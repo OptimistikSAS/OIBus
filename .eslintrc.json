@@ -1,0 +1,78 @@
+{
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true,
+      "experimentalObjectRestSpread": true
+    }
+  },
+  "extends": "airbnb",
+  "env": {
+    "es6": true,
+    "browser": true,
+    "node": true,
+    "jest": true
+  },
+  "globals": {
+    "server": false,
+    "browser": false,
+    "expect": false
+  },
+  "rules": {
+    "import/no-unresolved": [
+      2,
+      {
+        "ignore": ["meteor"]
+      }
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "new-cap": [
+      "error",
+      {
+        "newIsCapExceptionPattern": "^fT",
+        "capIsNewExceptions": ["OneOf"]
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error", "info"]
+      }
+    ],
+    "linebreak-style": 0,
+    "object-curly-newline": ["error", { "multiline": true }],
+    "no-param-reassign": ["error", { "props": false }],
+    "max-len": ["error", { "code": 150 }],
+    "semi": ["error", "never"],
+    "no-underscore-dangle": [
+      "error",
+      {
+        "allow": [
+          "_id",
+          "_ensureIndex",
+          "_verifyEmailToken",
+          "_resetPasswordToken",
+          "_name",
+          "_options",
+          "_checkPassword",
+          "_execute"
+        ]
+      }
+    ],
+    "jsx-a11y/anchor-is-valid": 1,
+    "import/extensions": ["error", "ignorePackages"],
+    "react/forbid-prop-types": [
+      "error",
+      {
+        "forbid": ["any", "array"]
+      }
+    ]
+  }
+}
