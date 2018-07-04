@@ -1,0 +1,13 @@
+[
+    {
+        "nodeId": "/fttest.base/Tank 1.tank/111111.fill_level",
+        "protocol": "Modbus",
+        "mode": "scan"
+    },
+    {
+        "nodeId": "/fttest.base/Tank 2.tank/222222.fill_level",
+        "protocol": "OPC-UA",
+        "mode": "poll",
+        "freq": "*/15 */6 1,15,31 * 1-5 *"
+    }
+]
