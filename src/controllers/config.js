@@ -1,5 +1,4 @@
-import { CronJob } from 'cron'
-
+const { CronJob } = require('cron')
 const fs = require('fs')
 const configService = require('../services/config.service')
 
@@ -8,7 +7,7 @@ const configService = require('../services/config.service')
  * @param {Object} ctx : koa context
  * @return {void}
  */
-const getConfig = (_ctx) => {
+const getConfig = (ctx) => {
   const args = configService.parseArgs()
 
   // Check if the arguments are not null or undefined
@@ -41,7 +40,6 @@ const getConfig = (_ctx) => {
       const { freq } = element // Get the frequence if mode is poll
       if (!freq) {
         console.error(`Frequence was not defined for poll mode in the element ${index}!`)
-        return false
       }
 
       /**
@@ -68,7 +66,7 @@ const getConfig = (_ctx) => {
         console.error(`Cron pattern is not valid for ${freq}. `, error)
       }
     }
-    return element
+    ctx.ok({ element })
   })
 
   return true
