@@ -9,13 +9,19 @@ const options = {
 }
 
 socket.on('connect', () => {
-  client.readCoils(0, 8)
-    .then((resp) => {
-      console.log('Respone from server: ', resp)
-      socket.end()
-    }).catch((error) => {
-      console.error(error)
-      socket.end()
-    })
+  setInterval(() => {
+    console.log('read')
+    client
+      .readCoils(0, 16)
+      .then((resp) => {
+        console.log('Response: ', JSON.stringify(resp.response))
+        // socket.end()
+      })
+      .catch((error) => {
+        console.error(error)
+        socket.end()
+      })
+  }, 2000)
 })
 socket.connect(options)
+
