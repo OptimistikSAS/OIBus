@@ -1,6 +1,36 @@
-const { CronJob } = require('cron')
 const fs = require('fs')
 const configService = require('../services/config.service')
+
+/**
+ * Retreives a nested property from an object
+ * @param {Object} obj : objectwhich contains the nested property
+ * @param {String} nestedProp : property to search inside the object, must be of format "property.nestedProperty"
+ * @return {*} : value of the property
+ */
+const getNestedProperty = (obj, nestedProp) => {
+  const propArray = nestedProp.split('.')
+  const currentProp = propArray.splice(0, 1)[0]
+  if (propArray.length !== 0) {
+    return getNestedProperty(obj[currentProp], propArray.join('.'))
+  }
+  return obj[currentProp]
+}
+
+/**
+ * Groups objects based on a mutual property
+ * @param {[ Object ]} array : array of objects to group
+ * @param {String} key : name of the property on which base the groups
+ * @return {Object} acc : grouped objects
+ */
+const groupBy = (array, key) => {
+  const nestedKey = key.includes('.')
+  return array.reduce((acc, obj) => {
+    const group = nestedKey ? getNestedProperty(obj, key) : obj[key]
+    if (!acc[group]) acc[group] = []
+    acc[group].push(obj)
+    return acc
+  }, {})
+}
 
 /**
  * Gets the configuration file
@@ -24,8 +54,7 @@ const getConfig = (ctx) => {
     return false
   }
 
-  // Read configuration file synchronously
-  const configFile = JSON.parse(fs.readFileSync(config, 'utf8'))
+  const configFile = JSON.parse(fs.readFileSync(config, 'utf8')) // Read configuration file synchronously
 
   if (!configFile) {
     console.error(`The file ${config} could not be loaded!`)
@@ -33,41 +62,17 @@ const getConfig = (ctx) => {
   }
 
   // Browse elements of the file
-  configFile.forEach((element, index) => {
-    const { nodeId, protocol, mode } = element
-    console.log(`Element n°${index}: `, nodeId, protocol, mode)
-    if (mode === 'poll') {
-      const { freq } = element // Get the frequence if mode is poll
-      if (!freq) {
-        console.error(`Frequence was not defined for poll mode in the element ${index}!`)
-      }
-
-      /**
-       * Cron time format
-          * * * * * *
-          | | | | | |
-          | | | | | +-- Year              (range: 1900-3000)
-          | | | | +---- Day of the Week   (range: 1-7, 1 standing for Monday)
-          | | | +------ Month of the Year (range: 1-12)
-          | | +-------- Day of the Month  (range: 1-31)
-          | +---------- Hour              (range: 0-23)
-          +------------ Minute            (range: 0-59)
-      */
-      try {
-        const job = new CronJob({
-          cronTime: freq,
-          onTick: () => {
-            console.log('Poll mode job for nodeId: ', nodeId)
-          },
-          start: true,
-        })
-        console.info('Job status: ', job.running)
-      } catch (error) {
-        console.error(`Cron pattern is not valid for ${freq}. `, error)
-      }
-    }
-    ctx.ok({ element })
+  const groups = configFile.map((equipment) => {
+    const { equipmentId, protocol, variables } = equipment
+    const frqGroups = groupBy(variables, 'scanMode', protocol)
+    Object.keys(frqGroups).forEach((freq) => {
+      const value = frqGroups[freq]
+      frqGroups[freq] = groupBy(value, `${protocol}.type`)
+    })
+    return { equipmentId, protocol, frqGroups }
   })
+
+  ctx.ok(groups)
 
   return true
 }
