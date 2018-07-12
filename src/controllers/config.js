@@ -64,10 +64,15 @@ const getConfig = (ctx) => {
   // Browse elements of the file
   const groups = configFile.map((equipment) => {
     const { equipmentId, protocol, variables } = equipment
-    const frqGroups = groupBy(variables, 'scanMode', protocol)
+    const frqGroups = groupBy(variables, 'scanMode')
     Object.keys(frqGroups).forEach((freq) => {
       const value = frqGroups[freq]
       frqGroups[freq] = groupBy(value, `${protocol}.type`)
+      const typeGroup = frqGroups[freq]
+      Object.keys(typeGroup).forEach((group) => {
+        const typeArray = typeGroup[group]
+        typeGroup[group] = typeArray.map(({ [protocol]: { address }, name, valueId, type }) => ({ address, name, valueId, type }))
+      })
     })
     return { equipmentId, protocol, frqGroups }
   })
