@@ -1,13 +1,28 @@
 [
     {
-        "nodeId": "/fttest.base/Tank 1.tank/111111.fill_level",
-        "protocol": "Modbus",
-        "mode": "scan"
-    },
-    {
-        "nodeId": "/fttest.base/Tank 2.tank/222222.fill_level",
-        "protocol": "OPC-UA",
-        "mode": "poll",
-        "freq": "*/15 */6 1,15,31 * 1-5 *"
+        "equipmentId": "PLC-35",
+        "protocol": "modbus",
+        "variables": [
+            {
+                "modbus": {
+                    "address": "0x0f",
+                    "type": "register"
+                },
+                "name": "temperature",
+                "valueId": "/fttest.base/Tank 1.tank/111111.fill_level#value",
+                "type": "number",
+                "scanMode": "every15DaysAt9"
+            },
+            {
+                "modbus": {
+                    "address": "0x0f8",
+                    "type": "coil"
+                },
+                "name": "openedValve",
+                "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+                "type": "boolean",
+                "scanMode": "every15DaysAt9"
+            }
+        ]
     }
 ]
