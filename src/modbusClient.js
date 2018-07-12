@@ -4,7 +4,7 @@ const net = require('net')
 const socket = new net.Socket()
 const client = new modbus.client.TCP(socket)
 const options = {
-  host: '35.180.21.237',
+  host: 'localhost',
   port: 502,
 }
 

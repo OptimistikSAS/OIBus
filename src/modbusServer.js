@@ -16,4 +16,4 @@ server.on('ReadCoils', (request, response, send) => {
   send(response)
 })
 
-netServer.listen(502)
+module.exports = netServer
