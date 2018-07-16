@@ -16,7 +16,7 @@
             {
                 "modbus": {
                     "address": "0x0f8",
-                    "type": "register"
+                    "type": "holdingRegister"
                 },
                 "name": "openedValve",
                 "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",

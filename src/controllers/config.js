@@ -100,7 +100,7 @@ const getConfig = (ctx) => {
     return { equipmentId, protocol, variableGroups }
   })
 
-  fs.writeFileSync('./tests/optimizedConfig.json', JSON.stringify(groups), 'utf8')
+  fs.writeFileSync('./config/optimizedConfig.json', JSON.stringify(groups), 'utf8')
 
   ctx.ok(groups)
 
