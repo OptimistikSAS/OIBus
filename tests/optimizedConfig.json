@@ -1,0 +1,22 @@
+[
+  {
+    "equipmentId": "PLC-35",
+    "protocol": "modbus",
+    "variableGroups": {
+      "everySecond": {
+        "coil": { "16-1008": [{ "modbus": { "address": "0x0f" }, "valueId": "/fttest.base/Tank 1.tank/111111.fill_level#value", "type": "number" }] }
+      },
+      "everyNoon": {
+        "holdingRegister": {
+          "256-1248": [{ "modbus": { "address": "0x0f8" }, "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value", "type": "boolean" }]
+        }
+      },
+      "every15DaysAt9": {
+        "coil": {
+          "30368-31376": [{ "modbus": { "address": "0x76a0" }, "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value", "type": "boolean" }],
+          "33696-34704": [{ "modbus": { "address": "0x83a6" }, "valueId": "/fttest.base/Tank 2.tank/111111.fill_level#value", "type": "boolean" }]
+        }
+      }
+    }
+  }
+]

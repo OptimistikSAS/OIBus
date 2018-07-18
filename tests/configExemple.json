@@ -8,17 +8,15 @@
                     "address": "0x0f",
                     "type": "coil"
                 },
-                "name": "temperature",
                 "valueId": "/fttest.base/Tank 1.tank/111111.fill_level#value",
                 "type": "number",
-                "scanMode": "every15DaysAt9"
+                "scanMode": "everySecond"
             },
             {
                 "modbus": {
                     "address": "0x0f8",
                     "type": "holdingRegister"
                 },
-                "name": "openedValve",
                 "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
                 "type": "boolean",
                 "scanMode": "everyNoon"
@@ -28,7 +26,6 @@
                     "address": "0x76a0",
                     "type": "coil"
                 },
-                "name": "test0",
                 "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
                 "type": "boolean",
                 "scanMode": "every15DaysAt9"
@@ -38,7 +35,6 @@
                     "address": "0x83a6",
                     "type": "coil"
                 },
-                "name": "test1",
                 "valueId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
                 "type": "boolean",
                 "scanMode": "every15DaysAt9"
