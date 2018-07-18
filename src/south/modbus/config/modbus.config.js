@@ -1,5 +1,5 @@
 const fs = require('fs')
-const configService = require('../services/config.service')
+const configService = require('../../../services/config.service')
 
 /**
  * Retreives a nested property from an object
@@ -59,30 +59,24 @@ const groupAddresses = (array, key, groupSize) => {
 
 /**
  * Gets the configuration file
- * @param {Object} ctx : koa context
- * @return {void}
+ * @return {boolean}
  */
-const getConfig = (ctx) => {
-  const args = configService.parseArgs()
-
-  // Check if the arguments are not null or undefined
-  if (!args) {
-    console.error('Args validity check failed!')
-    return false
-  }
-
-  const { config } = args // Get the configuration file path
+const getConfig = () => {
+  const args = configService.parseArgs() || {}
+  const { configPath = './fTbus.config.json' } = args // Get the configuration file path
 
   // Check if the provided file is json
-  if (!config.endsWith('.json')) {
+  if (!configPath.endsWith('.json')) {
     console.error('You must provide a json file for the configuration!')
     return false
   }
 
-  const configFile = JSON.parse(fs.readFileSync(config, 'utf8')) // Read configuration file synchronously
+  const fTbusConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  const { configExemple } = fTbusConfig
+  const configFile = JSON.parse(fs.readFileSync(configExemple, 'utf8')) // Read configuration file synchronously
 
   if (!configFile) {
-    console.error(`The file ${config} could not be loaded!`)
+    console.error(`The file ${configExemple} could not be loaded!`)
     return false
   }
 
@@ -100,11 +94,11 @@ const getConfig = (ctx) => {
     return { equipmentId, protocol, variableGroups }
   })
 
-  fs.writeFileSync('./config/optimizedConfig.json', JSON.stringify(groups), 'utf8')
-
-  ctx.ok(groups)
+  fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(groups), 'utf8', () => {
+    console.info('Optimized config file has been generated.')
+  })
 
   return true
 }
 
-module.exports = { getConfig }
+module.exports = getConfig
