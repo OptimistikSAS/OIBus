@@ -47,10 +47,11 @@ const groupAddresses = (array, key, groupSize) => {
   })
   return sortedArray.reduce((acc, obj) => {
     const strAddress = findProperty(obj, key, false)
-    const addressValue = parseInt(strAddress, 16)
-    const groupStart = Math.round(addressValue / 16) * 16
-    const groupEnd = Math.round((addressValue + groupSize) / 16) * 16
-    const groupName = `${groupStart}-${groupEnd}`
+    const addressValue = parseInt(strAddress, 16) // Decimal value of hexadecimal address
+    const nearestLimit = Math.round(addressValue / 16) * 16 // Nearest address group limit
+    const groupStart = (addressValue <= nearestLimit) ? nearestLimit - 16 : nearestLimit // First address of the group
+    const end = Math.round((groupStart + groupSize) / 16) * 16 // Last address
+    const groupName = `${groupStart}-${end}`
     if (!acc[groupName]) acc[groupName] = []
     acc[groupName].push(obj)
     return acc
