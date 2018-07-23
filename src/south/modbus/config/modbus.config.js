@@ -25,12 +25,21 @@ const findProperty = (obj, nestedProp, delProp) => {
  * @param {String} key : name of the property on which base the groups
  * @return {Object} acc : grouped objects
  */
-const groupBy = (array, key) => array.reduce((acc, obj) => {
-  const group = findProperty(obj, key, true)
-  if (!acc[group]) acc[group] = []
-  acc[group].push(obj)
-  return acc
-}, {})
+const groupBy = (array, key) =>
+  array.reduce((acc, obj) => {
+    const group = findProperty(obj, key, true)
+    if (!acc[group]) acc[group] = []
+    acc[group].push(obj)
+    return acc
+  }, {})
+
+const findAddressesGroup = (object, address) =>
+  Object.keys(object).find((group) => {
+    const rangeAddresses = group.split('-')
+    const start = parseInt(rangeAddresses[0], 10)
+    const end = parseInt(rangeAddresses[1], 10)
+    return address >= start && address <= end
+  })
 
 /**
  * Groups the equipments by addresses to optimize requests
@@ -41,17 +50,18 @@ const groupBy = (array, key) => array.reduce((acc, obj) => {
  */
 const groupAddresses = (array, key, groupSize) => {
   const sortedArray = array.sort((a, b) => {
-    const strAddressA = findProperty(a, key, false)
-    const strAddressB = findProperty(b, key, false)
+    const strAddressA = findProperty(a, key, false) // String address A
+    const strAddressB = findProperty(b, key, false) // String address B
     return parseInt(strAddressA, 16) - parseInt(strAddressB, 16)
   })
   return sortedArray.reduce((acc, obj) => {
     const strAddress = findProperty(obj, key, false)
     const addressValue = parseInt(strAddress, 16) // Decimal value of hexadecimal address
     const nearestLimit = Math.round(addressValue / 16) * 16 // Nearest address group limit
-    const groupStart = (addressValue <= nearestLimit) ? nearestLimit - 16 : nearestLimit // First address of the group
-    const end = Math.round((groupStart + groupSize) / 16) * 16 // Last address
-    const groupName = `${groupStart}-${end}`
+    const groupStart = addressValue <= nearestLimit ? nearestLimit - 16 : nearestLimit // First address of the group
+    const end = Math.round((nearestLimit + groupSize) / 16) * 16 // Last address
+
+    const groupName = findAddressesGroup(acc, addressValue) || `${groupStart}-${end}`
     if (!acc[groupName]) acc[groupName] = []
     acc[groupName].push(obj)
     return acc
@@ -72,7 +82,7 @@ const getConfig = () => {
     return false
   }
 
-  const fTbusConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  const fTbusConfig = JSON.parse(fs.readFileSync(configPath, 'utf8')) // Read fTbus config file
   const { configExemple } = fTbusConfig
   const configFile = JSON.parse(fs.readFileSync(configExemple, 'utf8')) // Read configuration file synchronously
 
@@ -84,22 +94,27 @@ const getConfig = () => {
   // Browse elements of the file
   const groups = configFile.map((equipment) => {
     const { equipmentId, protocol, variables } = equipment
+    const protocolConfig = JSON.parse(fs.readFileSync(`./tests/${protocol}.config.json`, 'utf8')) // Read configuration file synchronously
+    const { addressesGroupsSize } = protocolConfig
     const variableGroups = groupBy(variables, 'scanMode') // Group equipments by frequence
+
     // Grouping the equipments on multiple level
     Object.keys(variableGroups).forEach((freq) => {
       variableGroups[freq] = groupBy(variableGroups[freq], `${protocol}.type`) // Group equipments by type
+
+      // Making groups of address ranges
       Object.keys(variableGroups[freq]).forEach((type) => {
-        variableGroups[freq][type] = groupAddresses(variableGroups[freq][type], `${protocol}.address`, 1000) // Making groups of address ranges
+        variableGroups[freq][type] = groupAddresses(variableGroups[freq][type], `${protocol}.address`, addressesGroupsSize)
       })
     })
     return { equipmentId, protocol, variableGroups }
   })
 
-  fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(groups), 'utf8', () => {
-    console.info('Optimized config file has been generated.')
-  })
+  //   fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(groups), 'utf8', () => {
+  //     console.info('Optimized config file has been generated.')
+  //   })
 
-  return true
+  return groups
 }
 
 module.exports = getConfig
