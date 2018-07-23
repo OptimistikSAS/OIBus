@@ -5,7 +5,7 @@ const minimist = require('minimist')
  * @param {Object} args : arguments of the command
  * @return {boolean} : whether the right arguments have been passed or not
  */
-const isValidArgs = ({ config }) => {
+const isValidArgs = ({ config = './fTbus.config.json' }) => {
   if (!config) {
     console.error('No config file specified, exemple: --config ./config/config.json')
     return false

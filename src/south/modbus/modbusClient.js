@@ -45,7 +45,6 @@ socket.on('connect', () => {
 
             const thenFunction = (resp) => {
               console.log('Response: ', JSON.stringify(resp.response))
-              socket.end()
             }
 
             const errorFunction = (error) => {
