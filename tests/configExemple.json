@@ -14,6 +14,15 @@
             },
             {
                 "modbus": {
+                    "address": "0x0031",
+                    "type": "coil"
+                },
+                "valueId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
+                "type": "number",
+                "scanMode": "everySecond"
+            },
+            {
+                "modbus": {
                     "address": "0x0f8",
                     "type": "holdingRegister"
                 },
