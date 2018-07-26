@@ -8,7 +8,7 @@
                     "address": "0x0f",
                     "type": "coil"
                 },
-                "valueId": "/fttest.base/Tank 1.tank/111111.fill_level#value",
+                "pointId": "/fttest.base/Tank 1.tank/111111.fill_level#value",
                 "type": "number",
                 "scanMode": "everySecond"
             },
@@ -17,7 +17,7 @@
                     "address": "0x0031",
                     "type": "coil"
                 },
-                "valueId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
+                "pointId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
                 "type": "number",
                 "scanMode": "everySecond"
             },
@@ -26,7 +26,7 @@
                     "address": "0x0f8",
                     "type": "holdingRegister"
                 },
-                "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+                "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
                 "type": "boolean",
                 "scanMode": "everyNoon"
             },
@@ -35,7 +35,7 @@
                     "address": "0x76a0",
                     "type": "coil"
                 },
-                "valueId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+                "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
                 "type": "boolean",
                 "scanMode": "every15DaysAt9"
             },
@@ -44,7 +44,7 @@
                     "address": "0x83a6",
                     "type": "coil"
                 },
-                "valueId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
+                "pointId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
                 "type": "boolean",
                 "scanMode": "every15DaysAt9"
             }
