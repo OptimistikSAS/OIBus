@@ -22,7 +22,7 @@ class ModbusClient {
    * @param {String} scanMode : cron time
    * @return {void}
    */
-  pol = (scanMode) => {
+  pol(scanMode) {
     if (this.connected) {
       const scanGroup = this.optimizedConfig[scanMode]
       Object.keys(scanGroup).forEach((equipment) => {
@@ -62,7 +62,7 @@ class ModbusClient {
    * @param {Function} : callback function
    * @return {void}
    */
-  connect = (host) => {
+  connect(host) {
     this.socket.connect({ host, port: 502 })
     this.connected = true
   }
@@ -71,7 +71,7 @@ class ModbusClient {
    * Close the connection
    * @return {void}
    */
-  disconnect = () => {
+  disconnect() {
     this.socket.end()
     this.connected = false
   }
