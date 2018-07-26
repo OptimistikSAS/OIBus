@@ -32,10 +32,23 @@ const fTbusConfig = tryReadFile(configPath)
 const { scanModes, configExemple } = fTbusConfig // Get the cron frequences file path
 const frequences = tryReadFile(scanModes)
 
+const modbusClient = new ModbusClient(configExemple)
+
 // Check if the frequences file has been correctly retreived
 if (!frequences) {
   console.error('Frequences file not found.')
-} 
+} else {
+  modbusClient.connect('localhost')
+  frequences.forEach(({ name, cronTime }) => {
+    const job = new CronJob({
+      cronTime,
+      onTick: () => modbusClient.poll(name),
+      start: false,
+    })
+
+    job.start()
+  })
+}
 
 const port = process.env.PORT || 3333
 server.listen(port, () => console.info(`API server started on ${port}`))

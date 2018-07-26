@@ -22,7 +22,7 @@ class ModbusClient {
    * @param {String} scanMode : cron time
    * @return {void}
    */
-  pol(scanMode) {
+  poll(scanMode) {
     if (this.connected) {
       const scanGroup = this.optimizedConfig[scanMode]
       Object.keys(scanGroup).forEach((equipment) => {
