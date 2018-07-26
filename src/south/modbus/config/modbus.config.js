@@ -1,5 +1,4 @@
 const fs = require('fs')
-const configService = require('../../../services/config.service')
 
 /**
  * Retreives a nested property from an object
@@ -25,11 +24,11 @@ const findProperty = (obj, nestedProp, delProp) => {
  * @param {String} key : name of the property on which base the groups
  * @return {Object} acc : grouped objects
  */
-const groupBy = (array, key) =>
+const groupBy = (array, key, newProps = {}) =>
   array.reduce((acc, obj) => {
     const group = findProperty(obj, key, true)
     if (!acc[group]) acc[group] = []
-    acc[group].push(obj)
+    acc[group].push({ ...obj, ...newProps })
     return acc
   }, {})
 
@@ -72,49 +71,42 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const getConfig = () => {
-  const args = configService.parseArgs() || {}
-  const { configPath = './fTbus.config.json' } = args // Get the configuration file path
-
-  // Check if the provided file is json
-  if (!configPath.endsWith('.json')) {
-    console.error('You must provide a json file for the configuration!')
-    return false
-  }
-
-  const fTbusConfig = JSON.parse(fs.readFileSync(configPath, 'utf8')) // Read fTbus config file
-  const { configExemple } = fTbusConfig
-  const configFile = JSON.parse(fs.readFileSync(configExemple, 'utf8')) // Read configuration file synchronously
+const getConfig = (path) => {
+  const configFile = JSON.parse(fs.readFileSync(path, 'utf8')) // Read configuration file synchronously
 
   if (!configFile) {
-    console.error(`The file ${configExemple} could not be loaded!`)
+    console.error(`The file ${path} could not be loaded!`)
     return false
   }
 
-  // Browse elements of the file
-  const groups = configFile.map((equipment) => {
-    const { equipmentId, protocol, variables } = equipment
+  const optimized = configFile.reduce((acc, { equipmentId, protocol, variables }) => {
     const protocolConfig = JSON.parse(fs.readFileSync(`./tests/${protocol}.config.json`, 'utf8')) // Read configuration file synchronously
-    const { addressesGroupsSize } = protocolConfig
-    const variableGroups = groupBy(variables, 'scanMode') // Group equipments by frequence
+    const { addressGap } = protocolConfig
 
-    // Grouping the equipments on multiple level
-    Object.keys(variableGroups).forEach((freq) => {
-      variableGroups[freq] = groupBy(variableGroups[freq], `${protocol}.type`) // Group equipments by type
-
-      // Making groups of address ranges
-      Object.keys(variableGroups[freq]).forEach((type) => {
-        variableGroups[freq][type] = groupAddresses(variableGroups[freq][type], `${protocol}.address`, addressesGroupsSize)
+    if (protocol === 'modbus') {
+      const scanModes = groupBy(variables, 'scanMode', { equipmentId })
+      Object.keys(scanModes).forEach((scan) => {
+        scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
+        Object.keys(scanModes[scan]).forEach((equipment) => {
+          scanModes[scan][equipment] = groupBy(scanModes[scan][equipment], `${protocol}.type`)
+          Object.keys(scanModes[scan][equipment]).forEach((type) => {
+            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap)
+          })
+        })
       })
-    })
-    return { equipmentId, protocol, variableGroups }
+      Object.keys(scanModes).forEach((scan) => {
+        if (!acc[scan]) acc[scan] = {}
+        acc[scan] = { ...acc[scan], ...scanModes[scan] }
+      })
+    }
+
+    return acc
+  }, {})
+
+  fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(optimized), 'utf8', () => {
+    console.info('Optimized config file has been generated.')
   })
-
-  //   fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(groups), 'utf8', () => {
-  //     console.info('Optimized config file has been generated.')
-  //   })
-
-  return groups
+  return optimized
 }
 
 module.exports = getConfig
