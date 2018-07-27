@@ -1,14 +1,14 @@
 [
     {
         "name": "everySecond",
-        "frequence": "* * * * * *"
+        "cronTime": "* * * * * *"
     },
     {
         "name": "everyNoon",
-        "frequence": "0 0 12 * * *"
+        "cronTime": "0 0 12 * * *"
     },
     {
         "name": "every15DaysAt9",
-        "frequence": "0 0 9 */15 * *"
+        "cronTime": "0 0 9 */15 * *"
     }
 ]

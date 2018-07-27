@@ -1,13 +1,7 @@
 require('dotenv').config()
 const server = require('./server')
-const modbusClient = require('./south/modbus/modbusClient')
+const engine = require('./engine')
 
-// Connection options for client
-const options = {
-  host: 'localhost',
-  port: 502,
-}
-
+engine.start(() => console.info('Engine started.'))
 const port = process.env.PORT || 3333
 server.listen(port, () => console.info(`API server started on ${port}`))
-modbusClient.connect(options)
