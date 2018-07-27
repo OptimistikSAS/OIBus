@@ -1,4 +1,19 @@
 const minimist = require('minimist')
+const fs = require('fs')
+
+/**
+ * Tries to read a file at a given path
+ * @param {String} path : path to the file to read
+ * @return {*} : content of the file
+ */
+const tryReadFile = (path) => {
+  try {
+    return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
+  } catch (error) {
+    console.error(error)
+    return error
+  }
+}
 
 /**
  * Checks if the right arguments have been passed to the command
@@ -26,4 +41,4 @@ const parseArgs = () => {
   return null
 }
 
-module.exports = { parseArgs }
+module.exports = { parseArgs, tryReadFile }
