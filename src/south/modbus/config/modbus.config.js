@@ -103,9 +103,6 @@ const getConfig = (path) => {
     return acc
   }, {})
 
-  fs.writeFile('./tests/optimizedConfig.json', JSON.stringify(optimized), 'utf8', () => {
-    console.info('Optimized config file has been generated.')
-  })
   return optimized
 }
 
