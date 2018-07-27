@@ -1,6 +1,7 @@
 const modbus = require('jsmodbus')
 const net = require('net')
 const getConfig = require('./config/modbus.config')
+const ResponsesHandler = require('../../ResponsesHandler.class')
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -15,6 +16,7 @@ class ModbusClient {
     this.client = new modbus.client.TCP(this.socket)
     this.connected = false
     this.optimizedConfig = getConfig(configPath)
+    this.responses = new ResponsesHandler('Modbus-responses')
   }
 
   /**
@@ -32,28 +34,37 @@ class ModbusClient {
           const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s` // Build function name, IMPORTANT: type must be singular
 
           // Dynamic call of the appropriate function based on type
-          const modbusFunction = (startAddress, count) =>
-            this.client[funcName](startAddress, count)
-              .then((resp) => {
-                console.log('Response: ', JSON.stringify(resp.response))
-              })
-              .catch((error) => {
-                console.error(error)
-                this.disconnect()
-              })
 
           Object.keys(addressesForType).forEach((range) => {
             const rangeAddresses = range.split('-')
             const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
             const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
             const rangeSize = endAddress - startAddress // Size of the addresses group
-            modbusFunction(startAddress, rangeSize)
+            this.modbusFunction(funcName, { startAddress, rangeSize })
           })
         })
       })
     } else {
       console.error('You must be connected to run pol.')
     }
+  }
+
+  /**
+   * Dynamically call the right function based on the given name
+   * @param {String} funcName : name of the function to run
+   * @param {Object} infos : informations about the group of addresses (first address of the group, size)
+   * @return {void}
+   */
+  modbusFunction(funcName, { startAddress, rangeSize }) {
+    this.client[funcName](startAddress, rangeSize)
+      .then(({ response }) => {
+        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
+        this.responses.update({ id, data: response }, value => console.log(value))
+      })
+      .catch((error) => {
+        console.error(error)
+        this.disconnect()
+      })
   }
 
   /**
