@@ -1,54 +1,7 @@
 require('dotenv').config()
 const server = require('./server')
-const fs = require('fs')
-const { CronJob } = require('cron')
-const ModbusClient = require('./south/modbus/ModbusClient.class')
-const configService = require('./services/config.service')
+const engine = require('./engine')
 
-const args = configService.parseArgs() || {} // Arguments of the command
-const { configPath = './fTbus.config.json' } = args // Get the configuration file path
-
-// Check if the provided file is json
-if (!configPath.endsWith('.json')) {
-  console.error('You must provide a json file for the configuration!')
-}
-
-/**
- * Tries to read a file at a given path
- * @param {String} path : path to the file to read
- * @return {*} : content of the file
- */
-const tryReadFile = (path) => {
-  try {
-    return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
-  } catch (error) {
-    console.error(error)
-    return error
-  }
-}
-
-const fTbusConfig = tryReadFile(configPath)
-
-const { scanModes, configExemple } = fTbusConfig // Get the cron frequences file path
-const frequences = tryReadFile(scanModes)
-
-const modbusClient = new ModbusClient(configExemple)
-
-// Check if the frequences file has been correctly retreived
-if (!frequences) {
-  console.error('Frequences file not found.')
-} else {
-  modbusClient.connect('localhost')
-  frequences.forEach(({ name, cronTime }) => {
-    const job = new CronJob({
-      cronTime,
-      onTick: () => modbusClient.poll(name),
-      start: false,
-    })
-
-    job.start()
-  })
-}
-
+engine.start(() => console.info('Engine started.'))
 const port = process.env.PORT || 3333
 server.listen(port, () => console.info(`API server started on ${port}`))
