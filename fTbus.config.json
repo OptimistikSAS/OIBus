@@ -1,4 +1,4 @@
 {
-    "configExemple": "./tests/configExemple.json",
+    "config": "./tests/config.json",
     "scanModes": "./tests/scanMode.json"
 }
