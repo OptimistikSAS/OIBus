@@ -6,7 +6,7 @@
   "author": "factoryThings",
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
-    "start": "node src/ftbus.js",
+    "start": "node src/index.js",
     "build": "npx webpack --mode production",
     "build-dev": "npx webpack --mode development",
     "build-doc": "esdoc",
