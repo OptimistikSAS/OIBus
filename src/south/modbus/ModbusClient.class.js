@@ -1,7 +1,7 @@
 const modbus = require('jsmodbus')
 const net = require('net')
 const getConfig = require('./config/modbus.config')
-const ResponsesHandler = require('../../ResponsesHandler.class')
+const ResponsesHandler = require('../../engine/ResponsesHandler.class')
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -25,28 +25,26 @@ class ModbusClient {
    * @return {void}
    */
   poll(scanMode) {
-    if (this.connected) {
-      const scanGroup = this.optimizedConfig[scanMode]
-      Object.keys(scanGroup).forEach((equipment) => {
-        Object.keys(scanGroup[equipment]).forEach((type) => {
-          const addressesForType = scanGroup[equipment][type] // Addresses of the group
+    if (!this.connected) console.error('You must be connected before calling poll.')
 
-          const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s` // Build function name, IMPORTANT: type must be singular
+    const scanGroup = this.optimizedConfig[scanMode]
+    Object.keys(scanGroup).forEach((equipment) => {
+      Object.keys(scanGroup[equipment]).forEach((type) => {
+        const addressesForType = scanGroup[equipment][type] // Addresses of the group
 
-          // Dynamic call of the appropriate function based on type
+        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s` // Build function name, IMPORTANT: type must be singular
 
-          Object.keys(addressesForType).forEach((range) => {
-            const rangeAddresses = range.split('-')
-            const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-            const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
-            const rangeSize = endAddress - startAddress // Size of the addresses group
-            this.modbusFunction(funcName, { startAddress, rangeSize })
-          })
+        // Dynamic call of the appropriate function based on type
+
+        Object.keys(addressesForType).forEach((range) => {
+          const rangeAddresses = range.split('-')
+          const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
+          const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
+          const rangeSize = endAddress - startAddress // Size of the addresses group
+          this.modbusFunction(funcName, { startAddress, rangeSize })
         })
       })
-    } else {
-      console.error('You must be connected to run pol.')
-    }
+    })
   }
 
   /**
@@ -72,9 +70,15 @@ class ModbusClient {
    * @param {String} host : host ip address
    * @param {Function} : callback function
    * @return {void}
+   * @todo why 502 is hardcoded?
    */
   connect(host) {
-    this.socket.connect({ host, port: 502 })
+    try {
+      this.socket.connect({ host, port: 502 })
+    } catch (error) {
+      console.log(error)
+    }
+
     this.connected = true
   }
 

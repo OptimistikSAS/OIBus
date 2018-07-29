@@ -1,4 +1,4 @@
-function getNode(ctx) {
+const getInfo = (ctx) => {
   const { query } = ctx.request
   const { node } = query
   const authHeader = ctx.request.header.authorization || ''
@@ -20,9 +20,10 @@ function getNode(ctx) {
     console.log(`request from ${username} with password:${password}`)
   } else {
     // Handle what happens if that isn't the case
-    throw new Error("The authorization header is either empty or isn't Basic.")
+    ctx.throw(400, 'The authorization header is either empty or is not Basic.')
+    return
   }
-  ctx.ok({ node, query, comment: ' node was requested!' })
+  ctx.ok({ node, query, comment: ' info was requested!' })
 }
 
-module.exports = { getNode }
+module.exports = { getInfo }

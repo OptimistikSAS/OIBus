@@ -1,1 +1,321 @@
-!function(e){var t={};function o(r){if(t[r])return t[r].exports;var s=t[r]={i:r,l:!1,exports:{}};return e[r].call(s.exports,s,s.exports,o),s.l=!0,s.exports}o.m=e,o.c=t,o.d=function(e,t,r){o.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:r})},o.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},o.t=function(e,t){if(1&t&&(e=o(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var r=Object.create(null);if(o.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var s in e)o.d(r,s,function(t){return e[t]}.bind(null,s));return r},o.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return o.d(t,"a",t),t},o.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},o.p="",o(o.s=25)}([function(e,t){e.exports=require("koa-router")},function(e,t){e.exports=require("fs")},function(e,t){e.exports=class{constructor(e){this.name=e,this.responses=new Map}update({id:e,data:t},o){this.responses.set(e,t),o(this.responses)}}},function(e,t,o){const r=o(1),s=(e,t,o)=>{const r=t.split("."),n=r.splice(0,1)[0];if(0!==r.length)return s(e[n],r.join("."),o);const c=e[n];return o&&delete e[n],c},n=(e,t,o={})=>e.reduce((e,r)=>{const n=s(r,t,!0);return e[n]||(e[n]=[]),e[n].push({...r,...o}),e},{}),c=(e,t,o)=>{return e.sort((e,o)=>{const r=s(e,t,!1),n=s(o,t,!1);return parseInt(r,16)-parseInt(n,16)}).reduce((e,r)=>{const n=s(r,t,!1),c=parseInt(n,16),i=16*Math.round(c/16),a=c<=i?i-16:i,u=16*Math.round((i+o)/16),l=((e,t)=>Object.keys(e).find(e=>{const o=e.split("-"),r=parseInt(o[0],10),s=parseInt(o[1],10);return t>=r&&t<=s}))(e,c)||`${a}-${u}`;return e[l]||(e[l]=[]),e[l].push(r),e},{})};e.exports=(e=>{const t=JSON.parse(r.readFileSync(e,"utf8"));return t?t.reduce((e,{equipmentId:t,protocol:o,variables:s})=>{const i=JSON.parse(r.readFileSync(`./tests/${o}.config.json`,"utf8")),{addressGap:a}=i;if("modbus"===o){const r=n(s,"scanMode",{equipmentId:t});Object.keys(r).forEach(e=>{r[e]=n(r[e],"equipmentId"),Object.keys(r[e]).forEach(t=>{r[e][t]=n(r[e][t],`${o}.type`),Object.keys(r[e][t]).forEach(s=>{r[e][t][s]=c(r[e][t][s],`${o}.address`,a)})})}),Object.keys(r).forEach(t=>{e[t]||(e[t]={}),e[t]={...e[t],...r[t]}})}return e},{}):(console.error(`The file ${e} could not be loaded!`),!1)})},function(e,t){e.exports=require("net")},function(e,t){e.exports=require("jsmodbus")},function(e,t,o){const r=o(5),s=o(4),n=o(3),c=o(2);e.exports=class{constructor(e){this.socket=new s.Socket,this.client=new r.client.TCP(this.socket),this.connected=!1,this.optimizedConfig=n(e),this.responses=new c("Modbus-responses")}poll(e){if(this.connected){const t=this.optimizedConfig[e];Object.keys(t).forEach(e=>{Object.keys(t[e]).forEach(o=>{const r=t[e][o],s=`read${`${o.charAt(0).toUpperCase()}${o.slice(1)}`}s`;Object.keys(r).forEach(e=>{const t=e.split("-"),o=parseInt(t[0],10),r=parseInt(t[1],10)-o;this.modbusFunction(s,{startAddress:o,rangeSize:r})})})})}else console.error("You must be connected to run pol.")}modbusFunction(e,{startAddress:t,rangeSize:o}){this.client[e](t,o).then(({response:e})=>{const r=`${t}-${t+o}:${new Date}`;this.responses.update({id:r,data:e},e=>console.log(e))}).catch(e=>{console.error(e),this.disconnect()})}connect(e){this.socket.connect({host:e,port:502}),this.connected=!0}disconnect(){this.socket.end(),this.connected=!1}}},function(e,t){e.exports=require("minimist")},function(e,t,o){const r=o(7),s=o(1);e.exports={parseArgs:()=>{const e=r(process.argv.slice(2));return(({config:e="./fTbus.config.json"})=>!!e||(console.error("No config file specified, exemple: --config ./config/config.json"),!1))(e)?e:null},tryReadFile:e=>{try{return JSON.parse(s.readFileSync(e,"utf8"))}catch(e){return console.error(e),e}}}},function(e,t){e.exports=require("cron")},function(e,t,o){const{CronJob:r}=o(9),{parseArgs:s,tryReadFile:n}=o(8),c=o(6);e.exports={start:(e=(()=>{}))=>{const t=s()||{},{configPath:o="./fTbus.config.json"}=t;o.endsWith(".json")||console.error("You must provide a json file for the configuration!");const i=n(o),{scanModes:a,config:u}=i,l=n(a),d=new c(u);l?(d.connect("localhost"),l.forEach(({name:e,cronTime:t})=>{new r({cronTime:t,onTick:()=>d.poll(e),start:!1}).start()})):console.error("Frequences file not found."),e()}}},function(e,t){e.exports={getNode:function(e){const{query:t}=e.request,{node:o}=t,r=e.request.header.authorization||"";if(!r.startsWith("Basic "))throw new Error("The authorization header is either empty or isn't Basic.");{const e=r.split(" ")[1],t=Buffer.from(e,"base64").toString().split(":"),o=t[0],s=t[1];console.log(`request from ${o} with password:${s}`)}e.ok({node:o,query:t,comment:" node was requested!"})}}},function(e,t,o){const r=new(o(0)),s=o(11);r.get("/",s.getNode),e.exports=r.routes()},function(e,t){e.exports={getUser:function(e){const{query:t}=e.request,{user:o}=t;e.ok({user:o,query:t,comment:" user was requested!"})}}},function(e,t,o){const r=new(o(0)),s=o(13);r.get("/",s.getUser),e.exports=r.routes()},function(e,t,o){const r=o(14),s=o(12);e.exports=(e=>{e.prefix("/v1"),e.use("/users",r),e.use("/nodes",s)})},function(e,t){e.exports=require("koa-respond")},function(e,t){e.exports=require("koa-helmet")},function(e,t){e.exports=require("koa-bodyparser")},function(e,t,o){"use strict";e.exports=function(e){return e=Object.assign({},{allowMethods:"GET,HEAD,PUT,POST,DELETE,PATCH"},e),Array.isArray(e.exposeHeaders)&&(e.exposeHeaders=e.exposeHeaders.join(",")),Array.isArray(e.allowMethods)&&(e.allowMethods=e.allowMethods.join(",")),Array.isArray(e.allowHeaders)&&(e.allowHeaders=e.allowHeaders.join(",")),e.maxAge&&(e.maxAge=String(e.maxAge)),e.credentials=!!e.credentials,e.keepHeadersOnError=void 0===e.keepHeadersOnError||!!e.keepHeadersOnError,function(t,o){const r=t.get("Origin");if(t.vary("Origin"),!r)return o();let s;if("function"==typeof e.origin){if(!(s=e.origin(t)))return o()}else s=e.origin||r;const n={};function c(e,o){t.set(e,o),n[e]=o}if("OPTIONS"!==t.method)return c("Access-Control-Allow-Origin",s),!0===e.credentials&&c("Access-Control-Allow-Credentials","true"),e.exposeHeaders&&c("Access-Control-Expose-Headers",e.exposeHeaders),e.keepHeadersOnError?o().catch(e=>{throw e.headers=Object.assign({},e.headers,n),e}):o();{if(!t.get("Access-Control-Request-Method"))return o();t.set("Access-Control-Allow-Origin",s),!0===e.credentials&&t.set("Access-Control-Allow-Credentials","true"),e.maxAge&&t.set("Access-Control-Max-Age",e.maxAge),e.allowMethods&&t.set("Access-Control-Allow-Methods",e.allowMethods);let r=e.allowHeaders;r||(r=t.get("Access-Control-Request-Headers")),r&&t.set("Access-Control-Allow-Headers",r),t.status=204}}}},function(e,t){e.exports=require("koa-logger")},function(e,t){e.exports=require("koa-basic-auth")},function(e,t){e.exports=require("koa")},function(e,t,o){const r=o(22),s=o(0),n=o(21),c=(o(20),o(19)),i=o(18),a=o(17),u=o(16),l=new r,d=new s;l.use(a()),l.use(async(e,t)=>{try{await t()}catch(t){if(401!==t.status)throw t;e.status=401,e.set("WWW-Authenticate","Basic"),e.body="access was not authorized"}}),l.use(n({name:"jf",pass:"jfhjfh"})),l.use(c()),l.use(i({enableTypes:["json"],jsonLimit:"5mb",strict:!0,onerror(e,t){t.throw("body parse error",422)}})),l.use(u()),o(15)(d),l.use(d.routes()),l.use(d.allowedMethods()),e.exports=l},function(e,t){e.exports=require("dotenv")},function(e,t,o){o(24).config();const r=o(23);o(10).start(()=>console.info("Engine started."));const s=process.env.PORT||3333;r.listen(s,()=>console.info(`API server started on ${s}`))}]);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./node_modules/@koa/cors/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/@koa/cors/index.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\n/**\n * CORS middleware\n *\n * @param {Object} [options]\n *  - {String|Function(ctx)} origin `Access-Control-Allow-Origin`, default is request Origin header\n *  - {String|Array} allowMethods `Access-Control-Allow-Methods`, default is 'GET,HEAD,PUT,POST,DELETE,PATCH'\n *  - {String|Array} exposeHeaders `Access-Control-Expose-Headers`\n *  - {String|Array} allowHeaders `Access-Control-Allow-Headers`\n *  - {String|Number} maxAge `Access-Control-Max-Age` in seconds\n *  - {Boolean} credentials `Access-Control-Allow-Credentials`\n *  - {Boolean} keepHeadersOnError Add set headers to `err.header` if an error is thrown\n * @return {Function} cors middleware\n * @api public\n */\nmodule.exports = function(options) {\n  const defaults = {\n    allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',\n  };\n\n  options = Object.assign({}, defaults, options);\n\n  if (Array.isArray(options.exposeHeaders)) {\n    options.exposeHeaders = options.exposeHeaders.join(',');\n  }\n\n  if (Array.isArray(options.allowMethods)) {\n    options.allowMethods = options.allowMethods.join(',');\n  }\n\n  if (Array.isArray(options.allowHeaders)) {\n    options.allowHeaders = options.allowHeaders.join(',');\n  }\n\n  if (options.maxAge) {\n    options.maxAge = String(options.maxAge);\n  }\n\n  options.credentials = !!options.credentials;\n  options.keepHeadersOnError = options.keepHeadersOnError === undefined || !!options.keepHeadersOnError;\n\n  return function cors(ctx, next) {\n    // If the Origin header is not present terminate this set of steps.\n    // The request is outside the scope of this specification.\n    const requestOrigin = ctx.get('Origin');\n\n    // Always set Vary header\n    // https://github.com/rs/cors/issues/10\n    ctx.vary('Origin');\n\n    if (!requestOrigin) {\n      return next();\n    }\n\n    let origin;\n\n    if (typeof options.origin === 'function') {\n      // FIXME: origin can be promise\n      origin = options.origin(ctx);\n      if (!origin) {\n        return next();\n      }\n    } else {\n      origin = options.origin || requestOrigin;\n    }\n\n    const headersSet = {};\n\n    function set(key, value) {\n      ctx.set(key, value);\n      headersSet[key] = value;\n    }\n\n    if (ctx.method !== 'OPTIONS') {\n      // Simple Cross-Origin Request, Actual Request, and Redirects\n      set('Access-Control-Allow-Origin', origin);\n\n      if (options.credentials === true) {\n        set('Access-Control-Allow-Credentials', 'true');\n      }\n\n      if (options.exposeHeaders) {\n        set('Access-Control-Expose-Headers', options.exposeHeaders);\n      }\n\n      if (!options.keepHeadersOnError) {\n        return next();\n      }\n      return next().catch(err => {\n        err.headers = Object.assign({}, err.headers, headersSet);\n        throw err;\n      });\n    } else {\n      // Preflight Request\n\n      // If there is no Access-Control-Request-Method header or if parsing failed,\n      // do not set any additional headers and terminate this set of steps.\n      // The request is outside the scope of this specification.\n      if (!ctx.get('Access-Control-Request-Method')) {\n        // this not preflight request, ignore it\n        return next();\n      }\n\n      ctx.set('Access-Control-Allow-Origin', origin);\n\n      if (options.credentials === true) {\n        ctx.set('Access-Control-Allow-Credentials', 'true');\n      }\n\n      if (options.maxAge) {\n        ctx.set('Access-Control-Max-Age', options.maxAge);\n      }\n\n      if (options.allowMethods) {\n        ctx.set('Access-Control-Allow-Methods', options.allowMethods);\n      }\n\n      let allowHeaders = options.allowHeaders;\n      if (!allowHeaders) {\n        allowHeaders = ctx.get('Access-Control-Request-Headers');\n      }\n      if (allowHeaders) {\n        ctx.set('Access-Control-Allow-Headers', allowHeaders);\n      }\n\n      ctx.status = 204;\n    }\n  };\n};\n\n\n//# sourceURL=webpack:///./node_modules/@koa/cors/index.js?");
+
+/***/ }),
+
+/***/ "./src/engine/ResponsesHandler.class.js":
+/*!**********************************************!*\
+  !*** ./src/engine/ResponsesHandler.class.js ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("/**\n * Class ResponsesHandler : allows to manage requests responses in a Map\n */\nclass ResponsesHandler {\n  /**\n   * Constructor for the class ResponsesHandler\n   */\n  constructor(name) {\n    this.name = name\n    this.responses = new Map()\n  }\n\n  /**\n   * Updates the responses map\n   * @param {Object} entry : new entry (id and data of the entry)\n   * @param {Function} callback : callback function\n   * @return {void}\n   */\n  update({ id, data }, callback) {\n    this.responses.set(id, data)\n    callback(this.responses)\n  }\n}\n\nmodule.exports = ResponsesHandler\n\n\n//# sourceURL=webpack:///./src/engine/ResponsesHandler.class.js?");
+
+/***/ }),
+
+/***/ "./src/engine/engine.js":
+/*!******************************!*\
+  !*** ./src/engine/engine.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const { CronJob } = __webpack_require__(/*! cron */ \"cron\")\nconst ModbusClient = __webpack_require__(/*! ../south/modbus/ModbusClient.class */ \"./src/south/modbus/ModbusClient.class.js\")\n\nconst start = (scanModes, callback = () => {}) => {\n  const modbusClient = new ModbusClient(config)\n\n  modbusClient.connect('localhost')\n  scanModes.forEach(({ name, cronTime }) => {\n    const job = new CronJob({\n      cronTime,\n      onTick: () => modbusClient.poll(name), // @TODO: foreach protocol, run poll\n      start: false,\n    })\n    job.start()\n  })\n  callback()\n}\n\n\nmodule.exports = { start }\n\n\n//# sourceURL=webpack:///./src/engine/engine.js?");
+
+/***/ }),
+
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const serverCtrl = __webpack_require__(/*! ./server/server */ \"./src/server/server.js\")\nconst engineCtrl = __webpack_require__(/*! ./engine/engine */ \"./src/engine/engine.js\")\nconst { parseArgs, tryReadFile } = __webpack_require__(/*! ./services/config.service */ \"./src/services/config.service.js\")\n\n// retrieve config file\nconst args = parseArgs() || {} // Arguments of the command\nconst { configPath = './fTbus.json' } = args // Get the configuration file path\n\n// read the fTbusConfigFile and make it a global variable\nglobal.fTbusConfig = tryReadFile(configPath)\n\nif (global.fTbusConfig.debug === 'debug') console.info('Mode Debug enabled')\n\nconst { engine = {}, server = {} } = global.fTbusConfig // Get the config entries\n\n// start web server\nif (!server.port) server.port = 3333\nserverCtrl.listen(server.port, () => console.info(`Server started on ${server.port}`))\n\n// start engine\nif (!engine.scanModes) {\n  console.error('You should define scan modes.')\n  throw new Error('You should define scan modes.')\n}\nengineCtrl.start(engine.scanModes, () => console.info('Engine started.'))\n\n\n\n//# sourceURL=webpack:///./src/index.js?");
+
+/***/ }),
+
+/***/ "./src/server/info.js":
+/*!****************************!*\
+  !*** ./src/server/info.js ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("const getInfo = (ctx) => {\n  const { query } = ctx.request\n  const { node } = query\n  const authHeader = ctx.request.header.authorization || ''\n  // following sequence allow to determine the user/password\n  // used in the web request\n  // authHeader format: \"Basic <hashcode for user:pass\"\n\n  // 1/ Check format\n  if (authHeader.startsWith('Basic ')) {\n    // 2 extract encoded user:pass\n    const encodedUsernamePassword = authHeader.split(' ')[1]\n\n    // 3 decode back from Base64 to string:\n    const usernamePassword = Buffer.from(encodedUsernamePassword, 'base64')\n      .toString()\n      .split(':')\n    const username = usernamePassword[0]\n    const password = usernamePassword[1]\n    console.log(`request from ${username} with password:${password}`)\n  } else {\n    // Handle what happens if that isn't the case\n    ctx.throw(400, 'The authorization header is either empty or is not Basic.')\n    return\n  }\n  ctx.ok({ node, query, comment: ' info was requested!' })\n}\n\nmodule.exports = { getInfo }\n\n\n//# sourceURL=webpack:///./src/server/info.js?");
+
+/***/ }),
+
+/***/ "./src/server/server.js":
+/*!******************************!*\
+  !*** ./src/server/server.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const Koa = __webpack_require__(/*! koa */ \"koa\")\nconst Router = __webpack_require__(/*! koa-router */ \"koa-router\")\nconst auth = __webpack_require__(/*! koa-basic-auth */ \"koa-basic-auth\")\nconst logger = __webpack_require__(/*! koa-logger */ \"koa-logger\")\nconst cors = __webpack_require__(/*! @koa/cors */ \"./node_modules/@koa/cors/index.js\")\nconst bodyParser = __webpack_require__(/*! koa-bodyparser */ \"koa-bodyparser\")\nconst helmet = __webpack_require__(/*! koa-helmet */ \"koa-helmet\")\nconst respond = __webpack_require__(/*! koa-respond */ \"koa-respond\")\n\nconst Controller = __webpack_require__(/*! ./info */ \"./src/server/info.js\")\n\nconst app = new Koa()\nconst router = new Router()\n\n\n// Development style logging middleware\n// Recommended that you .use() this middleware near the top\n//  to \"wrap\" all subsequent middleware.\nif (global.fTbusConfig.debug === 'debug') {\n  app.use(logger())\n}\n// koa-helmet is a wrapper for helmet to work with koa.\n// It provides important security headers to make your app more secure by default.\napp.use(helmet())\n\n// custom 401 handling\napp.use(async (ctx, next) => {\n  try {\n    await next()\n  } catch (err) {\n    if (err.status === 401) {\n      ctx.status = 401\n      ctx.set('WWW-Authenticate', 'Basic')\n      ctx.body = 'access was not authorized'\n    } else {\n      throw err\n    }\n  }\n})\n\n// Add simple \"blanket\" basic auth with username / password.\n// Password protect downstream middleware:\n/** @todo: we need to think about the authorization process. in the first version, the program\n * need to be secured from the operating system and firewall should not allow to access the API.\n */\napp.use(auth({ name: 'admin', pass: 'admin' }))\n\n// CORS middleware for Koa\napp.use(cors())\n\n// A body parser for koa, base on co-body. support json, form and text type body.\napp.use(bodyParser({\n  enableTypes: ['json'],\n  jsonLimit: '5mb',\n  strict: true,\n  onerror(err, ctx) {\n    ctx.throw('body parse error', 422)\n  },\n}))\n\n// Middleware for Koa that adds useful methods to the Koa context.\napp.use(respond())\n\n// API routes\n// Router middleware for koa\n// Express-style routing using app.get, app.put, app.post, etc.\n// Named URL parameters.\n// Named routes with URL generation.\n// Responds to OPTIONS requests with allowed methods.\n// Support for 405 Method Not Allowed and 501 Not Implemented.\n// Multiple route middleware.\n// Multiple routers.\n// Nestable routers.\n// ES7 async/await support.\nrouter.prefix('/v0')\n\nrouter\n  .get('/', (ctx, _next) => {\n    ctx.ok({ comment: ' fTbus' })\n  })\n  .get('/infos', Controller.getInfo)\n  // .put('/users/:id', (ctx, next) => {\n  //  // ...\n  // })\n\napp.use(router.routes())\napp.use(router.allowedMethods())\n\nmodule.exports = app\n\n\n//# sourceURL=webpack:///./src/server/server.js?");
+
+/***/ }),
+
+/***/ "./src/services/config.service.js":
+/*!****************************************!*\
+  !*** ./src/services/config.service.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const minimist = __webpack_require__(/*! minimist */ \"minimist\")\nconst fs = __webpack_require__(/*! fs */ \"fs\")\n\n/**\n * Tries to read a file at a given path\n * @param {String} path : path to the file to read\n * @return {*} : content of the file\n */\nconst tryReadFile = (path) => {\n  if (!path.endsWith('.json')) {\n    console.error('You must provide a json file for the configuration!')\n    return new Error('You must provide a json file for the configuration!')\n  }\n  try {\n    return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file\n  } catch (error) {\n    console.error(error)\n    return error\n  }\n}\n\n/**\n * Checks if the right arguments have been passed to the command\n * @param {Object} args : arguments of the command\n * @return {boolean} : whether the right arguments have been passed or not\n */\nconst isValidArgs = ({ config = './fTbus.config.json' }) => {\n  if (!config) {\n    console.error('No config file specified, exemple: --config ./config/config.json')\n    return false\n  }\n  return true\n}\n\n/**\n * Retreives the arguments passed to the command\n * @return {Object} args : retreived arguments, or null\n */\nconst parseArgs = () => {\n  const args = minimist(process.argv.slice(2))\n\n  if (isValidArgs(args)) {\n    return args\n  }\n  return null\n}\n\nmodule.exports = { parseArgs, tryReadFile }\n\n\n//# sourceURL=webpack:///./src/services/config.service.js?");
+
+/***/ }),
+
+/***/ "./src/south/modbus/ModbusClient.class.js":
+/*!************************************************!*\
+  !*** ./src/south/modbus/ModbusClient.class.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const modbus = __webpack_require__(/*! jsmodbus */ \"jsmodbus\")\nconst net = __webpack_require__(/*! net */ \"net\")\nconst getConfig = __webpack_require__(/*! ./config/modbus.config */ \"./src/south/modbus/config/modbus.config.js\")\nconst ResponsesHandler = __webpack_require__(/*! ../../engine/ResponsesHandler.class */ \"./src/engine/ResponsesHandler.class.js\")\n\n/**\n * Class ModbusClient : provides instruction for modbus client connection\n */\nclass ModbusClient {\n  /**\n   * Constructor for ModbusClient\n   * @param {String} configPath : path to the non-optimized configuration file\n   */\n  constructor(configPath) {\n    this.socket = new net.Socket()\n    this.client = new modbus.client.TCP(this.socket)\n    this.connected = false\n    this.optimizedConfig = getConfig(configPath)\n    this.responses = new ResponsesHandler('Modbus-responses')\n  }\n\n  /**\n   * Runs right instructions based on a given scanMode\n   * @param {String} scanMode : cron time\n   * @return {void}\n   */\n  poll(scanMode) {\n    if (!this.connected) console.error('You must be connected before calling poll.')\n\n    const scanGroup = this.optimizedConfig[scanMode]\n    Object.keys(scanGroup).forEach((equipment) => {\n      Object.keys(scanGroup[equipment]).forEach((type) => {\n        const addressesForType = scanGroup[equipment][type] // Addresses of the group\n\n        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s` // Build function name, IMPORTANT: type must be singular\n\n        // Dynamic call of the appropriate function based on type\n\n        Object.keys(addressesForType).forEach((range) => {\n          const rangeAddresses = range.split('-')\n          const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group\n          const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group\n          const rangeSize = endAddress - startAddress // Size of the addresses group\n          this.modbusFunction(funcName, { startAddress, rangeSize })\n        })\n      })\n    })\n  }\n\n  /**\n   * Dynamically call the right function based on the given name\n   * @param {String} funcName : name of the function to run\n   * @param {Object} infos : informations about the group of addresses (first address of the group, size)\n   * @return {void}\n   */\n  modbusFunction(funcName, { startAddress, rangeSize }) {\n    this.client[funcName](startAddress, rangeSize)\n      .then(({ response }) => {\n        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`\n        this.responses.update({ id, data: response }, value => console.log(value))\n      })\n      .catch((error) => {\n        console.error(error)\n        this.disconnect()\n      })\n  }\n\n  /**\n   * Initiates a connection to the given host on port 502\n   * @param {String} host : host ip address\n   * @param {Function} : callback function\n   * @return {void}\n   * @todo why 502 is hardcoded?\n   */\n  connect(host) {\n    this.socket.connect({ host, port: 502 })\n    this.connected = true\n  }\n\n  /**\n   * Close the connection\n   * @return {void}\n   */\n  disconnect() {\n    this.socket.end()\n    this.connected = false\n  }\n}\n\nmodule.exports = ModbusClient\n\n\n//# sourceURL=webpack:///./src/south/modbus/ModbusClient.class.js?");
+
+/***/ }),
+
+/***/ "./src/south/modbus/config/modbus.config.js":
+/*!**************************************************!*\
+  !*** ./src/south/modbus/config/modbus.config.js ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const fs = __webpack_require__(/*! fs */ \"fs\")\n\n/**\n * Retrieves a nested property from an object\n * @param {Object} obj : objectwhich contains the nested property\n * @param {String} nestedProp : property to search inside the object, must be of format \"property.nestedProperty\"\n * @param {boolean} delProp : whether to delete the property once find or not\n * @return {*} : value of the property\n */\nconst findProperty = (obj, nestedProp, delProp) => {\n  const propArray = nestedProp.split('.')\n  const currentProp = propArray.splice(0, 1)[0]\n  if (propArray.length !== 0) {\n    return findProperty(obj[currentProp], propArray.join('.'), delProp)\n  }\n  const res = obj[currentProp]\n  if (delProp) delete obj[currentProp] // Delete useless property\n  return res\n}\n\n/**\n * Groups objects based on a mutual property\n * @param {[ Object ]} array : array of objects to group\n * @param {String} key : name of the property on which base the groups\n * @return {Object} acc : grouped objects\n */\nconst groupBy = (array, key, newProps = {}) =>\n  array.reduce((acc, obj) => {\n    const group = findProperty(obj, key, true)\n    if (!acc[group]) acc[group] = []\n    acc[group].push({ ...obj, ...newProps })\n    return acc\n  }, {})\n\nconst findAddressesGroup = (object, address) =>\n  Object.keys(object).find((group) => {\n    const rangeAddresses = group.split('-')\n    const start = parseInt(rangeAddresses[0], 10)\n    const end = parseInt(rangeAddresses[1], 10)\n    return address >= start && address <= end\n  })\n\n/**\n * Groups the equipments by addresses to optimize requests\n * @param {[ Object ]} array : array of objects to group\n * @param {String} key : key or nested key address to find it inside the objects\n * @param {int} groupSize : number of address by group\n * @return {Object} acc : grouped object by addresses\n */\nconst groupAddresses = (array, key, groupSize) => {\n  const sortedArray = array.sort((a, b) => {\n    const strAddressA = findProperty(a, key, false) // String address A\n    const strAddressB = findProperty(b, key, false) // String address B\n    return parseInt(strAddressA, 16) - parseInt(strAddressB, 16)\n  })\n  return sortedArray.reduce((acc, obj) => {\n    const strAddress = findProperty(obj, key, false)\n    const addressValue = parseInt(strAddress, 16) // Decimal value of hexadecimal address\n    const nearestLimit = Math.round(addressValue / 16) * 16 // Nearest address group limit\n    const groupStart = addressValue <= nearestLimit ? nearestLimit - 16 : nearestLimit // First address of the group\n    const end = Math.round((nearestLimit + groupSize) / 16) * 16 // Last address\n\n    const groupName = findAddressesGroup(acc, addressValue) || `${groupStart}-${end}`\n    if (!acc[groupName]) acc[groupName] = []\n    acc[groupName].push(obj)\n    return acc\n  }, {})\n}\n\n/**\n * Gets the configuration file\n * @return {boolean}\n */\nconst getConfig = (path) => {\n  const configFile = JSON.parse(fs.readFileSync(path, 'utf8')) // Read configuration file synchronously\n\n  if (!configFile) {\n    console.error(`The file ${path} could not be loaded!`)\n    return false\n  }\n\n  const optimized = configFile.reduce((acc, { equipmentId, protocol, variables }) => {\n    const protocolConfig = JSON.parse(fs.readFileSync(`./tests/${protocol}.config.json`, 'utf8')) // Read configuration file synchronously\n    const { addressGap } = protocolConfig\n\n    if (protocol === 'modbus') {\n      const scanModes = groupBy(variables, 'scanMode', { equipmentId })\n      Object.keys(scanModes).forEach((scan) => {\n        scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')\n        Object.keys(scanModes[scan]).forEach((equipment) => {\n          scanModes[scan][equipment] = groupBy(scanModes[scan][equipment], `${protocol}.type`)\n          Object.keys(scanModes[scan][equipment]).forEach((type) => {\n            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap)\n          })\n        })\n      })\n      Object.keys(scanModes).forEach((scan) => {\n        if (!acc[scan]) acc[scan] = {}\n        acc[scan] = { ...acc[scan], ...scanModes[scan] }\n      })\n    }\n\n    return acc\n  }, {})\n\n  return optimized\n}\n\nmodule.exports = getConfig\n\n\n//# sourceURL=webpack:///./src/south/modbus/config/modbus.config.js?");
+
+/***/ }),
+
+/***/ "cron":
+/*!***********************!*\
+  !*** external "cron" ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"cron\");\n\n//# sourceURL=webpack:///external_%22cron%22?");
+
+/***/ }),
+
+/***/ "fs":
+/*!*********************!*\
+  !*** external "fs" ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"fs\");\n\n//# sourceURL=webpack:///external_%22fs%22?");
+
+/***/ }),
+
+/***/ "jsmodbus":
+/*!***************************!*\
+  !*** external "jsmodbus" ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"jsmodbus\");\n\n//# sourceURL=webpack:///external_%22jsmodbus%22?");
+
+/***/ }),
+
+/***/ "koa":
+/*!**********************!*\
+  !*** external "koa" ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa\");\n\n//# sourceURL=webpack:///external_%22koa%22?");
+
+/***/ }),
+
+/***/ "koa-basic-auth":
+/*!*********************************!*\
+  !*** external "koa-basic-auth" ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-basic-auth\");\n\n//# sourceURL=webpack:///external_%22koa-basic-auth%22?");
+
+/***/ }),
+
+/***/ "koa-bodyparser":
+/*!*********************************!*\
+  !*** external "koa-bodyparser" ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-bodyparser\");\n\n//# sourceURL=webpack:///external_%22koa-bodyparser%22?");
+
+/***/ }),
+
+/***/ "koa-helmet":
+/*!*****************************!*\
+  !*** external "koa-helmet" ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-helmet\");\n\n//# sourceURL=webpack:///external_%22koa-helmet%22?");
+
+/***/ }),
+
+/***/ "koa-logger":
+/*!*****************************!*\
+  !*** external "koa-logger" ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-logger\");\n\n//# sourceURL=webpack:///external_%22koa-logger%22?");
+
+/***/ }),
+
+/***/ "koa-respond":
+/*!******************************!*\
+  !*** external "koa-respond" ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-respond\");\n\n//# sourceURL=webpack:///external_%22koa-respond%22?");
+
+/***/ }),
+
+/***/ "koa-router":
+/*!*****************************!*\
+  !*** external "koa-router" ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"koa-router\");\n\n//# sourceURL=webpack:///external_%22koa-router%22?");
+
+/***/ }),
+
+/***/ "minimist":
+/*!***************************!*\
+  !*** external "minimist" ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"minimist\");\n\n//# sourceURL=webpack:///external_%22minimist%22?");
+
+/***/ }),
+
+/***/ "net":
+/*!**********************!*\
+  !*** external "net" ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = require(\"net\");\n\n//# sourceURL=webpack:///external_%22net%22?");
+
+/***/ })
+
+/******/ });
