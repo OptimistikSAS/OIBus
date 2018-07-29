@@ -1,0 +1,22 @@
+{
+    "debug": true, 
+    "server": {
+        "port": 2222
+    },
+    "engine" : {
+        "scanModes": [
+            {
+                "name": "everySecond",
+                "cronTime": "* * * * * *"
+            },
+            {
+                "name": "everyNoon",
+                "cronTime": "0 0 12 * * *"
+            },
+            {
+                "name": "every15DaysAt9",
+                "cronTime": "0 0 9 */15 * *"
+            }
+        ]
+    }
+}

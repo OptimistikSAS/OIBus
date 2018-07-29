@@ -7,6 +7,10 @@ const fs = require('fs')
  * @return {*} : content of the file
  */
 const tryReadFile = (path) => {
+  if (!path.endsWith('.json')) {
+    console.error('You must provide a json file for the configuration!')
+    return new Error('You must provide a json file for the configuration!')
+  }
   try {
     return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
   } catch (error) {

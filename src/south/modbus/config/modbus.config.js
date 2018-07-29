@@ -1,7 +1,7 @@
 const fs = require('fs')
 
 /**
- * Retreives a nested property from an object
+ * Retrieves a nested property from an object
  * @param {Object} obj : objectwhich contains the nested property
  * @param {String} nestedProp : property to search inside the object, must be of format "property.nestedProperty"
  * @param {boolean} delProp : whether to delete the property once find or not
