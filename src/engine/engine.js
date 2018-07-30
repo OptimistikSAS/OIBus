@@ -6,13 +6,15 @@ const responses = new ResponsesHandler()
 
 const start = (config , callback = () => {}) => {
 
-  const modbusClient = new ModbusClient(config, responses)
+  const protocols = [
+    new ModbusClient(config, responses),
+  ]
 
   // modbusClient.connect('localhost')
-  config.scanModes.forEach(({ name, cronTime }) => {
+  config.scanModes.forEach(({ scanMode, cronTime }) => {
     const job = new CronJob({
       cronTime,
-      onTick: () => modbusClient.poll(name), // @TODO: foreach protocol, run poll
+      onTick: () => protocols.forEach(protocol => protocol.poll(scanMode)),
       start: false,
     })
     job.start()
