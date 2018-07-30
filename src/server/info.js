@@ -1,6 +1,5 @@
-function getNode(ctx) {
+const getInfo = (ctx) => {
   const { query } = ctx.request
-  const { node } = query
   const authHeader = ctx.request.header.authorization || ''
   // following sequence allow to determine the user/password
   // used in the web request
@@ -20,9 +19,10 @@ function getNode(ctx) {
     console.log(`request from ${username} with password:${password}`)
   } else {
     // Handle what happens if that isn't the case
-    throw new Error("The authorization header is either empty or isn't Basic.")
+    ctx.throw(400, 'The authorization header is either empty or is not Basic.')
+    return
   }
-  ctx.ok({ node, query, comment: ' node was requested!' })
+  ctx.ok({ query, config: global.fTbusConfig })
 }
 
-module.exports = { getNode }
+module.exports = { getInfo }

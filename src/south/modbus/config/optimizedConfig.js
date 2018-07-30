@@ -1,7 +1,5 @@
-const fs = require('fs')
-
 /**
- * Retreives a nested property from an object
+ * Retrieves a nested property from an object
  * @param {Object} obj : objectwhich contains the nested property
  * @param {String} nestedProp : property to search inside the object, must be of format "property.nestedProperty"
  * @param {boolean} delProp : whether to delete the property once find or not
@@ -71,20 +69,12 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const getConfig = (path) => {
-  const configFile = JSON.parse(fs.readFileSync(path, 'utf8')) // Read configuration file synchronously
-
-  if (!configFile) {
-    console.error(`The file ${path} could not be loaded!`)
-    return false
-  }
-
-  const optimized = configFile.reduce((acc, { equipmentId, protocol, variables }) => {
-    const protocolConfig = JSON.parse(fs.readFileSync(`./tests/${protocol}.config.json`, 'utf8')) // Read configuration file synchronously
-    const { addressGap } = protocolConfig
+const optimizedConfig = (equipments,addressGap) => {
+ 
+  const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
 
     if (protocol === 'modbus') {
-      const scanModes = groupBy(variables, 'scanMode', { equipmentId })
+      const scanModes = groupBy(points, 'scanMode', { equipmentId })
       Object.keys(scanModes).forEach((scan) => {
         scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
         Object.keys(scanModes[scan]).forEach((equipment) => {
@@ -106,4 +96,4 @@ const getConfig = (path) => {
   return optimized
 }
 
-module.exports = getConfig
+module.exports = optimizedConfig

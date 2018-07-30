@@ -1,7 +1,6 @@
-const modbus = require('jsmodbus')
-const net = require('net')
-const getConfig = require('./config/modbus.config')
-const ResponsesHandler = require('../../ResponsesHandler.class')
+const jsmodbus = require('jsmodbus');
+const net = require('net');
+const optimizedConfig = require('./config/optimizedConfig');
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -11,12 +10,15 @@ class ModbusClient {
    * Constructor for ModbusClient
    * @param {String} configPath : path to the non-optimized configuration file
    */
-  constructor(configPath) {
-    this.socket = new net.Socket()
-    this.client = new modbus.client.TCP(this.socket)
-    this.connected = false
-    this.optimizedConfig = getConfig(configPath)
-    this.responses = new ResponsesHandler('Modbus-responses')
+  constructor({ equipments, modbus }, responses) {
+    this.socket = new net.Socket();
+    this.client = new jsmodbus.client.TCP(this.socket);
+    this.connected = false;
+    this.optimizedConfig = optimizedConfig(
+      equipments,
+      modbus.addressGap || 1000,
+    );
+    this.responses = responses;
   }
 
   /**
@@ -25,28 +27,29 @@ class ModbusClient {
    * @return {void}
    */
   poll(scanMode) {
-    if (this.connected) {
-      const scanGroup = this.optimizedConfig[scanMode]
-      Object.keys(scanGroup).forEach((equipment) => {
-        Object.keys(scanGroup[equipment]).forEach((type) => {
-          const addressesForType = scanGroup[equipment][type] // Addresses of the group
+    if (!this.connected)
+      console.error('You must be connected before calling poll.');
 
-          const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s` // Build function name, IMPORTANT: type must be singular
+    const scanGroup = this.optimizedConfig[scanMode];
+    Object.keys(scanGroup).forEach(equipment => {
+      Object.keys(scanGroup[equipment]).forEach(type => {
+        const addressesForType = scanGroup[equipment][type]; // Addresses of the group
+        // Build function name, IMPORTANT: type must be singular
+        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(
+          1,
+        )}`}s`;
 
-          // Dynamic call of the appropriate function based on type
+        // Dynamic call of the appropriate function based on type
 
-          Object.keys(addressesForType).forEach((range) => {
-            const rangeAddresses = range.split('-')
-            const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-            const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
-            const rangeSize = endAddress - startAddress // Size of the addresses group
-            this.modbusFunction(funcName, { startAddress, rangeSize })
-          })
-        })
-      })
-    } else {
-      console.error('You must be connected to run pol.')
-    }
+        Object.keys(addressesForType).forEach(range => {
+          const rangeAddresses = range.split('-');
+          const startAddress = parseInt(rangeAddresses[0], 10); // First address of the group
+          const endAddress = parseInt(rangeAddresses[1], 10); // Last address of the group
+          const rangeSize = endAddress - startAddress; // Size of the addresses group
+          this.modbusFunction(funcName, { startAddress, rangeSize });
+        });
+      });
+    });
   }
 
   /**
@@ -58,13 +61,15 @@ class ModbusClient {
   modbusFunction(funcName, { startAddress, rangeSize }) {
     this.client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.responses.update({ id, data: response }, value => console.log(value))
+        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`;
+        this.responses.update({ id, data: response }, value =>
+          console.log(value),
+        );
       })
-      .catch((error) => {
-        console.error(error)
-        this.disconnect()
-      })
+      .catch(error => {
+        console.error(error);
+        this.disconnect();
+      });
   }
 
   /**
@@ -72,10 +77,16 @@ class ModbusClient {
    * @param {String} host : host ip address
    * @param {Function} : callback function
    * @return {void}
+   * @todo why 502 is hardcoded?
    */
   connect(host) {
-    this.socket.connect({ host, port: 502 })
-    this.connected = true
+    try {
+      this.socket.connect({ host, port: 502 });
+    } catch (error) {
+      console.log(error);
+    }
+
+    this.connected = true;
   }
 
   /**
@@ -83,9 +94,9 @@ class ModbusClient {
    * @return {void}
    */
   disconnect() {
-    this.socket.end()
-    this.connected = false
+    this.socket.end();
+    this.connected = false;
   }
 }
 
-module.exports = ModbusClient
+module.exports = ModbusClient;
