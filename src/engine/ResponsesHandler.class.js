@@ -6,7 +6,6 @@ class ResponsesHandler {
    * Constructor for the class ResponsesHandler
    */
   constructor(name) {
-    this.name = name
     this.responses = new Map()
   }
 

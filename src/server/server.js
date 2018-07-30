@@ -7,6 +7,8 @@ const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 
+const Controller = require('./info')
+
 const app = new Koa()
 const router = new Router()
 
@@ -14,7 +16,7 @@ const router = new Router()
 // Development style logging middleware
 // Recommended that you .use() this middleware near the top
 //  to "wrap" all subsequent middleware.
-if (process.env.NODE_ENV === 'development') {
+if (global.fTbusConfig.debug === 'debug') {
   app.use(logger())
 }
 // koa-helmet is a wrapper for helmet to work with koa.
@@ -38,7 +40,10 @@ app.use(async (ctx, next) => {
 
 // Add simple "blanket" basic auth with username / password.
 // Password protect downstream middleware:
-app.use(auth({ name: 'jf', pass: 'jfhjfh' }))
+/** @todo: we need to think about the authorization process. in the first version, the program
+ * need to be secured from the operating system and firewall should not allow to access the API.
+ */
+app.use(auth({ name: 'admin', pass: 'admin' }))
 
 // CORS middleware for Koa
 app.use(cors())
@@ -67,7 +72,16 @@ app.use(respond())
 // Multiple routers.
 // Nestable routers.
 // ES7 async/await support.
-require('./routes')(router)
+router.prefix('/v0')
+
+router
+  .get('/', (ctx, _next) => {
+    ctx.ok({ comment: ' fTbus' })
+  })
+  .get('/infos', Controller.getInfo)
+  // .put('/users/:id', (ctx, next) => {
+  //  // ...
+  // })
 
 app.use(router.routes())
 app.use(router.allowedMethods())
