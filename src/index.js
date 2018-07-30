@@ -1,26 +1,32 @@
-const { parseArgs, tryReadFile } = require('./services/config.service')
+const { parseArgs, tryReadFile } = require('./services/config.service');
 
 // retrieve config file
-const args = parseArgs() || {} // Arguments of the command
-const { config = './fTbus.json' } = args // Get the configuration file path
+const args = parseArgs() || {}; // Arguments of the command
+const { config = './fTbus.json' } = args; // Get the configuration file path
 
 // read the fTbusConfigFile and make it a global variable
-global.fTbusConfig = tryReadFile(config)
+global.fTbusConfig = tryReadFile(config);
 
-if (global.fTbusConfig.debug === 'debug') console.info('Mode Debug enabled')
+const {
+  debug = false,
+  port = 3333,
+  scanModes,
+  equipments,
+} = global.fTbusConfig; // Get the config entries
 
-const { engine = {}, server = {} } = global.fTbusConfig // Get the config entries
-
-const serverCtrl = require('./server/server')
-const engineCtrl = require('./engine/engine')
+if (debug) console.info('Mode Debug enabled');
+const server = require('./server/server');
+const engine = require('./engine/engine');
 // start web server
-if (!server.port) server.port = 3333
-serverCtrl.listen(server.port, () => console.info(`Server started on ${server.port}`))
+server.listen(port, () => console.info(`Server started on ${port}`));
 
 // start engine
-if (!engine.scanModes) {
-  console.error('You should define scan modes.')
-  throw new Error('You should define scan modes.')
+if (!scanModes) {
+  console.error('You should define scan modes.');
+  throw new Error('You should define scan modes.');
 }
-engineCtrl.start(engine.scanModes, () => console.info('Engine started.'))
-
+if (!equipments) {
+  console.error('You should define equipments.');
+  throw new Error('You should define equipments.');
+}
+engine.start(global.fTbusConfig, () => console.info('Engine started.'));
