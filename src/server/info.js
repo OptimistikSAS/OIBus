@@ -1,6 +1,5 @@
 const getInfo = (ctx) => {
   const { query } = ctx.request
-  const { node } = query
   const authHeader = ctx.request.header.authorization || ''
   // following sequence allow to determine the user/password
   // used in the web request
@@ -23,7 +22,7 @@ const getInfo = (ctx) => {
     ctx.throw(400, 'The authorization header is either empty or is not Basic.')
     return
   }
-  ctx.ok({ node, query, comment: ' info was requested!' })
+  ctx.ok({ query, config: global.fTbusConfig })
 }
 
 module.exports = { getInfo }
