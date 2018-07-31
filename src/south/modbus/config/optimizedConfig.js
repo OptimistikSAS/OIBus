@@ -22,21 +22,19 @@ const findProperty = (obj, nestedProp, delProp) => {
  * @param {String} key : name of the property on which base the groups
  * @return {Object} acc : grouped objects
  */
-const groupBy = (array, key, newProps = {}) =>
-  array.reduce((acc, obj) => {
-    const group = findProperty(obj, key, true)
-    if (!acc[group]) acc[group] = []
-    acc[group].push({ ...obj, ...newProps })
-    return acc
-  }, {})
+const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
+  const group = findProperty(obj, key, true)
+  if (!acc[group]) acc[group] = []
+  acc[group].push({ ...obj, ...newProps })
+  return acc
+}, {})
 
-const findAddressesGroup = (object, address) =>
-  Object.keys(object).find((group) => {
-    const rangeAddresses = group.split('-')
-    const start = parseInt(rangeAddresses[0], 10)
-    const end = parseInt(rangeAddresses[1], 10)
-    return address >= start && address <= end
-  })
+const findAddressesGroup = (object, address) => Object.keys(object).find((group) => {
+  const rangeAddresses = group.split('-')
+  const start = parseInt(rangeAddresses[0], 10)
+  const end = parseInt(rangeAddresses[1], 10)
+  return address >= start && address <= end
+})
 
 /**
  * Groups the equipments by addresses to optimize requests
@@ -69,10 +67,8 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const optimizedConfig = (equipments,addressGap) => {
- 
+const optimizedConfig = (equipments, addressGap) => {
   const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
-
     if (protocol === 'modbus') {
       const scanModes = groupBy(points, 'scanMode', { equipmentId })
       Object.keys(scanModes).forEach((scan) => {
