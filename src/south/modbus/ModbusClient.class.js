@@ -1,6 +1,6 @@
-const jsmodbus = require('jsmodbus');
-const net = require('net');
-const optimizedConfig = require('./config/optimizedConfig');
+const jsmodbus = require('jsmodbus')
+const net = require('net')
+const optimizedConfig = require('./config/optimizedConfig')
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -11,14 +11,11 @@ class ModbusClient {
    * @param {String} configPath : path to the non-optimized configuration file
    */
   constructor({ equipments, modbus }, responses) {
-    this.socket = new net.Socket();
-    this.client = new jsmodbus.client.TCP(this.socket);
-    this.connected = false;
-    this.optimizedConfig = optimizedConfig(
-      equipments,
-      modbus.addressGap || 1000,
-    );
-    this.responses = responses;
+    this.socket = new net.Socket()
+    this.client = new jsmodbus.client.TCP(this.socket)
+    this.connected = false
+    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
+    this.responses = responses
   }
 
   /**
@@ -27,29 +24,26 @@ class ModbusClient {
    * @return {void}
    */
   poll(scanMode) {
-    if (!this.connected)
-      console.error('You must be connected before calling poll.');
+    if (!this.connected) console.error('You must be connected before calling poll.')
 
-    const scanGroup = this.optimizedConfig[scanMode];
-    Object.keys(scanGroup).forEach(equipment => {
-      Object.keys(scanGroup[equipment]).forEach(type => {
-        const addressesForType = scanGroup[equipment][type]; // Addresses of the group
+    const scanGroup = this.optimizedConfig[scanMode]
+    Object.keys(scanGroup).forEach((equipment) => {
+      Object.keys(scanGroup[equipment]).forEach((type) => {
+        const addressesForType = scanGroup[equipment][type] // Addresses of the group
         // Build function name, IMPORTANT: type must be singular
-        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(
-          1,
-        )}`}s`;
+        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
 
         // Dynamic call of the appropriate function based on type
 
-        Object.keys(addressesForType).forEach(range => {
-          const rangeAddresses = range.split('-');
-          const startAddress = parseInt(rangeAddresses[0], 10); // First address of the group
-          const endAddress = parseInt(rangeAddresses[1], 10); // Last address of the group
-          const rangeSize = endAddress - startAddress; // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize });
-        });
-      });
-    });
+        Object.keys(addressesForType).forEach((range) => {
+          const rangeAddresses = range.split('-')
+          const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
+          const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
+          const rangeSize = endAddress - startAddress // Size of the addresses group
+          this.modbusFunction(funcName, { startAddress, rangeSize })
+        })
+      })
+    })
   }
 
   /**
@@ -61,15 +55,12 @@ class ModbusClient {
   modbusFunction(funcName, { startAddress, rangeSize }) {
     this.client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`;
-        this.responses.update({ id, data: response }, value =>
-          console.log(value),
-        );
+        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
+        this.responses.update({ id, data: response }, value => console.log(value))
       })
-      .catch(error => {
-        console.error(error);
-        this.disconnect();
-      });
+      .catch((error) => {
+        console.error(error)
+      })
   }
 
   /**
@@ -81,12 +72,12 @@ class ModbusClient {
    */
   connect(host) {
     try {
-      this.socket.connect({ host, port: 502 });
+      this.socket.connect({ host, port: 502 })
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
 
-    this.connected = true;
+    this.connected = true
   }
 
   /**
@@ -94,9 +85,9 @@ class ModbusClient {
    * @return {void}
    */
   disconnect() {
-    this.socket.end();
-    this.connected = false;
+    this.socket.end()
+    this.connected = false
   }
 }
 
-module.exports = ModbusClient;
+module.exports = ModbusClient

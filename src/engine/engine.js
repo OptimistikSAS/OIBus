@@ -4,13 +4,10 @@ const ResponsesHandler = require('./ResponsesHandler.class')
 
 const responses = new ResponsesHandler()
 
-const start = (config , callback = () => {}) => {
+const start = (config, callback = () => {}) => {
+  const protocols = [new ModbusClient(config, responses)]
 
-  const protocols = [
-    new ModbusClient(config, responses),
-  ]
-
-  // modbusClient.connect('localhost')
+  protocols.forEach(protocol => protocol.connect('35.180.21.237'))
   config.scanModes.forEach(({ scanMode, cronTime }) => {
     const job = new CronJob({
       cronTime,
@@ -21,6 +18,5 @@ const start = (config , callback = () => {}) => {
   })
   callback()
 }
-
 
 module.exports = { start }
