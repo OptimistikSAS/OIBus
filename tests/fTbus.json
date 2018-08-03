@@ -1,78 +1,88 @@
 {
-    "debug": true,
-    "port": 2222,
-    "scanModes": [
-        {
-            "scanMode": "everySecond",
-            "cronTime": "* * * * * *"
-        },
-        {
-            "scanMode": "everyNoon",
-            "cronTime": "0 0 12 * * *"
-        },
-        {
-            "scanMode": "every15DaysAt9",
-            "cronTime": "0 0 9 */15 * *"
-        }
-    ],
-    "modbus": {
-        "addressGap": 1000
+  "debug": true,
+  "port": 2222,
+  "scanModes": [
+    {
+      "scanMode": "everySecond",
+      "cronTime": "* * * * * *"
     },
-    "equipments" : [
+    {
+      "scanMode": "everyNoon",
+      "cronTime": "0 0 12 * * *"
+    },
+    {
+      "scanMode": "every15DaysAt9",
+      "cronTime": "0 0 9 */15 * *"
+    }
+  ],
+  "modbus": {
+    "addressGap": 1000
+  },
+  "equipments": [
+    {
+      "equipmentId": "PLC-35",
+      "protocol": "modbus",
+      "modbus": {
+        "address": "localhost",
+        "port": 502
+      },
+      "points": [
         {
-            "equipmentId": "PLC-35",
-            "protocol": "modbus",
-            "modbus": {
-                "address": "35.180.21.237",
-                "port": 502
-            },
-            "points": [
-                {
-                    "modbus": {
-                        "address": "0x0f",
-                        "type": "coil"
-                    },
-                    "pointId": "/fttest.base/Tank 1.tank/111111.fill_level#value",
-                    "type": "number",
-                    "scanMode": "everySecond"
-                },
-                {
-                    "modbus": {
-                        "address": "0x0031",
-                        "type": "coil"
-                    },
-                    "pointId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
-                    "type": "number",
-                    "scanMode": "everySecond"
-                },
-                {
-                    "modbus": {
-                        "address": "0x0f8",
-                        "type": "holdingRegister"
-                    },
-                    "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
-                    "type": "boolean",
-                    "scanMode": "everyNoon"
-                },
-                {
-                    "modbus": {
-                        "address": "0x76a0",
-                        "type": "coil"
-                    },
-                    "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
-                    "type": "boolean",
-                    "scanMode": "every15DaysAt9"
-                },
-                {
-                    "modbus": {
-                        "address": "0x83a6",
-                        "type": "coil"
-                    },
-                    "pointId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
-                    "type": "boolean",
-                    "scanMode": "every15DaysAt9"
-                }
-            ]
+          "modbus": {
+            "address": "0x0031",
+            "type": "coil"
+          },
+          "pointId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
+          "type": "number",
+          "scanMode": "everySecond"
+        },
+        {
+          "modbus": {
+            "address": "0x0f8",
+            "type": "holdingRegister"
+          },
+          "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+          "type": "boolean",
+          "scanMode": "everyNoon"
+        },
+        {
+          "modbus": {
+            "address": "0x76a0",
+            "type": "coil"
+          },
+          "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+          "type": "boolean",
+          "scanMode": "every15DaysAt9"
+        },
+        {
+          "modbus": {
+            "address": "0x83a6",
+            "type": "coil"
+          },
+          "pointId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
+          "type": "boolean",
+          "scanMode": "every15DaysAt9"
         }
-    ]
+      ]
+    },
+    {
+      "equipmentId": "PLC-42",
+      "protocol": "modbus",
+      "modbus": {
+        "address": "localhost",
+        "port": 502
+      },
+      "points": [
+        {
+          "modbus": {
+            "address": "0x0f",
+            "type": "coil"
+          },
+          "pointId": "/fttest.base/Tank 4.tank/111111.fill_level#value",
+          "type": "number",
+          "scanMode": "everySecond"
+        }
+      ]
+    }
+  ]
 }
