@@ -26,7 +26,7 @@ const tryReadFile = (path) => {
  */
 const isValidArgs = ({ config = './fTbus.config.json' }) => {
   if (!config) {
-    console.error('No config file specified, exemple: --config ./config/config.json')
+    console.error('No config file specified, example: --config ./config/config.json')
     return false
   }
   return true
