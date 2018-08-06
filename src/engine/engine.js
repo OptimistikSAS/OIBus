@@ -7,7 +7,7 @@ const responses = new ResponsesHandler()
 const start = (config, callback = () => {}) => {
   const protocols = [new ModbusClient(config, responses)]
 
-  protocols.forEach(protocol => protocol.connect('35.180.21.237'))
+  protocols.forEach(protocol => protocol.connect('localhost', 502))
   config.scanModes.forEach(({ scanMode, cronTime }) => {
     const job = new CronJob({
       cronTime,
