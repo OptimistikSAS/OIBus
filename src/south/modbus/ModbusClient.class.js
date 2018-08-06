@@ -16,6 +16,16 @@ class ModbusClient {
     this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
     this.responses = responses
+    this.socktest = new Map()
+    this.addressAndPort(equipments)
+  }
+
+  addressAndPort(equipments) {
+    let i
+    for (i = 0; equipments[i]; i++) {
+      this.socktest.set(equipments[i].equipmentId, equipments[i].modbus)
+    }
+    console.log(this.socktest)
   }
 
   /**
@@ -64,15 +74,16 @@ class ModbusClient {
   }
 
   /**
-   * Initiates a connection to the given host on port 502
+   * Initiates a connection to the given host on specified port
    * @param {String} host : host ip address
+   * @param {Number} port : host open port
    * @param {Function} : callback function
    * @return {void}
    * @todo why 502 is hardcoded?
    */
-  connect(host) {
+  connect(host, port) {
     try {
-      this.socket.connect({ host, port: 502 })
+      this.socket.connect({ host, port })
     } catch (error) {
       console.log(error)
     }
