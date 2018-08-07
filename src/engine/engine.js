@@ -6,9 +6,10 @@ const responses = new ResponsesHandler()
 const protocols = {}
 
 const start = (config, callback = () => {}) => {
-  Object.keys(config.equipments).forEach((key) => {
-    const equipment = config.equipments[key]
-    protocols[equipment.equipmentId] = new ModbusClient(responses, equipment.modbus.address, equipment.modbus.port)
+    // const protocols = [new ModbusClient(config, responses)]
+  Object.entries(config.equipments).forEach(([equipmentId, equipment]) => {
+    const protocolClient = `${equipment.protocol}Client`
+    protocols[equipmentId] = new [protocolClient](responses, equipment.modbus.address, equipment.modbus.port)
   })
   Object.keys(protocols).forEach(key => protocols[key].connect())
   config.scanModes.forEach(({ scanMode, cronTime }) => {
