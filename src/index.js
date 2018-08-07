@@ -1,4 +1,5 @@
 const { parseArgs, tryReadFile } = require('./services/config.service')
+const optimizedConfig = require('./south/modbus/config/optimizedConfig')
 
 // retrieve config file
 const args = parseArgs() || {} // Arguments of the command
@@ -6,6 +7,7 @@ const { config = './fTbus.json' } = args // Get the configuration file path
 
 // read the fTbusConfigFile and make it a global variable
 global.fTbusConfig = tryReadFile(config)
+global.optimizedConfig = optimizedConfig(global.fTbusConfig.equipments, global.fTbusConfig.modbus.addressGap || 1000)
 
 const { debug = false, port = 3333, scanModes, equipments } = global.fTbusConfig // Get the config entries
 
