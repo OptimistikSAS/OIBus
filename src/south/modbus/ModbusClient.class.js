@@ -1,6 +1,5 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const optimizedConfig = require('./config/optimizedConfig')
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -10,22 +9,13 @@ class ModbusClient {
    * Constructor for ModbusClient
    * @param {String} configPath : path to the non-optimized configuration file
    */
-  constructor({ equipments, modbus }, responses) {
+  constructor(responses, address, port) {
     this.socket = new net.Socket()
     this.client = new jsmodbus.client.TCP(this.socket)
     this.connected = false
-    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
     this.responses = responses
-    this.socktest = new Map()
-    this.addressAndPort(equipments)
-  }
-
-  addressAndPort(equipments) {
-    let i
-    for (i = 0; equipments[i]; i++) {
-      this.socktest.set(equipments[i].equipmentId, equipments[i].modbus)
-    }
-    console.log(this.socktest)
+    this.destAddr = address
+    this.destPort = port
   }
 
   /**
@@ -36,7 +26,7 @@ class ModbusClient {
   poll(scanMode) {
     if (!this.connected) console.error('You must be connected before calling poll.')
 
-    const scanGroup = this.optimizedConfig[scanMode]
+    const scanGroup = global.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
       Object.keys(scanGroup[equipment]).forEach((type) => {
         const addressesForType = scanGroup[equipment][type] // Addresses of the group
@@ -74,16 +64,15 @@ class ModbusClient {
   }
 
   /**
-   * Initiates a connection to the given host on specified port
+   * Initiates a connection to the given host on port 502
    * @param {String} host : host ip address
-   * @param {Number} port : host open port
    * @param {Function} : callback function
    * @return {void}
    * @todo why 502 is hardcoded?
    */
-  connect(host, port) {
+  connect() {
     try {
-      this.socket.connect({ host, port })
+      this.socket.connect({ host: this.destAddr, port: this.destPort })
     } catch (error) {
       console.log(error)
     }
