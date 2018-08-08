@@ -23,7 +23,7 @@
       "equipmentId": "PLC-35",
       "protocol": "modbus",
       "modbus": {
-        "address": "localhost",
+        "host": "localhost",
         "port": 502
       },
       "points": [
@@ -69,7 +69,7 @@
       "equipmentId": "PLC-42",
       "protocol": "modbus",
       "modbus": {
-        "address": "localhost",
+        "host": "localhost",
         "port": 502
       },
       "points": [
