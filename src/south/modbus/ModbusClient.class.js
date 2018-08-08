@@ -15,20 +15,19 @@ class ModbusClient {
     this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
     this.responses = responses
+    Object.values(equipments).forEach(equipment => this.add(equipment))
   }
-  
+
   /** Adds equipment entry in equipments
    * @param {Object} equipment
    * @return {void}
    */
   add(equipment) {
-    if (!this.equipments[equipment.equipmentId]) {
-      this.equipments[equipment.equipmentId] = {}
-      this.equipments[equipment.equipmentId].socket = new net.Socket()
-      this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
-      this.equipments[equipment.equipmentId].address = equipment.modbus.address
-      this.equipments[equipment.equipmentId].port = equipment.modbus.port
-    }
+    this.equipments[equipment.equipmentId] = {}
+    this.equipments[equipment.equipmentId].socket = new net.Socket()
+    this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
+    this.equipments[equipment.equipmentId].host = equipment.modbus.host
+    this.equipments[equipment.equipmentId].port = equipment.modbus.port
   }
 
   /**
@@ -53,7 +52,7 @@ class ModbusClient {
           const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
           const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
           const rangeSize = endAddress - startAddress // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize })
+          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment)
         })
       })
     })
@@ -65,17 +64,15 @@ class ModbusClient {
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
    * @return {void}
    */
-  modbusFunction(funcName, { startAddress, rangeSize }) {
-    Object.keys(this.equipments).forEach((key) => {
-      this.equipments[key].client[funcName](startAddress, rangeSize)
-        .then(({ response }) => {
-          const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-          this.responses.update({ id, data: response }, value => console.log(value))
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    })
+  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId) {
+    this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
+      .then(({ response }) => {
+        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
+        this.responses.update({ id, data: response }, value => console.log(value))
+      })
+      .catch((error) => {
+        console.error(error)
+      })
   }
 
   /**
@@ -87,8 +84,9 @@ class ModbusClient {
    */
   connect() {
     try {
-      Object.keys(this.equipments).forEach((key) => {
-        this.equipments[key].socket.connect({ host: this.equipments[key].address, port: this.equipments[key].port })
+      Object.entries(this.equipments).forEach(([equipmentId, equipment]) => {
+        const { host, port } = equipment
+        this.equipments[equipmentId].socket.connect({ host, port })
       })
     } catch (error) {
       console.log(error)
