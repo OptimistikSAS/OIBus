@@ -1,5 +1,6 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
+const optimizedConfig = require('./config/optimizedConfig')
 
 /**
  * Class ModbusClient : provides instruction for modbus client connection
@@ -9,13 +10,25 @@ class ModbusClient {
    * Constructor for ModbusClient
    * @param {String} configPath : path to the non-optimized configuration file
    */
-  constructor(responses, address, port) {
-    this.socket = new net.Socket()
-    this.client = new jsmodbus.client.TCP(this.socket)
+  constructor({ equipments, modbus }, responses) {
+    this.equipments = {}
     this.connected = false
+    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
     this.responses = responses
-    this.destAddr = address
-    this.destPort = port
+  }
+  
+  /** Adds equipment entry in equipments
+   * @param {Object} equipment
+   * @return {void}
+   */
+  add(equipment) {
+    if (!this.equipments[equipment.equipmentId]) {
+      this.equipments[equipment.equipmentId] = {}
+      this.equipments[equipment.equipmentId].socket = new net.Socket()
+      this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
+      this.equipments[equipment.equipmentId].address = equipment.modbus.address
+      this.equipments[equipment.equipmentId].port = equipment.modbus.port
+    }
   }
 
   /**
@@ -26,7 +39,7 @@ class ModbusClient {
   poll(scanMode) {
     if (!this.connected) console.error('You must be connected before calling poll.')
 
-    const scanGroup = global.optimizedConfig[scanMode]
+    const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
       Object.keys(scanGroup[equipment]).forEach((type) => {
         const addressesForType = scanGroup[equipment][type] // Addresses of the group
@@ -53,14 +66,16 @@ class ModbusClient {
    * @return {void}
    */
   modbusFunction(funcName, { startAddress, rangeSize }) {
-    this.client[funcName](startAddress, rangeSize)
-      .then(({ response }) => {
-        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.responses.update({ id, data: response }, value => console.log(value))
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+    Object.keys(this.equipments).forEach((key) => {
+      this.equipments[key].client[funcName](startAddress, rangeSize)
+        .then(({ response }) => {
+          const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
+          this.responses.update({ id, data: response }, value => console.log(value))
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    })
   }
 
   /**
@@ -72,7 +87,9 @@ class ModbusClient {
    */
   connect() {
     try {
-      this.socket.connect({ host: this.destAddr, port: this.destPort })
+      Object.keys(this.equipments).forEach((key) => {
+        this.equipments[key].socket.connect({ host: this.equipments[key].address, port: this.equipments[key].port })
+      })
     } catch (error) {
       console.log(error)
     }
