@@ -3,15 +3,21 @@ const ModbusClient = require('../south/modbus/ModbusClient.class')
 const ResponsesHandler = require('./ResponsesHandler.class')
 
 const responses = new ResponsesHandler()
+const activeProtocols = {}
+const protocolList = { modbus: ModbusClient }
 
 const start = (config, callback = () => {}) => {
-  const protocols = [new ModbusClient(config, responses)]
-
-  protocols.forEach(protocol => protocol.connect('35.180.21.237'))
+  // adds every protocol to be used in activeProtocols
+  Object.values(config.equipments).forEach((equipment) => {
+    if (!activeProtocols[equipment.protocol]) {
+      activeProtocols[equipment.protocol] = new protocolList[equipment.protocol](config, responses)
+    }
+  })
+  Object.keys(activeProtocols).forEach(key => activeProtocols[key].connect())
   config.scanModes.forEach(({ scanMode, cronTime }) => {
     const job = new CronJob({
       cronTime,
-      onTick: () => protocols.forEach(protocol => protocol.poll(scanMode)),
+      onTick: () => Object.keys(activeProtocols).forEach(key => activeProtocols[key].poll(scanMode)),
       start: false,
     })
     job.start()
