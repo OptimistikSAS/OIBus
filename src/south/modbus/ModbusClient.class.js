@@ -47,12 +47,12 @@ class ModbusClient {
 
         // Dynamic call of the appropriate function based on type
 
-        Object.keys(addressesForType).forEach((range) => {
+        Object.entries(addressesForType).forEach(([range, typeSpec]) => {
           const rangeAddresses = range.split('-')
           const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
           const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
           const rangeSize = endAddress - startAddress // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment)
+          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, typeSpec[0].pointId)
         })
       })
     })
@@ -64,11 +64,11 @@ class ModbusClient {
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
    * @return {void}
    */
-  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId) {
+  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, pointId) {
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.responses.update({ id, data: response }, value => console.log(value))
+        this.responses.update({ pointId, timestamp: id, data: response }, value => console.log(value))
       })
       .catch((error) => {
         console.error(error)
