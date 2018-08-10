@@ -18,7 +18,7 @@ class ResponsesHandler {
   mapInit() {
     global.fTbusConfig.equipments.forEach((equipment) => {
       equipment.points.forEach((point) => {
-        this.responses[point.pointId] = []
+        this.responses[point.pointId] = new Map()
       })
     })
   }
@@ -30,8 +30,8 @@ class ResponsesHandler {
    * @return {void}
    */
   update({ pointId, timestamp, data }, callback) {
-    this.responses[pointId].push({ timestamp, data })
-    if (callback) callback()
+    this.responses[pointId].set(timestamp, data)
+    if (callback) callback(this.responses[pointId])
   }
 }
 
