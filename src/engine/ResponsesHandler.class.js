@@ -6,18 +6,32 @@ class ResponsesHandler {
    * Constructor for the class ResponsesHandler
    */
   constructor() {
-    this.responses = new Map()
+    this.responses = {}
+    this.mapInit()
+  }
+
+  /**
+   * Fills the map with as many Arrays as there are pointId's in the config file
+   * With the pointId as a key.
+   * @return {void}
+   */
+  mapInit() {
+    global.fTbusConfig.equipments.forEach((equipment) => {
+      equipment.points.forEach((point) => {
+        this.responses[point.pointId] = new Map()
+      })
+    })
   }
 
   /**
    * Updates the responses map
-   * @param {Object} entry : new entry (id and data of the entry)
+   * @param {Object} entry : new entry (pointId, timestamp and data of the entry)
    * @param {Function} callback : callback function
    * @return {void}
    */
-  update({ id, data }, callback) {
-    this.responses.set(id, data)
-    callback(this.responses)
+  update({ pointId, timestamp, data }, callback) {
+    this.responses[pointId].set(timestamp, data)
+    if (callback) callback(this.responses[pointId])
   }
 }
 
