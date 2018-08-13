@@ -22,6 +22,7 @@
     {
       "equipmentId": "PLC-35",
       "protocol": "modbus",
+      "pointIdPrefix": "/fttest.base",
       "modbus": {
         "host": "localhost",
         "port": 502
@@ -32,7 +33,7 @@
             "address": "0x0031",
             "type": "coil"
           },
-          "pointId": "/fttest.base/Tank 3.tank/333333.fill_level#value",
+          "pointId": "./Tank 3.tank/333333.fill_level#value",
           "type": "number",
           "scanMode": "everySecond"
         },
@@ -41,7 +42,7 @@
             "address": "0x0f8",
             "type": "holdingRegister"
           },
-          "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+          "pointId": "./Tank 2.tank/222222.valve_state#value",
           "type": "boolean",
           "scanMode": "everyNoon"
         },
@@ -50,7 +51,7 @@
             "address": "0x76a0",
             "type": "coil"
           },
-          "pointId": "/fttest.base/Tank 2.tank/222222.fill_level#value",
+          "pointId": "./Tank 2.tank/222222.fill_level#value",
           "type": "boolean",
           "scanMode": "every15DaysAt9"
         },
@@ -59,7 +60,7 @@
             "address": "0x83a6",
             "type": "coil"
           },
-          "pointId": "/fttest.base/Tank 2.tank/111111.fill_level#value",
+          "pointId": "./Tank 3.tank/111111.valve_state#value",
           "type": "boolean",
           "scanMode": "every15DaysAt9"
         }
@@ -68,6 +69,7 @@
     {
       "equipmentId": "PLC-42",
       "protocol": "modbus",
+      "pointIdPrefix": "/fttest.base/Tank4.tank",
       "modbus": {
         "host": "localhost",
         "port": 502
@@ -78,11 +80,48 @@
             "address": "0x0f",
             "type": "coil"
           },
-          "pointId": "/fttest.base/Tank 4.tank/111111.fill_level#value",
+          "pointId": "./111111.fill_level#value",
+          "type": "number",
+          "scanMode": "everySecond"
+        },
+        {
+          "modbus": {
+            "address": "0x20",
+            "type": "register"
+          },
+          "pointId": "./111111.fill_level#flow_rate",
           "type": "number",
           "scanMode": "everySecond"
         }
       ]
+    }
+  ],
+  "applications": [
+    {
+     "applicationId": "Myconsole",
+      "type": "console",
+      "minimumBuffer:": 1,
+      "maximumBuffer": 1,
+      "sendBuffer": ["onUpdate","onScan"],
+      "scanMode": "everySecond",
+      "timeStamp": "fTbus",
+      "console": {
+        "content": "%(pointId)s->%(value)s at %(time)s"
+      }
+    },
+    {
+      "applicationId": "baseInflux",
+      "type": "influxDB",
+      "minimumBatch:": 1,
+      "maximumBatch": 1,
+      "scanMode": "everySecond",
+      "influxDB" : {
+        "user": "admin",
+        "password": "admin",
+        "db": "testdata",
+        "host": "localhost:9000",
+        "insert" : "%(host)s/write?db=%(db)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+      }
     }
   ]
 }
