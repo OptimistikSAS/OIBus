@@ -1,5 +1,6 @@
 const minimist = require('minimist')
 const fs = require('fs')
+const JSON5 = require('json5')
 
 /**
  * Tries to read a file at a given path
@@ -12,7 +13,7 @@ const tryReadFile = (path) => {
     return new Error('You must provide a json file for the configuration!')
   }
   try {
-    return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
+    return JSON5.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
   } catch (error) {
     console.error(error)
     return error
