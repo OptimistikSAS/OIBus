@@ -23,6 +23,7 @@
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "jsmodbus": "^3.0.0",
+    "json5": "^1.0.1",
     "koa": "^2.5.2",
     "koa-basic-auth": "^3.0.0",
     "koa-bodyparser": "^4.2.1",
