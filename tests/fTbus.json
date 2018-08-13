@@ -112,8 +112,8 @@
     {
       "applicationId": "baseInflux",
       "type": "influxDB",
-      "minimumBatch:": 1,
-      "maximumBatch": 1,
+      "minimumBuffer:": 10,
+      "maximumBuffer": 100,
       "scanMode": "everySecond",
       "influxDB" : {
         "user": "admin",
@@ -125,3 +125,6 @@
     }
   ]
 }
+
+
+// 
