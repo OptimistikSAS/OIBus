@@ -3,11 +3,11 @@ const net = require('net')
 const optimizedConfig = require('./config/optimizedConfig')
 
 /**
- * Class ModbusClient : provides instruction for modbus client connection
+ * Class Modbus : provides instruction for modbus client connection
  */
-class ModbusClient {
+class Modbus {
   /**
-   * Constructor for ModbusClient
+   * Constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file
    */
   constructor({ equipments, modbus }, responses) {
@@ -35,8 +35,8 @@ class ModbusClient {
    * @param {String} scanMode : cron time
    * @return {void}
    */
-  poll(scanMode) {
-    if (!this.connected) console.error('You must be connected before calling poll.')
+  onScan(scanMode) {
+    if (!this.connected) console.error('You must be connected before calling onScan.')
 
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
@@ -44,6 +44,7 @@ class ModbusClient {
         const addressesForType = scanGroup[equipment][type] // Addresses of the group
         // Build function name, IMPORTANT: type must be singular
         const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
+        console.log(funcName)
 
         // Dynamic call of the appropriate function based on type
 
@@ -105,4 +106,4 @@ class ModbusClient {
   }
 }
 
-module.exports = ModbusClient
+module.exports = Modbus

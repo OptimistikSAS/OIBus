@@ -33,6 +33,11 @@ class ResponsesHandler {
     this.responses[pointId].set(timestamp, data)
     if (callback) callback(this.responses[pointId])
   }
+  // Quand la map est mise à jour un évènement est créé pour toutes les applications
+  // Quand remove seule 1 app
 }
 
 module.exports = ResponsesHandler
+
+
+// 
