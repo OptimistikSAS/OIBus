@@ -69,7 +69,7 @@ const groupAddresses = (array, key, groupSize) => {
  */
 const optimizedConfig = (equipments, addressGap) => {
   const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
-    if (protocol === 'modbus') {
+    if (protocol === 'Modbus') {
       const scanModes = groupBy(points, 'scanMode', { equipmentId })
       Object.keys(scanModes).forEach((scan) => {
         scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')

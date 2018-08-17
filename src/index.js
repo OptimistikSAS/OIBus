@@ -11,10 +11,10 @@ const { debug = false, port = 3333, scanModes, equipments } = global.fTbusConfig
 
 if (debug) console.info('Mode Debug enabled')
 const server = require('./server/server')
-const engine = require('./engine/engine')
+const Engine = require('./engine/Engine.class')
 // start web server
 server.listen(port, () => console.info(`Server started on ${port}`))
-
+const engine = new Engine()
 // start engine
 if (!scanModes) {
   console.error('You should define scan modes.')
