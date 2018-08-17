@@ -1,20 +1,21 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
 const optimizedConfig = require('./config/optimizedConfig')
+const Protocol = require('../Protocol.class')
 
 /**
- * Class Modbus : provides instruction for modbus client connection
+ * Class Modbus : provides instruction for Modbus client connection
  */
-class Modbus {
+class Modbus extends Protocol {
   /**
    * Constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file
    */
-  constructor({ equipments, modbus }, responses) {
+  constructor({ equipments, modbus }, engine) {
+    super(engine)
     this.equipments = {}
     this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
-    this.responses = responses
     Object.values(equipments).forEach(equipment => this.add(equipment))
   }
 
@@ -26,8 +27,8 @@ class Modbus {
     this.equipments[equipment.equipmentId] = {}
     this.equipments[equipment.equipmentId].socket = new net.Socket()
     this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
-    this.equipments[equipment.equipmentId].host = equipment.modbus.host
-    this.equipments[equipment.equipmentId].port = equipment.modbus.port
+    this.equipments[equipment.equipmentId].host = equipment.Modbus.host
+    this.equipments[equipment.equipmentId].port = equipment.Modbus.port
   }
 
   /**
@@ -44,7 +45,6 @@ class Modbus {
         const addressesForType = scanGroup[equipment][type] // Addresses of the group
         // Build function name, IMPORTANT: type must be singular
         const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
-        console.log(funcName)
 
         // Dynamic call of the appropriate function based on type
 
@@ -69,7 +69,7 @@ class Modbus {
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.responses.update({ pointId, timestamp: id, data: response }, value => console.log(value))
+        this.engine.addValue({ pointId, timestamp: id, data: response }, value => console.log(value))
       })
       .catch((error) => {
         console.error(error)
