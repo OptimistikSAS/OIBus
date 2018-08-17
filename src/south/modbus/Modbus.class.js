@@ -1,20 +1,21 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
 const optimizedConfig = require('./config/optimizedConfig')
+const Protocol = require('../Protocol.class')
 
 /**
- * Class ModbusClient : provides instruction for modbus client connection
+ * Class Modbus : provides instruction for Modbus client connection
  */
-class ModbusClient {
+class Modbus extends Protocol {
   /**
-   * Constructor for ModbusClient
+   * Constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file
    */
-  constructor({ equipments, modbus }, responses) {
+  constructor({ equipments, modbus }, engine) {
+    super(engine)
     this.equipments = {}
     this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
-    this.responses = responses
     Object.values(equipments).forEach(equipment => this.add(equipment))
   }
 
@@ -26,8 +27,8 @@ class ModbusClient {
     this.equipments[equipment.equipmentId] = {}
     this.equipments[equipment.equipmentId].socket = new net.Socket()
     this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
-    this.equipments[equipment.equipmentId].host = equipment.modbus.host
-    this.equipments[equipment.equipmentId].port = equipment.modbus.port
+    this.equipments[equipment.equipmentId].host = equipment.Modbus.host
+    this.equipments[equipment.equipmentId].port = equipment.Modbus.port
   }
 
   /**
@@ -35,8 +36,8 @@ class ModbusClient {
    * @param {String} scanMode : cron time
    * @return {void}
    */
-  poll(scanMode) {
-    if (!this.connected) console.error('You must be connected before calling poll.')
+  onScan(scanMode) {
+    if (!this.connected) console.error('You must be connected before calling onScan.')
 
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
@@ -68,7 +69,7 @@ class ModbusClient {
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.responses.update({ pointId, timestamp: id, data: response }, value => console.log(value))
+        this.engine.addValue({ pointId, timestamp: id, data: response }, value => console.log(value))
       })
       .catch((error) => {
         console.error(error)
@@ -105,4 +106,4 @@ class ModbusClient {
   }
 }
 
-module.exports = ModbusClient
+module.exports = Modbus

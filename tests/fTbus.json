@@ -21,15 +21,15 @@
   "equipments": [
     {
       "equipmentId": "PLC-35",
-      "protocol": "modbus",
+      "protocol": "Modbus",
       "pointIdPrefix": "/fttest.base",
-      "modbus": {
+      "Modbus": {
         "host": "localhost",
         "port": 502
       },
       "points": [
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x0031",
             "type": "coil"
           },
@@ -38,7 +38,7 @@
           "scanMode": "everySecond"
         },
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x0f8",
             "type": "holdingRegister"
           },
@@ -47,7 +47,7 @@
           "scanMode": "everyNoon"
         },
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x76a0",
             "type": "coil"
           },
@@ -56,7 +56,7 @@
           "scanMode": "every15DaysAt9"
         },
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x83a6",
             "type": "coil"
           },
@@ -68,15 +68,15 @@
     },
     {
       "equipmentId": "PLC-42",
-      "protocol": "modbus",
+      "protocol": "Modbus",
       "pointIdPrefix": "/fttest.base/Tank4.tank",
-      "modbus": {
+      "Modbus": {
         "host": "localhost",
         "port": 502
       },
       "points": [
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x0f",
             "type": "coil"
           },
@@ -85,9 +85,9 @@
           "scanMode": "everySecond"
         },
         {
-          "modbus": {
+          "Modbus": {
             "address": "0x20",
-            "type": "register"
+            "type": "holdingRegister"
           },
           "pointId": "./111111.fill_level#flow_rate",
           "type": "number",
@@ -99,23 +99,23 @@
   "applications": [
     {
      "applicationId": "Myconsole",
-      "type": "console",
+      "type": "Console",
       "minimumBuffer:": 1,
       "maximumBuffer": 1,
       "sendBuffer": ["onUpdate","onScan"],
       "scanMode": "everySecond",
       "timeStamp": "fTbus",
-      "console": {
+      "Console": {
         "content": "%(pointId)s->%(value)s at %(time)s"
       }
     },
     {
-      "applicationId": "baseInflux",
-      "type": "influxDB",
-      "minimumBatch:": 1,
-      "maximumBatch": 1,
+      "applicationId": "BaseInflux",
+      "type": "InfluxDB",
+      "minimumBuffer:": 10,
+      "maximumBuffer": 100,
       "scanMode": "everySecond",
-      "influxDB" : {
+      "InfluxDB" : {
         "user": "admin",
         "password": "admin",
         "db": "testdata",
@@ -125,3 +125,6 @@
     }
   ]
 }
+
+
+// 
