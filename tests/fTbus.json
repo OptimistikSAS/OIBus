@@ -22,7 +22,7 @@
     {
       "equipmentId": "PLC-35",
       "protocol": "Modbus",
-      "pointIdPrefix": "/fttest.base",
+      "pointIdRoot": "/fttest.base",
       "Modbus": {
         "host": "localhost",
         "port": 502
@@ -69,7 +69,7 @@
     {
       "equipmentId": "PLC-42",
       "protocol": "Modbus",
-      "pointIdPrefix": "/fttest.base/Tank4.tank",
+      "pointIdRoot": "/fttest.base/Tank4.tank",
       "Modbus": {
         "host": "localhost",
         "port": 502
