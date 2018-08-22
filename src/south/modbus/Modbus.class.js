@@ -24,11 +24,12 @@ class Modbus extends Protocol {
    * @return {void}
    */
   add(equipment) {
-    this.equipments[equipment.equipmentId] = {}
-    this.equipments[equipment.equipmentId].socket = new net.Socket()
+    this.equipments[equipment.equipmentId] = {
+      socket: new net.Socket(),
+      host: equipment.Modbus.host,
+      port: equipment.Modbus.port,
+    }
     this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
-    this.equipments[equipment.equipmentId].host = equipment.Modbus.host
-    this.equipments[equipment.equipmentId].port = equipment.Modbus.port
   }
 
   /**
@@ -69,7 +70,7 @@ class Modbus extends Protocol {
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.engine.addValue({ pointId, timestamp: id, data: response }, value => console.log(value))
+        this.engine.addValue({ pointId, timestamp: id, data: response })
       })
       .catch((error) => {
         console.error(error)
