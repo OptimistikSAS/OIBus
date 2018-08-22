@@ -2,8 +2,9 @@ const Application = require('../Application.class')
 
 class Console extends Application {
   onScan() {
-    // console.info(this.queue.info())
+    console.info(this.queue.info())
     this.showAndDelete()
+    // if (this.queue.info().length > 20) this.deleteAll()
   }
 
   /**
@@ -16,6 +17,13 @@ class Console extends Application {
       console.log(this.queue.dequeue())
     }
     console.log(this.queue.buffer)
+  }
+
+  deleteAll() {
+    while (this.queue.info().length > 0) {
+      this.queue.dequeue()
+      console.log(this.queue.info().length)
+    }
   }
 }
 

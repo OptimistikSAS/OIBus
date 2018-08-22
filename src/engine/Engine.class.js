@@ -1,12 +1,14 @@
 const { CronJob } = require('cron')
 const Modbus = require('../south/Modbus/Modbus.class')
 const Console = require('../north/console/Console.class')
+const InfluxDB = require('../north/influxdb/InfluxDB.class')
+const { tryReadFile } = require('../services/config.service')
 
 const protocolList = { Modbus }
 
 const applicationList = {
   Console,
-  // InfluxDB
+  InfluxDB,
 }
 // manage la responses de toutes les app
 const activeProtocols = {}
@@ -21,7 +23,7 @@ class Engine {
    * Constructor for the class ResponsesHandler
    */
   constructor() {
-    this.queue = []
+    this.queues = []
   }
 
   /**
@@ -37,25 +39,24 @@ class Engine {
    * @return {void}
    */
 
-  addValue({ pointId, timestamp, data }, callback) {
-    this.queue.forEach((queue) => {
+  addValue({ pointId, timestamp, data }) {
+    this.queues.forEach((queue) => {
       queue.enqueue({ pointId, timestamp, data })
       queue.info()
     })
-    if (callback) callback(this.queue[0].buffer)
   }
 
   remove({ pointId, timestamp }, queue, callback) {
-    console.log(this.queue[queue][pointId].remove(timestamp))
-    if (callback) callback() // Alerte unique dans le callback ?
+    console.log(this.queues[queue][pointId].remove(timestamp))
+    if (callback) callback()
   }
 
   info() {
-    return { queues: this.queue.length }
+    return { queues: this.queues.length }
   }
 
   registerQueue(queue) {
-    this.queue.push(queue)
+    this.queues.push(queue)
   }
 
 
@@ -70,7 +71,7 @@ class Engine {
     })
     Object.values(config.applications).forEach((application) => {
       const { type } = application
-      if (!activeApplications[type] && type !== 'InfluxDB') {
+      if (!activeApplications[type]) {
         activeApplications[type] = new applicationList[type](this)
         //
       }
@@ -91,8 +92,17 @@ class Engine {
     if (callback) callback()
   }
 
-  // Quand la map est mise à jour un évènement est créé pour toutes les applications
-  // Quand remove seule 1 app (celle qui remove) est alertée
+  static initConfig(config) {
+    const readConfig = tryReadFile(config)
+    readConfig.equipments.forEach((equipment) => {
+      equipment.points.forEach((point) => {
+        if (point.pointId.charAt(0) === '.') {
+          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+      })
+    })
+    return readConfig
+  }
 }
 
 module.exports = Engine
