@@ -112,10 +112,7 @@
     {
      "applicationId": "Myconsole",
       "type": "Console",
-      "minimumBuffer:": 1,
-      "maximumBuffer": 1,
-      "sendBuffer": ["onUpdate","onScan"],
-      "scanMode": "everySecond",
+      "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
       "timeStamp": "fTbus",
       "Console": {
         "content": "%(pointId)s->%(value)s at %(time)s"
@@ -124,9 +121,8 @@
     {
       "applicationId": "BaseInflux",
       "type": "InfluxDB",
-      "minimumBuffer:": 10,
-      "maximumBuffer": 100,
-      "scanMode": "everySecond",
+      "minimumBuffer:": 10, // group by 10 when possible
+      "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
       "InfluxDB" : {
         "user": "admin",
         "password": "admin",
