@@ -15,7 +15,7 @@ class Modbus extends Protocol {
     super(engine)
     this.equipments = {}
     this.connected = false
-    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
+    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
     Object.values(equipments).forEach(equipment => this.add(equipment))
   }
 
@@ -49,12 +49,12 @@ class Modbus extends Protocol {
 
         // Dynamic call of the appropriate function based on type
 
-        Object.entries(addressesForType).forEach(([range, typeSpec]) => {
+        Object.entries(addressesForType).forEach(([range, points]) => {
           const rangeAddresses = range.split('-')
           const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
           const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
           const rangeSize = endAddress - startAddress // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, typeSpec[0].pointId)
+          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, points)
         })
       })
     })
@@ -66,11 +66,27 @@ class Modbus extends Protocol {
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
    * @return {void}
    */
-  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, pointId) {
+  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, points) {
+    console.log(funcName, startAddress, rangeSize)
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.engine.addValue({ pointId, timestamp: id, data: response })
+        const timestamp = `${new Date()}`
+        points.forEach((point) => {
+          const position = parseInt(point.Modbus.address, 16) - startAddress - 1
+          let data = response.body.valuesAsArray[position]
+          if (point.pointId === '/fttest.base/Tank4.tank/111111.flow_rate#value') {
+            console.log(response, position, data, response.body.valuesAsArray[position])
+          }
+          switch (point.type) {
+            case 'boolean':
+              data = !!data
+              break
+            case 'number':
+              break
+            default: console.error('This point type was not recognized : ', point.type)
+          }
+          this.engine.addValue({ pointId: point.pointId, timestamp, data })
+        })
       })
       .catch((error) => {
         console.error(error)

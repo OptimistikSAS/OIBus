@@ -16,7 +16,10 @@
     }
   ],
   "modbus": {
-    "addressGap": 1000
+    "addressGap": {
+      "holdingRegister": 256,
+      "coil": 1000
+    }
   },
   "equipments": [
     {
@@ -43,7 +46,7 @@
             "type": "holdingRegister"
           },
           "pointId": "./Tank 2.tank/222222.valve_state#value",
-          "type": "boolean",
+          "type": "number",
           "scanMode": "everyNoon"
         },
         {
@@ -53,7 +56,16 @@
           },
           "pointId": "./Tank 2.tank/222222.fill_level#value",
           "type": "boolean",
-          "scanMode": "every15DaysAt9"
+          "scanMode": "everySecond"
+        },
+        {
+          "Modbus": {
+            "address": "0x76b0",
+            "type": "coil"
+          },
+          "pointId": "./Tank 2.tank/222333.fill_level#value",
+          "type": "boolean",
+          "scanMode": "everySecond"
         },
         {
           "Modbus": {
@@ -62,7 +74,7 @@
           },
           "pointId": "./Tank 3.tank/111111.valve_state#value",
           "type": "boolean",
-          "scanMode": "every15DaysAt9"
+          "scanMode": "everySecond"
         }
       ]
     },
@@ -89,7 +101,7 @@
             "address": "0x20",
             "type": "holdingRegister"
           },
-          "pointId": "./111111.fill_level#flow_rate",
+          "pointId": "./111111.flow_rate#value",
           "type": "number",
           "scanMode": "everySecond"
         }
@@ -120,7 +132,7 @@
         "password": "admin",
         "db": "testdata",
         "host": "localhost:9000",
-        "insert" : "%(host)s/write?db=%(db)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+        "insert" : "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
       }
     }
   ]

@@ -76,7 +76,7 @@ const optimizedConfig = (equipments, addressGap) => {
         Object.keys(scanModes[scan]).forEach((equipment) => {
           scanModes[scan][equipment] = groupBy(scanModes[scan][equipment], `${protocol}.type`)
           Object.keys(scanModes[scan][equipment]).forEach((type) => {
-            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap)
+            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap[type])
           })
         })
       })
