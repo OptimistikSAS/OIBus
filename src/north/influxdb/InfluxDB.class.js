@@ -23,21 +23,34 @@ const pointIdToNodes = (pointId) => {
 }
 
 class InfluxDB extends Application {
+  /**
+   * @constructor for InfluxDB
+   * @param {Object} engine
+   */
   constructor(engine) {
     super(engine)
-    this.host = 'localhost:8086'
+    this.host = global.fTbusConfig.applications[1].InfluxDB.host
     this.currentObject = {}
   }
 
+  /**
+   * Makes a request for every entry in the queue while emptying it.
+   * @return {void}
+   */
   onScan() {
     while (this.queue.info().length > 0) {
-      this.currentObject = this.queue.dequeue()
-      this.makeRequest()
+      this.makeRequest(this.queue.dequeue())
     }
   }
 
-  makeRequest() {
-    const { data, pointId, timestamp } = this.currentObject
+  /**
+   * Makes an InfluxDB request with the parameters in the Object arg.
+   * @param {Object} entry : the entry from the queue
+   * @return {void}
+   * @todo comment the regular expressions
+   */
+  makeRequest(entry) {
+    const { data, pointId, timestamp } = entry
     const nodes = {}
     nodes.data = data
     nodes.host = this.host

@@ -21,7 +21,7 @@ const activeApplications = {}
  */
 class Engine {
   /**
-   * Constructor for the class Engine
+   * @constructor for Engine
    */
   constructor() {
     this.queues = []
@@ -58,25 +58,23 @@ class Engine {
   }
 
   /**
-   * Creates a new instance for every application and protocol.
+   * Creates a new instance for every application and protocol and connects them.
+   * Creates CronJobs based on the ScanModes and starts them.
    * @param {String} config : the config Object
-   * @param {*} callback
+   * @param {Function} callback
    * @return {void}
    */
   start(config, callback) {
-    // adds every protocol and application to be used in activeProtocols and activeApplications
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
       if (!activeProtocols[protocol]) {
         activeProtocols[protocol] = new protocolList[protocol](config, this)
-        //
       }
     })
     Object.values(config.applications).forEach((application) => {
       const { type } = application
       if (!activeApplications[type]) {
         activeApplications[type] = new applicationList[type](this)
-        //
       }
     })
     Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].connect())
@@ -98,6 +96,7 @@ class Engine {
   /**
    * Reads the config file and create the corresponding Object.
    * Makes the necessary changes to the pointId attributes.
+   * Checks for scanModes and equipments.
    * @param {String} config : path to the config file
    * @return {Object} readConfig : parsed config Object
    */

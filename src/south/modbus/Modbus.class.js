@@ -8,8 +8,9 @@ const Protocol = require('../Protocol.class')
  */
 class Modbus extends Protocol {
   /**
-   * Constructor for Modbus
+   * @constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file
+   * @param {Object} engine
    */
   constructor({ equipments, modbus }, engine) {
     super(engine)
@@ -65,7 +66,7 @@ class Modbus extends Protocol {
    * @param {String} funcName : name of the function to run
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
    * @param {String} equipmentId : identifier for the Modbus equipment the request is sent to
-   * @param {Object} points : points to read
+   * @param {Object} points : the points to read
    * @return {void}
    */
   modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, points) {
