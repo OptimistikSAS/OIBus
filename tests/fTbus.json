@@ -127,7 +127,7 @@
         "user": "admin",
         "password": "admin",
         "db": "testdata",
-        "host": "localhost:9000",
+        "host": "localhost:8086",
         "insert" : "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
       }
     }
