@@ -64,19 +64,17 @@ class Modbus extends Protocol {
    * Dynamically call the right function based on the given name
    * @param {String} funcName : name of the function to run
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
+   * @param {String} equipmentId : identifier for the Modbus equipment the request is sent to
+   * @param {Object} points : points to read
    * @return {void}
    */
   modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, points) {
-    console.log(funcName, startAddress, rangeSize)
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const timestamp = `${new Date()}`
         points.forEach((point) => {
           const position = parseInt(point.Modbus.address, 16) - startAddress - 1
           let data = response.body.valuesAsArray[position]
-          if (point.pointId === '/fttest.base/Tank4.tank/111111.flow_rate#value') {
-            console.log(response, position, data, response.body.valuesAsArray[position])
-          }
           switch (point.type) {
             case 'boolean':
               data = !!data
@@ -94,17 +92,14 @@ class Modbus extends Protocol {
   }
 
   /**
-   * Initiates a connection to the given host on port 502
-   * @param {String} host : host ip address
-   * @param {Function} : callback function
+   * Initiates a connection for every equipment to the right host and port.
    * @return {void}
-   * @todo why 502 is hardcoded?
    */
   connect() {
     try {
-      Object.entries(this.equipments).forEach(([equipmentId, equipment]) => {
+      Object.values(this.equipments).forEach((equipment) => {
         const { host, port } = equipment
-        this.equipments[equipmentId].socket.connect({ host, port })
+        equipment.socket.connect({ host, port })
       })
     } catch (error) {
       console.log(error)
@@ -118,7 +113,9 @@ class Modbus extends Protocol {
    * @return {void}
    */
   disconnect() {
-    this.socket.end()
+    Object.values(this.equipments).forEach((equipment) => {
+      equipment.socket.end()
+    })
     this.connected = false
   }
 }

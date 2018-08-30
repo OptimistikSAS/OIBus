@@ -9,20 +9,15 @@ const { config = './fTbus.json' } = args // Get the configuration file path
 
 // read the fTbusConfigFile and make it a global variable
 global.fTbusConfig = Engine.initConfig(config)
+
+// server cannot be declared if global.fTbusConfig.debug does not exist
 const server = require('./server/server')
 
-const { debug = false, port = 3333, scanModes, equipments } = global.fTbusConfig // Get the config entries
+const { debug = false, port = 3333 } = global.fTbusConfig // Get the config entries
 
 if (debug) console.info('Mode Debug enabled')
 // start web server
 server.listen(port, () => console.info(`Server started on ${port}`))
+
 // start engine
-if (!scanModes) {
-  console.error('You should define scan modes.')
-  throw new Error('You should define scan modes.')
-}
-if (!equipments) {
-  console.error('You should define equipments.')
-  throw new Error('You should define equipments.')
-}
 engine.start(global.fTbusConfig, () => console.info('Engine started.'))
