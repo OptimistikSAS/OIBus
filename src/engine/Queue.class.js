@@ -3,7 +3,7 @@
  */
 class Queue {
   /**
-   * Constructor for the class Queue
+   * @constructor for the class Queue
    */
   constructor(engine) {
     this.buffer = []
