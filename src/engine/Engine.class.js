@@ -10,56 +10,59 @@ const applicationList = {
   Console,
   InfluxDB,
 }
-// manage la responses de toutes les app
 const activeProtocols = {}
 const activeApplications = {}
 
 
 /**
- * Class ResponsesHandler : allows to manage requests responses in a Map
+ * Class Engine :
+ * - at startup, handles initialization of applications, protocols and config.
+ * - allows to manage the queues for every protocol and application.
  */
 class Engine {
   /**
-   * Constructor for the class ResponsesHandler
+   * Constructor for the class Engine
    */
   constructor() {
     this.queues = []
   }
 
   /**
-   * Fills the map with as many Arrays as there are pointId's in the config file
-   * With the pointId as a key.
-   * @return {void}
-   */
-
-  /**
-   * Updates the responses map
+   * Updates every queue with a new entry
    * @param {Object} entry : new entry (pointId, timestamp and data of the entry)
-   * @param {Function} callback : callback function
    * @return {void}
    */
-
   addValue({ pointId, timestamp, data }) {
     this.queues.forEach((queue) => {
       queue.enqueue({ pointId, timestamp, data })
-      queue.info()
+      // queue.info()
     })
   }
 
-  remove({ pointId, timestamp }, queue, callback) {
-    console.log(this.queues[queue][pointId].remove(timestamp))
-    if (callback) callback()
-  }
-
+  /**
+   * Unused
+   * Provides basic information about queues
+   * @return {Object} : { queues: number of registered queues }
+   */
   info() {
     return { queues: this.queues.length }
   }
 
+  /**
+   * Registers a new queue in the list
+   * @param {Object} queue : the Queue Object to be added
+   * @return {void}
+   */
   registerQueue(queue) {
     this.queues.push(queue)
   }
 
-
+  /**
+   * Creates a new instance for every application and protocol.
+   * @param {String} config : the config Object
+   * @param {*} callback
+   * @return {void}
+   */
   start(config, callback) {
     // adds every protocol and application to be used in activeProtocols and activeApplications
     Object.values(config.equipments).forEach((equipment) => {
@@ -92,6 +95,12 @@ class Engine {
     if (callback) callback()
   }
 
+  /**
+   * Reads the config file and create the corresponding Object.
+   * Makes the necessary changes to the pointId attributes.
+   * @param {String} config : path to the config file
+   * @return {Object} readConfig : parsed config Object
+   */
   static initConfig(config) {
     const readConfig = tryReadFile(config)
     readConfig.equipments.forEach((equipment) => {
@@ -101,6 +110,14 @@ class Engine {
         }
       })
     })
+    if (!readConfig.scanModes) {
+      console.error('You should define scan modes.')
+      throw new Error('You should define scan modes.')
+    }
+    if (!readConfig.equipments) {
+      console.error('You should define equipments.')
+      throw new Error('You should define equipments.')
+    }
     return readConfig
   }
 }
