@@ -115,7 +115,7 @@
       "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
       "timeStamp": "fTbus",
       "Console": {
-        "content": "%(pointId)s->%(value)s at %(time)s"
+        "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
       }
     },
     {
