@@ -8,14 +8,15 @@ const Protocol = require('../Protocol.class')
  */
 class Modbus extends Protocol {
   /**
-   * Constructor for Modbus
+   * @constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file
+   * @param {Object} engine
    */
   constructor({ equipments, modbus }, engine) {
     super(engine)
     this.equipments = {}
     this.connected = false
-    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap || 1000)
+    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
     Object.values(equipments).forEach(equipment => this.add(equipment))
   }
 
@@ -24,11 +25,12 @@ class Modbus extends Protocol {
    * @return {void}
    */
   add(equipment) {
-    this.equipments[equipment.equipmentId] = {}
-    this.equipments[equipment.equipmentId].socket = new net.Socket()
+    this.equipments[equipment.equipmentId] = {
+      socket: new net.Socket(),
+      host: equipment.Modbus.host,
+      port: equipment.Modbus.port,
+    }
     this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
-    this.equipments[equipment.equipmentId].host = equipment.Modbus.host
-    this.equipments[equipment.equipmentId].port = equipment.Modbus.port
   }
 
   /**
@@ -48,12 +50,12 @@ class Modbus extends Protocol {
 
         // Dynamic call of the appropriate function based on type
 
-        Object.entries(addressesForType).forEach(([range, typeSpec]) => {
+        Object.entries(addressesForType).forEach(([range, points]) => {
           const rangeAddresses = range.split('-')
           const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
           const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
           const rangeSize = endAddress - startAddress // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, typeSpec[0].pointId)
+          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, points)
         })
       })
     })
@@ -63,13 +65,27 @@ class Modbus extends Protocol {
    * Dynamically call the right function based on the given name
    * @param {String} funcName : name of the function to run
    * @param {Object} infos : informations about the group of addresses (first address of the group, size)
+   * @param {String} equipmentId : identifier for the Modbus equipment the request is sent to
+   * @param {Object} points : the points to read
    * @return {void}
    */
-  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, pointId) {
+  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, points) {
     this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const id = `${startAddress}-${startAddress + rangeSize}:${new Date()}`
-        this.engine.addValue({ pointId, timestamp: id, data: response }, value => console.log(value))
+        const timestamp = `${new Date()}`
+        points.forEach((point) => {
+          const position = parseInt(point.Modbus.address, 16) - startAddress - 1
+          let data = response.body.valuesAsArray[position]
+          switch (point.type) {
+            case 'boolean':
+              data = !!data
+              break
+            case 'number':
+              break
+            default: console.error('This point type was not recognized : ', point.type)
+          }
+          this.engine.addValue({ pointId: point.pointId, timestamp, data })
+        })
       })
       .catch((error) => {
         console.error(error)
@@ -77,17 +93,14 @@ class Modbus extends Protocol {
   }
 
   /**
-   * Initiates a connection to the given host on port 502
-   * @param {String} host : host ip address
-   * @param {Function} : callback function
+   * Initiates a connection for every equipment to the right host and port.
    * @return {void}
-   * @todo why 502 is hardcoded?
    */
   connect() {
     try {
-      Object.entries(this.equipments).forEach(([equipmentId, equipment]) => {
+      Object.values(this.equipments).forEach((equipment) => {
         const { host, port } = equipment
-        this.equipments[equipmentId].socket.connect({ host, port })
+        equipment.socket.connect({ host, port })
       })
     } catch (error) {
       console.log(error)
@@ -101,7 +114,9 @@ class Modbus extends Protocol {
    * @return {void}
    */
   disconnect() {
-    this.socket.end()
+    Object.values(this.equipments).forEach((equipment) => {
+      equipment.socket.end()
+    })
     this.connected = false
   }
 }
