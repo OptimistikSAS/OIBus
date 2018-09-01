@@ -1,5 +1,5 @@
 
-# Modbus optipization
+# Modbus optimization
 The Modbus driver will "compile" the configuration file in order to group together in a single request coils or registers close in the same range. The result will be a json object such as below:
 ```
 {
