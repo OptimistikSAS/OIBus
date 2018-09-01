@@ -5,8 +5,9 @@ class Application {
    * @constructor for Application
    * @param {Object} engine
    */
-  constructor(engine) {
+  constructor(engine, applicationParameters) {
     this.queue = new Queue(engine)
+    this.applicationParameters = applicationParameters
   }
 
   /*

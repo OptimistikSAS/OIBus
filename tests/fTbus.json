@@ -110,7 +110,7 @@
   ],
   "applications": [
     {
-     "applicationId": "Myconsole",
+      "applicationId": "Myconsole",
       "type": "Console",
       "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
       "timeStamp": "fTbus",
@@ -123,16 +123,15 @@
       "type": "InfluxDB",
       "minimumBuffer:": 10, // group by 10 when possible
       "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
-      "InfluxDB" : {
+      "InfluxDB": {
         "user": "admin",
         "password": "admin",
         "db": "testdata",
         "host": "localhost:8086",
-        "insert" : "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+        "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
       }
     }
   ]
+
+  //
 }
-
-
-// 

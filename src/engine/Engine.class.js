@@ -1,15 +1,21 @@
 const { CronJob } = require('cron')
+const { tryReadFile } = require('../services/config.service')
+// South classes
 const Modbus = require('../south/Modbus/Modbus.class')
+// North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
-const { tryReadFile } = require('../services/config.service')
 
+// List all South protocols
 const protocolList = { Modbus }
 
+// List all North applications
 const applicationList = {
   Console,
   InfluxDB,
 }
+// Will only contains protocols/application used
+// based on the config file
 const activeProtocols = {}
 const activeApplications = {}
 
@@ -74,7 +80,7 @@ class Engine {
     Object.values(config.applications).forEach((application) => {
       const { type } = application
       if (!activeApplications[type]) {
-        activeApplications[type] = new applicationList[type](this)
+        activeApplications[type] = new applicationList[type](this, application)
       }
     })
     Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].connect())
@@ -102,13 +108,7 @@ class Engine {
    */
   static initConfig(config) {
     const readConfig = tryReadFile(config)
-    readConfig.equipments.forEach((equipment) => {
-      equipment.points.forEach((point) => {
-        if (point.pointId.charAt(0) === '.') {
-          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-        }
-      })
-    })
+    // Check critical entries
     if (!readConfig.scanModes) {
       console.error('You should define scan modes.')
       throw new Error('You should define scan modes.')
@@ -117,6 +117,14 @@ class Engine {
       console.error('You should define equipments.')
       throw new Error('You should define equipments.')
     }
+    // replace relative path into absolute paths
+    readConfig.equipments.forEach((equipment) => {
+      equipment.points.forEach((point) => {
+        if (point.pointId.charAt(0) === '.') {
+          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+      })
+    })
     return readConfig
   }
 }
