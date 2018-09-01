@@ -39,8 +39,10 @@ class Modbus extends Protocol {
    * @return {void}
    */
   onScan(scanMode) {
-    if (!this.connected) console.error('You must be connected before calling onScan.')
-
+    if (!this.connected) {
+      console.error('You must be connected before calling onScan.')
+      return
+    }
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
       Object.keys(scanGroup[equipment]).forEach((type) => {
@@ -82,7 +84,8 @@ class Modbus extends Protocol {
               break
             case 'number':
               break
-            default: console.error('This point type was not recognized : ', point.type)
+            default:
+              console.error('This point type was not recognized : ', point.type)
           }
           this.engine.addValue({ pointId: point.pointId, timestamp, data })
         })
@@ -97,16 +100,20 @@ class Modbus extends Protocol {
    * @return {void}
    */
   connect() {
-    try {
-      Object.values(this.equipments).forEach((equipment) => {
-        const { host, port } = equipment
-        equipment.socket.connect({ host, port })
-      })
-    } catch (error) {
-      console.log(error)
-    }
+    Object.values(this.equipments).forEach((equipment) => {
+      const { host, port } = equipment
 
-    this.connected = true
+      equipment.socket.connect(
+        { host, port },
+        () => {
+          this.connected = true
+        },
+      )
+      equipment.socket.on('error', (err) => {
+        console.error(err)
+        this.connected = false
+      })
+    })
   }
 
   /**

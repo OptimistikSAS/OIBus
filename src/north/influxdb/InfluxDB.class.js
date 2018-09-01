@@ -29,7 +29,7 @@ class InfluxDB extends Application {
    */
   constructor(engine) {
     super(engine)
-    this.host = global.fTbusConfig.applications[1].InfluxDB.host
+    this.host = this.applicationParameters.InfluxDB.host
     this.currentObject = {}
   }
 
@@ -51,10 +51,7 @@ class InfluxDB extends Application {
    */
   makeRequest(entry) {
     const { data, pointId, timestamp } = entry
-    const nodes = {}
-    nodes.data = data
-    nodes.host = this.host
-    nodes.timestamp = timestamp
+    const nodes = { data, host: this.host, timestamp }
     Object.entries(pointIdToNodes(pointId)).forEach(([nodeId, node]) => {
       nodes[nodeId] = node
     })
