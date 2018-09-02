@@ -7,7 +7,7 @@ class Console extends Application {
    * @return {void}
    */
   onScan() {
-    console.info(this.queue.info())
+    console.info(this.queue.length)
   }
 
   /**
@@ -16,7 +16,7 @@ class Console extends Application {
    * @return {void}
    */
   showAndDelete() {
-    if (this.queue.info().length > 0) {
+    if (this.queue.length > 0) {
       console.log(sprintf(global.fTbusConfig.applications[0].Console.content, this.queue.dequeue()))
     }
     console.log(this.queue.buffer)
@@ -26,7 +26,7 @@ class Console extends Application {
    * @return {void}
    */
   deleteAll() {
-    while (this.queue.info().length > 0) {
+    while (this.queue.length > 0) {
       this.queue.dequeue()
     }
   }

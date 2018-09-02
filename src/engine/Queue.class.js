@@ -28,12 +28,20 @@ class Queue {
   }
 
   /**
-   * Provides an Object with informations about the queue.
-   * Currently only contains its length.
+   * dequeue all objects in the queue
+   * @return {Array} All objects currently in the queue are returned
+   */
+  flush() {
+    /** @todo to finish */
+    console.log(this)
+  }
+
+  /**
+   * Provides queue length
    * @return {Object} informations about the queue
    */
-  info() {
-    return { length: Object.keys(this.buffer).length }
+  get length() {
+    return Object.keys(this.buffer).length
   }
 }
 
