@@ -46,15 +46,6 @@ class Engine {
   }
 
   /**
-   * Unused
-   * Provides basic information about queues
-   * @return {Object} : { queues: number of registered queues }
-   */
-  info() {
-    return { queues: this.queues.length }
-  }
-
-  /**
    * Registers a new queue in the list
    * @param {Object} queue : the Queue Object to be added
    * @return {void}
