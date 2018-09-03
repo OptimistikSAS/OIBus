@@ -15,13 +15,16 @@ const pointIdToNodes = (pointId) => {
     .split('#')[0]
     .split('/')
     .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1')
-      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1')
+      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // this extracts the word after the dot
+      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // this one extracts the one before
       attributes[nodeId] = nodeValue
     })
   return attributes
 }
 
+/**
+ * Class InfluxDB : generates and sends InfluxDB requests
+ */
 class InfluxDB extends Application {
   /**
    * @constructor for InfluxDB
@@ -47,7 +50,6 @@ class InfluxDB extends Application {
    * Makes an InfluxDB request with the parameters in the Object arg.
    * @param {Object} entry : the entry from the queue
    * @return {void}
-   * @todo comment the regular expressions
    */
   makeRequest(entry) {
     const { data, pointId, timestamp } = entry
@@ -63,10 +65,11 @@ class InfluxDB extends Application {
     })
     const insert = global.fTbusConfig.applications[1].InfluxDB.insert.replace(/'/g, '')
     const body = sprintf((`${insert.split(' ')[2]} ${insert.split(' ')[3]}`)
+    // those self explanatory expressions manually replace 3-letter fields by the right tag
       .replace(/xxx/g, 'timestamp')
       .replace(/yyy(tag)?/g, 'tank')
       .replace(/zzz/g, '%(measurement)s')
-      .replace(/( \w+=).*/g, '$1%(data)s'), nodes)
+      .replace(/( \w+=).*/g, '$1%(data)s'), nodes) // this one looks for the last (value) field and inserts the data
     fetch(sprintf(`http://${insert.split(' ')[0]}`, nodes), {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
