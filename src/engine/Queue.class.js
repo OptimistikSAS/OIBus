@@ -7,6 +7,7 @@ class Queue {
    */
   constructor(engine) {
     this.buffer = []
+    // each queue need to register to the calling engine
     engine.registerQueue(this)
   }
 
@@ -41,6 +42,9 @@ class Queue {
    * @return {Object} informations about the queue
    */
   get length() {
+    /** @todo explain why we need Object.keys...
+     * instead of this.buffer.length?
+     */
     return Object.keys(this.buffer).length
   }
 }

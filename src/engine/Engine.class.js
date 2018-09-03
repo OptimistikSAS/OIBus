@@ -62,20 +62,23 @@ class Engine {
    * @return {void}
    */
   start(config, callback) {
+    // start Protocols
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
       if (!activeProtocols[protocol]) {
         activeProtocols[protocol] = new protocolList[protocol](config, this)
+        activeProtocols[protocol].connect()
       }
     })
+    // start Applications
     Object.values(config.applications).forEach((application) => {
       const { type } = application
       if (!activeApplications[type]) {
         activeApplications[type] = new applicationList[type](this, application)
+        activeApplications[type].connect()
       }
     })
-    Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].connect())
-    Object.keys(activeApplications).forEach(application => activeApplications[application].connect())
+    // start the cron timer
     config.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
