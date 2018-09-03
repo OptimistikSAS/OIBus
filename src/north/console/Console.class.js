@@ -3,11 +3,12 @@ const Application = require('../Application.class')
 
 class Console extends Application {
   /**
-   * Shows info on this.queue (currently, only the buffer length)
+   * Shows the length of this.queue
    * @return {void}
    */
   onScan() {
     console.info(this.queue.length)
+    this.deleteAll()
   }
 
   /**
@@ -26,9 +27,7 @@ class Console extends Application {
    * @return {void}
    */
   deleteAll() {
-    while (this.queue.length > 0) {
-      this.queue.dequeue()
-    }
+    console.log(this.queue.flush())
   }
 }
 
