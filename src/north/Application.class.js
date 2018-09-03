@@ -17,15 +17,15 @@ class Application {
   */
 
   connect() {
-    console.info('connect', this.queue.info())
+    console.info('connect', this.queue.length)
   }
 
   disconnect() {
-    console.info('disconnect', this.queue.info())
+    console.info('disconnect', this.queue.length)
   }
 
   onScan() {
-    console.info('onScan', this.queue.info())
+    console.info('onScan', this.queue.length)
   }
 }
 
