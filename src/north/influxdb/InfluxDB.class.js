@@ -27,9 +27,9 @@ class InfluxDB extends Application {
    * @constructor for InfluxDB
    * @param {Object} engine
    */
-  constructor(engine) {
-    super(engine)
-    this.host = this.applicationParameters.InfluxDB.host
+  constructor(engine, applicationParameters) {
+    super(engine, applicationParameters)
+    this.host = applicationParameters.InfluxDB.host
     this.currentObject = {}
   }
 
