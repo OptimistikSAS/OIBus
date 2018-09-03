@@ -15,8 +15,8 @@ const pointIdToNodes = (pointId) => {
     .split('#')[0]
     .split('/')
     .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // this extracts the word after the dot
-      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // this one extracts the one before
+      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
+      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
       attributes[nodeId] = nodeValue
     })
   return attributes
@@ -64,12 +64,21 @@ class InfluxDB extends Application {
       }
     })
     const insert = global.fTbusConfig.applications[1].InfluxDB.insert.replace(/'/g, '')
-    const body = sprintf((`${insert.split(' ')[2]} ${insert.split(' ')[3]}`)
-    // those self explanatory expressions manually replace 3-letter fields by the right tag
-      .replace(/xxx/g, 'timestamp')
-      .replace(/yyy(tag)?/g, 'tank')
+    let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
       .replace(/zzz/g, '%(measurement)s')
-      .replace(/( \w+=).*/g, '$1%(data)s'), nodes) // this one looks for the last (value) field and inserts the data
+      .replace(/( \w+=).*/g, '$1%(data)s') // Looks for the last field (value) and inserts the data
+    Object.keys(nodes).forEach((nodeId) => {
+      // maybe noChange should be renamed to something like 'processed' or 'notTags'
+      const noChange = ['data', 'host', 'measurement', nodes.measurement, 'base']
+      if (!noChange.includes(nodeId)) {
+        // Replaces 3-same-letter fields by a tagName
+        // i.e : Transforms xxx=%(xxx) into tagName=%(tagName)
+        body = body.replace(/([a-z])\1\1(tag)?=%\(\1\1\1\)/, `${nodeId}=%(${nodeId})`)
+      }
+    })
+    // Removes any unused 'xxx=%(xxx)' field from body
+    body = body.replace(/,([a-z])\1\1(tag)?=%\(\1\1\1\)/g, '')
+    body = sprintf(body, nodes)
     fetch(sprintf(`http://${insert.split(' ')[0]}`, nodes), {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
