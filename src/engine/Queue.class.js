@@ -33,19 +33,21 @@ class Queue {
    * @return {Array} All objects currently in the queue are returned
    */
   flush() {
-    /** @todo to finish */
-    console.log(this)
+    const flushingArray = []
+    while (this.length) {
+      flushingArray.push(this.dequeue())
+      // Maybe a callback after a dequeue could be useful ? see Console and InfluxDB
+      // callback(flushingArray.slice(-1)[0]) callbacks on the entry added last
+    }
+    return flushingArray
   }
 
   /**
    * Provides queue length
-   * @return {Object} informations about the queue
+   * @return {Number} length of the queue
    */
   get length() {
-    /** @todo explain why we need Object.keys...
-     * instead of this.buffer.length?
-     */
-    return Object.keys(this.buffer).length
+    return this.buffer.length
   }
 }
 
