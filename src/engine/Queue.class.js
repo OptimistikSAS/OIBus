@@ -33,7 +33,6 @@ class Queue {
    * @return {Array} All objects currently in the queue are returned
    */
   flush() {
-    /** @todo to finish */
     const flushingArray = []
     while (this.length) {
       flushingArray.push(this.dequeue())
