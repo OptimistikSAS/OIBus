@@ -38,6 +38,7 @@ class InfluxDB extends Application {
    * @return {void}
    */
   onScan() {
+    // this.queue.flush(value => this.makeRequest(value))
     while (this.queue.length > 0) {
       this.makeRequest(this.queue.dequeue())
     }

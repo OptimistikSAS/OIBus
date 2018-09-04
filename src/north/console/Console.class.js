@@ -3,11 +3,12 @@ const Application = require('../Application.class')
 
 class Console extends Application {
   /**
-   * Shows info on this.queue (currently, only the buffer length)
+   * Shows the length of this.queue
    * @return {void}
    */
   onScan() {
     console.info(this.queue.length)
+    console.log(this.queue.flush())
   }
 
   /**
@@ -20,15 +21,6 @@ class Console extends Application {
       console.log(sprintf(global.fTbusConfig.applications[0].Console.content, this.queue.dequeue()))
     }
     console.log(this.queue.buffer)
-  }
-
-  /** Empties the buffer
-   * @return {void}
-   */
-  deleteAll() {
-    while (this.queue.length > 0) {
-      this.queue.dequeue()
-    }
   }
 }
 
