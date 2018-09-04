@@ -8,7 +8,7 @@ class Console extends Application {
    */
   onScan() {
     console.info(this.queue.length)
-    this.deleteAll()
+    console.log(this.queue.flush())
   }
 
   /**
@@ -21,13 +21,6 @@ class Console extends Application {
       console.log(sprintf(global.fTbusConfig.applications[0].Console.content, this.queue.dequeue()))
     }
     console.log(this.queue.buffer)
-  }
-
-  /** Empties the buffer
-   * @return {void}
-   */
-  deleteAll() {
-    console.log(this.queue.flush())
   }
 }
 
