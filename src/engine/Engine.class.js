@@ -2,12 +2,13 @@ const { CronJob } = require('cron')
 const { tryReadFile } = require('../services/config.service')
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
+const OPCUA = require('../south/OPCUA/OPCUA.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // List all South protocols
-const protocolList = { Modbus }
+const protocolList = { Modbus, OPCUA }
 
 // List all North applications
 const applicationList = {
@@ -113,11 +114,13 @@ class Engine {
     }
     // replace relative path into absolute paths
     readConfig.equipments.forEach((equipment) => {
-      equipment.points.forEach((point) => {
-        if (point.pointId.charAt(0) === '.') {
-          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-        }
-      })
+      if (equipment.protocol === 'Modbus') {
+        equipment.points.forEach((point) => {
+          if (point.pointId.charAt(0) === '.') {
+            point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+          }
+        })
+      }
     })
     return readConfig
   }

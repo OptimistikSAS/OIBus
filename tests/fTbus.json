@@ -21,7 +21,36 @@
       "coil": 1000
     }
   },
+  "opcua": {
+    "connectionAddress":
+    {
+      "opc": "opc.tcp://%(host)s:%(opcPort)s/%(endPoint)s",
+      "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
+    },
+  },
   "equipments": [
+    {
+      "equipmentId": "SimulationServer",
+      "protocol": "OPCUA",
+      "pointIdRoot": "/fttest.base",
+      "OPCUA": {
+        "host": "localhost",
+        "opcPort": "53530",
+        "httpsPort": "53443",
+        "endPoint": "Server/Simulation"
+      },
+      "points": [
+        {
+          "OPCUA": {
+            "ns": "5",
+            "s": "Counter1"
+          },
+          "pointId": "./Tank 3.tank/333333.fill_level#value",
+          "type": "number",
+          "scanMode": "everySecond"
+        }
+      ]
+    },
     {
       "equipmentId": "PLC-35",
       "protocol": "Modbus",
@@ -116,7 +145,7 @@
       "timeStamp": "fTbus",
       "Console": {
         "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
-      }
+   }
     },
     {
       "applicationId": "BaseInflux",
