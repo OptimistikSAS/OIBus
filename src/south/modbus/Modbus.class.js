@@ -17,7 +17,11 @@ class Modbus extends Protocol {
     this.equipments = {}
     this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
-    Object.values(equipments).forEach(equipment => this.add(equipment))
+    equipments.forEach((equipment) => {
+      if (equipment.Modbus) {
+        this.add(equipment)
+      }
+    })
   }
 
   /** Adds equipment entry in equipments

@@ -40,12 +40,12 @@ class InfluxDB extends Application {
    * Makes a request for every entry in the queue while emptying it.
    * @return {void}
    */
-  onScan() {
-    // this.queue.flush(value => this.makeRequest(value))
-    while (this.queue.length > 0) {
-      this.makeRequest(this.queue.dequeue())
-    }
-  }
+  // onScan() {
+  //   // this.queue.flush(value => this.makeRequest(value))
+  //   while (this.queue.length > 0) {
+  //     this.makeRequest(this.queue.dequeue())
+  //   }
+  // }
 
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
