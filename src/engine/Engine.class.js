@@ -114,13 +114,11 @@ class Engine {
     }
     // replace relative path into absolute paths
     readConfig.equipments.forEach((equipment) => {
-      if (equipment.protocol === 'Modbus') {
-        equipment.points.forEach((point) => {
-          if (point.pointId.charAt(0) === '.') {
-            point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-          }
-        })
-      }
+      equipment.points.forEach((point) => {
+        if (point.pointId.charAt(0) === '.') {
+          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+      })
     })
     return readConfig
   }
