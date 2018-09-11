@@ -8,7 +8,10 @@ const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // List all South protocols
-const protocolList = { Modbus, OPCUA }
+const protocolList = {
+  Modbus,
+  OPCUA,
+}
 
 // List all North applications
 const applicationList = {

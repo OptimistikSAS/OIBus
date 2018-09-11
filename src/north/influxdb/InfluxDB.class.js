@@ -19,6 +19,7 @@ const pointIdToNodes = (pointId) => {
       const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
       attributes[nodeId] = nodeValue
     })
+  attributes.dataId = pointId.slice(1).split('#')[1]
   return attributes
 }
 
@@ -40,12 +41,12 @@ class InfluxDB extends Application {
    * Makes a request for every entry in the queue while emptying it.
    * @return {void}
    */
-  // onScan() {
-  //   // this.queue.flush(value => this.makeRequest(value))
-  //   while (this.queue.length > 0) {
-  //     this.makeRequest(this.queue.dequeue())
-  //   }
-  // }
+  onScan() {
+    this.queue.flush(value => this.makeRequest(value))
+    // while (this.queue.length > 0) {
+    //   this.makeRequest(this.queue.dequeue())
+    // }
+  }
 
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
@@ -67,11 +68,10 @@ class InfluxDB extends Application {
     const insert = global.fTbusConfig.applications[1].InfluxDB.insert.replace(/'/g, '')
     let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
       .replace(/zzz/g, '%(measurement)s')
-      .replace(/( \w+=).*/g, '$1%(data)s') // Looks for the last field (value) and inserts the data
+      .replace(/ \w+=.*/g, ' %(dataId)s=%(data)s') // Looks for the last field (value field) and inserts the data
     Object.keys(nodes).forEach((nodeId) => {
-      // maybe noChange should be renamed to something like 'processed' or 'notTags'
-      const noChange = ['data', 'host', 'measurement', nodes.measurement, 'base']
-      if (!noChange.includes(nodeId)) {
+      const notTags = ['data', 'host', 'measurement', nodes.measurement, 'base']
+      if (!notTags.includes(nodeId)) {
         // Replaces 3-same-letter fields by a tagName
         // i.e : Transforms xxx=%(xxx) into tagName=%(tagName)
         body = body.replace(/([a-z])\1\1(tag)?=%\(\1\1\1\)/, `${nodeId}=%(${nodeId})`)
