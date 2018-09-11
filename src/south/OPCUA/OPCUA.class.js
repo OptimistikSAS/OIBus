@@ -51,7 +51,7 @@ class OPCUA extends Protocol {
       const timestamp = `${new Date()}`
       this.equipments[equipment].session.read(nodeToRead, (err, dataValue) => {
         if (!err) {
-          this.engine.addValue({ pointId: scanGroup[equipment][0].pointId, timestamp, data: dataValue })
+          this.engine.addValue({ pointId: scanGroup[equipment][0].pointId, timestamp, data: dataValue.value.value })
           // console.log(timestamp, dataValue.value.value, scanGroup[equipment][0].pointId)
         }
       })
