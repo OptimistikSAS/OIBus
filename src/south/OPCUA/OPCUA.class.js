@@ -3,6 +3,20 @@ const { sprintf } = require('sprintf-js')
 const Protocol = require('../Protocol.class')
 const optimizedConfig = require('./config/optimizedConfig')
 
+const add = (opcua, equipment, equipments) => {
+  equipments[equipment.equipmentId] = {
+    client: new Opcua.OPCUAClient({ endpoint_must_exist: false }),
+    url: sprintf(opcua.connectionAddress.opc, equipment.OPCUA),
+  }
+}
+
+
+/**
+ *
+ *
+ * @class OPCUA
+ * @extends {Protocol}
+ */
 class OPCUA extends Protocol {
   constructor({ equipments, opcua }, engine) {
     super(engine)
@@ -10,16 +24,9 @@ class OPCUA extends Protocol {
     this.equipments = {}
     equipments.forEach((equipment) => {
       if (equipment.OPCUA) {
-        this.add(opcua, equipment)
+        add(opcua, equipment, this.equipments)
       }
     })
-  }
-
-  add(opcua, equipment) {
-    this.equipments[equipment.equipmentId] = {
-      client: new Opcua.OPCUAClient({ endpoint_must_exist: false }),
-      url: sprintf(opcua.connectionAddress.opc, equipment.OPCUA),
-    }
   }
 
   async connect() {
@@ -48,11 +55,13 @@ class OPCUA extends Protocol {
         nodeId: sprintf('ns=%(ns)s;s=%(s)s', scanGroup[equipment][0].OPCUAnodeId),
         attributeId: Opcua.AttributeIds.Value,
       }
-      const timestamp = `${new Date()}`
       this.equipments[equipment].session.read(nodeToRead, (err, dataValue) => {
         if (!err) {
-          this.engine.addValue({ pointId: scanGroup[equipment][0].pointId, timestamp, data: dataValue.value.value })
-          // console.log(timestamp, dataValue.value.value, scanGroup[equipment][0].pointId)
+          this.engine.addValue({
+            pointId: scanGroup[equipment][0].pointId,
+            timestamp: dataValue.sourceTimestamp.toString(),
+            data: dataValue.value.value,
+          })
         }
       })
     })
