@@ -67,7 +67,7 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const optimizedModbusConfig = (equipments, addressGap) => {
+const optimizedConfig = (equipments, addressGap) => {
   const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
     if (protocol === 'Modbus') {
       const scanModes = groupBy(points, 'scanMode', { equipmentId })
@@ -92,28 +92,4 @@ const optimizedModbusConfig = (equipments, addressGap) => {
   return optimized
 }
 
-const optimizedOPCUAConfig = (equipments) => {
-  const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
-    if (protocol === 'OPCUA') {
-      const scanModes = groupBy(points, 'scanMode', { equipmentId })
-      Object.keys(scanModes).forEach((scan) => {
-        scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
-        Object.values(scanModes[scan]).forEach((equipment) => {
-          equipment.forEach((point) => {
-            delete point.type
-          })
-        })
-      })
-      Object.keys(scanModes).forEach((scan) => {
-        if (!acc[scan]) acc[scan] = {}
-        acc[scan] = { ...acc[scan], ...scanModes[scan] }
-      })
-    }
-    return acc
-  }, {})
-
-  return optimized
-}
-
-module.exports.Modbus = optimizedModbusConfig
-module.exports.OPCUA = optimizedOPCUAConfig
+module.exports = optimizedConfig
