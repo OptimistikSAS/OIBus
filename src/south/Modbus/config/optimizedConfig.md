@@ -30,23 +30,3 @@ The Modbus driver will "compile" the configuration file in order to group togeth
   }
 }
 ```
-# OPCUA optimization
-To complete
-
-shape:
-{
-  "everySecond": {
-    "SimulationServer": [
-      { "OPCUAnodeId": { "ns": "5", "s": "Counter1" }, "pointId": "/fttest.base/Tank 5.tank/333333.temperature#value" },
-      { "OPCUAnodeId": { "ns": "5", "s": "Random1" }, "pointId": "/fttest.base/Tank 5.tank/333333.temperature#quality" },
-    ]
-  },
-  "everyNoon": {
-    "SimulationServer": [
-      { "OPCUAnodeId": { "ns": 5, "s": "Square1" }, "pointId": "/fttest.base/Tank 5.tank/333333.fill_level#value" },
-    ]
-  },
-  .
-  .
-  .
-}

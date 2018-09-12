@@ -1,6 +1,6 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const optimizedConfig = require('../config/optimizedConfig').Modbus
+const optimizedConfig = require('./config/optimizedConfig')
 const Protocol = require('../Protocol.class')
 
 /**

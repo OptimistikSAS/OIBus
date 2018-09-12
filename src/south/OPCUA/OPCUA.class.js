@@ -1,7 +1,7 @@
 const Opcua = require('node-opcua')
 const { sprintf } = require('sprintf-js')
 const Protocol = require('../Protocol.class')
-const optimizedConfig = require('../config/optimizedConfig').OPCUA
+const optimizedConfig = require('./config/optimizedConfig')
 
 class OPCUA extends Protocol {
   constructor({ equipments, opcua }, engine) {
