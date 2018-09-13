@@ -21,7 +21,85 @@
       "coil": 1000
     }
   },
+  "opcua": {
+    "connectionAddress":
+    {
+      "opc": "opc.tcp://%(host)s:%(opcPort)s/%(endPoint)s",
+      "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
+    },
+  },
   "equipments": [
+    {
+      "equipmentId": "SimulationServer",
+      "protocol": "OPCUA",
+      "pointIdRoot": "/fttest.base",
+      "OPCUA": {
+        "host": "localhost",
+        "opcPort": "53530",
+        "httpsPort": "53443",
+        "endPoint": "Server/Simulation"
+      },
+      "points": [
+        {
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Counter1"
+          },
+          "pointId": "./Tank 5.tank/333333.temperature#value",
+          "type": "number",
+          "scanMode": "everySecond"
+        },
+        {
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Random1"
+          },
+          "pointId": "./Tank 5.tank/333333.temperature#quality",
+          "type": "number",
+          "scanMode": "everySecond"
+        },
+        {
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Random1"
+          },
+          "pointId": "./Tank 5.tank/333333.temperature#quality",
+          "type": "number",
+          "scanMode": "everyNoon"
+        }
+      ]
+    },
+    {
+      "equipmentId": "SimulationServerBis",
+      "protocol": "OPCUA",
+      "pointIdRoot": "/fttest.base",
+      "OPCUA": {
+        "host": "localhost",
+        "opcPort": "53530",
+        "httpsPort": "53443",
+        "endPoint": "Server/Simulation"
+      },
+      "points": [
+        {
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Sinusoid1"
+          },
+          "pointId": "./Tank 9.tank/333333.temperature#value",
+          "type": "number",
+          "scanMode": "everyNoon"
+        },
+        {
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Sawtooth1"
+          },
+          "pointId": "./Tank 9.tank/333333.temperature#quality",
+          "type": "number",
+          "scanMode": "everySecond"
+        },
+      ]
+    },
     {
       "equipmentId": "PLC-35",
       "protocol": "Modbus",
@@ -116,7 +194,7 @@
       "timeStamp": "fTbus",
       "Console": {
         "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
-      }
+   }
     },
     {
       "applicationId": "BaseInflux",

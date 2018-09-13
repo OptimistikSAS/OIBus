@@ -30,4 +30,3 @@ The Modbus driver will "compile" the configuration file in order to group togeth
   }
 }
 ```
-
