@@ -30,40 +30,44 @@ class OPCUA extends Protocol {
   }
 
   async connect() {
-    this.connected = true
     await Object.values(this.equipments).forEach(async (equipment) => {
       await equipment.client.connect(equipment.url)
       await equipment.client.createSession((err, session) => {
         if (!err) {
           equipment.session = session
-          console.log(this.equipments)
-        } else {
-          this.connected = false
+          equipment.connected = true
         }
       })
     })
   }
 
+  /**
+   * @param {String} scanMode
+   * @todo check if every async and await is useful
+   * @todo on the very first Scan equipment.session might not be created yet, find out why
+   */
   async onScan(scanMode) {
     // On scan : read nodes
-    /** @todo check if every async and await is useful */
-    /** @todo on the very first Scan equipment.session might not be created yet, find out why */
-    /** @todo group every node to read in a nodesToRead object instead of nodeToRead */
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
-      const nodeToRead = {
-        nodeId: sprintf('ns=%(ns)s;s=%(s)s', scanGroup[equipment][0].OPCUAnodeId),
-        attributeId: Opcua.AttributeIds.Value,
+      if (this.equipments[equipment].connected) {
+        const nodesToRead = {}
+        scanGroup[equipment].forEach((point) => {
+          nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
+        })
+        this.equipments[equipment].session.read(Object.values(nodesToRead), 10, (err, dataValues) => {
+          if (!err && Object.keys(nodesToRead).length === dataValues.length) {
+            Object.keys(nodesToRead).forEach((pointId) => {
+              const dataValue = dataValues.shift()
+              this.engine.addValue({
+                pointId,
+                timestamp: dataValue.sourceTimestamp.toString(),
+                data: dataValue.value.value,
+              })
+            })
+          }
+        })
       }
-      this.equipments[equipment].session.read(nodeToRead, (err, dataValue) => {
-        if (!err) {
-          this.engine.addValue({
-            pointId: scanGroup[equipment][0].pointId,
-            timestamp: dataValue.sourceTimestamp.toString(),
-            data: dataValue.value.value,
-          })
-        }
-      })
     })
   }
 }

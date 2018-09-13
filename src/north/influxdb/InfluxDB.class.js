@@ -19,7 +19,7 @@ const pointIdToNodes = (pointId) => {
       const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
       attributes[nodeId] = nodeValue
     })
-  attributes.dataId = pointId.slice(1).split('#')[1]
+  attributes.dataId = pointId.split('#').slice(-1).pop()
   return attributes
 }
 
@@ -43,9 +43,6 @@ class InfluxDB extends Application {
    */
   onScan() {
     this.queue.flush(value => this.makeRequest(value))
-    // while (this.queue.length > 0) {
-    //   this.makeRequest(this.queue.dequeue())
-    // }
   }
 
   /**
