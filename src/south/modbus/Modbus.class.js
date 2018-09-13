@@ -3,6 +3,20 @@ const net = require('net')
 const optimizedConfig = require('./config/optimizedConfig')
 const Protocol = require('../Protocol.class')
 
+/** Adds equipment entry in equipments
+ * @param {Object} equipment
+ * @return {void}
+ */
+const add = (equipment, equipments) => {
+  equipments[equipment.equipmentId] = {
+    socket: new net.Socket(),
+    host: equipment.Modbus.host,
+    port: equipment.Modbus.port,
+    connected: false,
+  }
+  equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(equipments[equipment.equipmentId].socket)
+}
+
 /**
  * Class Modbus : provides instruction for Modbus client connection
  */
@@ -15,26 +29,12 @@ class Modbus extends Protocol {
   constructor({ equipments, modbus }, engine) {
     super(engine)
     this.equipments = {}
-    this.connected = false
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
     equipments.forEach((equipment) => {
       if (equipment.Modbus) {
-        this.add(equipment)
+        add(equipment, this.equipments)
       }
     })
-  }
-
-  /** Adds equipment entry in equipments
-   * @param {Object} equipment
-   * @return {void}
-   */
-  add(equipment) {
-    this.equipments[equipment.equipmentId] = {
-      socket: new net.Socket(),
-      host: equipment.Modbus.host,
-      port: equipment.Modbus.port,
-    }
-    this.equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(this.equipments[equipment.equipmentId].socket)
   }
 
   /**
@@ -43,27 +43,23 @@ class Modbus extends Protocol {
    * @return {void}
    */
   onScan(scanMode) {
-    if (!this.connected) {
-      console.error('You must be connected before calling onScan.')
-      return
-    }
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
-      Object.keys(scanGroup[equipment]).forEach((type) => {
-        const addressesForType = scanGroup[equipment][type] // Addresses of the group
-        // Build function name, IMPORTANT: type must be singular
-        const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
-
-        // Dynamic call of the appropriate function based on type
-
-        Object.entries(addressesForType).forEach(([range, points]) => {
-          const rangeAddresses = range.split('-')
-          const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-          const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
-          const rangeSize = endAddress - startAddress // Size of the addresses group
-          this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, points)
+      if (this.equipments[equipment].connected) {
+        Object.keys(scanGroup[equipment]).forEach((type) => {
+          const addressesForType = scanGroup[equipment][type] // Addresses of the group
+          // Build function name, IMPORTANT: type must be singular
+          const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
+          // Dynamic call of the appropriate function based on type
+          Object.entries(addressesForType).forEach(([range, points]) => {
+            const rangeAddresses = range.split('-')
+            const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
+            const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
+            const rangeSize = endAddress - startAddress // Size of the addresses group
+            this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, points)
+          })
         })
-      })
+      }
     })
   }
 
@@ -110,12 +106,11 @@ class Modbus extends Protocol {
       equipment.socket.connect(
         { host, port },
         () => {
-          this.connected = true
+          equipment.connected = true
         },
       )
       equipment.socket.on('error', (err) => {
         console.error(err)
-        this.connected = false
       })
     })
   }
@@ -126,9 +121,11 @@ class Modbus extends Protocol {
    */
   disconnect() {
     Object.values(this.equipments).forEach((equipment) => {
-      equipment.socket.end()
+      if (equipment.connected) {
+        equipment.socket.end()
+        equipment.connected = false
+      }
     })
-    this.connected = false
   }
 }
 
