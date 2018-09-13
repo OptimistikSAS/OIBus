@@ -28,7 +28,6 @@ class Modbus extends Protocol {
    */
   constructor({ equipments, modbus }, engine) {
     super(engine)
-    this.equipments = {}
     this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
     equipments.forEach((equipment) => {
       if (equipment.Modbus) {

@@ -21,7 +21,6 @@ class OPCUA extends Protocol {
   constructor({ equipments, opcua }, engine) {
     super(engine)
     this.optimizedConfig = optimizedConfig(equipments)
-    this.equipments = {}
     equipments.forEach((equipment) => {
       if (equipment.OPCUA) {
         add(opcua, equipment, this.equipments)
