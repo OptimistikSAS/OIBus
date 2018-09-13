@@ -8,6 +8,7 @@ class Protocol {
    */
   constructor(engine) {
     this.engine = engine
+    this.equipments = {}
   }
 }
 

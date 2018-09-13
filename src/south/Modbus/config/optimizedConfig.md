@@ -4,7 +4,7 @@ The Modbus driver will "compile" the configuration file in order to group togeth
 ```
 {
   "everySecond": {
-    "PLC-35": {}
+    "PLC-35": {
       "coil": {
         "0-1024": [
           { "Modbus": { "address": "0x0f" }, "pointId": "/fttest.base/Tank 1.tank/111111.fill_level#value", "type": "number" },
