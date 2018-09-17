@@ -11,7 +11,7 @@ class Application {
   }
 
   /*
-  Since every distinct application has a set use for their queue,
+  Since every distinct application has a different use for their queue,
   their prototype methods is only a display of the queue's info
   with the name of the method called.
   */
