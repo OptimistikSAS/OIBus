@@ -62,7 +62,7 @@ class InfluxDB extends Application {
         if (!Number.isNaN(parseInt(node, 10))) nodes.measurement = nodeId
       }
     })
-    const insert = global.fTbusConfig.applications[1].InfluxDB.insert.replace(/'/g, '')
+    const insert = this.applicationParameters.InfluxDB.insert.replace(/'/g, '')
     let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
       .replace(/zzz/g, '%(measurement)s')
       .replace(/ \w+=.*/g, ' %(dataId)s=%(data)s') // Looks for the last field (value field) and inserts the data
