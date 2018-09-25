@@ -18,7 +18,7 @@ const applicationList = {
   Console,
   InfluxDB,
 }
-// Will only contains protocols/application used
+// Will only contain protocols/application used
 // based on the config file
 const activeProtocols = {}
 const activeApplications = {}
