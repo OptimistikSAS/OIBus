@@ -17,7 +17,7 @@ class Console extends Application {
    */
   showAndDelete() {
     if (this.queue.length > 0) {
-      console.log(sprintf(global.fTbusConfig.applications[0].Console.content, this.queue.dequeue()))
+      console.log(sprintf(this.applicationParameters.Console.content, this.queue.dequeue()))
     }
     console.log(this.queue.buffer)
   }
