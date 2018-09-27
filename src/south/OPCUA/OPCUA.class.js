@@ -18,12 +18,12 @@ const add = (opcua, equipment, equipments) => {
  * @extends {Protocol}
  */
 class OPCUA extends Protocol {
-  constructor({ equipments, opcua }, engine) {
+  constructor({ equipments, south }, engine) {
     super(engine)
     this.optimizedConfig = optimizedConfig(equipments)
     equipments.forEach((equipment) => {
       if (equipment.OPCUA) {
-        add(opcua, equipment, this.equipments)
+        add(south.opcua, equipment, this.equipments)
       }
     })
   }
