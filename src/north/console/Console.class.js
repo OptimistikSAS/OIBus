@@ -7,7 +7,7 @@ class Console extends Application {
    * @return {void}
    */
   onScan() {
-    this.queue.flush(value => this.stringify(value))
+    this.queue.flush(value => console.log(value))
   }
 
   /**
