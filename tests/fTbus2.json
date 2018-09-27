@@ -71,10 +71,39 @@
     "opcda": {},
     "mqtt": {},
     "profinet": {},
-    "file": {},
+    "csv": {
+      // no parameters for this protocol
+    },
     "sql": {}
   },
   "equipments": [
+    {
+      "equipmentId": "CSVServer",
+      "protocol": "csv",
+      "pointIdRoot": "/fttest.base",
+      "defaultScanMode": "everySecond",
+      "csv": {
+        "filename": "./fichier.csv",
+        "archiveFolder": "./archived/",
+        "errorFolder": "./error/",
+        "separator": ",",
+        "timeStampColum": 0,
+      },
+      "points": [
+        {
+          "csv": {
+            "column": 1
+          },
+          "pointId": "./Tank 5.tank/333333.temperature",
+        },
+        {
+          "csv": {
+            "column": 2
+          },
+          "pointId": "./Tank 6.tank/333333.temperature",
+        },
+      ]
+    },
     {
       "equipmentId": "SimulationServer",
       "protocol": "OPCUA",
