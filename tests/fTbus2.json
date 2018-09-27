@@ -51,7 +51,20 @@
             "type": "boolean"
           }
         ]
-      }
+      },
+      {
+        "type": "temperature",
+        "fields": [
+          {
+            "name": "value",
+            "type": "number"
+          },
+          {
+            "name": "quality",
+            "type": "boolean"
+          }
+        ]
+      },
     ]
   },
   "south": {

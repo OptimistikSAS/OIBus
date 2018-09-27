@@ -121,6 +121,9 @@ class Engine {
         if (point.pointId.charAt(0) === '.') {
           point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
         }
+        if (!point.scanMode) {
+          point.scanMode = equipment.defaultScanMode
+        }
       })
     })
     return readConfig
