@@ -26,9 +26,9 @@ class Modbus extends Protocol {
    * @param {String} configPath : path to the non-optimized configuration file
    * @param {Object} engine
    */
-  constructor({ equipments, modbus }, engine) {
+  constructor({ equipments, south }, engine) {
     super(engine)
-    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
+    this.optimizedConfig = optimizedConfig(equipments, south.modbus.addressGap)
     equipments.forEach((equipment) => {
       if (equipment.Modbus) {
         add(equipment, this.equipments)

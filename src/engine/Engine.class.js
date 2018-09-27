@@ -75,7 +75,7 @@ class Engine {
       }
     })
     // start Applications
-    Object.values(config.applications).forEach((application) => {
+    Object.values(config.north).forEach((application) => {
       const { type } = application
       if (!activeApplications[type]) {
         activeApplications[type] = new applicationList[type](this, application)
@@ -83,7 +83,7 @@ class Engine {
       }
     })
     // start the cron timer
-    config.scanModes.forEach(({ scanMode, cronTime }) => {
+    config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
         onTick: () => {
@@ -107,7 +107,7 @@ class Engine {
   static initConfig(config) {
     const readConfig = tryReadFile(config)
     // Check critical entries
-    if (!readConfig.scanModes) {
+    if (!readConfig.engine.scanModes) {
       console.error('You should define scan modes.')
       throw new Error('You should define scan modes.')
     }
