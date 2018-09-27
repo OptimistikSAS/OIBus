@@ -33,6 +33,7 @@ const optimizedConfig = (equipments) => {
   const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
     if (protocol === 'OPCUA') {
       const scanModes = groupBy(points, 'scanMode', { equipmentId })
+      console.log(scanModes)
       Object.keys(scanModes).forEach((scan) => {
         scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
         Object.values(scanModes[scan]).forEach((equipment) => {
@@ -40,7 +41,7 @@ const optimizedConfig = (equipments) => {
             delete point.type
           })
         })
-      })
+      })  
       Object.keys(scanModes).forEach((scan) => {
         if (!acc[scan]) acc[scan] = {}
         acc[scan] = { ...acc[scan], ...scanModes[scan] }
@@ -48,7 +49,7 @@ const optimizedConfig = (equipments) => {
     }
     return acc
   }, {})
-
+  console.log(optimized)
   return optimized
 }
 
