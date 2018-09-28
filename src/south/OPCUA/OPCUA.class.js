@@ -10,6 +10,12 @@ const add = (opcua, equipment, equipments) => {
   }
 }
 
+const typeFromPointId = (pointId) => {
+  const type = pointId.split('.').slice(-1).pop()
+  return type
+}
+
+// const fieldFromPointId =
 
 /**
  *
@@ -51,18 +57,27 @@ class OPCUA extends Protocol {
     Object.keys(scanGroup).forEach((equipment) => {
       if (this.equipments[equipment].connected) {
         const nodesToRead = {}
+        const MAX_AGE = 10
         scanGroup[equipment].forEach((point) => {
           nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
         })
-        this.equipments[equipment].session.read(Object.values(nodesToRead), 10, (err, dataValues) => {
+        this.equipments[equipment].session.read(Object.values(nodesToRead), MAX_AGE, (err, dataValues) => {
           if (!err && Object.keys(nodesToRead).length === dataValues.length) {
             Object.keys(nodesToRead).forEach((pointId) => {
               const dataValue = dataValues.shift()
-              this.engine.addValue({
+              const value = {
                 pointId,
                 timestamp: dataValue.sourceTimestamp.toString(),
-                data: dataValue.value.value,
+              }
+              const type = typeFromPointId(pointId)
+              global.fTbusConfig.engine.types.forEach((typeCompared) => {
+                if (type === typeCompared.type) {
+                  typeCompared.fields.forEach((field) => {
+                    value[field.name] = dataValue.value[field.name]
+                  })
+                }
               })
+              this.engine.addValue(value)
             })
           }
         })

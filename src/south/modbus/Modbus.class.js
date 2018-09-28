@@ -51,6 +51,7 @@ class Modbus extends Protocol {
           const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
           // Dynamic call of the appropriate function based on type
           Object.entries(addressesForType).forEach(([range, points]) => {
+            console.log(points)
             const rangeAddresses = range.split('-')
             const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
             const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
@@ -85,6 +86,7 @@ class Modbus extends Protocol {
               break
             default:
               console.error('This point type was not recognized : ', point.type)
+            // Ajouter une erreur pour les types modbus avec plusieurs fields
           }
           this.engine.addValue({ pointId: point.pointId, timestamp, data })
         })
