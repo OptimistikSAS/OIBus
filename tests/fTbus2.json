@@ -217,16 +217,14 @@
             "address": "0x0f",
             "type": "coil"
           },
-          "pointId": "./111111.fill_level#value",
-          "type": "number"
+          "pointId": "./111111.fill_level"
         },
         {
           "Modbus": {
             "address": "0x20",
             "type": "holdingRegister"
           },
-          "pointId": "./111111.flow_rate#value",
-          "type": "number"
+          "pointId": "./111111.flow_rate"
         }
       ]
     }
