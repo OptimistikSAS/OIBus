@@ -1,5 +1,6 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
+const { sprintf } = require('sprintf-js')
 const optimizedConfig = require('./config/optimizedConfig')
 const Protocol = require('../Protocol.class')
 
@@ -15,6 +16,21 @@ const add = (equipment, equipments) => {
     connected: false,
   }
   equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(equipments[equipment.equipmentId].socket)
+}
+
+/**
+ * Gives a type to a point based on the config
+ */
+const giveType = (point) => {
+  global.fTbusConfig.engine.types.forEach((typeCompared) => {
+    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+      point.type = typeCompared.fields[0].type
+      point.pointId += sprintf('#%(name)s', typeCompared.fields[0])
+      if (typeCompared.fields.length > 1) {
+        console.error('Modbus points cannot contain more than 1 field')
+      }
+    }
+  })
 }
 
 /**
@@ -51,7 +67,7 @@ class Modbus extends Protocol {
           const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
           // Dynamic call of the appropriate function based on type
           Object.entries(addressesForType).forEach(([range, points]) => {
-            console.log(points)
+            points.forEach(point => giveType(point))
             const rangeAddresses = range.split('-')
             const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
             const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
