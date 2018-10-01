@@ -2,21 +2,21 @@ const { CronJob } = require('cron')
 const { tryReadFile } = require('../services/config.service')
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
-const OPCUA = require('../south/OPCUA/OPCUA.class')
+// const OPCUA = require('../south/OPCUA/OPCUA.class')
 // North classes
 const Console = require('../north/console/Console.class')
-const InfluxDB = require('../north/influxdb/InfluxDB.class')
+// const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // List all South protocols
 const protocolList = {
   Modbus,
-  OPCUA,
+  // OPCUA,
 }
 
 // List all North applications
 const applicationList = {
   Console,
-  InfluxDB,
+  // InfluxDB,
 }
 // Will only contains protocols/application used
 // based on the config file
@@ -69,7 +69,7 @@ class Engine {
     // start Protocols
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
-      if (!activeProtocols[protocol]) {
+      if (!activeProtocols[protocol] && protocolList[protocol]) {
         activeProtocols[protocol] = new protocolList[protocol](config, this)
         activeProtocols[protocol].connect()
       }
@@ -77,7 +77,7 @@ class Engine {
     // start Applications
     Object.values(config.north).forEach((application) => {
       const { type } = application
-      if (!activeApplications[type]) {
+      if (!activeApplications[type] && applicationList[type]) {
         activeApplications[type] = new applicationList[type](this, application)
         activeApplications[type].connect()
       }
