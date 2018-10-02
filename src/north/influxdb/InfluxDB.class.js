@@ -20,6 +20,7 @@ const pointIdToNodes = (pointId) => {
       attributes[nodeId] = nodeValue
     })
   attributes.dataId = pointId.split('#').slice(-1).pop()
+  console.log(attributes.dataId)
   return attributes
 }
 
@@ -51,8 +52,13 @@ class InfluxDB extends Application {
    * @return {void}
    */
   makeRequest(entry) {
-    const { data, pointId, timestamp } = entry
-    const nodes = { data, host: this.host, timestamp }
+    const { pointId, timestamp } = entry
+    const nodes = { host: this.host, timestamp }
+    Object.entries(entry).forEach(([id, prop]) => {
+      if (id !== 'pointId' && id !== 'timestamp') {
+        nodes[id] = prop
+      }
+    })
     Object.entries(pointIdToNodes(pointId)).forEach(([nodeId, node]) => {
       nodes[nodeId] = node
     })
@@ -62,7 +68,7 @@ class InfluxDB extends Application {
         if (!Number.isNaN(parseInt(node, 10))) nodes.measurement = nodeId
       }
     })
-    const insert = global.fTbusConfig.applications[1].InfluxDB.insert.replace(/'/g, '')
+    const insert = this.applicationParameters.InfluxDB.insert.replace(/'/g, '')
     let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
       .replace(/zzz/g, '%(measurement)s')
       .replace(/ \w+=.*/g, ' %(dataId)s=%(data)s') // Looks for the last field (value field) and inserts the data
@@ -77,6 +83,7 @@ class InfluxDB extends Application {
     // Removes any unused 'xxx=%(xxx)' field from body
     body = body.replace(/,([a-z])\1\1(tag)?=%\(\1\1\1\)/g, '')
     body = sprintf(body, nodes)
+    console.log(body)
     fetch(sprintf(`http://${insert.split(' ')[0]}`, nodes), {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

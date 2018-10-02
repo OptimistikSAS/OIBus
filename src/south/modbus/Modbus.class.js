@@ -102,9 +102,11 @@ class Modbus extends Protocol {
               break
             default:
               console.error('This point type was not recognized : ', point.type)
-            // Ajouter une erreur pour les types modbus avec plusieurs fields
           }
-          this.engine.addValue({ pointId: point.pointId, timestamp, data })
+          const value = { pointId: point.pointId, timestamp }
+          const fieldName = point.pointId.split('#').slice(-1).pop()
+          value[fieldName] = data
+          this.engine.addValue(value)
         })
       })
       .catch((error) => {
