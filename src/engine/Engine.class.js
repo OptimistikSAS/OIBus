@@ -5,7 +5,7 @@ const Modbus = require('../south/Modbus/Modbus.class')
 // const OPCUA = require('../south/OPCUA/OPCUA.class')
 // North classes
 const Console = require('../north/console/Console.class')
-// const InfluxDB = require('../north/influxdb/InfluxDB.class')
+const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // List all South protocols
 const protocolList = {
@@ -16,7 +16,7 @@ const protocolList = {
 // List all North applications
 const applicationList = {
   Console,
-  // InfluxDB,
+  InfluxDB,
 }
 // Will only contains protocols/application used
 // based on the config file
@@ -42,9 +42,9 @@ class Engine {
    * @param {Object} entry : new entry (pointId, timestamp and data of the entry)
    * @return {void}
    */
-  addValue({ pointId, timestamp, data }) {
+  addValue(value) {
     this.queues.forEach((queue) => {
-      queue.enqueue({ pointId, timestamp, data })
+      queue.enqueue(value)
       // queue.info()
     })
   }

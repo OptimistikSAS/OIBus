@@ -59,10 +59,12 @@ class OPCUA extends Protocol {
         const nodesToRead = {}
         const MAX_AGE = 10
         scanGroup[equipment].forEach((point) => {
+          console.log(point)
           nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
         })
         this.equipments[equipment].session.read(Object.values(nodesToRead), MAX_AGE, (err, dataValues) => {
           if (!err && Object.keys(nodesToRead).length === dataValues.length) {
+            console.log(nodesToRead)
             Object.keys(nodesToRead).forEach((pointId) => {
               const dataValue = dataValues.shift()
               const value = {
