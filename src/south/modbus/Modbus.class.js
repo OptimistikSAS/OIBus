@@ -106,8 +106,8 @@ class Modbus extends Protocol {
             pointId: point.pointId,
             timestamp,
             dataId: point.dataId,
+            data,
           }
-          value[point.dataId] = data
           this.engine.addValue(value)
         })
       })
