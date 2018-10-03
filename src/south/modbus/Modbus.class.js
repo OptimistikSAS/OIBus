@@ -1,6 +1,5 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const { sprintf } = require('sprintf-js')
 const optimizedConfig = require('./config/optimizedConfig')
 const Protocol = require('../Protocol.class')
 
@@ -25,7 +24,7 @@ const giveType = (point) => {
   global.fTbusConfig.engine.types.forEach((typeCompared) => {
     if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
       point.type = typeCompared.fields[0].type
-      point.pointId += sprintf('#%(name)s', typeCompared.fields[0])
+      point.dataId = typeCompared.fields[0].name
       if (typeCompared.fields.length > 1) {
         console.error('Modbus points cannot contain more than 1 field')
       }
@@ -103,9 +102,12 @@ class Modbus extends Protocol {
             default:
               console.error('This point type was not recognized : ', point.type)
           }
-          const value = { pointId: point.pointId, timestamp }
-          const fieldName = point.pointId.split('#').slice(-1).pop()
-          value[fieldName] = data
+          const value = {
+            pointId: point.pointId,
+            timestamp,
+            dataId: point.dataId,
+          }
+          value[point.dataId] = data
           this.engine.addValue(value)
         })
       })
