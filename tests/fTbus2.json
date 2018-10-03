@@ -34,10 +34,6 @@
         "type": "flow_rate",
         "fields": [
           {
-            "name": "value",
-            "type": "number"
-          },
-          {
             "name": "quality",
             "type": "boolean"
           }
@@ -51,7 +47,20 @@
             "type": "boolean"
           }
         ]
-      }
+      },
+      {
+        "type": "temperature",
+        "fields": [
+          {
+            "name": "value",
+            "type": "number"
+          },
+          {
+            "name": "quality",
+            "type": "boolean"
+          }
+        ]
+      },
     ]
   },
   "south": {
@@ -87,21 +96,21 @@
         "archiveFolder": "./archived/",
         "errorFolder": "./error/",
         "separator": ",",
-        "timeStampColum": 0
+        "timeStampColum": 0,
       },
       "points": [
         {
           "csv": {
             "column": 1
           },
-          "pointId": "./Tank 5.tank/333333.temperature"
+          "pointId": "./Tank 5.tank/333333.temperature",
         },
         {
           "csv": {
             "column": 2
           },
-          "pointId": "./Tank 6.tank/333333.temperature"
-        }
+          "pointId": "./Tank 6.tank/333333.temperature",
+        },
       ]
     },
     {
@@ -150,25 +159,24 @@
       "defaultScanMode": "everySecond",
       "OPCUA": {
         "host": "localhost",
-        "opcPort": "53530",
+        "opcuaPort": "53530",
         "httpsPort": "53443",
         "endPoint": "Server/Simulation"
       },
       "points": [
         {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Sinusoid1"
-          },
-          "pointId": "./Tank 9.tank/333333.temperature"
+          "OPCUAnodeId": [
+            {
+              "ns": "5",
+              "s": "Sinusoid1"
+            },
+            {
+              "ns": "5",
+              "s": "Sawtooth1"
+            },
+          ],
+          "pointId": "./Tank 9.tank/333333.temperature",
         },
-        {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Sawtooth1"
-          },
-          "pointId": "./Tank 9.tank/333333.temperature"
-        }
       ]
     },
     {
@@ -186,7 +194,7 @@
             "address": "0x0031",
             "type": "coil"
           },
-          "pointId": "./Tank 3.tank/333333.fill_level"
+          "pointId": "./Tank 3.tank/333333.fill_level",
         },
         {
           "Modbus": {
@@ -201,23 +209,21 @@
             "address": "0x76a0",
             "type": "coil"
           },
-          "pointId": "./Tank 2.tank/222222.fill_level"
+          "pointId": "./Tank 2.tank/222222.fill_level",
         },
         {
           "Modbus": {
             "address": "0x76b0",
             "type": "coil"
           },
-          "pointId": "./Tank 2.tank/222333.fill_level",
-          "scanMode": "everySecond"
+          "pointId": "./Tank 2.tank/222333.fill_level"
         },
         {
           "Modbus": {
             "address": "0x83a6",
             "type": "coil"
           },
-          "pointId": "./Tank 3.tank/111111.valve_state",
-          "scanMode": "everySecond"
+          "pointId": "./Tank 3.tank/111111.valve_state"
         }
       ]
     },
@@ -225,6 +231,7 @@
       "equipmentId": "PLC-42",
       "protocol": "Modbus",
       "pointIdRoot": "/fttest.base/Tank4.tank",
+      "defaultScanMode": "everySecond",
       "Modbus": {
         "host": "localhost",
         "port": 502
@@ -235,18 +242,14 @@
             "address": "0x0f",
             "type": "coil"
           },
-          "pointId": "./111111.fill_level#value",
-          "type": "number",
-          "scanMode": "everySecond"
+          "pointId": "./111111.fill_level"
         },
         {
           "Modbus": {
             "address": "0x20",
             "type": "holdingRegister"
           },
-          "pointId": "./111111.flow_rate#value",
-          "type": "number",
-          "scanMode": "everySecond"
+          "pointId": "./111111.flow_rate"
         }
       ]
     }
