@@ -66,22 +66,30 @@
   "south": {
     // this section contains protocol specific parameters
     "modbus": {
+      "enabled": true,
       "addressGap": {
         "holdingRegister": 256, // max number of Registers in one request
         "coil": 1000 // max number of Coils in one request
       }
     },
     "opcua": {
+      "enabled": true,
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
       }
     },
-    "opcda": {},
-    "mqtt": {},
-    "profinet": {},
+    "opcda": {
+      "enabled": false,
+    },
+    "mqtt": {
+      "enabled": false,
+    },
+    "profinet": {
+      "enabled": false,
+    },
     "csv": {
-      // no parameters for this protocol
+      "enabled": true,
     },
     "sql": {}
   },
