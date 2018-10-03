@@ -1,5 +1,6 @@
 const minimist = require('minimist')
 const fs = require('fs')
+const JSON5 = require('json5')
 
 /**
  * Tries to read a file at a given path
@@ -7,8 +8,12 @@ const fs = require('fs')
  * @return {*} : content of the file
  */
 const tryReadFile = (path) => {
+  if (!path.endsWith('.json')) {
+    console.error('You must provide a json file for the configuration!')
+    return new Error('You must provide a json file for the configuration!')
+  }
   try {
-    return JSON.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
+    return JSON5.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
   } catch (error) {
     console.error(error)
     return error
@@ -22,7 +27,7 @@ const tryReadFile = (path) => {
  */
 const isValidArgs = ({ config = './fTbus.config.json' }) => {
   if (!config) {
-    console.error('No config file specified, exemple: --config ./config/config.json')
+    console.error('No config file specified, example: --config ./config/config.json')
     return false
   }
   return true
