@@ -15,6 +15,25 @@ const typeFromPointId = (pointId) => {
   return type
 }
 
+const giveType = (point) => {
+  global.fTbusConfig.engine.types.forEach((typeCompared) => {
+    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+      point.type = []
+      typeCompared.fields.forEach((field) => {
+        point.type.push(field.type)
+      })
+    }
+  }
+}
+      point.type = typeCompared.fields[0].type
+      point.dataId = typeCompared.fields[0].name
+      if (typeCompared.fields.length > 1) {
+        console.error('Modbus points cannot contain more than 1 field')
+      }
+    }
+  })
+}
+
 // const fieldFromPointId =
 
 /**
@@ -55,6 +74,7 @@ class OPCUA extends Protocol {
     // On scan : read nodes
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
+      console.log('izi')
       if (this.equipments[equipment].connected) {
         const nodesToRead = {}
         const MAX_AGE = 10
