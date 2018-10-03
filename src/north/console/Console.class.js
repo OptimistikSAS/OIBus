@@ -21,6 +21,10 @@ class Console extends Application {
     }
     console.log(this.queue.buffer)
   }
+
+  stringify(entry) {
+    console.log(sprintf(this.applicationParameters.Console.content, entry))
+  }
 }
 
 module.exports = Console

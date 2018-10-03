@@ -40,7 +40,7 @@ const optimizedConfig = (equipments) => {
             delete point.type
           })
         })
-      })
+      })  
       Object.keys(scanModes).forEach((scan) => {
         if (!acc[scan]) acc[scan] = {}
         acc[scan] = { ...acc[scan], ...scanModes[scan] }
@@ -48,7 +48,6 @@ const optimizedConfig = (equipments) => {
     }
     return acc
   }, {})
-
   return optimized
 }
 

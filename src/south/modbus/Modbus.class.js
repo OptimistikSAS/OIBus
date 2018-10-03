@@ -18,6 +18,21 @@ const add = (equipment, equipments) => {
 }
 
 /**
+ * Gives a type to a point based on the config
+ */
+const giveType = (point) => {
+  global.fTbusConfig.engine.types.forEach((typeCompared) => {
+    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+      point.type = typeCompared.fields[0].type
+      point.dataId = typeCompared.fields[0].name
+      if (typeCompared.fields.length > 1) {
+        console.error('Modbus points cannot contain more than 1 field')
+      }
+    }
+  })
+}
+
+/**
  * Class Modbus : provides instruction for Modbus client connection
  */
 class Modbus extends Protocol {
@@ -26,9 +41,9 @@ class Modbus extends Protocol {
    * @param {String} configPath : path to the non-optimized configuration file
    * @param {Object} engine
    */
-  constructor({ equipments, modbus }, engine) {
+  constructor({ equipments, south }, engine) {
     super(engine)
-    this.optimizedConfig = optimizedConfig(equipments, modbus.addressGap)
+    this.optimizedConfig = optimizedConfig(equipments, south.modbus.addressGap)
     equipments.forEach((equipment) => {
       if (equipment.Modbus) {
         add(equipment, this.equipments)
@@ -51,6 +66,7 @@ class Modbus extends Protocol {
           const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
           // Dynamic call of the appropriate function based on type
           Object.entries(addressesForType).forEach(([range, points]) => {
+            points.forEach(point => giveType(point))
             const rangeAddresses = range.split('-')
             const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
             const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
@@ -86,7 +102,13 @@ class Modbus extends Protocol {
             default:
               console.error('This point type was not recognized : ', point.type)
           }
-          this.engine.addValue({ pointId: point.pointId, timestamp, data })
+          const value = {
+            pointId: point.pointId,
+            timestamp,
+            dataId: point.dataId,
+          }
+          value[point.dataId] = data
+          this.engine.addValue(value)
         })
       })
       .catch((error) => {

@@ -10,6 +10,20 @@ const add = (opcua, equipment, equipments) => {
   }
 }
 
+const giveType = (point) => {
+  global.fTbusConfig.engine.types.forEach((typeCompared) => {
+    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+      point.fields = typeCompared.fields
+      point.fields.forEach((field) => {
+        field.dataId = field.name
+        delete field.name
+      })
+    }
+  })
+  console.log(point)
+}
+
+// const fieldFromPointId =
 
 /**
  *
@@ -18,12 +32,12 @@ const add = (opcua, equipment, equipments) => {
  * @extends {Protocol}
  */
 class OPCUA extends Protocol {
-  constructor({ equipments, opcua }, engine) {
+  constructor({ equipments, south }, engine) {
     super(engine)
     this.optimizedConfig = optimizedConfig(equipments)
     equipments.forEach((equipment) => {
       if (equipment.OPCUA) {
-        add(opcua, equipment, this.equipments)
+        add(south.opcua, equipment, this.equipments)
       }
     })
   }
@@ -49,20 +63,32 @@ class OPCUA extends Protocol {
     // On scan : read nodes
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
+      console.log('izi')
       if (this.equipments[equipment].connected) {
         const nodesToRead = {}
+        const MAX_AGE = 10
         scanGroup[equipment].forEach((point) => {
+          console.log(point)
           nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
         })
-        this.equipments[equipment].session.read(Object.values(nodesToRead), 10, (err, dataValues) => {
+        this.equipments[equipment].session.read(Object.values(nodesToRead), MAX_AGE, (err, dataValues) => {
           if (!err && Object.keys(nodesToRead).length === dataValues.length) {
+            console.log(nodesToRead)
             Object.keys(nodesToRead).forEach((pointId) => {
               const dataValue = dataValues.shift()
-              this.engine.addValue({
+              const value = {
                 pointId,
                 timestamp: dataValue.sourceTimestamp.toString(),
-                data: dataValue.value.value,
+              }
+              const type = typeFromPointId(pointId)
+              global.fTbusConfig.engine.types.forEach((typeCompared) => {
+                if (type === typeCompared.type) {
+                  typeCompared.fields.forEach((field) => {
+                    value[field.name] = dataValue.value[field.name]
+                  })
+                }
               })
+              this.engine.addValue(value)
             })
           }
         })
