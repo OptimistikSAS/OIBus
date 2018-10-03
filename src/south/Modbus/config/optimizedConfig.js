@@ -1,7 +1,5 @@
-const fs = require('fs')
-
 /**
- * Retreives a nested property from an object
+ * Retrieves a nested property from an object
  * @param {Object} obj : objectwhich contains the nested property
  * @param {String} nestedProp : property to search inside the object, must be of format "property.nestedProperty"
  * @param {boolean} delProp : whether to delete the property once find or not
@@ -24,21 +22,19 @@ const findProperty = (obj, nestedProp, delProp) => {
  * @param {String} key : name of the property on which base the groups
  * @return {Object} acc : grouped objects
  */
-const groupBy = (array, key, newProps = {}) =>
-  array.reduce((acc, obj) => {
-    const group = findProperty(obj, key, true)
-    if (!acc[group]) acc[group] = []
-    acc[group].push({ ...obj, ...newProps })
-    return acc
-  }, {})
+const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
+  const group = findProperty(obj, key, true)
+  if (!acc[group]) acc[group] = []
+  acc[group].push({ ...obj, ...newProps })
+  return acc
+}, {})
 
-const findAddressesGroup = (object, address) =>
-  Object.keys(object).find((group) => {
-    const rangeAddresses = group.split('-')
-    const start = parseInt(rangeAddresses[0], 10)
-    const end = parseInt(rangeAddresses[1], 10)
-    return address >= start && address <= end
-  })
+const findAddressesGroup = (object, address) => Object.keys(object).find((group) => {
+  const rangeAddresses = group.split('-')
+  const start = parseInt(rangeAddresses[0], 10)
+  const end = parseInt(rangeAddresses[1], 10)
+  return address >= start && address <= end
+})
 
 /**
  * Groups the equipments by addresses to optimize requests
@@ -71,26 +67,16 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const getConfig = (path) => {
-  const configFile = JSON.parse(fs.readFileSync(path, 'utf8')) // Read configuration file synchronously
-
-  if (!configFile) {
-    console.error(`The file ${path} could not be loaded!`)
-    return false
-  }
-
-  const optimized = configFile.reduce((acc, { equipmentId, protocol, variables }) => {
-    const protocolConfig = JSON.parse(fs.readFileSync(`./tests/${protocol}.config.json`, 'utf8')) // Read configuration file synchronously
-    const { addressGap } = protocolConfig
-
-    if (protocol === 'modbus') {
-      const scanModes = groupBy(variables, 'scanMode', { equipmentId })
+const optimizedConfig = (equipments, addressGap) => {
+  const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
+    if (protocol === 'Modbus') {
+      const scanModes = groupBy(points, 'scanMode', { equipmentId })
       Object.keys(scanModes).forEach((scan) => {
         scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
         Object.keys(scanModes[scan]).forEach((equipment) => {
           scanModes[scan][equipment] = groupBy(scanModes[scan][equipment], `${protocol}.type`)
           Object.keys(scanModes[scan][equipment]).forEach((type) => {
-            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap)
+            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap[type])
           })
         })
       })
@@ -106,4 +92,4 @@ const getConfig = (path) => {
   return optimized
 }
 
-module.exports = getConfig
+module.exports = optimizedConfig
