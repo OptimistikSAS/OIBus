@@ -43,36 +43,26 @@ class CSV extends Protocol {
   onScan() {
     this.equipments.forEach((equipment) => {
       const { points } = equipment
-      const { filename, separator, archiveFolder, errorFolder } = equipment.CSV
+      const { inputFolder, separator, archiveFolder, errorFolder } = equipment.CSV
+      // list files in the inputFolder and manage them.
       const exists = fs.existsSync(filename)
       if (exists) {
         console.log('Opening the file ', filename)
         const csvObjects = loadFile(filename, separator)
-        const indexOfTimeStamp = 0
+        // can be also a string such as "time" to find the column
+        const indexOfTimeStamp = equipment.CSV.indexOfTimeStamp
         points.forEach((point) => {
-          if (typeof point.CSV.column === 'number') {
-            // In case that the type is number
-            csvObjects.forEach((line, index) => {
-              if (index !== 0) {
-                const data = line[point.CSV.column]
-                const timestamp = line[indexOfTimeStamp]
-                this.engine.addValue({ pointId: point.pointId, timestamp, data })
-              }
-            })
-          } else {
-            // in case that the type is string like 'sensor1'
-            csvObjects.forEach((line, index) => {
-              let indexOfColumn
-              if (index === 0) {
-                // Find the index in the first line
-                indexOfColumn = line.indexOf(point.CSV.column)
-              } else {
-                const data = line[indexOfColumn]
-                const timestamp = line[indexOfTimeStamp]
-                this.engine.addValue({ pointId: point.pointId, timestamp, data })
-              }
-            })
-          }
+          const column = typeof point.CSV.column === 'number' ? point.CSV.column : (indexOfColumn = line.indexOf(point.CSV.column))
+
+          // In case that the type is number
+          csvObjects.forEach((line, index) => {
+            if (index !== 0) {
+              // parameter!!!!
+              const data = line[column]
+              const timestamp = line[indexOfTimeStamp]
+              this.engine.addValue({ pointId: point.pointId, timestamp, data })
+            }
+          })
         })
         fs.rename(filename, `${archiveFolder}fichier.csv`, (err) => {
           if (err) {
