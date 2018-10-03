@@ -1,16 +1,16 @@
 const { CronJob } = require('cron')
 const { tryReadFile } = require('../services/config.service')
 // South classes
-const Modbus = require('../south/Modbus/Modbus.class')
-// const OPCUA = require('../south/OPCUA/OPCUA.class')
+// const Modbus = require('../south/Modbus/Modbus.class')
+const OPCUA = require('../south/OPCUA/OPCUA.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // List all South protocols
 const protocolList = {
-  Modbus,
-  // OPCUA,
+  // Modbus,
+  OPCUA,
 }
 
 // List all North applications
@@ -88,7 +88,9 @@ class Engine {
         cronTime,
         onTick: () => {
           Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].onScan(scanMode))
-          Object.keys(activeApplications).forEach(application => activeApplications[application].onScan(scanMode))
+          Object.keys(activeApplications).forEach((application) => {
+            if (activeApplications[application].queue.length) activeApplications[application].onScan(scanMode)
+          })
         },
         start: false,
       })

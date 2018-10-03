@@ -8,20 +8,15 @@ const Application = require('../Application.class')
  * @param {String} pointId : string with this form : value1.name1/value2.name2#value
  * @return {Object} attributes : values indexed by name
  */
-const pointIdToNodes = (pointId) => {
-  const attributes = {}
+const pointIdToNodes = (attributes, pointId) => {
   pointId
     .slice(1)
-    .split('#')[0]
     .split('/')
     .forEach((node) => {
       const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
       const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
       attributes[nodeId] = nodeValue
     })
-  attributes.dataId = pointId.split('#').slice(-1).pop()
-  console.log(attributes.dataId)
-  return attributes
 }
 
 /**
@@ -52,26 +47,28 @@ class InfluxDB extends Application {
    * @return {void}
    */
   makeRequest(entry) {
-    const { pointId, timestamp } = entry
-    const nodes = { host: this.host, timestamp }
+    const { pointId } = entry
+    console.log(entry)
+    const nodes = { host: this.host }
     Object.entries(entry).forEach(([id, prop]) => {
-      if (id !== 'pointId' && id !== 'timestamp') {
+      if (id !== 'pointId') {
         nodes[id] = prop
       }
     })
-    Object.entries(pointIdToNodes(pointId)).forEach(([nodeId, node]) => {
-      nodes[nodeId] = node
-    })
+    pointIdToNodes(nodes, pointId)
+    console.log(nodes.dataId)
     Object.entries(nodes).forEach(([nodeId, node]) => {
-      if (nodeId !== 'data') {
+      if (nodeId !== nodes.dataId) {
+        console.log(node, nodeId)
         nodes[nodeId] = node.replace(/ /g, '\\ ')
         if (!Number.isNaN(parseInt(node, 10))) nodes.measurement = nodeId
       }
     })
     const insert = this.applicationParameters.InfluxDB.insert.replace(/'/g, '')
     let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
-      .replace(/zzz/g, '%(measurement)s')
-      .replace(/ \w+=.*/g, ' %(dataId)s=%(data)s') // Looks for the last field (value field) and inserts the data
+      .replace(/zzz/g, '%(measurement)s') // // Use types from config ??
+      .replace(/ \w+=.*/g, ' %(dataId)s=') // Looks for the last field (value field) and inserts the data
+    body = `${body}%(${nodes.dataId})s`
     Object.keys(nodes).forEach((nodeId) => {
       const notTags = ['data', 'host', 'measurement', nodes.measurement, 'base']
       if (!notTags.includes(nodeId)) {
@@ -83,7 +80,6 @@ class InfluxDB extends Application {
     // Removes any unused 'xxx=%(xxx)' field from body
     body = body.replace(/,([a-z])\1\1(tag)?=%\(\1\1\1\)/g, '')
     body = sprintf(body, nodes)
-    console.log(body)
     fetch(sprintf(`http://${insert.split(' ')[0]}`, nodes), {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
