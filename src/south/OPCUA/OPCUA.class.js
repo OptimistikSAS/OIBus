@@ -10,28 +10,17 @@ const add = (opcua, equipment, equipments) => {
   }
 }
 
-const typeFromPointId = (pointId) => {
-  const type = pointId.split('.').slice(-1).pop()
-  return type
-}
-
 const giveType = (point) => {
   global.fTbusConfig.engine.types.forEach((typeCompared) => {
     if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
-      point.type = []
-      typeCompared.fields.forEach((field) => {
-        point.type.push(field.type)
+      point.fields = typeCompared.fields
+      point.fields.forEach((field) => {
+        field.dataId = field.name
+        delete field.name
       })
     }
-  }
-}
-      point.type = typeCompared.fields[0].type
-      point.dataId = typeCompared.fields[0].name
-      if (typeCompared.fields.length > 1) {
-        console.error('Modbus points cannot contain more than 1 field')
-      }
-    }
   })
+  console.log(point)
 }
 
 // const fieldFromPointId =
