@@ -3,6 +3,7 @@ const { tryReadFile } = require('../services/config.service')
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
 const OPCUA = require('../south/OPCUA/OPCUA.class')
+const CSV = require('../south/CSV/CSV.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
@@ -11,6 +12,7 @@ const InfluxDB = require('../north/influxdb/InfluxDB.class')
 const protocolList = {
   Modbus,
   OPCUA,
+  CSV,
 }
 
 // List all North applications
