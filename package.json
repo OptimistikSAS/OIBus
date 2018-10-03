@@ -23,6 +23,7 @@
     "cron": "^1.4.1",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
+    "javascript-csv": "^1.0.7",
     "jsmodbus": "^3.1.0",
     "json5": "^2.0.1",
     "koa": "^2.5.3",
