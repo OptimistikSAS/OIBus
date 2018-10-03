@@ -42,9 +42,9 @@ class Engine {
    * @param {Object} entry : new entry (pointId, timestamp and data of the entry)
    * @return {void}
    */
-  addValue({ pointId, timestamp, data }) {
+  addValue(value) {
     this.queues.forEach((queue) => {
-      queue.enqueue({ pointId, timestamp, data })
+      queue.enqueue(value)
       // queue.info()
     })
   }
@@ -69,26 +69,28 @@ class Engine {
     // start Protocols
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
-      if (!activeProtocols[protocol]) {
+      if (!activeProtocols[protocol] && protocolList[protocol]) {
         activeProtocols[protocol] = new protocolList[protocol](config, this)
         activeProtocols[protocol].connect()
       }
     })
     // start Applications
-    Object.values(config.applications).forEach((application) => {
+    Object.values(config.north).forEach((application) => {
       const { type } = application
-      if (!activeApplications[type]) {
+      if (!activeApplications[type] && applicationList[type]) {
         activeApplications[type] = new applicationList[type](this, application)
         activeApplications[type].connect()
       }
     })
     // start the cron timer
-    config.scanModes.forEach(({ scanMode, cronTime }) => {
+    config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
         onTick: () => {
           Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].onScan(scanMode))
-          Object.keys(activeApplications).forEach(application => activeApplications[application].onScan(scanMode))
+          Object.keys(activeApplications).forEach((application) => {
+            if (activeApplications[application].queue.length) activeApplications[application].onScan(scanMode)
+          })
         },
         start: false,
       })
@@ -107,7 +109,7 @@ class Engine {
   static initConfig(config) {
     const readConfig = tryReadFile(config)
     // Check critical entries
-    if (!readConfig.scanModes) {
+    if (!readConfig.engine.scanModes) {
       console.error('You should define scan modes.')
       throw new Error('You should define scan modes.')
     }
@@ -120,6 +122,9 @@ class Engine {
       equipment.points.forEach((point) => {
         if (point.pointId.charAt(0) === '.') {
           point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+        if (!point.scanMode) {
+          point.scanMode = equipment.defaultScanMode
         }
       })
     })
