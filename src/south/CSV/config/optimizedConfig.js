@@ -48,6 +48,7 @@ const optimizedConfig = (equipments) => {
     }
     return acc
   }, {})
+
   return optimized
 }
 
