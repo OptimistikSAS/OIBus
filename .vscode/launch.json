@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Launch Program",
       "program": "${workspaceFolder}/src/index.js",
-      "args":  ["--config", "./tests/fTbus2.json"]
+      "args":  ["--config", "./tests/fTbus_Csv.json"]
     }
   ]
 }

@@ -26,7 +26,7 @@
     {
       "opc": "opc.tcp://%(host)s:%(opcPort)s/%(endPoint)s",
       "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
-    },
+    }
   },
   "equipments": [
     {
