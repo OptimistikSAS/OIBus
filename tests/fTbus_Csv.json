@@ -34,11 +34,12 @@
       "pointIdRoot": "/fttest.base",
       "defaultScanMode": "everySecond",
       "CSV": {
-        "filename": "./fichier.csv",
-        "archiveFolder": "./archived/",
-        "errorFolder": "./error/",
+        "inputFolder": "./tests/fichiers/",
+        "archiveFolder": "./tests/archived/",
+        "errorFolder": "./tests/error/",
         "separator": ",",
-        "timeStampColum": 0
+        "timeStampColum": 0,
+        "hasFirstLine": true
       },
       "points": [
         {
@@ -55,6 +56,7 @@
         },
         {
           "CSV": {
+
             "column": 3
           },
           "pointId": "./Tank 7.tank/333333.temperature"
