@@ -65,41 +65,41 @@
   },
   "south": {
     // this section contains protocol specific parameters
-    "modbus": {
+    "Modbus": {
       "enabled": true,
       "addressGap": {
         "holdingRegister": 256, // max number of Registers in one request
         "coil": 1000 // max number of Coils in one request
       }
     },
-    "opcua": {
+    "OPCUA": {
       "enabled": false,
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
       }
     },
-    "opcda": {
+    "OPCDA": {
       "enabled": false,
     },
-    "mqtt": {
+    "MQTT": {
       "enabled": false,
     },
-    "profinet": {
+    "Profinet": {
       "enabled": false,
     },
-    "csv": {
+    "CSV": {
       "enabled": true,
     },
-    "sql": {}
+    "SQL": {}
   },
   "equipments": [
     {
       "equipmentId": "CSVServer",
-      "protocol": "csv",
+      "protocol": "CSV",
       "pointIdRoot": "/fttest.base",
       "defaultScanMode": "everySecond",
-      "csv": {
+      "CSV": {
         "filename": "./fichier.csv",
         "archiveFolder": "./archived/",
         "errorFolder": "./error/",
@@ -108,13 +108,13 @@
       },
       "points": [
         {
-          "csv": {
+          "CSV": {
             "column": 1
           },
           "pointId": "./Tank 5.tank/333333.temperature",
         },
         {
-          "csv": {
+          "CSV": {
             "column": 2
           },
           "pointId": "./Tank 6.tank/333333.temperature",
