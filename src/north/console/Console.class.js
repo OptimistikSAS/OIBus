@@ -6,7 +6,7 @@ class Console extends Application {
    * Shows the length of this.queue
    * @return {void}
    */
-  onScan() {
+  onUpdate() {
     console.log(this.queue.flush())
   }
 

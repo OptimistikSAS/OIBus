@@ -7,7 +7,7 @@ const args = parseArgs() || {} // Arguments of the command
 const { config = './fTbus.json' } = args // Get the configuration file path
 
 // read the fTbusConfigFile and make it a global variable
-global.fTbusConfig = Engine.initConfig(config)
+global.fTbusConfig = Engine.loadConfig(config)
 const { debug = false, port = 3333 } = global.fTbusConfig // Get the config entries
 const VERSION = require('../package.json').version
 
