@@ -72,7 +72,7 @@ class Engine {
     // start Protocols
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
-      if (!activeProtocols[protocol] && config.south[protocol.toLowerCase()].enabled) {
+      if (!activeProtocols[protocol] && config.south[protocol].enabled) {
         if (protocolList[protocol]) {
           activeProtocols[protocol] = new protocolList[protocol](config, this)
           activeProtocols[protocol].connect()
