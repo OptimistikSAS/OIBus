@@ -37,7 +37,7 @@ class InfluxDB extends Application {
    * Makes a request for every entry in the queue while emptying it.
    * @return {void}
    */
-  onScan() {
+  onUpdate() {
     this.queue.flush(value => this.makeRequest(value))
   }
 

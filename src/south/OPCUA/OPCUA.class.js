@@ -63,7 +63,6 @@ class OPCUA extends Protocol {
     // On scan : read nodes
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
-      console.log('izi')
       if (this.equipments[equipment].connected) {
         const nodesToRead = {}
         const MAX_AGE = 10
@@ -89,6 +88,7 @@ class OPCUA extends Protocol {
                 }
               })
               this.engine.addValue(value)
+              // @todo handle double values with an array as data
             })
           }
         })

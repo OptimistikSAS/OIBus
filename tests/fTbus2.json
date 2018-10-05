@@ -73,7 +73,7 @@
       }
     },
     "opcua": {
-      "enabled": true,
+      "enabled": false,
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
@@ -265,6 +265,7 @@
 
   "north": {
     "MyConsole": {
+      "enabled": true,
       "type": "Console",
       "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
       "timeStamp": "fTbus",
@@ -274,6 +275,7 @@
     },
 
     "BaseInflux": {
+      "enabled": false,
       "type": "InfluxDB",
       "minimumBuffer:": 10, // group by 10 when possible
       "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
