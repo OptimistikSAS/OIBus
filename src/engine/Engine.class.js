@@ -44,11 +44,12 @@ class Engine {
    * @param {Object} entry : new entry (pointId, timestamp and data of the entry)
    * @return {void}
    */
-  addValue(value) {
+  addValue({ data, dataId, pointId, timestamp }) {
     this.queues.forEach((queue) => {
-      queue.enqueue(value)
+      queue.enqueue({ data, dataId, pointId, timestamp })
       // queue.info()
     })
+    Object.values(activeApplications).forEach(application => application.onUpdate())
   }
 
   /**
@@ -71,17 +72,25 @@ class Engine {
     // start Protocols
     Object.values(config.equipments).forEach((equipment) => {
       const { protocol } = equipment
-      if (!activeProtocols[protocol] && protocolList[protocol]) {
-        activeProtocols[protocol] = new protocolList[protocol](config, this)
-        activeProtocols[protocol].connect()
+      if (!activeProtocols[protocol] && config.south[protocol.toLowerCase()].enabled) {
+        if (protocolList[protocol]) {
+          activeProtocols[protocol] = new protocolList[protocol](config, this)
+          activeProtocols[protocol].connect()
+        } else {
+          console.error('This protocol is not supported : ', protocol)
+        }
       }
     })
     // start Applications
     Object.values(config.north).forEach((application) => {
       const { type } = application
-      if (!activeApplications[type] && applicationList[type]) {
-        activeApplications[type] = new applicationList[type](this, application)
-        activeApplications[type].connect()
+      if (application.enabled) {
+        if (applicationList[type]) {
+          activeApplications[type] = new applicationList[type](this, application)
+          activeApplications[type].connect()
+        } else {
+          console.error('This application is not supported : ', type)
+        }
       }
     })
     // start the cron timer
@@ -89,10 +98,7 @@ class Engine {
       const job = new CronJob({
         cronTime,
         onTick: () => {
-          Object.keys(activeProtocols).forEach(protocol => activeProtocols[protocol].onScan(scanMode))
-          Object.keys(activeApplications).forEach((application) => {
-            if (activeApplications[application].queue.length) activeApplications[application].onScan(scanMode)
-          })
+          Object.values(activeProtocols).forEach(protocol => protocol.onScan(scanMode))
         },
         start: false,
       })
@@ -108,7 +114,7 @@ class Engine {
    * @param {String} config : path to the config file
    * @return {Object} readConfig : parsed config Object
    */
-  static initConfig(config) {
+  static loadConfig(config) {
     const readConfig = tryReadFile(config)
     // Check critical entries
     if (!readConfig.engine.scanModes) {
@@ -118,6 +124,18 @@ class Engine {
     if (!readConfig.equipments) {
       console.error('You should define equipments.')
       throw new Error('You should define equipments.')
+    }
+    if (!readConfig.engine.types) {
+      console.error('You should define types.')
+      throw new Error('You should define types.')
+    }
+    if (!readConfig.north) {
+      console.error('You should define application parameters.')
+      throw new Error('You should define application parameters.')
+    }
+    if (!readConfig.south) {
+      console.error('You should define protocol parameters.')
+      throw new Error('You should define protocol parameters.')
     }
     // replace relative path into absolute paths
     readConfig.equipments.forEach((equipment) => {
