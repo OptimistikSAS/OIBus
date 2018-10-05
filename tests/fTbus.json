@@ -66,14 +66,14 @@
   "south": {
     // this section contains protocol specific parameters
     "Modbus": {
-      "enabled": true,
+      "enabled": false,
       "addressGap": {
         "holdingRegister": 256, // max number of Registers in one request
         "coil": 1000 // max number of Coils in one request
       }
     },
     "OPCUA": {
-      "enabled": false,
+      "enabled": true,
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
@@ -89,7 +89,7 @@
       "enabled": false,
     },
     "CSV": {
-      "enabled": true,
+      "enabled": false,
     },
     "SQL": {}
   },
@@ -130,7 +130,8 @@
         "host": "localhost",
         "opcuaPort": "53530",
         "httpsPort": "53443",
-        "endPoint": "Server/Simulation"
+        "endPoint": "Server/Simulation",
+        "timeOrigin": "server", // or "source" or "fTbus"
       },
       "points": [
         {
@@ -139,7 +140,6 @@
             "s": "Counter1"
           },
           "pointId": "./Tank 5.tank/333333.temperature",
-          "type": "number"
         },
         {
           "OPCUAnodeId": {
@@ -147,15 +147,6 @@
             "s": "Random1"
           },
           "pointId": "./Tank 5.tank/333333.temperature",
-          "type": "number"
-        },
-        {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Random1"
-          },
-          "pointId": "./Tank 5.tank/333333.temperature",
-          "type": "number",
           "scanMode": "everyNoon"
         }
       ]
@@ -173,16 +164,10 @@
       },
       "points": [
         {
-          "OPCUAnodeId": [
-            {
-              "ns": "5",
-              "s": "Sinusoid1"
-            },
-            {
-              "ns": "5",
-              "s": "Sawtooth1"
-            },
-          ],
+          "OPCUAnodeId": {
+            "ns": "5",
+            "s": "Sinusoid1"
+          },
           "pointId": "./Tank 9.tank/333333.temperature",
         },
       ]
