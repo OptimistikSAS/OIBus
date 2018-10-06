@@ -7,6 +7,8 @@ const CSV = require('../south/CSV/CSV.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
+// Web Server
+const Server = require('../server/Server.class')
 
 // List all South protocols
 const protocolList = {
@@ -33,11 +35,44 @@ const activeApplications = {}
 class Engine {
   /**
    * @constructor for Engine
+   * Reads the config file and create the corresponding Object.
+   * Makes the necessary changes to the pointId attributes.
+   * Checks for critical entries such as scanModes and equipments.
+   * @param {String} config : path to the config file
+   * @return {Object} readConfig : parsed config Object
    */
-  constructor(config) {
+  constructor(configFile) {
+    const config = tryReadFile(configFile)
+    const mandatoryEntries = ['engine.scanModes', 'engine.types', 'south.equipments', 'north.applications']
+    mandatoryEntries.forEach((entry) => {
+      const [key, subkey] = entry.split('.')
+      if (!config[key]) {
+        console.error(`You should define ${key} in the config file`)
+        process.exit(1)
+      }
+      if (!config[key][subkey]) {
+        console.error(`You should define ${entry} in the config file`)
+        process.exit(1)
+      }
+    })
+    // prepare config
+    config.south.equipments.forEach((equipment) => {
+      equipment.points.forEach((point) => {
+        // replace relative path into absolute paths
+        if (point.pointId.charAt(0) === '.') {
+          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+        // apply default scanmodes
+        if (!point.scanMode) {
+          point.scanMode = equipment.defaultScanMode
+        }
+      })
+    })
     /** @type {string} contains one queue per application */
     this.queues = []
-    this.config = config
+    this.south = config.south
+    this.north = config.north
+    this.engine = config.engine
   }
 
   /**
@@ -69,34 +104,45 @@ class Engine {
    * @return {void}
    */
   start(callback) {
-    // start Protocol for each equipments
-    this.config.south.equipments.forEach((equipment) => {
+    // Get the config entries
+    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = this.engine
+
+    // 1. start web server
+    const server = new Server(debug, filter)
+    server.listen(port, () => console.info(`Server started on ${port}`))
+
+    // 2. start Protocol for each equipments
+    this.south.equipments.forEach((equipment) => {
       const { protocol, enabled, equipmentId } = equipment
       const Protocol = protocolList[protocol]
       if (enabled) {
         if (Protocol) {
-          activeProtocols[equipmentId] = new Protocol(equipment, this.config.south)
+          activeProtocols[equipmentId] = new Protocol(equipment, this.south)
           activeProtocols[equipmentId].connect()
         } else {
-          console.error('This protocol is not supported : ', protocol)
+          console.error(`Protocol for ${equipmentId}is not supported : ${protocol}`)
+          process.exit(1)
         }
       }
     })
-    // start Applications
-    this.config.north.applications.forEach((application) => {
+
+    // 3. start Applications
+    this.north.applications.forEach((application) => {
       const { applicationType, enabled, applicationId } = application
       const Application = applicationList[applicationType]
       if (enabled) {
         if (Application) {
-          activeApplications[applicationId] = new Application(application, this.config.north)
+          activeApplications[applicationId] = new Application(application, this.north)
           activeApplications[applicationType].connect()
         } else {
-          console.error('This application is not supported : ', applicationType)
+          console.error(`Application type for ${applicationId} is not supported : ${applicationType}`)
+          process.exit(1)
         }
       }
     })
-    // start the cron timer
-    this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
+
+    // 4. start the timers
+    this.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
         onTick: () => {
@@ -108,41 +154,6 @@ class Engine {
       job.start()
     })
     if (callback) callback()
-  }
-
-  /**
-   * Reads the config file and create the corresponding Object.
-   * Makes the necessary changes to the pointId attributes.
-   * Checks for scanModes and equipments.
-   * @param {String} config : path to the config file
-   * @return {Object} readConfig : parsed config Object
-   */
-  static loadConfig(config) {
-    const readConfig = tryReadFile(config)
-    const mandatoryEntries = ['engine.scanModes', 'engine.types', 'south.equipments']
-    mandatoryEntries.forEach((entry) => {
-      const [key, subkey] = entry.split('.')
-      if (!readConfig[key]) {
-        console.error(`You should define ${key} in the config file`)
-        process.exit(1)
-      }
-      if (!readConfig[key][subkey]) {
-        console.error(`You should define ${entry} in the config file`)
-        process.exit(1)
-      }
-    })
-    // replace relative path into absolute paths
-    readConfig.south.equipments.forEach((equipment) => {
-      equipment.points.forEach((point) => {
-        if (point.pointId.charAt(0) === '.') {
-          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-        }
-        if (!point.scanMode) {
-          point.scanMode = equipment.defaultScanMode
-        }
-      })
-    })
-    return readConfig
   }
 }
 
