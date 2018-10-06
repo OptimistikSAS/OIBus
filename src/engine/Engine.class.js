@@ -42,21 +42,21 @@ class Engine {
    * @return {Object} readConfig : parsed config Object
    */
   constructor(configFile) {
-    const config = tryReadFile(configFile)
+    this.config = tryReadFile(configFile)
     const mandatoryEntries = ['engine.scanModes', 'engine.types', 'south.equipments', 'north.applications']
     mandatoryEntries.forEach((entry) => {
       const [key, subkey] = entry.split('.')
-      if (!config[key]) {
+      if (!this.config[key]) {
         console.error(`You should define ${key} in the config file`)
         process.exit(1)
       }
-      if (!config[key][subkey]) {
+      if (!this.config[key][subkey]) {
         console.error(`You should define ${entry} in the config file`)
         process.exit(1)
       }
     })
     // prepare config
-    config.south.equipments.forEach((equipment) => {
+    this.config.south.equipments.forEach((equipment) => {
       equipment.points.forEach((point) => {
         // replace relative path into absolute paths
         if (point.pointId.charAt(0) === '.') {
@@ -70,9 +70,6 @@ class Engine {
     })
     /** @type {string} contains one queue per application */
     this.queues = []
-    this.south = config.south
-    this.north = config.north
-    this.engine = config.engine
   }
 
   /**
@@ -114,10 +111,11 @@ class Engine {
     // 2. start Protocol for each equipments
     this.south.equipments.forEach((equipment) => {
       const { protocol, enabled, equipmentId } = equipment
-      const Protocol = protocolList[protocol]
+      // select the correct Handler
+      const ProtocolHandler = protocolList[protocol]
       if (enabled) {
-        if (Protocol) {
-          activeProtocols[equipmentId] = new Protocol(equipment, this.south)
+        if (ProtocolHandler) {
+          activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
           activeProtocols[equipmentId].connect()
         } else {
           console.error(`Protocol for ${equipmentId}is not supported : ${protocol}`)
@@ -127,21 +125,22 @@ class Engine {
     })
 
     // 3. start Applications
-    this.north.applications.forEach((application) => {
-      const { applicationType, enabled, applicationId } = application
-      const Application = applicationList[applicationType]
+    this.north.applications.forEach((applicationInstance) => {
+      const { application, enabled, applicationId } = applicationInstance
+      // select the right application
+      const ApplicationHandler = applicationList[application]
       if (enabled) {
-        if (Application) {
-          activeApplications[applicationId] = new Application(application, this.north)
-          activeApplications[applicationType].connect()
+        if (ApplicationHandler) {
+          activeApplications[applicationId] = new ApplicationHandler(application, this)
+          activeApplications[application].connect()
         } else {
-          console.error(`Application type for ${applicationId} is not supported : ${applicationType}`)
+          console.error(`Application type for ${applicationId} is not supported : ${application}`)
           process.exit(1)
         }
       }
     })
 
-    // 4. start the timers
+    // 4. start the timers for each scan modes
     this.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
