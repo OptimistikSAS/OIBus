@@ -5,10 +5,8 @@ class Queue {
   /**
    * @constructor for the class Queue
    */
-  constructor(engine) {
+  constructor() {
     this.buffer = []
-    // each queue need to register to the calling engine
-    engine.registerQueue(this)
   }
 
   /**
@@ -32,12 +30,10 @@ class Queue {
    * dequeue all objects in the queue
    * @return {Array} All objects currently in the queue are returned
    */
-  flush(callback = () => {}) {
+  flush() {
     const flushingArray = []
     while (this.length) {
       flushingArray.push(this.dequeue())
-      // Maybe a callback after a dequeue could be useful ? see Console and InfluxDB
-      callback(flushingArray.slice(-1)[0]) // callbacks on the entry added last
     }
     return flushingArray
   }
