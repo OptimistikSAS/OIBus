@@ -1,7 +1,11 @@
 {
   "engine": {
-    "debug": true, // switch debug mode
-    "port": 2222, // the port for the engine
+    // switch debug mode
+    "debug": true,
+    // the port for the web interface to fTbus
+    "port": 2222,
+    // the list of IP addresses allowed to access
+    "filter": ["127.0.0.1", "::1"],
     // the scan mode section allow to create categories of scan
     // each categories will use the cron syntax to determine the
     // sequence
@@ -60,217 +64,220 @@
             "type": "boolean"
           }
         ]
-      },
+      }
     ]
   },
   "south": {
     // this section contains protocol specific parameters
     "Modbus": {
-      "enabled": false,
       "addressGap": {
-        "holdingRegister": 256, // max number of Registers in one request
-        "coil": 1000 // max number of Coils in one request
+        // max number of Registers in one request
+        "holdingRegister": 256,
+        // max number of Coils in one request
+        "coil": 1000
       }
     },
     "OPCUA": {
-      "enabled": true,
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
       }
     },
     "OPCDA": {
-      "enabled": false,
     },
     "MQTT": {
-      "enabled": false,
     },
     "Profinet": {
-      "enabled": false,
     },
     "CSV": {
-      "enabled": false,
     },
-    "SQL": {}
+    "SQL": {},
+    "equipments": [
+      {
+        "equipmentId": "CSVServer",
+        "enabled": false,
+        "protocol": "CSV",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "CSV": {
+          "filename": "./tests/fichier.csv",
+          "archiveFolder": "./tests/archived/",
+          "errorFolder": "./tests/error/",
+          "separator": ",",
+          "timeStampColum": 0
+        },
+        "points": [
+          {
+            "CSV": {
+              "column": 1
+            },
+            "pointId": "./Tank 5.tank/333333.temperature"
+          },
+          {
+            "CSV": {
+              "column": 2
+            },
+            "pointId": "./Tank 6.tank/333333.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "SimulationServer",
+        "enabled": true,
+        "protocol": "OPCUA",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "OPCUA": {
+          "host": "localhost",
+          "opcuaPort": "53530",
+          "httpsPort": "53443",
+          "endPoint": "Server/Simulation",
+          "timeOrigin": "server" // or "source" or "fTbus"
+        },
+        "points": [
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Counter1"
+            },
+            "pointId": "./Tank 5.tank/333333.temperature"
+          },
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Random1"
+            },
+            "pointId": "./Tank 5.tank/333333.temperature",
+            "scanMode": "everyNoon"
+          }
+        ]
+      },
+      {
+        "equipmentId": "SimulationServerBis",
+        "enabled": false,
+        "protocol": "OPCUA",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "OPCUA": {
+          "host": "localhost",
+          "opcuaPort": "53530",
+          "httpsPort": "53443",
+          "endPoint": "Server/Simulation"
+        },
+        "points": [
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Sinusoid1"
+            },
+            "pointId": "./Tank 9.tank/333333.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "PLC-35",
+        "enabled": false,
+        "protocol": "Modbus",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "Modbus": {
+          "host": "localhost",
+          "port": 502
+        },
+        "points": [
+          {
+            "Modbus": {
+              "address": "0x0031",
+              "type": "coil"
+            },
+            "pointId": "./Tank 3.tank/333333.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x0f8",
+              "type": "holdingRegister"
+            },
+            "pointId": "./Tank 2.tank/222222.valve_state",
+            "scanMode": "everyNoon"
+          },
+          {
+            "Modbus": {
+              "address": "0x76a0",
+              "type": "coil"
+            },
+            "pointId": "./Tank 2.tank/222222.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x76b0",
+              "type": "coil"
+            },
+            "pointId": "./Tank 2.tank/222333.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x83a6",
+              "type": "coil"
+            },
+            "pointId": "./Tank 3.tank/111111.valve_state"
+          }
+        ]
+      },
+      {
+        "equipmentId": "PLC-42",
+        "enabled": false,
+        "protocol": "Modbus",
+        "pointIdRoot": "/fttest.base/Tank4.tank",
+        "defaultScanMode": "everySecond",
+        "Modbus": {
+          "host": "localhost",
+          "port": 502
+        },
+        "points": [
+          {
+            "Modbus": {
+              "address": "0x0f",
+              "type": "coil"
+            },
+            "pointId": "./111111.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x20",
+              "type": "holdingRegister"
+            },
+            "pointId": "./111111.flow_rate"
+          }
+        ]
+      }
+    ]
   },
-  "equipments": [
-    {
-      "equipmentId": "CSVServer",
-      "protocol": "CSV",
-      "pointIdRoot": "/fttest.base",
-      "defaultScanMode": "everySecond",
-      "CSV": {
-        "filename": "./fichier.csv",
-        "archiveFolder": "./archived/",
-        "errorFolder": "./error/",
-        "separator": ",",
-        "timeStampColum": 0,
-      },
-      "points": [
-        {
-          "CSV": {
-            "column": 1
-          },
-          "pointId": "./Tank 5.tank/333333.temperature",
-        },
-        {
-          "CSV": {
-            "column": 2
-          },
-          "pointId": "./Tank 6.tank/333333.temperature",
-        },
-      ]
-    },
-    {
-      "equipmentId": "SimulationServer",
-      "protocol": "OPCUA",
-      "pointIdRoot": "/fttest.base",
-      "defaultScanMode": "everySecond",
-      "OPCUA": {
-        "host": "localhost",
-        "opcuaPort": "53530",
-        "httpsPort": "53443",
-        "endPoint": "Server/Simulation",
-        "timeOrigin": "server", // or "source" or "fTbus"
-      },
-      "points": [
-        {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Counter1"
-          },
-          "pointId": "./Tank 5.tank/333333.temperature",
-        },
-        {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Random1"
-          },
-          "pointId": "./Tank 5.tank/333333.temperature",
-          "scanMode": "everyNoon"
-        }
-      ]
-    },
-    {
-      "equipmentId": "SimulationServerBis",
-      "protocol": "OPCUA",
-      "pointIdRoot": "/fttest.base",
-      "defaultScanMode": "everySecond",
-      "OPCUA": {
-        "host": "localhost",
-        "opcuaPort": "53530",
-        "httpsPort": "53443",
-        "endPoint": "Server/Simulation"
-      },
-      "points": [
-        {
-          "OPCUAnodeId": {
-            "ns": "5",
-            "s": "Sinusoid1"
-          },
-          "pointId": "./Tank 9.tank/333333.temperature",
-        },
-      ]
-    },
-    {
-      "equipmentId": "PLC-35",
-      "protocol": "Modbus",
-      "pointIdRoot": "/fttest.base",
-      "defaultScanMode": "everySecond",
-      "Modbus": {
-        "host": "localhost",
-        "port": 502
-      },
-      "points": [
-        {
-          "Modbus": {
-            "address": "0x0031",
-            "type": "coil"
-          },
-          "pointId": "./Tank 3.tank/333333.fill_level",
-        },
-        {
-          "Modbus": {
-            "address": "0x0f8",
-            "type": "holdingRegister"
-          },
-          "pointId": "./Tank 2.tank/222222.valve_state",
-          "scanMode": "everyNoon"
-        },
-        {
-          "Modbus": {
-            "address": "0x76a0",
-            "type": "coil"
-          },
-          "pointId": "./Tank 2.tank/222222.fill_level",
-        },
-        {
-          "Modbus": {
-            "address": "0x76b0",
-            "type": "coil"
-          },
-          "pointId": "./Tank 2.tank/222333.fill_level"
-        },
-        {
-          "Modbus": {
-            "address": "0x83a6",
-            "type": "coil"
-          },
-          "pointId": "./Tank 3.tank/111111.valve_state"
-        }
-      ]
-    },
-    {
-      "equipmentId": "PLC-42",
-      "protocol": "Modbus",
-      "pointIdRoot": "/fttest.base/Tank4.tank",
-      "defaultScanMode": "everySecond",
-      "Modbus": {
-        "host": "localhost",
-        "port": 502
-      },
-      "points": [
-        {
-          "Modbus": {
-            "address": "0x0f",
-            "type": "coil"
-          },
-          "pointId": "./111111.fill_level"
-        },
-        {
-          "Modbus": {
-            "address": "0x20",
-            "type": "holdingRegister"
-          },
-          "pointId": "./111111.flow_rate"
-        }
-      ]
-    }
-  ],
-
   "north": {
-    "MyConsole": {
-      "enabled": true,
-      "type": "Console",
-      "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
-      "timeStamp": "fTbus",
-      "Console": {
-        "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
+    "applications": [
+      {
+        "applicationId": "MyConsole",
+        "enabled": true,
+        "applicationType": "Console",
+        "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
+        "timeStamp": "fTbus",
+        "Console": {
+          "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
+        }
+      },
+      {
+        "applicationId": "BaseInflux",
+        "enabled": false,
+        "applicationType": "InfluxDB",
+        "minimumBuffer:": 10, // group by 10 when possible
+        "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
+        "InfluxDB": {
+          "user": "admin",
+          "password": "admin",
+          "db": "testdata",
+          "host": "localhost:8086",
+          "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+        }
       }
-    },
-
-    "BaseInflux": {
-      "enabled": false,
-      "type": "InfluxDB",
-      "minimumBuffer:": 10, // group by 10 when possible
-      "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
-      "InfluxDB": {
-        "user": "admin",
-        "password": "admin",
-        "db": "testdata",
-        "host": "localhost:8086",
-        "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
-      }
-    }
+    ]
   }
 }
