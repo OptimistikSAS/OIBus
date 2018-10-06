@@ -7,8 +7,13 @@ class Protocol {
    * @param {Object} engine
    */
   constructor(equipment, engine) {
-    this.equipement = equipment
+    this.equipment = equipment
     this.engine = engine
+  }
+
+  connect() {
+    const { equipmentId, protocol } = this.equipment
+    console.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
   }
 }
 

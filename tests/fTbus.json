@@ -100,9 +100,10 @@
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "CSV": {
-          "filename": "./tests/fichier.csv",
-          "archiveFolder": "./tests/archived/",
-          "errorFolder": "./tests/error/",
+          "filename": "fichier.csv",
+          "inputFolder": "./tests/csv/input/",
+          "archiveFolder": "./tests/csv/archived/",
+          "errorFolder": "./tests/csv/error/",
           "separator": ",",
           "timeStampColum": 0
         },
