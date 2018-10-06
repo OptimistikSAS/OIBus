@@ -17,7 +17,7 @@ class Server {
    * @constructor for Protocol
    * @param {Object} engine
    */
-  constructor(debug) {
+  constructor(debug, filter) {
     this.app = new Koa()
     const router = new Router()
     this.debug = debug
@@ -31,6 +31,16 @@ class Server {
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
     this.app.use(helmet())
+    // filter IP adresses
+    this.app.use(async (ctx, next) => {
+      const { ip } = ctx.request
+      if (filter.includes(ip)) {
+        await next()
+      } else {
+        console.error(`${ip} is not authorized`)
+        ctx.throw(401, 'access denied ', `${ip} is not authorized`)
+      }
+    })
 
     // custom 401 handling
     this.app.use(async (ctx, next) => {

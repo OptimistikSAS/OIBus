@@ -26,7 +26,7 @@ class CSV extends Protocol {
    * @param {String} configPath : path to the non-optimized configuration file
    * @param {Object} engine
    */
-  constructor({ equipments }, engine) {
+  constructor(engine, { equipments }) {
     super(engine)
     this.equipments = equipments
     this.startWord = 'CSV connected.'
