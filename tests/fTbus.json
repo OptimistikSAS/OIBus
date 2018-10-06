@@ -95,7 +95,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": false,
+        "enabled": true,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -123,7 +123,7 @@
       },
       {
         "equipmentId": "SimulationServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
