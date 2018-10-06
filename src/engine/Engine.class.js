@@ -92,12 +92,9 @@ class Engine {
    * @return {void}
    */
   start(callback) {
-    // Get the config entries
-    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = this.config.engine
-
     // 1. start web server
-    const server = new Server(debug, filter)
-    server.listen(port, () => console.info(`Server started on ${port}`))
+    const server = new Server(this)
+    server.listen()
 
     // 2. start Protocol for each equipments
     this.config.south.equipments.forEach((equipment) => {
