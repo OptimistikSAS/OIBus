@@ -22,7 +22,7 @@ const getInfo = (ctx) => {
     ctx.throw(400, 'The authorization header is either empty or is not Basic.')
     return
   }
-  ctx.ok({ query, config: global.fTbusConfig })
+  ctx.ok({ query, config: ctx.app.engine.config })
 }
 
 module.exports = { getInfo }

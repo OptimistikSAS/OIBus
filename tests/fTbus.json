@@ -100,12 +100,12 @@
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "CSV": {
-          "filename": "fichier.csv",
           "inputFolder": "./tests/csv/input/",
           "archiveFolder": "./tests/csv/archived/",
           "errorFolder": "./tests/csv/error/",
           "separator": ",",
-          "timeStampColum": 0
+          "timeColumn": 0,
+          "hasFirstLine": true
         },
         "points": [
           {

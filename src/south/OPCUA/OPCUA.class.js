@@ -60,7 +60,7 @@ class OPCUA extends Protocol {
   }
 
   async connect() {
-    await this.client.connect(this.equipment.url)
+    this.client.connect(this.equipment.url)
     await this.client.createSession((err, session) => {
       if (!err) {
         this.session = session
