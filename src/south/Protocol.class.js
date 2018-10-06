@@ -6,9 +6,9 @@ class Protocol {
    * @constructor for Protocol
    * @param {Object} engine
    */
-  constructor(engine) {
+  constructor(equipment, engine) {
+    this.equipement = equipment
     this.engine = engine
-    this.equipments = {}
   }
 }
 
