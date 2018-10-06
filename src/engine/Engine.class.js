@@ -22,10 +22,6 @@ const applicationList = {
   Console,
   InfluxDB,
 }
-// Will only contain protocols/application used
-// based on the config file
-const activeProtocols = {}
-const activeApplications = {}
 
 /**
  * Class Engine :
@@ -70,6 +66,10 @@ class Engine {
     })
     /** @type {string} contains one queue per application */
     this.queues = []
+    // Will only contain protocols/application used
+    // based on the config file
+    this.activeProtocols = {}
+    this.activeApplications = {}
   }
 
   /**
@@ -78,19 +78,10 @@ class Engine {
    * @return {void}
    */
   addValue({ data, dataId, pointId, timestamp }) {
-    this.queues.forEach((queue) => {
-      queue.enqueue({ data, dataId, pointId, timestamp })
+    Object.values(this.activeApplications).forEach((application) => {
+      application.enqueue({ data, dataId, pointId, timestamp })
+      application.onUpdate()
     })
-    Object.values(activeApplications).forEach(application => application.onUpdate())
-  }
-
-  /**
-   * Registers a new queue in the Engine
-   * @param {Object} queue : the Queue Object to be added
-   * @return {void}
-   */
-  registerQueue(queue) {
-    this.queues.push(queue)
   }
 
   /**
@@ -102,21 +93,21 @@ class Engine {
    */
   start(callback) {
     // Get the config entries
-    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = this.engine
+    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = this.config.engine
 
     // 1. start web server
     const server = new Server(debug, filter)
     server.listen(port, () => console.info(`Server started on ${port}`))
 
     // 2. start Protocol for each equipments
-    this.south.equipments.forEach((equipment) => {
+    this.config.south.equipments.forEach((equipment) => {
       const { protocol, enabled, equipmentId } = equipment
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
       if (enabled) {
         if (ProtocolHandler) {
-          activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
-          activeProtocols[equipmentId].connect()
+          this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
+          this.activeProtocols[equipmentId].connect()
         } else {
           console.error(`Protocol for ${equipmentId}is not supported : ${protocol}`)
           process.exit(1)
@@ -125,14 +116,14 @@ class Engine {
     })
 
     // 3. start Applications
-    this.north.applications.forEach((applicationInstance) => {
+    this.config.north.applications.forEach((applicationInstance) => {
       const { application, enabled, applicationId } = applicationInstance
       // select the right application
       const ApplicationHandler = applicationList[application]
       if (enabled) {
         if (ApplicationHandler) {
-          activeApplications[applicationId] = new ApplicationHandler(application, this)
-          activeApplications[application].connect()
+          this.activeApplications[applicationId] = new ApplicationHandler(application, this)
+          this.activeApplications[applicationId].connect()
         } else {
           console.error(`Application type for ${applicationId} is not supported : ${application}`)
           process.exit(1)
@@ -141,12 +132,12 @@ class Engine {
     })
 
     // 4. start the timers for each scan modes
-    this.engine.scanModes.forEach(({ scanMode, cronTime }) => {
+    this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
         onTick: () => {
           // on each scan, activate each protocols
-          Object.values(activeProtocols).forEach(protocol => protocol.onScan(scanMode))
+          Object.values(this.activeProtocols).forEach(protocol => protocol.onScan(scanMode))
         },
         start: false,
       })

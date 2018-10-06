@@ -5,16 +5,14 @@ class Application {
    * @constructor for Application
    * @param {Object} engine
    */
-  constructor(engine, applicationParameters) {
-    this.queue = new Queue(engine)
+  constructor(application, applicationParameters) {
+    this.queue = new Queue()
     this.applicationParameters = applicationParameters
   }
 
-  /*
-  Since every distinct application has a different use for their queue,
-  their prototype methods is only a display of the queue's info
-  with the name of the method called.
-  */
+  enqueue(value) {
+    this.queue.enqueue(value)
+  }
 
   connect() {
     console.info('connect', this.queue.length)
