@@ -8,11 +8,11 @@ const { config = './fTbus.json' } = args // Get the configuration file path
 
 // read the fTbusConfigFile and make it a global variable
 global.fTbusConfig = Engine.loadConfig(config)
-const { debug = false, port = 3333 } = global.fTbusConfig // Get the config entries
+const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = global.fTbusConfig.engine // Get the config entries
 const VERSION = require('../package.json').version
 
-const engine = new Engine()
-const server = new Server(debug)
+const engine = new Engine(global.fTbusConfig)
+const server = new Server(debug, filter)
 
 if (debug) console.info('Mode Debug enabled')
 console.info(`fTbus version ${VERSION}`)
@@ -21,4 +21,4 @@ console.info(`fTbus version ${VERSION}`)
 server.listen(port, () => console.info(`Server started on ${port}`))
 
 // start engine
-engine.start(global.fTbusConfig, () => console.info('Engine started.'))
+engine.start(() => console.info('Engine started.'))

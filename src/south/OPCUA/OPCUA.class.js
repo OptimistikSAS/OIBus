@@ -46,10 +46,10 @@ const fieldsFromPointId = (pointId, scannedEquipment) => {
  * @extends {Protocol}
  */
 class OPCUA extends Protocol {
-  constructor({ equipments, south }, engine) {
+  constructor({ south }, engine) {
     super(engine)
-    this.optimizedConfig = optimizedConfig(equipments)
-    equipments.forEach((equipment) => {
+    this.optimizedConfig = optimizedConfig(south.equipments)
+    south.equipments.forEach((equipment) => {
       if (equipment.OPCUA) {
         add(south.OPCUA, equipment, this.equipments)
       }
