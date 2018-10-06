@@ -17,10 +17,16 @@ class Server {
    * @constructor for Protocol
    * @param {Object} engine
    */
-  constructor(debug, filter) {
+  constructor(engine) {
     this.app = new Koa()
+    // capture the engine under app for reuse in routes.
+    this.app.engine = engine
     const router = new Router()
+    // Get the config entries
+    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = engine.config.engine
+
     this.debug = debug
+    this.port = port
     // Development style logging middleware
     // Recommended that you .use() this middleware near the top
     //  to "wrap" all subsequent middleware.
@@ -108,8 +114,8 @@ class Server {
     this.app.use(router.allowedMethods())
   }
 
-  listen(port, callback) {
-    this.app.listen(port, callback)
+  listen() {
+    this.app.listen(this.port, () => console.info(`Server started on ${this.port}`))
   }
 }
 
