@@ -4,6 +4,9 @@
     "debug": true,
     // the port for the web interface to fTbus
     "port": 2222,
+    // user/password (use ) (to do: use bcrypt)
+    "user": "admin",
+    "password": "pass",
     // the list of IP addresses allowed to access
     "filter": ["127.0.0.1", "::1"],
     // the scan mode section allow to create categories of scan
