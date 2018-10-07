@@ -1,7 +1,7 @@
 const Opcua = require('node-opcua')
 const { sprintf } = require('sprintf-js')
 const Protocol = require('../Protocol.class')
-const optimizedConfig = require('./config/optimizedConfig')
+const optimizedConfig = require('./config/getOptimizedConfig')
 
 const add = (opcua, equipment, equipments) => {
   equipments[equipment.equipmentId] = {}

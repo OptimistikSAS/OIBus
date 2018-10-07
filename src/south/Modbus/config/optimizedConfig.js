@@ -67,28 +67,22 @@ const groupAddresses = (array, key, groupSize) => {
  * Gets the configuration file
  * @return {boolean}
  */
-const optimizedConfig = (equipments, addressGap) => {
-  const optimized = equipments.reduce((acc, { equipmentId, protocol, points }) => {
-    if (protocol === 'Modbus') {
-      const scanModes = groupBy(points, 'scanMode', { equipmentId })
-      Object.keys(scanModes).forEach((scan) => {
-        scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
-        Object.keys(scanModes[scan]).forEach((equipment) => {
-          scanModes[scan][equipment] = groupBy(scanModes[scan][equipment], `${protocol}.type`)
-          Object.keys(scanModes[scan][equipment]).forEach((type) => {
-            scanModes[scan][equipment][type] = groupAddresses(scanModes[scan][equipment][type], `${protocol}.address`, addressGap[type])
-          })
+const optimizedConfig = (equipment, addressGap) => {
+  const optimized = equipment.reduce((acc, { points }) => {
+    const scanModes = groupBy(points, 'scanMode', { equipmentId })
+    Object.keys(scanModes).forEach((scan) => {
+       scanModes[scan] = groupBy(scanModes[scan], `${protocol}.type`)
+        Object.keys(scanModes[scan]).forEach((type) => {
+          scanModes[scan][type] = groupAddresses(scanModes[scan][type], `${protocol}.address`, addressGap[type])
         })
       })
-      Object.keys(scanModes).forEach((scan) => {
-        if (!acc[scan]) acc[scan] = {}
-        acc[scan] = { ...acc[scan], ...scanModes[scan] }
-      })
-    }
-
+    })
+    Object.keys(scanModes).forEach((scan) => {
+      if (!acc[scan]) acc[scan] = {}
+      acc[scan] = { ...acc[scan], ...scanModes[scan] }
+    })
     return acc
   }, {})
-
   return optimized
 }
 
