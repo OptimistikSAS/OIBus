@@ -51,4 +51,4 @@ const getOptimizedConfig = (equipment) => {
   return optimized
 }
 
-module.exports = optimizedConfig
+module.exports = getOptimizedConfig
