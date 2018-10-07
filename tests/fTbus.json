@@ -112,11 +112,11 @@
         },
         "points": [
           {
-            "CSV": { "column": 1 },
+            "CSV": { "value": 1, "quality": 2 },
             "pointId": "./Tank 5.tank/333333.temperature"
           },
           {
-            "CSV": { "column": 2 },
+            "CSV": { "value": 3, "quality": 4 },
             "pointId": "./Tank 6.tank/333333.temperature"
           }
         ]
