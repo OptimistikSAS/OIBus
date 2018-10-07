@@ -25,8 +25,8 @@ class CSV extends Protocol {
    * @return {void}
    */
   onScan(scanMode) {
-    console.log(scanMode)
-    const { points, CSV: parameters } = this.equipment
+    const { points, defaultScanMode, CSV: parameters } = this.equipment
+    if (scanMode !== defaultScanMode) return
     const { inputFolder, archiveFolder, errorFolder, timeColumn, hasFirstLine, separator } = parameters
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
