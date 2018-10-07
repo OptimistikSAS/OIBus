@@ -6,6 +6,7 @@ const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
+const json = require('koa-json')
 
 const Controller = require('./info')
 
@@ -87,6 +88,8 @@ class Server {
 
     // Middleware for Koa that adds useful methods to the Koa context.
     this.app.use(respond())
+    // Middleware for beautiful JSON
+    this.app.use(json())
 
     // API routes
     // Router middleware for koa
