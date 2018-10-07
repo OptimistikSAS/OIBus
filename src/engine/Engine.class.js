@@ -39,7 +39,15 @@ class Engine {
    */
   constructor(configFile) {
     this.config = tryReadFile(configFile)
-    const mandatoryEntries = ['engine.scanModes', 'engine.types', 'south.equipments', 'north.applications']
+    const mandatoryEntries = [
+      'engine.scanModes',
+      'engine.types',
+      'engine.port',
+      'engine.user',
+      'engine.password',
+      'south.equipments',
+      'north.applications',
+    ]
     mandatoryEntries.forEach((entry) => {
       const [key, subkey] = entry.split('.')
       if (!this.config[key]) {

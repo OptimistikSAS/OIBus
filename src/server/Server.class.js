@@ -9,6 +9,7 @@ const respond = require('koa-respond')
 const json = require('koa-json')
 
 const Controller = require('./info')
+const VERSION = require('../../package.json').version
 
 /**
  * Class Server : provides general attributes and methods for protocols.
@@ -24,10 +25,12 @@ class Server {
     this.app.engine = engine
     const router = new Router()
     // Get the config entries
-    const { debug = false, port = 3333, filter = ['127.0.0.1', '::1'] } = engine.config.engine
+    const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.config.engine
 
     this.debug = debug
     this.port = port
+    this.user = user
+    this.password = password
     // Development style logging middleware
     // Recommended that you .use() this middleware near the top
     //  to "wrap" all subsequent middleware.
@@ -69,7 +72,7 @@ class Server {
     /** @todo: we need to think about the authorization process. in the first version, the program
      * need to be secured from the operating system and firewall should not allow to access the API.
      */
-    this.app.use(auth({ name: 'admin', pass: 'admin' }))
+    this.app.use(auth({ name: this.user, pass: this.password }))
 
     // CORS middleware for Koa
     this.app.use(cors())
@@ -102,11 +105,10 @@ class Server {
     // Multiple routers.
     // Nestable routers.
     // ES7 async/await support.
-    router.prefix('/v0')
 
     router
       .get('/', (ctx, _next) => {
-        ctx.ok({ comment: ' fTbus' })
+        ctx.ok({ module: ' fTbus', VERSION })
       })
       .get('/infos', Controller.getInfo)
     // .put('/users/:id', (ctx, next) => {
