@@ -29,7 +29,7 @@ const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
   return acc
 }, {})
 
-const optimizedConfig = (equipment) => {
+const getOptimizedConfig = (equipment) => {
   const optimized = equipment.reduce((acc, { equipmentId, protocol, points }) => {
     if (protocol === 'OPCUA') {
       const scanModes = groupBy(points, 'scanMode', { equipmentId })
