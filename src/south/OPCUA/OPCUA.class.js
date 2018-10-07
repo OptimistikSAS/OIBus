@@ -1,18 +1,21 @@
 const Opcua = require('node-opcua')
 const { sprintf } = require('sprintf-js')
 const Protocol = require('../Protocol.class')
-const optimizedConfig = require('./config/optimizedConfig')
+const optimizedConfig = require('./config/getOptimizedConfig')
 
 const add = (opcua, equipment, equipments) => {
-  equipments[equipment.equipmentId] = {
-    client: new Opcua.OPCUAClient({ endpoint_must_exist: false }),
-    url: sprintf(opcua.connectionAddress.opc, equipment.OPCUA),
-  }
+  equipments[equipment.equipmentId] = {}
 }
 
 const giveTypes = (point) => {
   global.fTbusConfig.engine.types.forEach((typeCompared) => {
-    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+    if (
+      typeCompared.type
+      === point.pointId
+        .split('.')
+        .slice(-1)
+        .pop()
+    ) {
       point.fields = typeCompared.fields
       // point.fields.forEach((field) => {
       //   field.dataId = field.name
@@ -34,8 +37,7 @@ const fieldsFromPointId = (pointId, scannedEquipment) => {
     console.log(point.pointId, pointId)
     if (point.pointId === pointId) return point.fields
   })
-  console.error('Unable to retrieve fields associated with this pointId : ', pointId)
-  console.log(scannedEquipment)
+  console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
   return {}
 }
 
@@ -46,25 +48,24 @@ const fieldsFromPointId = (pointId, scannedEquipment) => {
  * @extends {Protocol}
  */
 class OPCUA extends Protocol {
-  constructor({ equipments, south }, engine) {
-    super(engine)
-    this.optimizedConfig = optimizedConfig(equipments)
-    equipments.forEach((equipment) => {
-      if (equipment.OPCUA) {
-        add(south.OPCUA, equipment, this.equipments)
-      }
-    })
+  constructor(equipment, engine) {
+    super(equipment, engine)
+    // as OPCUA can group multiple points in a single request
+    // we group points based on scanMode
+    this.optimizedConfig = optimizedConfig(equipment)
+    // define OPCUA connection parameters
+    this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
+    this.url = sprintf(engine.south.OPCUA.connectionAddress.opc, equipment.OPCUA)
+    this.maxAge = equipment.OPCUA.maxAge || 10
   }
 
   async connect() {
-    await Object.values(this.equipments).forEach(async (equipment) => {
-      await equipment.client.connect(equipment.url)
-      await equipment.client.createSession((err, session) => {
-        if (!err) {
-          equipment.session = session
-          equipment.connected = true
-        }
-      })
+    this.client.connect(this.equipment.url)
+    await this.client.createSession((err, session) => {
+      if (!err) {
+        this.session = session
+        this.connected = true
+      }
     })
   }
 
@@ -76,16 +77,13 @@ class OPCUA extends Protocol {
   async onScan(scanMode) {
     const scanGroup = this.optimizedConfig[scanMode]
     Object.keys(scanGroup).forEach((equipment) => {
-      console.log('dddd')
       if (this.equipments[equipment].connected) {
         const nodesToRead = {}
-        const MAX_AGE = 10
         scanGroup[equipment].forEach((point) => {
           nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
         })
-        this.equipments[equipment].session.read(Object.values(nodesToRead), MAX_AGE, (err, dataValues) => {
+        this.equipments[equipment].session.read(Object.values(nodesToRead), this.maxAge, (err, dataValues) => {
           if (!err && Object.keys(nodesToRead).length === dataValues.length) {
-            console.log(dataValues)
             Object.keys(nodesToRead).forEach((pointId) => {
               const dataValue = dataValues.shift()
               const value = {
@@ -96,7 +94,7 @@ class OPCUA extends Protocol {
               }
               fieldsFromPointId(pointId, scanGroup[equipment]).forEach((field) => {
                 if (field.name !== 'quality') {
-                  value.data[field.name] = dataValue.value.value// .shift() // Assuming the values array would under dataValue.value.value
+                  value.data[field.name] = dataValue.value.value // .shift() // Assuming the values array would under dataValue.value.value
                 } else {
                   value.data[field.name] = dataValue.statusCode.value
                 }

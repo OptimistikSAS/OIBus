@@ -6,8 +6,10 @@ const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
+const json = require('koa-json')
 
 const Controller = require('./info')
+const VERSION = require('../../package.json').version
 
 /**
  * Class Server : provides general attributes and methods for protocols.
@@ -17,10 +19,18 @@ class Server {
    * @constructor for Protocol
    * @param {Object} engine
    */
-  constructor(debug) {
+  constructor(engine) {
     this.app = new Koa()
+    // capture the engine under app for reuse in routes.
+    this.app.engine = engine
     const router = new Router()
+    // Get the config entries
+    const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.config.engine
+
     this.debug = debug
+    this.port = port
+    this.user = user
+    this.password = password
     // Development style logging middleware
     // Recommended that you .use() this middleware near the top
     //  to "wrap" all subsequent middleware.
@@ -31,6 +41,16 @@ class Server {
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
     this.app.use(helmet())
+    // filter IP adresses
+    this.app.use(async (ctx, next) => {
+      const { ip } = ctx.request
+      if (filter.includes(ip)) {
+        await next()
+      } else {
+        console.error(`${ip} is not authorized`)
+        ctx.throw(401, 'access denied ', `${ip} is not authorized`)
+      }
+    })
 
     // custom 401 handling
     this.app.use(async (ctx, next) => {
@@ -52,7 +72,7 @@ class Server {
     /** @todo: we need to think about the authorization process. in the first version, the program
      * need to be secured from the operating system and firewall should not allow to access the API.
      */
-    this.app.use(auth({ name: 'admin', pass: 'admin' }))
+    this.app.use(auth({ name: this.user, pass: this.password }))
 
     // CORS middleware for Koa
     this.app.use(cors())
@@ -71,6 +91,8 @@ class Server {
 
     // Middleware for Koa that adds useful methods to the Koa context.
     this.app.use(respond())
+    // Middleware for beautiful JSON
+    this.app.use(json())
 
     // API routes
     // Router middleware for koa
@@ -83,11 +105,10 @@ class Server {
     // Multiple routers.
     // Nestable routers.
     // ES7 async/await support.
-    router.prefix('/v0')
 
     router
       .get('/', (ctx, _next) => {
-        ctx.ok({ comment: ' fTbus' })
+        ctx.ok({ module: ' fTbus', VERSION })
       })
       .get('/infos', Controller.getInfo)
     // .put('/users/:id', (ctx, next) => {
@@ -98,8 +119,8 @@ class Server {
     this.app.use(router.allowedMethods())
   }
 
-  listen(port, callback) {
-    this.app.listen(port, callback)
+  listen() {
+    this.app.listen(this.port, () => console.info(`Server started on ${this.port}`))
   }
 }
 
