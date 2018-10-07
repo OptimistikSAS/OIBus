@@ -18,6 +18,10 @@
         "cronTime": "* * * * * *"
       },
       {
+        "scanMode": "every5Second",
+        "cronTime": "*/5 * * * * *"
+      },
+      {
         "scanMode": "everyNoon",
         "cronTime": "0 0 12 * * *"
       },
@@ -86,14 +90,10 @@
         "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
       }
     },
-    "OPCDA": {
-    },
-    "MQTT": {
-    },
-    "Profinet": {
-    },
-    "CSV": {
-    },
+    "OPCDA": {},
+    "MQTT": {},
+    "Profinet": {},
+    "CSV": {},
     "SQL": {},
     "equipments": [
       {
@@ -101,7 +101,7 @@
         "enabled": true,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "everySecond",
+        "defaultScanMode": "every5Second",
         "CSV": {
           "inputFolder": "./tests/csv/input/",
           "archiveFolder": "./tests/csv/archived/",
@@ -112,15 +112,11 @@
         },
         "points": [
           {
-            "CSV": {
-              "column": 1
-            },
+            "CSV": { "column": 1 },
             "pointId": "./Tank 5.tank/333333.temperature"
           },
           {
-            "CSV": {
-              "column": 2
-            },
+            "CSV": { "column": 2 },
             "pointId": "./Tank 6.tank/333333.temperature"
           }
         ]

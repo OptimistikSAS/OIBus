@@ -24,7 +24,8 @@ class CSV extends Protocol {
    * read the csv file and rewrite it to another file in the folder archive
    * @return {void}
    */
-  onScan(_scanMode) {
+  onScan(scanMode) {
+    console.log(scanMode)
     const { points, CSV: parameters } = this.equipment
     const { inputFolder, archiveFolder, errorFolder, timeColumn, hasFirstLine, separator } = parameters
     // list files in the inputFolder and manage them.
