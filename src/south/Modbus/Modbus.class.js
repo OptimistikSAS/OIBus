@@ -1,28 +1,20 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const optimizedConfig = require('./config/optimizedConfig')
+const getOptimizedConfig = require('./config/getOptimizedConfig')
 const Protocol = require('../Protocol.class')
-
-/** Adds equipment entry in equipments
- * @param {Object} equipment
- * @return {void}
- */
-const add = (equipment, equipments) => {
-  equipments[equipment.equipmentId] = {
-    socket: new net.Socket(),
-    host: equipment.Modbus.host,
-    port: equipment.Modbus.port,
-    connected: false,
-  }
-  equipments[equipment.equipmentId].client = new jsmodbus.client.TCP(equipments[equipment.equipmentId].socket)
-}
 
 /**
  * Gives a type to a point based on the config
  */
 const giveType = (point) => {
-  global.fTbusConfig.engine.types.forEach((typeCompared) => {
-    if (typeCompared.type === point.pointId.split('.').slice(-1).pop()) {
+  this.engine.types.forEach((typeCompared) => {
+    if (
+      typeCompared.type
+      === point.pointId
+        .split('.')
+        .slice(-1)
+        .pop()
+    ) {
       point.type = typeCompared.fields[0].type
       point.dataId = typeCompared.fields[0].name
       if (typeCompared.fields.length > 1) {
@@ -41,14 +33,15 @@ class Modbus extends Protocol {
    * @param {String} configPath : path to the non-optimized configuration file
    * @param {Object} engine
    */
-  constructor({ equipments, south }, engine) {
+  constructor(equipment, engine) {
     super(engine)
-    this.optimizedConfig = optimizedConfig(equipments, south.Modbus.addressGap)
-    equipments.forEach((equipment) => {
-      if (equipment.Modbus) {
-        add(equipment, this.equipments)
-      }
-    })
+    const { addressGap } = this.engine.south.Modbus
+    this.optimizedConfig = getOptimizedConfig(this, addressGap)
+    this.socket = new net.Socket()
+    this.host = equipment.Modbus.host
+    this.port = equipment.Modbus.port
+    this.connected = false
+    this.client = new jsmodbus.client.TCP(this.socket)
   }
 
   /**
@@ -57,24 +50,25 @@ class Modbus extends Protocol {
    * @return {void}
    */
   onScan(scanMode) {
-    const scanGroup = this.optimizedConfig[scanMode]
-    Object.keys(scanGroup).forEach((equipment) => {
-      if (this.equipments[equipment].connected) {
-        Object.keys(scanGroup[equipment]).forEach((type) => {
-          const addressesForType = scanGroup[equipment][type] // Addresses of the group
-          // Build function name, IMPORTANT: type must be singular
-          const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
-          // Dynamic call of the appropriate function based on type
-          Object.entries(addressesForType).forEach(([range, points]) => {
-            points.forEach(point => giveType(point))
-            const rangeAddresses = range.split('-')
-            const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-            const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
-            const rangeSize = endAddress - startAddress // Size of the addresses group
-            this.modbusFunction(funcName, { startAddress, rangeSize }, equipment, points)
-          })
-        })
-      }
+    const { connected, optimizedConfig } = this
+    const scanGroup = optimizedConfig[scanMode]
+    // ignore if scanMode if not relevant to this equipment/ or not connected
+    /** @todo we should likely filter onScan at the engine level */
+    if (!scanGroup || !connected) return
+
+    Object.keys(scanGroup).forEach((type) => {
+      const addressesForType = scanGroup[type] // Addresses of the group
+      // Build function name, IMPORTANT: type must be singular
+      const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
+      // Dynamic call of the appropriate function based on type
+      Object.entries(addressesForType).forEach(([range, points]) => {
+        points.forEach(point => giveType(point))
+        const rangeAddresses = range.split('-')
+        const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
+        const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
+        const rangeSize = endAddress - startAddress // Size of the addresses group
+        this.modbusFunction(funcName, { startAddress, rangeSize }, points)
+      })
     })
   }
 
@@ -86,8 +80,8 @@ class Modbus extends Protocol {
    * @param {Object} points : the points to read
    * @return {void}
    */
-  modbusFunction(funcName, { startAddress, rangeSize }, equipmentId, points) {
-    this.equipments[equipmentId].client[funcName](startAddress, rangeSize)
+  modbusFunction(funcName, { startAddress, rangeSize }, points) {
+    this.client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
         const timestamp = `${new Date()}`
         points.forEach((point) => {
@@ -121,18 +115,16 @@ class Modbus extends Protocol {
    * @return {void}
    */
   connect() {
-    Object.values(this.equipments).forEach((equipment) => {
-      const { host, port } = equipment
+    const { host, port } = this
 
-      equipment.socket.connect(
-        { host, port },
-        () => {
-          equipment.connected = true
-        },
-      )
-      equipment.socket.on('error', (err) => {
-        console.error(err)
-      })
+    this.socket.connect(
+      { host, port },
+      () => {
+        this.equipment.connected = true
+      },
+    )
+    this.socket.on('error', (err) => {
+      console.error(err)
     })
   }
 
@@ -141,12 +133,10 @@ class Modbus extends Protocol {
    * @return {void}
    */
   disconnect() {
-    Object.values(this.equipments).forEach((equipment) => {
-      if (equipment.connected) {
-        equipment.socket.end()
-        equipment.connected = false
-      }
-    })
+    if (this.connected) {
+      this.socket.end()
+      this.connected = false
+    }
   }
 }
 
