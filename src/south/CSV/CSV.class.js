@@ -1,13 +1,16 @@
 const fs = require('fs')
 const jscsv = require('javascript-csv')
-const Protocol = require('../ProtocolHandler.class')
+const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
  * Load the csv file from the path to an object
  * @todo We may have to handle very large files that can't be read in one pass.
+ * cf http://c2fo.io/fast-csv/index.html
+ *
+ *
  * @param {*} file
  * @param {*} separator
- * @returns
+ * @returns the csv file (in memory)
  * @memberof CSV
  */
 const loadFile = (file, separator) => {
@@ -19,7 +22,7 @@ const loadFile = (file, separator) => {
 /**
  * Class CSV
  */
-class CSV extends Protocol {
+class CSV extends ProtocolHandler {
   /**
    * read the csv file and rewrite it to another file in the folder archive
    * @return {void}
@@ -30,17 +33,17 @@ class CSV extends Protocol {
     const { inputFolder, archiveFolder, errorFolder, timeColumn, hasFirstLine, separator } = parameters
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
-      /** @todo should we check why we have err  */
-      if (err) return
+      if (err) {
+        console.error(err)
+        return
+      }
       if (!files.length) console.warn(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         const csvObjects = loadFile(`${inputFolder}${filename}`, separator)
-        // can be also a string such as "time" to find the column
         if (hasFirstLine) {
-          // if this file CSV has the first line to describe all the columns
+          // if this file has the first line to describe all the columns
           const timeColumnIndex = typeof timeColumn === 'number' ? timeColumn : csvObjects[0].indexOf(timeColumn)
           points.forEach((point) => {
-            // const column = typeof point.CSV.column === 'number' ? point.CSV.column : csvObjects[0].indexOf(point.CSV.column)
             let typeColumn = {}
             if (typeof Object.values(point.CSV)[0] === 'number') {
               typeColumn = point.CSV
@@ -58,9 +61,13 @@ class CSV extends Protocol {
                   data.push(line[typeColumn[key]])
                   dataId.push(key)
                 })
-                console.log(dataId, data)
                 const timestamp = line[timeColumnIndex]
-                this.engine.addValue({ pointId: point.pointId, timestamp, data, dataId })
+                this.engine.addValue({
+                  pointId: point.pointId,
+                  timestamp,
+                  data,
+                  dataId,
+                })
               }
             })
           })
@@ -78,7 +85,12 @@ class CSV extends Protocol {
                 dataId.push(key)
               })
               const timestamp = line[timeColumn]
-              this.engine.addValue({ pointId: point.pointId, timestamp, data, dataId })
+              this.engine.addValue({
+                pointId: point.pointId,
+                timestamp,
+                data,
+                dataId,
+              })
             })
           })
         }
