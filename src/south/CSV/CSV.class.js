@@ -1,6 +1,6 @@
 const fs = require('fs')
 const jscsv = require('javascript-csv')
-const Protocol = require('../Protocol.class')
+const Protocol = require('../ProtocolHandler.class')
 
 /**
  * Load the csv file from the path to an object
