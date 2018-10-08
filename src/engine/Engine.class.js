@@ -18,7 +18,7 @@ const protocolList = {
 }
 
 // List all North applications
-const applicationList = {
+const apiList = {
   Console,
   InfluxDB,
 }
@@ -77,7 +77,7 @@ class Engine {
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
-    this.activeApplications = {}
+    this.activeApis = {}
   }
 
   /**
@@ -86,7 +86,7 @@ class Engine {
    * @return {void}
    */
   addValue({ data, dataId, pointId, timestamp }) {
-    Object.values(this.activeApplications).forEach((application) => {
+    Object.values(this.activeApis).forEach((application) => {
       application.enqueue({ data, dataId, pointId, timestamp })
       application.onUpdate()
     })
@@ -121,16 +121,16 @@ class Engine {
     })
 
     // 3. start Applications
-    this.config.north.applications.forEach((applicationInstance) => {
-      const { application, enabled, applicationId } = applicationInstance
-      // select the right application
-      const ApplicationHandler = applicationList[application]
+    this.config.north.applications.forEach((application) => {
+      const { api, enabled, applicationId } = application
+      // select the right api handler
+      const ApiHandler = apiList[api]
       if (enabled) {
-        if (ApplicationHandler) {
-          this.activeApplications[applicationId] = new ApplicationHandler(application, this)
-          this.activeApplications[applicationId].connect()
+        if (ApiHandler) {
+          this.activeApis[applicationId] = new ApiHandler(api, this)
+          this.activeApis[applicationId].connect()
         } else {
-          console.error(`Application type for ${applicationId} is not supported : ${application}`)
+          console.error(`API for ${applicationId} is not supported : ${api}`)
           process.exit(1)
         }
       }
