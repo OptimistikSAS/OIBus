@@ -1,6 +1,6 @@
 const Opcua = require('node-opcua')
 const { sprintf } = require('sprintf-js')
-const Protocol = require('../Protocol.class')
+const ProtocolHandler = require('../ProtocolHandler.class')
 const optimizedConfig = require('./config/getOptimizedConfig')
 
 const add = (opcua, equipment, equipments) => {
@@ -47,7 +47,7 @@ const fieldsFromPointId = (pointId, scannedEquipment) => {
  * @class OPCUA
  * @extends {Protocol}
  */
-class OPCUA extends Protocol {
+class OPCUA extends ProtocolHandler {
   constructor(equipment, engine) {
     super(equipment, engine)
     // as OPCUA can group multiple points in a single request
