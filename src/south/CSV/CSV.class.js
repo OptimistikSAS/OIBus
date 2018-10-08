@@ -40,28 +40,45 @@ class CSV extends Protocol {
           // if this file CSV has the first line to describe all the columns
           const timeColumnIndex = typeof timeColumn === 'number' ? timeColumn : csvObjects[0].indexOf(timeColumn)
           points.forEach((point) => {
-            const column = typeof point.CSV.column === 'number' ? point.CSV.column : csvObjects[0].indexOf(point.CSV.column)
-
-            // In case that the type is number
+            // const column = typeof point.CSV.column === 'number' ? point.CSV.column : csvObjects[0].indexOf(point.CSV.column)
+            let typeColumn = {}
+            if (typeof Object.values(point.CSV)[0] === 'number') {
+              typeColumn = point.CSV
+            } else {
+              Object.keys(point.CSV).forEach((key) => {
+                typeColumn[key] = csvObjects[0].indexOf(point.CSV[key])
+              })
+            }
             csvObjects.forEach((line, index) => {
               if (index !== 0) {
                 // The first line consists of the titles
-                const data = line[column]
+                const data = []
+                const dataId = []
+                Object.keys(typeColumn).forEach((key) => {
+                  data.push(line[typeColumn[key]])
+                  dataId.push(key)
+                })
+                console.log(dataId, data)
                 const timestamp = line[timeColumnIndex]
-                this.engine.addValue({ pointId: point.pointId, timestamp, data })
+                this.engine.addValue({ pointId: point.pointId, timestamp, data, dataId })
               }
             })
           })
         } else {
           // if this file CSV doesn't have the first line to describe the columns
-          // In this case, the parameter 'indexOfTimeStamp' require to be a number
+          // In this case, the parameter 'indexOfTimeStamp' is required to be a number
           points.forEach((point) => {
             // In this case, the parameter 'column' is absolument a number
-            const { column } = point.CSV
+            const typeColumn = point.CSV
             csvObjects.forEach((line) => {
-              const data = line[column]
+              const data = []
+              const dataId = []
+              Object.keys(typeColumn).forEach((key) => {
+                data.push(line[typeColumn[key]])
+                dataId.push(key)
+              })
               const timestamp = line[timeColumn]
-              this.engine.addValue({ pointId: point.pointId, timestamp, data })
+              this.engine.addValue({ pointId: point.pointId, timestamp, data, dataId })
             })
           })
         }
