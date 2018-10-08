@@ -1,7 +1,7 @@
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  */
-class Protocol {
+class ProtocolHandler {
   /**
    * @constructor for Protocol
    * @param {Object} engine
@@ -17,4 +17,4 @@ class Protocol {
   }
 }
 
-module.exports = Protocol
+module.exports = ProtocolHandler

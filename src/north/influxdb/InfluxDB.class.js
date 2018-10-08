@@ -1,6 +1,6 @@
 const fetch = require('node-fetch')
 const { sprintf } = require('sprintf-js')
-const Application = require('../Application.class')
+const ApiHandler = require('../ApiHandler.class')
 
 
 /**
@@ -22,7 +22,7 @@ const pointIdToNodes = (attributes, pointId) => {
 /**
  * Class InfluxDB : generates and sends InfluxDB requests
  */
-class InfluxDB extends Application {
+class InfluxDB extends ApiHandler {
   /**
    * @constructor for InfluxDB
    * @param {Object} engine
