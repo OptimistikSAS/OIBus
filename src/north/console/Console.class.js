@@ -1,7 +1,7 @@
 const { sprintf } = require('sprintf-js')
-const Application = require('../Application.class')
+const ApiHandler = require('../ApiHandler.class')
 
-class Console extends Application {
+class Console extends ApiHandler {
   /**
    * Shows the length of this.queue
    * @return {void}

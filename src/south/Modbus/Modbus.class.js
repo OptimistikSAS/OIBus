@@ -1,7 +1,7 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
-const Protocol = require('../Protocol.class')
+const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
  * Gives a type to a point based on the config
@@ -27,7 +27,7 @@ const giveType = (point) => {
 /**
  * Class Modbus : provides instruction for Modbus client connection
  */
-class Modbus extends Protocol {
+class Modbus extends ProtocolHandler {
   /**
    * @constructor for Modbus
    * @param {String} configPath : path to the non-optimized configuration file

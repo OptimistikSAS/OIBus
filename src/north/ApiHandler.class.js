@@ -1,13 +1,14 @@
 const Queue = require('../engine/Queue.class')
 
-class Application {
+class ApiHandler {
   /**
    * @constructor for Application
    * @param {Object} engine
    */
-  constructor(application, applicationParameters) {
+  constructor(api, engine) {
     this.queue = new Queue()
-    this.applicationParameters = applicationParameters
+    this.application = 
+    this.engine = engine
   }
 
   enqueue(value) {
@@ -27,4 +28,4 @@ class Application {
   }
 }
 
-module.exports = Application
+module.exports = ApiHandler
