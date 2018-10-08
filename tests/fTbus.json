@@ -257,7 +257,7 @@
       {
         "applicationId": "MyConsole",
         "enabled": true,
-        "application": "Console",
+        "api": "Console",
         "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
         "timeStamp": "fTbus",
         "Console": {
@@ -267,7 +267,7 @@
       {
         "applicationId": "BaseInflux",
         "enabled": false,
-        "application": "InfluxDB",
+        "api": "InfluxDB",
         "minimumBuffer:": 10, // group by 10 when possible
         "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
         "InfluxDB": {
