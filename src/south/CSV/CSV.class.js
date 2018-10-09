@@ -55,18 +55,15 @@ class CSV extends ProtocolHandler {
             csvObjects.forEach((line, index) => {
               if (index !== 0) {
                 // The first line consists of the titles
-                const data = []
-                const dataId = []
+                const data = {}
                 Object.keys(typeColumn).forEach((key) => {
-                  data.push(line[typeColumn[key]])
-                  dataId.push(key)
+                  data[key] = line[typeColumn[key]]
                 })
                 const timestamp = line[timeColumnIndex]
                 this.engine.addValue({
                   pointId: point.pointId,
                   timestamp,
                   data,
-                  dataId,
                 })
               }
             })
@@ -78,18 +75,16 @@ class CSV extends ProtocolHandler {
             // In this case, the parameter 'column' is absolument a number
             const typeColumn = point.CSV
             csvObjects.forEach((line) => {
-              const data = []
-              const dataId = []
+              const data = {}
+
               Object.keys(typeColumn).forEach((key) => {
-                data.push(line[typeColumn[key]])
-                dataId.push(key)
+                data[key] = line[typeColumn[key]]
               })
               const timestamp = line[timeColumn]
               this.engine.addValue({
                 pointId: point.pointId,
                 timestamp,
                 data,
-                dataId,
               })
             })
           })
