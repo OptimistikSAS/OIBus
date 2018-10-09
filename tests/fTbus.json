@@ -112,7 +112,7 @@
         },
         "points": [
           {
-            "CSV": { "value": 1, "quality": 2 },
+            "CSV": { "value": "sensor1-value", "quality": "sensor1-quality" },
             "pointId": "./Tank 5.tank/333333.temperature"
           },
           {
