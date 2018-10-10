@@ -6,8 +6,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 /**
  * Gives a type to a point based on the config
  */
-const giveType = (point) => {
-  this.engine.types.forEach((typeCompared) => {
+const giveType = (point, types) => {
+  types.forEach((typeCompared) => {
     if (
       typeCompared.type
       === point.pointId
@@ -34,9 +34,9 @@ class Modbus extends ProtocolHandler {
    * @param {Object} engine
    */
   constructor(equipment, engine) {
-    super(engine)
-    const { addressGap } = this.engine.south.Modbus
-    this.optimizedConfig = getOptimizedConfig(this, addressGap)
+    super(equipment, engine)
+    const { addressGap } = this.engine.config.south.Modbus
+    this.optimizedConfig = getOptimizedConfig(this.equipment, addressGap)
     this.socket = new net.Socket()
     this.host = equipment.Modbus.host
     this.port = equipment.Modbus.port
@@ -62,7 +62,7 @@ class Modbus extends ProtocolHandler {
       const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
       // Dynamic call of the appropriate function based on type
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach(point => giveType(point))
+        points.forEach(point => giveType(point, this.engine.config.engine.types))
         const rangeAddresses = range.split('-')
         const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
         const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
@@ -120,7 +120,7 @@ class Modbus extends ProtocolHandler {
     this.socket.connect(
       { host, port },
       () => {
-        this.equipment.connected = true
+        this.connected = true
       },
     )
     this.socket.on('error', (err) => {
