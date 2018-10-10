@@ -66,10 +66,10 @@
             "name": "value",
             "type": "number"
           },
-          {
-            "name": "quality",
-            "type": "boolean"
-          }
+          // {
+          //   "name": "quality",
+          //   "type": "boolean"
+          // }
         ]
       }
     ]
@@ -98,7 +98,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "every5Second",
@@ -123,7 +123,7 @@
       },
       {
         "equipmentId": "SimulationServer",
-        "enabled": false,
+        "enabled": true,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -154,7 +154,7 @@
       },
       {
         "equipmentId": "SimulationServerBis",
-        "enabled": false,
+        "enabled": true,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
