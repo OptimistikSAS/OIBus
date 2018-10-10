@@ -30,25 +30,26 @@ const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
 }, {})
 
 const getOptimizedConfig = (equipment) => {
-  const optimized = equipment.reduce((acc, { equipmentId, protocol, points }) => {
-    if (protocol === 'OPCUA') {
-      const scanModes = groupBy(points, 'scanMode', { equipmentId })
-      Object.keys(scanModes).forEach((scan) => {
-        scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
-        Object.values(scanModes[scan]).forEach((equipment) => {
-          equipment.forEach((point) => {
-            delete point.type
-          })
+  // const optimized = equipment.reduce((acc, { equipmentId, protocol, points }) => {
+    const { points } = equipment
+    const scanModes = groupBy(points, 'scanMode')
+    Object.keys(scanModes).forEach((scan) => {
+      console.log(scanModes)
+      scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
+      Object.values(scanModes[scan]).forEach((equipment) => {
+        equipment.forEach((point) => {
+          delete point.type
         })
       })
-      Object.keys(scanModes).forEach((scan) => {
-        if (!acc[scan]) acc[scan] = {}
-        acc[scan] = { ...acc[scan], ...scanModes[scan] }
-      })
-    }
-    return acc
-  }, {})
-  return optimized
+    })
+    // Object.keys(scanModes).forEach((scan) => {
+    //   if (!acc[scan]) acc[scan] = {}
+    //   acc[scan] = { ...acc[scan], ...scanModes[scan] }
+    // })
+    console.log(scanModes)
+    return scanModes
+  // }, {})
+  // return optimized
 }
 
 module.exports = getOptimizedConfig
