@@ -29,7 +29,7 @@
         "scanMode": "every15DaysAt9",
         "cronTime": "0 0 9 */15 * *"
       },
-      { "scanMode": "event" }
+      { "scanMode": "listen" }
     ],
     // types section allows to define the types managed by this engine
     "types": [
