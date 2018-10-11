@@ -28,7 +28,8 @@
       {
         "scanMode": "every15DaysAt9",
         "cronTime": "0 0 9 */15 * *"
-      }
+      },
+      { "scanMode": "event" }
     ],
     // types section allows to define the types managed by this engine
     "types": [
@@ -98,7 +99,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "every5Second",
@@ -118,6 +119,31 @@
           {
             "CSV": { "value": 3, "quality": 4 },
             "pointId": "./Tank 6.tank/333333.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "MQTTServer",
+        "enabled": true,
+        "protocol": "MQTT",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "event",
+        "MQTT": {
+          "server": "simulator.factorythings.com",
+          "protocol": "mqtts",
+          "port": "8883",
+          "username": "bai",
+          "password": "secret"
+        },
+        "points": [
+          {
+            "MQTT": { "topic": "hello" },
+            "pointId": "./Tank 5.tank/22.temperature"
+          },
+          {
+            "MQTT": { "topic": "bonjour" },
+            "pointId": "./Tank 6.tank/23.temperature"
+
           }
         ]
       },
