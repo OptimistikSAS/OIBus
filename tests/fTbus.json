@@ -127,7 +127,7 @@
         "enabled": true,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "event",
+        "defaultScanMode": "listen",
         "MQTT": {
           "server": "simulator.factorythings.com",
           "protocol": "mqtts",
