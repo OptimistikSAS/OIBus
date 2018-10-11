@@ -140,11 +140,10 @@ class Engine {
 
     // 4. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      if (scanMode === 'event') {
+      if (scanMode === 'listen') {
         // If the scan mode is 'event'
         Object.values(this.activeProtocols).forEach((protocol) => {
-          if (protocol.equipment.defaultScanMode === 'event') {
-            console.log('protocol MQTT started... ')
+          if (protocol.equipment.defaultScanMode === 'listen') {
             protocol.listen()
           }
         })
@@ -155,9 +154,7 @@ class Engine {
           onTick: () => {
             // on each scan, activate each protocols
             Object.values(this.activeProtocols).forEach((protocol) => {
-              if (protocol.equipment.protocol !== 'MQTT') {
-                protocol.onScan(scanMode)
-              }
+              protocol.onScan(scanMode)
             })
           },
           start: false,
