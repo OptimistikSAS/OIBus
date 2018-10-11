@@ -1,7 +1,7 @@
 const Opcua = require('node-opcua')
 const { sprintf } = require('sprintf-js')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const optimizedConfig = require('./config/getOptimizedConfig')
+const getOptimizedConfig = require('./config/getOptimizedConfig')
 
 const add = (opcua, equipment, equipments) => {
   equipments[equipment.equipmentId] = {}
@@ -27,18 +27,40 @@ const giveTypes = (point) => {
 }
 
 /**
- * Returns the fields array from the point containing arg'd pointId.
+ * Returns the fields array from the point containing passed pointId.
  * The point is from the optimized config hence the scannedEquipment parameter
  * @param {*} pointId
  * @param {*} scannedEquipment
  */
-const fieldsFromPointId = (pointId, scannedEquipment) => {
-  scannedEquipment.forEach((point) => {
-    console.log(point.pointId, pointId)
-    if (point.pointId === pointId) return point.fields
+const fieldsFromPointId = (pointId, types) => {
+  let fields = []
+  types.some((typeCompared) => {
+    if (
+      typeCompared.type
+      === pointId
+        .split('.')
+        .slice(-1)
+        .pop()
+    ) {
+      fields = typeCompared.fields
+      return true
+    }
   })
-  console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
-  return {}
+  if (fields) {
+    return fields
+  } else {
+    console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
+    return {}
+  }
+  // let fields
+  // scannedEquipment.some((point) => {
+  //   console.log(point.pointId === pointId)
+  //   if (point.pointId === pointId) {
+  //     console.log(point.fields)
+  //     fields = point.fields
+  //     return true
+  //   }
+  // })
 }
 
 /**
@@ -52,15 +74,16 @@ class OPCUA extends ProtocolHandler {
     super(equipment, engine)
     // as OPCUA can group multiple points in a single request
     // we group points based on scanMode
-    this.optimizedConfig = optimizedConfig(equipment)
+    this.optimizedConfig = getOptimizedConfig(equipment)
+    console.log(this.optimizedConfig)
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = sprintf(engine.south.OPCUA.connectionAddress.opc, equipment.OPCUA)
+    this.url = sprintf(engine.config.south.OPCUA.connectionAddress.opc, equipment.OPCUA)
     this.maxAge = equipment.OPCUA.maxAge || 10
   }
 
   async connect() {
-    this.client.connect(this.equipment.url)
+    await this.client.connect(this.url)
     await this.client.createSession((err, session) => {
       if (!err) {
         this.session = session
@@ -76,36 +99,36 @@ class OPCUA extends ProtocolHandler {
    */
   async onScan(scanMode) {
     const scanGroup = this.optimizedConfig[scanMode]
-    Object.keys(scanGroup).forEach((equipment) => {
-      if (this.equipments[equipment].connected) {
-        const nodesToRead = {}
-        scanGroup[equipment].forEach((point) => {
-          nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
-        })
-        this.equipments[equipment].session.read(Object.values(nodesToRead), this.maxAge, (err, dataValues) => {
-          if (!err && Object.keys(nodesToRead).length === dataValues.length) {
-            Object.keys(nodesToRead).forEach((pointId) => {
-              const dataValue = dataValues.shift()
-              const value = {
-                pointId,
-                timestamp: dataValue.sourceTimestamp.toString(),
-                data: {},
-                // dataId: [], // to add after data{} is handled
-              }
-              fieldsFromPointId(pointId, scanGroup[equipment]).forEach((field) => {
-                if (field.name !== 'quality') {
-                  value.data[field.name] = dataValue.value.value // .shift() // Assuming the values array would under dataValue.value.value
-                } else {
-                  value.data[field.name] = dataValue.statusCode.value
-                }
-              })
-              this.engine.addValue(value)
-              // @todo handle double values with an array as data
-            })
-          } else {
-            console.error(err)
+    if (!this.connected || !scanGroup) return
+    const nodesToRead = {}
+    scanGroup.forEach((point) => {
+      nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
+    })
+    this.session.read(Object.values(nodesToRead), this.maxAge, (err, dataValues) => {
+      if (!err && Object.keys(nodesToRead).length === dataValues.length) {
+        Object.keys(nodesToRead).forEach((pointId) => {
+          const dataValue = dataValues.shift()
+          const value = {
+            pointId,
+            timestamp: dataValue.sourceTimestamp.toString(),
+            data: [],
+            dataId: [], // to add after data{} is handled
           }
+          console.log(pointId, scanGroup)
+          console.log(fieldsFromPointId(pointId, this.engine.config.engine.types))
+          fieldsFromPointId(pointId, this.engine.config.engine.types).forEach((field) => {
+            value.dataId.push(field.name)
+            if (field.name !== 'quality') {
+              value.data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
+            } else {
+              value.data.push(dataValue.statusCode.value)
+            }
+          })
+          this.engine.addValue(value)
+          // @todo handle double values with an array as data
         })
+      } else {
+        console.error(err)
       }
     })
   }
