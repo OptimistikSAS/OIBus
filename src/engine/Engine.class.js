@@ -116,7 +116,7 @@ class Engine {
           this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
           this.activeProtocols[equipmentId].connect()
         } else {
-          console.error(`Protocol for ${equipmentId}is not supported : ${protocol}`)
+          console.error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
           process.exit(1)
         }
       }
