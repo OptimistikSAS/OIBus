@@ -35,6 +35,7 @@
     "koa-respond": "^2.1.0",
     "koa-router": "^7.4.0",
     "minimist": "^1.2.0",
+    "mqtt": "^2.18.8",
     "node-fetch": "^2.2.0",
     "node-opcua": "^0.4.6",
     "sprintf-js": "^1.1.1"
