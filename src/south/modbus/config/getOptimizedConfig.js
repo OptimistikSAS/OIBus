@@ -68,14 +68,13 @@ const groupAddresses = (array, key, groupSize) => {
  * @return {boolean}
  */
 const optimizedConfig = (equipment, addressGap) => {
-  const optimized = equipment.reduce((acc, { points }) => {
-    const scanModes = groupBy(points, 'scanMode' /* , { equipmentId } */)
-    Object.keys(scanModes).forEach((scan) => {
-      scanModes[scan] = groupBy(scanModes[scan], 'type')
-      Object.keys(scanModes[scan]).forEach((type) => {
-        scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'address', addressGap[type])
-      })
+  const scanModes = groupBy(equipment.points, 'scanMode' /* , { equipmentId } */)
+  Object.keys(scanModes).forEach((scan) => {
+    scanModes[scan] = groupBy(scanModes[scan], 'Modbus.type')
+    Object.keys(scanModes[scan]).forEach((type) => {
+      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'Modbus.address', addressGap[type])
     })
+  })
     /*
   Object.keys(scanModes).forEach((scan) => {
     if (!acc[scan]) acc[scan] = {}
@@ -84,8 +83,7 @@ const optimizedConfig = (equipment, addressGap) => {
   }
   return acc
   */
-  }, {})
-  return optimized
+  return scanModes
 }
 
 module.exports = optimizedConfig
