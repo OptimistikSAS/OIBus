@@ -15,6 +15,10 @@ class ProtocolHandler {
     const { equipmentId, protocol } = this.equipment
     console.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
   }
+  /* eslint-disable-next-line */
+  listen() {}
+  /* eslint-disable-next-line */
+  onScan() {}
 }
 
 module.exports = ProtocolHandler
