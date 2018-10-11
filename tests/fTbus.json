@@ -66,10 +66,10 @@
             "name": "value",
             "type": "number"
           },
-          {
-            "name": "quality",
-            "type": "boolean"
-          }
+          // {
+          //   "name": "quality",
+          //   "type": "boolean"
+          // }
         ]
       }
     ]
@@ -148,7 +148,7 @@
       },
       {
         "equipmentId": "SimulationServer",
-        "enabled": false,
+        "enabled": true,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -179,7 +179,7 @@
       },
       {
         "equipmentId": "SimulationServerBis",
-        "enabled": false,
+        "enabled": true,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -201,7 +201,7 @@
       },
       {
         "equipmentId": "PLC-35",
-        "enabled": true,
+        "enabled": false,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -250,7 +250,7 @@
       },
       {
         "equipmentId": "PLC-42",
-        "enabled": true,
+        "enabled": false,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base/Tank4.tank",
         "defaultScanMode": "everySecond",
