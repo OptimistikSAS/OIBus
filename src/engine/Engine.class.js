@@ -115,6 +115,7 @@ class Engine {
         if (ProtocolHandler) {
           this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
           this.activeProtocols[equipmentId].connect()
+          this.activeProtocols[equipmentId].listen()
         } else {
           console.error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
           process.exit(1)
@@ -140,27 +141,17 @@ class Engine {
 
     // 4. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      if (scanMode === 'listen') {
-        // If the scan mode is 'event'
-        Object.values(this.activeProtocols).forEach((protocol) => {
-          if (protocol.equipment.defaultScanMode === 'listen') {
-            protocol.listen()
-          }
-        })
-      } else {
-        // If the scan mode is a normal one
-        const job = new CronJob({
-          cronTime,
-          onTick: () => {
-            // on each scan, activate each protocols
-            Object.values(this.activeProtocols).forEach((protocol) => {
-              protocol.onScan(scanMode)
-            })
-          },
-          start: false,
-        })
-        job.start()
-      }
+      const job = new CronJob({
+        cronTime,
+        onTick: () => {
+          // on each scan, activate each protocols
+          Object.values(this.activeProtocols).forEach((protocol) => {
+            protocol.onScan(scanMode)
+          })
+        },
+        start: false,
+      })
+      job.start()
     })
 
     if (callback) callback()
