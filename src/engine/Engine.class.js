@@ -4,6 +4,7 @@ const { tryReadFile } = require('../services/config.service')
 const Modbus = require('../south/Modbus/Modbus.class')
 const OPCUA = require('../south/OPCUA/OPCUA.class')
 const CSV = require('../south/CSV/CSV.class')
+const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
@@ -12,6 +13,7 @@ const Server = require('../server/Server.class')
 
 // List all South protocols
 const protocolList = {
+  MQTT,
   Modbus,
   OPCUA,
   CSV,
@@ -113,6 +115,7 @@ class Engine {
         if (ProtocolHandler) {
           this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
           this.activeProtocols[equipmentId].connect()
+          this.activeProtocols[equipmentId].listen()
         } else {
           console.error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
           process.exit(1)
@@ -142,12 +145,15 @@ class Engine {
         cronTime,
         onTick: () => {
           // on each scan, activate each protocols
-          Object.values(this.activeProtocols).forEach(protocol => protocol.onScan(scanMode))
+          Object.values(this.activeProtocols).forEach((protocol) => {
+            protocol.onScan(scanMode)
+          })
         },
         start: false,
       })
       job.start()
     })
+
     if (callback) callback()
   }
 }

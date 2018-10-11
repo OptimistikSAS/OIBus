@@ -122,6 +122,31 @@
         ]
       },
       {
+        "equipmentId": "MQTTServer",
+        "enabled": true,
+        "protocol": "MQTT",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "listen",
+        "MQTT": {
+          "server": "simulator.factorythings.com",
+          "protocol": "mqtts",
+          "port": "8883",
+          "username": "bai",
+          "password": "secret"
+        },
+        "points": [
+          {
+            "MQTT": { "topic": "hello" },
+            "pointId": "./Tank 5.tank/22.temperature"
+          },
+          {
+            "MQTT": { "topic": "bonjour" },
+            "pointId": "./Tank 6.tank/23.temperature"
+
+          }
+        ]
+      },
+      {
         "equipmentId": "SimulationServer",
         "enabled": true,
         "protocol": "OPCUA",
