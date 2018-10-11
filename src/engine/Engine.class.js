@@ -4,6 +4,7 @@ const { tryReadFile } = require('../services/config.service')
 const Modbus = require('../south/Modbus/Modbus.class')
 const OPCUA = require('../south/OPCUA/OPCUA.class')
 const CSV = require('../south/CSV/CSV.class')
+const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
@@ -12,6 +13,7 @@ const Server = require('../server/Server.class')
 
 // List all South protocols
 const protocolList = {
+  MQTT,
   Modbus,
   OPCUA,
   CSV,
@@ -138,16 +140,32 @@ class Engine {
 
     // 4. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = new CronJob({
-        cronTime,
-        onTick: () => {
-          // on each scan, activate each protocols
-          Object.values(this.activeProtocols).forEach(protocol => protocol.onScan(scanMode))
-        },
-        start: false,
-      })
-      job.start()
+      if (scanMode === 'event') {
+        // If the scan mode is 'event'
+        Object.values(this.activeProtocols).forEach((protocol) => {
+          if (protocol.equipment.defaultScanMode === 'event') {
+            console.log('protocol MQTT started... ')
+            protocol.listen()
+          }
+        })
+      } else {
+        // If the scan mode is a normal one
+        const job = new CronJob({
+          cronTime,
+          onTick: () => {
+            // on each scan, activate each protocols
+            Object.values(this.activeProtocols).forEach((protocol) => {
+              if (protocol.equipment.protocol !== 'MQTT') {
+                protocol.onScan(scanMode)
+              }
+            })
+          },
+          start: false,
+        })
+        job.start()
+      }
     })
+
     if (callback) callback()
   }
 }
