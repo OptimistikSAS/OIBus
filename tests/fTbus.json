@@ -99,7 +99,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": false,
+        "enabled": true,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "every5Second",
