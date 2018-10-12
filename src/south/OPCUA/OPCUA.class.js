@@ -52,15 +52,6 @@ const fieldsFromPointId = (pointId, types) => {
     console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
     return {}
   }
-  // let fields
-  // scannedEquipment.some((point) => {
-  //   console.log(point.pointId === pointId)
-  //   if (point.pointId === pointId) {
-  //     console.log(point.fields)
-  //     fields = point.fields
-  //     return true
-  //   }
-  // })
 }
 
 /**
@@ -75,7 +66,6 @@ class OPCUA extends ProtocolHandler {
     // as OPCUA can group multiple points in a single request
     // we group points based on scanMode
     this.optimizedConfig = getOptimizedConfig(equipment)
-    console.log(this.optimizedConfig)
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
     this.url = sprintf(engine.config.south.OPCUA.connectionAddress.opc, equipment.OPCUA)

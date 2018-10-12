@@ -123,7 +123,7 @@
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
@@ -201,7 +201,7 @@
       },
       {
         "equipmentId": "PLC-35",
-        "enabled": false,
+        "enabled": true,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -250,7 +250,7 @@
       },
       {
         "equipmentId": "PLC-42",
-        "enabled": false,
+        "enabled": true,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base/Tank4.tank",
         "defaultScanMode": "everySecond",
