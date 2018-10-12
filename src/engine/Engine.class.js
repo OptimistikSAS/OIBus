@@ -62,6 +62,10 @@ class Engine {
       }
     })
     // prepare config
+    this.scanModes = {}
+    this.config.engine.scanModes.forEach(({ scanMode }) => {
+      this.scanModes[scanMode] = []
+    })
     this.config.south.equipments.forEach((equipment) => {
       equipment.points.forEach((point) => {
         // replace relative path into absolute paths
@@ -71,6 +75,9 @@ class Engine {
         // apply default scanmodes
         if (!point.scanMode) {
           point.scanMode = equipment.defaultScanMode
+        }
+        if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.protocol)) {
+          this.scanModes[point.scanMode].push(equipment.protocol)
         }
       })
     })
@@ -146,7 +153,10 @@ class Engine {
         onTick: () => {
           // on each scan, activate each protocols
           Object.values(this.activeProtocols).forEach((protocol) => {
-            protocol.onScan(scanMode)
+            // if (this.scanModes[scanMode][protocol.constructor.name]) {
+            if (this.scanModes[scanMode].includes(protocol.constructor.name)) {
+              protocol.onScan(scanMode)
+            }
           })
         },
         start: false,
