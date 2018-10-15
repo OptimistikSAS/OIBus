@@ -25,6 +25,27 @@ const apiList = {
   InfluxDB,
 }
 
+const checkConfig = (config) => {
+  const mandatoryEntries = [
+    'engine.scanModes',
+    'engine.types',
+    'engine.port',
+    'engine.user',
+    'engine.password',
+    'south.equipments',
+    'north.applications',
+  ]
+  mandatoryEntries.forEach((entry) => {
+    const [key, subkey] = entry.split('.')
+    if (!config[key]) {
+      throw new Error(`You should define ${key} in the config file`)
+    }
+    if (!config[key][subkey]) {
+      throw new Error(`You should define ${entry} in the config file`)
+    }
+  })
+}
+
 /**
  * Class Engine :
  * - at startup, handles initialization of applications, protocols and config.
@@ -41,26 +62,7 @@ class Engine {
    */
   constructor(configFile) {
     this.config = tryReadFile(configFile)
-    const mandatoryEntries = [
-      'engine.scanModes',
-      'engine.types',
-      'engine.port',
-      'engine.user',
-      'engine.password',
-      'south.equipments',
-      'north.applications',
-    ]
-    mandatoryEntries.forEach((entry) => {
-      const [key, subkey] = entry.split('.')
-      if (!this.config[key]) {
-        console.error(`You should define ${key} in the config file`)
-        process.exit(1)
-      }
-      if (!this.config[key][subkey]) {
-        console.error(`You should define ${entry} in the config file`)
-        process.exit(1)
-      }
-    })
+    checkConfig(this.config)
     // prepare config
     // initialize the scanMode object with empty arrays
     this.scanModes = {}
@@ -74,7 +76,7 @@ class Engine {
         if (point.pointId.charAt(0) === '.') {
           point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
         }
-        // 2.apply default scanmodes
+        // 2.apply default scanmodes to each points
         if (!point.scanMode) {
           point.scanMode = equipment.defaultScanMode
         }
@@ -125,10 +127,8 @@ class Engine {
         if (ProtocolHandler) {
           this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
           this.activeProtocols[equipmentId].connect()
-          this.activeProtocols[equipmentId].listen()
         } else {
-          console.error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
-          process.exit(1)
+          throw new Error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
         }
       }
     })
@@ -143,8 +143,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(api, this)
           this.activeApis[applicationId].connect()
         } else {
-          console.error(`API for ${applicationId} is not supported : ${api}`)
-          process.exit(1)
+          throw new Error(`API for ${applicationId} is not supported : ${api}`)
         }
       }
     })
