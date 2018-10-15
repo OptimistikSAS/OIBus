@@ -7,7 +7,7 @@
     // user/password (use ) (to do: use bcrypt)
     "user": "admin",
     "password": "pass",
-    // the list of IP addresses allowed to access the Web interface
+    // the list of IP addresses allowed to access the Web Server
     "filter": ["127.0.0.1", "::1"],
     // the scan mode section allow to create categories of scan
     // each categories will use the cron syntax to determine the
@@ -65,7 +65,7 @@
           {
             "name": "value",
             "type": "number"
-          },
+          }
           // {
           //   "name": "quality",
           //   "type": "boolean"
@@ -100,7 +100,7 @@
         "equipmentId": "CSVServer",
         "enabled": true,
         "protocol": "CSV",
-        "pointIdRoot": "/fttest.base",
+        "equipmentRoot": "/fttest.base",
         "defaultScanMode": "every5Second",
         "CSV": {
           "inputFolder": "./tests/csv/input/",
@@ -112,20 +112,22 @@
         },
         "points": [
           {
-            "CSV": { "value": "sensor1-value", "quality": "sensor1-quality" },
+            "value": "sensor1-value",
+            "quality": "sensor1-quality",
             "pointId": "./Tank 5.tank/333333.temperature"
           },
           {
-            "CSV": { "value": 3, "quality": 4 },
+            "value": 3,
+            "quality": 4,
             "pointId": "./Tank 6.tank/333333.temperature"
           }
         ]
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
-        "pointIdRoot": "/fttest.base",
+        "equipmentRoot": "/fttest.base",
         "defaultScanMode": "listen",
         "MQTT": {
           "server": "simulator.factorythings.com",
@@ -136,13 +138,12 @@
         },
         "points": [
           {
-            "MQTT": { "topic": "hello" },
+            "topic": "hello",
             "pointId": "./Tank 5.tank/22.temperature"
           },
           {
-            "MQTT": { "topic": "bonjour" },
+            "topic": "bonjour",
             "pointId": "./Tank 6.tank/23.temperature"
-
           }
         ]
       },
@@ -150,7 +151,7 @@
         "equipmentId": "SimulationServer",
         "enabled": true,
         "protocol": "OPCUA",
-        "pointIdRoot": "/fttest.base",
+        "equipmentRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "OPCUA": {
           "host": "localhost",
@@ -161,17 +162,13 @@
         },
         "points": [
           {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Counter1"
-            },
+            "ns": "5",
+            "s": "Counter1",
             "pointId": "./Tank 5.tank/333333.temperature"
           },
           {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Random1"
-            },
+            "ns": "5",
+            "s": "Random1",
             "pointId": "./Tank 5.tank/333333.temperature",
             "scanMode": "everyNoon"
           }
@@ -181,7 +178,7 @@
         "equipmentId": "SimulationServerBis",
         "enabled": true,
         "protocol": "OPCUA",
-        "pointIdRoot": "/fttest.base",
+        "equipmentRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "OPCUA": {
           "host": "localhost",
@@ -191,10 +188,8 @@
         },
         "points": [
           {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Sinusoid1"
-            },
+            "ns": "5",
+            "s": "Sinusoid1",
             "pointId": "./Tank 9.tank/333333.temperature"
           }
         ]
@@ -203,7 +198,7 @@
         "equipmentId": "PLC-35",
         "enabled": true,
         "protocol": "Modbus",
-        "pointIdRoot": "/fttest.base",
+        "equipmentRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "Modbus": {
           "host": "localhost",
@@ -211,39 +206,29 @@
         },
         "points": [
           {
-            "Modbus": {
-              "address": "0x0031",
-              "type": "coil"
-            },
+            "address": "0x0031",
+            "type": "coil",
             "pointId": "./Tank 3.tank/333333.fill_level"
           },
           {
-            "Modbus": {
-              "address": "0x0f8",
-              "type": "holdingRegister"
-            },
+            "address": "0x0f8",
+            "type": "holdingRegister",
             "pointId": "./Tank 2.tank/222222.valve_state",
             "scanMode": "everyNoon"
           },
           {
-            "Modbus": {
-              "address": "0x76a0",
-              "type": "coil"
-            },
+            "address": "0x76a0",
+            "type": "coil",
             "pointId": "./Tank 2.tank/222222.fill_level"
           },
           {
-            "Modbus": {
-              "address": "0x76b0",
-              "type": "coil"
-            },
+            "address": "0x76b0",
+            "type": "coil",
             "pointId": "./Tank 2.tank/222333.fill_level"
           },
           {
-            "Modbus": {
-              "address": "0x83a6",
-              "type": "coil"
-            },
+            "address": "0x83a6",
+            "type": "coil",
             "pointId": "./Tank 3.tank/111111.valve_state"
           }
         ]
@@ -252,7 +237,7 @@
         "equipmentId": "PLC-42",
         "enabled": true,
         "protocol": "Modbus",
-        "pointIdRoot": "/fttest.base/Tank4.tank",
+        "equipmentRoot": "/fttest.base/Tank4.tank",
         "defaultScanMode": "everySecond",
         "Modbus": {
           "host": "localhost",
@@ -260,17 +245,13 @@
         },
         "points": [
           {
-            "Modbus": {
-              "address": "0x0f",
-              "type": "coil"
-            },
+            "address": "0x0f",
+            "type": "coil",
             "pointId": "./111111.fill_level"
           },
           {
-            "Modbus": {
-              "address": "0x20",
-              "type": "holdingRegister"
-            },
+            "address": "0x20",
+            "type": "holdingRegister",
             "pointId": "./111111.flow_rate"
           }
         ]
