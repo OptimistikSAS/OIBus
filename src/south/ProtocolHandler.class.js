@@ -16,9 +16,9 @@ class ProtocolHandler {
     console.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
   }
   /* eslint-disable-next-line */
-  listen() {}
-  /* eslint-disable-next-line */
   onScan() {}
+  /* eslint-disable-next-line */
+  listen() {}
 }
 
 module.exports = ProtocolHandler
