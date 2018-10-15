@@ -14,9 +14,28 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * @memberof CSV
  */
 const loadFile = (file, separator) => {
-  const content = fs.readFileSync(file).toString()
-  const csv = jscsv.toArrays(content, { separator })
-  return csv
+  // const content = fs.readFileSync(file).toString()
+  console.log(file)
+  const readStream = fs.createReadStream('./tests/csv/input/fichier.txt')
+  const content = readStream.read()
+  console.log(content)
+  readStream.on('error', (err) => {
+    console.error(err)
+  })
+
+  readStream.on('open', (fd) => {
+    console.log('FIle opened', fd)
+  })
+
+  readStream.on('ready', () => {
+    console.log('File ready..')
+  })
+
+  readStream.on('data', (chunk) => {
+    console.log('Reading datas:', chunk)
+    const csv = jscsv.toArrays(chunk, { separator })
+    return csv
+  })
 }
 
 /**
@@ -60,11 +79,11 @@ class CSV extends ProtocolHandler {
                   data[key] = line[typeColumn[key]]
                 })
                 const timestamp = line[timeColumnIndex]
-                this.engine.addValue({
-                  pointId: point.pointId,
-                  timestamp,
-                  data,
-                })
+                // this.engine.addValue({
+                //   pointId: point.pointId,
+                //   timestamp,
+                //   data,
+                // })
               }
             })
           })
@@ -81,11 +100,11 @@ class CSV extends ProtocolHandler {
                 data[key] = line[typeColumn[key]]
               })
               const timestamp = line[timeColumn]
-              this.engine.addValue({
-                pointId: point.pointId,
-                timestamp,
-                data,
-              })
+              // this.engine.addValue({
+              //   pointId: point.pointId,
+              //   timestamp,
+              //   data,
+              // })
             })
           })
         }
