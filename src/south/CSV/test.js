@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const readStream = fs.createReadStream('./tests/csv/input/fichier.txt')
+const readStream = fs.createReadStream('./tests/csv/input/fichier.csv')
 const content = readStream.read()
 console.log(content)
 readStream.on('error', (err) => {
@@ -16,5 +16,6 @@ readStream.on('ready', () => {
 })
 
 readStream.on('data', (chunk) => {
-  console.log('Reading datas:', chunk)
+  console.log('Reading datas:', chunk.toString())
 })
+console.log('Finished')
