@@ -1,4 +1,3 @@
-# Koatest
 # fTbus
 ## How fTbus works
 
