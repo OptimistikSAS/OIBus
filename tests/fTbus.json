@@ -153,7 +153,7 @@
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "OPCUA": {
-          "host": "localhost",
+          "host": "35.180.179.217",
           "opcuaPort": "53530",
           "httpsPort": "53443",
           "endPoint": "Server/Simulation",
@@ -184,7 +184,7 @@
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "OPCUA": {
-          "host": "localhost",
+          "host": "35.180.179.217",
           "opcuaPort": "53530",
           "httpsPort": "53443",
           "endPoint": "Server/Simulation"
@@ -206,7 +206,7 @@
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
         "Modbus": {
-          "host": "localhost",
+          "host": "35.180.153.134",
           "port": 502
         },
         "points": [
@@ -255,7 +255,7 @@
         "pointIdRoot": "/fttest.base/Tank4.tank",
         "defaultScanMode": "everySecond",
         "Modbus": {
-          "host": "localhost",
+          "host": "35.180.153.134",
           "port": 502
         },
         "points": [
