@@ -10,10 +10,9 @@ class CSV extends ProtocolHandler {
    * read the csv file and rewrite it to another file in the folder archive
    * @return {void}
    */
-  onScan(scanMode) {
-    const { defaultScanMode, CSV: parameters } = this.equipment
-    if (scanMode !== defaultScanMode) return
-    const { inputFolder, archiveFolder, errorFolder } = parameters
+  onScan(_scanMode) {
+    const { CSV: parameters } = this.equipment
+    const { inputFolder } = parameters
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
@@ -22,15 +21,7 @@ class CSV extends ProtocolHandler {
       }
       if (!files.length) console.warn(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
-        this.processFile(`${inputFolder}${filename}`)
-
-        fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (erro) => {
-          if (erro) {
-            fs.writeFile(`${errorFolder}error.txt`, erro.toString())
-            return
-          }
-          console.info('Rename complete!')
-        })
+        this.processFile(inputFolder, filename)
       })
     })
   }
@@ -41,17 +32,24 @@ class CSV extends ProtocolHandler {
    * cf http://c2fo.io/fast-csv/index.html
    *
    *
-   * @param {*} file
-   * @param {*} separator
+   * @param {*} inputFolder
+   * @param {*} filename
    * @returns the csv file (in memory)
    * @memberof CSV
    */
-  processFile(file) {
+  processFile(inputFolder, filename) {
+    const file = `${inputFolder}${filename}`
     const { points, CSV: parameters } = this.equipment
-    const { timeColumn, hasFirstLine } = parameters
+    const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
     const readStream = fs.createReadStream(file)
     readStream.on('error', (err) => {
       console.error(err)
+      fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (erro) => {
+        if (erro) {
+          console.error(erro)
+        }
+      })
+      console.log('File move to ', `${errorFolder}${filename}`)
     })
     let timeColumnIndex
     let firstLine = []
@@ -107,6 +105,12 @@ class CSV extends ProtocolHandler {
       })
       .on('end', () => {
         console.log('File loading end.')
+        fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (erro) => {
+          if (erro) {
+            console.error(erro)
+          }
+        })
+        console.info('File move succeeded!')
       })
 
     readStream.pipe(csvFile)
