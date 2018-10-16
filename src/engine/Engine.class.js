@@ -81,8 +81,10 @@ class Engine {
           point.scanMode = equipment.defaultScanMode
         }
         // 3. Associate the scanMode to all it's corresponding equipments
-        if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
-          this.scanModes[point.scanMode].push(equipment.equipmentId)
+        if (equipment.enabled) {
+          if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
+            this.scanModes[point.scanMode].push(equipment.equipmentId)
+          }
         }
       })
     })
