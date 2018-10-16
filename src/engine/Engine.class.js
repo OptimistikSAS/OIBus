@@ -151,8 +151,6 @@ class Engine {
     })
 
     // 4. start the timers for each scan modes
-    console.log(this.activeProtocols)
-    console.log(this.scanModes)
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,
