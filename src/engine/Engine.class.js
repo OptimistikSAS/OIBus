@@ -79,8 +79,10 @@ class Engine {
           point.scanMode = equipment.defaultScanMode
         }
         // 3. Associate the scanMode to all it's corresponding equipments
-        if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
-          this.scanModes[point.scanMode].push(equipment.equipmentId)
+        if (equipment.enabled) {
+          if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
+            this.scanModes[point.scanMode].push(equipment.equipmentId)
+          }
         }
       })
     })
@@ -150,6 +152,8 @@ class Engine {
     })
 
     // 4. start the timers for each scan modes
+    console.log(this.activeProtocols)
+    console.log(this.scanModes)
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = new CronJob({
         cronTime,

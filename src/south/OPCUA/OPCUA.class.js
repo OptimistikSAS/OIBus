@@ -3,28 +3,6 @@ const { sprintf } = require('sprintf-js')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
 
-const add = (opcua, equipment, equipments) => {
-  equipments[equipment.equipmentId] = {}
-}
-
-const giveTypes = (point) => {
-  global.fTbusConfig.engine.types.forEach((typeCompared) => {
-    if (
-      typeCompared.type
-      === point.pointId
-        .split('.')
-        .slice(-1)
-        .pop()
-    ) {
-      point.fields = typeCompared.fields
-      // point.fields.forEach((field) => {
-      //   field.dataId = field.name
-      //   delete field.name
-      // })
-    }
-  })
-  console.log(point)
-}
 
 /**
  * Returns the fields array from the point containing passed pointId.
@@ -48,10 +26,9 @@ const fieldsFromPointId = (pointId, types) => {
   })
   if (fields) {
     return fields
-  } else {
-    console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
-    return {}
   }
+  console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
+  return {}
 }
 
 /**
@@ -73,11 +50,19 @@ class OPCUA extends ProtocolHandler {
   }
 
   async connect() {
-    await this.client.connect(this.url)
-    await this.client.createSession((err, session) => {
-      if (!err) {
-        this.session = session
-        this.connected = true
+    await this.client.connect(this.url, (err1) => {
+      if (!err1) {
+        console.log('Connected')
+        this.client.createSession((err2, session) => {
+          if (!err2) {
+            this.session = session
+            this.connected = true
+          } else {
+            console.error('Could not connect to : ', this.equipment.equipmentId)
+          }
+        })
+      } else {
+        console.error(err1)
       }
     })
   }
