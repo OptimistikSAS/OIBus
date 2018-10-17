@@ -1,6 +1,12 @@
 const fs = require('fs')
 const csv = require('fast-csv')
+const { createLogger, format, transports } = require('winston')
 const ProtocolHandler = require('../ProtocolHandler.class')
+
+    new transports.File({ filename: 'error.log', level: 'error' }),
+    new transports.File({ filename: 'combined.log' }),
+  ],
+})
 
 /**
  * Class CSV
@@ -16,10 +22,10 @@ class CSV extends ProtocolHandler {
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
-        console.error(err)
+        logger.error(err)
         return
       }
-      if (!files.length) console.warn(`The folder ${inputFolder} is empty.`)
+      if (!files.length) logger.info(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         this.processFile(inputFolder, filename)
       })
@@ -43,13 +49,13 @@ class CSV extends ProtocolHandler {
     const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
     const readStream = fs.createReadStream(file)
     readStream.on('error', (err) => {
-      console.error(err)
+      logger.error(err)
       fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (erro) => {
         if (erro) {
-          console.error(erro)
+          logger.error(erro)
         }
       })
-      console.log('File move to ', `${errorFolder}${filename}`)
+      logger.info('File move to ', `${errorFolder}${filename}`)
     })
     let timeColumnIndex
     let firstLine = []
@@ -76,10 +82,10 @@ class CSV extends ProtocolHandler {
               Object.keys(typeColumn).forEach((key) => {
                 data[key] = csvObjects[typeColumn[key]]
               })
-              const timestamp = csvObjects[timeColumnIndex]
+              const timeStamp = csvObjects[timeColumnIndex]
               this.engine.addValue({
                 pointId: point.pointId,
-                timestamp,
+                timestamp: timeStamp,
                 data,
               })
             })
@@ -94,23 +100,23 @@ class CSV extends ProtocolHandler {
             Object.keys(typeColumn).forEach((key) => {
               data[key] = csvObjects[typeColumn[key]]
             })
-            const timestamp = csvObjects[timeColumn]
+            const timeStamp = csvObjects[timeColumn]
             this.engine.addValue({
               pointId: point.pointId,
-              timestamp,
+              timestamp: timeStamp,
               data,
             })
           })
         }
       })
       .on('end', () => {
-        console.log('File loading end.')
+        logger.info('File loading end.')
         fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (erro) => {
           if (erro) {
-            console.error(erro)
+            logger.error(erro)
           }
         })
-        console.info('File move succeeded!')
+        logger.info('File move succeeded!')
       })
 
     readStream.pipe(csvFile)
