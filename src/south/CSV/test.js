@@ -13,4 +13,4 @@ const logger = createLogger({
     new transports.File({ filename: 'combined.log' }),
   ],
 })
-logger.info('hahaha')
+logger.info(new Date().toISOString())
