@@ -7,7 +7,7 @@ class ApiHandler {
    */
   constructor(api, engine) {
     this.queue = new Queue()
-    this.application = 
+    this.application = api
     this.engine = engine
   }
 
