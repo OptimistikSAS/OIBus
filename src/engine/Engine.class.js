@@ -11,7 +11,7 @@ const InfluxDB = require('../north/influxdb/InfluxDB.class')
 // Web Server
 const Server = require('../server/Server.class')
 // Logger
-const Logger = require('../../tests/Logger.class')
+const Logger = require('./Logger.class')
 // List all South protocols
 const protocolList = {
   MQTT,
