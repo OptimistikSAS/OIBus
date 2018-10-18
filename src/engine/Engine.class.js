@@ -10,7 +10,8 @@ const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
 // Web Server
 const Server = require('../server/Server.class')
-
+// Logger
+const Logger = require('../../tests/Logger.class')
 // List all South protocols
 const protocolList = {
   MQTT,
@@ -94,6 +95,9 @@ class Engine {
     // based on the config file
     this.activeProtocols = {}
     this.activeApis = {}
+
+    // Configure and get the logger
+    this.logger = new Logger(this.config.engine.logParameters).getLogger()
   }
 
   /**

@@ -1,12 +1,6 @@
 const fs = require('fs')
 const csv = require('fast-csv')
-const { createLogger, format, transports } = require('winston')
 const ProtocolHandler = require('../ProtocolHandler.class')
-
-    new transports.File({ filename: 'error.log', level: 'error' }),
-    new transports.File({ filename: 'combined.log' }),
-  ],
-})
 
 /**
  * Class CSV
@@ -19,6 +13,7 @@ class CSV extends ProtocolHandler {
   onScan(_scanMode) {
     const { CSV: parameters } = this.equipment
     const { inputFolder } = parameters
+    const { logger } = this.engine
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
