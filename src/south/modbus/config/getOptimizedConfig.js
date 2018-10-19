@@ -75,7 +75,7 @@ const optimizedConfig = (equipment, addressGap) => {
       scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'Modbus.address', addressGap[type])
     })
   })
-    /*
+  /*
   Object.keys(scanModes).forEach((scan) => {
     if (!acc[scan]) acc[scan] = {}
     acc[scan] = { ...acc[scan], ...scanModes[scan]

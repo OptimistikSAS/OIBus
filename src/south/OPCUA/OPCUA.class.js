@@ -3,7 +3,6 @@ const { sprintf } = require('sprintf-js')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
 
-
 /**
  * Returns the fields array from the point containing passed pointId.
  * The point is from the optimized config hence the scannedEquipment parameter
@@ -50,21 +49,24 @@ class OPCUA extends ProtocolHandler {
   }
 
   async connect() {
-    await this.client.connect(this.url, (err1) => {
-      if (!err1) {
-        console.log('Connected')
-        this.client.createSession((err2, session) => {
-          if (!err2) {
-            this.session = session
-            this.connected = true
-          } else {
-            console.error('Could not connect to : ', this.equipment.equipmentId)
-          }
-        })
-      } else {
-        console.error(err1)
-      }
-    })
+    await this.client.connect(
+      this.url,
+      (err1) => {
+        if (!err1) {
+          console.log('Connected')
+          this.client.createSession((err2, session) => {
+            if (!err2) {
+              this.session = session
+              this.connected = true
+            } else {
+              console.error('Could not connect to : ', this.equipment.equipmentId)
+            }
+          })
+        } else {
+          console.error(err1)
+        }
+      },
+    )
   }
 
   /**

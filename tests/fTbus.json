@@ -27,15 +27,15 @@
       },
       {
         "scanMode": "every5Second",
-        "cronTime": "*/5 * * * * *"
+        "cronTime": "* * * * * /5"
       },
       {
         "scanMode": "everyNoon",
-        "cronTime": "0 0 12 * * *"
+        "cronTime": "* * * 12"
       },
       {
         "scanMode": "every15DaysAt9",
-        "cronTime": "0 0 9 */15 * *"
+        "cronTime": "0 0 /15 9"
       }
     ],
     // types section allows to define the types managed by this engine
