@@ -1,4 +1,4 @@
-const { CronJob } = require('cron')
+const timexe = require('timexe')
 const { tryReadFile } = require('../services/config.service')
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
@@ -152,17 +152,12 @@ class Engine {
 
     // 4. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = new CronJob({
-        cronTime,
-        onTick: () => {
-          // on each scan, activate each protocols
-          this.scanModes[scanMode].forEach((equipmentId) => {
-            this.activeProtocols[equipmentId].onScan(scanMode)
-          })
-        },
-        start: false,
+      const job = timexe(cronTime, () => {
+        // on each scan, activate each protocols
+        this.scanModes[scanMode].forEach((equipmentId) => {
+          this.activeProtocols[equipmentId].onScan(scanMode)
+        })
       })
-      job.start()
     })
 
     if (callback) callback()
