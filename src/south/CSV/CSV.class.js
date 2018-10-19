@@ -7,19 +7,29 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  */
 class CSV extends ProtocolHandler {
   /**
+   * @constructor for Protocol
+   * @param {Object} engine
+   */
+  constructor(equipment, engine) {
+    super(equipment, engine)
+    this.logger = this.engine.logger
+  }
+
+  /**
    * read the csv file and rewrite it to another file in the folder archive
    * @return {void}
    */
   onScan(_scanMode) {
     const { CSV: parameters } = this.equipment
     const { inputFolder } = parameters
+
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
-        console.error(err)
+        this.logger.error(err)
         return
       }
-      if (!files.length) console.warn(`The folder ${inputFolder} is empty.`)
+      if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         this.processFile(inputFolder, filename)
       })
@@ -43,13 +53,13 @@ class CSV extends ProtocolHandler {
     const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
     const readStream = fs.createReadStream(file)
     readStream.on('error', (err) => {
-      console.error(err)
+      this.logger.error(err)
       fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (erro) => {
         if (erro) {
-          console.error(erro)
+          this.logger.error(erro)
         }
       })
-      console.log('File move to ', `${errorFolder}${filename}`)
+      this.logger.info('File move to ', `${errorFolder}${filename}`)
     })
     let timeColumnIndex
     let firstLine = []
@@ -86,7 +96,7 @@ class CSV extends ProtocolHandler {
           }
         } else {
           // if this file CSV doesn't have the first line to describe the columns
-          // In this case, the parameter 'indexOfTimeStamp' is required to be a number
+          // In this case, the parameter 'timeColumn' is required to be a number
           points.forEach((point) => {
             // In this case, the parameter 'column' is absolument a number
             const typeColumn = point.CSV
@@ -104,13 +114,13 @@ class CSV extends ProtocolHandler {
         }
       })
       .on('end', () => {
-        console.log('File loading end.')
+        this.logger.info('File loading end.')
         fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (erro) => {
           if (erro) {
-            console.error(erro)
+            this.logger.error(erro)
           }
         })
-        console.info('File move succeeded!')
+        this.logger.info('File move succeeded!')
       })
 
     readStream.pipe(csvFile)

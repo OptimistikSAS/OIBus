@@ -36,6 +36,7 @@
     "node-fetch": "^2.2.0",
     "node-opcua": "^0.4.6",
     "sprintf-js": "^1.1.1",
+    "winston": "^3.1.0",
     "timexe": "^0.9.13"
   },
   "devDependencies": {
