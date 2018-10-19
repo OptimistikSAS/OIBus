@@ -97,7 +97,7 @@ class Engine {
     this.activeApis = {}
 
     // Configure and get the logger
-    this.logger = new Logger(this.config.engine.logParameters).getLogger()
+    this.logger = new Logger(this.config.engine.logParameters)
   }
 
   /**
