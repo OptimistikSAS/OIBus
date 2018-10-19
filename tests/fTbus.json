@@ -12,7 +12,8 @@
     // the parameters for logs, describing different performances for different levels
     // and the file name which stocks the logs
     "logParameters": {
-      "consoleLevel": "info",
+      "debugMode": "true", // if debugging is needed, set it true
+      "consoleLevel": "debug",
       "fileLevel": "error",
       "filename": "journal.log"
     },
