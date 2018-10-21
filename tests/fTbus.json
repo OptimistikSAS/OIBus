@@ -12,10 +12,10 @@
     // the parameters for logs, describing different performances for different levels
     // and the file name which stocks the logs
     "logParameters": {
-      "debugMode": "true", // if debugging is needed, set it true
+      "debugMode": false, // if debugging is needed, set it true
       "consoleLevel": "debug",
-      "fileLevel": "error",
-      "filename": "journal.log"
+      "fileLevel": "debug",
+      "filename": "./tests/journal.log"
     },
     // the scan mode section allow to create categories of scan
     // each categories will use the cron syntax to determine the

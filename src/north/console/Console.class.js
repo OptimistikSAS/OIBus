@@ -7,7 +7,7 @@ class Console extends ApiHandler {
    * @return {void}
    */
   onUpdate() {
-    console.log(this.queue.flush())
+    console.info(this.queue.flush())
   }
 
   /**
@@ -17,9 +17,9 @@ class Console extends ApiHandler {
    */
   showAndDelete() {
     if (this.queue.length > 0) {
-      console.log(sprintf(this.applicationParameters.Console.content, this.queue.dequeue()))
+      console.info(sprintf(this.applicationParameters.Console.content, this.queue.dequeue()))
     }
-    console.log(this.queue.buffer)
+    console.info(this.queue.buffer)
   }
 }
 
