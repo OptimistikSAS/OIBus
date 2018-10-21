@@ -19,7 +19,7 @@ class Logger {
 
   info(message) {
     this.logger.info(message)
-    if (this.debugMode) console.log(message)
+    if (this.debugMode) console.info(message)
   }
 
   warn(message) {
