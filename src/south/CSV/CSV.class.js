@@ -29,7 +29,7 @@ class CSV extends ProtocolHandler {
         this.logger.error(err)
         return
       }
-      if (!files.length) this.logger.error(`The folder ${inputFolder} is empty.`)
+      if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         this.processFile(inputFolder, filename)
       })
