@@ -1,5 +1,7 @@
 {
   "engine": {
+    // Simulation/Normal
+    "mode": "Normal",
      // the port for the web interface to fTbus
     "port": 2222,
     // user/password (use ) (to do: use bcrypt)

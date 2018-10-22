@@ -1,5 +1,5 @@
 const later = require('later')
-const Machine = require('./Machine.js')
+const Machine = require('./Machine.class.js')
 
 class Tank extends Machine {
   constructor(id, parameter) {
@@ -29,7 +29,7 @@ class Tank extends Machine {
       level,tank=cuve1 value=60.09423243397569 1388567520000000000
       measurement,tag_set field_set timestamp
     */
-    return { ts: `${this.id} value=${this.currentLevel} ${currentDate.getTime()}000000` }
+    this.value = { fillLevel: this.currentLevel, quality: true }
   }
 }
 
