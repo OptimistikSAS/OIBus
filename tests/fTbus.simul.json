@@ -1,0 +1,139 @@
+{
+  "engine": {
+    // Simulation/Normal
+    "mode": "Simulation",
+    // the port for the web interface to fTbus
+    "port": 2222,
+    // user/password (use ) (to do: use bcrypt)
+    "user": "admin",
+    "password": "pass",
+    // the list of IP addresses allowed to access the Web interface
+    "filter": ["127.0.0.1", "::1"],
+    // the parameters for logs, describing different performances for different levels
+    // and the file name which stocks the logs
+    "logParameters": {
+      // possible levels: debug, info, warn, error
+      "consoleLevel": "debug", // specify only the lowest level
+      "fileLevel": "debug",
+      "filename": "./tests/journal.log",
+      "maxSize": 1000000,
+      "maxFiles": 5
+    },
+    // the scan mode section allow to create categories of scan
+    // each categories will use the cron syntax to determine the
+    // sequence. Format: year month day hour minute second millisec microsec
+    "scanModes": [
+      {
+        "scanMode": "everySecond",
+        "cronTime": "* * * * * *"
+      },
+      {
+        "scanMode": "every5Second",
+        "cronTime": "* * * * * /5"
+      },
+      {
+        "scanMode": "every100ms",
+        "cronTime": "* * * * * * /100"
+      },
+      {
+        "scanMode": "every15DaysAt9",
+        "cronTime": "0 0 /15 9"
+      }
+    ]
+  },
+  "south": {
+    // this section contains protocol specific parameters
+    "Modbus": {},
+    "OPCUA": {
+      "connectionAddress": {
+        "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
+        "https": "opc.tcp://%(host)s:%(httpsPort)s/%(endPoint)s"
+      }
+    },
+    "OPCDA": {},
+    "MQTT": {},
+    "Profinet": {},
+    "CSV": {},
+    "SQL": {},
+    "equipments": [
+      {
+        "equipmentId": "PLC1",
+        "enabled": true,
+        "protocol": "MQTT",
+        "defaultScanMode": "everySecond",
+        "MQTT": {
+          "host": "simulator.factorythings.com:8883/tcp",
+          "protocol": "mqtts",
+          "username": "bai",
+          "password": "secret"
+        },
+        "points": [
+          {
+            "topic": "fillLevel",
+            "application": "Tank2"
+          }
+        ]
+      },
+      {
+        "equipmentId": "PLC2",
+        "enabled": true,
+        "protocol": "Modbus",
+        "Modbus": {
+          "port": 502
+        },
+        "points": [
+          {
+            "address": "0x0031",
+            "type": "coil",
+            "application": "Tank1",
+            "valueId": "fillLevel"
+          }
+        ]
+      }
+    ]
+  },
+  "north": {
+    "Simulator": {
+      "refreshCycle": 100
+    },
+    "machines": [
+      {
+        "machineId": "Tank1",
+        "enabled": true,
+        "type": "Tank",
+        "capacity": 500,
+        "fillPerSecond": 10,
+        "emptyPerSecond": 0.1,
+        "precision": 0.1
+      },
+      {
+        "applicationId": "Tank2",
+        "enabled": true,
+        "type": "Tank",
+        "capacity": 400,
+        "fillPerSecond": 5,
+        "emptyPerSecond": 0.2,
+        "precision": 0.1
+      },
+      {
+        "applicationId": "Mixer",
+        "enabled": true,
+        "type": "Mixer",
+        "rotation": "every5minutes",
+        "rotationSpeed": 10,
+        "rotationDuration": 240,
+        "precision": 0.1
+      },
+      {
+        "applicationId": "Remplissage",
+        "enabled": true,
+        "type": "Filler",
+        "cadence": "every100ms",
+        "alarmChance": 0.01,
+        "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
+        "alarmMaxAge": 180,
+        "precision": 0.2
+      }
+    ]
+  }
+}

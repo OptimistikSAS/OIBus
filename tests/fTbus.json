@@ -1,6 +1,8 @@
 {
   "engine": {
-    // the port for the web interface to fTbus
+    // Simulation/Normal
+    "mode": "Normal",
+     // the port for the web interface to fTbus
     "port": 2222,
     // user/password (use ) (to do: use bcrypt)
     "user": "admin",
@@ -10,16 +12,17 @@
     // the parameters for logs, describing different performances for different levels
     // and the file name which stocks the logs
     "logParameters": {
-      "consoleLevel": "debug",
+      // possible levels: debug, info, warn, error 
+      "consoleLevel": "debug", // specify only the lowest level
       "fileLevel": "debug",
       "filename": "./tests/journal.log",
-      "maxFiles": 5, 
-      "maxsize": 1000000,
+      "maxsize": 1000000, 
+      "maxFiles": 5,
       "tailable": true
     },
     // the scan mode section allow to create categories of scan
     // each categories will use the cron syntax to determine the
-    // sequence
+    // sequence. Format: year month day hour minute second millisec microsec
     "scanModes": [
       {
         "scanMode": "everySecond",
