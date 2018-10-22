@@ -30,55 +30,12 @@
         "cronTime": "* * * * * /5"
       },
       {
-        "scanMode": "everyNoon",
-        "cronTime": "* * * 12"
+        "scanMode": "every100ms",
+        "cronTime": "* * * * * * /100"
       },
       {
         "scanMode": "every15DaysAt9",
         "cronTime": "0 0 /15 9"
-      }
-    ],
-    // types section allows to define the types managed by this engine
-    "types": [
-      {
-        "type": "fill_level",
-        "fields": [
-          {
-            "name": "value",
-            "type": "number"
-          }
-        ]
-      },
-      {
-        "type": "flow_rate",
-        "fields": [
-          {
-            "name": "quality",
-            "type": "boolean"
-          }
-        ]
-      },
-      {
-        "type": "valve_state",
-        "fields": [
-          {
-            "name": "value",
-            "type": "boolean"
-          }
-        ]
-      },
-      {
-        "type": "temperature",
-        "fields": [
-          {
-            "name": "value",
-            "type": "number"
-          },
-          // {
-          //   "name": "quality",
-          //   "type": "boolean"
-          // }
-        ]
       }
     ]
   },
@@ -288,29 +245,56 @@
   "north": {
     "applications": [
       {
-        "applicationId": "MyConsole",
+        "applicationId": "Tank1",
         "enabled": true,
-        "api": "Console",
-        "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
-        "timeStamp": "fTbus",
-        "Console": {
-          "content": "%(pointId)s\n->%(data)s at %(timestamp)s"
+        "api": "Simulator",
+        "Simulator": {
+          "type": "Tank",
+          "fill": "every100ms",
+          "capacity": 500,
+          "fillPerSecond": 10,
+          "emptyPerSecond": 0.1,
+          "precision": 0.1
         }
       },
       {
-        "applicationId": "BaseInflux",
-        "enabled": false,
-        "api": "InfluxDB",
-        "minimumBuffer:": 10, // group by 10 when possible
-        "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
-        "InfluxDB": {
-          "user": "admin",
-          "password": "admin",
-          "db": "testdata",
-          "host": "localhost:8086",
-          "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+        "applicationId": "Tank2",
+        "enabled": true,
+        "api": "Simulator",
+        "Simulator": {
+          "type": "Tank",
+          "fill": "every200ms",
+          "capacity": 400,
+          "fillPerSecond": 5,
+          "emptyPerSecond": 0.2,
+          "precision": 0.1
         }
-      }
+      },
+      {
+          "applicationId": "Mixer",
+          "enabled": true,
+          "api": "Simulator",
+          "Simulator": {
+            "type": "Mixer",
+            "rotation": "every5minutes",
+            "rotationSpeed": 10,
+            "rotationDuration": 240,
+            "precision": 0.1
+          }
+        },
+        {
+          "applicationId": "Remplissage",
+          "enabled": true,
+          "api": "Simulator",
+          "Simulator": {
+            "type": "Filler",
+            "cadence": "every100ms",
+            "alarmChance": 0.01,
+            "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
+            "alarmMaxAge": 180,
+            "precision": 0.2
+          }
+        }
     ]
   }
 }
