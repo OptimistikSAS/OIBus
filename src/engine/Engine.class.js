@@ -8,6 +8,10 @@ const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
+// Machines
+const Tank = require('../north/simulator/machines/Tank.class')
+const Mixer = require('../north/simulator/machines/Mixer.class')
+const Remplissage = require('../north/simulator/machines/Remplissage.class')
 // Web Server
 const Server = require('../server/Server.class')
 // Logger
@@ -25,8 +29,15 @@ const apiList = {
   Console,
   InfluxDB,
 }
+// List of all machines
+const machineList = {
+  Tank,
+  Mixer,
+  Remplissage,
+}
 
 const checkConfig = (config) => {
+  const { mode } = config.engine
   const mandatoryEntries = [
     'engine.scanModes',
     'engine.types',
@@ -36,15 +47,36 @@ const checkConfig = (config) => {
     'south.equipments',
     'north.applications',
   ]
-  mandatoryEntries.forEach((entry) => {
-    const [key, subkey] = entry.split('.')
-    if (!config[key]) {
-      throw new Error(`You should define ${key} in the config file`)
-    }
-    if (!config[key][subkey]) {
-      throw new Error(`You should define ${entry} in the config file`)
-    }
-  })
+  const simulationEntries = [
+    'engine.scanModes',
+    'engine.logParameters',
+    'engine.port',
+    'engine.user',
+    'engine.password',
+    'south.equipments',
+    'north.machines',
+  ]
+  if (mode === 'Simulation') {
+    simulationEntries.forEach((entry) => {
+      const [key, subkey] = entry.split('.')
+      if (!config[key]) {
+        throw new Error(`You should define ${key} in the config file`)
+      }
+      if (!config[key][subkey]) {
+        throw new Error(`You should define ${entry} in the config file`)
+      }
+    })
+  } else {
+    mandatoryEntries.forEach((entry) => {
+      const [key, subkey] = entry.split('.')
+      if (!config[key]) {
+        throw new Error(`You should define ${key} in the config file`)
+      }
+      if (!config[key][subkey]) {
+        throw new Error(`You should define ${entry} in the config file`)
+      }
+    })
+  }
 }
 
 /**
