@@ -16,8 +16,9 @@
       "consoleLevel": "debug", // specify only the lowest level
       "fileLevel": "debug",
       "filename": "./tests/journal.log",
-      "maxSize": 1000000, 
-      "maxFiles": 5
+      "maxsize": 1000000, 
+      "maxFiles": 5,
+      "tailable": true
     },
     // the scan mode section allow to create categories of scan
     // each categories will use the cron syntax to determine the
