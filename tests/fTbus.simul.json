@@ -1,6 +1,8 @@
 {
   "engine": {
-     // the port for the web interface to fTbus
+    // Simulation/Normal
+    "mode": "Simulation",
+    // the port for the web interface to fTbus
     "port": 2222,
     // user/password (use ) (to do: use bcrypt)
     "user": "admin",
@@ -10,11 +12,11 @@
     // the parameters for logs, describing different performances for different levels
     // and the file name which stocks the logs
     "logParameters": {
-      // possible levels: debug, info, warn, error 
+      // possible levels: debug, info, warn, error
       "consoleLevel": "debug", // specify only the lowest level
       "fileLevel": "debug",
       "filename": "./tests/journal.log",
-      "maxSize": 1000000, 
+      "maxSize": 1000000,
       "maxFiles": 5
     },
     // the scan mode section allow to create categories of scan
@@ -41,14 +43,7 @@
   },
   "south": {
     // this section contains protocol specific parameters
-    "Modbus": {
-      "addressGap": {
-        // max number of Registers in one request
-        "holdingRegister": 256,
-        // max number of Coils in one request
-        "coil": 1000
-      }
-    },
+    "Modbus": {},
     "OPCUA": {
       "connectionAddress": {
         "opc": "opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s",
@@ -62,239 +57,83 @@
     "SQL": {},
     "equipments": [
       {
-        "equipmentId": "CSVServer",
-        "enabled": true,
-        "protocol": "CSV",
-        "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "every5Second",
-        "CSV": {
-          "inputFolder": "./tests/csv/input/",
-          "archiveFolder": "./tests/csv/archived/",
-          "errorFolder": "./tests/csv/error/",
-          "separator": ",",
-          "timeColumn": 0,
-          "hasFirstLine": true
-        },
-        "points": [
-          {
-            "CSV": { "value": "sensor1-value", "quality": "sensor1-quality" },
-            "pointId": "./Tank 5.tank/333333.temperature"
-          },
-          {
-            "CSV": { "value": 3, "quality": 4 },
-            "pointId": "./Tank 6.tank/333333.temperature"
-          }
-        ]
-      },
-      {
-        "equipmentId": "MQTTServer",
+        "equipmentId": "PLC1",
         "enabled": true,
         "protocol": "MQTT",
-        "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "listen",
+        "defaultScanMode": "everySecond",
         "MQTT": {
-          "server": "simulator.factorythings.com",
+          "host": "simulator.factorythings.com:8883/tcp",
           "protocol": "mqtts",
-          "port": "8883",
           "username": "bai",
           "password": "secret"
         },
         "points": [
           {
-            "MQTT": { "topic": "hello" },
-            "pointId": "./Tank 5.tank/22.temperature"
-          },
-          {
-            "MQTT": { "topic": "bonjour" },
-            "pointId": "./Tank 6.tank/23.temperature"
-
+            "topic": "fillLevel",
+            "application": "Tank2"
           }
         ]
       },
       {
-        "equipmentId": "SimulationServer",
-        "enabled": true,
-        "protocol": "OPCUA",
-        "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "everySecond",
-        "OPCUA": {
-          "host": "35.180.179.217",
-          "opcuaPort": "53530",
-          "httpsPort": "53443",
-          "endPoint": "Server/Simulation",
-          "timeOrigin": "server" // or "source" or "fTbus"
-        },
-        "points": [
-          {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Counter1"
-            },
-            "pointId": "./Tank 5.tank/333333.temperature"
-          },
-          {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Random1"
-            },
-            "pointId": "./Tank 5.tank/333333.temperature",
-            "scanMode": "everyNoon"
-          }
-        ]
-      },
-      {
-        "equipmentId": "SimulationServerBis",
-        "enabled": true,
-        "protocol": "OPCUA",
-        "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "everySecond",
-        "OPCUA": {
-          "host": "35.180.179.217",
-          "opcuaPort": "53530",
-          "httpsPort": "53443",
-          "endPoint": "Server/Simulation"
-        },
-        "points": [
-          {
-            "OPCUAnodeId": {
-              "ns": "5",
-              "s": "Sinusoid1"
-            },
-            "pointId": "./Tank 9.tank/333333.temperature"
-          }
-        ]
-      },
-      {
-        "equipmentId": "PLC-35",
+        "equipmentId": "PLC2",
         "enabled": true,
         "protocol": "Modbus",
-        "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "everySecond",
         "Modbus": {
-          "host": "35.180.153.134",
           "port": 502
         },
         "points": [
           {
-            "Modbus": {
-              "address": "0x0031",
-              "type": "coil"
-            },
-            "pointId": "./Tank 3.tank/333333.fill_level"
-          },
-          {
-            "Modbus": {
-              "address": "0x0f8",
-              "type": "holdingRegister"
-            },
-            "pointId": "./Tank 2.tank/222222.valve_state",
-            "scanMode": "everyNoon"
-          },
-          {
-            "Modbus": {
-              "address": "0x76a0",
-              "type": "coil"
-            },
-            "pointId": "./Tank 2.tank/222222.fill_level"
-          },
-          {
-            "Modbus": {
-              "address": "0x76b0",
-              "type": "coil"
-            },
-            "pointId": "./Tank 2.tank/222333.fill_level"
-          },
-          {
-            "Modbus": {
-              "address": "0x83a6",
-              "type": "coil"
-            },
-            "pointId": "./Tank 3.tank/111111.valve_state"
-          }
-        ]
-      },
-      {
-        "equipmentId": "PLC-42",
-        "enabled": true,
-        "protocol": "Modbus",
-        "pointIdRoot": "/fttest.base/Tank4.tank",
-        "defaultScanMode": "everySecond",
-        "Modbus": {
-          "host": "35.180.153.134",
-          "port": 502
-        },
-        "points": [
-          {
-            "Modbus": {
-              "address": "0x0f",
-              "type": "coil"
-            },
-            "pointId": "./111111.fill_level"
-          },
-          {
-            "Modbus": {
-              "address": "0x20",
-              "type": "holdingRegister"
-            },
-            "pointId": "./111111.flow_rate"
+            "address": "0x0031",
+            "type": "coil",
+            "application": "Tank1",
+            "valueId": "fillLevel"
           }
         ]
       }
     ]
   },
   "north": {
-    "applications": [
+    "Simulator": {
+      "refreshCycle": 100
+    },
+    "machines": [
       {
-        "applicationId": "Tank1",
+        "machineId": "Tank1",
         "enabled": true,
-        "api": "Simulator",
-        "Simulator": {
-          "type": "Tank",
-          "fill": "every100ms",
-          "capacity": 500,
-          "fillPerSecond": 10,
-          "emptyPerSecond": 0.1,
-          "precision": 0.1
-        }
+        "type": "Tank",
+        "capacity": 500,
+        "fillPerSecond": 10,
+        "emptyPerSecond": 0.1,
+        "precision": 0.1
       },
       {
         "applicationId": "Tank2",
         "enabled": true,
-        "api": "Simulator",
-        "Simulator": {
-          "type": "Tank",
-          "fill": "every200ms",
-          "capacity": 400,
-          "fillPerSecond": 5,
-          "emptyPerSecond": 0.2,
-          "precision": 0.1
-        }
+        "type": "Tank",
+        "capacity": 400,
+        "fillPerSecond": 5,
+        "emptyPerSecond": 0.2,
+        "precision": 0.1
       },
       {
-          "applicationId": "Mixer",
-          "enabled": true,
-          "api": "Simulator",
-          "Simulator": {
-            "type": "Mixer",
-            "rotation": "every5minutes",
-            "rotationSpeed": 10,
-            "rotationDuration": 240,
-            "precision": 0.1
-          }
-        },
-        {
-          "applicationId": "Remplissage",
-          "enabled": true,
-          "api": "Simulator",
-          "Simulator": {
-            "type": "Filler",
-            "cadence": "every100ms",
-            "alarmChance": 0.01,
-            "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
-            "alarmMaxAge": 180,
-            "precision": 0.2
-          }
-        }
+        "applicationId": "Mixer",
+        "enabled": true,
+        "type": "Mixer",
+        "rotation": "every5minutes",
+        "rotationSpeed": 10,
+        "rotationDuration": 240,
+        "precision": 0.1
+      },
+      {
+        "applicationId": "Remplissage",
+        "enabled": true,
+        "type": "Filler",
+        "cadence": "every100ms",
+        "alarmChance": 0.01,
+        "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
+        "alarmMaxAge": 180,
+        "precision": 0.2
+      }
     ]
   }
 }

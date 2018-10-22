@@ -1,4 +1,4 @@
-const Machine = require('./Machine.js')
+const Machine = require('./Machine.class.js')
 
 class Remplissage extends Machine {
   constructor(id, parameter) {

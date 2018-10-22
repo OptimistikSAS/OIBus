@@ -1,5 +1,5 @@
 const later = require('later')
-const Machine = require('./Machine.js')
+const Machine = require('./Machine.class.js')
 
 class Mixer extends Machine {
   constructor(id, parameter) {
