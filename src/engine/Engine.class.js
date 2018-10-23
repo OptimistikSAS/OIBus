@@ -161,6 +161,12 @@ class Engine {
     })
   }
 
+  /**
+   * get the value of state from the machine and return it to the protocol
+   * @param {*} machineId
+   * @returns {*} value
+   * @memberof Engine
+   */
   getValue(machineId) {
     const value = this.activeMachines[machineId].getState()
     return value
