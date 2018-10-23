@@ -111,8 +111,8 @@
         "enabled": true,
         "type": "Tank",
         "capacity": 400,
-        "fillPerSecond": 5,
-        "emptyPerSecond": 0.2,
+        "fillPerRefresh": 5,
+        "emptyPerRefresh": 0.2,
         "precision": 0.1
       },
       {
