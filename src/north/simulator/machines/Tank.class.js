@@ -29,9 +29,9 @@ class Tank extends Machine {
       }
     }
     /*
-level,tank=cuve1 value=60.09423243397569 1388567520000000000
-measurement,tag_set field_set timestamp
-*/
+      level,tank=cuve1 value=60.09423243397569 1388567520000000000
+      measurement,tag_set field_set timestamp
+    */
     this.value = { fillLevel: this.currentLevel, quality }
   }
 }
