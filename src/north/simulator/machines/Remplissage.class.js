@@ -1,8 +1,8 @@
 const Machine = require('./Machine.class.js')
 
 class Remplissage extends Machine {
-  constructor(id, parameter) {
-    super(id, parameter)
+  constructor(parameters) {
+    super(parameters)
     this.alarmAge = 0
     this.maxAlarmAge = -1 // -1 => no alarm
   }

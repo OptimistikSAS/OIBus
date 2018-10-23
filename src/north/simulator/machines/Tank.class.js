@@ -1,26 +1,29 @@
-const later = require('later')
 const Machine = require('./Machine.class.js')
 
 class Tank extends Machine {
-  constructor(id, parameter) {
-    super(id, parameter)
-    const parse = later.parse.cron(parameter.fill)
-    this.schedFill = later.schedule(parse)
+  constructor(parameters) {
+    super(parameters)
     this.currentLevel = 0
     this.fill = true
   }
 
-  run(currentDate) {
-    const { fillPerSecond, emptyPerSecond, capacity, precision } = this.parameter
-    if (this.schedFill.isValid(currentDate)) this.fill = true
+  run() {
+    const { fillPerRefresh, emptyPerRefresh, capacity, precision } = this.parameters
+    let quality
+    if (Math.random() < 0.95) {
+      quality = true
+    } else {
+      quality = false
+    }
+    if (this.currentLevel === 0) this.fill = true
     if (this.fill) {
-      this.currentLevel += fillPerSecond * (1 - precision + Math.random() * 2 * precision)
+      this.currentLevel += fillPerRefresh * (1 - precision + Math.random() * 2 * precision)
       if (this.currentLevel > capacity) {
         this.currentLevel = capacity
         this.fill = false
       }
     } else {
-      this.currentLevel -= emptyPerSecond * (1 - precision + Math.random() * 2 * precision)
+      this.currentLevel -= emptyPerRefresh * (1 - precision + Math.random() * 2 * precision)
       if (this.currentLevel < 0) {
         this.currentLevel = 0
       }
@@ -29,7 +32,7 @@ class Tank extends Machine {
       level,tank=cuve1 value=60.09423243397569 1388567520000000000
       measurement,tag_set field_set timestamp
     */
-    this.value = { fillLevel: this.currentLevel, quality: true }
+    this.value = { fillLevel: this.currentLevel, quality }
   }
 }
 
