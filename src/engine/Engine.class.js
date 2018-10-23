@@ -162,7 +162,7 @@ class Engine {
   }
 
   getValue(machineId) {
-    const value = this.activeMachines[machineId].state
+    const value = this.activeMachines[machineId].getState()
     return value
   }
 
@@ -201,7 +201,7 @@ class Engine {
         const Machine = machineList[type]
         if (enabled) {
           if (Machine) {
-            this.activeMachines[machineId] = new Machine(machineId, this) // constructor(id, parameter)
+            this.activeMachines[machineId] = new Machine(machine)
             this.activeMachines[machineId].run() // Should be coherent with the fonction in Machine.class
           } else {
             throw new Error(`Machine for ${machineId} is not supported : ${type}`)
