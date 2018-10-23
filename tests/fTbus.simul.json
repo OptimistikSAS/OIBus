@@ -102,12 +102,12 @@
         "enabled": true,
         "type": "Tank",
         "capacity": 500,
-        "fillPerSecond": 10,
-        "emptyPerSecond": 0.1,
+        "fillPerRefresh": 10,
+        "emptyPerRefresh": 0.1,
         "precision": 0.1
       },
       {
-        "applicationId": "Tank2",
+        "machineId": "Tank2",
         "enabled": true,
         "type": "Tank",
         "capacity": 400,
@@ -116,7 +116,7 @@
         "precision": 0.1
       },
       {
-        "applicationId": "Mixer",
+        "machineId": "Mixer",
         "enabled": true,
         "type": "Mixer",
         "rotation": "every5minutes",
@@ -125,7 +125,7 @@
         "precision": 0.1
       },
       {
-        "applicationId": "Remplissage",
+        "machineId": "Remplissage",
         "enabled": true,
         "type": "Filler",
         "cadence": "every100ms",
