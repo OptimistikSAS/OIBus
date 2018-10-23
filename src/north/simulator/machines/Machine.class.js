@@ -1,9 +1,8 @@
 class Machine {
-  constructor(id, parameter) {
-    this.id = id
-    this.parameter = parameter
+  constructor(parameters) {
+    this.parameters = parameters
     this.state = {}
-    console.info(id, 'registered')
+    console.info(parameters.machineId, 'registered')
   }
   // eslint-disable-next-line
   run() {}
