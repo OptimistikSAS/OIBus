@@ -6,5 +6,9 @@ class Machine {
   }
   // eslint-disable-next-line
   run() {}
+
+  getState() {
+    return this.state
+  }
 }
 module.exports = Machine
