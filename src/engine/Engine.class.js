@@ -8,10 +8,8 @@ const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
-// Machines
-const Tank = require('../north/simulator/machines/Tank.class')
-const Mixer = require('../north/simulator/machines/Mixer.class')
-const Remplissage = require('../north/simulator/machines/Remplissage.class')
+const Simulator = require('../north/Simulator.class')
+
 // Web Server
 const Server = require('../server/Server.class')
 // Logger
@@ -28,16 +26,9 @@ const protocolList = {
 const apiList = {
   Console,
   InfluxDB,
+  Simulator,
 }
-// List of all machines
-const machineList = {
-  Tank,
-  Mixer,
-  Remplissage,
-}
-
 const checkConfig = (config) => {
-  const { mode } = config.engine
   const mandatoryEntries = [
     'engine.scanModes',
     'engine.types',
@@ -47,38 +38,17 @@ const checkConfig = (config) => {
     'south.equipments',
     'north.applications',
   ]
-  const simulationEntries = [
-    'engine.scanModes',
-    'engine.logParameters',
-    'engine.port',
-    'engine.user',
-    'engine.password',
-    'south.equipments',
-    'north.machines',
-  ]
-  if (mode === 'Simulation') {
-    // If the engine works as a simulator
-    simulationEntries.forEach((entry) => {
-      const [key, subkey] = entry.split('.')
-      if (!config[key]) {
-        throw new Error(`You should define ${key} in the config file`)
-      }
-      if (!config[key][subkey]) {
-        throw new Error(`You should define ${entry} in the config file`)
-      }
-    })
-  } else {
-    // If the engine works normally as client
-    mandatoryEntries.forEach((entry) => {
-      const [key, subkey] = entry.split('.')
-      if (!config[key]) {
-        throw new Error(`You should define ${key} in the config file`)
-      }
-      if (!config[key][subkey]) {
-        throw new Error(`You should define ${entry} in the config file`)
-      }
-    })
-  }
+
+  // If the engine works normally as client
+  mandatoryEntries.forEach((entry) => {
+    const [key, subkey] = entry.split('.')
+    if (!config[key]) {
+      throw new Error(`You should define ${key} in the config file`)
+    }
+    if (!config[key][subkey]) {
+      throw new Error(`You should define ${entry} in the config file`)
+    }
+  })
 }
 
 /**
@@ -97,7 +67,6 @@ class Engine {
    */
   constructor(configFile) {
     this.config = tryReadFile(configFile)
-    this.mode = this.config.engine.mode
     checkConfig(this.config)
     // prepare config
     // initialize the scanMode object with empty arrays
@@ -106,36 +75,24 @@ class Engine {
       this.scanModes[scanMode] = []
     })
 
-    if (this.mode === 'Simulation') {
-      // Associate the scanMode to all it's corresponding equipments
-      this.config.south.equipments.forEach((equipment) => {
-        if (equipment.defaultScanMode) {
-          const scanMode = equipment.defaultScanMode
-          if (this.scanModes[scanMode] && !this.scanModes[scanMode].includes(equipment.equipmentId)) {
-            this.scanModes[scanMode].push(equipment.equipmentId)
+    this.config.south.equipments.forEach((equipment) => {
+      equipment.points.forEach((point) => {
+        // 1.replace relative path into absolute paths
+        if (point.pointId.charAt(0) === '.') {
+          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
+        }
+        // 2.apply default scanmodes to each points
+        if (!point.scanMode) {
+          point.scanMode = equipment.defaultScanMode
+        }
+        // 3. Associate the scanMode to all it's corresponding equipments
+        if (equipment.enabled) {
+          if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
+            this.scanModes[point.scanMode].push(equipment.equipmentId)
           }
         }
       })
-    } else {
-      this.config.south.equipments.forEach((equipment) => {
-        equipment.points.forEach((point) => {
-          // 1.replace relative path into absolute paths
-          if (point.pointId.charAt(0) === '.') {
-            point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-          }
-          // 2.apply default scanmodes to each points
-          if (!point.scanMode) {
-            point.scanMode = equipment.defaultScanMode
-          }
-          // 3. Associate the scanMode to all it's corresponding equipments
-          if (equipment.enabled) {
-            if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
-              this.scanModes[point.scanMode].push(equipment.equipmentId)
-            }
-          }
-        })
-      })
-    }
+    })
 
     /** @type {string} contains one queue per application */
     this.queues = []
@@ -159,17 +116,6 @@ class Engine {
       application.enqueue({ data, dataId, pointId, timestamp })
       application.onUpdate()
     })
-  }
-
-  /**
-   * get the value of state from the machine and return it to the protocol
-   * @param {*} machineId
-   * @returns {*} value
-   * @memberof Engine
-   */
-  getValue(machineId) {
-    const value = this.activeMachines[machineId].getState()
-    return value
   }
 
   /**
@@ -199,37 +145,22 @@ class Engine {
       }
     })
 
-    // 3. start Applications/ Machines
-    if (this.mode === 'Simulation') {
-      // Machines
-      this.config.north.machines.forEach((machine) => {
-        const { machineId, type, enabled } = machine
-        const Machine = machineList[type]
-        if (enabled) {
-          if (Machine) {
-            this.activeMachines[machineId] = new Machine(machine)
-            this.activeMachines[machineId].run() // Should be coherent with the fonction in Machine.class
-          } else {
-            throw new Error(`Machine for ${machineId} is not supported : ${type}`)
-          }
+    // 3. start Applications
+
+    // Applications
+    this.config.north.applications.forEach((application) => {
+      const { api, enabled, applicationId } = application
+      // select the right api handler
+      const ApiHandler = apiList[api]
+      if (enabled) {
+        if (ApiHandler) {
+          this.activeApis[applicationId] = new ApiHandler(api, this)
+          this.activeApis[applicationId].connect()
+        } else {
+          throw new Error(`API for ${applicationId} is not supported : ${api}`)
         }
-      })
-    } else {
-      // Applications
-      this.config.north.applications.forEach((application) => {
-        const { api, enabled, applicationId } = application
-        // select the right api handler
-        const ApiHandler = apiList[api]
-        if (enabled) {
-          if (ApiHandler) {
-            this.activeApis[applicationId] = new ApiHandler(api, this)
-            this.activeApis[applicationId].connect()
-          } else {
-            throw new Error(`API for ${applicationId} is not supported : ${api}`)
-          }
-        }
-      })
-    }
+      }
+    })
 
     // 4. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
