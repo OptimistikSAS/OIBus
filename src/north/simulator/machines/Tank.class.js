@@ -8,9 +8,9 @@ class Tank extends Machine {
   }
 
   run() {
-    const { fillPerRefresh, emptyPerRefresh, capacity, precision } = this.parameters
     let quality
-    if (Math.random() < 0.95) {
+    const { qualityIndicator, fillPerRefresh, emptyPerRefresh, capacity, precision } = this.parameters
+    if (Math.random() < qualityIndicator) {
       quality = true
     } else {
       quality = false
