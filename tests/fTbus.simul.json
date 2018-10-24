@@ -94,46 +94,46 @@
   },
   "north": {
     "Simulator": {
-      "refreshCycle": 100
-    },
-    "machines": [
-      {
-        "machineId": "Tank1",
-        "enabled": true,
-        "type": "Tank",
-        "capacity": 500,
-        "fillPerRefresh": 10,
-        "emptyPerRefresh": 0.1,
-        "precision": 0.1
-      },
-      {
-        "machineId": "Tank2",
-        "enabled": true,
-        "type": "Tank",
-        "capacity": 400,
-        "fillPerRefresh": 5,
-        "emptyPerRefresh": 0.2,
-        "precision": 0.1
-      },
-      {
-        "machineId": "Mixer",
-        "enabled": true,
-        "type": "Mixer",
-        "rotation": "every5minutes",
-        "rotationSpeed": 10,
-        "rotationDuration": 240,
-        "precision": 0.1
-      },
-      {
-        "machineId": "Remplissage",
-        "enabled": true,
-        "type": "Filler",
-        "cadence": "every100ms",
-        "alarmChance": 0.01,
-        "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
-        "alarmMaxAge": 180,
-        "precision": 0.2
-      }
-    ]
+      "refreshCycle": 100,
+      "machines": [
+        {
+          "machineId": "Tank1",
+          "enabled": true,
+          "type": "Tank",
+          "capacity": 500,
+          "fillPerRefresh": 10,
+          "emptyPerRefresh": 0.1,
+          "precision": 0.1
+        },
+        {
+          "machineId": "Tank2",
+          "enabled": true,
+          "type": "Tank",
+          "capacity": 400,
+          "fillPerRefresh": 5,
+          "emptyPerRefresh": 0.2,
+          "precision": 0.1
+        },
+        {
+          "machineId": "Mixer",
+          "enabled": true,
+          "type": "Mixer",
+          "rotation": "every5minutes",
+          "rotationSpeed": 10,
+          "rotationDuration": 240,
+          "precision": 0.1
+        },
+        {
+          "machineId": "Remplissage",
+          "enabled": true,
+          "type": "Filler",
+          "cadence": "every100ms",
+          "alarmChance": 0.01,
+          "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
+          "alarmMaxAge": 180,
+          "precision": 0.2
+        }
+      ]
+    }
   }
 }
