@@ -103,7 +103,8 @@
           "capacity": 500,
           "fillPerRefresh": 10,
           "emptyPerRefresh": 0.1,
-          "precision": 0.1
+          "precision": 0.1,
+          "qualityIndicator": 0.92
         },
         {
           "machineId": "Tank2",
@@ -112,7 +113,8 @@
           "capacity": 400,
           "fillPerRefresh": 5,
           "emptyPerRefresh": 0.2,
-          "precision": 0.1
+          "precision": 0.1,
+          "qualityIndicator": 0.93
         },
         {
           "machineId": "Mixer",
@@ -120,8 +122,9 @@
           "type": "Mixer",
           "rotation": "every5minutes",
           "rotationSpeed": 10,
-          "rotationDuration": 240,
-          "precision": 0.1
+          "rotationDuration": 24,
+          "precision": 0.1,
+          "qualityIndicator": 0.96
         },
         {
           "machineId": "Remplissage",
@@ -131,7 +134,8 @@
           "alarmChance": 0.01,
           "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
           "alarmMaxAge": 180,
-          "precision": 0.2
+          "precision": 0.2,
+          "qualityIndicator": 0.95
         }
       ]
     }

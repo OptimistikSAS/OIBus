@@ -8,9 +8,9 @@ class Mixer extends Machine {
     this.running = false
   }
 
-  run(refreshCycle) {
+  run(refreshCycle) { // refreshCycle in milliseconds
     let quality
-    const { rotationSpeed, rotationDuration, precision } = this.parameters
+    const { qualityIndicator, rotationSpeed, rotationDuration, precision } = this.parameters
     this.currentSpeed = rotationSpeed * (1 - precision + Math.random() * 2 * precision)
     this.duration = (this.duration + refreshCycle / 1000)
     if (this.duration >= rotationDuration) {
@@ -18,7 +18,7 @@ class Mixer extends Machine {
       this.duration = 0
       this.currentSpeed = 0
       quality = true
-    } else if (Math.random() < 0.95) {
+    } else if (Math.random() < qualityIndicator) {
       quality = true
     } else {
       quality = false
