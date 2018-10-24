@@ -1,7 +1,5 @@
 {
   "engine": {
-    // Simulation/Normal
-    "mode": "Simulation",
     // the port for the web interface to fTbus
     "port": 2222,
     // user/password (use ) (to do: use bcrypt)
@@ -57,30 +55,51 @@
     "SQL": {},
     "equipments": [
       {
-        "equipmentId": "PLC1",
+        "equipmentId": "PLC2",
+        "protocol": "Modbus",
+        "Modbus": {
+          "port": 502
+        }
+      }
+    ]
+  },
+  "north": {
+    "applications": [
+      {
+        "applicationId": "SimulatorPLC1",
         "enabled": true,
+        "api": "Simulator",
+        "refreshCycle": 100,
         "protocol": "MQTT",
-        "defaultScanMode": "everySecond",
+        "UpdateCycle": "everySecond",
         "MQTT": {
           "host": "simulator.factorythings.com:8883/tcp",
           "protocol": "mqtts",
           "username": "bai",
           "password": "secret"
         },
-        "points": [
+        "machines": [
           {
-            "topic": "fillLevel",
-            "application": "Tank2"
+            "machineId": "Tank2",
+            "type": "Tank",
+            "capacity": 400,
+            "fillPerRefresh": 5,
+            "emptyPerRefresh": 0.2,
+            "precision": 0.1,
+            "points": [
+              {
+                "topic": "fillLevel"
+              }
+            ]
           }
         ]
       },
       {
-        "equipmentId": "PLC2",
+        "applicationId": "SimulatorPLC2",
         "enabled": true,
-        "protocol": "Modbus",
-        "Modbus": {
-          "port": 502
-        },
+        "api": "Simulator",
+        "refreshCycle": 100,
+        "equipmentId": "PLC2",
         "points": [
           {
             "address": "0x0031",
@@ -91,29 +110,9 @@
         ]
       }
     ]
-  },
-  "north": {
-    "Simulator": {
-      "refreshCycle": 100,
-      "machines": [
-        {
-          "machineId": "Tank1",
-          "enabled": true,
-          "type": "Tank",
-          "capacity": 500,
-          "fillPerRefresh": 10,
-          "emptyPerRefresh": 0.1,
-          "precision": 0.1
-        },
-        {
-          "machineId": "Tank2",
-          "enabled": true,
-          "type": "Tank",
-          "capacity": 400,
-          "fillPerRefresh": 5,
-          "emptyPerRefresh": 0.2,
-          "precision": 0.1
-        },
+  }
+
+  /*
         {
           "machineId": "Mixer",
           "enabled": true,
@@ -133,7 +132,7 @@
           "alarmMaxAge": 180,
           "precision": 0.2
         }
-      ]
-    }
-  }
+   
+}
+*/
 }
