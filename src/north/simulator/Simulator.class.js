@@ -1,12 +1,10 @@
 const timexe = require('timexe')
 // Machines
-const Tank = require('./simulator/machines/Tank.class')
-const Mixer = require('./simulator/machines/Mixer.class')
-const Remplissage = require('./simulator/machines/Remplissage.class')
-// Web Server
-const Server = require('../server/Server.class')
+const Tank = require('./machines/Tank.class')
+const Mixer = require('./machines/Mixer.class')
+const Remplissage = require('./machines/Remplissage.class')
 // ApiHandler
-const ApiHandler = require('./ApiHandler.class')
+const ApiHandler = require('../ApiHandler.class')
 // List of all machines
 const machineList = {
   Tank,
