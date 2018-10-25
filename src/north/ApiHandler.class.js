@@ -5,9 +5,9 @@ class ApiHandler {
    * @constructor for Application
    * @param {Object} engine
    */
-  constructor(api, engine) {
+  constructor(applicationParameters, engine) {
     this.queue = new Queue()
-    this.application = api
+    this.application = applicationParameters
     this.engine = engine
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
