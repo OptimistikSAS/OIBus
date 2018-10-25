@@ -55,6 +55,17 @@
     "SQL": {},
     "equipments": [
       {
+        "equipmentId": "PLC1",
+        "protocol": "MQTT",
+        "UpdateCycle": "everySecond",
+        "MQTT": {
+          "host": "simulator.factorythings.com:8883/tcp",
+          "protocol": "mqtts",
+          "username": "bai",
+          "password": "secret"
+        }
+      },
+      {
         "equipmentId": "PLC2",
         "protocol": "Modbus",
         "Modbus": {
@@ -70,14 +81,6 @@
         "enabled": true,
         "api": "Simulator",
         "refreshCycle": 100,
-        "protocol": "MQTT",
-        "UpdateCycle": "everySecond",
-        "MQTT": {
-          "host": "simulator.factorythings.com:8883/tcp",
-          "protocol": "mqtts",
-          "username": "bai",
-          "password": "secret"
-        },
         "machines": [
           {
             "machineId": "Tank2",
@@ -100,12 +103,21 @@
         "api": "Simulator",
         "refreshCycle": 100,
         "equipmentId": "PLC2",
-        "points": [
+        "machines": [
           {
-            "address": "0x0031",
-            "type": "coil",
-            "application": "Tank1",
-            "valueId": "fillLevel"
+            "machineId": "Tank1",
+            "type": "Tank",
+            "capacity": 400,
+            "fillPerRefresh": 5,
+            "emptyPerRefresh": 0.2,
+            "precision": 0.1,
+            "points": [
+              {
+                "address": "0x0031",
+                "type": "coil",
+                "valueId": "fillLevel"
+              }
+            ]
           }
         ]
       }

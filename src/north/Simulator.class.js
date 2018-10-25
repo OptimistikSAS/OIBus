@@ -3,8 +3,6 @@ const timexe = require('timexe')
 const Tank = require('./simulator/machines/Tank.class')
 const Mixer = require('./simulator/machines/Mixer.class')
 const Remplissage = require('./simulator/machines/Remplissage.class')
-// Web Server
-const Server = require('../server/Server.class')
 // ApiHandler
 const ApiHandler = require('./ApiHandler.class')
 // List of all machines
@@ -48,11 +46,7 @@ class Simulator extends ApiHandler {
    */
   constructor(api, engine) {
     super(api, engine)
-
-    // Will only contain machines used
-    // based on the config file
     this.activeMachines = {}
-
     // Machines
     this.config.north.Simulator.machines.forEach((machine) => {
       const { machineId, type, enabled } = machine
@@ -79,17 +73,7 @@ class Simulator extends ApiHandler {
   }
 
   connect() {
-    // Scan the protocols regularly with the help of cronjob
-    this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = timexe(cronTime, () => {
-        // on each scan, activate each protocols
-        this.scanModes[scanMode].forEach((equipmentId) => {
-          this.activeProtocols[equipmentId].onScan(scanMode)
-        })
-      })
-    })
-
-    // Run the machines recurringly with an interval setted in fTbus.simul.json
+    // Run the machines recurringly with an interval setted in advance
     const { refreshCycle } = this.config.north.Simulator
     setInterval(() => {
       this.activeMachines.forEach((machine) => {

@@ -10,19 +10,7 @@ class ApiHandler {
     this.application = api
     this.engine = engine
     this.config = this.engine.config
-    // initialize the scanMode object with empty arrays
-    this.scanModes = {}
-    this.config.engine.scanModes.forEach(({ scanMode }) => {
-      this.scanModes[scanMode] = []
-    })
-    this.config.south.equipments.forEach((equipment) => {
-      if (equipment.defaultScanMode) {
-        const scanMode = equipment.defaultScanMode
-        if (this.scanModes[scanMode] && !this.scanModes[scanMode].includes(equipment.equipmentId)) {
-          this.scanModes[scanMode].push(equipment.equipmentId)
-        }
-      }
-    })
+    this.scanModes = this.engine.scanModes
   }
 
   enqueue(value) {
