@@ -146,8 +146,6 @@ class Engine {
     })
 
     // 3. start Applications
-
-    // Applications
     this.config.north.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
