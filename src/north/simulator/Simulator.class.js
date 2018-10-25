@@ -1,10 +1,9 @@
-const timexe = require('timexe')
 // Machines
-const Tank = require('./simulator/machines/Tank.class')
-const Mixer = require('./simulator/machines/Mixer.class')
-const Remplissage = require('./simulator/machines/Remplissage.class')
+const Tank = require('./machines/Tank.class')
+const Mixer = require('./machines/Mixer.class')
+const Remplissage = require('./machines/Remplissage.class')
 // ApiHandler
-const ApiHandler = require('./ApiHandler.class')
+const ApiHandler = require('../ApiHandler.class')
 // List of all machines
 const machineList = {
   Tank,
@@ -44,11 +43,12 @@ class Simulator extends ApiHandler {
    * @param {String} config : path to the config file
    * @return {Object} readConfig : parsed config Object
    */
-  constructor(api, engine) {
-    super(api, engine)
+  constructor(applicationParameters, engine) {
+    super(applicationParameters, engine)
+    this.parameters = applicationParameters
     this.activeMachines = {}
     // Machines
-    this.config.north.Simulator.machines.forEach((machine) => {
+    this.parameters.machines.forEach((machine) => {
       const { machineId, type, enabled } = machine
       const Machine = machineList[type]
       if (enabled) {
@@ -73,6 +73,7 @@ class Simulator extends ApiHandler {
   }
 
   connect() {
+    console.log(this.parameters.applicationID, 'conneted')
     // Run the machines recurringly with an interval setted in advance
     const { refreshCycle } = this.config.north.Simulator
     setInterval(() => {
