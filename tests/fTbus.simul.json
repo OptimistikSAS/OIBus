@@ -56,53 +56,77 @@
     "equipments": [
       {
         "equipmentId": "PLC1",
+        "enabled": true,
         "protocol": "MQTT",
-        "UpdateCycle": "everySecond",
+        "defaultScanMode": "every5Second",
         "MQTT": {
-          "host": "simulator.factorythings.com:8883/tcp",
+          "server": "simulator.factorythings.com",
           "protocol": "mqtts",
+          "port": "8883",
           "username": "bai",
           "password": "secret"
-        }
+        },
+        "points": [
+          {
+            "MQTT": { "topic": "temperatureTank1" },
+            "pointId": "Tank1.temperature"
+          },
+          {
+            "MQTT": { "topic": "temperatureTank2" },
+            "pointId": "Tank2.temperature"
+          }
+        ]
       },
       {
         "equipmentId": "PLC2",
+        "enabled": true,
         "protocol": "Modbus",
+        "defaultScanMode": "listen",
         "Modbus": {
+          "host": "localhost",
           "port": 502
-        }
+        },
+        "points": [
+          {
+            "Modbus": {
+              "address": "0x0031",
+              "type": "coil"
+            },
+            "pointId": "tank3.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x0f8",
+              "type": "holdingRegister"
+            },
+            "pointId": "tank2.valve_state",
+          },
+          {
+            "Modbus": {
+              "address": "0x76a0",
+              "type": "coil"
+            },
+            "pointId": "tank 2.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x83a6",
+              "type": "coil"
+            },
+            "pointId": "tank3.valve_state"
+          }
+        ]
       }
     ]
   },
   "north": {
     "applications": [
       {
-        "applicationId": "SimulatorPLC1",
-        "enabled": true,
-        "api": "Simulator",
-        "refreshCycle": 100,
-        "machines": [
-          {
-            "machineId": "Tank2",
-            "type": "Tank",
-            "capacity": 400,
-            "fillPerRefresh": 5,
-            "emptyPerRefresh": 0.2,
-            "precision": 0.1,
-            "points": [
-              {
-                "topic": "fillLevel"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "applicationId": "SimulatorPLC2",
-        "enabled": true,
-        "api": "Simulator",
-        "refreshCycle": 100,
-        "equipmentId": "PLC2",
+        "applicationId": "SimulatorPLC1", // name of the simulator
+        "api": "Simulator", // application for Simulation
+        "enabled": true, // true/false
+        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC1", // the Simulator communicate through this equipment
         "machines": [
           {
             "machineId": "Tank1",
@@ -111,16 +135,47 @@
             "fillPerRefresh": 5,
             "emptyPerRefresh": 0.2,
             "precision": 0.1,
-            "points": [
-              {
-                "address": "0x0031",
-                "type": "coil",
-                "valueId": "fillLevel"
-              }
-            ]
+            "pointId": "Tank1.temperature" // the variable that will be updated
+          },
+          {
+            "machineId": "Tank2",
+            "type": "Tank",
+            "capacity": 500,
+            "fillPerRefresh": 10,
+            "emptyPerRefresh": 0.4,
+            "precision": 0.1,
+            "pointId": "Tank2.temperature" // the variable that will be updated
           }
         ]
-      }
+      },
+      {
+        "applicationId": "SimulatorPLC2", // name of the simulator
+        "api": "Simulator", // application for Simulation
+        "enabled": true, // true/false
+        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC2", // the Simulator communicate through this equipment
+        "machines": [
+          {
+            "machineId": "Tank3",
+            "type": "Tank",
+            "capacity": 400,
+            "fillPerRefresh": 5,
+            "emptyPerRefresh": 0.2,
+            "precision": 0.1,
+            "pointId": "Tank3.fill_level" // the variable that will be updated
+          },
+          {
+            "machineId": "Tank2",
+            "type": "Tank",
+            "capacity": 500,
+            "fillPerRefresh": 10,
+            "emptyPerRefresh": 0.4,
+            "precision": 0.1,
+            "pointId": "Tank2.temperature" // the variable that will be updated
+          }
+        ]
+      },
+      
     ]
   }
 

@@ -1,10 +1,10 @@
-const later = require('later')
+// const later = require('later')
 const Machine = require('./Machine.class.js')
 
 class Mixer extends Machine {
   constructor(parameters) {
     super(parameters)
-    const parse = later.parse.cron(parameter.mix)
+    const parse = later.parse.cron(parameters.mix)
     this.schedFill = later.schedule(parse)
     this.currentSpeed = 0
     this.duration = 0
