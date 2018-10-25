@@ -23,7 +23,7 @@
     "fast-csv": "^2.4.1",
     "jsmodbus": "^3.1.0",
     "json5": "^2.1.0",
-    "koa": "^2.5.3",
+    "koa": "^2.6.1",
     "koa-basic-auth": "^3.0.0",
     "koa-bodyparser": "^4.2.1",
     "koa-helmet": "^4.0.0",
@@ -50,7 +50,7 @@
     "eslint-plugin-jsx-a11y": "^6.1.2",
     "eslint-plugin-react": "^7.11.1",
     "ignore-loader": "^0.1.2",
-    "webpack": "^4.22.0",
+    "webpack": "^4.23.1",
     "webpack-cli": "^3.1.2"
   }
 }
