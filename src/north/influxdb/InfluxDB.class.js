@@ -27,8 +27,8 @@ class InfluxDB extends ApiHandler {
    * @constructor for InfluxDB
    * @param {Object} engine
    */
-  constructor(engine, applicationParameters) {
-    super(engine, applicationParameters)
+  constructor(applicationParameters, engine) {
+    super(applicationParameters, engine)
     this.host = applicationParameters.InfluxDB.host
     this.currentObject = {}
   }

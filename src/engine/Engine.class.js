@@ -8,7 +8,7 @@ const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
-const Simulator = require('../north/Simulator.class')
+const Simulator = require('../north/simulator/Simulator.class')
 
 // Web Server
 const Server = require('../server/Server.class')
@@ -31,7 +31,7 @@ const apiList = {
 const checkConfig = (config) => {
   const mandatoryEntries = [
     'engine.scanModes',
-    'engine.types',
+    // 'engine.types',
     'engine.port',
     'engine.user',
     'engine.password',
@@ -146,15 +146,13 @@ class Engine {
     })
 
     // 3. start Applications
-
-    // Applications
     this.config.north.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
       const ApiHandler = apiList[api]
       if (enabled) {
         if (ApiHandler) {
-          this.activeApis[applicationId] = new ApiHandler(api, this)
+          this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
           throw new Error(`API for ${applicationId} is not supported : ${api}`)

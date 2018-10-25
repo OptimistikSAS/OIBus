@@ -1,12 +1,9 @@
-const timexe = require('timexe')
 // Machines
-const Tank = require('./simulator/machines/Tank.class')
-const Mixer = require('./simulator/machines/Mixer.class')
-const Remplissage = require('./simulator/machines/Remplissage.class')
-// Web Server
-const Server = require('../server/Server.class')
+const Tank = require('./machines/Tank.class')
+const Mixer = require('./machines/Mixer.class')
+const Remplissage = require('./machines/Remplissage.class')
 // ApiHandler
-const ApiHandler = require('./ApiHandler.class')
+const ApiHandler = require('../ApiHandler.class')
 // List of all machines
 const machineList = {
   Tank,
@@ -46,15 +43,12 @@ class Simulator extends ApiHandler {
    * @param {String} config : path to the config file
    * @return {Object} readConfig : parsed config Object
    */
-  constructor(api, engine) {
-    super(api, engine)
-
-    // Will only contain machines used
-    // based on the config file
+  constructor(applicationParameters, engine) {
+    super(applicationParameters, engine)
+    this.parameters = applicationParameters
     this.activeMachines = {}
-
     // Machines
-    this.config.north.Simulator.machines.forEach((machine) => {
+    this.parameters.machines.forEach((machine) => {
       const { machineId, type, enabled } = machine
       const Machine = machineList[type]
       if (enabled) {
@@ -79,17 +73,8 @@ class Simulator extends ApiHandler {
   }
 
   connect() {
-    // Scan the protocols regularly with the help of cronjob
-    this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = timexe(cronTime, () => {
-        // on each scan, activate each protocols
-        this.scanModes[scanMode].forEach((equipmentId) => {
-          this.activeProtocols[equipmentId].onScan(scanMode)
-        })
-      })
-    })
-
-    // Run the machines recurringly with an interval setted in fTbus.simul.json
+    console.log(this.parameters.applicationID, 'conneted')
+    // Run the machines recurringly with an interval setted in advance
     const { refreshCycle } = this.config.north.Simulator
     setInterval(() => {
       this.activeMachines.forEach((machine) => {
