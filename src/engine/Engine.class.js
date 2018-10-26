@@ -8,6 +8,8 @@ const MQTT = require('../south/MQTT/MQTT.class')
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
+const Simulator = require('../north/simulator/Simulator.class')
+
 // Web Server
 const Server = require('../server/Server.class')
 // Logger
@@ -24,18 +26,12 @@ const protocolList = {
 const apiList = {
   Console,
   InfluxDB,
+  Simulator,
 }
-
 const checkConfig = (config) => {
-  const mandatoryEntries = [
-    'engine.scanModes',
-    'engine.types',
-    'engine.port',
-    'engine.user',
-    'engine.password',
-    'south.equipments',
-    'north.applications',
-  ]
+  const mandatoryEntries = ['engine.scanModes', 'engine.', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
+
+  // If the engine works normally as client
   mandatoryEntries.forEach((entry) => {
     const [key, subkey] = entry.split('.')
     if (!config[key]) {
@@ -89,12 +85,14 @@ class Engine {
         }
       })
     })
+
     /** @type {string} contains one queue per application */
     this.queues = []
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
     this.activeApis = {}
+    this.activeMachines = {}
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
@@ -110,6 +108,11 @@ class Engine {
       application.enqueue({ data, dataId, pointId, timestamp })
       application.onUpdate()
     })
+  }
+
+  getValue({ pointId }) {
+    // select the application attached to this point and request the value
+    return this.pointApplication[pointId].get()
   }
 
   /**
@@ -140,13 +143,18 @@ class Engine {
     })
 
     // 3. start Applications
+    this.pointApplication = {}
     this.config.north.applications.forEach((application) => {
-      const { api, enabled, applicationId } = application
+      const { api, enabled, applicationId, points } = application
       // select the right api handler
       const ApiHandler = apiList[api]
       if (enabled) {
         if (ApiHandler) {
-          this.activeApis[applicationId] = new ApiHandler(api, this)
+          this.activeApis[applicationId] = new ApiHandler(application, this)
+          // Construct the array pointApplication
+          points.forEach((point) => {
+            this.pointApplication[point.pointId] = this.activeApis[applicationId]
+          })
           this.activeApis[applicationId].connect()
         } else {
           throw new Error(`API for ${applicationId} is not supported : ${api}`)
