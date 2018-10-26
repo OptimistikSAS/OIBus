@@ -29,15 +29,7 @@ const apiList = {
   Simulator,
 }
 const checkConfig = (config) => {
-  const mandatoryEntries = [
-    'engine.scanModes',
-    'engine.types',
-    'engine.port',
-    'engine.user',
-    'engine.password',
-    'south.equipments',
-    'north.applications',
-  ]
+  const mandatoryEntries = ['engine.scanModes', 'engine.', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
 
   // If the engine works normally as client
   mandatoryEntries.forEach((entry) => {
@@ -151,13 +143,18 @@ class Engine {
     })
 
     // 3. start Applications
+    this.pointApplication = {}
     this.config.north.applications.forEach((application) => {
-      const { api, enabled, applicationId } = application
+      const { api, enabled, applicationId, points } = application
       // select the right api handler
       const ApiHandler = apiList[api]
       if (enabled) {
         if (ApiHandler) {
           this.activeApis[applicationId] = new ApiHandler(application, this)
+          // Construct the array pointApplication
+          points.forEach((point) => {
+            this.pointApplication[point.pointId] = this.activeApis[applicationId]
+          })
           this.activeApis[applicationId].connect()
         } else {
           throw new Error(`API for ${applicationId} is not supported : ${api}`)
