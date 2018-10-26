@@ -189,14 +189,21 @@
           },
           {
             "pointId": "Filler.cadence", // the variable that will be updated
-            "machineType": "Filler.",
+            "machineType": "Filler",
             "cadence": 10,
             "alarmChance": 0.03,
             "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
             "alarmMaxAge": 180,
             "precision": 0.2,
             "qualityIndicator": 0.95
-          }
+          },
+          {
+            "pointId": "Random.number", // the variable that will be updated
+            "machineType": "Random",
+            "scale": 40, // scale of the randomly generated number
+            "integer": false, // whether the number should be floored
+            "qualityIndicator": 0.95
+          },
         ]
       }
     ]
