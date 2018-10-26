@@ -48,14 +48,14 @@ class Simulator extends ApiHandler {
     this.parameters = applicationParameters
     this.activeMachines = {}
     // Machines
-    this.parameters.machines.forEach((machine) => {
-      const { machineId, type, enabled } = machine
+    this.parameters.points.forEach((point) => {
+      const { pointId, type, enabled } = point
       const Machine = machineList[type]
       if (enabled) {
         if (Machine) {
-          this.activeMachines[machineId] = new Machine(machine)
+          this.activeMachines[pointId] = new Machine(point)
         } else {
-          throw new Error(`Machine for ${machineId} is not supported : ${type}`)
+          throw new Error(`Machine for ${pointId} is not supported : ${type}`)
         }
       }
     })
@@ -67,8 +67,8 @@ class Simulator extends ApiHandler {
    * @returns {*} value
    * @memberof Engine
    */
-  getValue(machineId) {
-    const value = this.activeMachines[machineId].getState()
+  get(pointId) {
+    const value = this.activeMachines[pointId].getState()
     return value
   }
 
