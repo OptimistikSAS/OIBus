@@ -191,7 +191,7 @@
             "pointId": "Filler.cadence", // the variable that will be updated
             "machineType": "Filler.",
             "cadence": 10,
-            "alarmChance": 0.01,
+            "alarmChance": 0.03,
             "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
             "alarmMaxAge": 180,
             "precision": 0.2,
