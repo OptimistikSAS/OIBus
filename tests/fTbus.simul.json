@@ -172,12 +172,12 @@
         ]
       },
       {
-        "applicationId": "SimulatorPLC2", // name of the simulator
+        "applicationId": "SimulatorPLC3", // name of the simulator
         "api": "Simulator", // application for Simulation
         "enabled": true, // true/false
-        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
-        "equipmentId": "PLC2", // the Simulator communicate through this equipment
-        "machines": [
+        "refreshCycle": 150, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC3", // the Simulator communicate through this equipment
+        "points": [
           {
             "pointId": "Mixer.rotation", // the variable that will be updated
             "machineType": "Mixer",
@@ -189,14 +189,21 @@
           },
           {
             "pointId": "Filler.cadence", // the variable that will be updated
-            "machineType": "Filler.",
-            "cadence": "every100ms",
-            "alarmChance": 0.01,
+            "machineType": "Filler",
+            "cadence": 10,
+            "alarmChance": 0.03,
             "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
             "alarmMaxAge": 180,
             "precision": 0.2,
             "qualityIndicator": 0.95
-          }
+          },
+          {
+            "pointId": "Random.number", // the variable that will be updated
+            "machineType": "Random",
+            "scale": 40, // scale of the randomly generated number
+            "integer": false, // whether the number should be floored
+            "qualityIndicator": 0.95
+          },
         ]
       }
     ]
