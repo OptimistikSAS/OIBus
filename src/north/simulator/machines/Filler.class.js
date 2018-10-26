@@ -1,6 +1,6 @@
 const Machine = require('./Machine.class.js')
 
-class Remplissage extends Machine {
+class Filler extends Machine {
   constructor(parameters) {
     super(parameters)
     this.alarmAge = 0
@@ -36,4 +36,4 @@ class Remplissage extends Machine {
   }
 }
 
-module.exports = Remplissage
+module.exports = Filler
