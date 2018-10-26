@@ -8,13 +8,14 @@ class Sinusoid extends Machine {
 
   run() {
     const { qualityIndicator, counterSpeed } = this.parameters
-    const measure = Math.sin(this.counter)
+    let measure = Math.sin(this.counter)
     this.counter += counterSpeed
     let quality
     if (Math.random() < qualityIndicator) {
       quality = true
     } else {
       quality = false
+      measure *= 2 * Math.random()
     }
     this.state = { measure, quality }
   }
