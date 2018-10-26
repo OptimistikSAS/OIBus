@@ -8,13 +8,8 @@ class Tank extends Machine {
   }
 
   run() {
-    let quality
     const { qualityIndicator, fillPerRefresh, emptyPerRefresh, capacity, precision } = this.parameters
-    if (Math.random() < qualityIndicator) {
-      quality = true
-    } else {
-      quality = false
-    }
+    let quality
     if (this.currentLevel === 0) this.fill = true
     if (this.fill) {
       this.currentLevel += fillPerRefresh * (1 - precision + Math.random() * 2 * precision)
@@ -28,11 +23,14 @@ class Tank extends Machine {
         this.currentLevel = 0
       }
     }
-    /*
-      level,tank=cuve1 value=60.09423243397569 1388567520000000000
-      measurement,tag_set field_set timestamp
-    */
-    this.state = { fillLevel: this.currentLevel, quality }
+    let fillLevel = this.currentLevel
+    if (Math.random() < qualityIndicator) {
+      quality = true
+    } else {
+      quality = false
+      fillLevel += 10 * Math.random() - 5 * Math.random() - 5 * Math.random()
+    }
+    this.state = { fillLevel, quality }
   }
 }
 
