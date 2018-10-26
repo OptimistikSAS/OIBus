@@ -1,7 +1,5 @@
 {
   "engine": {
-    // Simulation/Normal
-    "mode": "Simulation",
     // the port for the web interface to fTbus
     "port": 2222,
     // user/password (use ) (to do: use bcrypt)
@@ -60,17 +58,22 @@
         "equipmentId": "PLC1",
         "enabled": true,
         "protocol": "MQTT",
-        "defaultScanMode": "everySecond",
+        "defaultScanMode": "every5Second",
         "MQTT": {
-          "host": "simulator.factorythings.com:8883/tcp",
+          "server": "simulator.factorythings.com",
           "protocol": "mqtts",
+          "port": "8883",
           "username": "bai",
           "password": "secret"
         },
         "points": [
           {
-            "topic": "fillLevel",
-            "application": "Tank2"
+            "MQTT": { "topic": "temperatureTank1" },
+            "pointId": "Tank1.temperature"
+          },
+          {
+            "MQTT": { "topic": "temperatureTank2" },
+            "pointId": "Tank2.temperature"
           }
         ]
       },
@@ -78,61 +81,140 @@
         "equipmentId": "PLC2",
         "enabled": true,
         "protocol": "Modbus",
+        "defaultScanMode": "listen",
         "Modbus": {
+          "host": "localhost",
           "port": 502
         },
         "points": [
           {
-            "address": "0x0031",
-            "type": "coil",
-            "application": "Tank1",
-            "valueId": "fillLevel"
+            "Modbus": {
+              "address": "0x0031",
+              "type": "coil"
+            },
+            "pointId": "tank3.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x0f8",
+              "type": "holdingRegister"
+            },
+            "pointId": "tank2.valve_state"
+          },
+          {
+            "Modbus": {
+              "address": "0x76a0",
+              "type": "coil"
+            },
+            "pointId": "tank 2.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x83a6",
+              "type": "coil"
+            },
+            "pointId": "tank3.valve_state"
           }
         ]
       }
     ]
   },
   "north": {
-    "Simulator": {
-      "refreshCycle": 100
-    },
-    "machines": [
+    "applications": [
       {
-        "machineId": "Tank1",
-        "enabled": true,
-        "type": "Tank",
-        "capacity": 500,
-        "fillPerSecond": 10,
-        "emptyPerSecond": 0.1,
-        "precision": 0.1
+        "applicationId": "SimulatorPLC1", // name of the simulator
+        "api": "Simulator", // application for Simulation
+        "enabled": true, // true/false
+        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC1", // the Simulator communicate through this equipment
+        "points": [
+          {
+            "pointId": "Tank1.temperature", // the variable that will be updated
+            "machineType": "Tank",
+            "capacity": 400,
+            "fillPerRefresh": 5,
+            "emptyPerRefresh": 0.2,
+            "precision": 0.1,
+            "qualityIndicator": 0.95
+          },
+          {
+            "pointId": "Tank2.temperature", // the variable that will be updated
+            "machineType": "Tank",
+            "capacity": 500,
+            "fillPerRefresh": 10,
+            "emptyPerRefresh": 0.4,
+            "precision": 0.1,
+            "qualityIndicator": 0.91
+          }
+        ]
       },
       {
-        "applicationId": "Tank2",
-        "enabled": true,
-        "type": "Tank",
-        "capacity": 400,
-        "fillPerSecond": 5,
-        "emptyPerSecond": 0.2,
-        "precision": 0.1
+        "applicationId": "SimulatorPLC2", // name of the simulator
+        "api": "Simulator", // application for Simulation
+        "enabled": true, // true/false
+        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC2", // the Simulator communicate through this equipment
+        "points": [
+          {
+            "pointId": "Tank3.fill_level", // the variable that will be updated
+            "machineType": "Tank",
+            "capacity": 400,
+            "fillPerRefresh": 5,
+            "emptyPerRefresh": 0.2,
+            "precision": 0.1,
+            "qualityIndicator": 0.93
+          },
+          {
+            "pointId": "Tank2.fill_level", // the variable that will be updated
+            "machineType": "Tank",
+            "capacity": 500,
+            "fillPerRefresh": 10,
+            "emptyPerRefresh": 0.4,
+            "precision": 0.1,
+            "qualityIndicator": 0.94
+          }
+        ]
       },
       {
-        "applicationId": "Mixer",
-        "enabled": true,
-        "type": "Mixer",
-        "rotation": "every5minutes",
-        "rotationSpeed": 10,
-        "rotationDuration": 240,
-        "precision": 0.1
-      },
-      {
-        "applicationId": "Remplissage",
-        "enabled": true,
-        "type": "Filler",
-        "cadence": "every100ms",
-        "alarmChance": 0.01,
-        "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
-        "alarmMaxAge": 180,
-        "precision": 0.2
+        "applicationId": "SimulatorPLC3", // name of the simulator
+        "api": "Simulator", // application for Simulation
+        "enabled": true, // true/false
+        "refreshCycle": 150, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC3", // the Simulator communicate through this equipment
+        "points": [
+          {
+            "pointId": "Mixer.rotation", // the variable that will be updated
+            "machineType": "Mixer",
+            "rotation": "* * * * * /15",
+            "rotationSpeed": 10,
+            "rotationDuration": 10,
+            "precision": 0.1,
+            "qualityIndicator": 0.96
+          },
+          {
+            "pointId": "Filler.cadence", // the variable that will be updated
+            "machineType": "Filler",
+            "cadence": 10,
+            "alarmChance": 0.03,
+            "alarmMinAge": 60, // alarm duration between 1mn to 3mn (random)
+            "alarmMaxAge": 180,
+            "precision": 0.2,
+            "qualityIndicator": 0.95
+          },
+          {
+            "pointId": "Random.number", // the variable that will be updated
+            "machineType": "Random",
+            "scale": 40, // scale of the randomly generated number
+            "integer": false, // whether the number should be floored
+            "qualityIndicator": 0.95
+          },
+          {
+            "pointId": "Sinusoid.measure", // the variable that will be updated
+            "machineType": "Sinusoid",
+            "counterSpeed": 0.06, // Indicator on the speed at which the cursor advances on the sin() function
+            "qualityIndicator": 0.92
+          },
+        ]
       }
     ]
   }
