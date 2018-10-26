@@ -31,7 +31,7 @@ const apiList = {
 const checkConfig = (config) => {
   const mandatoryEntries = [
     'engine.scanModes',
-    // 'engine.types',
+    'engine.types',
     'engine.port',
     'engine.user',
     'engine.password',
@@ -116,6 +116,11 @@ class Engine {
       application.enqueue({ data, dataId, pointId, timestamp })
       application.onUpdate()
     })
+  }
+
+  getValue({ pointId }) {
+    // select the application attached to this point and request the value
+    return this.pointApplication[pointId].get()
   }
 
   /**
