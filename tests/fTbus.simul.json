@@ -204,6 +204,12 @@
             "integer": false, // whether the number should be floored
             "qualityIndicator": 0.95
           },
+          {
+            "pointId": "Sinusoid.measure", // the variable that will be updated
+            "machineType": "Sinusoid",
+            "counterSpeed": 0.06, // Indicator on the speed at which the cursor advances on the sin() function
+            "qualityIndicator": 0.92
+          },
         ]
       }
     ]
