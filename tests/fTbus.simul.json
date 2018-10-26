@@ -172,12 +172,12 @@
         ]
       },
       {
-        "applicationId": "SimulatorPLC2", // name of the simulator
+        "applicationId": "SimulatorPLC3", // name of the simulator
         "api": "Simulator", // application for Simulation
         "enabled": true, // true/false
-        "refreshCycle": 100, // the Simulator will update its value on each cycle (ms)
-        "equipmentId": "PLC2", // the Simulator communicate through this equipment
-        "machines": [
+        "refreshCycle": 150, // the Simulator will update its value on each cycle (ms)
+        "equipmentId": "PLC3", // the Simulator communicate through this equipment
+        "points": [
           {
             "pointId": "Mixer.rotation", // the variable that will be updated
             "machineType": "Mixer",
