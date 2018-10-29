@@ -29,7 +29,7 @@ const apiList = {
   Simulator,
 }
 const checkConfig = (config) => {
-  const mandatoryEntries = ['engine.scanModes', 'engine.', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
+  const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
 
   // If the engine works normally as client
   mandatoryEntries.forEach((entry) => {

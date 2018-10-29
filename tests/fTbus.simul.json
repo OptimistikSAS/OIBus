@@ -56,7 +56,7 @@
     "equipments": [
       {
         "equipmentId": "PLC1",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
         "defaultScanMode": "every5Second",
         "MQTT": {
@@ -79,7 +79,7 @@
       },
       {
         "equipmentId": "PLC2",
-        "enabled": true,
+        "enabled": false,
         "protocol": "Modbus",
         "defaultScanMode": "listen",
         "Modbus": {
