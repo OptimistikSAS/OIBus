@@ -1,14 +1,18 @@
 // Machines
 const Tank = require('./machines/Tank.class')
 const Mixer = require('./machines/Mixer.class')
-const Remplissage = require('./machines/Remplissage.class')
+const Filler = require('./machines/Filler.class')
+const Sinusoid = require('./machines/Sinusoid.class')
+const Random = require('./machines/Random.class')
 // ApiHandler
 const ApiHandler = require('../ApiHandler.class')
 // List of all machines
 const machineList = {
   Tank,
   Mixer,
-  Remplissage,
+  Filler,
+  Sinusoid,
+  Random,
 }
 
 const checkConfig = (config) => {
@@ -49,14 +53,12 @@ class Simulator extends ApiHandler {
     this.activeMachines = {}
     // Machines
     this.parameters.points.forEach((point) => {
-      const { pointId, type, enabled } = point
-      const Machine = machineList[type]
-      if (enabled) {
-        if (Machine) {
-          this.activeMachines[pointId] = new Machine(point)
-        } else {
-          throw new Error(`Machine for ${pointId} is not supported : ${type}`)
-        }
+      const { pointId, machineType } = point
+      const Machine = machineList[machineType]
+      if (Machine) {
+        this.activeMachines[pointId] = new Machine(point)
+      } else {
+        throw new Error(`Machine for ${pointId} is not supported : ${machineType}`)
       }
     })
   }
@@ -73,7 +75,7 @@ class Simulator extends ApiHandler {
   }
 
   connect() {
-    console.log(this.parameters.applicationID, 'conneted')
+    console.log(this.parameters.applicationId, 'conneted')
     // Run the machines recurringly with an interval setted in advance
     const { refreshCycle } = this.parameters
     setInterval(() => {

@@ -2,7 +2,7 @@ class Machine {
   constructor(parameters) {
     this.parameters = parameters
     this.state = {}
-    console.info(parameters.machineId, 'registered')
+    console.info(parameters.pointId, 'registered')
   }
   // eslint-disable-next-line
   run() {}
