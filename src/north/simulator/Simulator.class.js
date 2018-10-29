@@ -75,9 +75,9 @@ class Simulator extends ApiHandler {
   connect() {
     console.log(this.parameters.applicationID, 'conneted')
     // Run the machines recurringly with an interval setted in advance
-    const { refreshCycle } = this.config.north.Simulator
+    const { refreshCycle } = this.parameters
     setInterval(() => {
-      this.activeMachines.forEach((machine) => {
+      Object.values(this.activeMachines).forEach((machine) => {
         machine.run()
       })
     }, refreshCycle)
