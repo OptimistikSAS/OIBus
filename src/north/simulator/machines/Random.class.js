@@ -4,13 +4,14 @@ class Random extends Machine {
   run() {
     const { integer, scale, qualityIndicator } = this.parameters
     let quality
+    let number = Math.random() * scale
+    if (integer) number = Math.floor(number)
     if (Math.random() < qualityIndicator) {
       quality = true
     } else {
       quality = false
+      number *= -Math.random()
     }
-    let number = Math.random() * scale
-    if (integer) number = Math.floor(number)
     this.state = { number, quality }
   }
 }
