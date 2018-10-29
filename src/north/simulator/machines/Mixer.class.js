@@ -25,6 +25,7 @@ class Mixer extends Machine {
       quality = true
     } else {
       quality = false
+      this.currentSpeed *= (Math.random() - Math.random() + Math.random())
     }
     this.state = { speed: this.currentSpeed, duration: this.duration, quality }
   }

@@ -134,7 +134,8 @@
             "capacity": 400,
             "fillPerRefresh": 5,
             "emptyPerRefresh": 0.2,
-            "precision": 0.1
+            "precision": 0.1,
+            "qualityIndicator": 0.95
           },
           {
             "pointId": "Tank2.temperature", // the variable that will be updated
@@ -142,7 +143,8 @@
             "capacity": 500,
             "fillPerRefresh": 10,
             "emptyPerRefresh": 0.4,
-            "precision": 0.1
+            "precision": 0.1,
+            "qualityIndicator": 0.91
           }
         ]
       },
@@ -159,7 +161,8 @@
             "capacity": 400,
             "fillPerRefresh": 5,
             "emptyPerRefresh": 0.2,
-            "precision": 0.1
+            "precision": 0.1,
+            "qualityIndicator": 0.93
           },
           {
             "pointId": "Tank2.fill_level", // the variable that will be updated
@@ -167,7 +170,8 @@
             "capacity": 500,
             "fillPerRefresh": 10,
             "emptyPerRefresh": 0.4,
-            "precision": 0.1
+            "precision": 0.1,
+            "qualityIndicator": 0.94
           }
         ]
       },
@@ -203,6 +207,12 @@
             "scale": 40, // scale of the randomly generated number
             "integer": false, // whether the number should be floored
             "qualityIndicator": 0.95
+          },
+          {
+            "pointId": "Sinusoid.measure", // the variable that will be updated
+            "machineType": "Sinusoid",
+            "counterSpeed": 0.06, // Indicator on the speed at which the cursor advances on the sin() function
+            "qualityIndicator": 0.92
           },
         ]
       }
