@@ -16,13 +16,13 @@ class MQTT extends ProtocolHandler {
       { port, username, password: Buffer.from(password) },
     )
     points.forEach((point) => {
-      const { MQTT: { topic } = {} } = point
+      const { MQTT: { topic } = {}, pointId } = point
       this.server.on('connect', () => {
         this.server.subscribe(topic, (err) => {
           if (err) {
             console.error(err)
           } else {
-            this.server.publish()
+            this.server.publish('topic', this.engine.getValue(pointId))
           }
         })
       })
