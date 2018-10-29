@@ -3,8 +3,30 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
   connect() {
+    const { defaultScanMode } = this.equipment
     super.connect()
     this.listen()
+    this.notify(defaultScanMode)
+  }
+
+  notify() {
+    const { MQTT: { protocol, server, port, username, password } = {}, points } = this.equipment
+    this.server = mqtt.connect(
+      `${protocol}://${server}`,
+      { port, username, password: Buffer.from(password) },
+    )
+    points.forEach((point) => {
+      const { MQTT: { topic } = {} } = point
+      this.server.on('connect', () => {
+        this.server.subscribe(topic, (err) => {
+          if (err) {
+            console.error(err)
+          } else {
+            this.server.publish()
+          }
+        })
+      })
+    })
   }
 
   listen() {
