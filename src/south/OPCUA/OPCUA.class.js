@@ -53,7 +53,7 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (err1) => {
         if (!err1) {
-          console.log('Connected')
+          console.log('OPCUA Connected')
           this.client.createSession((err2, session) => {
             if (!err2) {
               this.session = session

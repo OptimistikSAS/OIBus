@@ -3,7 +3,7 @@
     // Simulation/Normal
     "mode": "Normal",
      // the port for the web interface to fTbus
-    "port": 2222,
+    "port": 2223,
     // user/password (use ) (to do: use bcrypt)
     "user": "admin",
     "password": "pass",
@@ -147,11 +147,11 @@
         },
         "points": [
           {
-            "MQTT": { "topic": "hello" },
+            "MQTT": { "topic": "temperatureTank1" },
             "pointId": "./Tank 5.tank/22.temperature"
           },
           {
-            "MQTT": { "topic": "bonjour" },
+            "MQTT": { "topic": "temperatureTank2" },
             "pointId": "./Tank 6.tank/23.temperature"
 
           }
@@ -159,7 +159,7 @@
       },
       {
         "equipmentId": "SimulationServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -190,7 +190,7 @@
       },
       {
         "equipmentId": "SimulationServerBis",
-        "enabled": true,
+        "enabled": false,
         "protocol": "OPCUA",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -212,7 +212,7 @@
       },
       {
         "equipmentId": "PLC-35",
-        "enabled": true,
+        "enabled": false,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "everySecond",
@@ -261,7 +261,7 @@
       },
       {
         "equipmentId": "PLC-42",
-        "enabled": true,
+        "enabled": false,
         "protocol": "Modbus",
         "pointIdRoot": "/fttest.base/Tank4.tank",
         "defaultScanMode": "everySecond",
