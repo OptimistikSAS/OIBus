@@ -108,11 +108,6 @@ class Engine {
     })
   }
 
-  getValue({ pointId }) {
-    // select the application attached to this point and request the value
-    return this.pointApplication[pointId].get()
-  }
-
   /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
@@ -164,6 +159,9 @@ class Engine {
           this.activeProtocols[equipmentId].onScan(scanMode)
         })
       })
+      if (job.result !== 'ok') {
+        this.logger.error(job.error)
+      }
     })
 
     if (callback) callback()
