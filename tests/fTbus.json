@@ -1,7 +1,5 @@
 {
   "engine": {
-    // Simulation/Normal
-    "mode": "Normal",
      // the port for the web interface to fTbus
     "port": 2223,
     // user/password (use ) (to do: use bcrypt)
@@ -21,7 +19,7 @@
       "tailable": true
     },
     // the scan mode section allow to create categories of scan
-    // each categories will use the cron syntax to determine the
+    // each categories will use the timexe syntax to determine the
     // sequence. Format: year month day hour minute second millisec microsec
     "scanModes": [
       {
@@ -38,7 +36,7 @@
       },
       {
         "scanMode": "every15DaysAt9",
-        "cronTime": "0 0 /15 9"
+        "cronTime": "* * /15 9"
       }
     ],
     // types section allows to define the types managed by this engine
