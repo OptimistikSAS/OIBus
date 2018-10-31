@@ -19,18 +19,15 @@ class MQTT extends ProtocolHandler {
         this.client.subscribe(topic, (err) => {
           if (err) {
             console.error(err)
-          } else {
-            console.info('Subscribe ', topic, ' succeeded!')
-            console.info('For points ', pointId)
           }
         })
       })
 
       this.client.on('message', (topic1, message) => {
-        // message is Buffer
-        console.log('Message received from topic: ', topic1)
-        this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId })
-        // client.end()
+        if (topic1 === topic) {
+          // message is Buffer
+          this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId })
+        }
       })
     })
   }
