@@ -3,30 +3,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
   connect() {
-    const { defaultScanMode } = this.equipment
     super.connect()
     this.listen()
-    this.notify(defaultScanMode)
-  }
-
-  notify() {
-    const { MQTT: { protocol, server, port, username, password } = {}, points } = this.equipment
-    this.server = mqtt.connect(
-      `${protocol}://${server}`,
-      { port, username, password: Buffer.from(password) },
-    )
-    points.forEach((point) => {
-      const { MQTT: { topic } = {}, pointId } = point
-      this.server.on('connect', () => {
-        this.server.subscribe(topic, (err) => {
-          if (err) {
-            console.error(err)
-          } else {
-            this.server.publish('topic', this.engine.getValue(pointId))
-          }
-        })
-      })
-    })
   }
 
   listen() {
@@ -36,18 +14,22 @@ class MQTT extends ProtocolHandler {
       { port, username, password: Buffer.from(password) },
     )
     points.forEach((point) => {
-      const { MQTT: { topic } = {} } = point
+      const { MQTT: { topic } = {}, pointId } = point
       this.client.on('connect', () => {
         this.client.subscribe(topic, (err) => {
           if (err) {
             console.error(err)
+          } else {
+            console.info('Subscribe ', topic, ' succeeded!')
+            console.info('For points ', pointId)
           }
         })
       })
 
-      this.client.on('message', (_topic, message) => {
+      this.client.on('message', (topic1, message) => {
         // message is Buffer
-        this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId: point.pointId })
+        console.log('Message received from topic: ', topic1)
+        this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId })
         // client.end()
       })
     })
