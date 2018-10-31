@@ -115,6 +115,7 @@ class Modbus extends ProtocolHandler {
    * @return {void}
    */
   connect() {
+    super.connect()
     const { host, port } = this
 
     this.socket.connect(
