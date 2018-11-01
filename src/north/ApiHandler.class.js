@@ -1,4 +1,4 @@
-const Queue = require('../engine/Queue.class')
+const Queue = require('./Queue.class')
 
 class ApiHandler {
   /**
