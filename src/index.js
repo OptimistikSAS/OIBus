@@ -9,4 +9,10 @@ const VERSION = require('../package.json').version
 
 const engine = new Engine(config)
 // start engine
-engine.start(() => console.info(`fTbus version ${VERSION} started`))
+engine
+  .start()
+  .then(() => console.info(`fTbus version ${VERSION} started`))
+  .catch((error) => {
+    console.error(error.message)
+    process.exit(-1)
+  })
