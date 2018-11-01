@@ -9,10 +9,10 @@ const MQTT = require('../south/MQTT/MQTT.class')
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
 
-// Web Server
+// Engine classes
 const Server = require('../server/Server.class')
-// Logger
 const Logger = require('./Logger.class')
+
 // List all South protocols
 const protocolList = {
   MQTT,
@@ -26,6 +26,7 @@ const apiList = {
   Console,
   InfluxDB,
 }
+
 const checkConfig = (config) => {
   const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
 
@@ -58,11 +59,15 @@ class Engine {
   constructor(configFile) {
     this.config = tryReadFile(configFile)
     checkConfig(this.config)
+
+    // Configure and get the logger
+    this.logger = new Logger(this.config.engine.logParameters)
+
     // prepare config
-    // initialize the scanMode object with empty arrays
-    this.scanModes = {}
+    // initialize the scanLists with empty arrays
+    this.scanLists = {}
     this.config.engine.scanModes.forEach(({ scanMode }) => {
-      this.scanModes[scanMode] = []
+      this.scanLists[scanMode] = []
     })
 
     this.config.south.equipments.forEach((equipment) => {
@@ -77,8 +82,8 @@ class Engine {
         }
         // 3. Associate the scanMode to all it's corresponding equipments
         if (equipment.enabled) {
-          if (this.scanModes[point.scanMode] && !this.scanModes[point.scanMode].includes(equipment.equipmentId)) {
-            this.scanModes[point.scanMode].push(equipment.equipmentId)
+          if (this.scanLists[point.scanMode] && !this.scanLists[point.scanMode].includes(equipment.equipmentId)) {
+            this.scanLists[point.scanMode].push(equipment.equipmentId)
           }
         }
       })
@@ -91,19 +96,18 @@ class Engine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.activeMachines = {}
-
-    // Configure and get the logger
-    this.logger = new Logger(this.config.engine.logParameters)
   }
 
   /**
-   * send a Value from an equipement to application queues
+   * send a Value from an equipement to application queues, the value is made
+   * of the id of the point (object), the value of the point (object) and a timestamp
+   * (UTC).
    * @param {Object} value : new value (pointId, timestamp and data of the entry)
    * @return {void}
    */
-  addValue({ data, dataId, pointId, timestamp }) {
+  addValue({ pointId, data, timestamp }) {
     Object.values(this.activeApis).forEach((application) => {
-      application.enqueue({ data, dataId, pointId, timestamp })
+      application.enqueue({ data, pointId, timestamp })
       application.onUpdate()
     })
   }
@@ -115,7 +119,7 @@ class Engine {
    * @param {Function} callback
    * @return {void}
    */
-  start(callback) {
+  async start() {
     // 1. start web server
     const server = new Server(this)
     server.listen()
@@ -155,16 +159,14 @@ class Engine {
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = timexe(cronTime, () => {
         // on each scan, activate each protocols
-        this.scanModes[scanMode].forEach((equipmentId) => {
+        this.scanLists[scanMode].forEach((equipmentId) => {
           this.activeProtocols[equipmentId].onScan(scanMode)
         })
       })
       if (job.result !== 'ok') {
-        this.logger.error(job.error)
+        throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
       }
     })
-
-    if (callback) callback()
   }
 }
 
