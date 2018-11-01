@@ -1,10 +1,13 @@
 const timexe = require('timexe')
 const { tryReadFile } = require('../services/config.service')
+const VERSION = require('../../package.json').version
+
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
 const OPCUA = require('../south/OPCUA/OPCUA.class')
 const CSV = require('../south/CSV/CSV.class')
 const MQTT = require('../south/MQTT/MQTT.class')
+
 // North classes
 const Console = require('../north/console/Console.class')
 const InfluxDB = require('../north/influxdb/InfluxDB.class')
@@ -116,10 +119,9 @@ class Engine {
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
    * @param {String} config : the config Object
-   * @param {Function} callback
    * @return {void}
    */
-  async start() {
+  start() {
     // 1. start web server
     const server = new Server(this)
     server.listen()
@@ -167,6 +169,7 @@ class Engine {
         throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
       }
     })
+    console.info(`fTbus version ${VERSION} started`)
   }
 }
 

@@ -2,7 +2,7 @@
   "engine": {
      // the port for the web interface to fTbus
     "port": 2223,
-    // user/password (use ) (to do: use bcrypt)
+    // user/password
     "user": "admin",
     "password": "pass",
     // the list of IP addresses allowed to access the Web interface
