@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt')
+const auth = require('basic-auth')
 
 /**
  * Return redefined auth middleware with
@@ -11,15 +13,17 @@
  * @return {GeneratorFunction}
  * @api public
  */
-function authRedefined(engine, opts = {}) {
+function authRedefined(opts = {}) {
   if (!opts.name && !opts.pass) throw new Error('Basic auth `name` and/or `pass` is required')
 
   if (!opts.realm) opts.realm = 'Secure Area'
 
   return function basicAuth(ctx, next) {
-    const { user, password } = engine.config.engine
-
-    if (!user || (opts.name && opts.name !== user) || (opts.pass && opts.pass !== password)) {
+    const user = auth(ctx)
+    const { name, pass } = user
+    const saltRounds = 10
+    const hash = bcrypt.hashSync(pass, saltRounds)
+    if (!user || (opts.name && opts.name !== name) || (opts.pass && opts.pass !== hash)) {
       return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
     }
     return next()
