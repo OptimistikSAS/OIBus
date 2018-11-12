@@ -1,6 +1,5 @@
 const Koa = require('koa')
 const Router = require('koa-router')
-const auth = require('koa-basic-auth')
 const logger = require('koa-logger')
 const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
@@ -8,6 +7,7 @@ const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
 
+const auth = require('./auth')
 const Controller = require('./info')
 const VERSION = require('../../package.json').version
 
