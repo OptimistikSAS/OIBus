@@ -4,7 +4,7 @@
     "port": 2223,
     // user/password
     "user": "admin",
-    "password": "pass",
+    "password": "d41d8cd98f00b204e9800998ecf8427e",
     // the list of IP addresses allowed to access the Web interface
     "filter": ["127.0.0.1", "::1"],
     // the parameters for logs, describing different performances for different levels
