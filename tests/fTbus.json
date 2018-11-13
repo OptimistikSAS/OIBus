@@ -2,9 +2,9 @@
   "engine": {
      // the port for the web interface to fTbus
     "port": 2223,
-    // user/password
+    // user/password for "pass" (don't show the decoded password in production!)
     "user": "admin",
-    "password": "d41d8cd98f00b204e9800998ecf8427e",
+    "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
     // the list of IP addresses allowed to access the Web interface
     "filter": ["127.0.0.1", "::1"],
     // the parameters for logs, describing different performances for different levels
@@ -29,6 +29,10 @@
       {
         "scanMode": "every5Second",
         "cronTime": "* * * * * /5"
+      },
+      {
+        "scanMode": "every20Second",
+        "cronTime": "* * * * * /20"
       },
       {
         "scanMode": "everyNoon",
@@ -110,7 +114,7 @@
         "enabled": true,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
-        "defaultScanMode": "every5Second",
+        "defaultScanMode": "every20Second",
         "CSV": {
           "inputFolder": "./tests/csv/input/",
           "archiveFolder": "./tests/csv/archived/",
