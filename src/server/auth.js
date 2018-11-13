@@ -2,7 +2,7 @@
  * Module dependencies.
  */
 const crypto = require('crypto')
-const auth = require('basic-auth')
+const basicAuth = require('basic-auth')
 
 /**
  * Return basic auth middleware with
@@ -16,15 +16,18 @@ const auth = require('basic-auth')
  * @return {GeneratorFunction}
  * @api public
  */
-module.exports = function (opts) {
+const auth = (opts = {}) => {
   if (!opts.realm) opts.realm = 'Secure Area'
 
-  return function basicAuth(ctx, next) {
-    const user = auth(ctx)
-    const hash = crypto.createHash('MD5', user.pass).digest('hex')
-    if (user && user.name === opts.name && hash === opts.pass) {
-      next()
+  return (ctx, next) => {
+    const user = basicAuth(ctx)
+    if (user && user.pass && user.name === opts.name) {
+      const hash = crypto.createHash('sha256').update(user.pass).digest('hex')
+      if (hash === opts.pass) return next()
+      console.error('bad hash', hash)
     }
-    ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
+    return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
   }
 }
+
+module.exports = auth
