@@ -1,6 +1,5 @@
 const Koa = require('koa')
 const Router = require('koa-router')
-const auth = require('koa-basic-auth')
 const logger = require('koa-logger')
 const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
@@ -8,6 +7,7 @@ const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
 
+const authCrypto = require('./auth') // ./auth
 const Controller = require('./info')
 const VERSION = require('../../package.json').version
 
@@ -72,7 +72,7 @@ class Server {
     /** @todo: we need to think about the authorization process. in the first version, the program
      * need to be secured from the operating system and firewall should not allow to access the API.
      */
-    this.app.use(auth({ name: this.user, pass: this.password }))
+    this.app.use(authCrypto({ name: this.user, pass: this.password }))
 
     // CORS middleware for Koa
     this.app.use(cors())
