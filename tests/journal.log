@@ -118,3 +118,23 @@
 2018-10-31T11:04:10.003Z info: The folder ./tests/csv/input/ is empty.
 2018-10-31T11:04:15.000Z info: The folder ./tests/csv/input/ is empty.
 2018-11-01T21:11:55.008Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T15:46:45.085Z info: [object Object]
+2018-11-14T15:46:45.197Z info: [object Object]
+2018-11-14T15:46:50.085Z info: [object Object]
+2018-11-14T15:46:50.206Z info: [object Object]
+2018-11-14T15:46:55.084Z info: [object Object]
+2018-11-14T15:46:55.196Z info: [object Object]
+2018-11-14T15:47:00.005Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T15:47:00.084Z info: [object Object]
+2018-11-14T15:47:00.209Z info: [object Object]
+2018-11-14T15:47:05.084Z info: [object Object]
+2018-11-14T15:47:05.199Z info: [object Object]
+2018-11-14T15:47:10.085Z info: [object Object]
+2018-11-14T15:47:10.214Z info: [object Object]
+2018-11-14T15:47:15.105Z info: [object Object]
+2018-11-14T15:47:15.217Z info: [object Object]
+2018-11-14T15:47:35.095Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":139.55105237306162,\"quality\":true}","timestamp":"Wed Nov 14 2018 16:47:35 GMT+0100 (Central European Standard Time)"}
+2018-11-14T15:47:35.200Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":480.9969856664123,\"quality\":false}","timestamp":"Wed Nov 14 2018 16:47:35 GMT+0100 (Central European Standard Time)"}
+2018-11-14T15:47:40.007Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T15:47:40.104Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":129.4037532847395,\"quality\":true}","timestamp":"Wed Nov 14 2018 16:47:40 GMT+0100 (Central European Standard Time)"}
+2018-11-14T15:47:40.214Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":467.4009131304318,\"quality\":true}","timestamp":"Wed Nov 14 2018 16:47:40 GMT+0100 (Central European Standard Time)"}
