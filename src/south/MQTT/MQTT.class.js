@@ -26,7 +26,8 @@ class MQTT extends ProtocolHandler {
       this.client.on('message', (topic1, message) => {
         if (topic1 === topic) {
           // message is Buffer
-          this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId })
+          this.engine.bus.emit('addValue', { data: message.toString(), timestamp: Date(), pointId })
+          // this.engine.addValue({ data: message.toString(), timestamp: Date(), pointId })
         }
       })
     })

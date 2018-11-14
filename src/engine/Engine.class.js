@@ -1,6 +1,8 @@
 const timexe = require('timexe')
+const { EventEmitter } = require('events')
 const { tryReadFile } = require('../services/config.service')
 const VERSION = require('../../package.json').version
+
 
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
@@ -65,6 +67,9 @@ class Engine {
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
+
+    // Get the emitter of events
+    this.bus = new EventEmitter()
 
     // prepare config
     // initialize the scanLists with empty arrays
