@@ -7,22 +7,22 @@ class Console extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-    this.engine.bus.on('addValue', ({ pointId, data, timestamp }) => {
-      this.onUpdate({ pointId, data, timestamp })
+    this.start()
+  }
+
+  /**
+   * This will permit the apllication to start listening all the necessary events
+   * @memberof InfluxDB
+   */
+  start() {
+    this.engine.bus.on('addValue', (value) => {
+      this.onUpdate(value)
     })
   }
 
-  onUpdate({ pointId, data, timestamp }) {
-    this.engine.logger.info(JSON.stringify({ pointId, data, timestamp }))
+  onUpdate(value) {
+    this.engine.logger.info(JSON.stringify(value))
   }
-  // /**
-  //  * Shows the length of this.queue
-  //  * @return {void}
-  //  * @todo Use sprintf to manage the content parameter
-  //  */
-  // onUpdate() {
-  //   console.info(this.queue.flush())
-  // }
 }
 
 module.exports = Console
