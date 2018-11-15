@@ -1,4 +1,5 @@
 const timexe = require('timexe')
+const { EventEmitter } = require('events')
 const { tryReadFile } = require('../services/config.service')
 const VERSION = require('../../package.json').version
 
@@ -48,7 +49,7 @@ const checkConfig = (config) => {
 /**
  * Class Engine :
  * - at startup, handles initialization of applications, protocols and config.
- * - allows to manage the queues for every protocol and application.
+ * - allows to manage the bus for every EventEmitter of protocol and EventListener of application.
  */
 class Engine {
   /**
@@ -65,6 +66,9 @@ class Engine {
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
+
+    // Get the emitter of events
+    this.bus = new EventEmitter()
 
     // prepare config
     // initialize the scanLists with empty arrays
@@ -92,8 +96,6 @@ class Engine {
       })
     })
 
-    /** @type {string} contains one queue per application */
-    this.queues = []
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
@@ -102,16 +104,29 @@ class Engine {
   }
 
   /**
-   * send a Value from an equipement to application queues, the value is made
+   * send a Value from an equipement to application by emitting an event, the value is made
    * of the id of the point (object), the value of the point (object) and a timestamp
    * (UTC).
    * @param {Object} value : new value (pointId, timestamp and data of the entry)
    * @return {void}
    */
   addValue({ pointId, data, timestamp }) {
-    Object.values(this.activeApis).forEach((application) => {
-      application.enqueue({ data, pointId, timestamp })
-      application.onUpdate()
+    this.bus.emit('addValue', {
+      pointId,
+      timestamp,
+      data,
+    })
+  }
+
+  /**
+   * Register the callback function to the event listner
+   * @param {*} eventName
+   * @param {*} callback
+   * @memberof Engine
+   */
+  register(eventName, callback) {
+    this.bus.on(eventName, (args) => {
+      callback(args)
     })
   }
 
