@@ -2,12 +2,12 @@ const ApiHandler = require('../ApiHandler.class')
 
 class Console extends ApiHandler {
   /**
-   * Shows the length of this.queue
-   * @return {void}
-   * @todo Use sprintf to manage the content parameter
+   * Print to the console the value received
+   * @param {*} value
+   * @memberof Console
    */
-  onUpdate() {
-    console.info(this.queue.flush())
+  onUpdate(value) {
+    console.info(value)
   }
 }
 

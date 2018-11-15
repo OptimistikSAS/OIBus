@@ -2,7 +2,6 @@ const fetch = require('node-fetch')
 const { sprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
 
-
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
  * @param {String} pointId : string with this form : value1.name1/value2.name2#value
@@ -31,19 +30,20 @@ class InfluxDB extends ApiHandler {
     super(applicationParameters, engine)
     this.host = applicationParameters.InfluxDB.host
     this.currentObject = {}
+    this.start()
   }
 
   /**
-   * Makes a request for every entry in the queue while emptying it.
+   * Makes a request for every entry revceived from the event.
    * @return {void}
    */
-  onUpdate() {
-    this.queue.flush(value => this.makeRequest(value))
+  onUpdate(value) {
+    this.makeRequest(value)
   }
 
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
-   * @param {Object} entry : the entry from the queue
+   * @param {Object} entry : the entry from the event
    * @return {void}
    */
   makeRequest(entry) {
