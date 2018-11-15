@@ -101,7 +101,7 @@ class OPCUA extends ProtocolHandler {
               value.data.push(dataValue.statusCode.value)
             }
           })
-          this.engine.addValue(value)
+          this.engine.bus.emit('addValue', value)
           // @todo handle double values with an array as data
         })
       } else {

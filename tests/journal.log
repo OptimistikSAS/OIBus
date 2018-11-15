@@ -138,3 +138,108 @@
 2018-11-14T15:47:40.007Z info: The folder ./tests/csv/input/ is empty.
 2018-11-14T15:47:40.104Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":129.4037532847395,\"quality\":true}","timestamp":"Wed Nov 14 2018 16:47:40 GMT+0100 (Central European Standard Time)"}
 2018-11-14T15:47:40.214Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":467.4009131304318,\"quality\":true}","timestamp":"Wed Nov 14 2018 16:47:40 GMT+0100 (Central European Standard Time)"}
+2018-11-14T16:18:00.007Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T16:18:20.001Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T16:18:20.094Z info: {"data":"{\"fillLevel\":162.72126928493904,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:18:20 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-14T16:18:20.207Z info: {"data":"{\"fillLevel\":317.06693352966863,\"quality\":false}","timestamp":"Wed Nov 14 2018 17:18:20 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-14T16:18:25.092Z info: {"data":"{\"fillLevel\":399.4090001752008,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:18:25 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-14T16:18:25.210Z info: {"data":"{\"fillLevel\":487.25008051612815,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:18:25 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-14T16:18:30.092Z info: {"data":"{\"fillLevel\":389.22332688018264,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:18:30 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-14T16:18:30.206Z info: {"data":"{\"fillLevel\":467.197062854144,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:18:30 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-14T16:20:55.092Z info: [{"data":"{\"fillLevel\":100.60726786670143,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:20:55 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}]
+2018-11-14T16:20:55.203Z info: [{"data":"{\"fillLevel\":412.41529036687774,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:20:55 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}]
+2018-11-14T16:23:50.092Z info: [object Object]
+2018-11-14T16:23:50.206Z info: [object Object]
+2018-11-14T16:23:55.091Z info: [object Object]
+2018-11-14T16:23:55.203Z info: [object Object]
+2018-11-14T16:24:40.012Z info: The folder ./tests/csv/input/ is empty.
+2018-11-14T16:24:40.108Z info: {"data":"{\"fillLevel\":69.26447161503387,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:24:40 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-14T16:24:40.222Z info: {"data":"{\"fillLevel\":35.58487914885876,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:24:40 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-14T16:24:45.095Z info: {"data":"{\"fillLevel\":59.47994137831611,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:24:45 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-14T16:24:45.228Z info: {"data":"{\"fillLevel\":15.798438500202103,\"quality\":true}","timestamp":"Wed Nov 14 2018 17:24:45 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-15T09:15:50.133Z info: undefined
+2018-11-15T09:15:50.247Z info: undefined
+2018-11-15T09:15:55.092Z info: undefined
+2018-11-15T09:15:55.207Z info: undefined
+2018-11-15T09:16:00.019Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:16:00.116Z info: undefined
+2018-11-15T09:16:00.226Z info: undefined
+2018-11-15T09:16:05.113Z info: undefined
+2018-11-15T09:16:05.225Z info: undefined
+2018-11-15T09:16:10.092Z info: undefined
+2018-11-15T09:16:10.206Z info: undefined
+2018-11-15T09:16:15.121Z info: undefined
+2018-11-15T09:16:15.224Z info: undefined
+2018-11-15T09:16:20.003Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:16:20.100Z info: undefined
+2018-11-15T09:16:20.225Z info: undefined
+2018-11-15T09:16:25.110Z info: undefined
+2018-11-15T09:16:25.227Z info: undefined
+2018-11-15T09:16:40.008Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:16:40.119Z info: undefined
+2018-11-15T09:16:40.225Z info: undefined
+2018-11-15T09:16:45.091Z info: undefined
+2018-11-15T09:16:45.200Z info: undefined
+2018-11-15T09:16:50.092Z info: undefined
+2018-11-15T09:16:50.204Z info: undefined
+2018-11-15T09:16:55.093Z info: undefined
+2018-11-15T09:16:55.224Z info: undefined
+2018-11-15T09:17:00.013Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:17:00.113Z info: undefined
+2018-11-15T09:17:00.223Z info: undefined
+2018-11-15T09:17:05.092Z info: undefined
+2018-11-15T09:17:05.204Z info: undefined
+2018-11-15T09:17:10.100Z info: undefined
+2018-11-15T09:17:10.223Z info: undefined
+2018-11-15T09:17:15.092Z info: undefined
+2018-11-15T09:17:15.205Z info: undefined
+2018-11-15T09:17:20.003Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:17:20.098Z info: undefined
+2018-11-15T09:17:20.223Z info: undefined
+2018-11-15T09:18:25.093Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":105.36617903176011,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:25 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:18:25.205Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":420.2808771668,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:25 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:18:30.091Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":95.42766840481035,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:30 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:18:30.205Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":400.2062625209743,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:30 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:18:35.094Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":85.37040677992655,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:35 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:18:35.204Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":380.12892400285614,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:18:35 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:15.095Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":5.991648453334513,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:15 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:15.203Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":220.67887890505492,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:15 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:20.000Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:19:20.090Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":101.64203540834947,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:20 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:20.211Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":200.82561045500887,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:20 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:25.098Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":353.4953000772173,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:25 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:25.222Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":180.85318268626563,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:25 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:30.090Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":392.1941359909953,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:30 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:30.202Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":161.2712524193613,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:30 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:35.091Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":382.2356922879406,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:35 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:35.202Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":141.2903080299076,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:35 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:40.001Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:19:40.098Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":372.3720764827758,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:40 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:40.222Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":121.37232090966981,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:40 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:45.089Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":362.3845133434016,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:45 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:45.210Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":101.61937602162966,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:45 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:50.111Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":352.4140967841345,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:50 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:50.223Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":83.87293276337897,\"quality\":false}","timestamp":"Thu Nov 15 2018 10:19:50 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:55.089Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":342.48276771620783,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:55 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:19:55.201Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":61.2727191220398,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:19:55 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:00.003Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:20:00.115Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":332.6320034967717,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:00 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:00.243Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":41.64769959296921,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:00 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:05.090Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":322.56892845197723,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:05 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:05.203Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":21.71974020518063,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:05 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:10.090Z info: {"pointId":"/fttest.base/Tank 5.tank/22.temperature","data":"{\"fillLevel\":312.70915648436494,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:10 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:20:10.203Z info: {"pointId":"/fttest.base/Tank 6.tank/23.temperature","data":"{\"fillLevel\":2.1275228898501966,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:20:10 GMT+0100 (Central European Standard Time)"}
+2018-11-15T09:24:20.017Z info: {"pointId":"/fttest.base/Tank 5.tank/333333.temperature","timestamp":"01/10/18 11:01\t","data":{"value":"34.6530599","quality":"90.7057566"}}
+2018-11-15T09:24:20.039Z info: {"pointId":"/fttest.base/Tank 6.tank/333333.temperature","timestamp":"01/10/18 11:01\t","data":{"value":"10.1564125","quality":"32.5156548"}}
+2018-11-15T09:24:20.042Z info: {"pointId":"/fttest.base/Tank 5.tank/333333.temperature","timestamp":"01/10/18 11:15\t","data":{"value":"7.44583695","quality":"75.7873194"}}
+2018-11-15T09:24:20.051Z info: {"pointId":"/fttest.base/Tank 6.tank/333333.temperature","timestamp":"01/10/18 11:15\t","data":{"value":"81.9485416","quality":"99.9999999"}}
+2018-11-15T09:24:20.053Z info: File loading end.
+2018-11-15T09:24:20.055Z info: File move succeeded!
+2018-11-15T09:24:20.101Z info: {"data":"{\"fillLevel\":232.96399486881228,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:24:20 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-15T09:24:20.201Z info: {"data":"{\"fillLevel\":46.76188751125011,\"quality\":false}","timestamp":"Thu Nov 15 2018 10:24:20 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-15T09:24:25.088Z info: {"data":"{\"fillLevel\":223.04873393022396,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:24:25 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-15T09:24:25.201Z info: {"data":"{\"fillLevel\":30.631418222064,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:24:25 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
+2018-11-15T09:27:58.929Z info: connect
+2018-11-15T09:28:00.003Z info: The folder ./tests/csv/input/ is empty.
+2018-11-15T09:28:00.107Z info: {"data":"{\"fillLevel\":210.96499258565663,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:28:00 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 5.tank/22.temperature"}
+2018-11-15T09:28:00.222Z info: {"data":"{\"fillLevel\":216.8540616340683,\"quality\":true}","timestamp":"Thu Nov 15 2018 10:28:00 GMT+0100 (Central European Standard Time)","pointId":"/fttest.base/Tank 6.tank/23.temperature"}
