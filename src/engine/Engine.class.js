@@ -3,7 +3,6 @@ const { EventEmitter } = require('events')
 const { tryReadFile } = require('../services/config.service')
 const VERSION = require('../../package.json').version
 
-
 // South classes
 const Modbus = require('../south/Modbus/Modbus.class')
 const OPCUA = require('../south/OPCUA/OPCUA.class')
@@ -102,6 +101,33 @@ class Engine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.activeMachines = {}
+  }
+
+  /**
+   * send a Value from an equipement to application by emitting an event, the value is made
+   * of the id of the point (object), the value of the point (object) and a timestamp
+   * (UTC).
+   * @param {Object} value : new value (pointId, timestamp and data of the entry)
+   * @return {void}
+   */
+  addValue({ pointId, data, timestamp }) {
+    this.bus.emit('addValue', {
+      pointId,
+      timestamp,
+      data,
+    })
+  }
+
+  /**
+   * Register the callback function to the event listner
+   * @param {*} eventName
+   * @param {*} callback
+   * @memberof Engine
+   */
+  register(eventName, callback) {
+    this.bus.on(eventName, (args) => {
+      callback(args)
+    })
   }
 
   /**

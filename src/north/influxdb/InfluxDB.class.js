@@ -38,9 +38,7 @@ class InfluxDB extends ApiHandler {
    * @memberof InfluxDB
    */
   start() {
-    this.engine.bus.on('addValue', (value) => {
-      this.onUpdate(value)
-    })
+    this.engine.register('addValue', this.onUpdate.bind(this))
   }
 
   /**
