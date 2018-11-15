@@ -8,6 +8,15 @@ class ApiHandler {
     this.engine = engine
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
+    this.start()
+  }
+
+  /**
+   * This will permit the apllication to start listening all the necessary events
+   * @memberof InfluxDB
+   */
+  start() {
+    this.engine.register('addValue', this.onUpdate.bind(this))
   }
 
   /**
