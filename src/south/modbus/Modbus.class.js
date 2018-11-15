@@ -102,7 +102,7 @@ class Modbus extends ProtocolHandler {
             dataId: point.dataId,
             data,
           }
-          this.engine.bus.emit('addValue', value)
+          this.engine.addValue(value)
         })
       })
       .catch((error) => {
