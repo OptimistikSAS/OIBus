@@ -50,7 +50,7 @@ const checkConfig = (config) => {
 /**
  * Class Engine :
  * - at startup, handles initialization of applications, protocols and config.
- * - allows to manage the queues for every protocol and application.
+ * - allows to manage the bus for every EventEmitter of protocol and EventListener of application.
  */
 class Engine {
   /**
@@ -97,27 +97,11 @@ class Engine {
       })
     })
 
-    /** @type {string} contains one queue per application */
-    this.queues = []
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
     this.activeApis = {}
     this.activeMachines = {}
-  }
-
-  /**
-   * send a Value from an equipement to application queues, the value is made
-   * of the id of the point (object), the value of the point (object) and a timestamp
-   * (UTC).
-   * @param {Object} value : new value (pointId, timestamp and data of the entry)
-   * @return {void}
-   */
-  addValue({ pointId, data, timestamp }) {
-    Object.values(this.activeApis).forEach((application) => {
-      application.enqueue({ data, pointId, timestamp })
-      application.onUpdate()
-    })
   }
 
   /**
