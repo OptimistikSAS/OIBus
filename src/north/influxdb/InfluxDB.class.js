@@ -34,14 +34,6 @@ class InfluxDB extends ApiHandler {
   }
 
   /**
-   * This will permit the apllication to start listening all the necessary events
-   * @memberof InfluxDB
-   */
-  start() {
-    this.engine.register('addValue', this.onUpdate.bind(this))
-  }
-
-  /**
    * Makes a request for every entry revceived from the event.
    * @return {void}
    */
