@@ -7,7 +7,7 @@ class Console extends ApiHandler {
    * @memberof Console
    */
   onUpdate(value) {
-    this.engine.logger.info(JSON.stringify(value))
+    console.info(value)
   }
 }
 
