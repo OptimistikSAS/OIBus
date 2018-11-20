@@ -304,16 +304,16 @@
       },
       {
         "applicationId": "BaseInflux",
-        "enabled": false,
+        "enabled": true,
         "api": "InfluxDB",
-        "minimumBuffer:": 10, // group by 10 when possible
-        "maxTimeinBuffer": 500, // 0 or undefined -> unlimited
+        // "minimumBuffer:": 10, // group by 10 when possible
+        "maxTimeinBuffer": 500, // 0 or undefined -> immediately, 500 -> wait for 500 ms
         "InfluxDB": {
           "user": "admin",
-          "password": "admin",
+          "password": "secret",
           "db": "testdata",
-          "host": "localhost:8086",
-          "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
+          "host": "localhost:8086"
+          // "insert": "%(host)s/write?db=%(base)s' --data-binary 'zzz,xxx=%(xxx)s,yyytag=%(yyy)s value=10"
         }
       }
     ]
