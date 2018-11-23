@@ -2,6 +2,32 @@ const fetch = require('node-fetch')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
+ * Reads a string in pointId format and returns an object with corresponding indexes and values.
+ * @param {String} pointId : string with this form : value1.name1/value2.name2#value
+ * @return {Object} attributes : values indexed by name
+ */
+const pointIdToNodes = (pointId) => {
+  const attributes = {}
+  pointId
+    .slice(1)
+    .split('/')
+    .forEach((node) => {
+      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
+      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
+      attributes[nodeId] = nodeValue
+    })
+  return attributes
+}
+
+const escapeSpace = (chars) => {
+  if (typeof chars === 'string') {
+    const charsEscaped = chars.replace(/ /g, '\\ ')
+    return charsEscaped
+  }
+  return chars
+}
+
+/**
  * Class InfluxDB : generates and sends InfluxDB requests
  */
 class InfluxDB extends ApiHandler {
@@ -30,19 +56,27 @@ class InfluxDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entry) {
-    const { host, user, password, db } = this.application.InfluxDB
+    const { host, user, password } = this.application.InfluxDB
     const { pointId, data, timestamp } = entry
-    console.log('Auth succeeded!!')
+    const Nodes = Object.entries(pointIdToNodes(pointId))
+    const db = Nodes[0][1]
+    const measurement = Nodes[Nodes.length - 1][0]
     const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
-    const measurement = 'temperature'
+    // Convert nodes into tags for CLI
+    let tags
+    Nodes.slice(1).forEach(([tagKey, tagValue]) => {
+      if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+      else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+    })
+    // Converts data into fields for CLI
     let fields
     // The data received from MQTT is type of string, so we need to transform is to Json
     const dataJson = JSON.parse(data)
     Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-      if (fields) fields = `${fields},${fieldKey}=${fieldValue}`
-      else fields = `${fieldKey}=${fieldValue}`
+      if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+      else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
     })
-    const body = `${measurement} ${fields} ${timestamp.getTime()}`
+    const body = `${measurement},${tags} ${fields} ${timestamp.getTime()}`
     fetch(url, {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

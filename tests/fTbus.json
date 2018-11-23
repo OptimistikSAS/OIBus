@@ -79,10 +79,10 @@
             "name": "value",
             "type": "number"
           },
-          // {
-          //   "name": "quality",
-          //   "type": "boolean"
-          // }
+          {
+            "name": "quality",
+            "type": "boolean"
+          }
         ]
       }
     ]
@@ -150,11 +150,11 @@
         "points": [
           {
             "MQTT": { "topic": "temperatureTank1" },
-            "pointId": "./Tank 5.tank/22.temperature"
+            "pointId": "./Tank 5.tank/Sensor22.temperature"
           },
           {
             "MQTT": { "topic": "temperatureTank2" },
-            "pointId": "./Tank 6.tank/23.temperature"
+            "pointId": "./Tank 6.tank/Sensor23.temperature"
 
           }
         ]
