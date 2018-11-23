@@ -1,5 +1,4 @@
 const fetch = require('node-fetch')
-const { sprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
@@ -7,7 +6,8 @@ const ApiHandler = require('../ApiHandler.class')
  * @param {String} pointId : string with this form : value1.name1/value2.name2#value
  * @return {Object} attributes : values indexed by name
  */
-const pointIdToNodes = (attributes, pointId) => {
+const pointIdToNodes = (pointId) => {
+  const attributes = {}
   pointId
     .slice(1)
     .split('/')
@@ -16,6 +16,15 @@ const pointIdToNodes = (attributes, pointId) => {
       const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
       attributes[nodeId] = nodeValue
     })
+  return attributes
+}
+
+const escapeSpace = (chars) => {
+  if (typeof chars === 'string') {
+    const charsEscaped = chars.replace(/ /g, '\\ ')
+    return charsEscaped
+  }
+  return chars
 }
 
 /**
@@ -47,40 +56,28 @@ class InfluxDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entry) {
-    const { pointId } = entry
-    console.log(entry)
-    const nodes = { host: this.host }
-    Object.entries(entry).forEach(([id, prop]) => {
-      if (id !== 'pointId') {
-        nodes[id] = prop
-      }
+    const { host, user, password } = this.application.InfluxDB
+    const { pointId, data, timestamp } = entry
+    const Nodes = Object.entries(pointIdToNodes(pointId))
+    const db = Nodes[0][1]
+    const measurement = Nodes[Nodes.length - 1][0]
+    const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
+    // Convert nodes into tags for CLI
+    let tags
+    Nodes.slice(1).forEach(([tagKey, tagValue]) => {
+      if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+      else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
     })
-    pointIdToNodes(nodes, pointId)
-    console.log(nodes.dataId)
-    Object.entries(nodes).forEach(([nodeId, node]) => {
-      if (nodeId !== nodes.dataId) {
-        console.log(node, nodeId)
-        nodes[nodeId] = node.replace(/ /g, '\\ ')
-        if (!Number.isNaN(parseInt(node, 10))) nodes.measurement = nodeId
-      }
+    // Converts data into fields for CLI
+    let fields
+    // The data received from MQTT is type of string, so we need to transform is to Json
+    const dataJson = JSON.parse(data)
+    Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
+      if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+      else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
     })
-    const insert = this.applicationParameters.InfluxDB.insert.replace(/'/g, '')
-    let body = `${insert.split(' ')[2]} ${insert.split(' ')[3]}`
-      .replace(/zzz/g, '%(measurement)s') // // Use types from config ??
-      .replace(/ \w+=.*/g, ' %(dataId)s=') // Looks for the last field (value field) and inserts the data
-    body = `${body}%(${nodes.dataId})s`
-    Object.keys(nodes).forEach((nodeId) => {
-      const notTags = ['data', 'host', 'measurement', nodes.measurement, 'base']
-      if (!notTags.includes(nodeId)) {
-        // Replaces 3-same-letter fields by a tagName
-        // i.e : Transforms xxx=%(xxx) into tagName=%(tagName)
-        body = body.replace(/([a-z])\1\1(tag)?=%\(\1\1\1\)/, `${nodeId}=%(${nodeId})`)
-      }
-    })
-    // Removes any unused 'xxx=%(xxx)' field from body
-    body = body.replace(/,([a-z])\1\1(tag)?=%\(\1\1\1\)/g, '')
-    body = sprintf(body, nodes)
-    fetch(sprintf(`http://${insert.split(' ')[0]}`, nodes), {
+    const body = `${measurement},${tags} ${fields} ${timestamp.getTime()}`
+    fetch(url, {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       method: 'POST',
