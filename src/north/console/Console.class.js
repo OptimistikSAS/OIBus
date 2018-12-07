@@ -6,6 +6,7 @@ class Console extends ApiHandler {
    * @param {*} value
    * @memberof Console
    */
+  /* eslint-disable-next-line class-methods-use-this */
   onUpdate(value) {
     console.info(value)
   }
