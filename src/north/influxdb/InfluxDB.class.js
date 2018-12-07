@@ -39,7 +39,6 @@ class InfluxDB extends ApiHandler {
     super(applicationParameters, engine)
     this.host = applicationParameters.InfluxDB.host
     this.currentObject = {}
-    this.start()
   }
 
   /**

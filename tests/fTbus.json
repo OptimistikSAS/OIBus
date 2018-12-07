@@ -136,7 +136,7 @@
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
@@ -304,7 +304,7 @@
       },
       {
         "applicationId": "BaseInflux",
-        "enabled": true,
+        "enabled": false,
         "api": "InfluxDB",
         // "minimumBuffer:": 10, // group by 10 when possible
         "maxTimeinBuffer": 500, // 0 or undefined -> immediately, 500 -> wait for 500 ms

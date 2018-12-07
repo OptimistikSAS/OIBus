@@ -1,9 +1,7 @@
-// This logger supported by winston doesn't print to log when we use start debugging to run the application
-// so I added a parameter debugMode to permit it to perform differently to print logs to the console
-// this is just a stuppid way to garantee the debugging work and need to be changed one day
 const { createLogger, format, transports } = require('winston')
 
 const { combine, timestamp, printf, colorize } = format
+
 class Logger {
   constructor(logParameters) {
     const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable } = logParameters
