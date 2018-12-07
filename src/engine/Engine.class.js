@@ -1,35 +1,24 @@
 const timexe = require('timexe')
 const { EventEmitter } = require('events')
+
 const { tryReadFile } = require('../services/config.service')
 const VERSION = require('../../package.json').version
 
 // South classes
-const Modbus = require('../south/Modbus/Modbus.class')
-const OPCUA = require('../south/OPCUA/OPCUA.class')
-const CSV = require('../south/CSV/CSV.class')
-const MQTT = require('../south/MQTT/MQTT.class')
+const protocolList = {}
+protocolList.Modbus = require('../south/Modbus/Modbus.class')
+protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
+protocolList.CSV = require('../south/CSV/CSV.class')
+protocolList.MQTT = require('../south/MQTT/MQTT.class')
 
 // North classes
-const Console = require('../north/console/Console.class')
-const InfluxDB = require('../north/influxdb/InfluxDB.class')
+const apiList = {}
+apiList.Console = require('../north/console/Console.class')
+apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
-
-// List all South protocols
-const protocolList = {
-  MQTT,
-  Modbus,
-  OPCUA,
-  CSV,
-}
-
-// List all North applications
-const apiList = {
-  Console,
-  InfluxDB,
-}
 
 const checkConfig = (config) => {
   const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
@@ -100,7 +89,6 @@ class Engine {
     // based on the config file
     this.activeProtocols = {}
     this.activeApis = {}
-    this.activeMachines = {}
   }
 
   /**
