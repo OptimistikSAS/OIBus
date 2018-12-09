@@ -44,7 +44,7 @@ class OPCUA extends ProtocolHandler {
     this.optimizedConfig = getOptimizedConfig(equipment)
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = sprintf(engine.config.south.OPCUA.connectionAddress.opc, equipment.OPCUA)
+    this.url = sprintf('opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s', equipment.OPCUA)
     this.maxAge = equipment.OPCUA.maxAge || 10
   }
 
