@@ -36,6 +36,7 @@
     "mqtt": "^2.18.8",
     "node-fetch": "^2.3.0",
     "node-opcua": "^0.5.0",
+    "pg": "^7.7.1",
     "sprintf-js": "^1.1.1",
     "timexe": "^0.9.13",
     "winston": "^3.1.0"
