@@ -69,7 +69,7 @@ class InfluxDB extends ApiHandler {
     })
     // Converts data into fields for CLI
     let fields
-    // The data received from MQTT is type of string, so we need to transform is to Json
+    // The data received from MQTT is type of string, so we need to transform it to Json
     const dataJson = JSON.parse(data)
     Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
       if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
