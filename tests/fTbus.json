@@ -1,8 +1,8 @@
 {
   "engine": {
-     // the port for the web interface to fTbus
+    // the port for the web interface to fTbus
     "port": 2223,
-    // user/password for "pass" 
+    // user/password for "pass"
     // (don't show the decoded password in production!)
     "user": "admin",
     "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
@@ -11,11 +11,11 @@
     // the parameters for logs, describing different performances for different levels
     // and the file name which stocks the logs
     "logParameters": {
-      // possible levels: debug, info, warn, error 
+      // possible levels: debug, info, warn, error
       "consoleLevel": "debug", // specify only the lowest level
       "fileLevel": "debug",
       "filename": "./tests/journal.log",
-      "maxsize": 1000000, 
+      "maxsize": 1000000,
       "maxFiles": 5,
       "tailable": true
     },
@@ -90,7 +90,8 @@
   },
   "south": {
     // this section contains protocol specific parameters
-    "Modbus": { // Modbus global parameters
+    "Modbus": {
+      // Modbus global parameters
       "addressGap": {
         // max number of Registers in one request
         "holdingRegister": 256,
@@ -128,7 +129,7 @@
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": false,
+        "enabled": true,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
@@ -147,7 +148,6 @@
           {
             "MQTT": { "topic": "temperatureTank2" },
             "pointId": "./Tank 6.tank/Sensor23.temperature"
-
           }
         ]
       },
@@ -289,7 +289,7 @@
         "enabled": true,
         "api": "Console",
         "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
-        "timeStamp": "fTbus",
+        "timeStamp": "fTbus"
       },
       {
         "applicationId": "BaseInflux",
@@ -302,6 +302,17 @@
           "password": "secret",
           "db": "testdata",
           "host": "localhost:8086"
+        }
+      },
+      {
+        "applicationId": "BaseTimescale",
+        "enabled": true,
+        "api": "TimescaleDB",
+        // "minimumBuffer:": 10, // group by 10 when possible
+        "TimescaleDB": {
+          "user": "postgres",
+          "password": "secret",
+          "host": "ts.factorythings.com"
         }
       }
     ]
