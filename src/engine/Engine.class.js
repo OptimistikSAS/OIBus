@@ -15,6 +15,7 @@ protocolList.MQTT = require('../south/MQTT/MQTT.class')
 const apiList = {}
 apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
+apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
