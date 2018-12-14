@@ -10,23 +10,18 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
  * @param {*} scannedEquipment
  */
 const fieldsFromPointId = (pointId, types) => {
-  let fields = []
-  types.some((typeCompared) => {
-    if (
-      typeCompared.type
+  const type = types.find(
+    typeCompared => typeCompared.type
       === pointId
         .split('.')
         .slice(-1)
-        .pop()
-    ) {
-      fields = typeCompared.fields
-      return true
-    }
-  })
+        .pop(),
+  )
+  const { fields = [] } = type
   if (fields) {
     return fields
   }
-  console.error('Unable to retrieve fields associated with this pointId ', pointId, scannedEquipment)
+  console.error('Unable to retrieve fields associated with this pointId ', pointId, types)
   return {}
 }
 
