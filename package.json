@@ -17,7 +17,7 @@
     "factoryThings"
   ],
   "dependencies": {
-    "@babel/runtime": "^7.1.5",
+    "@babel/runtime": "^7.2.0",
     "@koa/cors": "^2.2.2",
     "async": "^2.6.1",
     "basic-auth": "^2.0.1",
@@ -35,24 +35,24 @@
     "minimist": "^1.2.0",
     "mqtt": "^2.18.8",
     "node-fetch": "^2.3.0",
-    "node-opcua": "^0.5.0",
+    "node-opcua": "^0.5.5",
     "pg": "^7.7.1",
-    "sprintf-js": "^1.1.1",
+    "sprintf-js": "^1.1.2",
     "timexe": "^0.9.13",
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.1.5",
-    "@babel/preset-env": "^7.1.5",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.0",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.4",
-    "eslint": "^5.9.0",
+    "eslint": "^5.10.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^6.1.2",
     "eslint-plugin-react": "^7.11.1",
     "ignore-loader": "^0.1.2",
-    "webpack": "^4.25.1",
+    "webpack": "^4.27.1",
     "webpack-cli": "^3.1.2"
   }
 }
