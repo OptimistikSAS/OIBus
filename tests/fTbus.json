@@ -14,7 +14,7 @@
       // possible levels: debug, info, warn, error
       "consoleLevel": "debug", // specify only the lowest level
       "fileLevel": "debug",
-      "filename": "./tests/journal.log",
+      "filename": "./logs/journal.log",
       "maxsize": 1000000,
       "maxFiles": 5,
       "tailable": true
