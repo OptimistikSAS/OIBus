@@ -69,9 +69,8 @@ class Server {
 
     // Add simple "blanket" basic auth with username / password.
     // Password protect downstream middleware:
-    /** @todo: we need to think about the authorization process. in the first version, the program
-     * need to be secured from the operating system and firewall should not allow to access the API.
-     */
+    // @todo: we need to think about the authorization process. in the first version, the program
+    // need to be secured from the operating system and firewall should not allow to access the API.
     this.app.use(authCrypto({ name: this.user, pass: this.password }))
 
     // CORS middleware for Koa
