@@ -47,7 +47,7 @@ class Server {
       if (filter.includes(ip)) {
         await next()
       } else {
-        console.error(`${ip} is not authorized`)
+        this.app.engine.logger.error(`${ip} is not authorized`)
         ctx.throw(401, 'access denied ', `${ip} is not authorized`)
       }
     })
@@ -120,7 +120,7 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => console.info(`Server started on ${this.port}`))
+    this.app.listen(this.port, () => this.app.engine.logger.info(`Server started on ${this.port}`))
   }
 }
 
