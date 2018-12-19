@@ -12,7 +12,6 @@ class CSV extends ProtocolHandler {
    */
   constructor(equipment, engine) {
     super(equipment, engine)
-    this.logger = this.engine.logger
   }
 
   /**
@@ -26,10 +25,10 @@ class CSV extends ProtocolHandler {
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
-        this.logger.error(err)
+        this.engine.logger.error(err)
         return
       }
-      if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
+      if (!files.length) this.engine.logger.info(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         this.processFile(inputFolder, filename)
       })
@@ -53,13 +52,13 @@ class CSV extends ProtocolHandler {
     const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
     const readStream = fs.createReadStream(file)
     readStream.on('error', (err) => {
-      this.logger.error(err)
+      this.engine.logger.error(err)
       fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (erro) => {
         if (erro) {
-          this.logger.error(erro)
+          this.engine.logger.error(erro)
         }
       })
-      this.logger.info('File move to ', `${errorFolder}${filename}`)
+      this.engine.logger.info('File move to ', `${errorFolder}${filename}`)
     })
     let timeColumnIndex
     let firstLine = []
@@ -114,13 +113,13 @@ class CSV extends ProtocolHandler {
         }
       })
       .on('end', () => {
-        this.logger.info('File loading end.')
+        this.engine.logger.info('File loading end.')
         fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (erro) => {
           if (erro) {
-            this.logger.error(erro)
+            this.engine.logger.error(erro)
           }
         })
-        this.logger.info('File move succeeded!')
+        this.engine.logger.info('File move succeeded!')
       })
 
     readStream.pipe(csvFile)

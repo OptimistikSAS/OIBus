@@ -17,7 +17,7 @@ class ApiHandler {
    * @memberof ApiHandler
    */
   get(pointId) {
-    console.info('Get the stats of ', pointId, 'from ', this.application.api)
+    this.engine.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
   }
 
   /**

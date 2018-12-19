@@ -13,7 +13,7 @@ class ProtocolHandler {
 
   connect() {
     const { equipmentId, protocol } = this.equipment
-    console.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
+    this.engine.logger.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
   }
   /* eslint-disable-next-line */
   onScan() {}
