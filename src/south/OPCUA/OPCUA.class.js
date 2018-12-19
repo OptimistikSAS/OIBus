@@ -9,7 +9,7 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
  * @param {*} pointId
  * @param {*} scannedEquipment
  */
-const fieldsFromPointId = (pointId, types) => {
+const fieldsFromPointId = (pointId, types, logger) => {
   const type = types.find(
     typeCompared => typeCompared.type
       === pointId
@@ -21,7 +21,7 @@ const fieldsFromPointId = (pointId, types) => {
   if (fields) {
     return fields
   }
-  console.error('Unable to retrieve fields associated with this pointId ', pointId, types)
+  logger.error('Unable to retrieve fields associated with this pointId ', pointId, types)
   return {}
 }
 
@@ -48,17 +48,17 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (err1) => {
         if (!err1) {
-          console.log('OPCUA Connected')
+          this.engine.logger.log('OPCUA Connected')
           this.client.createSession((err2, session) => {
             if (!err2) {
               this.session = session
               this.connected = true
             } else {
-              console.error('Could not connect to : ', this.equipment.equipmentId)
+              this.engine.logger.error('Could not connect to : ', this.equipment.equipmentId)
             }
           })
         } else {
-          console.error(err1)
+          this.engine.logger.error(err1)
         }
       },
     )
@@ -86,9 +86,9 @@ class OPCUA extends ProtocolHandler {
             data: [],
             dataId: [], // to add after data{} is handled
           }
-          console.log(pointId, scanGroup)
-          console.log(fieldsFromPointId(pointId, this.engine.config.engine.types))
-          fieldsFromPointId(pointId, this.engine.config.engine.types).forEach((field) => {
+          this.engine.logger.debug(pointId, scanGroup)
+          this.engine.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.engine.logger))
+          fieldsFromPointId(pointId, this.engine.config.engine.types, this.engine.logger).forEach((field) => {
             value.dataId.push(field.name)
             if (field.name !== 'quality') {
               value.data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
@@ -100,7 +100,7 @@ class OPCUA extends ProtocolHandler {
           // @todo handle double values with an array as data
         })
       } else {
-        console.error(err)
+        this.engine.logger.error(err)
       }
     })
   }

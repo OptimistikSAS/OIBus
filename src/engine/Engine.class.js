@@ -173,7 +173,7 @@ class Engine {
         throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
       }
     })
-    console.info(`fTbus version ${VERSION} started`)
+    this.logger.info(`fTbus version ${VERSION} started`)
   }
 }
 
