@@ -1,5 +1,4 @@
 const Koa = require('koa')
-const Router = require('koa-router')
 const logger = require('koa-logger')
 const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
@@ -7,9 +6,9 @@ const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
 
-const authCrypto = require('./auth') // ./auth
-const Controller = require('./info')
-const VERSION = require('../../package.json').version
+const authCrypto = require('./middlewares/auth') // ./auth
+
+const router = require('./routes')
 
 /**
  * Class Server : provides general attributes and methods for protocols.
@@ -23,7 +22,6 @@ class Server {
     this.app = new Koa()
     // capture the engine under app for reuse in routes.
     this.app.engine = engine
-    const router = new Router()
     // Get the config entries
     const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.config.engine
 
@@ -47,7 +45,7 @@ class Server {
       if (filter.includes(ip)) {
         await next()
       } else {
-        console.error(`${ip} is not authorized`)
+        this.app.engine.logger.error(`${ip} is not authorized`)
         ctx.throw(401, 'access denied ', `${ip} is not authorized`)
       }
     })
@@ -94,33 +92,13 @@ class Server {
     // Middleware for beautiful JSON
     this.app.use(json())
 
-    // API routes
-    // Router middleware for koa
-    // Express-style routing using app.get, app.put, app.post, etc.
-    // Named URL parameters.
-    // Named routes with URL generation.
-    // Responds to OPTIONS requests with allowed methods.
-    // Support for 405 Method Not Allowed and 501 Not Implemented.
-    // Multiple route middleware.
-    // Multiple routers.
-    // Nestable routers.
-    // ES7 async/await support.
-
-    router
-      .get('/', (ctx, _next) => {
-        ctx.ok({ module: ' fTbus', VERSION })
-      })
-      .get('/infos', Controller.getInfo)
-    // .put('/users/:id', (ctx, next) => {
-    //  // ...
-    // })
-
+    // Define routes
     this.app.use(router.routes())
     this.app.use(router.allowedMethods())
   }
 
   listen() {
-    this.app.listen(this.port, () => console.info(`Server started on ${this.port}`))
+    this.app.listen(this.port, () => this.app.engine.logger.info(`Server started on ${this.port}`))
   }
 }
 
