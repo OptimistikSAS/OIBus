@@ -6,7 +6,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 /**
  * Gives a type to a point based on the config
  */
-const giveType = (point, types) => {
+const giveType = (point, types, logger) => {
   types.forEach((typeCompared) => {
     if (
       typeCompared.type
@@ -18,7 +18,7 @@ const giveType = (point, types) => {
       point.type = typeCompared.fields[0].type
       point.dataId = typeCompared.fields[0].name
       if (typeCompared.fields.length > 1) {
-        console.error('Modbus points cannot contain more than 1 field')
+        logger.error('Modbus points cannot contain more than 1 field')
       }
     }
   })
@@ -62,7 +62,7 @@ class Modbus extends ProtocolHandler {
       const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
       // Dynamic call of the appropriate function based on type
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach(point => giveType(point, this.engine.config.engine.types))
+        points.forEach(point => giveType(point, this.engine.config.engine.types, this.logger))
         const rangeAddresses = range.split('-')
         const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
         const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
@@ -94,7 +94,7 @@ class Modbus extends ProtocolHandler {
             case 'number':
               break
             default:
-              console.error('This point type was not recognized : ', point.type)
+              this.logger.error('This point type was not recognized : ', point.type)
           }
           const value = {
             pointId: point.pointId,
@@ -106,7 +106,7 @@ class Modbus extends ProtocolHandler {
         })
       })
       .catch((error) => {
-        console.error(error)
+        this.logger.error(error)
       })
   }
 
@@ -125,7 +125,7 @@ class Modbus extends ProtocolHandler {
       },
     )
     this.socket.on('error', (err) => {
-      console.error(err)
+      this.logger.error(err)
     })
   }
 
