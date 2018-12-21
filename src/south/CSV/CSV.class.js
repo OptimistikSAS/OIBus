@@ -7,14 +7,6 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  */
 class CSV extends ProtocolHandler {
   /**
-   * @constructor for Protocol
-   * @param {Object} engine
-   */
-  constructor(equipment, engine) {
-    super(equipment, engine)
-  }
-
-  /**
    * read the csv file and rewrite it to another file in the folder archive
    * @return {void}
    */
