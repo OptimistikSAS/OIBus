@@ -54,7 +54,7 @@ class TimescaleDB extends ApiHandler {
     this.client = new pg.Client(url)
     this.client.connect((err) => {
       if (err) {
-        return console.error('could not connect to postgres', err)
+        return this.logger.error('could not connect to postgres', err)
       }
       return 0
     })
@@ -92,7 +92,7 @@ class TimescaleDB extends ApiHandler {
   sendRequest(str, value, callback) {
     this.client.query(str, value, (err, result) => {
       if (err) {
-        console.error(err)
+        this.logger.error(err)
       } else if (result.rows !== undefined) callback(result.rows)
       else callback()
     })

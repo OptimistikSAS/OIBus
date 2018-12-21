@@ -9,11 +9,12 @@ class ProtocolHandler {
   constructor(equipment, engine) {
     this.equipment = equipment
     this.engine = engine
+    this.logger = engine.logger
   }
 
   connect() {
     const { equipmentId, protocol } = this.equipment
-    console.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
+    this.logger.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
   }
   /* eslint-disable-next-line */
   onScan() {}
