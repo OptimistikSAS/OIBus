@@ -18,7 +18,7 @@ class MQTT extends ProtocolHandler {
       this.client.on('connect', () => {
         this.client.subscribe(topic, (err) => {
           if (err) {
-            this.engine.logger.error(err)
+            this.logger.error(err)
           }
         })
       })
