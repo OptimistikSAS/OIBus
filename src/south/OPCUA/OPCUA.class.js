@@ -48,17 +48,17 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (err1) => {
         if (!err1) {
-          this.engine.logger.log('OPCUA Connected')
+          this.logger.log('OPCUA Connected')
           this.client.createSession((err2, session) => {
             if (!err2) {
               this.session = session
               this.connected = true
             } else {
-              this.engine.logger.error('Could not connect to : ', this.equipment.equipmentId)
+              this.logger.error('Could not connect to : ', this.equipment.equipmentId)
             }
           })
         } else {
-          this.engine.logger.error(err1)
+          this.logger.error(err1)
         }
       },
     )
@@ -86,9 +86,9 @@ class OPCUA extends ProtocolHandler {
             data: [],
             dataId: [], // to add after data{} is handled
           }
-          this.engine.logger.debug(pointId, scanGroup)
-          this.engine.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.engine.logger))
-          fieldsFromPointId(pointId, this.engine.config.engine.types, this.engine.logger).forEach((field) => {
+          this.logger.debug(pointId, scanGroup)
+          this.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger))
+          fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger).forEach((field) => {
             value.dataId.push(field.name)
             if (field.name !== 'quality') {
               value.data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
@@ -100,7 +100,7 @@ class OPCUA extends ProtocolHandler {
           // @todo handle double values with an array as data
         })
       } else {
-        this.engine.logger.error(err)
+        this.logger.error(err)
       }
     })
   }

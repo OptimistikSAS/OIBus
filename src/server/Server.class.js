@@ -20,11 +20,13 @@ class Server {
    */
   constructor(engine) {
     this.app = new Koa()
-    // capture the engine under app for reuse in routes.
+    // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
+    this.app.logger = engine.logger
     // Get the config entries
     const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.config.engine
 
+    this.logger = engine.logger
     this.debug = debug
     this.port = port
     this.user = user
@@ -45,7 +47,7 @@ class Server {
       if (filter.includes(ip)) {
         await next()
       } else {
-        this.app.engine.logger.error(`${ip} is not authorized`)
+        this.logger.error(`${ip} is not authorized`)
         ctx.throw(401, 'access denied ', `${ip} is not authorized`)
       }
     })
@@ -97,7 +99,7 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => this.app.engine.logger.info(`Server started on ${this.port}`))
+    this.app.listen(this.port, () => this.logger.info(`Server started on ${this.port}`))
   }
 }
 

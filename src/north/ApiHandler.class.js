@@ -6,6 +6,7 @@ class ApiHandler {
   constructor(applicationParameters, engine) {
     this.application = applicationParameters
     this.engine = engine
+    this.logger = engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
     this.engine.register('addValue', this.onUpdate.bind(this))
