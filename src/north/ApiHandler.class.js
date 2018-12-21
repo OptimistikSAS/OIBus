@@ -6,6 +6,7 @@ class ApiHandler {
   constructor(applicationParameters, engine) {
     this.application = applicationParameters
     this.engine = engine
+    this.logger = engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
     this.engine.register('addValue', this.onUpdate.bind(this))
@@ -17,7 +18,7 @@ class ApiHandler {
    * @memberof ApiHandler
    */
   get(pointId) {
-    console.info('Get the stats of ', pointId, 'from ', this.application.api)
+    this.engine.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
   }
 
   /**

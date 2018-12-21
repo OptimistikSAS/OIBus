@@ -12,7 +12,6 @@ class CSV extends ProtocolHandler {
    */
   constructor(equipment, engine) {
     super(equipment, engine)
-    this.logger = this.engine.logger
   }
 
   /**
