@@ -4,8 +4,8 @@ const ApiHandler = require('../ApiHandler.class')
 
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId : string with this form : value1.name1/value2.name2#value
- * @return {Object} attributes : values indexed by name
+ * @param {String} pointId - String with this form : value1.name1/value2.name2#value
+ * @return {Object} Values indexed by name
  */
 const pointIdToNodes = (pointId) => {
   const attributes = {}
@@ -14,16 +14,19 @@ const pointIdToNodes = (pointId) => {
     .split('/')
     .forEach((node) => {
       const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-      attributes[nodeId] = nodeValue
+      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
     })
   return attributes
 }
 
+/**
+ * Escape spaces.
+ * @param {*} chars - The content to escape
+ * @return {*} The escaped or the original content
+ */
 const escapeSpace = (chars) => {
   if (typeof chars === 'string') {
-    const charsEscaped = chars.replace(/ /g, '\\ ')
-    return charsEscaped
+    return chars.replace(/ /g, '\\ ')
   }
   return chars
 }
@@ -35,13 +38,19 @@ class TimescaleDB extends ApiHandler {
   }
 
   /**
-   * Makes a request for every entry revceived from the event.
+   * Makes a request for every entry received from the event.
+   * @param {Object} value - The value
    * @return {void}
    */
   onUpdate(value) {
     this.makeRequest(value)
   }
 
+  /**
+   * Makes a TimescaleDB request with the parameters in the Object arg.
+   * @param {Object} entry - The entry from the event
+   * @return {void}
+   */
   makeRequest(entry) {
     const { host, user, password } = this.application.TimescaleDB
     const { pointId, data, timestamp } = entry
@@ -59,10 +68,10 @@ class TimescaleDB extends ApiHandler {
       return 0
     })
     // Make the query by rebuilding the Nodes
-    const tablename = Nodes[Nodes.length - 1][0]
-    let query = `insert into ${tablename}(`
+    const tableName = Nodes[Nodes.length - 1][0]
+    let query = `insert into ${tableName}(`
     const values = []
-    let fields
+    let fields = null
     const num = []
     let count = 0
     Nodes.slice(1).forEach(([nodeKey, nodeValue]) => {
@@ -89,6 +98,13 @@ class TimescaleDB extends ApiHandler {
     this.sendRequest(query, values, () => {})
   }
 
+  /**
+   * Send the request.
+   * @param {String} str - The query
+   * @param {Array} value - The values
+   * @param {Function} callback - The callback
+   * @return {void}
+   */
   sendRequest(str, value, callback) {
     this.client.query(str, value, (err, result) => {
       if (err) {
@@ -98,4 +114,5 @@ class TimescaleDB extends ApiHandler {
     })
   }
 }
+
 module.exports = TimescaleDB
