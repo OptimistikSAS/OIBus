@@ -2,11 +2,19 @@ const mqtt = require('mqtt')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
+  /**
+   * Initiate connection and start listening.
+   * @return {void}
+   */
   connect() {
     super.connect()
     this.listen()
   }
 
+  /**
+   * Listen for messages.
+   * @return {void}
+   */
   listen() {
     const { MQTT: { protocol, server, port, username, password } = {}, points } = this.equipment
     this.client = mqtt.connect(
@@ -32,4 +40,5 @@ class MQTT extends ProtocolHandler {
     })
   }
 }
+
 module.exports = MQTT
