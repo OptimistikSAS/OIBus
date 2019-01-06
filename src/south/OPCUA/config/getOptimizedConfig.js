@@ -1,9 +1,9 @@
 /**
  * Retrieves a nested property from an object
- * @param {Object} obj : objectwhich contains the nested property
- * @param {String} nestedProp : property to search inside the object, must be of format "property.nestedProperty"
- * @param {boolean} delProp : whether to delete the property once find or not
- * @return {*} : value of the property
+ * @param {Object} obj - Object which contains the nested property
+ * @param {String} nestedProp - Property to search inside the object, must be of format "property.nestedProperty"
+ * @param {boolean} delProp - Whether to delete the property once find or not
+ * @return {*} Value of the property
  */
 const findProperty = (obj, nestedProp, delProp) => {
   const propArray = nestedProp.split('.')
@@ -18,9 +18,10 @@ const findProperty = (obj, nestedProp, delProp) => {
 
 /**
  * Groups objects based on a mutual property
- * @param {[ Object ]} array : array of objects to group
- * @param {String} key : name of the property on which base the groups
- * @return {Object} acc : grouped objects
+ * @param {[ Object ]} array - Array of objects to group
+ * @param {String} key - Name of the property on which base the groups
+ * @param {Object} newProps - The new props
+ * @return {Object} Grouped objects
  */
 const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
   const group = findProperty(obj, key, true)
@@ -29,6 +30,11 @@ const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
   return acc
 }, {})
 
+/**
+ * Get optimized config.
+ * @param {Object} equipment - The equipment
+ * @return {*} The optimized config
+ */
 const getOptimizedConfig = equipment => groupBy(equipment.points, 'scanMode')
 // {
 // const optimized = equipment.reduce((acc, { equipmentId, protocol, points }) => {

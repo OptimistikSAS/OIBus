@@ -6,8 +6,10 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
 /**
  * Returns the fields array from the point containing passed pointId.
  * The point is from the optimized config hence the scannedEquipment parameter
- * @param {*} pointId
- * @param {*} scannedEquipment
+ * @param {Object} pointId - The point ID
+ * @param {Array} types - The types
+ * @param {Logger} logger - The logger
+ * @return {*} The fields
  */
 const fieldsFromPointId = (pointId, types, logger) => {
   const type = types.find(
@@ -29,9 +31,16 @@ const fieldsFromPointId = (pointId, types, logger) => {
  *
  *
  * @class OPCUA
- * @extends {Protocol}
+ * @extends {ProtocolHandler}
  */
 class OPCUA extends ProtocolHandler {
+  /**
+   * Constructor for OPCUA
+   * @constructor
+   * @param {Object} equipment - The equipment
+   * @param {Engine} engine - The engine
+   * @return {void}
+   */
   constructor(equipment, engine) {
     super(equipment, engine)
     // as OPCUA can group multiple points in a single request
@@ -43,6 +52,10 @@ class OPCUA extends ProtocolHandler {
     this.maxAge = equipment.OPCUA.maxAge || 10
   }
 
+  /**
+   * Connect.
+   * @return {Promise<void>} The connection promise
+   */
   async connect() {
     await this.client.connect(
       this.url,
@@ -65,7 +78,9 @@ class OPCUA extends ProtocolHandler {
   }
 
   /**
-   * @param {String} scanMode
+   * On scan.
+   * @param {String} scanMode - The scan mode
+   * @return {Promise<void>} - The on scan promise
    * @todo check if every async and await is useful
    * @todo on the very first Scan equipment.session might not be created yet, find out why
    */
