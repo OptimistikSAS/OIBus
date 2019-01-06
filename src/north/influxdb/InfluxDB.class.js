@@ -3,8 +3,8 @@ const ApiHandler = require('../ApiHandler.class')
 
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId : string with this form : value1.name1/value2.name2#value
- * @return {Object} attributes : values indexed by name
+ * @param {String} pointId - String with this form : value1.name1/value2.name2#value
+ * @return {Object} Values indexed by name
  */
 const pointIdToNodes = (pointId) => {
   const attributes = {}
@@ -13,27 +13,33 @@ const pointIdToNodes = (pointId) => {
     .split('/')
     .forEach((node) => {
       const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      const nodeValue = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-      attributes[nodeId] = nodeValue
+      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
     })
   return attributes
 }
 
+/**
+ * Escape spaces.
+ * @param {*} chars - The content to escape
+ * @return {*} The escaped or the original content
+ */
 const escapeSpace = (chars) => {
   if (typeof chars === 'string') {
-    const charsEscaped = chars.replace(/ /g, '\\ ')
-    return charsEscaped
+    return chars.replace(/ /g, '\\ ')
   }
   return chars
 }
 
 /**
- * Class InfluxDB : generates and sends InfluxDB requests
+ * Class InfluxDB - generates and sends InfluxDB requests
  */
 class InfluxDB extends ApiHandler {
   /**
-   * @constructor for InfluxDB
-   * @param {Object} engine
+   * Constructor for InfluxDB
+   * @constructor
+   * @param {Object} applicationParameters - The application parameters
+   * @param {Engine} engine - The Engine
+   * @return {void}
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
@@ -42,7 +48,8 @@ class InfluxDB extends ApiHandler {
   }
 
   /**
-   * Makes a request for every entry revceived from the event.
+   * Makes a request for every entry received from the event.
+   * @param {Object} value - The value
    * @return {void}
    */
   onUpdate(value) {
@@ -51,7 +58,7 @@ class InfluxDB extends ApiHandler {
 
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
-   * @param {Object} entry : the entry from the event
+   * @param {Object} entry - The entry from the event
    * @return {void}
    */
   makeRequest(entry) {
@@ -62,13 +69,13 @@ class InfluxDB extends ApiHandler {
     const measurement = Nodes[Nodes.length - 1][0]
     const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
     // Convert nodes into tags for CLI
-    let tags
+    let tags = null
     Nodes.slice(1).forEach(([tagKey, tagValue]) => {
       if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
       else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
     })
     // Converts data into fields for CLI
-    let fields
+    let fields = null
     // The data received from MQTT is type of string, so we need to transform it to Json
     const dataJson = JSON.parse(data)
     Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {

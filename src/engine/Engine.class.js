@@ -43,12 +43,13 @@ const checkConfig = (config) => {
  */
 class Engine {
   /**
-   * @constructor for Engine
+   * Constructor for Engine
    * Reads the config file and create the corresponding Object.
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and equipments.
-   * @param {String} config : path to the config file
-   * @return {Object} readConfig : parsed config Object
+   * @constructor
+   * @param {String} configFile - path to the config file
+   * @return {Object} readConfig - parsed config Object
    */
   constructor(configFile) {
     this.config = tryReadFile(configFile)
@@ -93,10 +94,10 @@ class Engine {
   }
 
   /**
-   * send a Value from an equipement to application by emitting an event, the value is made
+   * send a Value from an equipment to application by emitting an event, the value is made
    * of the id of the point (object), the value of the point (object) and a timestamp
    * (UTC).
-   * @param {Object} value : new value (pointId, timestamp and data of the entry)
+   * @param {Object} value - New value (pointId, timestamp and data of the entry)
    * @return {void}
    */
   addValue({ pointId, data, timestamp }) {
@@ -108,9 +109,10 @@ class Engine {
   }
 
   /**
-   * Register the callback function to the event listner
-   * @param {*} eventName
-   * @param {*} callback
+   * Register the callback function to the event listener
+   * @param {String} eventName - The name of the event
+   * @param {Function} callback - The callback function
+   * @return {void}
    * @memberof Engine
    */
   register(eventName, callback) {
@@ -122,7 +124,6 @@ class Engine {
   /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
-   * @param {String} config : the config Object
    * @return {void}
    */
   start() {

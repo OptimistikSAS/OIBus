@@ -7,7 +7,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  */
 class CSV extends ProtocolHandler {
   /**
-   * read the csv file and rewrite it to another file in the folder archive
+   * Read the csv file and rewrite it to another file in the folder archive
+   * @param {*} _scanMode - The scan mode
    * @return {void}
    */
   onScan(_scanMode) {
@@ -32,10 +33,9 @@ class CSV extends ProtocolHandler {
    * @todo We may have to handle very large files that can't be read in one pass.
    * cf http://c2fo.io/fast-csv/index.html
    *
-   *
-   * @param {*} inputFolder
-   * @param {*} filename
-   * @returns the csv file (in memory)
+   * @param {String} inputFolder - The input folder
+   * @param {String} filename - The filename
+   * @return {void}
    * @memberof CSV
    */
   processFile(inputFolder, filename) {
@@ -117,4 +117,5 @@ class CSV extends ProtocolHandler {
     readStream.pipe(csvFile)
   }
 }
+
 module.exports = CSV

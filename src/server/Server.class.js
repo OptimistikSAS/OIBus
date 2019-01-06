@@ -11,12 +11,14 @@ const authCrypto = require('./middlewares/auth') // ./auth
 const router = require('./routes')
 
 /**
- * Class Server : provides general attributes and methods for protocols.
+ * Class Server - Provides general attributes and methods for protocols.
  */
 class Server {
   /**
-   * @constructor for Protocol
-   * @param {Object} engine
+   * Constructor for Protocol
+   * @constructor
+   * @param {Engine} engine - The engine
+   * @return {void}
    */
   constructor(engine) {
     this.app = new Koa()

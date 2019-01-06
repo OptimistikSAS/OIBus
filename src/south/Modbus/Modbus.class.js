@@ -5,6 +5,10 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
  * Gives a type to a point based on the config
+ * @param {Object} point - The point
+ * @param {Array} types - The types
+ * @param {Logger} logger - The logger
+ * @return {void}
  */
 const giveType = (point, types, logger) => {
   types.forEach((typeCompared) => {
@@ -25,13 +29,15 @@ const giveType = (point, types, logger) => {
 }
 
 /**
- * Class Modbus : provides instruction for Modbus client connection
+ * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
   /**
-   * @constructor for Modbus
-   * @param {String} configPath : path to the non-optimized configuration file
-   * @param {Object} engine
+   * Constructor for Modbus
+   * @constructor
+   * @param {Object} equipment - The equipment
+   * @param {Engine} engine - The engine
+   * @return {void}
    */
   constructor(equipment, engine) {
     super(equipment, engine)
@@ -46,7 +52,7 @@ class Modbus extends ProtocolHandler {
 
   /**
    * Runs right instructions based on a given scanMode
-   * @param {String} scanMode : cron time
+   * @param {String} scanMode - Cron time
    * @return {void}
    */
   onScan(scanMode) {
@@ -74,10 +80,9 @@ class Modbus extends ProtocolHandler {
 
   /**
    * Dynamically call the right function based on the given name
-   * @param {String} funcName : name of the function to run
-   * @param {Object} infos : informations about the group of addresses (first address of the group, size)
-   * @param {String} equipmentId : identifier for the Modbus equipment the request is sent to
-   * @param {Object} points : the points to read
+   * @param {String} funcName - Name of the function to run
+   * @param {Object} infos - Information about the group of addresses (first address of the group, size)
+   * @param {Object} points - the points to read
    * @return {void}
    */
   modbusFunction(funcName, { startAddress, rangeSize }, points) {
