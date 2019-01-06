@@ -3,8 +3,11 @@
  */
 class ProtocolHandler {
   /**
-   * @constructor for Protocol
-   * @param {Object} engine
+   * Constructor for Protocol
+   * @constructor
+   * @param {*} equipment - The equipment
+   * @param {Engine} engine - The engine
+   * @return {void}
    */
   constructor(equipment, engine) {
     this.equipment = equipment

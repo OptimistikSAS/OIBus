@@ -4,8 +4,8 @@ const JSON5 = require('json5')
 
 /**
  * Tries to read a file at a given path
- * @param {String} path : path to the file to read
- * @return {*} : content of the file
+ * @param {String} path - Path to the file to read
+ * @return {*} Content of the file
  */
 const tryReadFile = (path) => {
   if (!path.endsWith('.json')) {
@@ -22,8 +22,8 @@ const tryReadFile = (path) => {
 
 /**
  * Checks if the right arguments have been passed to the command
- * @param {Object} args : arguments of the command
- * @return {boolean} : whether the right arguments have been passed or not
+ * @param {Object} args - Arguments of the command
+ * @return {boolean} - Whether the right arguments have been passed or not
  */
 const isValidArgs = ({ config = './fTbus.config.json' }) => {
   if (!config) {
@@ -34,8 +34,8 @@ const isValidArgs = ({ config = './fTbus.config.json' }) => {
 }
 
 /**
- * Retreives the arguments passed to the command
- * @return {Object} args : retreived arguments, or null
+ * Retrieves the arguments passed to the command
+ * @return {Object} args - Retrieved arguments, or null
  */
 const parseArgs = () => {
   const args = minimist(process.argv.slice(2))

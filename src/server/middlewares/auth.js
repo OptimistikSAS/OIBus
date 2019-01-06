@@ -12,8 +12,8 @@ const basicAuth = require('basic-auth')
  *  - `pass` password
  *  - `realm` realm
  *
- * @param {Object} opts
- * @return {GeneratorFunction}
+ * @param {Object} opts - The options
+ * @return {GeneratorFunction} The middleware function
  * @api public
  */
 const auth = (opts = {}) => {
