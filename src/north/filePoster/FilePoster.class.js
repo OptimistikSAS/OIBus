@@ -10,8 +10,12 @@ class FilePoster extends ApiHandler {
     this.engine.register('postFile', this.postFile.bind(this))
   }
 
+  /**
+   * @param {*} file: The address of the file
+   * @memberof FilePoster
+   * @return {void}
+   */
   postFile(file) {
-    this.abc = 0
     // fs.readFile(file, (err, postData) => {
     //   if (err) throw err
     // const username = 'QFPELALDNSUO6BUV8SJ'
@@ -50,13 +54,21 @@ class FilePoster extends ApiHandler {
     // req.end()
     // })
 
-    const username = 'QFPELALDNSUO6BUV8SJ'
-    const password = 'vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy'
-    fetch('QFPELALDNSUO6BUV8SJ:vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy@demo.oianalytics.fr', {
-      body: file,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorisation: `${username}:${password}` },
+    // `${user}:${password}@${host}:${port}${path}`
+    const { host, user, password, port, path } = this.application.FilePoster
+    const readStream = fs.createReadStream(file)
+    fetch('https://demo.oianalytics.fr:443/api/optimistik/data/values/upload', {
+      body: readStream,
+      headers: { /* 'Content-Type': 'application/x-www-form-urlencoded', */ Authorisation: `${user}:${password}` },
       method: 'POST',
     })
+      .then(res => res.json())
+      .then((json) => {
+        console.info(json)
+        if (json === 200) {
+          this.engine.notifyEnd(file)
+        }
+      })
   }
 }
 

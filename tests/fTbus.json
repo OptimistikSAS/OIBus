@@ -308,7 +308,14 @@
       {
         "applicationId": "FilePoster",
         "enabled": true,
-        "api":"FilePoster"
+        "api":"FilePoster",
+        "FilePoster":{
+          "user":"QFPELALDNSUO6BUV8SJ",
+          "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy",
+          "host": "demo.oianalytics.fr",
+          "path": "/api/optimistik/data/values/upload",
+          "port": 80
+        }
       },
       {
         "applicationId": "BaseInflux",

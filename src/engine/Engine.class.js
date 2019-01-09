@@ -10,7 +10,7 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.FT = require('../south/FileTransmitter/FIleTransmitter.class')
+protocolList.FT = require('../south/FileTransmitter/FileTransmitter.class')
 
 // North classes
 const apiList = {}
@@ -118,6 +118,10 @@ class Engine {
    */
   postFile(file) {
     this.bus.emit('postFile', file)
+  }
+
+  notifyEnd(file) {
+    this.bus.emit('notifyEnd', file)
   }
 
   /**

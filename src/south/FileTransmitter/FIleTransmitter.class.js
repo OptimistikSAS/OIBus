@@ -3,7 +3,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 
 class FileTransmitter extends ProtocolHandler {
   connect() {
-    this.engine.register()
+    this.engine.register('notifyEnd', this.handleFile.bind(this))
     const { FT: parameters } = this.equipment
     const { inputFolder, outputFolder, minAge, handlingMode, regex } = parameters
     this.inputFolder = inputFolder
@@ -11,36 +11,38 @@ class FileTransmitter extends ProtocolHandler {
     this.minAge = minAge
     this.handlingMode = handlingMode
     this.regex = regex
+    this.pattern = new RegExp(this.regex)
   }
 
   onScan(_scanMode) {
     fs.readdir(this.inputFolder, (err, files) => {
       if (err) {
-        console.error(err)
+        this.logger.error(err)
         return
       }
-      if (!files.length) console.info(`The folder ${this.inputFolder} is empty.`)
+      if (!files.length) this.logger.info(`The folder ${this.inputFolder} is empty.`)
       files.forEach((filename) => {
         this.checkFile(filename)
       })
     })
   }
 
-  handleFile(filename) {
+  handleFile(file) {
     if (!this.handlingMode || (this.handlingMode === 'Move' && !this.outputFolder)) {
-      console.error('Error in configurations')
+      this.logger.error('Error in configurations')
     } else if (this.handlingMode === 'Delete') {
-      //   fs.unlink(`${this.inputFolder}${filename}`, (err) => {
-      //     if (err) throw err
-      //     console.info('File: ', `${this.inputFolder}${filename}`, 'deleted.')
-      //   })
+      fs.unlink(file, (err) => {
+        if (err) throw err
+        this.logger.info('File: ', file, 'deleted.')
+      })
     } else if (this.handlingMode === 'Move') {
-      fs.rename(`${this.inputFolder}${filename}`, `${this.outputFolder}${filename}`, (erro) => {
+      const newFile = file.replace(this.inputFolder, this.outputFolder)
+      fs.rename(file, newFile, (erro) => {
         if (erro) {
-          console.error(erro)
+          this.logger.error(erro)
         }
       })
-      console.info('File move to ', `${this.outputFolder}${filename}`)
+      this.logger.info('File move to ', newFile)
     }
   }
 
@@ -50,8 +52,8 @@ class FileTransmitter extends ProtocolHandler {
    * @returns {void}
    */
   pollFile(filename) {
-    console.info('Poll ', `${this.inputFolder}${filename}`)
-    this.engine.postFile(new File(`${this.inputFolder}${filename}`))
+    this.logger.info('Poll ', `${this.inputFolder}${filename}`)
+    this.engine.postFile(`${this.inputFolder}${filename}`)
     this.handleFile(filename)
   }
 
@@ -61,8 +63,7 @@ class FileTransmitter extends ProtocolHandler {
    * @returns {void}
    */
   checkFile(filename) {
-    const pattern = new RegExp(this.regex)
-    if (pattern.test(filename)) {
+    if (this.pattern.test(filename)) {
       fs.stat(`${this.inputFolder}${filename}`, (err, stats) => {
         const current = new Date().getTime()
         if (err) throw err
@@ -71,7 +72,7 @@ class FileTransmitter extends ProtocolHandler {
         }
       })
     } else {
-      console.info('This file ', filename, " doesn't matche ", this.regex)
+      this.logger.info('This file ', filename, " doesn't matche ", this.regex)
     }
   }
 }
