@@ -104,7 +104,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "every20Second",
@@ -128,8 +128,22 @@
         ]
       },
       {
-        "equipmentId": "MQTTServer",
+        "equipmentId": "FileTransimitter",
         "enabled": true,
+        "protocol": "FT",
+        "defaultScanMode": "every5Second",
+        "FT": {
+          "inputFolder": "./tests/FT/",
+          "outputFolder": "", // Required when handlingMode is 'Move'
+          "minAge": 1000, //unit is ms
+          "handlingMode": "Delete", // Delete or Move
+          "regex": ".txt"
+        },
+        "points": [{ "pointId": "./Tank 5.tank/Sensor22.temperature" }]
+      },
+      {
+        "equipmentId": "MQTTServer",
+        "enabled": false,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
@@ -290,6 +304,11 @@
         "api": "Console",
         "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
         "timeStamp": "fTbus"
+      },
+      {
+        "applicationId": "FilePoster",
+        "enabled": true,
+        "api":"FilePoster"
       },
       {
         "applicationId": "BaseInflux",

@@ -10,12 +10,14 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
+protocolList.FT = require('../south/FileTransmitter/FIleTransmitter.class')
 
 // North classes
 const apiList = {}
 apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
+apiList.FilePoster = require('../north/filePoster/FilePoster.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -106,6 +108,16 @@ class Engine {
       timestamp,
       data,
     })
+  }
+
+  /**
+   * Emit the event postFile
+   * @param {*} file: The absolute address
+   * @memberof Engine
+   * @return {void}
+   */
+  postFile(file) {
+    this.bus.emit('postFile', file)
   }
 
   /**
