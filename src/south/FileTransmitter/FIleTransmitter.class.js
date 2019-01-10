@@ -33,7 +33,7 @@ class FileTransmitter extends ProtocolHandler {
     } else if (this.handlingMode === 'Delete') {
       fs.unlink(file, (err) => {
         if (err) throw err
-        this.logger.info('File: ', file, 'deleted.')
+        this.logger.info(`File: ${file}deleted.`)
       })
     } else if (this.handlingMode === 'Move') {
       const newFile = file.replace(this.inputFolder, this.outputFolder)
@@ -42,7 +42,7 @@ class FileTransmitter extends ProtocolHandler {
           this.logger.error(erro)
         }
       })
-      this.logger.info('File move to ', newFile)
+      this.logger.info(`File move to ${newFile}`)
     }
   }
 
@@ -52,7 +52,7 @@ class FileTransmitter extends ProtocolHandler {
    * @returns {void}
    */
   pollFile(filename) {
-    this.logger.info('Poll ', `${this.inputFolder}${filename}`)
+    this.logger.info(`Poll ${this.inputFolder}${filename}`)
     this.engine.postFile(`${this.inputFolder}${filename}`)
   }
 
@@ -71,7 +71,7 @@ class FileTransmitter extends ProtocolHandler {
         }
       })
     } else {
-      this.logger.info('This file ', filename, " doesn't matche ", this.regex)
+      this.logger.info(`This file ${filename} doesn't matche ${this.regex}`)
     }
   }
 }

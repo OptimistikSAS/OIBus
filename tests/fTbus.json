@@ -134,9 +134,9 @@
         "defaultScanMode": "every5Second",
         "FT": {
           "inputFolder": "./tests/FT/",
-          "outputFolder": "", // Required when handlingMode is 'Move'
+          "outputFolder": "./tests/", // Required when handlingMode is 'Move'
           "minAge": 1000, //unit is ms
-          "handlingMode": "Delete", // Delete or Move
+          "handlingMode": "Move", // Delete or Move
           "regex": ".txt"
         },
         "points": [{ "pointId": "./Tank 5.tank/Sensor22.temperature" }]
