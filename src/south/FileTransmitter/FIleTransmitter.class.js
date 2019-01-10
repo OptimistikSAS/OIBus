@@ -54,7 +54,6 @@ class FileTransmitter extends ProtocolHandler {
   pollFile(filename) {
     this.logger.info('Poll ', `${this.inputFolder}${filename}`)
     this.engine.postFile(`${this.inputFolder}${filename}`)
-    this.handleFile(filename)
   }
 
   /**

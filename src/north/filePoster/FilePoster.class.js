@@ -1,4 +1,3 @@
-const http = require('http')
 const fetch = require('node-fetch')
 const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
@@ -59,7 +58,7 @@ class FilePoster extends ApiHandler {
     const readStream = fs.createReadStream(file)
     fetch('https://demo.oianalytics.fr:443/api/optimistik/data/values/upload', {
       body: readStream,
-      headers: { /* 'Content-Type': 'application/x-www-form-urlencoded', */ Authorisation: `${user}:${password}` },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorisation: `Basic ${user}:${password}` },
       method: 'POST',
     })
       .then(res => res.json())
