@@ -82,7 +82,8 @@ class InfluxDB extends ApiHandler {
       if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
       else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
     })
-    const body = `${measurement},${tags} ${fields} ${timestamp.getTime()}`
+    // If not specified otherwise, timestamp must be in nanosecond
+    const body = `${measurement},${tags} ${fields} ${1000 * 1000 * timestamp.getTime()}`
     fetch(url, {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
