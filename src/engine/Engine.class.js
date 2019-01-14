@@ -61,6 +61,10 @@ class Engine {
     // Get the emitter of events
     this.bus = new EventEmitter()
 
+    // Local buffer and timer for grouping
+    this.groupingBuffer = []
+    this.groupingTimeout = null
+
     // prepare config
     // initialize the scanLists with empty arrays
     this.scanLists = {}
@@ -94,18 +98,68 @@ class Engine {
   }
 
   /**
-   * send a Value from an equipment to application by emitting an event, the value is made
-   * of the id of the point (object), the value of the point (object) and a timestamp
-   * (UTC).
-   * @param {Object} value - New value (pointId, timestamp and data of the entry)
+   * Add a new Value from an equipment to the Engine.
+   * The Engine will forward the Value to the North applications by emitting an event.
+   * It will be done immediately if doNotGroup is set to "true". Otherwise the Value will be stored in a buffer
+   * and forwarded after grouping several values based on the grouping configuration.
+   * @param {object} value - The new value
+   * @param {string} value.pointId - The ID of the point
+   * @param {string|boolean|array|object} value.data - The value of the point
+   * @param {object} value.timestamp - The timestamp
+   * @param {boolean} value.doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue({ pointId, data, timestamp }) {
-    this.bus.emit('addValue', {
+  addValue({ pointId, data, timestamp, doNotGroup = false }) {
+    const value = {
       pointId,
       timestamp,
       data,
-    })
+    }
+
+    if (!this.config.engine.grouping.enabled || doNotGroup) {
+      // If grouping is not enabled or doNotGroup is set forward the value immediately
+      this.bus.emit('addValues', [value])
+    } else {
+      // Otherwise store the value in the buffer
+      this.groupingBuffer.push(value)
+
+      // Is the timer is not active activate it to send the values after maxTime is reached
+      if (!this.groupingTimeout) {
+        this.groupingTimeout = setTimeout(this.sendValues.bind(this), 1000 * this.config.engine.grouping.maxTime)
+      }
+
+      // Check whether the buffer's length reached the configured value
+      if (this.groupingBuffer.length >= this.config.engine.grouping.groupCount) {
+        // Send the buffer
+        this.bus.emit('addValues', this.groupingBuffer)
+
+        // Empty the buffer
+        this.groupingBuffer = []
+
+        // Reset the timer
+        if (this.groupingTimeout) {
+          clearTimeout(this.groupingTimeout)
+          this.groupingTimeout = null
+        }
+      }
+    }
+  }
+
+  /**
+   * Callback function used by the timer to send the values.
+   * @return {void}
+   */
+  sendValues() {
+    console.log('Timer activated', this.groupingBuffer)
+
+    // Send the values
+    if (this.groupingBuffer.length > 0) {
+      this.bus.emit('addValues', this.groupingBuffer)
+      this.groupingBuffer = []
+    }
+
+    // Reset the timer
+    this.groupingTimeout = null
   }
 
   /**

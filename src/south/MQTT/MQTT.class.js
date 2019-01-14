@@ -22,7 +22,7 @@ class MQTT extends ProtocolHandler {
       { port, username, password: Buffer.from(password) },
     )
     points.forEach((point) => {
-      const { MQTT: { topic } = {}, pointId } = point
+      const { MQTT: { topic } = {}, pointId, doNotGroup = false } = point
       this.client.on('connect', () => {
         this.client.subscribe(topic, (err) => {
           if (err) {
@@ -34,7 +34,7 @@ class MQTT extends ProtocolHandler {
       this.client.on('message', (topic1, message) => {
         if (topic1 === topic) {
           // message is Buffer
-          this.engine.addValue({ data: message.toString(), timestamp: new Date(), pointId })
+          this.engine.addValue({ data: message.toString(), timestamp: new Date(), pointId, doNotGroup })
         }
       })
     })
