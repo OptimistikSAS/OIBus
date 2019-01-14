@@ -49,40 +49,50 @@ class InfluxDB extends ApiHandler {
 
   /**
    * Makes a request for every entry received from the event.
-   * @param {Object} value - The value
+   * @param {Object[]} values - The values
    * @return {void}
    */
-  onUpdate(value) {
-    this.makeRequest(value)
+  onUpdate(values) {
+    this.makeRequest(values)
   }
 
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
-   * @param {Object} entry - The entry from the event
+   * @param {Object[]} entries - The entry from the event
    * @return {void}
    */
-  makeRequest(entry) {
-    const { host, user, password } = this.application.InfluxDB
-    const { pointId, data, timestamp } = entry
-    const Nodes = Object.entries(pointIdToNodes(pointId))
-    const db = Nodes[0][1]
-    const measurement = Nodes[Nodes.length - 1][0]
+  makeRequest(entries) {
+    const { host, user, password, db } = this.application.InfluxDB
     const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
-    // Convert nodes into tags for CLI
-    let tags = null
-    Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-      if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-      else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+
+    let body = ''
+
+    entries.forEach((entry) => {
+      const { pointId, data, timestamp } = entry
+      const Nodes = Object.entries(pointIdToNodes(pointId))
+      const measurement = Nodes[Nodes.length - 1][0]
+
+      // Convert nodes into tags for CLI
+      let tags = null
+      Nodes.slice(1).forEach(([tagKey, tagValue]) => {
+        if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+        else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+      })
+
+      // Converts data into fields for CLI
+      let fields = null
+      // The data received from MQTT is type of string, so we need to transform it to Json
+      const dataJson = JSON.parse(data)
+      Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
+        if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+        else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+      })
+
+      // Append entry to body
+      body += `${measurement},${tags} ${fields} ${1000 * 1000 * timestamp.getTime()}\n`
     })
-    // Converts data into fields for CLI
-    let fields = null
-    // The data received from MQTT is type of string, so we need to transform it to Json
-    const dataJson = JSON.parse(data)
-    Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-      if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-      else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-    })
-    const body = `${measurement},${tags} ${fields} ${timestamp.getTime()}`
+
+    // Send data to InfluxDB
     fetch(url, {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
