@@ -52,11 +52,10 @@ class TimescaleDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entry) {
-    const { host, user, password } = this.application.TimescaleDB
+    const { host, user, password, db } = this.application.TimescaleDB
     const { pointId, data, timestamp } = entry
     // Convert the pointId into nodes
     const Nodes = Object.entries(pointIdToNodes(pointId))
-    const db = Nodes[0][1]
     // Build the url
     const url = `postgres://${user}:${password}@${host}/${db}`
     // Get client object and connect to the database
