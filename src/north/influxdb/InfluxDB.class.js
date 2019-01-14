@@ -62,10 +62,9 @@ class InfluxDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entry) {
-    const { host, user, password } = this.application.InfluxDB
+    const { host, user, password, db } = this.application.InfluxDB
     const { pointId, data, timestamp } = entry
     const Nodes = Object.entries(pointIdToNodes(pointId))
-    const db = Nodes[0][1]
     const measurement = Nodes[Nodes.length - 1][0]
     const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
     // Convert nodes into tags for CLI
