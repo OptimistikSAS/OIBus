@@ -150,8 +150,6 @@ class Engine {
    * @return {void}
    */
   sendValues() {
-    console.log('Timer activated', this.groupingBuffer)
-
     // Send the values
     if (this.groupingBuffer.length > 0) {
       this.bus.emit('addValues', this.groupingBuffer)
