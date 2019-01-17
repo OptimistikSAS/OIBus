@@ -312,6 +312,7 @@
         "TimescaleDB": {
           "user": "postgres",
           "password": "secret",
+          "db": "testdata",
           "host": "ts.factorythings.com"
         }
       }
