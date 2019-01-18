@@ -20,6 +20,7 @@
       "tailable": true
     },
     "grouping": {
+      "enabled": true,
       "groupCount": 10, // The number of events to group
       "maxTime": 5 // The number of seconds to wait before sending
     },
