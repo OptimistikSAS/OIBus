@@ -62,11 +62,12 @@ class InfluxDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entry) {
-    const { host, user, password, db } = this.application.InfluxDB
+    const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
+    const url = `http://${host}/write?u=${user}&p=${password}&db=${db}&precision=${precision}`
+
     const { pointId, data, timestamp } = entry
     const Nodes = Object.entries(pointIdToNodes(pointId))
     const measurement = Nodes[Nodes.length - 1][0]
-    const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
     // Convert nodes into tags for CLI
     let tags = null
     Nodes.slice(1).forEach(([tagKey, tagValue]) => {
@@ -81,8 +82,30 @@ class InfluxDB extends ApiHandler {
       if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
       else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
     })
-    // If not specified otherwise, timestamp must be in nanosecond
-    const body = `${measurement},${tags} ${fields} ${1000 * 1000 * timestamp.getTime()}`
+    // Convert timestamp to the configured precision
+    let preciseTimestamp = timestamp
+    switch (precision) {
+      case 'ns':
+        preciseTimestamp = 1000 * 1000 * timestamp
+        break
+      case 'u':
+        preciseTimestamp = 1000 * timestamp
+        break
+      case 'ms':
+        break
+      case 's':
+        preciseTimestamp = Math.floor(timestamp / 1000)
+        break
+      case 'm':
+        preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+        break
+      case 'h':
+        preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+        break
+      default:
+        preciseTimestamp = timestamp
+    }
+    const body = `${measurement},${tags} ${fields} ${preciseTimestamp}`
     fetch(url, {
       body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
