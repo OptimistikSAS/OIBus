@@ -20,6 +20,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 // Engine classes
 const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
+const GroupingBuffer = require('./GroupingBuffer.class')
 
 const checkConfig = (config) => {
   const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
@@ -61,9 +62,8 @@ class Engine {
     // Get the emitter of events
     this.bus = new EventEmitter()
 
-    // Local buffer and timer for grouping
-    this.groupingBuffer = []
-    this.groupingTimeout = null
+    // Local Buffer
+    this.buffer = new GroupingBuffer(this)
 
     // prepare config
     // initialize the scanLists with empty arrays
@@ -110,54 +110,16 @@ class Engine {
    * @return {void}
    */
   addValue({ pointId, data, timestamp, doNotGroup = false }) {
-    const value = {
-      pointId,
-      timestamp,
-      data,
-    }
-
-    if (!this.config.engine.grouping.enabled || doNotGroup) {
-      // If grouping is not enabled or doNotGroup is set forward the value immediately
-      this.bus.emit('addValues', [value])
-    } else {
-      // Otherwise store the value in the buffer
-      this.groupingBuffer.push(value)
-
-      // Is the timer is not active activate it to send the values after maxTime is reached
-      if (!this.groupingTimeout) {
-        this.groupingTimeout = setTimeout(this.sendValues.bind(this), 1000 * this.config.engine.grouping.maxTime)
-      }
-
-      // Check whether the buffer's length reached the configured value
-      if (this.groupingBuffer.length >= this.config.engine.grouping.groupCount) {
-        // Send the buffer
-        this.bus.emit('addValues', this.groupingBuffer)
-
-        // Empty the buffer
-        this.groupingBuffer = []
-
-        // Reset the timer
-        if (this.groupingTimeout) {
-          clearTimeout(this.groupingTimeout)
-          this.groupingTimeout = null
-        }
-      }
-    }
+    this.buffer.addValue({ pointId, data, timestamp, doNotGroup })
   }
 
   /**
-   * Callback function used by the timer to send the values.
+   * Send values to the north applications.
+   * @param {object[]} values - The values to send
    * @return {void}
    */
-  sendValues() {
-    // Send the values
-    if (this.groupingBuffer.length > 0) {
-      this.bus.emit('addValues', this.groupingBuffer)
-      this.groupingBuffer = []
-    }
-
-    // Reset the timer
-    this.groupingTimeout = null
+  sendValues(values) {
+    this.bus.emit('addValues', values)
   }
 
   /**
