@@ -61,7 +61,7 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (err1) => {
         if (!err1) {
-          this.logger.log('OPCUA Connected')
+          this.logger.info('OPCUA Connected')
           this.client.createSession((err2, session) => {
             if (!err2) {
               this.session = session
@@ -97,7 +97,7 @@ class OPCUA extends ProtocolHandler {
           const dataValue = dataValues.shift()
           const value = {
             pointId,
-            timestamp: dataValue.sourceTimestamp.toString(),
+            timestamp: dataValue.sourceTimestamp.getTime(),
             data: [],
             dataId: [], // to add after data{} is handled
           }
