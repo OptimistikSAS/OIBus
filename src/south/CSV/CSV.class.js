@@ -77,7 +77,7 @@ class CSV extends ProtocolHandler {
               Object.keys(typeColumn).forEach((key) => {
                 data[key] = csvObjects[typeColumn[key]]
               })
-              const timestamp = csvObjects[timeColumnIndex]
+              const timestamp = new Date(csvObjects[timeColumnIndex]).getTime()
               this.engine.addValue({
                 pointId: point.pointId,
                 timestamp,

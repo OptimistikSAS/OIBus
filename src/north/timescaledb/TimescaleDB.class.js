@@ -94,7 +94,7 @@ class TimescaleDB extends ApiHandler {
         else values = `${values},'${fieldValue}'`
       })
       fields += ',timestamp'
-      values += `,'${timestamp.toISOString()}'`
+      values += `,'${new Date(timestamp).toISOString()}'`
 
       statement += `${fields}) values(${values});`
 

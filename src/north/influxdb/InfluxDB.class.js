@@ -62,8 +62,8 @@ class InfluxDB extends ApiHandler {
    * @return {void}
    */
   makeRequest(entries) {
-    const { host, user, password, db } = this.application.InfluxDB
-    const url = `http://${host}/write?u=${user}&p=${password}&db=${db}`
+    const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
+    const url = `http://${host}/write?u=${user}&p=${password}&db=${db}&precision=${precision}`
 
     let body = ''
 
@@ -88,8 +88,32 @@ class InfluxDB extends ApiHandler {
         else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
       })
 
+      // Convert timestamp to the configured precision
+      let preciseTimestamp = timestamp
+      switch (precision) {
+        case 'ns':
+          preciseTimestamp = 1000 * 1000 * timestamp
+          break
+        case 'u':
+          preciseTimestamp = 1000 * timestamp
+          break
+        case 'ms':
+          break
+        case 's':
+          preciseTimestamp = Math.floor(timestamp / 1000)
+          break
+        case 'm':
+          preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+          break
+        case 'h':
+          preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+          break
+        default:
+          preciseTimestamp = timestamp
+      }
+
       // Append entry to body
-      body += `${measurement},${tags} ${fields} ${1000 * 1000 * timestamp.getTime()}\n`
+      body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
     })
 
     // Send data to InfluxDB
