@@ -301,7 +301,8 @@
           "user": "admin",
           "password": "secret",
           "db": "testdata",
-          "host": "localhost:8086"
+          "host": "localhost:8086",
+          "precision": "ms" // Possible values: ns, u, ms, s, m, h. Defaul value: ms
         }
       },
       {
