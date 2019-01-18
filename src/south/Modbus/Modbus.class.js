@@ -88,7 +88,7 @@ class Modbus extends ProtocolHandler {
   modbusFunction(funcName, { startAddress, rangeSize }, points) {
     this.client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const timestamp = `${new Date()}`
+        const timestamp = new Date().getTime()
         points.forEach((point) => {
           const position = parseInt(point.Modbus.address, 16) - startAddress - 1
           let data = response.body.valuesAsArray[position]
