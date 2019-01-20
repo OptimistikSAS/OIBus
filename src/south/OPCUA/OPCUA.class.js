@@ -88,8 +88,10 @@ class OPCUA extends ProtocolHandler {
     const scanGroup = this.optimizedConfig[scanMode]
     if (!this.connected || !scanGroup) return
     const nodesToRead = {}
+    const pointsDoNotGroup = {}
     scanGroup.forEach((point) => {
       nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
+      pointsDoNotGroup[point.pointId] = point.doNotGroup
     })
     this.session.read(Object.values(nodesToRead), this.maxAge, (err, dataValues) => {
       if (!err && Object.keys(nodesToRead).length === dataValues.length) {
@@ -100,6 +102,7 @@ class OPCUA extends ProtocolHandler {
             timestamp: dataValue.sourceTimestamp.getTime(),
             data: [],
             dataId: [], // to add after data{} is handled
+            doNotGroup: nodesToRead[pointId],
           }
           this.logger.debug(pointId, scanGroup)
           this.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger))

@@ -3,13 +3,15 @@ const ApiHandler = require('../ApiHandler.class')
 class Console extends ApiHandler {
   /**
    * Print to the console the value received
-   * @param {Object} value - The value
+   * @param {Array} values - The values
    * @memberof Console
    * @return {void}
    */
   /* eslint-disable-next-line class-methods-use-this */
-  onUpdate(value) {
-    console.info(value)
+  onUpdate(values) {
+    values.forEach((value) => {
+      console.info(value)
+    })
   }
 }
 
