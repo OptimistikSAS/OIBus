@@ -19,6 +19,11 @@
       "maxFiles": 5,
       "tailable": true
     },
+    "grouping": {
+      "enabled": true,
+      "groupCount": 10, // The number of events to group
+      "maxTime": 5 // The number of seconds to wait before sending
+    },
     // the scan mode section
     // reference: https://github.com/paragi/timexe
     // Format: year month day hour minute second millisec microsec
@@ -143,7 +148,8 @@
         "points": [
           {
             "MQTT": { "topic": "temperatureTank1" },
-            "pointId": "./Tank 5.tank/Sensor22.temperature"
+            "pointId": "./Tank 5.tank/Sensor22.temperature",
+            "doNotGroup": true
           },
           {
             "MQTT": { "topic": "temperatureTank2" },
