@@ -12,7 +12,7 @@ class ApiHandler {
     this.logger = engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
-    this.engine.register('addValue', this.onUpdate.bind(this))
+    this.engine.register('addValues', this.onUpdate.bind(this))
   }
 
   /**
