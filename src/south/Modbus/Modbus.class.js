@@ -106,9 +106,8 @@ class Modbus extends ProtocolHandler {
             timestamp,
             dataId: point.dataId,
             data,
-            doNotGroup: point.doNotGroup,
           }
-          this.engine.addValue(value)
+          this.engine.addValue(value, point.doNotGroup)
         })
       })
       .catch((error) => {
