@@ -82,7 +82,7 @@ class CSV extends ProtocolHandler {
                 {
                   pointId: point.pointId,
                   timestamp,
-                  data,
+                  data: JSON.stringify(data),
                 },
                 point.doNotGroup,
               )
@@ -103,7 +103,7 @@ class CSV extends ProtocolHandler {
               {
                 pointId: point.pointId,
                 timestamp,
-                data,
+                data: JSON.stringify(data),
               },
               point.doNotGroup,
             )
