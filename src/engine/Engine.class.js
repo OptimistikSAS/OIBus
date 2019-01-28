@@ -104,7 +104,7 @@ class Engine {
    * and forwarded after grouping several values based on the grouping configuration.
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
-   * @param {string|boolean|array|object} value.data - The value of the point
+   * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
