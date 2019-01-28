@@ -104,13 +104,13 @@ class Engine {
    * and forwarded after grouping several values based on the grouping configuration.
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
-   * @param {string|boolean|array|object} value.data - The value of the point
-   * @param {object} value.timestamp - The timestamp
-   * @param {boolean} value.doNotGroup - Whether to disable grouping
+   * @param {string} value.data - The value of the point
+   * @param {number} value.timestamp - The timestamp
+   * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue({ pointId, data, timestamp, doNotGroup = false }) {
-    this.buffer.addValue({ pointId, data, timestamp, doNotGroup })
+  addValue({ pointId, data, timestamp }, doNotGroup) {
+    this.buffer.addValue({ pointId, data, timestamp }, doNotGroup)
   }
 
   /**
