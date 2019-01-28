@@ -23,12 +23,16 @@ class GroupingBuffer {
    * The Value will be stored in the buffer and sent back to Engine
    * after grouping several values based on the grouping configuration.
    * @param {object} value - The new value
+   * @param {string} value.pointId - The ID of the point
+   * @param {string|boolean|array|object} value.data - The value of the point
+   * @param {number} value.timestamp - The timestamp
+   * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue(value) {
+  addValue(value, doNotGroup = false) {
     // If grouping is not enabled or doNotGroup is set forward the value immediately
     // Otherwise add it to the buffer for grouping
-    if (!this.config.enabled || value.doNotGroup) {
+    if (!this.config.enabled || doNotGroup) {
       this.engine.sendValues([value])
     } else {
       // Store the value in the buffer

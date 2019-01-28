@@ -78,12 +78,14 @@ class CSV extends ProtocolHandler {
                 data[key] = csvObjects[typeColumn[key]]
               })
               const timestamp = new Date(csvObjects[timeColumnIndex]).getTime()
-              this.engine.addValue({
-                pointId: point.pointId,
-                timestamp,
-                data,
-                doNotGroup: point.doNotGroup,
-              })
+              this.engine.addValue(
+                {
+                  pointId: point.pointId,
+                  timestamp,
+                  data,
+                },
+                point.doNotGroup,
+              )
             })
           }
         } else {
@@ -97,12 +99,14 @@ class CSV extends ProtocolHandler {
               data[key] = csvObjects[typeColumn[key]]
             })
             const timestamp = csvObjects[timeColumn]
-            this.engine.addValue({
-              pointId: point.pointId,
-              timestamp,
-              data,
-              doNotGroup: point.doNotGroup,
-            })
+            this.engine.addValue(
+              {
+                pointId: point.pointId,
+                timestamp,
+                data,
+              },
+              point.doNotGroup,
+            )
           })
         }
       })
