@@ -51,6 +51,15 @@ class ApiHandler {
   }
 
   /**
+   * Method to resend values stored in the local cache.
+   * @param {Object[]} values - The values to resend
+   * @return {Promise} - The resend status
+   */
+  resendValues(values) {
+    this.engine.logger.info('resendValues', values)
+  }
+
+  /**
    * Method called by Engine when the value is received and when we need to update the log/database. Surcharge is needed in order
    * to send to the db, send to an external application etc...
    * @param {Object} value - Is a value object i.e { timestamp:... , field1:... , field2: ... }

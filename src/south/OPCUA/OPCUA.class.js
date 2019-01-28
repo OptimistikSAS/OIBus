@@ -97,24 +97,25 @@ class OPCUA extends ProtocolHandler {
       if (!err && Object.keys(nodesToRead).length === dataValues.length) {
         Object.keys(nodesToRead).forEach((pointId) => {
           const dataValue = dataValues.shift()
+          const data = []
           const value = {
             pointId,
             timestamp: dataValue.sourceTimestamp.getTime(),
-            data: [],
+            data: '',
             dataId: [], // to add after data{} is handled
-            doNotGroup: nodesToRead[pointId],
           }
           this.logger.debug(pointId, scanGroup)
           this.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger))
           fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger).forEach((field) => {
             value.dataId.push(field.name)
             if (field.name !== 'quality') {
-              value.data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
+              data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
             } else {
-              value.data.push(dataValue.statusCode.value)
+              data.push(dataValue.statusCode.value)
             }
           })
-          this.engine.addValue(value)
+          value.data = JSON.stringify(data)
+          this.engine.addValue(value, pointsDoNotGroup[pointId])
           // @todo handle double values with an array as data
         })
       } else {
