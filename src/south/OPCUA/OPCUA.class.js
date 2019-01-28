@@ -102,7 +102,6 @@ class OPCUA extends ProtocolHandler {
             timestamp: dataValue.sourceTimestamp.getTime(),
             data: [],
             dataId: [], // to add after data{} is handled
-            doNotGroup: nodesToRead[pointId],
           }
           this.logger.debug(pointId, scanGroup)
           this.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger))
@@ -114,7 +113,7 @@ class OPCUA extends ProtocolHandler {
               value.data.push(dataValue.statusCode.value)
             }
           })
-          this.engine.addValue(value)
+          this.engine.addValue(value, pointsDoNotGroup[pointId])
           // @todo handle double values with an array as data
         })
       } else {
