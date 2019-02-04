@@ -2,16 +2,17 @@ const ApiHandler = require('../ApiHandler.class')
 
 class Console extends ApiHandler {
   /**
-   * Print to the console the value received
-   * @param {Array} values - The values
-   * @memberof Console
-   * @return {void}
+   * Handle values by printing them to the console.
+   * @param {object[]} values - The values
+   * @return {Promise} - The handle status
    */
   /* eslint-disable-next-line class-methods-use-this */
-  onUpdate(values) {
+  handleValues(values) {
     values.forEach((value) => {
       console.info(value)
     })
+
+    return Promise.resolve()
   }
 }
 
