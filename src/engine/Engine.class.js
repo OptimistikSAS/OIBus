@@ -115,11 +115,21 @@ class Engine {
 
   /**
    * Send values to the north applications.
+   * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
-   * @return {void}
+   * @return {Promise} - The send promise
    */
-  sendValues(values) {
-    this.bus.emit('addValues', values)
+  sendValues(applicationId, values) {
+    return new Promise((resolve) => {
+      this.activeApis[applicationId].handleValues(values)
+        .then(() => {
+          resolve(true)
+        })
+        .catch((error) => {
+          this.logger.error(error.stack)
+          resolve(false)
+        })
+    })
   }
 
   /**
