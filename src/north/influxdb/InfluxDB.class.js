@@ -1,7 +1,6 @@
 const fetch = require('node-fetch')
 
 const ApiHandler = require('../ApiHandler.class')
-const LocalCache = require('../../engine/LocalCache.class')
 
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
@@ -37,53 +36,12 @@ const escapeSpace = (chars) => {
  */
 class InfluxDB extends ApiHandler {
   /**
-   * Constructor for InfluxDB
-   * @constructor
-   * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
-   * @return {void}
+   * Handle values by sending them to InfluxDB.
+   * @param {object[]} values - The values
+   * @return {Promise} - The handle status
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
-    this.host = applicationParameters.InfluxDB.host
-    this.currentObject = {}
-
-    // Initiate local cache
-    this.localCache = new LocalCache(engine, this)
-  }
-
-  /**
-   * Makes a request for every entry received from the event.
-   * @param {Object[]} values - The values
-   * @return {void}
-   */
-  onUpdate(values) {
-    this.makeRequest(values)
-      .then(() => {
-      })
-      .catch((error) => {
-        this.logger.error(error)
-
-        this.localCache.cacheValues(values)
-      })
-  }
-
-  /**
-   * Method to resend values stored in the local cache.
-   * @param {Object[]} values - The values to resend
-   * @return {Promise} - The resend status
-   */
-  resendValues(values) {
-    return new Promise((resolve) => {
-      this.makeRequest(values)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  handleValues(values) {
+    return this.makeRequest(values)
   }
 
   /**

@@ -12,7 +12,6 @@ class ApiHandler {
     this.logger = engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
-    this.engine.register('addValues', this.onUpdate.bind(this))
   }
 
   /**
@@ -42,32 +41,12 @@ class ApiHandler {
   }
 
   /**
-   * Method to push a Value to equipments. (used for simulation at this point)
-   * @param {Object} value - Is a value object i.e { timestamp:... , field1:... , field2: ... }
-   * @return {void}
+   * Method called by the Engine to handle values.
+   * @param {Object[]} values - The values
+   * @return {Promise} - The handle status
    */
-  sendValue(value) {
-    this.engine.logger.info('sendValue', value)
-  }
-
-  /**
-   * Method to resend values stored in the local cache.
-   * @param {Object[]} values - The values to resend
-   * @return {Promise} - The resend status
-   */
-  resendValues(values) {
-    this.engine.logger.info('resendValues', values)
-  }
-
-  /**
-   * Method called by Engine when the value is received and when we need to update the log/database. Surcharge is needed in order
-   * to send to the db, send to an external application etc...
-   * @param {Object} value - Is a value object i.e { timestamp:... , field1:... , field2: ... }
-   * @return {void}
-   */
-  /* eslint-disable-next-line no-unused-vars */
-  onUpdate(value) {
-    this.engine.logger.info('onUpdate')
+  handleValues(values) {
+    this.engine.logger.info('handleValues', values)
   }
 }
 
