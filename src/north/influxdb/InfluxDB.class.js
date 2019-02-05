@@ -119,7 +119,7 @@ class InfluxDB extends ApiHandler {
           }
         })
         .catch((error) => {
-          reject(error.stack)
+          reject(error)
         })
     })
   }
