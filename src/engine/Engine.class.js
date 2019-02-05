@@ -120,7 +120,7 @@ class Engine {
           resolve(true)
         })
         .catch((error) => {
-          this.logger.error(error.stack)
+          this.logger.error(error)
           resolve(false)
         })
     })
