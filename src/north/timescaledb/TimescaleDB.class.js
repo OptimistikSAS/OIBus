@@ -55,7 +55,7 @@ class TimescaleDB extends ApiHandler {
       this.client = new pg.Client(url)
       this.client.connect((error) => {
         if (error) {
-          reject(error.stack)
+          reject(error)
         }
       })
 
@@ -100,7 +100,7 @@ class TimescaleDB extends ApiHandler {
 
       this.client.query(query, (error) => {
         if (error) {
-          reject(error.stack)
+          reject(error)
         } else {
           resolve()
         }
