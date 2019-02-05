@@ -79,9 +79,8 @@ class Cache {
 
   /**
    * Cache a new Value.
-   * It will store the value.
-   * If doNotCache is "true" it will immediately .
-   * Otherwise the Value will be cached and sent back later.
+   * It will store the value in every database. If doNotCache is "true" it will immediately forward the value
+   * to every North application.
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -121,7 +120,7 @@ class Cache {
   }
 
   /**
-   * Get values to send.
+   * Get values to send to a given North application.
    * @param {string} applicationId - The application ID
    * @return {Promise} - The query status
    */
@@ -142,7 +141,7 @@ class Cache {
   }
 
   /**
-   * Remove sent values from the cache.
+   * Remove sent values from the cache for a given North application.
    * @param {string} applicationId - The application ID
    * @param {Object} values - The values to remove from the cache
    * @return {void}
@@ -159,7 +158,7 @@ class Cache {
   }
 
   /**
-   * Callback function used by the timer to send the values.
+   * Callback function used by the timer to send the values to the given North application.
    * @param {string} applicationId - The application ID
    * @return {void}
    */
@@ -203,7 +202,7 @@ class Cache {
   }
 
   /**
-   * Send values to North application
+   * Send values to a given North application.
    * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
    * @return {void}
