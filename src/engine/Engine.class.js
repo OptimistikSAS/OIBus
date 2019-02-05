@@ -1,5 +1,4 @@
 const timexe = require('timexe')
-const { EventEmitter } = require('events')
 
 const { tryReadFile } = require('../services/config.service')
 const VERSION = require('../../package.json').version
@@ -20,7 +19,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 // Engine classes
 const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
-const GroupingBuffer = require('./GroupingBuffer.class')
+const Cache = require('./Cache.class')
 
 const checkConfig = (config) => {
   const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
@@ -59,11 +58,8 @@ class Engine {
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
 
-    // Get the emitter of events
-    this.bus = new EventEmitter()
-
-    // Local Buffer
-    this.buffer = new GroupingBuffer(this)
+    // Configure the Cache
+    this.cache = new Cache(this)
 
     // prepare config
     // initialize the scanLists with empty arrays
@@ -99,9 +95,7 @@ class Engine {
 
   /**
    * Add a new Value from an equipment to the Engine.
-   * The Engine will forward the Value to the North applications by emitting an event.
-   * It will be done immediately if doNotGroup is set to "true". Otherwise the Value will be stored in a buffer
-   * and forwarded after grouping several values based on the grouping configuration.
+   * The Engine will forward the Value to the Cache.
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -110,11 +104,11 @@ class Engine {
    * @return {void}
    */
   addValue({ pointId, data, timestamp }, doNotGroup) {
-    this.buffer.addValue({ pointId, data, timestamp }, doNotGroup)
+    this.cache.cacheValues({ pointId, data, timestamp }, doNotGroup)
   }
 
   /**
-   * Send values to the north applications.
+   * Send values to a North application.
    * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
    * @return {Promise} - The send promise
@@ -186,7 +180,10 @@ class Engine {
       }
     })
 
-    // 4. start the timers for each scan modes
+    // 4. Initiate the cache
+    this.cache.initialize(this.activeApis)
+
+    // 5. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = timexe(cronTime, () => {
         // on each scan, activate each protocols
