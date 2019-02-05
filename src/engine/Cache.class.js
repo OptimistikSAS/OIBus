@@ -2,7 +2,7 @@ const fs = require('fs')
 const sqlite3 = require('sqlite3')
 
 /**
- * Local cache implementation to store events when the communication with north is down.
+ * Local cache implementation to group events and store them when the communication with North is down.
  */
 class Cache {
   /**
@@ -32,7 +32,8 @@ class Cache {
    * @return {void}
    */
   initialize(applications) {
-    applications.forEach((application) => {
+    Object.keys(applications).forEach((applicationId) => {
+      const application = applications[applicationId]
       const activeApi = {}
 
       activeApi.applicationId = application.application.applicationId
@@ -54,9 +55,9 @@ class Cache {
    */
   createDatabase(filename) {
     const databasePath = `${this.cacheFolder}/${filename}`
-    const database = new sqlite3.Database(databasePath, (error) => {
-      if (error) {
-        this.logger.error(error.message)
+    const database = new sqlite3.Database(databasePath, (openError) => {
+      if (openError) {
+        this.logger.error(openError)
       } else {
         // Create cache table if not exists
         const query = `CREATE TABLE IF NOT EXISTS ${this.CACHE_TABLE_NAME} (
@@ -65,7 +66,11 @@ class Cache {
                         data TEXT,
                         point_id TEXT
                      );`
-        database.run(query)
+        database.run(query, (createError) => {
+          if (createError) {
+            this.logger.error(createError)
+          }
+        })
       }
     })
 
@@ -86,13 +91,16 @@ class Cache {
    */
   cacheValues(value, doNotGroup) {
     Object.keys(this.activeApis).forEach((applicationId) => {
-      const database = this.activeApis[applicationId]
+      const { database, config } = this.activeApis[applicationId]
 
       database.serialize(() => {
-        const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, data, point_id) VALUES (?, ?, ?)`
+        const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, data, point_id) 
+                             VALUES (?, ?, ?)`
         const entries = [value.timestamp, encodeURI(value.data), value.pointId]
         database.run(insertQuery, entries, (error) => {
-          this.logger.error(error)
+          if (error) {
+            this.logger.error(error)
+          }
         })
 
         if (doNotGroup) {
@@ -102,7 +110,7 @@ class Cache {
                               FROM ${this.CACHE_TABLE_NAME}`
           database.get(countQuery, (error, result) => {
             if (!error) {
-              if (result.nr_entries >= this.activeApis.config.groupCount) {
+              if (result.nr_entries >= config.groupCount) {
                 this.sendCallback(applicationId)
               }
             }
@@ -122,7 +130,7 @@ class Cache {
       const query = `SELECT id, timestamp, data, point_id AS pointId 
                      FROM ${this.CACHE_TABLE_NAME}
                      ORDER BY timestamp
-                     LIMIT ${this.activeApis[applicationId].config.resendCount}`
+                     LIMIT ${this.activeApis[applicationId].config.groupCount}`
       this.activeApis[applicationId].database.all(query, (error, results) => {
         if (error) {
           reject(error)
@@ -185,7 +193,7 @@ class Cache {
         )
       })
       .catch((error) => {
-        this.logger.error(error.stack)
+        this.logger.error(error)
 
         this.activeApis[applicationId].timeout = setTimeout(
           this.sendCallback.bind(this, applicationId),
