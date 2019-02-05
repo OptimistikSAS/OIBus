@@ -73,33 +73,41 @@ class Cache {
   }
 
   /**
-   * Cache new Values.
-   * The Values will be stored in the memory and sent back to Application for re-sending
-   * after retryInterval or resendInterval is reached.
-   * @param {object} values - The new values
+   * Cache a new Value.
+   * It will store the value.
+   * If doNotCache is "true" it will immediately .
+   * Otherwise the Value will be cached and sent back later.
+   * @param {object} value - The new value
+   * @param {string} value.pointId - The ID of the point
+   * @param {string} value.data - The value of the point
+   * @param {number} value.timestamp - The timestamp
+   * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  cacheValues(values) {
+  cacheValues(value, doNotGroup) {
     Object.keys(this.activeApis).forEach((applicationId) => {
       const database = this.activeApis[applicationId]
 
       database.serialize(() => {
         const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, data, point_id) VALUES (?, ?, ?)`
-        const stmt = database.prepare(insertQuery)
-        values.forEach((value) => {
-          stmt.run(value.timestamp, encodeURI(value.data), value.pointId)
+        const entries = [value.timestamp, encodeURI(value.data), value.pointId]
+        database.run(insertQuery, entries, (error) => {
+          this.logger.error(error)
         })
-        stmt.finalize()
 
-        const countQuery = `SELECT COUNT(*) AS nr_entries 
-                            FROM ${this.CACHE_TABLE_NAME}`
-        database.get(countQuery, (error, result) => {
-          if (!error) {
-            if (result.nr_entries >= this.activeApis.config.groupCount) {
-              this.sendCallback(applicationId)
+        if (doNotGroup) {
+          this.sendValues(applicationId, [value])
+        } else {
+          const countQuery = `SELECT COUNT(*) AS nr_entries
+                              FROM ${this.CACHE_TABLE_NAME}`
+          database.get(countQuery, (error, result) => {
+            if (!error) {
+              if (result.nr_entries >= this.activeApis.config.groupCount) {
+                this.sendCallback(applicationId)
+              }
             }
-          }
-        })
+          })
+        }
       })
     })
   }
@@ -153,12 +161,13 @@ class Cache {
     this.getValuesToSend(applicationId)
       .then((values) => {
         if (values.length > 0) {
+          // Decode values
           const decodedValues = values.map((value) => {
             value.data = decodeURI(value.data)
             return value
           })
 
-          // Send data
+          // Send the values
           this.engine.sendValues(applicationId, decodedValues)
             .then((success) => {
               if (success) {
@@ -182,6 +191,21 @@ class Cache {
           this.sendCallback.bind(this, applicationId),
           timeout,
         )
+      })
+  }
+
+  /**
+   * Send values to North application
+   * @param {string} applicationId - The application ID
+   * @param {object[]} values - The values to send
+   * @return {void}
+   */
+  sendValues(applicationId, values) {
+    this.engine.sendValues(applicationId, values)
+      .then((success) => {
+        if (success) {
+          this.removeSentValues(applicationId, values)
+        }
       })
   }
 }
