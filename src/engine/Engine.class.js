@@ -10,6 +10,7 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
+protocolList.RawFile = require('../south/RawFile/RawFile.class')
 
 // North classes
 const apiList = {}
@@ -111,6 +112,14 @@ class Engine {
    */
   addValue({ pointId, data, timestamp }, doNotGroup) {
     this.buffer.addValue({ pointId, data, timestamp }, doNotGroup)
+  }
+
+  addFile(path) {
+    this.logger.info(`File at ${path} added to Engine`)
+
+    return new Promise((resolve) => {
+      resolve()
+    })
   }
 
   /**
