@@ -291,6 +291,24 @@
             "pointId": "./111111.flow_rate"
           }
         ]
+      },
+      {
+        "equipmentId": "RawFileTransfer",
+        "enabled": true,
+        "protocol": "RawFile",
+        "defaultScanMode": "every5Second",
+        "RawFile": {
+          "inputFolder": "./tests/RawFile/input/",
+          "archiveFolder": "./tests/RawFile/archived/",  // Required when handlingMode is 'move'
+          "minAge": 1000, // Minimum age fo files is milliseconds
+          "handlingMode": "delete", // move or delete
+          "regex": ".txt" // Regex expression to match the filename
+        },
+        "points": [
+          {
+            "pointId": "RawFileTransferPointId"
+          }
+        ]
       }
     ]
   },
