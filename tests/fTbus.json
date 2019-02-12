@@ -349,6 +349,20 @@
           "db": "testdata",
           "host": "localhost"
         }
+      },
+      {
+        "applicationId": "RawFileSender",
+        "enabled": true,
+        "api":"RawFileSender",
+        "RawFileSender":{
+          "host": "https://demo.oianalytics.fr",
+          "endpoint": "/api/optimistik/data/values/upload",
+          "authentication": {
+            "type": "Basic", // Only Basic authentication is supported at this moment
+            "username":"QFPELALDNSUO6BUV8SJ",
+            "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+          }
+        }
       }
     ]
   }
