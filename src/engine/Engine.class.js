@@ -17,6 +17,7 @@ const apiList = {}
 apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
+apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -114,11 +115,18 @@ class Engine {
     this.buffer.addValue({ pointId, data, timestamp }, doNotGroup)
   }
 
-  addFile(path) {
-    this.logger.info(`File at ${path} added to Engine`)
+  addFile(filePath) {
+    const applicationId = 'RawFileSender'
 
     return new Promise((resolve) => {
-      resolve()
+      this.activeApis[applicationId].handleFile(filePath)
+        .then(() => {
+          resolve()
+        })
+        .catch((error) => {
+          this.logger.error(error)
+          resolve()
+        })
     })
   }
 
