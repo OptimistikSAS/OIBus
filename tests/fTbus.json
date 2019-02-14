@@ -19,16 +19,8 @@
       "maxFiles": 5,
       "tailable": true
     },
-    "grouping": {
-      "enabled": true,
-      "groupCount": 10, // The number of events to group
-      "maxTime": 5 // The number of seconds to wait before sending
-    },
     "caching": {
-      "cacheFolder": "./tests/cache", // Where to store the cached data
-      "retryInterval": 10, // Retry interval in seconds
-      "resendInterval": 5, // Resend interval in seconds
-      "resendCount": 2 // Number of values to resend in one step
+      "cacheFolder": "./cache" // Where to store the cached data
     },
     // the scan mode section
     // reference: https://github.com/paragi/timexe
@@ -301,7 +293,12 @@
         "enabled": true,
         "api": "Console",
         "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
-        "timeStamp": "fTbus"
+        "timeStamp": "fTbus",
+        "caching": {
+          "sendInterval": 15000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 6 // Number of values to send in one step
+        }
       },
       {
         "applicationId": "BaseInflux",
@@ -317,7 +314,9 @@
           "precision": "ms" // Possible values: ns, u, ms, s, m, h. Defaul value: ms
         },
         "caching": {
-          "resendCount": 5 // Overwrite the default resendCount
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 3 // Number of values to send in one step
         }
       },
       {
@@ -330,6 +329,11 @@
           "password": "secret",
           "db": "testdata",
           "host": "localhost"
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 3 // Number of values to send in one step
         }
       }
     ]
