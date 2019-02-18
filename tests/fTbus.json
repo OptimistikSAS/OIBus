@@ -366,6 +366,10 @@
             "username":"QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
           }
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
         }
       }
     ]
