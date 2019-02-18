@@ -1,7 +1,6 @@
 const pg = require('pg')
 
 const ApiHandler = require('../ApiHandler.class')
-const LocalCache = require('../../engine/LocalCache.class')
 
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
@@ -33,52 +32,18 @@ const escapeSpace = (chars) => {
 }
 
 class TimescaleDB extends ApiHandler {
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
-    this.currentObject = {}
-
-    // Initiate local cache
-    this.localCache = new LocalCache(engine, this)
-  }
-
   /**
-   * Makes a request for every entry received from the event.
-   * @param {Object[]} values - The values
-   * @return {void}
+   * Handle values by sending them to InfluxDB.
+   * @param {object[]} values - The values
+   * @return {Promise} - The handle status
    */
-  onUpdate(values) {
-    this.makeRequest(values)
-      .then(() => {
-        this.logger.debug('Values saved')
-      })
-      .catch((error) => {
-        this.logger.error(error)
-
-        this.localCache.cacheValues(values)
-      })
-  }
-
-  /**
-   * Method to resend values stored in the local cache.
-   * @param {Object[]} values - The values to resend
-   * @return {Promise} - The resend status
-   */
-  resendValues(values) {
-    return new Promise((resolve) => {
-      this.makeRequest(values)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  handleValues(values) {
+    return this.makeRequest(values)
   }
 
   /**
    * Makes a TimescaleDB request with the parameters in the Object arg.
-   * @param {Object[]} entries - The entry from the event
+   * @param {object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
   makeRequest(entries) {
@@ -90,7 +55,7 @@ class TimescaleDB extends ApiHandler {
       this.client = new pg.Client(url)
       this.client.connect((error) => {
         if (error) {
-          reject(error.stack)
+          reject(error)
         }
       })
 
@@ -133,29 +98,13 @@ class TimescaleDB extends ApiHandler {
 
       query += 'COMMIT'
 
-      this.sendRequest(query, (error) => {
+      this.client.query(query, (error) => {
         if (error) {
-          reject(error.stack)
+          reject(error)
         } else {
           resolve()
         }
       })
-    })
-  }
-
-  /**
-   * Send the request.
-   * @param {String} str - The query
-   * @param {Function} callback - The callback
-   * @return {void}
-   */
-  sendRequest(str, callback) {
-    this.client.query(str, (error) => {
-      if (error) {
-        callback(error)
-      } else {
-        callback()
-      }
     })
   }
 }
