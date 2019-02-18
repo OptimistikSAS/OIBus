@@ -110,16 +110,14 @@ class Engine {
   }
 
   addFile(filePath) {
-    const applicationId = 'RawFileSender'
-
     return new Promise((resolve) => {
-      this.activeApis[applicationId].handleFile(filePath)
+      this.cache.cacheFile(filePath)
         .then(() => {
-          resolve()
+          resolve(true)
         })
         .catch((error) => {
           this.logger.error(error)
-          resolve()
+          resolve(false)
         })
     })
   }
@@ -133,6 +131,25 @@ class Engine {
   sendValues(applicationId, values) {
     return new Promise((resolve) => {
       this.activeApis[applicationId].handleValues(values)
+        .then(() => {
+          resolve(true)
+        })
+        .catch((error) => {
+          this.logger.error(error)
+          resolve(false)
+        })
+    })
+  }
+
+  /**
+   * Send file to a North application.
+   * @param {string} applicationId - The application ID
+   * @param {string} filePath - The file to send
+   * @return {Promise} - The send promise
+   */
+  sendFile(applicationId, filePath) {
+    return new Promise((resolve) => {
+      this.activeApis[applicationId].handleFile(filePath)
         .then(() => {
           resolve(true)
         })

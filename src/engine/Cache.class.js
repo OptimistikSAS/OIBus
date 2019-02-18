@@ -40,10 +40,6 @@ class Cache {
 
       activeApi.applicationId = application.application.applicationId
       activeApi.config = application.application.caching
-      activeApi.timeout = setTimeout(
-        this.sendCallback.bind(this, activeApi.applicationId),
-        activeApi.config.sendInterval,
-      )
       activeApi.canHandleValues = application.canHandleValues
       activeApi.canHandleFiles = application.canHandleFiles
 
@@ -53,6 +49,8 @@ class Cache {
       if (application.canHandleFiles) {
         activeApi.storageFolder = this.createStorageFolder(activeApi.applicationId)
       }
+
+      this.resetTimeout(activeApi, activeApi.config.sendInterval)
 
       this.activeApis[activeApi.applicationId] = activeApi
     })
@@ -265,7 +263,6 @@ class Cache {
    * @return {void}
    */
   deleteSentFile(applicationId, filePath) {
-    // Delete original file
     fs.unlink(filePath, (error) => {
       if (error) {
         this.logger.error(error)
@@ -320,19 +317,12 @@ class Cache {
             })
         }
 
-        // Re-activate the send timer
-        application.timeout = setTimeout(
-          this.sendCallback.bind(this, application.applicationId),
-          timeout,
-        )
+        this.resetTimeout(application, timeout)
       })
       .catch((error) => {
         this.logger.error(error)
 
-        application.timeout = setTimeout(
-          this.sendCallback.bind(this, application.applicationId),
-          timeout,
-        )
+        this.resetTimeout(application, timeout)
       })
   }
 
@@ -356,26 +346,16 @@ class Cache {
                 timeout = application.config.retryInterval
               }
 
-              // Re-activate the send timer
-              application.timeout = setTimeout(
-                this.sendCallback.bind(this, application.applicationId),
-                timeout,
-              )
+              this.resetTimeout(application, timeout)
             })
         } else {
-          application.timeout = setTimeout(
-            this.sendCallback.bind(this, application.applicationId),
-            timeout,
-          )
+          this.resetTimeout(application, timeout)
         }
       })
       .catch((error) => {
         this.logger.error(error)
 
-        application.timeout = setTimeout(
-          this.sendCallback.bind(this, application.applicationId),
-          timeout,
-        )
+        this.resetTimeout(application, timeout)
       })
   }
 
@@ -392,6 +372,22 @@ class Cache {
           this.removeSentValues(applicationId, values)
         }
       })
+  }
+
+  /**
+   * Reset application timer.
+   * @param {object} application - The application
+   * @param {number} timeout - The timeout interval
+   * @return {void}
+   */
+  resetTimeout(application, timeout) {
+    if (application.timeout) {
+      clearTimeout(application.timeout)
+    }
+    application.timeout = setTimeout(
+      this.sendCallback.bind(this, application.applicationId),
+      timeout,
+    )
   }
 }
 
