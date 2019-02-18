@@ -24,6 +24,8 @@ class RawFileSender extends ApiHandler {
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
+
+    this.canHandleFiles = true
   }
 
   /**

@@ -84,9 +84,11 @@ class RawFile extends ProtocolHandler {
     const filePath = path.join(this.inputFolder, filename)
 
     this.engine.addFile(filePath)
-      .then(() => {
-        this.logger.info(`${filename} sent to Engine`)
-        this.handleFile(filename)
+      .then((success) => {
+        if (success) {
+          this.logger.info(`${filePath} sent to Engine`)
+          this.handleFile(filename)
+        }
       })
   }
 
