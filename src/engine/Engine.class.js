@@ -109,17 +109,14 @@ class Engine {
     this.cache.cacheValues({ pointId, data, timestamp }, doNotGroup)
   }
 
+  /**
+   * Add a new File from an equipment to the Engine.
+   * The Engine will forward the File to the Cache.
+   * @param {string} filePath - The path to the File
+   * @return {void}
+   */
   addFile(filePath) {
-    return new Promise((resolve) => {
-      this.cache.cacheFile(filePath)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+    this.cache.cacheFile(filePath)
   }
 
   /**

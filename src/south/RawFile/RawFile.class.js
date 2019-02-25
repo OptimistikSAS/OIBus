@@ -46,12 +46,12 @@ class RawFile extends ProtocolHandler {
         return
       }
 
-      if (!files.length) {
+      if (files.length > 0) {
+        const matchedFiles = files.filter(this.checkFile.bind(this))
+        matchedFiles.forEach(this.sendFile.bind(this))
+      } else {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
-
-      const matchedFiles = files.filter(this.checkFile.bind(this))
-      matchedFiles.forEach(this.processFile.bind(this))
     })
   }
 
@@ -78,58 +78,12 @@ class RawFile extends ProtocolHandler {
    * @param {String} filename - The filename
    * @return {void}
    */
-  processFile(filename) {
-    this.logger.debug(`Processing file ${filename}.`)
-
+  sendFile(filename) {
     const filePath = path.join(this.inputFolder, filename)
+
+    this.logger.debug(`Sending ${filePath} to Engine.`)
 
     this.engine.addFile(filePath)
-      .then((success) => {
-        if (success) {
-          this.logger.info(`${filePath} sent to Engine`)
-          this.handleFile(filename)
-        }
-      })
-  }
-
-  /**
-   * Handle the processed file.
-   * @param {String} filename - The file to handle
-   * @return {void}
-   */
-  handleFile(filename) {
-    const filePath = path.join(this.inputFolder, filename)
-    const archivedFilename = `${path.parse(filename).name}-${new Date().getTime()}${path.parse(filename).ext}`
-    const archivePath = path.join(this.archiveFolder, archivedFilename)
-
-    switch (this.handlingMode) {
-      case 'delete':
-        // Delete original file
-        fs.unlink(filePath, (error) => {
-          if (error) {
-            this.logger.error(error)
-          } else {
-            this.logger.info(`File: ${filename} deleted.`)
-          }
-        })
-        break
-      case 'move':
-        // Create archive folder if it doesn't exist
-        if (!fs.existsSync(this.archiveFolder)) {
-          fs.mkdirSync(this.archiveFolder, { recursive: true })
-        }
-
-        // Move original file into the archive folder
-        fs.rename(filePath, archivePath, (error) => {
-          if (error) {
-            this.logger.error(error)
-          } else {
-            this.logger.info(`File: ${filename} moved as ${archivedFilename}.`)
-          }
-        })
-        break
-      default:
-    }
   }
 }
 
