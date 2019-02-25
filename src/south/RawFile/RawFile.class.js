@@ -18,12 +18,10 @@ class RawFile extends ProtocolHandler {
     super(equipment, engine)
 
     const { RawFile: parameters } = this.equipment
-    const { inputFolder, archiveFolder, minAge, handlingMode, regex } = parameters
+    const { inputFolder, minAge, regex } = parameters
 
     this.inputFolder = path.resolve(inputFolder)
-    this.archiveFolder = path.resolve(archiveFolder)
     this.minAge = minAge
-    this.handlingMode = handlingMode
     this.regex = new RegExp(regex)
   }
 
