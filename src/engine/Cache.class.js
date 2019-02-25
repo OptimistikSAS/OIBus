@@ -19,11 +19,23 @@ class Cache {
     this.engine = engine
     this.logger = engine.logger
 
+    const { cacheFolder, archiveFolder, handlingMode } = engine.config.engine.caching
+
     // Create cache folder if not exists
-    this.cacheFolder = engine.config.engine.caching.cacheFolder
+    this.cacheFolder = cacheFolder
     if (!fs.existsSync(this.cacheFolder)) {
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
+
+    // Create archive folder if not exists
+    this.archiveFolder = archiveFolder
+    if (!fs.existsSync(this.archiveFolder)) {
+      fs.mkdirSync(this.archiveFolder, { recursive: true })
+    }
+
+    this.handlingMode = handlingMode
+
+    this.filesDatabase = this.createFilesDatabase('fileCache.db')
 
     this.activeApis = {}
   }
@@ -44,10 +56,7 @@ class Cache {
       activeApi.canHandleFiles = application.canHandleFiles
 
       if (application.canHandleValues) {
-        activeApi.database = this.createDatabase(`${activeApi.applicationId}.db`)
-      }
-      if (application.canHandleFiles) {
-        activeApi.storageFolder = this.createStorageFolder(activeApi.applicationId)
+        activeApi.database = this.createValuesDatabase(`${activeApi.applicationId}.db`)
       }
 
       this.resetTimeout(activeApi, activeApi.config.sendInterval)
@@ -61,7 +70,7 @@ class Cache {
    * @param {string} filename - The filename to use for the database
    * @return {sqlite3.Database} - The SQLite3 database
    */
-  createDatabase(filename) {
+  createValuesDatabase(filename) {
     const databasePath = `${this.cacheFolder}/${filename}`
     const database = new sqlite3.Database(databasePath, (openError) => {
       if (openError) {
@@ -86,18 +95,32 @@ class Cache {
   }
 
   /**
-   * Create storage directory.
-   * @param {string} directoryName - The directory name
-   * @return {string} - The storage folder
+   * Initiate SQLite3 database and create the cache table.
+   * @param {string} filename - The filename to use for the database
+   * @return {sqlite3.Database} - The SQLite3 database
    */
-  createStorageFolder(directoryName) {
-    const directoryPath = path.join(this.cacheFolder, directoryName)
+  createFilesDatabase(filename) {
+    const databasePath = `${this.cacheFolder}/${filename}`
+    const database = new sqlite3.Database(databasePath, (openError) => {
+      if (openError) {
+        this.logger.error(openError)
+      } else {
+        // Create cache table if not exists
+        const query = `CREATE TABLE IF NOT EXISTS ${this.CACHE_TABLE_NAME} (
+                        id INTEGER PRIMARY KEY,
+                        timestamp INTEGER,
+                        application TEXT,
+                        path TEXT
+                     );`
+        database.run(query, (createError) => {
+          if (createError) {
+            this.logger.error(createError)
+          }
+        })
+      }
+    })
 
-    if (!fs.existsSync(directoryPath)) {
-      fs.mkdirSync(directoryPath, { recursive: true })
-    }
-
-    return directoryPath
+    return database
   }
 
   /**
@@ -145,43 +168,39 @@ class Cache {
   }
 
   /**
-   * Copy file from source path to destination folder.
-   * @param {String} filePath - The source path
-   * @param {String} storageFolder - The destination folder
-   * @return {Promise} - The copy status
-   */
-  copyFile(filePath, storageFolder) {
-    return new Promise((resolve) => {
-      const cacheFilename = `${path.parse(filePath).name}-${new Date().getTime()}${path.parse(filePath).ext}`
-      const cachePath = path.join(storageFolder, cacheFilename)
-
-      fs.copyFile(filePath, cachePath, (error) => {
-        if (error) {
-          this.logger.error(error)
-        }
-
-        resolve()
-      })
-    })
-  }
-
-  /**
    * Cache the new raw file.
    * @param {String} filePath - The path of the raw file
-   * @return {Promise} - The cache status
+   * @return {void}
    */
   cacheFile(filePath) {
-    const actions = []
+    const timestamp = new Date().getTime()
+    const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
+    const cachePath = path.join(this.cacheFolder, cacheFilename)
 
-    Object.keys(this.activeApis).forEach((applicationId) => {
-      const { storageFolder, canHandleFiles } = this.activeApis[applicationId]
+    fs.rename(filePath, cachePath, (renameError) => {
+      if (renameError) {
+        this.logger.error(renameError)
+      } else {
+        Object.keys(this.activeApis).forEach((applicationId) => {
+          const { canHandleFiles } = this.activeApis[applicationId]
 
-      if (canHandleFiles) {
-        actions.push(this.copyFile(filePath, storageFolder))
+          if (canHandleFiles) {
+            this.filesDatabase.serialize(() => {
+              const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, application, path) 
+                             VALUES (?, ?, ?)`
+              const entries = [timestamp, applicationId, cachePath]
+              this.filesDatabase.run(insertQuery, entries, (insertError) => {
+                if (insertError) {
+                  this.logger.error(insertError)
+                } else {
+                  this.sendCallback(applicationId)
+                }
+              })
+            })
+          }
+        })
       }
     })
-
-    return Promise.all(actions)
   }
 
   /**
@@ -229,28 +248,17 @@ class Cache {
    */
   getFileToSend(applicationId) {
     return new Promise((resolve, reject) => {
-      const { storageFolder } = this.activeApis[applicationId]
-
-      fs.readdir(storageFolder, (error, files) => {
+      const query = `SELECT path 
+                     FROM ${this.CACHE_TABLE_NAME}
+                     WHERE application = ${applicationId}
+                     ORDER BY timestamp
+                     LIMIT 1`
+      this.activeApis[applicationId].database.all(query, (error, results) => {
         if (error) {
           reject(error)
-        }
-
-        const orderedFiles = files.map((fileName) => {
-          const file = {
-            name: fileName,
-            time: fs.statSync(path.join(storageFolder, fileName)).mtime.getTime(),
-          }
-
-          return file
-        })
-          .sort((a, b) => (a.time - b.time))
-          .map(file => file.name)
-
-        if (orderedFiles.length > 0) {
-          resolve(path.join(storageFolder, orderedFiles[0]))
         } else {
-          resolve(null)
+          const [{ cachePath = null }] = results
+          resolve(cachePath)
         }
       })
     })
@@ -263,11 +271,14 @@ class Cache {
    * @return {void}
    */
   deleteSentFile(applicationId, filePath) {
-    fs.unlink(filePath, (error) => {
+    const query = `DELETE FROM ${this.CACHE_TABLE_NAME}
+                   WHERE application = ${applicationId}
+                     AND path = ${filePath}`
+    this.filesDatabase.run(query, (error) => {
       if (error) {
         this.logger.error(error)
       } else {
-        this.logger.info(`File: ${filePath} deleted.`)
+        this.handleSentFile(filePath)
       }
     })
   }
@@ -335,13 +346,13 @@ class Cache {
     let timeout = application.config.sendInterval
 
     this.getFileToSend(application.applicationId)
-      .then((filePath) => {
-        if (filePath) {
+      .then((cachePath) => {
+        if (cachePath) {
           // Send the file
-          this.engine.sendFile(application.applicationId, filePath)
+          this.engine.sendFile(application.applicationId, cachePath)
             .then((success) => {
               if (success) {
-                this.deleteSentFile(application.applicationId, filePath)
+                this.deleteSentFile(application.applicationId, cachePath)
               } else {
                 timeout = application.config.retryInterval
               }
@@ -372,6 +383,54 @@ class Cache {
           this.removeSentValues(applicationId, values)
         }
       })
+  }
+
+  /**
+   * Remove file if it was sent to all North.
+   * @param {string} filePath - The file
+   * @return {void}
+   */
+  handleSentFile(filePath) {
+    const query = `SELECT COUNT(*) AS count 
+                   FROM ${this.CACHE_TABLE_NAME}
+                   WHERE path = ${filePath}`
+    this.filesDatabase.get(query, (selectError, result) => {
+      if (selectError) {
+        this.logger.error(selectError)
+      } else if (result.count === 0) {
+        const archivedFilename = path.basename(filePath)
+        const archivePath = path.join(this.archiveFolder, archivedFilename)
+
+        switch (this.handlingMode) {
+          case 'delete':
+            // Delete original file
+            fs.unlink(filePath, (error) => {
+              if (error) {
+                this.logger.error(error)
+              } else {
+                this.logger.info(`File ${filePath} deleted`)
+              }
+            })
+            break
+          case 'move':
+            // Create archive folder if it doesn't exist
+            if (!fs.existsSync(this.archiveFolder)) {
+              fs.mkdirSync(this.archiveFolder, { recursive: true })
+            }
+
+            // Move original file into the archive folder
+            fs.rename(filePath, archivePath, (renameError) => {
+              if (renameError) {
+                this.logger.error(renameError)
+              } else {
+                this.logger.info(`File ${filePath} moved to ${archivePath}`)
+              }
+            })
+            break
+          default:
+        }
+      }
+    })
   }
 
   /**

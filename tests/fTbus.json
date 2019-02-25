@@ -21,6 +21,8 @@
     },
     "caching": {
       "cacheFolder": "./cache" // Where to store the cached data
+      "archiveFolder": "./cache/archived/",  // Required when handlingMode is 'move' for files
+      "handlingMode": "delete" // move or delete files
     },
     // the scan mode section
     // reference: https://github.com/paragi/timexe
@@ -291,9 +293,7 @@
         "defaultScanMode": "every5Second",
         "RawFile": {
           "inputFolder": "./tests/RawFile/input/",
-          "archiveFolder": "./tests/RawFile/archived/",  // Required when handlingMode is 'move'
-          "minAge": 1000, // Minimum age fo files is milliseconds
-          "handlingMode": "delete", // move or delete
+          "minAge": 1000, // Minimum age for files in milliseconds
           "regex": ".txt" // Regex expression to match the filename
         },
         "points": [
