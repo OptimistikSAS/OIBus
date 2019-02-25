@@ -22,13 +22,13 @@ class Cache {
     const { cacheFolder, archiveFolder, handlingMode } = engine.config.engine.caching
 
     // Create cache folder if not exists
-    this.cacheFolder = cacheFolder
+    this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
 
     // Create archive folder if not exists
-    this.archiveFolder = archiveFolder
+    this.archiveFolder = path.resolve(archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
@@ -187,7 +187,7 @@ class Cache {
           if (canHandleFiles) {
             this.filesDatabase.serialize(() => {
               const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, application, path) 
-                             VALUES (?, ?, ?)`
+                                   VALUES (?, ?, ?)`
               const entries = [timestamp, applicationId, cachePath]
               this.filesDatabase.run(insertQuery, entries, (insertError) => {
                 if (insertError) {
@@ -250,14 +250,17 @@ class Cache {
     return new Promise((resolve, reject) => {
       const query = `SELECT path 
                      FROM ${this.CACHE_TABLE_NAME}
-                     WHERE application = ${applicationId}
+                     WHERE application = ?
                      ORDER BY timestamp
                      LIMIT 1`
-      this.activeApis[applicationId].database.all(query, (error, results) => {
+      this.filesDatabase.all(query, [applicationId], (error, results) => {
         if (error) {
           reject(error)
         } else {
-          const [{ cachePath = null }] = results
+          let cachePath = null
+          if (results.length > 0) {
+            cachePath = results[0].path
+          }
           resolve(cachePath)
         }
       })
@@ -272,9 +275,9 @@ class Cache {
    */
   deleteSentFile(applicationId, filePath) {
     const query = `DELETE FROM ${this.CACHE_TABLE_NAME}
-                   WHERE application = ${applicationId}
-                     AND path = ${filePath}`
-    this.filesDatabase.run(query, (error) => {
+                   WHERE application = ?
+                     AND path = ?`
+    this.filesDatabase.run(query, [applicationId, filePath], (error) => {
       if (error) {
         this.logger.error(error)
       } else {
@@ -393,8 +396,8 @@ class Cache {
   handleSentFile(filePath) {
     const query = `SELECT COUNT(*) AS count 
                    FROM ${this.CACHE_TABLE_NAME}
-                   WHERE path = ${filePath}`
-    this.filesDatabase.get(query, (selectError, result) => {
+                   WHERE path = ?`
+    this.filesDatabase.get(query, [filePath], (selectError, result) => {
       if (selectError) {
         this.logger.error(selectError)
       } else if (result.count === 0) {
@@ -412,7 +415,7 @@ class Cache {
               }
             })
             break
-          case 'move':
+          case 'archive':
             // Create archive folder if it doesn't exist
             if (!fs.existsSync(this.archiveFolder)) {
               fs.mkdirSync(this.archiveFolder, { recursive: true })
