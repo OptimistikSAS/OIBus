@@ -57,8 +57,8 @@ class ApiHandler {
    * @param {string} filePath - The path of the raw file
    * @return {Promise} - The handle status
    */
-  handleFiles(filePath) {
-    this.engine.logger.info('handleValues', filePath)
+  handleFile(filePath) {
+    this.engine.logger.info('handleFile', filePath)
   }
 }
 
