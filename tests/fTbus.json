@@ -20,7 +20,7 @@
       "tailable": true
     },
     "caching": {
-      "cacheFolder": "./cache" // Where to store the cached data
+      "cacheFolder": "./cache", // Where to store the cached data
       "archiveFolder": "./cache/archived/",  // Required when handlingMode is 'move' for files
       "handlingMode": "delete" // move or delete files
     },
