@@ -25267,7 +25267,7 @@ var Welcome = function Welcome() {
   });
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0___default.a.Fragment, null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", {
     className: "header"
-  }, "Hello"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, JSON.stringify(configJson)));
+  }, "Hello"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("pre", null, JSON.stringify(configJson, ' ', 2)));
 };
 
 react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render(react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Welcome, null), document.getElementById('root'));
