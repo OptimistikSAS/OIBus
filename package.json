@@ -80,5 +80,8 @@
     "webpack": "^4.29.5",
     "webpack-cli": "^3.2.3"
   },
-  "bin": "./src/index.js"
+  "bin": "./src/index.js",
+  "pkg": {
+    "assets": "build/**/*"
+  }
 }
