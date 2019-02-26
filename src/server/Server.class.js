@@ -33,6 +33,7 @@ class Server {
     this.port = port
     this.user = user
     this.password = password
+
     // Development style logging middleware
     // Recommended that you .use() this middleware near the top
     //  to "wrap" all subsequent middleware.
@@ -43,6 +44,7 @@ class Server {
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
     this.app.use(helmet())
+
     // filter IP adresses
     this.app.use(async (ctx, next) => {
       const { ip } = ctx.request
@@ -92,6 +94,7 @@ class Server {
 
     // Middleware for Koa that adds useful methods to the Koa context.
     this.app.use(respond())
+
     // Middleware for beautiful JSON
     this.app.use(json())
 
