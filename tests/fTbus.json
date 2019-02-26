@@ -21,8 +21,8 @@
     },
     "caching": {
       "cacheFolder": "./cache", // Where to store the cached data
-      "archiveFolder": "./cache/archived/",  // Required when handlingMode is 'archive' for files
-      "handlingMode": "archive" // move or delete files
+      "archiveFolder": "./cache/archived/",  // Required when archiveMode is 'archive' for files
+      "archiveMode": "archive" // move or delete files
     },
     // the scan mode section
     // reference: https://github.com/paragi/timexe
