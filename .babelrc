@@ -1,9 +1,9 @@
 {
-  "presets": 
-  [
-    [
-      "env",
-      {"targets": { "node": "10" }}
-    ]
-  ]
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties"
+  ],
 }
