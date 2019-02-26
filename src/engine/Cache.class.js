@@ -19,7 +19,7 @@ class Cache {
     this.engine = engine
     this.logger = engine.logger
 
-    const { cacheFolder, archiveFolder, handlingMode } = engine.config.engine.caching
+    const { cacheFolder, archiveFolder, archiveMode } = engine.config.engine.caching
 
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
@@ -33,7 +33,7 @@ class Cache {
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
 
-    this.handlingMode = handlingMode
+    this.archiveMode = archiveMode
 
     this.filesDatabase = this.createFilesDatabase('fileCache.db')
 
@@ -403,7 +403,7 @@ class Cache {
         const archivedFilename = path.basename(filePath)
         const archivePath = path.join(this.archiveFolder, archivedFilename)
 
-        switch (this.handlingMode) {
+        switch (this.archiveMode) {
           case 'delete':
             // Delete original file
             fs.unlink(filePath, (error) => {
