@@ -18,7 +18,7 @@ const Welcome = () => {
   return (
     <>
       <h1 className="header">Hello</h1>
-      <p>{JSON.stringify(configJson)}</p>
+      <pre>{JSON.stringify(configJson, ' ', 2)}</pre>
     </>
   )
 }
