@@ -8,7 +8,8 @@ module.exports = {
     publicPath: '/',
     filename: 'bundle.js',
   },
-  devServer: { contentBase: './build' },
+  // devServer: { contentBase: './build' },
+  devtool: 'source-map',
   module: {
     rules: [
       {
