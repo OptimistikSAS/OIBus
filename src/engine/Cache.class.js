@@ -46,8 +46,7 @@ class Cache {
    * @return {void}
    */
   initialize(applications) {
-    Object.keys(applications).forEach((applicationId) => {
-      const application = applications[applicationId]
+    Object.values(applications).forEach((application) => {
       const activeApi = {}
 
       activeApi.applicationId = application.application.applicationId
@@ -135,8 +134,8 @@ class Cache {
    * @return {void}
    */
   cacheValues(value, doNotGroup) {
-    Object.keys(this.activeApis).forEach((applicationId) => {
-      const { database, config, canHandleValues } = this.activeApis[applicationId]
+    Object.entries(this.activeApis).forEach(([applicationId, activeApi]) => {
+      const { database, config, canHandleValues } = activeApi
 
       if (canHandleValues) {
         database.serialize(() => {
@@ -181,8 +180,8 @@ class Cache {
       if (renameError) {
         this.logger.error(renameError)
       } else {
-        Object.keys(this.activeApis).forEach((applicationId) => {
-          const { canHandleFiles } = this.activeApis[applicationId]
+        Object.entries(this.activeApis).forEach(([applicationId, activeApi]) => {
+          const { canHandleFiles } = activeApi
 
           if (canHandleFiles) {
             this.filesDatabase.serialize(() => {
