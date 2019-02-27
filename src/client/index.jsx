@@ -11,33 +11,19 @@ import South from './South.jsx'
 import North from './North.jsx'
 import Engine from './Engine.jsx'
 
-const Main = () => {
-  const [configJson, setConfigJson] = React.useState()
-  React.useEffect(() => {
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          setConfigJson(config)
-        })
-      }
-      return null
-    })
-  })
-  return (
-    <Router>
-      <div>
-        <TopHeader />
-        <Switch>
-          <Route exact path="/" render={() => <Welcome />} />
-          <Route exact path="/engine" render={() => <Engine configJson={configJson} />} />
-          <Route exact path="/south" render={() => <South configJson={configJson} />} />
-          <Route exact path="/north" render={() => <North configJson={configJson} />} />
-          <Route component={NotFound} />
-        </Switch>
-      </div>
-    </Router>
-  )
-}
+const Main = () => (
+  <Router>
+    <div>
+      <TopHeader />
+      <Switch>
+        <Route exact path="/" component={Welcome} />
+        <Route exact path="/engine" component={Engine} />
+        <Route exact path="/south" component={South} />
+        <Route exact path="/north" component={North} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
+  </Router>
+)
 
 ReactDOM.render(<Main />, document.getElementById('root'))
