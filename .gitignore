@@ -5,3 +5,5 @@ dist/
 docs/
 logs/
 cache/
+build/bundle.js.map
+build/bundle.js

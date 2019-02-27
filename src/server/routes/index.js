@@ -1,17 +1,15 @@
 const Router = require('koa-router')
 const koaSend = require('koa-send')
 
-const indexController = require('../controllers/indexController')
-const infoController = require('../controllers/infoController')
+const configController = require('../controllers/configController')
 
 const router = new Router()
-
+// route for API server
+router.get('/config', configController.getConfig)
 // route for client bundle (static files)
-router.get('/index.html', async ctx => koaSend(ctx, ctx.path, { root: `${__dirname}/../../../build` }))
 router.get('/bundle.js', async ctx => koaSend(ctx, ctx.path, { root: `${__dirname}/../../../build` }))
 router.get('/bundle.js.map', async ctx => koaSend(ctx, ctx.path, { root: `${__dirname}/../../../build` }))
-// route for API server
-router.get('/', indexController.getIndex)
-router.get('/infos', infoController.getInfo)
+router.get('/*', async ctx => koaSend(ctx, 'index.html', { root: `${__dirname}/../../../build` }))
+
 
 module.exports = router
