@@ -10,18 +10,20 @@ const TopHeader = () => {
   }
   return (
     <Navbar color="dark" dark expand="md">
-      <NavbarBrand href="/index.html">OIBus</NavbarBrand>
+      <NavbarBrand tag={Link} to="/">
+        OIBus
+      </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
         <Nav className="ml-auto" navbar>
-          <NavItem>
-            <Link to="/engine">Engine</Link>
+          <NavItem tag={Link} to="/engine">
+            Engine
           </NavItem>
-          <NavItem>
-            <Link to="/north">North</Link>
+          <NavItem tag={Link} to="/north">
+            North
           </NavItem>
-          <NavItem>
-            <Link to="/south">South</Link>
+          <NavItem tag={Link} to="/south">
+            South
           </NavItem>
         </Nav>
       </Collapse>

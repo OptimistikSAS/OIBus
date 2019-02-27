@@ -1,14 +1,27 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 // import { } from 'reactstrap'
 
-const Engine = ({ configJson }) => (
-  <>
-    <h1>Engine</h1>
-    <pre>{JSON.stringify(configJson.engine, ' ', 2)}</pre>
-  </>
-)
-export default Engine
+const Engine = () => {
+  const [configJson, setConfigJson] = React.useState()
+  React.useEffect(() => {
+    // eslint-disable-next-line consistent-return
+    fetch('/config').then((response) => {
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+        return response.json().then(({ config }) => {
+          setConfigJson(config)
+        })
+      }
+    })
+  }, [])
 
-Engine.propTypes = { configJson: PropTypes.object.isRequired }
+  return (
+    <>
+      <h1>Engine</h1>
+      <pre>{configJson && JSON.stringify(configJson.engine, ' ', 2)}</pre>
+    </>
+  )
+}
+
+export default Engine
