@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const sqlite3 = require('sqlite3')
+const databaseService = require('../services/database.service')
 
 /**
  * Local cache implementation to group events and store them when the communication with North is down.
@@ -14,8 +14,6 @@ class Cache {
    * @return {void}
    */
   constructor(engine) {
-    this.CACHE_TABLE_NAME = 'cache'
-
     this.engine = engine
     this.logger = engine.logger
 
@@ -35,7 +33,7 @@ class Cache {
 
     this.archiveMode = archiveMode
 
-    this.filesDatabase = this.createFilesDatabase('fileCache.db')
+    this.filesDatabase = databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
 
     this.activeApis = {}
   }
@@ -55,71 +53,13 @@ class Cache {
       activeApi.canHandleFiles = application.canHandleFiles
 
       if (application.canHandleValues) {
-        activeApi.database = this.createValuesDatabase(`${activeApi.applicationId}.db`)
+        activeApi.database = databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
       }
 
       this.resetTimeout(activeApi, activeApi.config.sendInterval)
 
       this.activeApis[activeApi.applicationId] = activeApi
     })
-  }
-
-  /**
-   * Initiate SQLite3 database and create the cache table.
-   * @param {string} filename - The filename to use for the database
-   * @return {sqlite3.Database} - The SQLite3 database
-   */
-  createValuesDatabase(filename) {
-    const databasePath = `${this.cacheFolder}/${filename}`
-    const database = new sqlite3.Database(databasePath, (openError) => {
-      if (openError) {
-        this.logger.error(openError)
-      } else {
-        // Create cache table if not exists
-        const query = `CREATE TABLE IF NOT EXISTS ${this.CACHE_TABLE_NAME} (
-                        id INTEGER PRIMARY KEY,
-                        timestamp INTEGER,
-                        data TEXT,
-                        point_id TEXT
-                     );`
-        database.run(query, (createError) => {
-          if (createError) {
-            this.logger.error(createError)
-          }
-        })
-      }
-    })
-
-    return database
-  }
-
-  /**
-   * Initiate SQLite3 database and create the cache table.
-   * @param {string} filename - The filename to use for the database
-   * @return {sqlite3.Database} - The SQLite3 database
-   */
-  createFilesDatabase(filename) {
-    const databasePath = `${this.cacheFolder}/${filename}`
-    const database = new sqlite3.Database(databasePath, (openError) => {
-      if (openError) {
-        this.logger.error(openError)
-      } else {
-        // Create cache table if not exists
-        const query = `CREATE TABLE IF NOT EXISTS ${this.CACHE_TABLE_NAME} (
-                        id INTEGER PRIMARY KEY,
-                        timestamp INTEGER,
-                        application TEXT,
-                        path TEXT
-                     );`
-        database.run(query, (createError) => {
-          if (createError) {
-            this.logger.error(createError)
-          }
-        })
-      }
-    })
-
-    return database
   }
 
   /**
@@ -138,30 +78,16 @@ class Cache {
       const { database, config, canHandleValues } = activeApi
 
       if (canHandleValues) {
-        database.serialize(() => {
-          const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, data, point_id) 
-                             VALUES (?, ?, ?)`
-          const entries = [value.timestamp, encodeURI(value.data), value.pointId]
-          database.run(insertQuery, entries, (error) => {
-            if (error) {
-              this.logger.error(error)
-            }
-          })
+        databaseService.saveValue(database, value)
 
-          if (doNotGroup) {
-            this.sendValues(applicationId, [value])
-          } else {
-            const countQuery = `SELECT COUNT(*) AS nr_entries
-                                FROM ${this.CACHE_TABLE_NAME}`
-            database.get(countQuery, (error, result) => {
-              if (!error) {
-                if (result.nr_entries >= config.groupCount) {
-                  this.sendCallback(applicationId)
-                }
-              }
-            })
+        if (doNotGroup) {
+          this.sendValues(applicationId, [value])
+        } else {
+          const count = databaseService.getValuesCount(database)
+          if (count >= config.groupCount) {
+            this.sendCallback(applicationId)
           }
-        })
+        }
       }
     })
   }
@@ -184,110 +110,10 @@ class Cache {
           const { canHandleFiles } = activeApi
 
           if (canHandleFiles) {
-            this.filesDatabase.serialize(() => {
-              const insertQuery = `INSERT INTO ${this.CACHE_TABLE_NAME} (timestamp, application, path) 
-                                   VALUES (?, ?, ?)`
-              const entries = [timestamp, applicationId, cachePath]
-              this.filesDatabase.run(insertQuery, entries, (insertError) => {
-                if (insertError) {
-                  this.logger.error(insertError)
-                } else {
-                  this.sendCallback(applicationId)
-                }
-              })
-            })
+            databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+            this.sendCallback(applicationId)
           }
         })
-      }
-    })
-  }
-
-  /**
-   * Get values to send to a given North application.
-   * @param {string} applicationId - The application ID
-   * @return {Promise} - The query status
-   */
-  getValuesToSend(applicationId) {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT id, timestamp, data, point_id AS pointId 
-                     FROM ${this.CACHE_TABLE_NAME}
-                     ORDER BY timestamp
-                     LIMIT ${this.activeApis[applicationId].config.groupCount}`
-      this.activeApis[applicationId].database.all(query, (error, results) => {
-        if (error) {
-          reject(error)
-        } else {
-          let values = null
-          if (results.length > 0) {
-            values = results.map((value) => {
-              value.data = decodeURI(value.data)
-              return value
-            })
-          }
-          resolve(values)
-        }
-      })
-    })
-  }
-
-  /**
-   * Remove sent values from the cache for a given North application.
-   * @param {string} applicationId - The application ID
-   * @param {Object} values - The values to remove from the cache
-   * @return {void}
-   */
-  removeSentValues(applicationId, values) {
-    const ids = values.map(value => value.id).join()
-    const query = `DELETE FROM ${this.CACHE_TABLE_NAME}
-                   WHERE id IN (${ids})`
-    this.activeApis[applicationId].database.run(query, (error) => {
-      if (error) {
-        this.logger.error(error)
-      }
-    })
-  }
-
-  /**
-   * Get file to send to a given North application.
-   * @param {string} applicationId - The application ID
-   * @return {Promise} - The file read status
-   */
-  getFileToSend(applicationId) {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT path 
-                     FROM ${this.CACHE_TABLE_NAME}
-                     WHERE application = ?
-                     ORDER BY timestamp
-                     LIMIT 1`
-      this.filesDatabase.all(query, [applicationId], (error, results) => {
-        if (error) {
-          reject(error)
-        } else {
-          let cachePath = null
-          if (results.length > 0) {
-            cachePath = results[0].path
-          }
-          resolve(cachePath)
-        }
-      })
-    })
-  }
-
-  /**
-   * Delete sent file from the cache for a given North application.
-   * @param {string} applicationId - The application ID
-   * @param {String} filePath - The file to delete from the cache
-   * @return {void}
-   */
-  deleteSentFile(applicationId, filePath) {
-    const query = `DELETE FROM ${this.CACHE_TABLE_NAME}
-                   WHERE application = ?
-                     AND path = ?`
-    this.filesDatabase.run(query, [applicationId, filePath], (error) => {
-      if (error) {
-        this.logger.error(error)
-      } else {
-        this.handleSentFile(filePath)
       }
     })
   }
@@ -318,7 +144,7 @@ class Cache {
     let success = true
 
     try {
-      const values = await this.getValuesToSend(application.applicationId)
+      const values = databaseService.getValuesToSend(application.database, application.config.groupCount)
 
       if (values) {
         success = await this.sendValues(application.applicationId, values)
@@ -341,13 +167,14 @@ class Cache {
     let success = true
 
     try {
-      const filePath = await this.getFileToSend(application.applicationId)
+      const filePath = databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
         success = await this.engine.sendFile(application.applicationId, filePath)
 
         if (success) {
-          this.deleteSentFile(application.applicationId, filePath)
+          databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
+          this.handleSentFile(filePath)
         }
       }
     } catch (error) {
@@ -369,7 +196,7 @@ class Cache {
     const success = await this.engine.sendValues(applicationId, values)
 
     if (success) {
-      this.removeSentValues(applicationId, values)
+      databaseService.removeSentValues(this.activeApis[applicationId].database, values)
     }
 
     return success
@@ -381,46 +208,40 @@ class Cache {
    * @return {void}
    */
   handleSentFile(filePath) {
-    const query = `SELECT COUNT(*) AS count 
-                   FROM ${this.CACHE_TABLE_NAME}
-                   WHERE path = ?`
-    this.filesDatabase.get(query, [filePath], (selectError, result) => {
-      if (selectError) {
-        this.logger.error(selectError)
-      } else if (result.count === 0) {
-        const archivedFilename = path.basename(filePath)
-        const archivePath = path.join(this.archiveFolder, archivedFilename)
+    const count = databaseService.getFileCount(this.filesDatabase, filePath)
+    if (count === 0) {
+      const archivedFilename = path.basename(filePath)
+      const archivePath = path.join(this.archiveFolder, archivedFilename)
 
-        switch (this.archiveMode) {
-          case 'delete':
-            // Delete original file
-            fs.unlink(filePath, (error) => {
-              if (error) {
-                this.logger.error(error)
-              } else {
-                this.logger.info(`File ${filePath} deleted`)
-              }
-            })
-            break
-          case 'archive':
-            // Create archive folder if it doesn't exist
-            if (!fs.existsSync(this.archiveFolder)) {
-              fs.mkdirSync(this.archiveFolder, { recursive: true })
+      switch (this.archiveMode) {
+        case 'delete':
+          // Delete original file
+          fs.unlink(filePath, (error) => {
+            if (error) {
+              this.logger.error(error)
+            } else {
+              this.logger.info(`File ${filePath} deleted`)
             }
+          })
+          break
+        case 'archive':
+          // Create archive folder if it doesn't exist
+          if (!fs.existsSync(this.archiveFolder)) {
+            fs.mkdirSync(this.archiveFolder, { recursive: true })
+          }
 
-            // Move original file into the archive folder
-            fs.rename(filePath, archivePath, (renameError) => {
-              if (renameError) {
-                this.logger.error(renameError)
-              } else {
-                this.logger.info(`File ${filePath} moved to ${archivePath}`)
-              }
-            })
-            break
-          default:
-        }
+          // Move original file into the archive folder
+          fs.rename(filePath, archivePath, (renameError) => {
+            if (renameError) {
+              this.logger.error(renameError)
+            } else {
+              this.logger.info(`File ${filePath} moved to ${archivePath}`)
+            }
+          })
+          break
+        default:
       }
-    })
+    }
   }
 
   /**
