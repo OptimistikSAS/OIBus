@@ -9,12 +9,14 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
+protocolList.RawFile = require('../south/RawFile/RawFile.class')
 
 // North classes
 const apiList = {}
 apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
+apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -108,6 +110,16 @@ class Engine {
   }
 
   /**
+   * Add a new File from an equipment to the Engine.
+   * The Engine will forward the File to the Cache.
+   * @param {string} filePath - The path to the File
+   * @return {void}
+   */
+  addFile(filePath) {
+    this.cache.cacheFile(filePath)
+  }
+
+  /**
    * Send values to a North application.
    * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
@@ -124,6 +136,24 @@ class Engine {
           resolve(false)
         })
     })
+  }
+
+  /**
+   * Send file to a North application.
+   * @param {string} applicationId - The application ID
+   * @param {string} filePath - The file to send
+   * @return {Promise} - The send promise
+   */
+  async sendFile(applicationId, filePath) {
+    let success = false
+
+    try {
+      success = await this.activeApis[applicationId].handleFile(filePath)
+    } catch (error) {
+      this.logger.error(error)
+    }
+
+    return success
   }
 
   /**

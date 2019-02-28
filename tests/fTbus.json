@@ -20,7 +20,9 @@
       "tailable": true
     },
     "caching": {
-      "cacheFolder": "./cache" // Where to store the cached data
+      "cacheFolder": "./cache", // Where to store the cached data
+      "archiveFolder": "./cache/archived/",  // Required when archiveMode is 'archive' for files
+      "archiveMode": "archive" // move or delete files
     },
     // the scan mode section
     // reference: https://github.com/paragi/timexe
@@ -283,6 +285,22 @@
             "pointId": "./111111.flow_rate"
           }
         ]
+      },
+      {
+        "equipmentId": "RawFileTransfer",
+        "enabled": true,
+        "protocol": "RawFile",
+        "defaultScanMode": "every5Second",
+        "RawFile": {
+          "inputFolder": "./tests/RawFile/input/",
+          "minAge": 1000, // Minimum age for files in milliseconds
+          "regex": ".txt" // Regex expression to match the filename
+        },
+        "points": [
+          {
+            "pointId": "RawFileTransferPointId"
+          }
+        ]
       }
     ]
   },
@@ -334,6 +352,24 @@
           "sendInterval": 5000, // Send interval in milliseconds
           "retryInterval": 10000, // Retry interval in milliseconds
           "groupCount": 3 // Number of values to send in one step
+        }
+      },
+      {
+        "applicationId": "RawFileSender",
+        "enabled": true,
+        "api":"RawFileSender",
+        "RawFileSender":{
+          "host": "https://demo.oianalytics.fr",
+          "endpoint": "/api/optimistik/data/values/upload",
+          "authentication": {
+            "type": "Basic", // Only Basic authentication is supported at this moment
+            "username":"QFPELALDNSUO6BUV8SJ",
+            "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+          }
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
         }
       }
     ]
