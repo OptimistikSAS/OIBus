@@ -7,6 +7,9 @@ class ApiHandler {
    * @return {void}
    */
   constructor(applicationParameters, engine) {
+    this.canHandleValues = false
+    this.canHandleFiles = false
+
     this.application = applicationParameters
     this.engine = engine
     this.logger = engine.logger
@@ -41,12 +44,21 @@ class ApiHandler {
   }
 
   /**
-   * Method called by the Engine to handle values.
-   * @param {Object[]} values - The values
+   * Method called by the Engine to handle a values.
+   * @param {object[]} values - The values to handle
    * @return {Promise} - The handle status
    */
   handleValues(values) {
     this.engine.logger.info('handleValues', values)
+  }
+
+  /**
+   * Method called by the Engine to handle a raw file.
+   * @param {string} filePath - The path of the raw file
+   * @return {Promise} - The handle status
+   */
+  handleFile(filePath) {
+    this.engine.logger.info('handleFile', filePath)
   }
 }
 
