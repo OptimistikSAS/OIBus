@@ -33,6 +33,19 @@ const escapeSpace = (chars) => {
 
 class TimescaleDB extends ApiHandler {
   /**
+   * Constructor for TimescaleDB
+   * @constructor
+   * @param {Object} applicationParameters - The application parameters
+   * @param {Engine} engine - The Engine
+   * @return {void}
+   */
+  constructor(applicationParameters, engine) {
+    super(applicationParameters, engine)
+
+    this.canHandleValues = true
+  }
+
+  /**
    * Handle values by sending them to InfluxDB.
    * @param {object[]} values - The values
    * @return {Promise} - The handle status
