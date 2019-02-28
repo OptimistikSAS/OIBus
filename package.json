@@ -21,6 +21,7 @@
     "@koa/cors": "^2.2.2",
     "async": "^2.6.1",
     "basic-auth": "^2.0.1",
+    "better-sqlite3": "^5.4.0",
     "fast-csv": "^2.4.1",
     "form-data": "^2.3.3",
     "jsmodbus": "^3.1.0",
@@ -39,7 +40,6 @@
     "node-opcua": "^0.5.5",
     "pg": "^7.7.1",
     "sprintf-js": "^1.1.2",
-    "sqlite3": "^4.0.6",
     "timexe": "^0.9.13",
     "winston": "^3.1.0"
   },
