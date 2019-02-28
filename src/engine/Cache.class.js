@@ -217,7 +217,14 @@ class Cache {
         if (error) {
           reject(error)
         } else {
-          resolve(results)
+          let values = null
+          if (results.length > 0) {
+            values = results.map((value) => {
+              value.data = decodeURI(value.data)
+              return value
+            })
+          }
+          resolve(values)
         }
       })
     })
@@ -307,36 +314,22 @@ class Cache {
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  handleValues(application) {
-    let timeout = application.config.sendInterval
+  async handleValues(application) {
+    let success = true
 
-    this.getValuesToSend(application.applicationId)
-      .then((values) => {
-        if (values.length > 0) {
-          // Decode values
-          const decodedValues = values.map((value) => {
-            value.data = decodeURI(value.data)
-            return value
-          })
+    try {
+      const values = await this.getValuesToSend(application.applicationId)
 
-          // Send the values
-          this.engine.sendValues(application.applicationId, decodedValues)
-            .then((success) => {
-              if (success) {
-                this.removeSentValues(application.applicationId, values)
-              } else {
-                timeout = application.config.retryInterval
-              }
-            })
-        }
+      if (values) {
+        success = await this.sendValues(application.applicationId, values)
+      }
+    } catch (error) {
+      this.logger.error(error)
+      success = false
+    }
 
-        this.resetTimeout(application, timeout)
-      })
-      .catch((error) => {
-        this.logger.error(error)
-
-        this.resetTimeout(application, timeout)
-      })
+    const timeout = success ? application.config.sendInterval : application.config.retryInterval
+    this.resetTimeout(application, timeout)
   }
 
   /**
@@ -344,32 +337,26 @@ class Cache {
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  handleFiles(application) {
-    let timeout = application.config.sendInterval
+  async handleFiles(application) {
+    let success = true
 
-    this.getFileToSend(application.applicationId)
-      .then((cachePath) => {
-        if (cachePath) {
-          // Send the file
-          this.engine.sendFile(application.applicationId, cachePath)
-            .then((success) => {
-              if (success) {
-                this.deleteSentFile(application.applicationId, cachePath)
-              } else {
-                timeout = application.config.retryInterval
-              }
+    try {
+      const filePath = await this.getFileToSend(application.applicationId)
 
-              this.resetTimeout(application, timeout)
-            })
-        } else {
-          this.resetTimeout(application, timeout)
+      if (filePath) {
+        success = await this.engine.sendFile(application.applicationId, filePath)
+
+        if (success) {
+          this.deleteSentFile(application.applicationId, filePath)
         }
-      })
-      .catch((error) => {
-        this.logger.error(error)
+      }
+    } catch (error) {
+      this.logger.error(error)
+      success = false
+    }
 
-        this.resetTimeout(application, timeout)
-      })
+    const timeout = success ? application.config.sendInterval : application.config.retryInterval
+    this.resetTimeout(application, timeout)
   }
 
   /**
@@ -378,13 +365,14 @@ class Cache {
    * @param {object[]} values - The values to send
    * @return {void}
    */
-  sendValues(applicationId, values) {
-    this.engine.sendValues(applicationId, values)
-      .then((success) => {
-        if (success) {
-          this.removeSentValues(applicationId, values)
-        }
-      })
+  async sendValues(applicationId, values) {
+    const success = await this.engine.sendValues(applicationId, values)
+
+    if (success) {
+      this.removeSentValues(applicationId, values)
+    }
+
+    return success
   }
 
   /**
