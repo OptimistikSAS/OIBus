@@ -144,17 +144,16 @@ class Engine {
    * @param {string} filePath - The file to send
    * @return {Promise} - The send promise
    */
-  sendFile(applicationId, filePath) {
-    return new Promise((resolve) => {
-      this.activeApis[applicationId].handleFile(filePath)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  async sendFile(applicationId, filePath) {
+    let success = false
+
+    try {
+      success = await this.activeApis[applicationId].handleFile(filePath)
+    } catch (error) {
+      this.logger.error(error)
+    }
+
+    return success
   }
 
   /**

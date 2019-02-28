@@ -33,40 +33,37 @@ class RawFileSender extends ApiHandler {
    * @param {String} filePath - The path of the file
    * @return {Promise} - The send status
    */
-  handleFile(filePath) {
-    return new Promise((resolve, reject) => {
-      const headers = {}
+  async handleFile(filePath) {
+    const headers = {}
 
-      // Generate authentication header
-      if (this.authentication.type === 'Basic') {
-        const basic = Buffer.from(`${this.authentication.username}:${this.authentication.password}`).toString('base64')
-        headers.Authorization = `Basic ${basic}`
+    // Generate authentication header
+    if (this.authentication.type === 'Basic') {
+      const basic = Buffer.from(`${this.authentication.username}:${this.authentication.password}`).toString('base64')
+      headers.Authorization = `Basic ${basic}`
+    }
+
+    // Create form data with the file
+    const body = new FormData()
+    const readStream = fs.createReadStream(filePath)
+    const bodyOptions = { filename: path.basename(filePath) }
+    body.append('file', readStream, bodyOptions)
+
+    const fetchOptions = {
+      method: 'POST',
+      headers,
+      body,
+    }
+
+    try {
+      const response = await fetch(this.url, fetchOptions)
+      if (!response.ok) {
+        return Promise.reject(new Error(response.statusText))
       }
+    } catch (error) {
+      return Promise.reject(error)
+    }
 
-      // Create form data with the file
-      const body = new FormData()
-      const readStream = fs.createReadStream(filePath)
-      const options = { filename: path.basename(filePath) }
-      body.append('file', readStream, options)
-
-      // Send the file
-      fetch(this.url, {
-        method: 'POST',
-        headers,
-        body,
-      })
-        .then((response) => {
-          if (response.ok) {
-            resolve()
-          } else {
-            reject(response.statusText)
-          }
-          resolve()
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    })
+    return true
   }
 }
 
