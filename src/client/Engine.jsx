@@ -16,7 +16,7 @@ const Engine = () => {
       }
     })
   }, [])
-  const log = type => console.log.bind(console, type)
+  const log = type => console.info.bind(console, type)
   return (
     <>
       <h1>Engine</h1>
