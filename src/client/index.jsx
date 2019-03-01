@@ -9,7 +9,7 @@ import Welcome from './Welcome.jsx'
 import NotFound from './NotFound.jsx'
 import South from './South.jsx'
 import North from './North.jsx'
-import Engine from './Engine.jsx'
+import Engine from '../engine/Engine.jsx'
 
 const Main = () => (
   <Router>

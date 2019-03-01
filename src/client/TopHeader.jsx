@@ -15,7 +15,7 @@ const TopHeader = () => {
       </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
-        <Nav className="ml-auto" navbar>
+        <Nav navbar>
           <NavItem tag={Link} to="/engine">
             Engine
           </NavItem>
