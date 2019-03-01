@@ -134,7 +134,7 @@
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
