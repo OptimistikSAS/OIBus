@@ -19,11 +19,13 @@ module.exports = {
       },
       {
         test: /\.(less|css)$/,
-        use: ['style-loader', 'css-loader', 'less-loader'],
+        use: [
+          { loader: 'style-loader' }, // creates style nodes from JS strings
+          { loader: 'css-loader' }, // translates CSS into CommonJS
+          { loader: 'less-loader' }, // compiles Less to CSS
+        ],
       },
     ],
   },
-  plugins: [
-    new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') }),
-  ],
+  plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') })],
 }
