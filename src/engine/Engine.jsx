@@ -1,5 +1,5 @@
 import React from 'react'
-import Form from 'react-jsonschema-form'
+import Form from 'react-jsonschema-form-bs4'
 
 const Engine = () => {
   const [configJson, setConfigJson] = React.useState()
@@ -16,8 +16,7 @@ const Engine = () => {
   }, [])
   const log = type => console.info.bind(console, type)
   return (
-    <div>
-      <h1>Engine</h1>
+    <>
       <Form
         formData={configJson && configJson.engine}
         schema={Engine.schema}
@@ -28,7 +27,7 @@ const Engine = () => {
         onError={log('errors')}
       />
       <pre>{configJson && JSON.stringify(configJson.engine, ' ', 2)}</pre>
-    </div>
+    </>
   )
 }
 
@@ -69,17 +68,15 @@ Engine.schema = {
       title: 'Scan Modes',
       items: {
         type: 'object',
-        required: ['ScanMode', 'cronTime'],
+        required: ['scanMode', 'cronTime'],
         properties: {
           scanMode: {
             type: 'string',
             title: 'Scan Mode',
-            description: 'Name of the scan mode',
           },
           cronTime: {
             type: 'string',
             title: 'Cron Time',
-            description: 'Enter with the cron syntax',
           },
         },
       },

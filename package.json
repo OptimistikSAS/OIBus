@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.3.4",
+    "@fortawesome/fontawesome-free": "^5.7.2",
     "@koa/cors": "^2.2.3",
     "async": "^2.6.2",
     "basic-auth": "^2.0.1",
@@ -48,6 +49,7 @@
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "react-jsonschema-form": "^1.2.1",
+    "react-jsonschema-form-bs4": "^1.0.6",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
     "reactstrap": "^7.1.0",
