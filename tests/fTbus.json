@@ -134,7 +134,7 @@
       },
       {
         "equipmentId": "MQTTServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "MQTT",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "listen",
@@ -339,7 +339,7 @@
       },
       {
         "applicationId": "BaseTimescale",
-        "enabled": true,
+        "enabled": false,
         "api": "TimescaleDB",
         // "minimumBuffer:": 10, // group by 10 when possible
         "TimescaleDB": {
