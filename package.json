@@ -38,7 +38,6 @@
     "koa-react-router": "^3.0.0",
     "koa-respond": "^2.1.0",
     "koa-router": "^7.4.0",
-    "koa-send": "^5.0.0",
     "koa-static": "^5.0.0",
     "minimist": "^1.2.0",
     "mqtt": "^2.18.8",

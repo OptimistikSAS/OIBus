@@ -5,6 +5,7 @@ const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
+const serve = require('koa-static')
 
 const authCrypto = require('./middlewares/auth') // ./auth
 
@@ -101,6 +102,9 @@ class Server {
     // Define routes
     this.app.use(router.routes())
     this.app.use(router.allowedMethods())
+
+    // Static files for client bundle
+    this.app.use(serve(`${__dirname}/../../build`))
   }
 
   listen() {
