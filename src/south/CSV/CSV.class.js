@@ -18,7 +18,7 @@ class CSV extends ProtocolHandler {
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (err, files) => {
       if (err) {
-        this.logger.error(err)
+        this.logger.error(`readir: ${err}`)
         return
       }
       if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
