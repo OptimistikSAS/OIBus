@@ -1,11 +1,8 @@
 const Router = require('koa-router')
 
-const indexController = require('../controllers/indexController')
-const infoController = require('../controllers/infoController')
+const configController = require('../controllers/configController')
 
 const router = new Router()
-
-router.get('/', indexController.getIndex)
-router.get('/infos', infoController.getInfo)
+router.get('/config', configController.getConfig)
 
 module.exports = router
