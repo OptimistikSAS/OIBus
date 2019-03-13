@@ -123,6 +123,17 @@ class OPCUA extends ProtocolHandler {
       }
     })
   }
+
+  /**
+   * Close the connection
+   * @return {void}
+   */
+  async disconnect() {
+    if (this.connected) {
+      await this.client.disconnect()
+      this.connected = false
+    }
+  }
 }
 
 module.exports = OPCUA
