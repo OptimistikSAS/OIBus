@@ -23,7 +23,6 @@
     "@koa/cors": "^2.2.3",
     "async": "^2.6.2",
     "basic-auth": "^2.0.1",
-    "better-sqlite3": "^5.4.0",
     "bootstrap-less-port": "^0.5.0",
     "fast-csv": "^2.4.1",
     "form-data": "^2.3.3",
@@ -53,6 +52,7 @@
     "react-router-dom": "^4.3.1",
     "reactstrap": "^7.1.0",
     "sprintf-js": "^1.1.2",
+    "sqlite": "^3.0.2",
     "timexe": "^0.9.13",
     "winston": "^3.2.1"
   },
