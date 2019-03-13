@@ -39,6 +39,15 @@ class MQTT extends ProtocolHandler {
       })
     })
   }
+
+
+  /**
+   * Close the connection
+   * @return {void}
+   */
+  disconnect() {
+    this.client.end(true)
+  }
 }
 
 module.exports = MQTT

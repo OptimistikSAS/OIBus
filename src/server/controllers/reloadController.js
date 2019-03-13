@@ -1,9 +1,11 @@
 const reload = (ctx) => {
-  ctx.ok('Reloading...')
+  ctx.app.engine.stop()
 
   setTimeout(() => {
     process.exit(1)
-  }, 1000)
+  }, 10000)
+
+  ctx.ok('Reloading...')
 }
 
 module.exports = { reload }
