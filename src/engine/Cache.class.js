@@ -33,8 +33,6 @@ class Cache {
 
     this.archiveMode = archiveMode
 
-    this.filesDatabase = databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-
     this.activeApis = {}
   }
 
@@ -43,8 +41,10 @@ class Cache {
    * @param {object} applications - The North applications
    * @return {void}
    */
-  initialize(applications) {
-    Object.values(applications).forEach((application) => {
+  async initialize(applications) {
+    this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
+
+    Object.values(applications).forEach(async (application) => {
       const activeApi = {}
 
       activeApi.applicationId = application.application.applicationId
@@ -53,7 +53,7 @@ class Cache {
       activeApi.canHandleFiles = application.canHandleFiles
 
       if (application.canHandleValues) {
-        activeApi.database = databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
+        activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
       }
 
       this.resetTimeout(activeApi, activeApi.config.sendInterval)
@@ -73,17 +73,17 @@ class Cache {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  cacheValues(value, doNotGroup) {
-    Object.entries(this.activeApis).forEach(([applicationId, activeApi]) => {
+  async cacheValues(value, doNotGroup) {
+    Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
       const { database, config, canHandleValues } = activeApi
 
       if (canHandleValues) {
-        databaseService.saveValue(database, value)
+        await databaseService.saveValue(database, value)
 
         if (doNotGroup) {
           this.sendValues(applicationId, [value])
         } else {
-          const count = databaseService.getValuesCount(database)
+          const count = await databaseService.getValuesCount(database)
           if (count >= config.groupCount) {
             this.sendCallback(applicationId)
           }
@@ -97,7 +97,7 @@ class Cache {
    * @param {String} filePath - The path of the raw file
    * @return {void}
    */
-  cacheFile(filePath) {
+  async cacheFile(filePath) {
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
@@ -106,11 +106,11 @@ class Cache {
       if (renameError) {
         this.logger.error(renameError)
       } else {
-        Object.entries(this.activeApis).forEach(([applicationId, activeApi]) => {
+        Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
           const { canHandleFiles } = activeApi
 
           if (canHandleFiles) {
-            databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+            await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
             this.sendCallback(applicationId)
           }
         })
@@ -144,7 +144,7 @@ class Cache {
     let success = true
 
     try {
-      const values = databaseService.getValuesToSend(application.database, application.config.groupCount)
+      const values = await databaseService.getValuesToSend(application.database, application.config.groupCount)
 
       if (values) {
         success = await this.sendValues(application.applicationId, values)
@@ -167,13 +167,13 @@ class Cache {
     let success = true
 
     try {
-      const filePath = databaseService.getFileToSend(this.filesDatabase, application.applicationId)
+      const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
         success = await this.engine.sendFile(application.applicationId, filePath)
 
         if (success) {
-          databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
+          await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
           this.handleSentFile(filePath)
         }
       }
@@ -196,7 +196,7 @@ class Cache {
     const success = await this.engine.sendValues(applicationId, values)
 
     if (success) {
-      databaseService.removeSentValues(this.activeApis[applicationId].database, values)
+      await databaseService.removeSentValues(this.activeApis[applicationId].database, values)
     }
 
     return success
@@ -207,8 +207,8 @@ class Cache {
    * @param {string} filePath - The file
    * @return {void}
    */
-  handleSentFile(filePath) {
-    const count = databaseService.getFileCount(this.filesDatabase, filePath)
+  async handleSentFile(filePath) {
+    const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       const archivedFilename = path.basename(filePath)
       const archivePath = path.join(this.archiveFolder, archivedFilename)
