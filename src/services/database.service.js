@@ -1,23 +1,22 @@
-const Database = require('better-sqlite3')
+const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
 
 /**
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {BetterSqlite3.Database} - The SQLite3 database
+ * @return {Sqlite.Database} - The SQLite3 database
  */
-const createValuesDatabase = (databasePath) => {
-  const database = new Database(databasePath)
-
+const createValuesDatabase = async (databasePath) => {
+  const database = await sqlite.open(databasePath)
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
                    timestamp INTEGER,
                    data TEXT,
                    point_id TEXT
                  );`
-  const stmt = database.prepare(query)
-  stmt.run()
+  const stmt = await database.prepare(query)
+  await stmt.run()
 
   return database
 }
@@ -27,8 +26,8 @@ const createValuesDatabase = (databasePath) => {
  * @param {string} databasePath - The database file path
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
-const createFilesDatabase = (databasePath) => {
-  const database = new Database(databasePath)
+const createFilesDatabase = async (databasePath) => {
+  const database = await sqlite.open(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -36,8 +35,8 @@ const createFilesDatabase = (databasePath) => {
                    application TEXT,
                    path TEXT
                  );`
-  const stmt = database.prepare(query)
-  stmt.run()
+  const stmt = await database.prepare(query)
+  await stmt.run()
 
   return database
 }
@@ -48,11 +47,11 @@ const createFilesDatabase = (databasePath) => {
  * @param {object} value - The value to save
  * @return {void}
  */
-const saveValue = (database, value) => {
+const saveValue = async (database, value) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id) 
                  VALUES (?, ?, ?)`
-  const stmt = database.prepare(query)
-  stmt.run(value.timestamp, encodeURI(value.data), value.pointId)
+  const stmt = await database.prepare(query)
+  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId)
 }
 
 /**
@@ -60,11 +59,11 @@ const saveValue = (database, value) => {
  * @param {BetterSqlite3.Database} database - The database to use
  * @return {number} - The values count
  */
-const getValuesCount = (database) => {
+const getValuesCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
-  const stmt = database.prepare(query)
-  const result = stmt.get()
+  const stmt = await database.prepare(query)
+  const result = await stmt.get()
 
   return result.count
 }
@@ -75,13 +74,13 @@ const getValuesCount = (database) => {
  * @param {string} count - The number of values to get
  * @return {array|null} - The values
  */
-const getValuesToSend = (database, count) => {
+const getValuesToSend = async (database, count) => {
   const query = `SELECT id, timestamp, data, point_id AS pointId 
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
-  const stmt = database.prepare(query)
-  const results = stmt.all()
+  const stmt = await database.prepare(query)
+  const results = await stmt.all()
 
   let values = null
 
@@ -101,12 +100,12 @@ const getValuesToSend = (database, count) => {
  * @param {Object} values - The values to remove
  * @return {void}
  */
-const removeSentValues = (database, values) => {
+const removeSentValues = async (database, values) => {
   const ids = values.map(value => value.id).join()
   const query = `DELETE FROM ${CACHE_TABLE_NAME}
                  WHERE id IN (${ids})`
-  const stmt = database.prepare(query)
-  stmt.run()
+  const stmt = await database.prepare(query)
+  await stmt.run()
 }
 
 /**
@@ -117,11 +116,11 @@ const removeSentValues = (database, values) => {
  * @param {string} filePath - The file path
  * @return {void}
  */
-const saveFile = (database, timestamp, applicationId, filePath) => {
+const saveFile = async (database, timestamp, applicationId, filePath) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, application, path) 
                  VALUES (?, ?, ?)`
-  const stmt = database.prepare(query)
-  stmt.run(timestamp, applicationId, filePath)
+  const stmt = await database.prepare(query)
+  await stmt.run(timestamp, applicationId, filePath)
 }
 
 /**
@@ -130,14 +129,14 @@ const saveFile = (database, timestamp, applicationId, filePath) => {
  * @param {string} applicationId - The application ID
  * @return {string|null} - The file path
  */
-const getFileToSend = (database, applicationId) => {
+const getFileToSend = async (database, applicationId) => {
   const query = `SELECT path 
                  FROM ${CACHE_TABLE_NAME}
                  WHERE application = ?
                  ORDER BY timestamp
                  LIMIT 1`
-  const stmt = database.prepare(query)
-  const results = stmt.all(applicationId)
+  const stmt = await database.prepare(query)
+  const results = await stmt.all(applicationId)
 
   return results.length > 0 ? results[0].path : null
 }
@@ -149,12 +148,12 @@ const getFileToSend = (database, applicationId) => {
  * @param {string} filePath - The file path
  * @return {void}
  */
-const deleteSentFile = (database, applicationId, filePath) => {
+const deleteSentFile = async (database, applicationId, filePath) => {
   const query = `DELETE FROM ${CACHE_TABLE_NAME}
                  WHERE application = ?
                    AND path = ?`
-  const stmt = database.prepare(query)
-  stmt.run(applicationId, filePath)
+  const stmt = await database.prepare(query)
+  await stmt.run(applicationId, filePath)
 }
 
 /**
@@ -163,12 +162,12 @@ const deleteSentFile = (database, applicationId, filePath) => {
  * @param {string} filePath - The file path
  * @return {number} - The file count
  */
-const getFileCount = (database, filePath) => {
+const getFileCount = async (database, filePath) => {
   const query = `SELECT COUNT(*) AS count 
                  FROM ${CACHE_TABLE_NAME}
                  WHERE path = ?`
-  const stmt = database.prepare(query)
-  const result = stmt.get(filePath)
+  const stmt = await database.prepare(query)
+  const result = await stmt.get(filePath)
 
   return result.count
 }
