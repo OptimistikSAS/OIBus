@@ -23,6 +23,8 @@ class ProtocolHandler {
   onScan() {}
   /* eslint-disable-next-line */
   listen() {}
+  /* eslint-disable-next-line */
+  disconnect() {}
 }
 
 module.exports = ProtocolHandler
