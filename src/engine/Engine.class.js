@@ -93,6 +93,7 @@ class Engine {
     // based on the config file
     this.activeProtocols = {}
     this.activeApis = {}
+    this.jobs = []
   }
 
   /**
@@ -223,9 +224,34 @@ class Engine {
       })
       if (job.result !== 'ok') {
         throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
+      } else {
+        this.jobs.push(job.id)
       }
     })
     this.logger.info(`fTbus version ${VERSION} started`)
+  }
+
+  /**
+   * Gracefully stop every Timer, Protocol and Application
+   * @return {void}
+   */
+  stop() {
+    // Stop timers
+    this.jobs.forEach((id) => {
+      timexe.remove(id)
+    })
+
+    // Stop Protocols
+    Object.entries(this.activeProtocols).forEach(([equipmentId, protocol]) => {
+      this.logger.info(`Stopping ${equipmentId}`)
+      protocol.disconnect()
+    })
+
+    // Stop Applications
+    Object.entries(this.activeApis).forEach(([applicationId, application]) => {
+      this.logger.info(`Stopping ${applicationId}`)
+      application.disconnect()
+    })
   }
 }
 
