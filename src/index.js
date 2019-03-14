@@ -1,11 +1,7 @@
 const cluster = require('cluster')
 
-const { parseArgs } = require('./services/config.service')
+const { parseArgs, checkOrCreateConfigFile } = require('./services/config.service')
 const Engine = require('./engine/Engine.class')
-
-// retrieve config file
-const args = parseArgs() || {} // Arguments of the command
-const { config = './fTbus.json' } = args // Get the configuration file path
 
 if (cluster.isMaster) {
   // Fork a worker
@@ -21,6 +17,12 @@ if (cluster.isMaster) {
     cluster.fork()
   })
 } else {
+  const args = parseArgs() || {} // Arguments of the command
+
+  const { config = './fTbus.json' } = args // Get the configuration file path
+
+  checkOrCreateConfigFile(config) // Create default config file if it doesn't exist
+
   const engine = new Engine(config)
   engine.start()
 }
