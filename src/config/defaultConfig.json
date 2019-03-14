@@ -1,0 +1,52 @@
+{
+  "engine": {
+    "port": 2223,
+    "user": "admin",
+    "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
+    "filter": ["127.0.0.1", "::1"],
+    "logParameters": {
+      "consoleLevel": "debug",
+      "fileLevel": "debug",
+      "filename": "./logs/journal.log",
+      "maxsize": 1000000,
+      "maxFiles": 5,
+      "tailable": true
+    },
+    "caching": {
+      "cacheFolder": "./cache",
+      "archiveMode": "archive",
+      "archiveFolder": "./cache/archived/"
+    },
+    "scanModes": [
+      {
+        "scanMode": "everySecond",
+        "cronTime": "* * * * * *"
+      },
+      {
+        "scanMode": "every10Second",
+        "cronTime": "* * * * * /10"
+      },
+      {
+        "scanMode": "every1Min",
+        "cronTime": "* * * * *"
+      }
+    ]
+  },
+  "south": {
+    "equipments": []
+  },
+  "north": {
+    "applications": [
+      {
+        "applicationId": "MyConsole",
+        "enabled": true,
+        "api": "Console",
+        "caching": {
+          "sendInterval": 1000,
+          "retryInterval": 1000,
+          "groupCount": 1
+        }
+      }
+    ]
+  }
+}
