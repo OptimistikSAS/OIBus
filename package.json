@@ -90,6 +90,6 @@
   },
   "bin": "./src/index.js",
   "pkg": {
-    "assets": "build/**/*"
+    "assets": ["build/**/*", "src/config/*"]
   }
 }

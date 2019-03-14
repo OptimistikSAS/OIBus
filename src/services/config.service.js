@@ -25,7 +25,7 @@ const tryReadFile = (path) => {
  * @param {Object} args - Arguments of the command
  * @return {boolean} - Whether the right arguments have been passed or not
  */
-const isValidArgs = ({ config = './fTbus.config.json' }) => {
+const isValidArgs = ({ config }) => {
   if (!config) {
     console.error('No config file specified, example: --config ./config/config.json')
     return false
@@ -46,4 +46,17 @@ const parseArgs = () => {
   return null
 }
 
-module.exports = { parseArgs, tryReadFile }
+/**
+ * Check if config file exists
+ * @param {string} filePath - The location of the config file
+ * @return {void}
+ */
+const checkOrCreateConfigFile = (filePath) => {
+  if (!fs.existsSync(filePath)) {
+    console.info('Default config file does not exist. Creating it.')
+    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+    fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
+  }
+}
+
+module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile }
