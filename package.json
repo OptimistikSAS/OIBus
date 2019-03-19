@@ -22,6 +22,7 @@
     "@fortawesome/fontawesome-free": "^5.7.2",
     "@koa/cors": "^2.2.3",
     "async": "^2.6.2",
+    "aws-sdk": "^2.422.0",
     "basic-auth": "^2.0.1",
     "bootstrap-less-port": "^0.5.0",
     "fast-csv": "^2.4.1",
@@ -90,6 +91,9 @@
   },
   "bin": "./src/index.js",
   "pkg": {
-    "assets": ["build/**/*", "src/config/*"]
+    "assets": [
+      "build/**/*",
+      "src/config/*"
+    ]
   }
 }
