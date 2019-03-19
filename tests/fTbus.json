@@ -371,6 +371,23 @@
           "sendInterval": 5000, // Send interval in milliseconds
           "retryInterval": 10000, // Retry interval in milliseconds
         }
+      },
+      {
+        "applicationId": "AmazonS3",
+        "enabled": true,
+        "api":"AmazonS3",
+        "AmazonS3":{
+          "bucket": "optimistik.test",
+          "folder": "oi_bus_test",
+          "authentication": {
+            "accessKey": "AKIAJPJ46DKBR7Q23FOQ",
+            "secretKey": "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"
+          }
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+        }
       }
     ]
   }
