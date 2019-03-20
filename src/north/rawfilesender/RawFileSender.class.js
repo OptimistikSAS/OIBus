@@ -1,8 +1,10 @@
 const fs = require('fs')
 const path = require('path')
+const url = require('url')
 
 const fetch = require('node-fetch')
 const FormData = require('form-data')
+const ProxyAgent = require('proxy-agent')
 
 const ApiHandler = require('../ApiHandler.class')
 
@@ -20,10 +22,11 @@ class RawFileSender extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication } = applicationParameters.RawFileSender
+    const { host, endpoint, authentication, proxy = null } = applicationParameters.RawFileSender
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
+    this.proxy = proxy
 
     this.canHandleFiles = true
   }
@@ -35,12 +38,26 @@ class RawFileSender extends ApiHandler {
    */
   async handleFile(filePath) {
     const headers = {}
+    let agent = null
 
     // Generate authentication header
     if (this.authentication.type === 'Basic') {
       const basic = Buffer.from(`${this.authentication.username}:${this.authentication.password}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
+
+    if (this.proxy) {
+      const { host, port, username = null, password = null } = this.proxy
+
+      const proxyOptions = url.parse(`${host}:${port}`)
+
+      if (username && password) {
+        proxyOptions.auth = `${username}:${password}`
+      }
+
+      agent = new ProxyAgent(proxyOptions)
+    }
+
 
     // Create form data with the file
     const body = new FormData()
@@ -52,6 +69,7 @@ class RawFileSender extends ApiHandler {
       method: 'POST',
       headers,
       body,
+      agent,
     }
 
     try {
