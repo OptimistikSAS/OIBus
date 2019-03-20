@@ -13,7 +13,7 @@ const tryReadFile = (path) => {
     return new Error('You must provide a json file for the configuration!')
   }
   try {
-    return JSON5.parse(fs.readFileSync(path, 'utf8')) // Get fTbus configuration file
+    return JSON5.parse(fs.readFileSync(path, 'utf8')) // Get OIBus configuration file
   } catch (error) {
     console.error(error)
     return error

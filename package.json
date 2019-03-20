@@ -1,12 +1,12 @@
 {
-  "name": "ftbus",
+  "name": "oibus",
   "private": true,
   "version": "0.0.1",
   "main": "index.js",
   "author": "factoryThings",
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
-    "start": "node src/index.js --config ./tests/fTbus.json",
+    "start": "node src/index.js --config ./tests/oibus.json",
     "build": "pkg . --out-path dist",
     "start-client": "webpack --mode development --watch",
     "build-client": "webpack --mode production",
