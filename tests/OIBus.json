@@ -1,6 +1,6 @@
 {
   "engine": {
-    // the port for the web interface to fTbus
+    // the port for the web interface to OIBus
     "port": 2223,
     // user/password for "pass"
     // (don't show the decoded password in production!)
@@ -168,7 +168,7 @@
           "opcuaPort": "53530",
           "httpsPort": "53443",
           "endPoint": "Server/Simulation",
-          "timeOrigin": "server" // or "source" or "fTbus"
+          "timeOrigin": "server" // or "source" or "OIBus"
         },
         "points": [
           {
@@ -311,7 +311,7 @@
         "enabled": true,
         "api": "Console",
         "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
-        "timeStamp": "fTbus",
+        "timeStamp": "OIBus",
         "caching": {
           "sendInterval": 15000, // Send interval in milliseconds
           "retryInterval": 10000, // Retry interval in milliseconds
