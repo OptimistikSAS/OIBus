@@ -45,6 +45,7 @@
     "node-opcua": "^0.5.8",
     "pg": "^7.8.1",
     "prop-types": "^15.7.2",
+    "proxy-agent": "^3.0.3",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "react-jsonschema-form": "^1.2.1",
