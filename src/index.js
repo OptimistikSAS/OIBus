@@ -19,7 +19,7 @@ if (cluster.isMaster) {
 } else {
   const args = parseArgs() || {} // Arguments of the command
 
-  const { config = './fTbus.json' } = args // Get the configuration file path
+  const { config = './OIBus.json' } = args // Get the configuration file path
 
   checkOrCreateConfigFile(config) // Create default config file if it doesn't exist
 
