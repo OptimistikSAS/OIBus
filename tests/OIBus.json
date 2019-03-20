@@ -1,0 +1,406 @@
+{
+  "engine": {
+    // the port for the web interface to OIBus
+    "port": 2223,
+    // user/password for "pass"
+    // (don't show the decoded password in production!)
+    "user": "admin",
+    "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
+    // the list of IP addresses allowed to access the Web interface
+    "filter": ["127.0.0.1", "::1"],
+    // the parameters for logs, describing different performances for different levels
+    // and the file name which stocks the logs
+    "logParameters": {
+      // possible levels: debug, info, warn, error
+      "consoleLevel": "debug", // specify only the lowest level
+      "fileLevel": "debug",
+      "filename": "./logs/journal.log",
+      "maxsize": 1000000,
+      "maxFiles": 5,
+      "tailable": true
+    },
+    "caching": {
+      "cacheFolder": "./cache", // Where to store the cached data
+      "archiveFolder": "./cache/archived/",  // Required when archiveMode is 'archive' for files
+      "archiveMode": "archive" // move or delete files
+    },
+    // the scan mode section
+    // reference: https://github.com/paragi/timexe
+    // Format: year month day hour minute second millisec microsec
+    "scanModes": [
+      {
+        "scanMode": "everySecond",
+        "cronTime": "* * * * * *"
+      },
+      {
+        "scanMode": "every5Second",
+        "cronTime": "* * * * * /5"
+      },
+      {
+        "scanMode": "every20Second",
+        "cronTime": "* * * * * /20"
+      },
+      {
+        "scanMode": "everyNoon",
+        "cronTime": "* * * 12"
+      },
+      {
+        "scanMode": "every15DaysAt9",
+        "cronTime": "* * /15 9"
+      }
+    ],
+    // types section allows to define the types managed by this engine
+    "types": [
+      {
+        "type": "fill_level",
+        "fields": [
+          {
+            "name": "value",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "type": "flow_rate",
+        "fields": [
+          {
+            "name": "quality",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "type": "valve_state",
+        "fields": [
+          {
+            "name": "value",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "type": "temperature",
+        "fields": [
+          {
+            "name": "value",
+            "type": "number"
+          },
+          {
+            "name": "quality",
+            "type": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "south": {
+    // this section contains protocol specific parameters
+    "Modbus": {
+      // Modbus global parameters
+      "addressGap": {
+        // max number of Registers in one request
+        "holdingRegister": 256,
+        // max number of Coils in one request
+        "coil": 1000
+      }
+    },
+    /// other protocols (existing or planned):
+    // OPCUA OPCDA MQTT Profinet CSV SQL
+    "equipments": [
+      {
+        "equipmentId": "CSVServer",
+        "enabled": true,
+        "protocol": "CSV",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "every20Second",
+        "CSV": {
+          "inputFolder": "./tests/csv/input/",
+          "archiveFolder": "./tests/csv/archived/",
+          "errorFolder": "./tests/csv/error/",
+          "separator": ",",
+          "timeColumn": 0,
+          "hasFirstLine": true
+        },
+        "points": [
+          {
+            "CSV": { "value": "sensor1-value", "quality": "sensor1-quality" },
+            "pointId": "./Tank 5.tank/333333.temperature"
+          },
+          {
+            "CSV": { "value": 3, "quality": 4 },
+            "pointId": "./Tank 6.tank/333333.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "MQTTServer",
+        "enabled": false,
+        "protocol": "MQTT",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "listen",
+        "MQTT": {
+          "server": "simulator.factorythings.com",
+          "protocol": "mqtts",
+          "port": "8883",
+          "username": "bai",
+          "password": "secret"
+        },
+        "points": [
+          {
+            "MQTT": { "topic": "temperatureTank1" },
+            "pointId": "./Tank 5.tank/Sensor22.temperature",
+            "doNotGroup": true
+          },
+          {
+            "MQTT": { "topic": "temperatureTank2" },
+            "pointId": "./Tank 6.tank/Sensor23.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "SimulationServer",
+        "enabled": false,
+        "protocol": "OPCUA",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "OPCUA": {
+          "host": "35.180.179.217",
+          "opcuaPort": "53530",
+          "httpsPort": "53443",
+          "endPoint": "Server/Simulation",
+          "timeOrigin": "server" // or "source" or "OIBus"
+        },
+        "points": [
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Counter1"
+            },
+            "pointId": "./Tank 5.tank/333333.temperature"
+          },
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Random1"
+            },
+            "pointId": "./Tank 5.tank/333333.temperature",
+            "scanMode": "everyNoon"
+          }
+        ]
+      },
+      {
+        "equipmentId": "SimulationServerBis",
+        "enabled": false,
+        "protocol": "OPCUA",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "OPCUA": {
+          "host": "35.180.179.217",
+          "opcuaPort": "53530",
+          "httpsPort": "53443",
+          "endPoint": "Server/Simulation"
+        },
+        "points": [
+          {
+            "OPCUAnodeId": {
+              "ns": "5",
+              "s": "Sinusoid1"
+            },
+            "pointId": "./Tank 9.tank/333333.temperature"
+          }
+        ]
+      },
+      {
+        "equipmentId": "PLC-35",
+        "enabled": false,
+        "protocol": "Modbus",
+        "pointIdRoot": "/fttest.base",
+        "defaultScanMode": "everySecond",
+        "Modbus": {
+          "host": "35.180.153.134",
+          "port": 502
+        },
+        "points": [
+          {
+            "Modbus": {
+              "address": "0x0031",
+              "type": "coil"
+            },
+            "pointId": "./Tank 3.tank/333333.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x0f8",
+              "type": "holdingRegister"
+            },
+            "pointId": "./Tank 2.tank/222222.valve_state",
+            "scanMode": "everyNoon"
+          },
+          {
+            "Modbus": {
+              "address": "0x76a0",
+              "type": "coil"
+            },
+            "pointId": "./Tank 2.tank/222222.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x76b0",
+              "type": "coil"
+            },
+            "pointId": "./Tank 2.tank/222333.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x83a6",
+              "type": "coil"
+            },
+            "pointId": "./Tank 3.tank/111111.valve_state"
+          }
+        ]
+      },
+      {
+        "equipmentId": "PLC-42",
+        "enabled": false,
+        "protocol": "Modbus",
+        "pointIdRoot": "/fttest.base/Tank4.tank",
+        "defaultScanMode": "everySecond",
+        "Modbus": {
+          "host": "35.180.153.134",
+          "port": 502
+        },
+        "points": [
+          {
+            "Modbus": {
+              "address": "0x0f",
+              "type": "coil"
+            },
+            "pointId": "./111111.fill_level"
+          },
+          {
+            "Modbus": {
+              "address": "0x20",
+              "type": "holdingRegister"
+            },
+            "pointId": "./111111.flow_rate"
+          }
+        ]
+      },
+      {
+        "equipmentId": "RawFileTransfer",
+        "enabled": true,
+        "protocol": "RawFile",
+        "defaultScanMode": "every5Second",
+        "RawFile": {
+          "inputFolder": "./tests/RawFile/input/",
+          "minAge": 1000, // Minimum age for files in milliseconds
+          "regex": ".txt" // Regex expression to match the filename
+        },
+        "points": [
+          {
+            "pointId": "RawFileTransferPointId"
+          }
+        ]
+      }
+    ]
+  },
+  "north": {
+    "applications": [
+      {
+        "applicationId": "MyConsole",
+        "enabled": true,
+        "api": "Console",
+        "minimumBuffer:": 1, // 0 -> incorrect value. undefined -> 1
+        "timeStamp": "OIBus",
+        "caching": {
+          "sendInterval": 15000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 6 // Number of values to send in one step
+        }
+      },
+      {
+        "applicationId": "BaseInflux",
+        "enabled": false,
+        "api": "InfluxDB",
+        // "minimumBuffer:": 10, // group by 10 when possible
+        "maxTimeinBuffer": 500, // 0 or undefined -> immediately, 500 -> wait for 500 ms
+        "InfluxDB": {
+          "user": "admin",
+          "password": "secret",
+          "db": "testdata",
+          "host": "localhost:8086",
+          "precision": "ms" // Possible values: ns, u, ms, s, m, h. Defaul value: ms
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 3 // Number of values to send in one step
+        }
+      },
+      {
+        "applicationId": "BaseTimescale",
+        "enabled": false,
+        "api": "TimescaleDB",
+        // "minimumBuffer:": 10, // group by 10 when possible
+        "TimescaleDB": {
+          "user": "postgres",
+          "password": "secret",
+          "db": "testdata",
+          "host": "localhost"
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+          "groupCount": 3 // Number of values to send in one step
+        }
+      },
+      {
+        "applicationId": "RawFileSender",
+        "enabled": false,
+        "api":"RawFileSender",
+        "RawFileSender":{
+          "host": "https://demo.oianalytics.fr",
+          "endpoint": "/api/optimistik/data/values/upload",
+          "authentication": {
+            "type": "Basic", // Only Basic authentication is supported at this moment
+            "username":"QFPELALDNSUO6BUV8SJ",
+            "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+          },
+          "proxy": {
+            "host": "http://127.0.0.1",
+            "port": 8080,
+            "username": "user",
+            "password": "password"
+          }
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+        }
+      },
+      {
+        "applicationId": "AmazonS3",
+        "enabled": false,
+        "api":"AmazonS3",
+        "AmazonS3":{
+          "bucket": "optimistik.test",
+          "folder": "oi_bus_test",
+          "authentication": {
+            "accessKey": "AKIAJPJ46DKBR7Q23FOQ",
+            "secretKey": "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"
+          },
+          "proxy": {
+            "host": "http://localhost",
+            "port": 8080,
+            "username": "",
+            "password": ""
+          }
+        },
+        "caching": {
+          "sendInterval": 5000, // Send interval in milliseconds
+          "retryInterval": 10000, // Retry interval in milliseconds
+        }
+      }
+    ]
+  }
+}
