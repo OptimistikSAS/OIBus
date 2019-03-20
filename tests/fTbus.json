@@ -356,7 +356,7 @@
       },
       {
         "applicationId": "RawFileSender",
-        "enabled": true,
+        "enabled": false,
         "api":"RawFileSender",
         "RawFileSender":{
           "host": "https://demo.oianalytics.fr",
@@ -365,6 +365,12 @@
             "type": "Basic", // Only Basic authentication is supported at this moment
             "username":"QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+          },
+          "proxy": {
+            "host": "http://127.0.0.1",
+            "port": 8080,
+            "username": "user",
+            "password": "password"
           }
         },
         "caching": {
@@ -374,7 +380,7 @@
       },
       {
         "applicationId": "AmazonS3",
-        "enabled": true,
+        "enabled": false,
         "api":"AmazonS3",
         "AmazonS3":{
           "bucket": "optimistik.test",
@@ -382,6 +388,12 @@
           "authentication": {
             "accessKey": "AKIAJPJ46DKBR7Q23FOQ",
             "secretKey": "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"
+          },
+          "proxy": {
+            "host": "http://localhost",
+            "port": 8080,
+            "username": "",
+            "password": ""
           }
         },
         "caching": {
