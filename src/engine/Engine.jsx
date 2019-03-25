@@ -55,9 +55,9 @@ Engine.schema = {
       title: 'Log Parameters',
       properties: {
         consoleLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'Console Level', default: 'debug' },
-        fileLevel: { type: 'string', title: 'File Level', default: 'debug' },
+        fileLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'File Level', default: 'debug' },
         filename: { type: 'string', title: 'Filename', default: './logs/journal.log' },
-        maxsize: { type: 'number', title: 'Max Size', default: 1000000 },
+        maxsize: { type: 'number', title: 'Max Size (Byte)', default: 1000000 },
         maxFiles: { type: 'number', title: 'Max Files', default: 5 },
         tailable: { type: 'boolean', title: 'Tailable', default: true },
       },
@@ -93,7 +93,37 @@ Engine.schema = {
 }
 
 Engine.uiSchema = {
-  port: { 'ui:help': <div>the port to access the web interface to OIBus. Valid values range from 1 through 65535.</div> },
+  port: { 'ui:help': <div>The port to access the web interface to OIBus. Valid values range from 1 through 65535.</div> },
   password: { 'ui:widget': 'password' },
-  filter: { 'ui:help': <div>the list of IP addresses allowed to access the Web interface</div> },
+  filter: { 'ui:help': <div>The list of IP addresses allowed to access the Web interface</div> },
+  logParameters: {
+    tailable: {
+      'ui:help': (
+        <div>
+          If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log
+          lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
+        </div>
+      ),
+    },
+  },
+  caching: {
+    cacheFolder: { 'ui:help': <div>Where to store the cached data</div> },
+    archiveFolder: { 'ui:help': <div>Required when archiveMode is &apos;archive&apos; for files</div> },
+    archiveMode: { 'ui:help': <div> Move or delete files</div> },
+  },
+  scanModes: {
+    'ui:help': (
+      <div>
+        Scan mode: name of the scan mode defined by the user
+        <br />
+        Cron time: interval for the scans
+        <br />
+        Example to scan every 5 seconds at 6am on the first day of each month in 2019
+        <br />
+        2019 * 1 6 * /5
+        <br />
+        <a href="https://github.com/paragi/timexe#readme"> For additional information, please refer the documentation of timexe.</a>
+      </div>
+    ),
+  },
 }
