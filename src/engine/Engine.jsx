@@ -93,7 +93,7 @@ Engine.schema = {
 }
 
 Engine.uiSchema = {
-  port: { 'ui:help': <div>the port to access the web interface to fTbus. Valid values range from 1 through 65535.</div> },
+  port: { 'ui:help': <div>the port to access the web interface to OIBus. Valid values range from 1 through 65535.</div> },
   password: { 'ui:widget': 'password' },
   filter: { 'ui:help': <div>the list of IP addresses allowed to access the Web interface</div> },
   logParameters: {

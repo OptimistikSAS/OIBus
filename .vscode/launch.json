@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Launch Program",
       "program": "${workspaceFolder}/src/index.js",
-      "args":  ["--config", "./tests/fTbus.json"],
+      "args":  ["--config", "./tests/OIBus.json"],
       "console": "integratedTerminal"
     }
   ]
