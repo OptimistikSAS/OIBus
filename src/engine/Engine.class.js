@@ -229,7 +229,7 @@ class Engine {
         this.jobs.push(job.id)
       }
     })
-    this.logger.info(`fTbus version ${VERSION} started`)
+    this.logger.info(`OIBus version ${VERSION} started`)
   }
 
   /**

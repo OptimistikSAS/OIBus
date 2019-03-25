@@ -30,7 +30,6 @@
     "new-cap": [
       "error",
       {
-        "newIsCapExceptionPattern": "^fT",
         "capIsNewExceptions": ["OneOf"]
       }
     ],

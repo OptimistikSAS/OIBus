@@ -1,5 +1,5 @@
-# fTbus
-## How fTbus works
+# OIBus
+## How OIBus works
 
 ###### Overall workflow
 

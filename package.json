@@ -1,12 +1,12 @@
 {
-  "name": "ftbus",
+  "name": "oibus",
   "private": true,
   "version": "0.0.1",
   "main": "index.js",
   "author": "factoryThings",
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
-    "start": "node src/index.js --config ./tests/fTbus.json",
+    "start": "node src/index.js --config ./tests/oibus.json",
     "build": "pkg . --out-path dist",
     "start-client": "webpack --mode development --watch",
     "build-client": "webpack --mode production",
@@ -38,7 +38,7 @@
     "koa-react-router": "^3.0.0",
     "koa-respond": "^2.1.0",
     "koa-router": "^7.4.0",
-    "koa-static": "^5.0.0",
+    "koa-send": "^5.0.0",
     "minimist": "^1.2.0",
     "mqtt": "^2.18.8",
     "node-fetch": "^2.3.0",
