@@ -400,6 +400,27 @@
           "sendInterval": 5000, // Send interval in milliseconds
           "retryInterval": 10000, // Retry interval in milliseconds
         }
+      },
+      {
+        "applicationId": "AliveSignal",
+        "enabled": false,
+        "api":"AliveSignal",
+        "AliveSignal":{
+          "host": "https://demo.oianalytics.fr/api/optimistik/oibus",
+          "authentication": {
+            "type": "Basic", // Only Basic authentication is supported at this moment
+            "username":"QFPELALDNSUO6BUV8SJ",
+            "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+          },
+          "id": "OIBus friendly name",
+          "frequency": 10000, // Ping interval in milliseconds
+          "proxy": {
+            "host": "http://localhost",
+            "port": 8888,
+            "username": "user",
+            "password": "password"
+          }
+        }
       }
     ]
   }
