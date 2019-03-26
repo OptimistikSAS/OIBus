@@ -45,20 +45,22 @@ class Cache {
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
 
     Object.values(applications).forEach(async (application) => {
-      const activeApi = {}
+      if (application.canHandleFiles || application.canHandleValues) {
+        const activeApi = {}
 
-      activeApi.applicationId = application.application.applicationId
-      activeApi.config = application.application.caching
-      activeApi.canHandleValues = application.canHandleValues
-      activeApi.canHandleFiles = application.canHandleFiles
+        activeApi.applicationId = application.application.applicationId
+        activeApi.config = application.application.caching
+        activeApi.canHandleValues = application.canHandleValues
+        activeApi.canHandleFiles = application.canHandleFiles
 
-      if (application.canHandleValues) {
-        activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
+        if (application.canHandleValues) {
+          activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
+        }
+
+        this.resetTimeout(activeApi, activeApi.config.sendInterval)
+
+        this.activeApis[activeApi.applicationId] = activeApi
       }
-
-      this.resetTimeout(activeApi, activeApi.config.sendInterval)
-
-      this.activeApis[activeApi.applicationId] = activeApi
     })
   }
 
