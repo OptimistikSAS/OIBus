@@ -18,6 +18,7 @@ apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
+apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
