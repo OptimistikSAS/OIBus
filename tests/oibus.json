@@ -293,6 +293,7 @@
         "defaultScanMode": "every5Second",
         "RawFile": {
           "inputFolder": "./tests/RawFile/input/",
+          "preserveFiles": true,
           "minAge": 1000, // Minimum age for files in milliseconds
           "regex": ".txt" // Regex expression to match the filename
         },
