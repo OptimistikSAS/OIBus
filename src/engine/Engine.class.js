@@ -116,10 +116,11 @@ class Engine {
    * Add a new File from an equipment to the Engine.
    * The Engine will forward the File to the Cache.
    * @param {string} filePath - The path to the File
+   * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(filePath) {
-    this.cache.cacheFile(filePath)
+  addFile(filePath, preserveFiles) {
+    this.cache.cacheFile(filePath, preserveFiles)
   }
 
   /**

@@ -97,27 +97,45 @@ class Cache {
   /**
    * Cache the new raw file.
    * @param {String} filePath - The path of the raw file
+   * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  async cacheFile(filePath) {
+  async cacheFile(filePath, preserveFiles) {
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
-    fs.rename(filePath, cachePath, (renameError) => {
-      if (renameError) {
-        this.logger.error(renameError)
-      } else {
-        Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-          const { canHandleFiles } = activeApi
+    if (preserveFiles) {
+      fs.copyFile(filePath, cachePath, (copyError) => {
+        if (copyError) {
+          this.logger.error(copyError)
+        } else {
+          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
+            const { canHandleFiles } = activeApi
 
-          if (canHandleFiles) {
-            await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-            this.sendCallback(applicationId)
-          }
-        })
-      }
-    })
+            if (canHandleFiles) {
+              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+              this.sendCallback(applicationId)
+            }
+          })
+        }
+      })
+    } else {
+      fs.rename(filePath, cachePath, (renameError) => {
+        if (renameError) {
+          this.logger.error(renameError)
+        } else {
+          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
+            const { canHandleFiles } = activeApi
+
+            if (canHandleFiles) {
+              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+              this.sendCallback(applicationId)
+            }
+          })
+        }
+      })
+    }
   }
 
   /**
