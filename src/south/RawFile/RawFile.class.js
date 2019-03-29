@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
+const databaseService = require('../../services/database.service')
 
 /**
  * Class RawFile
@@ -18,11 +19,19 @@ class RawFile extends ProtocolHandler {
     super(equipment, engine)
 
     const { RawFile: parameters } = this.equipment
-    const { inputFolder, minAge, regex } = parameters
+    const { inputFolder, preserveFiles, minAge, regex } = parameters
 
     this.inputFolder = path.resolve(inputFolder)
+    this.preserveFiles = preserveFiles
     this.minAge = minAge
     this.regex = new RegExp(regex)
+  }
+
+  async connect() {
+    if (this.preserveFiles) {
+      const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.equipment.equipmentId}.db`
+      this.database = await databaseService.createRawFilesDatabase(databasePath)
+    }
   }
 
   /**
@@ -38,15 +47,24 @@ class RawFile extends ProtocolHandler {
     }
 
     // List files in the inputFolder and manage them.
-    fs.readdir(this.inputFolder, (error, files) => {
+    fs.readdir(this.inputFolder, async (error, files) => {
       if (error) {
         this.logger.error(error)
         return
       }
 
       if (files.length > 0) {
+        let filesToHandle = []
+
         const matchedFiles = files.filter(this.checkFile.bind(this))
-        matchedFiles.forEach(this.sendFile.bind(this))
+
+        if (this.preserveFiles) {
+          filesToHandle = await this.filterHandledFiles(matchedFiles)
+        } else {
+          filesToHandle = matchedFiles
+        }
+
+        filesToHandle.forEach(this.sendFile.bind(this))
       } else {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
@@ -65,10 +83,33 @@ class RawFile extends ProtocolHandler {
       const timestamp = new Date().getTime()
       const stats = fs.statSync(path.join(this.inputFolder, filename))
 
-      matched = (stats.atimeMs < (timestamp - this.minAge))
+      matched = (stats.mtimeMs < (timestamp - this.minAge))
     }
 
     return matched
+  }
+
+  /**
+   * Filter out already handled files.
+   * @param {string[]} filenames - The files to check
+   * @return {string[]} - The filtered files
+   */
+  async filterHandledFiles(filenames) {
+    const filesToHandle = []
+
+    await Promise.all(filenames.map(async (filename) => {
+      const stats = fs.statSync(path.join(this.inputFolder, filename))
+      const modified = await databaseService.getRawFileModifyTime(this.database, filename)
+      if (modified) {
+        if ((stats.mtimeMs > modified)) {
+          filesToHandle.push(filename)
+        }
+      } else {
+        filesToHandle.push(filename)
+      }
+    }))
+
+    return filesToHandle
   }
 
   /**
@@ -81,7 +122,24 @@ class RawFile extends ProtocolHandler {
 
     this.logger.debug(`Sending ${filePath} to Engine.`)
 
-    this.engine.addFile(filePath)
+    this.engine.addFile(filePath, this.preserveFiles)
+
+    if (this.preserveFiles) {
+      this.storeFile(filename)
+    }
+  }
+
+  /**
+   * Store the file with the modify time.
+   * @param {string} filename - The filename
+   * @return {void}
+   */
+  async storeFile(filename) {
+    const stats = fs.statSync(path.join(this.inputFolder, filename))
+
+    this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
+
+    await databaseService.upsertRawFile(this.database, filename, stats.mtimeMs)
   }
 }
 
