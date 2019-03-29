@@ -42,6 +42,25 @@ const createFilesDatabase = async (databasePath) => {
 }
 
 /**
+ * Initiate SQLite3 database and create the cache table.
+ * @param {string} databasePath - The database file path
+ * @return {BetterSqlite3.Database} - The SQLite3 database
+ */
+const createRawFilesDatabase = async (databasePath) => {
+  const database = await sqlite.open(databasePath)
+
+  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+                   id INTEGER PRIMARY KEY,
+                   filename TEXT UNIQUE,
+                   modified INTEGER
+                 );`
+  const stmt = await database.prepare(query)
+  await stmt.run()
+
+  return database
+}
+
+/**
  * Save value in database.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {object} value - The value to save
@@ -172,9 +191,41 @@ const getFileCount = async (database, filePath) => {
   return result.count
 }
 
+/**
+ * Upsert handled raw file.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {string} filename - The filename
+ * @param {number} modified - The modify time
+ * @return {void}
+ */
+const upsertRawFile = async (database, filename, modified) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (filename, modified) 
+                 VALUES (?, ?)
+                 ON CONFLICT(filename) DO UPDATE SET modified = ?`
+  const stmt = await database.prepare(query)
+  await stmt.run(filename, modified, modified)
+}
+
+/**
+ * Get modify time for handled raw file.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {string} filename - The filename
+ * @return {string|null} - The modify time
+ */
+const getRawFileModifyTime = async (database, filename) => {
+  const query = `SELECT modified 
+                 FROM ${CACHE_TABLE_NAME}
+                 WHERE filename = ?`
+  const stmt = await database.prepare(query)
+  const results = await stmt.all(filename)
+
+  return results.length > 0 ? results[0].modified : null
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
+  createRawFilesDatabase,
   saveValue,
   getValuesCount,
   getValuesToSend,
@@ -183,4 +234,6 @@ module.exports = {
   getFileToSend,
   deleteSentFile,
   getFileCount,
+  upsertRawFile,
+  getRawFileModifyTime,
 }
