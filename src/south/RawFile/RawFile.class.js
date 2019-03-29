@@ -97,14 +97,17 @@ class RawFile extends ProtocolHandler {
   async filterHandledFiles(filenames) {
     const filesToHandle = []
 
-    filenames.forEach(async (filename) => {
+    await Promise.all(filenames.map(async (filename) => {
       const stats = fs.statSync(path.join(this.inputFolder, filename))
       const modified = await databaseService.getRawFileModifyTime(this.database, filename)
-
-      if (stats.mtimeMs > modified) {
+      if (modified) {
+        if ((stats.mtimeMs > modified)) {
+          filesToHandle.push(filename)
+        }
+      } else {
         filesToHandle.push(filename)
       }
-    })
+    }))
 
     return filesToHandle
   }
