@@ -1,98 +1,55 @@
-/* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-debugger */
-/* eslint-disable jsx-a11y/label-has-for */
-/* eslint-disable react/prop-types */
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
+import { getScheme } from './Schemas'
 
-// import { } from 'reactstrap'
-
-const South = ({ history }) => {
+// eslint-disable-next-line react/prop-types
+const ConfigureSouth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
-  React.useLayoutEffect(() => {
-    // eslint-disable-next-line consistent-return
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          setConfigJson(config)
-        })
-      }
-    })
+  const [configSchema, setConfigSchema] = React.useState()
+
+  const updateForm = () => {
+    const { protocol } = match.params
+    const { formData } = location
+    setConfigJson(formData)
+    setConfigSchema(getScheme(protocol))
+  }
+  React.useEffect(() => {
+    updateForm()
   }, [])
+
+  const handleChange = (data) => {
+    const { formData } = data
+    const { protocol } = formData
+
+    if (configJson !== data.formData) {
+      setConfigJson(formData)
+      setConfigSchema(getScheme(protocol))
+    }
+  }
   const log = type => console.info.bind(console, type)
-
-  const handleClick = (element) => {
-    const { formData } = element.children.props
-    const link = `/south/${formData.protocol}`
-    history.push({ pathname: link, formData })
-  }
-
-  const customArrayField = (field) => {
-    const { items, onAddClick, title } = field
-    return (
-      <div>
-        <legend>{title}</legend>
-        {items.map(element => (
-          <div key={element.index} className="array-row">
-            <>
-              {element.children}
-              <button type="button" className="btn btn-primary" onClick={() => handleClick(element)}>
-                Configure equipment
-              </button>
-            </>
-          </div>
-        ))}
-        {
-          <button type="button" onClick={onAddClick}>
-            Add protocol
-          </button>
-        }
-      </div>
-    )
-  }
-
-  // eslint-disable-next-line no-unused-vars
-  const customField = (field) => {
-    const { id, classNames, label, help, required, description, errors, children } = field
-    const classes = `${classNames} row`
-    return (
-      <div className={classes}>
-        <label htmlFor={id}>
-          {label}
-          {required ? '*' : null}
-        </label>
-        {description}
-        {children}
-        {errors}
-        {help}
-      </div>
-    )
-  }
   return (
     <>
-      <Form
-        formData={configJson && configJson.south}
-        liveValidate
-        // FieldTemplate={customField}
-        ArrayFieldTemplate={customArrayField}
-        schema={South.schema}
-        uiSchema={South.uiSchema}
-        autocomplete="on"
-        onChange={log('changed')}
-        onSubmit={log('submitted')}
-        onError={log('errors')}
-      />
-      <pre>{configJson && JSON.stringify(configJson.south, ' ', 2)}</pre>
+      {configJson && configSchema && (
+        <Form
+          formData={configJson}
+          liveValidate
+          schema={configSchema}
+          // uiSchema={ConfigureSouth.uiModbus}
+          autocomplete="on"
+          onChange={handleChange}
+          onSubmit={log('submitted')}
+          onError={log('errors')}
+        />
+      )}
+      <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
     </>
   )
 }
 
-export default withRouter(South)
+export default withRouter(ConfigureSouth)
 
-South.schema = {
+ConfigureSouth.schema = {
   title: 'South',
   type: 'object',
   properties: {
