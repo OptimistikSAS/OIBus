@@ -8,23 +8,24 @@ const ConfigureSouth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
-  const updateForm = () => {
-    const { protocol } = match.params
-    const { formData } = location
+  const updateForm = (formData, protocol) => {
     setConfigJson(formData)
     setConfigSchema(getScheme(protocol))
   }
+
   React.useEffect(() => {
-    updateForm()
+    const { protocol } = match.params
+    const { formData } = location
+    updateForm(formData, protocol)
   }, [])
 
   const handleChange = (data) => {
     const { formData } = data
     const { protocol } = formData
 
-    if (configJson !== data.formData) {
-      setConfigJson(formData)
-      setConfigSchema(getScheme(protocol))
+    if (configJson.protocol !== protocol) {
+      updateForm(formData, protocol)
+      // TODO: remove previous data from form if protocol changed
     }
   }
   const log = type => console.info.bind(console, type)
