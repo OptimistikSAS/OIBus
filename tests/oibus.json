@@ -21,7 +21,7 @@
     },
     "caching": {
       "cacheFolder": "./cache", // Where to store the cached data
-      "archiveFolder": "./cache/archived/",  // Required when archiveMode is 'archive' for files
+      "archiveFolder": "./cache/archived/", // Required when archiveMode is 'archive' for files
       "archiveMode": "archive" // move or delete files
     },
     // the scan mode section
@@ -141,7 +141,7 @@
         "MQTT": {
           "server": "simulator.factorythings.com",
           "protocol": "mqtts",
-          "port": "8883",
+          "port": 8883,
           "username": "bai",
           "password": "secret"
         },
@@ -358,13 +358,13 @@
       {
         "applicationId": "RawFileSender",
         "enabled": false,
-        "api":"RawFileSender",
-        "RawFileSender":{
+        "api": "RawFileSender",
+        "RawFileSender": {
           "host": "https://demo.oianalytics.fr",
           "endpoint": "/api/optimistik/data/values/upload",
           "authentication": {
             "type": "Basic", // Only Basic authentication is supported at this moment
-            "username":"QFPELALDNSUO6BUV8SJ",
+            "username": "QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
           },
           "proxy": {
@@ -376,14 +376,14 @@
         },
         "caching": {
           "sendInterval": 5000, // Send interval in milliseconds
-          "retryInterval": 10000, // Retry interval in milliseconds
+          "retryInterval": 10000 // Retry interval in milliseconds
         }
       },
       {
         "applicationId": "AmazonS3",
         "enabled": false,
-        "api":"AmazonS3",
-        "AmazonS3":{
+        "api": "AmazonS3",
+        "AmazonS3": {
           "bucket": "optimistik.test",
           "folder": "oi_bus_test",
           "authentication": {
@@ -399,18 +399,18 @@
         },
         "caching": {
           "sendInterval": 5000, // Send interval in milliseconds
-          "retryInterval": 10000, // Retry interval in milliseconds
+          "retryInterval": 10000 // Retry interval in milliseconds
         }
       },
       {
         "applicationId": "AliveSignal",
         "enabled": false,
-        "api":"AliveSignal",
-        "AliveSignal":{
+        "api": "AliveSignal",
+        "AliveSignal": {
           "host": "https://demo.oianalytics.fr/api/optimistik/oibus",
           "authentication": {
             "type": "Basic", // Only Basic authentication is supported at this moment
-            "username":"QFPELALDNSUO6BUV8SJ",
+            "username": "QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
           },
           "id": "OIBus friendly name",
