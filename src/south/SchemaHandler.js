@@ -1,8 +1,8 @@
-import CsvSchema from './csv'
-import ModbusSchema from './modbus'
-import MqttSchema from './mqtt'
-import OpcuaSchema from './opcua'
-import RawFileSchema from './rawFile'
+import CsvSchema from './CSV/schema'
+import ModbusSchema from './Modbus/schema'
+import MqttSchema from './MQTT/schema'
+import OpcuaSchema from './OPCUA/schema'
+import RawFileSchema from './RawFile/schema'
 
 function getScheme(protocol) {
   switch (protocol) {

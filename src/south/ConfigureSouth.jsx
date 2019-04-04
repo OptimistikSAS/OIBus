@@ -1,7 +1,7 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
-import { getScheme } from './Schemas'
+import { getScheme } from './SchemaHandler'
 
 // eslint-disable-next-line react/prop-types
 const ConfigureSouth = ({ match, location }) => {
@@ -24,8 +24,9 @@ const ConfigureSouth = ({ match, location }) => {
     const { protocol } = formData
 
     if (configJson.protocol !== protocol) {
-      updateForm(formData, protocol)
-      // TODO: remove previous data from form if protocol changed
+      const newFormData = {}
+      newFormData.protocol = protocol
+      updateForm(newFormData, protocol)
     }
   }
   const log = type => console.info.bind(console, type)
