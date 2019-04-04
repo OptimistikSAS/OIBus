@@ -24,18 +24,13 @@ const ConfigureNorth = ({ match, location }) => {
     const { api } = formData
 
     if (configJson.api !== api) {
-      // eslint-disable-next-line no-console
-      console.log('updating form')
       const newFormData = {}
       newFormData.api = api
       updateForm(newFormData, api)
     }
   }
 
-  const handleSubmit = (form) => {
-    // eslint-disable-next-line no-console
-    console.log(form)
-  }
+  const handleSubmit = () => {}
 
   const log = type => console.info.bind(console, type)
   return (
