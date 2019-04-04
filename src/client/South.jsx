@@ -1,13 +1,7 @@
-/* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-debugger */
-/* eslint-disable jsx-a11y/label-has-for */
-/* eslint-disable react/prop-types */
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
-
-// import { } from 'reactstrap'
+import PropTypes from 'prop-types'
 
 const South = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -54,29 +48,11 @@ const South = ({ history }) => {
     )
   }
 
-  // eslint-disable-next-line no-unused-vars
-  const customField = (field) => {
-    const { id, classNames, label, help, required, description, errors, children } = field
-    const classes = `${classNames} row`
-    return (
-      <div className={classes}>
-        <label htmlFor={id}>
-          {label}
-          {required ? '*' : null}
-        </label>
-        {description}
-        {children}
-        {errors}
-        {help}
-      </div>
-    )
-  }
   return (
     <>
       <Form
         formData={configJson && configJson.south}
         liveValidate
-        // FieldTemplate={customField}
         ArrayFieldTemplate={customArrayField}
         schema={South.schema}
         uiSchema={South.uiSchema}
@@ -89,6 +65,8 @@ const South = ({ history }) => {
     </>
   )
 }
+
+South.propTypes = { history: PropTypes.object.isRequired }
 
 export default withRouter(South)
 
@@ -131,52 +109,6 @@ South.schema = {
             title: 'Protocol',
             default: 'CSV',
           },
-          // pointIdRoot: {
-          //   type: 'string',
-          //   title: 'Point ID Root',
-          // },
-          // defaultScanMode: {
-          //   type: 'string',
-          //   title: 'Default Scan Mode',
-          //   default: 'every20Second',
-          // },
-          // '^[A-Z]+$': {
-          //   type: 'object',
-          //   properties: {
-          //     inputFolder: {
-          //       type: 'string',
-          //       title: 'Input Folder',
-          //     },
-          //     archiveFolder: {
-          //       type: 'string',
-          //       title: 'Archive Folder',
-          //     },
-          //     errorFolder: {
-          //       type: 'string',
-          //       title: 'Error Folder',
-          //     },
-          //     separator: {
-          //       type: 'string',
-          //       title: 'Separator',
-          //       default: ',',
-          //     },
-          //     timeColumn: {
-          //       type: 'number',
-          //       title: 'Time Column',
-          //       default: 0,
-          //     },
-          //     hasFirstLine: {
-          //       type: 'boolean',
-          //       title: 'Has First Line',
-          //       default: true,
-          //     },
-          //   },
-          // },
-          // points: {
-          //   type: 'array',
-          //   title: 'Points',
-          //   items: {},
-          // },
         },
       },
     },
