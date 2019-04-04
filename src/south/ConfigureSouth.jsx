@@ -1,9 +1,9 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import { getScheme } from './SchemaHandler'
 
-// eslint-disable-next-line react/prop-types
 const ConfigureSouth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
@@ -47,6 +47,11 @@ const ConfigureSouth = ({ match, location }) => {
       <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
     </>
   )
+}
+
+ConfigureSouth.propTypes = {
+  match: PropTypes.object.isRequired,
+  location: PropTypes.object.isRequired,
 }
 
 export default withRouter(ConfigureSouth)
