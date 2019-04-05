@@ -13,7 +13,7 @@ const modbusSchema = {
     },
     protocol: {
       type: 'string',
-      enum: ['CSV', 'MQTT', 'OPCUA', 'RawFile', 'Modbus'],
+      enum: ['Modbus'],
       title: 'Protocol',
       default: 'CSV',
     },
