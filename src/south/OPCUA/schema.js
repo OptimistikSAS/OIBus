@@ -13,7 +13,7 @@ const OpcuaScheme = {
     },
     protocol: {
       type: 'string',
-      enum: ['CSV', 'MQTT', 'OPCUA', 'RawFile', 'Modbus'],
+      enum: ['OPCUA'],
       title: 'Protocol',
       default: 'CSV',
     },

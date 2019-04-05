@@ -13,7 +13,7 @@ const MqttSchema = {
     },
     protocol: {
       type: 'string',
-      enum: ['CSV', 'MQTT', 'OPCUA', 'RawFile', 'Modbus'],
+      enum: ['MQTT'],
       title: 'Protocol',
       default: 'CSV',
     },
