@@ -109,7 +109,7 @@
     "equipments": [
       {
         "equipmentId": "CSVServer",
-        "enabled": true,
+        "enabled": false,
         "protocol": "CSV",
         "pointIdRoot": "/fttest.base",
         "defaultScanMode": "every20Second",
@@ -293,7 +293,7 @@
         "defaultScanMode": "every5Second",
         "RawFile": {
           "inputFolder": "./tests/RawFile/input/",
-          "preserveFiles": true,
+          "preserveFiles": false,
           "minAge": 1000, // Minimum age for files in milliseconds
           "regex": ".txt" // Regex expression to match the filename
         },
@@ -362,14 +362,16 @@
         "RawFileSender": {
           "host": "https://demo.oianalytics.fr",
           "endpoint": "/api/optimistik/data/values/upload",
+          "stack": "request", // The package to use: "fetch", "axios", "request"
           "authentication": {
             "type": "Basic", // Only Basic authentication is supported at this moment
             "username": "QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
           },
           "proxy": {
-            "host": "http://127.0.0.1",
-            "port": 8080,
+            "protocol": "http", // "http" or "https"
+            "host": "localhost",
+            "port": 8888,
             "username": "user",
             "password": "password"
           }
