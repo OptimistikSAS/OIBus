@@ -13,7 +13,7 @@ const rawFileSchema = {
     },
     protocol: {
       type: 'string',
-      enum: ['CSV', 'MQTT', 'OPCUA', 'RawFile', 'Modbus'],
+      enum: ['RawFile'],
       title: 'Protocol',
       default: 'CSV',
     },
