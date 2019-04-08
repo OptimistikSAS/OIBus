@@ -59,16 +59,4 @@ const checkOrCreateConfigFile = (filePath) => {
   }
 }
 
-const getSchema = (baseDir) => {
-  const schemaFile = `${baseDir}/schema.js`
-  let schema = null
-
-  if (fs.existsSync(schemaFile)) {
-    /* eslint-disable-next-line */
-    schema = require(schemaFile)
-  }
-
-  return schema
-}
-
-module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile, getSchema }
+module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile }

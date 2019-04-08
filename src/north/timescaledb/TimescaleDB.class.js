@@ -120,14 +120,8 @@ class TimescaleDB extends ApiHandler {
       })
     })
   }
-
-  /**
-   * Method called to get the schema description.
-   * @return {object} - The schema
-   */
-  static getSchema() {
-    return super.getSchema(__dirname)
-  }
 }
+
+TimescaleDB.schema = require('./schema')
 
 module.exports = TimescaleDB
