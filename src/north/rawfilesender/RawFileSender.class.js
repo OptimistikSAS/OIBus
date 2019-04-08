@@ -43,6 +43,10 @@ class RawFileSender extends ApiHandler {
    * @return {Promise} - The send status
    */
   async handleFile(filePath) {
+    const stats = fs.statSync(filePath)
+    const fileSizeInBytes = stats.size
+    this.logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`)
+
     const headers = {}
 
     // Generate authentication header
