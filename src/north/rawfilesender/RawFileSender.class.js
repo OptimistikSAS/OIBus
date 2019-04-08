@@ -221,6 +221,14 @@ class RawFileSender extends ApiHandler {
 
     return true
   }
+
+  /**
+   * Method called to get the schema description.
+   * @return {object} - The schema
+   */
+  static getSchema() {
+    return super.getSchema(__dirname)
+  }
 }
 
 module.exports = RawFileSender

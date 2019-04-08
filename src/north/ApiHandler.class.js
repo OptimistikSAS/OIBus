@@ -1,3 +1,5 @@
+const { getSchema } = require('../services/config.service')
+
 class ApiHandler {
   /**
    * Constructor for Application
@@ -59,6 +61,15 @@ class ApiHandler {
    */
   handleFile(filePath) {
     this.engine.logger.info('handleFile', filePath)
+  }
+
+  /**
+   * Method called to get the schema description.
+   * @param {String} baseDir - The directory where the requested schema is located
+   * @return {object} - The schema
+   */
+  static getSchema(baseDir) {
+    return getSchema(baseDir)
   }
 }
 

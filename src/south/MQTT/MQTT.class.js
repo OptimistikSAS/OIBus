@@ -40,13 +40,20 @@ class MQTT extends ProtocolHandler {
     })
   }
 
-
   /**
    * Close the connection
    * @return {void}
    */
   disconnect() {
     this.client.end(true)
+  }
+
+  /**
+   * Method called to get the schema description.
+   * @return {object} - The schema
+   */
+  static getSchema() {
+    return super.getSchema(__dirname)
   }
 }
 
