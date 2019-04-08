@@ -86,6 +86,14 @@ class AliveSignal extends ApiHandler {
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
   }
+
+  /**
+   * Method called to get the schema description.
+   * @return {object} - The schema
+   */
+  static getSchema() {
+    return super.getSchema(__dirname)
+  }
 }
 
 module.exports = AliveSignal
