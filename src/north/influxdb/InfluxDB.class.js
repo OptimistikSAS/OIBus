@@ -138,4 +138,6 @@ class InfluxDB extends ApiHandler {
   }
 }
 
+InfluxDB.schema = require('./schema')
+
 module.exports = InfluxDB
