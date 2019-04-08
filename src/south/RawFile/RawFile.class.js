@@ -141,6 +141,14 @@ class RawFile extends ProtocolHandler {
 
     await databaseService.upsertRawFile(this.database, filename, stats.mtimeMs)
   }
+
+  /**
+   * Method called to get the schema description.
+   * @return {object} - The schema
+   */
+  static getSchema() {
+    return super.getSchema(__dirname)
+  }
 }
 
 module.exports = RawFile

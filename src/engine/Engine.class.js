@@ -256,6 +256,58 @@ class Engine {
       application.disconnect()
     })
   }
+
+  /**
+   * Return available North applications
+   * @return {String[]} - Available North applications
+   */
+  getNorthSchemaList() {
+    this.logger.debug('Getting North applications')
+    return Object.keys(apiList)
+  }
+
+  /**
+   * Return available South protocols
+   * @return {String[]} - Available South protocols
+   */
+  getSouthSchemaList() {
+    this.logger.debug('Getting South protocols')
+    return Object.keys(protocolList)
+  }
+
+  /**
+   * Get schema definition for the given api
+   * @param {String} api - The api to get the schema for
+   * @return {Object} - The api schema
+   */
+  getNorthSchema(api) {
+    let schema = null
+
+    if (Object.keys(apiList).includes(api)) {
+      this.logger.debug(`Getting schema for North application ${api}`)
+
+      schema = apiList[api].getSchema()
+    }
+
+    return schema
+  }
+
+  /**
+   * Get schema definition for the given protocol
+   * @param {String} protocol - The protocol to get the schema for
+   * @return {Object} - The protocol schema
+   */
+  getSouthSchema(protocol) {
+    let schema = null
+
+    if (Object.keys(protocolList).includes(protocol)) {
+      this.logger.debug(`Getting schema for South protocol ${protocol}`)
+
+      schema = protocolList[protocol].getSchema()
+    }
+
+    return schema
+  }
 }
 
 module.exports = Engine
