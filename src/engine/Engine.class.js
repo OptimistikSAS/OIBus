@@ -263,6 +263,7 @@ class Engine {
    */
   getNorthSchemaList() {
     this.logger.debug('Getting North applications')
+
     return Object.keys(apiList)
   }
 
@@ -272,6 +273,7 @@ class Engine {
    */
   getSouthSchemaList() {
     this.logger.debug('Getting South protocols')
+
     return Object.keys(protocolList)
   }
 
@@ -281,15 +283,13 @@ class Engine {
    * @return {Object} - The api schema
    */
   getNorthSchema(api) {
-    let schema = null
-
     if (Object.keys(apiList).includes(api)) {
       this.logger.debug(`Getting schema for North application ${api}`)
 
-      schema = apiList[api].getSchema()
+      return apiList[api].schema
     }
 
-    return schema
+    return null
   }
 
   /**
@@ -298,15 +298,13 @@ class Engine {
    * @return {Object} - The protocol schema
    */
   getSouthSchema(protocol) {
-    let schema = null
-
     if (Object.keys(protocolList).includes(protocol)) {
       this.logger.debug(`Getting schema for South protocol ${protocol}`)
 
-      schema = protocolList[protocol].getSchema()
+      return protocolList[protocol].schema
     }
 
-    return schema
+    return null
   }
 }
 
