@@ -47,14 +47,8 @@ class MQTT extends ProtocolHandler {
   disconnect() {
     this.client.end(true)
   }
-
-  /**
-   * Method called to get the schema description.
-   * @return {object} - The schema
-   */
-  static getSchema() {
-    return super.getSchema(__dirname)
-  }
 }
+
+MQTT.schema = require('./schema')
 
 module.exports = MQTT

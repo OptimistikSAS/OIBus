@@ -144,14 +144,8 @@ class Modbus extends ProtocolHandler {
       this.connected = false
     }
   }
-
-  /**
-   * Method called to get the schema description.
-   * @return {object} - The schema
-   */
-  static getSchema() {
-    return super.getSchema(__dirname)
-  }
 }
+
+Modbus.schema = require('./schema')
 
 module.exports = Modbus

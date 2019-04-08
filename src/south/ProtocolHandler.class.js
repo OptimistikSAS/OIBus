@@ -1,5 +1,3 @@
-const { getSchema } = require('../services/config.service')
-
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  */
@@ -27,15 +25,6 @@ class ProtocolHandler {
   listen() {}
   /* eslint-disable-next-line */
   disconnect() {}
-
-  /**
-   * Method called to get the schema description.
-   * @param {String} baseDir - The directory where the requested schema is located
-   * @return {object} - The schema
-   */
-  static getSchema(baseDir) {
-    return getSchema(baseDir)
-  }
 }
 
 module.exports = ProtocolHandler

@@ -27,14 +27,8 @@ class Console extends ApiHandler {
 
     return Promise.resolve()
   }
-
-  /**
-   * Method called to get the schema description.
-   * @return {object} - The schema
-   */
-  static getSchema() {
-    return super.getSchema(__dirname)
-  }
 }
+
+Console.schema = require('./schema')
 
 module.exports = Console

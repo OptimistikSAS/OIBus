@@ -122,14 +122,8 @@ class CSV extends ProtocolHandler {
 
     readStream.pipe(csvFile)
   }
-
-  /**
-   * Method called to get the schema description.
-   * @return {object} - The schema
-   */
-  static getSchema() {
-    return super.getSchema(__dirname)
-  }
 }
+
+CSV.schema = require('./schema')
 
 module.exports = CSV
