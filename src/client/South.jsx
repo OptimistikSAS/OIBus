@@ -2,6 +2,7 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import ConfigService from './services/configService'
 
 const South = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -10,20 +11,12 @@ const South = ({ history }) => {
   }
 
   React.useLayoutEffect(() => {
-    // eslint-disable-next-line consistent-return
-    fetch('/config/schemas/south').then(resp => resp.json().then((protocolList) => {
+    ConfigService.getSouthProtocols().then((protocolList) => {
       setProtocols(protocolList)
-
-      // eslint-disable-next-line consistent-return
-      fetch('/config').then((response) => {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.indexOf('application/json') !== -1) {
-          return response.json().then(({ config }) => {
-            setConfigJson(config)
-          })
-        }
+      ConfigService.getConfig().then(({ config }) => {
+        setConfigJson(config)
       })
-    }))
+    })
   }, [])
   const log = type => console.info.bind(console, type)
 
