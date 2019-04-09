@@ -1,4 +1,4 @@
-const amazonSchema = {
+module.exports = {
   title: 'Configure AmazonS3',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const amazonSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['AmazonS3'],
       default: 'Console',
     },
     AmazonS3: {
@@ -91,5 +91,3 @@ const amazonSchema = {
     },
   },
 }
-
-export default amazonSchema

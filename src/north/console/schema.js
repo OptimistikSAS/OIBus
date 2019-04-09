@@ -1,4 +1,4 @@
-const consoleSchema = {
+module.exports = {
   title: 'Configure Console',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const consoleSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['Console'],
       default: 'Console',
     },
     minimumBuffer: {
@@ -50,5 +50,3 @@ const consoleSchema = {
     },
   },
 }
-
-export default consoleSchema

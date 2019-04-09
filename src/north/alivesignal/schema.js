@@ -1,4 +1,4 @@
-const aliveSignalSchema = {
+module.exports = {
   title: 'Configure Alive Signal',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const aliveSignalSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['AliveSignal'],
       default: 'Console',
     },
     AliveSignal: {
@@ -84,5 +84,3 @@ const aliveSignalSchema = {
     },
   },
 }
-
-export default aliveSignalSchema

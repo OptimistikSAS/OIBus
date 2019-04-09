@@ -1,4 +1,4 @@
-const influxDbSchema = {
+module.exports = {
   title: 'Configure InfluxDB',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const influxDbSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['InfluxDB'],
       default: 'Console',
     },
     minimumBuffer: {
@@ -80,5 +80,3 @@ const influxDbSchema = {
     },
   },
 }
-
-export default influxDbSchema
