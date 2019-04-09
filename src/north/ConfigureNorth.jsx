@@ -2,32 +2,29 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getScheme } from './SchemaHandler'
 
 const ConfigureNorth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
-  const updateForm = (formData, api) => {
+  const updateForm = (formData) => {
     setConfigJson(formData)
-    setConfigSchema(getScheme(api))
   }
 
   React.useEffect(() => {
     const { api } = match.params
     const { formData } = location
-    updateForm(formData, api)
+    // eslint-disable-next-line consistent-return
+    fetch(`/config/schemas/north/${api}`).then(response => response.json().then((schema) => {
+      setConfigSchema(schema)
+      updateForm(formData)
+    }))
   }, [])
 
   const handleChange = (form) => {
     const { formData } = form
-    const { api } = formData
 
-    if (configJson.api !== api) {
-      const newFormData = {}
-      newFormData.api = api
-      updateForm(newFormData, api)
-    }
+    updateForm(formData)
   }
 
   const handleSubmit = () => {}
