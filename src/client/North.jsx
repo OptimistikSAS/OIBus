@@ -6,16 +6,27 @@ import PropTypes from 'prop-types'
 
 const North = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
+
+  const setApis = (apiList) => {
+    North.schema.properties.applications.items.properties.api.enum = apiList
+  }
+
   React.useLayoutEffect(() => {
     // eslint-disable-next-line consistent-return
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          setConfigJson(config)
-        })
-      }
-    })
+
+    // eslint-disable-next-line consistent-return
+    fetch('/config/schemas/north').then(response => response.json().then((apiList) => {
+      setApis(apiList)
+      // eslint-disable-next-line consistent-return
+      fetch('/config').then((resp) => {
+        const contentType = resp.headers.get('content-type')
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+          return resp.json().then(({ config }) => {
+            setConfigJson(config)
+          })
+        }
+      })
+    }))
   }, [])
   const log = type => console.info.bind(console, type)
 
@@ -48,6 +59,7 @@ const North = ({ history }) => {
       </div>
     )
   }
+
   return (
     <>
       <Form
@@ -66,7 +78,6 @@ const North = ({ history }) => {
   )
 }
 North.propTypes = { history: PropTypes.object.isRequired }
-
 North.schema = {
   title: 'North',
   type: 'object',
@@ -89,7 +100,7 @@ North.schema = {
           api: {
             type: 'string',
             title: 'API',
-            enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+            enum: [],
             default: 'Console',
           },
         },
