@@ -190,11 +190,17 @@ class Cache {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
-        success = await this.engine.sendFile(application.applicationId, filePath)
+        if (fs.existsSync(filePath)) {
+          success = await this.engine.sendFile(application.applicationId, filePath)
 
-        if (success) {
+          if (success) {
+            await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
+            this.handleSentFile(filePath)
+          }
+        } else {
+          this.logger.error(`File ${filePath} doesn't exist. Removing it from database.`)
+
           await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
-          this.handleSentFile(filePath)
         }
       }
     } catch (error) {
