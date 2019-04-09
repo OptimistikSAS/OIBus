@@ -2,7 +2,7 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ConfigService from '../client/services/configService'
+import apis from '../client/services/apis'
 
 const ConfigureNorth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -16,7 +16,7 @@ const ConfigureNorth = ({ match, location }) => {
     const { api } = match.params
     const { formData } = location
 
-    ConfigService.getNorthApiSchema(api).then((schema) => {
+    apis.getNorthApiSchema(api).then((schema) => {
       setConfigSchema(schema)
       updateForm(formData)
     })
