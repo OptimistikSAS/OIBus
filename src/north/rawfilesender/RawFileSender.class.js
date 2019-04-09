@@ -3,6 +3,7 @@ const path = require('path')
 const url = require('url')
 
 const fetch = require('node-fetch')
+// eslint-disable-next-line import/no-unresolved
 const axios = require('axios').default
 const request = require('request-promise-native')
 const tunnel = require('tunnel')
@@ -43,6 +44,10 @@ class RawFileSender extends ApiHandler {
    * @return {Promise} - The send status
    */
   async handleFile(filePath) {
+    const stats = fs.statSync(filePath)
+    const fileSizeInBytes = stats.size
+    this.logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`)
+
     const headers = {}
 
     // Generate authentication header
@@ -222,5 +227,7 @@ class RawFileSender extends ApiHandler {
     return true
   }
 }
+
+RawFileSender.schema = require('./schema')
 
 module.exports = RawFileSender

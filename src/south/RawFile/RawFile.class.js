@@ -143,4 +143,6 @@ class RawFile extends ProtocolHandler {
   }
 }
 
+RawFile.schema = require('./schema')
+
 module.exports = RawFile
