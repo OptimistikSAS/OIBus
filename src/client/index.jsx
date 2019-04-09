@@ -24,7 +24,7 @@ const Main = () => (
           <Route exact path="/engine" component={Engine} />
           <Route exact path="/south" component={South} />
           <Route exact path="/north" component={North} />
-          <Route exact path="/north/:protocol" component={ConfigureNorth} />
+          <Route exact path="/north/:api" component={ConfigureNorth} />
           <Route component={NotFound} />
         </Switch>
       </Container>

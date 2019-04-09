@@ -1,4 +1,4 @@
-const timescaleDbSchema = {
+module.exports = {
   title: 'Configure TimescaleDB',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const timescaleDbSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['TimescaleDB'],
       default: 'Console',
     },
     minimumBuffer: {
@@ -70,5 +70,3 @@ const timescaleDbSchema = {
     },
   },
 }
-
-export default timescaleDbSchema

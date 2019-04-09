@@ -1,4 +1,4 @@
-const rawFileSenderSchema = {
+module.exports = {
   title: 'Configure RawFileSender',
   type: 'object',
   properties: {
@@ -14,7 +14,7 @@ const rawFileSenderSchema = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console', 'InfluxDB', 'RawFileSender', 'TimescaleDB', 'AmazonS3', 'AliveSignal'],
+      enum: ['RawFileSender'],
       default: 'Console',
     },
     RawFileSender: {
@@ -96,5 +96,3 @@ const rawFileSenderSchema = {
     },
   },
 }
-
-export default rawFileSenderSchema
