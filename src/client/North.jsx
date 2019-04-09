@@ -1,27 +1,111 @@
 import React from 'react'
-
+import { withRouter } from 'react-router-dom'
+import Form from 'react-jsonschema-form-bs4'
+import PropTypes from 'prop-types'
 // import { } from 'reactstrap'
 
-const North = () => {
+const North = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
+
+  const setApis = (apiList) => {
+    North.schema.properties.applications.items.properties.api.enum = apiList
+  }
+
   React.useLayoutEffect(() => {
     // eslint-disable-next-line consistent-return
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          setConfigJson(config)
-        })
-      }
-    })
+
+    // eslint-disable-next-line consistent-return
+    fetch('/config/schemas/north').then(response => response.json().then((apiList) => {
+      setApis(apiList)
+      // eslint-disable-next-line consistent-return
+      fetch('/config').then((resp) => {
+        const contentType = resp.headers.get('content-type')
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+          return resp.json().then(({ config }) => {
+            setConfigJson(config)
+          })
+        }
+      })
+    }))
   }, [])
+  const log = type => console.info.bind(console, type)
+
+  const handleClick = (element) => {
+    const { formData } = element.children.props
+    const link = `/north/${formData.api}`
+    history.push({ pathname: link, formData })
+  }
+
+  const customArrayField = (field) => {
+    const { items, onAddClick, title } = field
+    return (
+      <div>
+        <legend>{title}</legend>
+        {items.map(element => (
+          <div key={element.index} className="array-row">
+            <>
+              {element.children}
+              <button type="button" className="btn btn-primary" onClick={() => handleClick(element)}>
+                Configure application
+              </button>
+            </>
+          </div>
+        ))}
+        {
+          <button type="button" onClick={onAddClick}>
+            Add application
+          </button>
+        }
+      </div>
+    )
+  }
 
   return (
     <>
-      <h1>North</h1>
+      <Form
+        formData={configJson && configJson.north}
+        liveValidate
+        ArrayFieldTemplate={customArrayField}
+        schema={North.schema}
+        uiSchema={North.uiSchema}
+        autocomplete="on"
+        onChange={log('changed')}
+        onSubmit={log('submitted')}
+        onError={log('errors')}
+      />
       <pre>{configJson && JSON.stringify(configJson.north, ' ', 2)}</pre>
     </>
   )
 }
-
-export default North
+North.propTypes = { history: PropTypes.object.isRequired }
+North.schema = {
+  title: 'North',
+  type: 'object',
+  properties: {
+    applications: {
+      type: 'array',
+      title: 'Applications',
+      items: {
+        type: 'object',
+        properties: {
+          applicationId: {
+            type: 'string',
+            title: 'Application ID',
+          },
+          enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true,
+          },
+          api: {
+            type: 'string',
+            title: 'API',
+            enum: [],
+            default: 'Console',
+          },
+        },
+      },
+    },
+  },
+}
+export default withRouter(North)
