@@ -3,6 +3,7 @@ const path = require('path')
 const url = require('url')
 
 const fetch = require('node-fetch')
+// eslint-disable-next-line import/no-unresolved
 const axios = require('axios').default
 const request = require('request-promise-native')
 const tunnel = require('tunnel')
