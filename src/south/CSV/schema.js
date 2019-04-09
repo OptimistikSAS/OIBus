@@ -1,4 +1,4 @@
-const csvSchema = {
+module.exports = {
   title: 'Configure CSV',
   type: 'object',
   properties: {
@@ -91,5 +91,3 @@ const csvSchema = {
     },
   },
 }
-
-export default csvSchema

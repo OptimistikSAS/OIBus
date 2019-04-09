@@ -1,4 +1,4 @@
-const OpcuaScheme = {
+module.exports = {
   title: 'Configure OPCUA',
   type: 'object',
   properties: {
@@ -88,5 +88,3 @@ const OpcuaScheme = {
     },
   },
 }
-
-export default OpcuaScheme
