@@ -45,7 +45,7 @@ const getSouthSchemaList = (ctx) => {
  * @return {void}
  */
 const getSouthSchema = (ctx) => {
-  const schema = ctx.app.engine.getSouthSchema(ctx.params.api)
+  const schema = ctx.app.engine.getSouthSchema(ctx.params.protocol)
   if (schema) {
     ctx.ok(schema)
   } else {
