@@ -136,4 +136,6 @@ class OPCUA extends ProtocolHandler {
   }
 }
 
+OPCUA.schema = require('./schema')
+
 module.exports = OPCUA
