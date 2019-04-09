@@ -184,18 +184,22 @@ class Cache {
    * @return {void}
    */
   async handleFiles(application) {
-    let success = true
+    let timeout = application.config.sendInterval
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
+        timeout = 1000
+
         if (fs.existsSync(filePath)) {
-          success = await this.engine.sendFile(application.applicationId, filePath)
+          const success = await this.engine.sendFile(application.applicationId, filePath)
 
           if (success) {
             await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
-            this.handleSentFile(filePath)
+            await this.handleSentFile(filePath)
+          } else {
+            timeout = application.config.retryInterval
           }
         } else {
           this.logger.error(`File ${filePath} doesn't exist. Removing it from database.`)
@@ -205,10 +209,8 @@ class Cache {
       }
     } catch (error) {
       this.logger.error(error)
-      success = false
     }
 
-    const timeout = success ? application.config.sendInterval : application.config.retryInterval
     this.resetTimeout(application, timeout)
   }
 
