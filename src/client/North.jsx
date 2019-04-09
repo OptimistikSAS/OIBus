@@ -2,7 +2,7 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 import Form from 'react-jsonschema-form-bs4'
 import PropTypes from 'prop-types'
-// import { } from 'reactstrap'
+import ConfigService from './services/configService'
 
 const North = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -12,21 +12,12 @@ const North = ({ history }) => {
   }
 
   React.useLayoutEffect(() => {
-    // eslint-disable-next-line consistent-return
-
-    // eslint-disable-next-line consistent-return
-    fetch('/config/schemas/north').then(response => response.json().then((apiList) => {
+    ConfigService.getNorthApis().then((apiList) => {
       setApis(apiList)
-      // eslint-disable-next-line consistent-return
-      fetch('/config').then((resp) => {
-        const contentType = resp.headers.get('content-type')
-        if (contentType && contentType.indexOf('application/json') !== -1) {
-          return resp.json().then(({ config }) => {
-            setConfigJson(config)
-          })
-        }
+      ConfigService.getConfig().then(({ config }) => {
+        setConfigJson(config)
       })
-    }))
+    })
   }, [])
   const log = type => console.info.bind(console, type)
 
