@@ -1,4 +1,4 @@
-const modbusSchema = {
+module.exports = {
   title: 'Configure Modbus',
   type: 'object',
   properties: {
@@ -73,5 +73,3 @@ const modbusSchema = {
     },
   },
 }
-
-export default modbusSchema
