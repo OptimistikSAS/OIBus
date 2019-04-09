@@ -1,4 +1,4 @@
-const rawFileSchema = {
+module.exports = {
   title: 'Configure RawFile',
   type: 'object',
   properties: {
@@ -70,5 +70,3 @@ const rawFileSchema = {
     },
   },
 }
-
-export default rawFileSchema

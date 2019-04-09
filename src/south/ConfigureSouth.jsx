@@ -2,32 +2,29 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getScheme } from './SchemaHandler'
 
 const ConfigureSouth = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
-  const updateForm = (formData, protocol) => {
+  const updateForm = (formData) => {
     setConfigJson(formData)
-    setConfigSchema(getScheme(protocol))
   }
 
   React.useEffect(() => {
     const { protocol } = match.params
     const { formData } = location
-    updateForm(formData, protocol)
+    // eslint-disable-next-line consistent-return
+    fetch(`/config/schemas/south/${protocol}`).then(response => response.json().then((schema) => {
+      setConfigSchema(schema)
+      updateForm(formData)
+    }))
   }, [])
 
   const handleChange = (data) => {
     const { formData } = data
-    const { protocol } = formData
 
-    if (configJson.protocol !== protocol) {
-      const newFormData = {}
-      newFormData.protocol = protocol
-      updateForm(newFormData, protocol)
-    }
+    updateForm(formData)
   }
   const log = type => console.info.bind(console, type)
   return (

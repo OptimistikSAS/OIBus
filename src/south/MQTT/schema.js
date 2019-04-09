@@ -1,4 +1,4 @@
-const MqttSchema = {
+module.exports = {
   title: 'Configure MQTT',
   type: 'object',
   properties: {
@@ -85,5 +85,3 @@ const MqttSchema = {
     },
   },
 }
-
-export default MqttSchema
