@@ -12,6 +12,7 @@ import NotFound from './NotFound.jsx'
 import South from './South.jsx'
 import North from './North.jsx'
 import Engine from '../engine/Engine.jsx'
+import ConfigureNorth from '../north/ConfigureNorth.jsx'
 import ConfigureSouth from '../south/ConfigureSouth.jsx'
 
 const Main = () => (
@@ -25,6 +26,7 @@ const Main = () => (
           <Route exact path="/south" component={South} />
           <Route exact path="/south/:protocol" component={ConfigureSouth} />
           <Route exact path="/north" component={North} />
+          <Route exact path="/north/:api" component={ConfigureNorth} />
           <Route component={NotFound} />
         </Switch>
       </Container>
