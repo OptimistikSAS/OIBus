@@ -40,7 +40,6 @@ class MQTT extends ProtocolHandler {
     })
   }
 
-
   /**
    * Close the connection
    * @return {void}
@@ -49,5 +48,7 @@ class MQTT extends ProtocolHandler {
     this.client.end(true)
   }
 }
+
+MQTT.schema = require('./schema')
 
 module.exports = MQTT
