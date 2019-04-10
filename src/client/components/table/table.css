@@ -1,0 +1,4 @@
+.table .oi-row:hover {
+  cursor: pointer;
+  opacity: 0.7;
+}
