@@ -6,7 +6,6 @@ const Api = {
   async handleResponse(response) {
     try {
       const json = await response.json()
-      json.code = response.status
       return json
     } catch (error) {
       log('Error parsing JSON', error)
