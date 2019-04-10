@@ -41,7 +41,7 @@ const South = ({ history }) => {
   }, [])
 
   React.useEffect(() => {
-    ConfigService.getSouthProtocols().then((protocols) => {
+    ConfigService.getNorthApis().then((protocols) => {
       setProtocolList(protocols)
       setNewRowData({ equipmentId: '', enabled: false, protocol: protocols[0] })
     })
@@ -77,7 +77,6 @@ const South = ({ history }) => {
         ({ value } = target)
         break
     }
-    console.log(value)
     setNewRowData(prevState => ({ ...prevState, [name]: value }))
   }
 
