@@ -1,102 +1,73 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
-import Form from 'react-jsonschema-form-bs4'
 import PropTypes from 'prop-types'
 import ConfigService from './services/configService'
+import Table from './components/table/Table.jsx'
+
+const tableHeaders = ['Application ID', 'Enabled', 'API']
 
 const North = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
+  const [tableRows, setTableRows] = React.useState()
 
-  const setApis = (apiList) => {
-    North.schema.properties.applications.items.properties.api.enum = apiList
+  /**
+   * Sets the content of the table
+   * @param {object} config The configuration json
+   * @returns {void} no return value
+   */
+  const createTableRows = (config) => {
+    const array = []
+    config.applications.forEach((application) => {
+      const { applicationId, enabled, api } = application
+      array.push([applicationId, enabled.toString(), api])
+    })
+
+    setTableRows(array)
   }
 
-  React.useLayoutEffect(() => {
-    ConfigService.getNorthApis().then((apiList) => {
-      setApis(apiList)
-      ConfigService.getConfig().then(({ config }) => {
-        setConfigJson(config)
-      })
+  React.useEffect(() => {
+    ConfigService.getConfig().then(({ config }) => {
+      setConfigJson(config.north)
+      createTableRows(config.north)
     })
   }, [])
-  const log = type => console.info.bind(console, type)
 
-  const handleClick = (element) => {
-    const { formData } = element.children.props
+  /**
+   * Gets the config json of a north application
+   * @param {string} applicationId ID of an application
+   * @returns {object} The selected application's config
+   */
+  const getApplicationData = (applicationId) => {
+    let formData = {}
+    configJson.applications.forEach((application) => {
+      if (application.applicationId === applicationId) {
+        formData = application
+      }
+    })
+
+    return formData
+  }
+
+  /**
+   * Handles the click of the table rows and redirects the
+   * user to the selected north application's configuration page
+   * @param {array} application Data of the clicked row
+   * @return {void}
+   */
+  const handleClick = (application) => {
+    const [applicationId] = application
+    const formData = getApplicationData(applicationId)
     const link = `/north/${formData.api}`
     history.push({ pathname: link, formData })
   }
 
-  const customArrayField = (field) => {
-    const { items, onAddClick, title } = field
-    return (
-      <div>
-        <legend>{title}</legend>
-        {items.map(element => (
-          <div key={element.index} className="array-row">
-            <>
-              {element.children}
-              <button type="button" className="btn btn-primary" onClick={() => handleClick(element)}>
-                Configure application
-              </button>
-            </>
-          </div>
-        ))}
-        {
-          <button type="button" onClick={onAddClick}>
-            Add application
-          </button>
-        }
-      </div>
-    )
-  }
-
   return (
     <>
-      <Form
-        formData={configJson && configJson.north}
-        liveValidate
-        ArrayFieldTemplate={customArrayField}
-        schema={North.schema}
-        uiSchema={North.uiSchema}
-        autocomplete="on"
-        onChange={log('changed')}
-        onSubmit={log('submitted')}
-        onError={log('errors')}
-      />
-      <pre>{configJson && JSON.stringify(configJson.north, ' ', 2)}</pre>
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleClick} />}
+      <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
     </>
   )
 }
 North.propTypes = { history: PropTypes.object.isRequired }
-North.schema = {
-  title: 'North',
-  type: 'object',
-  properties: {
-    applications: {
-      type: 'array',
-      title: 'Applications',
-      items: {
-        type: 'object',
-        properties: {
-          applicationId: {
-            type: 'string',
-            title: 'Application ID',
-          },
-          enabled: {
-            type: 'boolean',
-            title: 'Enabled',
-            default: true,
-          },
-          api: {
-            type: 'string',
-            title: 'API',
-            enum: [],
-            default: 'Console',
-          },
-        },
-      },
-    },
-  },
-}
+
 export default withRouter(North)
