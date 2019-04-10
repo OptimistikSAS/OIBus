@@ -1,14 +1,22 @@
+/* eslint-disable no-debugger */
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ConfigService from './services/configService'
 import Table from './components/table/Table.jsx'
+import Select from './components/Select.jsx'
+import Input from './components/Input.jsx'
 
 const tableHeaders = ['Equipment ID', 'Enabled', 'Protocol']
 
 const South = ({ history }) => {
   const [configJson, setConfigJson] = React.useState()
   const [tableRows, setTableRows] = React.useState()
+  const [newRowData, setNewRowData] = React.useState({})
+  const [protocolList, setProtocolList] = React.useState()
+  const buttonRef = React.useRef()
 
   /**
    * Sets the content of the table
@@ -32,6 +40,13 @@ const South = ({ history }) => {
     })
   }, [])
 
+  React.useEffect(() => {
+    ConfigService.getSouthProtocols().then((protocols) => {
+      setProtocolList(protocols)
+      setNewRowData({ equipmentId: '', enabled: false, protocol: protocols[0] })
+    })
+  }, [])
+
   /**
    * Gets the config json of a south equipment
    * @param {string} equipmentId ID of an equipment
@@ -48,22 +63,62 @@ const South = ({ history }) => {
     return formData
   }
 
+  const handleChange = (event) => {
+    const {
+      target,
+      target: { type, name },
+    } = event
+    let value
+    switch (type) {
+      case 'checkbox':
+        value = target.checked
+        break
+      default:
+        ({ value } = target)
+        break
+    }
+    console.log(value)
+    setNewRowData(prevState => ({ ...prevState, [name]: value }))
+  }
+
+  const createNewRow = () => [
+    <Input name="equipmentId" type="text" onChange={handleChange} />,
+    <Input name="enabled" type="checkbox" onChange={handleChange} />,
+    <Select name="protocol" options={protocolList} onChange={handleChange} />,
+  ]
+
   /**
    * Handles the click of the table rows and redirects the
    * user to the selected south equipment's configuration page
    * @param {array} equipment Data of the clicked row
    * @return {void}
    */
-  const handleClick = (equipment) => {
+  const handleRowClick = (equipment) => {
     const [equipmentId] = equipment
-    const formData = getEquipmentData(equipmentId)
+    let formData
+    if (typeof equipmentId === 'string') {
+      formData = getEquipmentData(equipmentId)
+    } else {
+      formData = { ...newRowData }
+    }
     const link = `/south/${formData.protocol}`
     history.push({ pathname: link, formData })
   }
 
+  const handleButtonClick = () => {
+    const newRows = [...tableRows]
+    const newRow = createNewRow()
+    newRows.push(newRow)
+    setTableRows(newRows)
+    console.log(buttonRef)
+    buttonRef.current.setAttribute('disabled', 'disabled')
+  }
   return (
     <>
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleClick} />}
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} />}
+      <button ref={buttonRef} type="button" className="btn btn-primary" onClick={handleButtonClick}>
+        Add equipment
+      </button>
       <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
     </>
   )
