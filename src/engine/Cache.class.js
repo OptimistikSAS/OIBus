@@ -108,7 +108,7 @@ class Cache {
     if (preserveFiles) {
       fs.copyFile(filePath, cachePath, (copyError) => {
         if (copyError) {
-          this.logger.error(copyError.stack || copyError)
+          this.logger.error(copyError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
             const { canHandleFiles } = activeApi
@@ -123,7 +123,7 @@ class Cache {
     } else {
       fs.rename(filePath, cachePath, (renameError) => {
         if (renameError) {
-          this.logger.error(renameError.stack || renameError)
+          this.logger.error(renameError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
             const { canHandleFiles } = activeApi
@@ -170,7 +170,7 @@ class Cache {
         success = await this.sendValues(application.applicationId, values)
       }
     } catch (error) {
-      this.logger.error(error.stack || error)
+      this.logger.error(error)
       success = false
     }
 
@@ -202,13 +202,13 @@ class Cache {
             timeout = application.config.retryInterval
           }
         } else {
-          this.logger.error(`File ${filePath} doesn't exist. Removing it from database.`)
+          this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
 
           await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
         }
       }
     } catch (error) {
-      this.logger.error(error.stack || error)
+      this.logger.error(error)
     }
 
     this.resetTimeout(application, timeout)
@@ -246,7 +246,7 @@ class Cache {
           // Delete original file
           fs.unlink(filePath, (unlinkError) => {
             if (unlinkError) {
-              this.logger.error(unlinkError.stack || unlinkError)
+              this.logger.error(unlinkError)
             } else {
               this.logger.info(`File ${filePath} deleted`)
             }
@@ -261,7 +261,7 @@ class Cache {
           // Move original file into the archive folder
           fs.rename(filePath, archivePath, (renameError) => {
             if (renameError) {
-              this.logger.error(renameError.stack || renameError)
+              this.logger.error(renameError)
             } else {
               this.logger.info(`File ${filePath} moved to ${archivePath}`)
             }
