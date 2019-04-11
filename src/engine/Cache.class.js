@@ -202,7 +202,7 @@ class Cache {
             timeout = application.config.retryInterval
           }
         } else {
-          this.logger.error(`File ${filePath} doesn't exist. Removing it from database.`)
+          this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
 
           await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
         }
@@ -244,9 +244,9 @@ class Cache {
       switch (this.archiveMode) {
         case 'delete':
           // Delete original file
-          fs.unlink(filePath, (error) => {
-            if (error) {
-              this.logger.error(error)
+          fs.unlink(filePath, (unlinkError) => {
+            if (unlinkError) {
+              this.logger.error(unlinkError)
             } else {
               this.logger.info(`File ${filePath} deleted`)
             }
