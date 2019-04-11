@@ -108,7 +108,7 @@ class Cache {
     if (preserveFiles) {
       fs.copyFile(filePath, cachePath, (copyError) => {
         if (copyError) {
-          this.logger.error(copyError)
+          this.logger.error(copyError.stack || copyError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
             const { canHandleFiles } = activeApi
@@ -123,7 +123,7 @@ class Cache {
     } else {
       fs.rename(filePath, cachePath, (renameError) => {
         if (renameError) {
-          this.logger.error(renameError)
+          this.logger.error(renameError.stack || renameError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
             const { canHandleFiles } = activeApi
@@ -170,7 +170,7 @@ class Cache {
         success = await this.sendValues(application.applicationId, values)
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.stack || error)
       success = false
     }
 
@@ -208,7 +208,7 @@ class Cache {
         }
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.stack || error)
     }
 
     this.resetTimeout(application, timeout)
@@ -244,9 +244,9 @@ class Cache {
       switch (this.archiveMode) {
         case 'delete':
           // Delete original file
-          fs.unlink(filePath, (error) => {
-            if (error) {
-              this.logger.error(error)
+          fs.unlink(filePath, (unlinError) => {
+            if (unlinError) {
+              this.logger.error(unlinError.stack || unlinError)
             } else {
               this.logger.info(`File ${filePath} deleted`)
             }
@@ -261,7 +261,7 @@ class Cache {
           // Move original file into the archive folder
           fs.rename(filePath, archivePath, (renameError) => {
             if (renameError) {
-              this.logger.error(renameError)
+              this.logger.error(renameError.stack || renameError)
             } else {
               this.logger.info(`File ${filePath} moved to ${archivePath}`)
             }

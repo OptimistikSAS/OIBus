@@ -59,11 +59,11 @@ class OPCUA extends ProtocolHandler {
   async connect() {
     await this.client.connect(
       this.url,
-      (err1) => {
-        if (!err1) {
+      (connectError) => {
+        if (!connectError) {
           this.logger.info('OPCUA Connected')
-          this.client.createSession((err2, session) => {
-            if (!err2) {
+          this.client.createSession((sessionError, session) => {
+            if (!sessionError) {
               this.session = session
               this.connected = true
             } else {
@@ -71,7 +71,7 @@ class OPCUA extends ProtocolHandler {
             }
           })
         } else {
-          this.logger.error(err1)
+          this.logger.error(connectError.stack || connectError)
         }
       },
     )
@@ -93,8 +93,8 @@ class OPCUA extends ProtocolHandler {
       nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
       pointsDoNotGroup[point.pointId] = point.doNotGroup
     })
-    this.session.read(Object.values(nodesToRead), this.maxAge, (err, dataValues) => {
-      if (!err && Object.keys(nodesToRead).length === dataValues.length) {
+    this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {
+      if (!error && Object.keys(nodesToRead).length === dataValues.length) {
         Object.keys(nodesToRead).forEach((pointId) => {
           const dataValue = dataValues.shift()
           const data = []
@@ -119,7 +119,7 @@ class OPCUA extends ProtocolHandler {
           // @todo handle double values with an array as data
         })
       } else {
-        this.logger.error(err)
+        this.logger.error(error.stack || error)
       }
     })
   }

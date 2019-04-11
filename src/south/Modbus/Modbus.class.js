@@ -111,7 +111,7 @@ class Modbus extends ProtocolHandler {
         })
       })
       .catch((error) => {
-        this.logger.error(error)
+        this.logger.error(error.stack || error)
       })
   }
 
@@ -129,8 +129,8 @@ class Modbus extends ProtocolHandler {
         this.connected = true
       },
     )
-    this.socket.on('error', (err) => {
-      this.logger.error(err)
+    this.socket.on('error', (error) => {
+      this.logger.error(error.stack || error)
     })
   }
 

@@ -136,7 +136,7 @@ class Engine {
           resolve(true)
         })
         .catch((error) => {
-          this.logger.error(error)
+          this.logger.error(error.stack || error)
           resolve(false)
         })
     })
@@ -154,7 +154,7 @@ class Engine {
     try {
       success = await this.activeApis[applicationId].handleFile(filePath)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.stack || error)
     }
 
     return success
