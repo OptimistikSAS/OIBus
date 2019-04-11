@@ -51,7 +51,7 @@ class Server {
       if (filter.includes(ip)) {
         await next()
       } else {
-        this.logger.error(`${ip} is not authorized`)
+        this.logger.error(new Error(`${ip} is not authorized`))
         ctx.throw(401, 'access denied ', `${ip} is not authorized`)
       }
     })
