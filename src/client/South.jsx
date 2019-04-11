@@ -1,6 +1,3 @@
-/* eslint-disable no-debugger */
-/* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
@@ -41,7 +38,7 @@ const South = ({ history }) => {
   }, [])
 
   React.useEffect(() => {
-    ConfigService.getNorthApis().then((protocols) => {
+    ConfigService.getSouthProtocols().then((protocols) => {
       setProtocolList(protocols)
       setNewRowData({ equipmentId: '', enabled: false, protocol: protocols[0] })
     })
@@ -63,12 +60,19 @@ const South = ({ history }) => {
     return formData
   }
 
+  /**
+   * Update the equipment's state if any value changed
+   * @param {object} event The event object of the change
+   * @returns {void}
+   */
   const handleChange = (event) => {
     const {
       target,
       target: { type, name },
     } = event
     let value
+
+    //  set the value field based on the event's type
     switch (type) {
       case 'checkbox':
         value = target.checked
@@ -77,9 +81,14 @@ const South = ({ history }) => {
         ({ value } = target)
         break
     }
+
+    //  update the new equipment's state
     setNewRowData(prevState => ({ ...prevState, [name]: value }))
   }
 
+  /**
+   * @returns {array} An array with the needed components
+   */
   const createNewRow = () => [
     <Input name="equipmentId" type="text" onChange={handleChange} />,
     <Input name="enabled" type="checkbox" onChange={handleChange} />,
@@ -100,18 +109,25 @@ const South = ({ history }) => {
     } else {
       formData = { ...newRowData }
     }
+
+    // return if no id is provided
+    if (formData.equipmentId.length < 1) return
     const link = `/south/${formData.protocol}`
     history.push({ pathname: link, formData })
   }
 
+  /**
+   * A new row is added and the button will become disabled
+   * @returns {void}
+   */
   const handleButtonClick = () => {
     const newRows = [...tableRows]
     const newRow = createNewRow()
     newRows.push(newRow)
     setTableRows(newRows)
-    console.log(buttonRef)
     buttonRef.current.setAttribute('disabled', 'disabled')
   }
+
   return (
     <>
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} />}
