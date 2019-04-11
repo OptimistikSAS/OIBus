@@ -244,9 +244,9 @@ class Cache {
       switch (this.archiveMode) {
         case 'delete':
           // Delete original file
-          fs.unlink(filePath, (unlinError) => {
-            if (unlinError) {
-              this.logger.error(unlinError.stack || unlinError)
+          fs.unlink(filePath, (unlinkError) => {
+            if (unlinkError) {
+              this.logger.error(unlinkError.stack || unlinkError)
             } else {
               this.logger.info(`File ${filePath} deleted`)
             }
