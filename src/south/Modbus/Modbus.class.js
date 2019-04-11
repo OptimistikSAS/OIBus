@@ -99,7 +99,7 @@ class Modbus extends ProtocolHandler {
             case 'number':
               break
             default:
-              this.logger.error('This point type was not recognized : ', point.type)
+              this.logger.error(new Error(`This point type was not recognized: ${point.type}`))
           }
           const value = {
             pointId: point.pointId,
@@ -129,8 +129,8 @@ class Modbus extends ProtocolHandler {
         this.connected = true
       },
     )
-    this.socket.on('error', (err) => {
-      this.logger.error(err)
+    this.socket.on('error', (error) => {
+      this.logger.error(error)
     })
   }
 

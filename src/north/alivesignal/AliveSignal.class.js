@@ -78,7 +78,7 @@ class AliveSignal extends ApiHandler {
       if (response.ok) {
         this.logger.info('Alive signal successful')
       } else {
-        this.logger.error(`Alive signal error: ${response.statusText}`)
+        this.logger.error(new Error(`Alive signal error: ${response.statusText}`))
       }
     } catch (error) {
       this.logger.error(error)
