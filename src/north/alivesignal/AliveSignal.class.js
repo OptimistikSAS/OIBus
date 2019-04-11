@@ -81,7 +81,7 @@ class AliveSignal extends ApiHandler {
         this.logger.error(`Alive signal error: ${response.statusText}`)
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.stack || error)
     }
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)

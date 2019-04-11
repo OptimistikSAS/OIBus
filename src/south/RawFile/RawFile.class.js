@@ -49,7 +49,7 @@ class RawFile extends ProtocolHandler {
     // List files in the inputFolder and manage them.
     fs.readdir(this.inputFolder, async (error, files) => {
       if (error) {
-        this.logger.error(error)
+        this.logger.error(error.stack || error)
         return
       }
 
