@@ -24,9 +24,9 @@ class MQTT extends ProtocolHandler {
     points.forEach((point) => {
       const { MQTT: { topic } = {}, pointId, doNotGroup = false } = point
       this.client.on('connect', () => {
-        this.client.subscribe(topic, (err) => {
-          if (err) {
-            this.logger.error(err)
+        this.client.subscribe(topic, (error) => {
+          if (error) {
+            this.logger.error(error.stack || error)
           }
         })
       })

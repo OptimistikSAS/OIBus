@@ -67,7 +67,7 @@ class RawFileSender extends ApiHandler {
           await this.sendWithFetch(headers, filePath)
       }
     } catch (error) {
-      return Promise.reject(error.message)
+      return Promise.reject(error)
     }
 
     return true
