@@ -60,12 +60,19 @@ const North = ({ history }) => {
     return formData
   }
 
+  /**
+   * Update the applications's state if any value changed
+   * @param {object} event The event object of the change
+   * @returns {void}
+   */
   const handleChange = (event) => {
     const {
       target,
       target: { type, name },
     } = event
     let value
+
+    //  set the value field based on the event's type
     switch (type) {
       case 'checkbox':
         value = target.checked
@@ -74,9 +81,14 @@ const North = ({ history }) => {
         ({ value } = target)
         break
     }
+
+    //  update the new application's state
     setNewRowData(prevState => ({ ...prevState, [name]: value }))
   }
 
+  /**
+   * @returns {array} An array with the needed components
+   */
   const createNewRow = () => [
     <Input name="applicationId" type="text" onChange={handleChange} />,
     <Input name="enabled" type="checkbox" onChange={handleChange} />,
@@ -97,10 +109,19 @@ const North = ({ history }) => {
     } else {
       formData = { ...newRowData }
     }
+
+    // return if no id is provided
+    if (formData.equipmentId.length < 1) return
     const link = `/north/${formData.api}`
     history.push({ pathname: link, formData })
   }
 
+  /**
+   * Handles the click of the table rows and redirects the
+   * user to the selected north application's configuration page
+   * @param {array} equipment Data of the clicked row
+   * @return {void}
+   */
   const handleButtonClick = () => {
     const newRows = [...tableRows]
     const newRow = createNewRow()
