@@ -26,7 +26,7 @@ class Logger {
   }
 
   error(message) {
-    this.logger.error(message)
+    this.logger.error(message.stack || message)
   }
 
   debug(message) {

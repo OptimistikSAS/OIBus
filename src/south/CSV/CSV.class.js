@@ -18,7 +18,7 @@ class CSV extends ProtocolHandler {
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (error, files) => {
       if (error) {
-        this.logger.error(error.stack || error)
+        this.logger.error(error)
         return
       }
       if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
@@ -44,10 +44,10 @@ class CSV extends ProtocolHandler {
     const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
     const readStream = fs.createReadStream(file)
     readStream.on('error', (readError) => {
-      this.logger.error(readError.stack || readError)
+      this.logger.error(readError)
       fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (renameError) => {
         if (renameError) {
-          this.logger.error(renameError.stack || renameError)
+          this.logger.error(renameError)
         }
       })
       this.logger.info('File move to ', `${errorFolder}${filename}`)
@@ -114,7 +114,7 @@ class CSV extends ProtocolHandler {
         this.logger.info('File loading end.')
         fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (error) => {
           if (error) {
-            this.logger.error(error.stack || error)
+            this.logger.error(error)
           }
         })
         this.logger.info('File move succeeded!')

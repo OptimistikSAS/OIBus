@@ -23,7 +23,7 @@ const fieldsFromPointId = (pointId, types, logger) => {
   if (fields) {
     return fields
   }
-  logger.error('Unable to retrieve fields associated with this pointId ', pointId, types)
+  logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`))
   return {}
 }
 
@@ -67,11 +67,11 @@ class OPCUA extends ProtocolHandler {
               this.session = session
               this.connected = true
             } else {
-              this.logger.error('Could not connect to : ', this.equipment.equipmentId)
+              this.logger.error(new Error(`Could not connect to: ${this.equipment.equipmentId}`))
             }
           })
         } else {
-          this.logger.error(connectError.stack || connectError)
+          this.logger.error(connectError)
         }
       },
     )
@@ -119,7 +119,7 @@ class OPCUA extends ProtocolHandler {
           // @todo handle double values with an array as data
         })
       } else {
-        this.logger.error(error.stack || error)
+        this.logger.error(error)
       }
     })
   }
