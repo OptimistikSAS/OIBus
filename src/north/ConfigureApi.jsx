@@ -2,9 +2,10 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import ReactJson from 'react-json-view'
 import ConfigService from '../client/services/configService'
 
-const ConfigureNorth = ({ match, location }) => {
+const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
@@ -38,20 +39,19 @@ const ConfigureNorth = ({ match, location }) => {
           formData={configJson}
           liveValidate
           schema={configSchema}
-          // uiSchema={ConfigureSouth.uiModbus}
           autocomplete="on"
           onChange={handleChange}
           onSubmit={handleSubmit}
           onError={log('errors')}
         />
       )}
-      <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
+      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
 
-ConfigureNorth.propTypes = {
+ConfigureApi.propTypes = {
   match: PropTypes.object.isRequired,
   location: PropTypes.object.isRequired,
 }
-export default withRouter(ConfigureNorth)
+export default withRouter(ConfigureApi)

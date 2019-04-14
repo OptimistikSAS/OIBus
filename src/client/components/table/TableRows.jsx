@@ -3,13 +3,10 @@ import PropTypes from 'prop-types'
 
 const TableRows = ({ rows, onRowClick }) => (
   <tbody>
-    {rows.map((row, index) => (
-      <tr className="oi-row" key={index.toString()}>
-        <th className="row-index" scope="row" onClick={() => onRowClick(row)}>
-          {index + 1}
-        </th>
-        {row.map((field, fieldIndex) => (
-          <td key={fieldIndex.toString()}>{field}</td>
+    {rows.map(row => (
+      <tr key={row[0]} onClick={() => onRowClick(row)}>
+        {row.map(field => (
+          <td key={field}>{field}</td>
         ))}
       </tr>
     ))}
