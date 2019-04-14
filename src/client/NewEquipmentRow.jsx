@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Container, Button, Form, FormGroup, Label, Input } from 'reactstrap'
 import Select from './components/Select.jsx'
 
 const NewEquipmentRow = ({ protocolList, addEquipment }) => {
@@ -11,13 +12,10 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
 
   const [equipment, setEquipment] = React.useState({ equipmentId: '', enable: false, protocol: 'Modbus' })
   const handleChange = (event) => {
-    const {
-      target,
-      target: { type, name },
-    } = event
-    const value = type === 'checkbox' ? target.checked : target.value
+    const { target } = event
+    const { value } = target
     //  update the new equipment's state
-    setEquipment(prevState => ({ ...prevState, [name]: value }))
+    setEquipment(prevState => ({ ...prevState, [target.name]: value }))
   }
   const handleAddEquipement = () => {
     if (equipment.equipmentId === '') return
@@ -27,26 +25,22 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
   }
 
   return (
-    <table className="table table-sm">
-      <tbody>
-        <tr>
-          <td>
-            <input value={equipment.equipmentId} name="equipmentId" type="text" onChange={handleChange} />
-          </td>
-          <td>
-            <input value={equipment.enable} name="enabled" type="checkbox" onChange={handleChange} />
-          </td>
-          <td>
-            <Select value={equipment.protocol} name="protocol" options={protocolList} onChange={handleChange} />
-          </td>
-          <td>
-            <button type="button" className="btn btn-primary" onClick={() => handleAddEquipement()}>
-              Add
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <Container>
+      <Form>
+        <FormGroup>
+          <Label for="Id">
+            Equipment Id:
+            <Input value={equipment.equipmentId} id="Id" name="equipmentId" type="text" onChange={handleChange} />
+          </Label>
+        </FormGroup>
+        <FormGroup>
+          <Select value={equipment.protocol} id="protocol" name="protocol" options={protocolList} onChange={handleChange} />
+        </FormGroup>
+        <Button color="primary" onClick={() => handleAddEquipement()}>
+          Add
+        </Button>
+      </Form>
+    </Container>
   )
 }
 

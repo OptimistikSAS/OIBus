@@ -1,13 +1,15 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Table as BsTable } from 'reactstrap'
+
 import TableHeader from './TableHeader.jsx'
 import TableRows from './TableRows.jsx'
 
 const Table = ({ headers, rows, onRowClick }) => (
-  <table className="table table-striped table-hover table-sm">
+  <BsTable striped hover size="sm">
     <TableHeader headers={headers} />
     <TableRows rows={rows} onRowClick={onRowClick} />
-  </table>
+  </BsTable>
 )
 
 Table.propTypes = {
