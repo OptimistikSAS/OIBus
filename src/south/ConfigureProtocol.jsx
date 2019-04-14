@@ -2,9 +2,10 @@ import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import ReactJson from 'react-json-view'
 import ConfigService from '../client/services/configService'
 
-const ConfigureSouth = ({ match, location }) => {
+const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
@@ -35,26 +36,26 @@ const ConfigureSouth = ({ match, location }) => {
           formData={configJson}
           liveValidate
           schema={configSchema}
-          // uiSchema={ConfigureSouth.uiModbus}
+          // uiSchema={configureProtocol.uiModbus}
           autocomplete="on"
           onChange={handleChange}
           onSubmit={log('submitted')}
           onError={log('errors')}
         />
       )}
-      <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
+      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
 
-ConfigureSouth.propTypes = {
+ConfigureProtocol.propTypes = {
   match: PropTypes.object.isRequired,
   location: PropTypes.object.isRequired,
 }
 
-export default withRouter(ConfigureSouth)
+export default withRouter(ConfigureProtocol)
 
-ConfigureSouth.schema = {
+ConfigureProtocol.schema = {
   title: 'South',
   type: 'object',
   properties: {

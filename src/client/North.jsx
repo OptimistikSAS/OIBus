@@ -1,6 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import ReactJson from 'react-json-view'
 import ConfigService from './services/configService'
 import Table from './components/table/Table.jsx'
 import Select from './components/Select.jsx'
@@ -70,17 +71,8 @@ const North = ({ history }) => {
       target,
       target: { type, name },
     } = event
-    let value
 
-    //  set the value field based on the event's type
-    switch (type) {
-      case 'checkbox':
-        value = target.checked
-        break
-      default:
-        ({ value } = target)
-        break
-    }
+    const value = (type === 'checkbox') ? target.checked : target.value
 
     //  update the new application's state
     setNewRowData(prevState => ({ ...prevState, [name]: value }))
@@ -136,7 +128,7 @@ const North = ({ history }) => {
       <button ref={buttonRef} type="button" className="btn btn-primary" onClick={handleButtonClick}>
         Add application
       </button>
-      <pre>{configJson && JSON.stringify(configJson, ' ', 2)}</pre>
+      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

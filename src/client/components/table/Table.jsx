@@ -1,12 +1,10 @@
-/* eslint-disable import/no-unresolved */
 import React from 'react'
 import PropTypes from 'prop-types'
 import TableHeader from './TableHeader.jsx'
 import TableRows from './TableRows.jsx'
-import './table.css'
 
 const Table = ({ headers, rows, onRowClick }) => (
-  <table className="table">
+  <table className="table table-striped table-hover table-sm">
     <TableHeader headers={headers} />
     <TableRows rows={rows} onRowClick={onRowClick} />
   </table>
