@@ -1,69 +1,73 @@
 import React from 'react'
-import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import ReactJson from 'react-json-view'
+import Table from './components/table/Table.jsx'
+import NewEquipmentRow from './NewEquipmentRow.jsx'
 import apis from './services/apis'
 
 const South = ({ history }) => {
-  const [configJson, setConfigJson] = React.useState()
-  const setProtocols = (protocolList) => {
-    South.schema.properties.equipments.items.properties.protocol.enum = protocolList
-  }
+  const [equipments, setEquipments] = React.useState([])
+  const [protocolList, setProtocolList] = React.useState([])
 
-  React.useLayoutEffect(() => {
-    apis.getSouthProtocols().then((protocolList) => {
-      setProtocols(protocolList)
-      apis.getConfig().then(({ config }) => {
-        setConfigJson(config)
-      })
+  // acquire the South configuration
+  React.useEffect(() => {
+    apis.getConfig().then(({ config }) => {
+      setEquipments(config.south.equipments)
     })
   }, [])
-  const log = type => console.info.bind(console, type)
 
-  const handleClick = (element) => {
-    const { formData } = element.children.props
+  // acquire the list of Protocols
+  React.useEffect(() => {
+    apis.getSouthProtocols().then((protocols) => {
+      setProtocolList(protocols)
+    })
+  }, [])
+
+  /**
+   * Gets the json of a south equipment
+   * @param {string} equipmentId ID of an equipment
+   * @returns {object} The selected equipment's config
+   */
+  const getEquipmentIndex = equipmentId => equipments.findIndex(equipment => equipment.equipmentId === equipmentId)
+
+  /**
+   * Handles the click of the table rows and redirects the
+   * user to the selected south equipment's configuration page
+   * @param {array} equipment Data of the clicked row
+   * @return {void}
+   */
+  const handleRowClick = (equipment) => {
+    const [equipmentId] = equipment
+    const equipmentIndex = getEquipmentIndex(equipmentId)
+    if (equipmentIndex === -1) return
+    const formData = equipments[equipmentIndex]
     const link = `/south/${formData.protocol}`
     history.push({ pathname: link, formData })
   }
 
-  const customArrayField = (field) => {
-    const { items, onAddClick, title } = field
-    return (
-      <div>
-        <legend>{title}</legend>
-        {items.map(element => (
-          <div key={element.index} className="array-row">
-            <>
-              {element.children}
-              <button type="button" className="btn btn-primary" onClick={() => handleClick(element)}>
-                Configure equipment
-              </button>
-            </>
-          </div>
-        ))}
-        {
-          <button type="button" onClick={onAddClick}>
-            Add protocol
-          </button>
-        }
-      </div>
-    )
+  /**
+   * Adds a new equipment row to the table
+   * @param {Object} param0 An equipment object containing
+   * equipmentId, enabled and protocol fields
+   * @returns {void}
+   */
+  const addEquipment = ({ equipmentId, enabled, protocol }) => {
+    const equipmentIndex = getEquipmentIndex(equipmentId)
+    if (equipmentIndex === -1) {
+      setEquipments(prev => [...prev, { equipmentId, enabled, protocol }])
+    } else {
+      throw new Error('equipmentId already exists')
+    }
   }
 
+  const tableHeaders = ['Equipment ID', 'Enabled', 'Protocol']
+  const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [equipmentId, enabled ? 'enabled' : '', protocol])
   return (
     <>
-      <Form
-        formData={configJson && configJson.south}
-        liveValidate
-        ArrayFieldTemplate={customArrayField}
-        schema={South.schema}
-        uiSchema={South.uiSchema}
-        autocomplete="on"
-        onChange={log('changed')}
-        onSubmit={log('submitted')}
-        onError={log('errors')}
-      />
-      <pre>{configJson && JSON.stringify(configJson.south, ' ', 2)}</pre>
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} />}
+      <NewEquipmentRow protocolList={protocolList} addEquipment={addEquipment} />
+      <ReactJson src={equipments} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
@@ -71,48 +75,3 @@ const South = ({ history }) => {
 South.propTypes = { history: PropTypes.object.isRequired }
 
 export default withRouter(South)
-
-South.schema = {
-  title: 'South',
-  type: 'object',
-  properties: {
-    Modbus: {
-      type: 'object',
-      title: 'Modbus',
-      properties: {
-        addressGap: {
-          type: 'object',
-          title: 'Address Gap',
-          properties: {
-            holdingRegister: { type: 'number', title: 'Holding register' },
-            coil: { type: 'number', title: 'Coil' },
-          },
-        },
-      },
-    },
-    equipments: {
-      type: 'array',
-      title: 'Equipments',
-      items: {
-        type: 'object',
-        properties: {
-          equipmentId: {
-            type: 'string',
-            title: 'Equipment ID',
-          },
-          enabled: {
-            type: 'boolean',
-            title: 'Enabled',
-            default: true,
-          },
-          protocol: {
-            type: 'string',
-            enum: [],
-            title: 'Protocol',
-            default: 'CSV',
-          },
-        },
-      },
-    },
-  },
-}
