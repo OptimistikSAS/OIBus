@@ -8,55 +8,45 @@ const getConfig = (ctx) => {
 }
 
 /**
- * Get North schema list.
+ * Add North application.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getNorthSchemaList = (ctx) => {
-  ctx.ok(ctx.app.engine.getNorthSchemaList())
+const addNorth = (ctx) => {
+  ctx.ok()
 }
 
 /**
- * Get North schema list.
+ * Update North application.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getNorthSchema = (ctx) => {
-  const schema = ctx.app.engine.getNorthSchema(ctx.params.api)
-  if (schema) {
-    ctx.ok(schema)
-  } else {
-    ctx.throw(404)
-  }
+const updateNorth = (ctx) => {
+  ctx.ok()
 }
 
 /**
- * Get South schema list.
+ * Add South equipment.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getSouthSchemaList = (ctx) => {
-  ctx.ok(ctx.app.engine.getSouthSchemaList())
+const addSouth = (ctx) => {
+  ctx.ok()
 }
 
 /**
- * Get South schema.
+ * Update South equipment.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getSouthSchema = (ctx) => {
-  const schema = ctx.app.engine.getSouthSchema(ctx.params.protocol)
-  if (schema) {
-    ctx.ok(schema)
-  } else {
-    ctx.throw(404)
-  }
+const updateSouth = (ctx) => {
+  ctx.ok()
 }
 
 module.exports = {
   getConfig,
-  getNorthSchemaList,
-  getNorthSchema,
-  getSouthSchemaList,
-  getSouthSchema,
+  addNorth,
+  updateNorth,
+  addSouth,
+  updateSouth,
 }
