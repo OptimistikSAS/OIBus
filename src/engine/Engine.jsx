@@ -1,8 +1,9 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
+import ReactJson from 'react-json-view'
 
 const Engine = () => {
-  const [configJson, setConfigJson] = React.useState()
+  const [configJson, setConfigJson] = React.useState({ engine: {} })
   React.useEffect(() => {
     // eslint-disable-next-line consistent-return
     fetch('/config').then((response) => {
@@ -27,7 +28,7 @@ const Engine = () => {
         onSubmit={log('submitted')}
         onError={log('errors')}
       />
-      <pre>{configJson && JSON.stringify(configJson.engine, ' ', 2)}</pre>
+      <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
