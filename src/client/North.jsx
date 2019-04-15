@@ -2,9 +2,9 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
-import ConfigService from './services/configService'
 import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
+import apis from './services/apis'
 
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
@@ -12,15 +12,15 @@ const North = ({ history }) => {
 
   // acquire the North configuration
   React.useEffect(() => {
-    ConfigService.getConfig().then(({ config }) => {
+    apis.getConfig().then(({ config }) => {
       setApplications(config.north.applications)
     })
   }, [])
 
   // acquire the list of Apis
   React.useEffect(() => {
-    ConfigService.getNorthApis().then((apis) => {
-      setApiList(apis)
+    apis.getNorthApis().then((application) => {
+      setApiList(application)
     })
   }, [])
 

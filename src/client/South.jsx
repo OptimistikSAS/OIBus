@@ -2,9 +2,9 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
-import ConfigService from './services/configService'
 import Table from './components/table/Table.jsx'
 import NewEquipmentRow from './NewEquipmentRow.jsx'
+import apis from './services/apis'
 
 const South = ({ history }) => {
   const [equipments, setEquipments] = React.useState([])
@@ -12,14 +12,14 @@ const South = ({ history }) => {
 
   // acquire the South configuration
   React.useEffect(() => {
-    ConfigService.getConfig().then(({ config }) => {
+    apis.getConfig().then(({ config }) => {
       setEquipments(config.south.equipments)
     })
   }, [])
 
   // acquire the list of Protocols
   React.useEffect(() => {
-    ConfigService.getSouthProtocols().then((protocols) => {
+    apis.getSouthProtocols().then((protocols) => {
       setProtocolList(protocols)
     })
   }, [])
