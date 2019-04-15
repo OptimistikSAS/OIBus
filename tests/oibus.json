@@ -19,6 +19,16 @@
       "maxFiles": 5,
       "tailable": true
     },
+    "proxies": [
+      {
+        "name": "demoProxy",
+        "protocol": "http", // "http" or "https"
+        "host": "localhost",
+        "port": 8888,
+        "username": "user",
+        "password": "password"
+      }
+    ],
     "caching": {
       "cacheFolder": "./cache", // Where to store the cached data
       "archiveFolder": "./cache/archived/", // Required when archiveMode is 'archive' for files
@@ -368,13 +378,7 @@
             "username": "QFPELALDNSUO6BUV8SJ",
             "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
           },
-          "proxy": {
-            "protocol": "http", // "http" or "https"
-            "host": "localhost",
-            "port": 8888,
-            "username": "user",
-            "password": "password"
-          }
+          "defaultProxy": "demoProxy"
         },
         "caching": {
           "sendInterval": 5000, // Send interval in milliseconds
@@ -392,12 +396,7 @@
             "accessKey": "AKIAJPJ46DKBR7Q23FOQ",
             "secretKey": "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"
           },
-          "proxy": {
-            "host": "http://localhost",
-            "port": 8080,
-            "username": "",
-            "password": ""
-          }
+          "defaultProxy": "demoProxy"
         },
         "caching": {
           "sendInterval": 5000, // Send interval in milliseconds
@@ -417,12 +416,7 @@
           },
           "id": "OIBus friendly name",
           "frequency": 10000, // Ping interval in milliseconds
-          "proxy": {
-            "host": "http://localhost",
-            "port": 8888,
-            "username": "user",
-            "password": "password"
-          }
+          "defaultProxy": "demoProxy"
         }
       }
     ]

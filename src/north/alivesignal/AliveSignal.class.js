@@ -19,12 +19,12 @@ class AliveSignal extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, authentication, id, frequency, proxy = null } = applicationParameters.AliveSignal
+    const { host, authentication, id, frequency, defaultProxy = null } = applicationParameters.AliveSignal
 
     this.host = `${host}?id=${encodeURI(id)}`
     this.authentication = authentication
     this.frequency = frequency
-    this.proxy = proxy
+    this.proxy = this.getProxy(defaultProxy)
 
     this.timer = null
   }
@@ -56,9 +56,9 @@ class AliveSignal extends ApiHandler {
     }
 
     if (this.proxy) {
-      const { host, port, username = null, password = null } = this.proxy
+      const { protocol, host, port, username = null, password = null } = this.proxy
 
-      const proxyOptions = url.parse(`${host}:${port}`)
+      const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
         proxyOptions.auth = `${username}:${password}`
@@ -78,7 +78,7 @@ class AliveSignal extends ApiHandler {
       if (response.ok) {
         this.logger.info('Alive signal successful')
       } else {
-        this.logger.error(`Alive signal error: ${response.statusText}`)
+        this.logger.error(new Error(`Alive signal error: ${response.statusText}`))
       }
     } catch (error) {
       this.logger.error(error)

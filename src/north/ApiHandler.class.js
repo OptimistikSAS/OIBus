@@ -60,6 +60,21 @@ class ApiHandler {
   handleFile(filePath) {
     this.engine.logger.info('handleFile', filePath)
   }
+
+  /**
+   * Get proxy by name
+   * @param {String} proxyName - The name of the proxy
+   * @return {*} - The proxy
+   */
+  getProxy(proxyName) {
+    let proxy = null
+
+    if (proxyName) {
+      proxy = this.config.engine.proxies.find(({ name }) => name === proxyName)
+    }
+
+    return proxy
+  }
 }
 
 module.exports = ApiHandler
