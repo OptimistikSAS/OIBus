@@ -25,21 +25,6 @@ const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
 
-const checkConfig = (config) => {
-  const mandatoryEntries = ['engine.scanModes', 'engine.port', 'engine.user', 'engine.password', 'south.equipments', 'north.applications']
-
-  // If the engine works normally as client
-  mandatoryEntries.forEach((entry) => {
-    const [key, subkey] = entry.split('.')
-    if (!config[key]) {
-      throw new Error(`You should define ${key} in the config file`)
-    }
-    if (!config[key][subkey]) {
-      throw new Error(`You should define ${entry} in the config file`)
-    }
-  })
-}
-
 /**
  * Class Engine :
  * - at startup, handles initialization of applications, protocols and config.
@@ -57,7 +42,6 @@ class Engine {
    */
   constructor(configFile) {
     this.config = tryReadFile(configFile)
-    checkConfig(this.config)
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
