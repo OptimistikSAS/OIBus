@@ -21,7 +21,7 @@ class AmazonS3 extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { bucket, folder, authentication, proxy = null } = applicationParameters.AmazonS3
+    const { bucket, folder, authentication, defaultProxy = null } = applicationParameters.AmazonS3
 
     this.bucket = bucket
     this.folder = folder
@@ -31,16 +31,18 @@ class AmazonS3 extends ApiHandler {
       secretAccessKey: authentication.secretKey,
     })
 
+    const proxy = this.getProxy(defaultProxy)
     if (proxy) {
-      const { host, port, username = null, password = null } = proxy
+      const { protocol, host, port, username = null, password = null } = proxy
 
-      const proxyOptions = url.parse(`${host}:${port}`)
+      const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
         proxyOptions.auth = `${username}:${password}`
       }
 
       const agent = new ProxyAgent(proxyOptions)
+
       AWS.config.update({ httpOptions: { agent } })
     }
 
