@@ -26,11 +26,11 @@ class RawFileSender extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
+    const { host, endpoint, authentication, defaultProxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
-    this.proxy = proxy
+    this.proxy = this.getProxy(defaultProxy)
     this.stack = stack
 
     this.timeout = 60000
