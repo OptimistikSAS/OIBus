@@ -10,12 +10,6 @@ const South = ({ history }) => {
   const [equipments, setEquipments] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
 
-  /**
-   * Sets the content of the table
-   * @param {object} config The configuration json
-   * @returns {void} no return value
-   */
-
   // acquire the South configuration
   React.useEffect(() => {
     ConfigService.getConfig().then(({ config }) => {
@@ -52,6 +46,12 @@ const South = ({ history }) => {
     history.push({ pathname: link, formData })
   }
 
+  /**
+   * Adds a new equipment row to the table
+   * @param {Object} param0 An equipment object containing
+   * equipmentId, enabled and protocol fields
+   * @returns {void}
+   */
   const addEquipment = ({ equipmentId, enabled, protocol }) => {
     const equipmentIndex = getEquipmentIndex(equipmentId)
     if (equipmentIndex === -1) {
