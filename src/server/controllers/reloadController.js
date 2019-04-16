@@ -1,9 +1,5 @@
 const reload = (ctx) => {
-  ctx.app.engine.stop()
-
-  setTimeout(() => {
-    process.exit(1)
-  }, 10000)
+  ctx.app.engine.reload(10000)
 
   ctx.ok('Reloading...')
 }
