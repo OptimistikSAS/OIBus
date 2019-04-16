@@ -31,11 +31,11 @@ const addNorth = async (ctx) => {
  * @return {void}
  */
 const updateNorth = (ctx) => {
-  if (!ctx.app.engine.hasNorth(ctx.request.params.applicationId)) {
+  if (!ctx.app.engine.hasNorth(ctx.params.applicationId)) {
     ctx.throw(404, 'The given application ID doesn\'t exists')
   }
 
-  if (ctx.request.params.applicationId !== ctx.request.body.applicationId) {
+  if (ctx.params.applicationId !== ctx.request.body.applicationId) {
     ctx.throw(400, 'Inconsistent application ID')
   }
 
@@ -53,12 +53,12 @@ const updateNorth = (ctx) => {
  * @return {void}
  */
 const deleteNorth = (ctx) => {
-  if (!ctx.app.engine.hasNorth(ctx.request.params.applicationId)) {
+  if (!ctx.app.engine.hasNorth(ctx.params.applicationId)) {
     ctx.throw(404, 'The given application ID doesn\'t exists')
   }
 
   try {
-    ctx.app.engine.deleteNorth(ctx.request.params.applicationId)
+    ctx.app.engine.deleteNorth(ctx.params.applicationId)
     ctx.ok('Reloading...')
   } catch (error) {
     ctx.throw(500, 'Unable to delete application')
@@ -71,7 +71,16 @@ const deleteNorth = (ctx) => {
  * @return {void}
  */
 const addSouth = (ctx) => {
-  ctx.ok()
+  if (ctx.app.engine.hasSouth(ctx.request.body.equipmentId)) {
+    ctx.throw(409, 'The given equipment ID already exists')
+  }
+
+  try {
+    ctx.app.engine.addSouth(ctx.request.body)
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to add new equipment')
+  }
 }
 
 /**
@@ -80,7 +89,20 @@ const addSouth = (ctx) => {
  * @return {void}
  */
 const updateSouth = (ctx) => {
-  ctx.ok()
+  if (!ctx.app.engine.hasSouth(ctx.params.equipmentId)) {
+    ctx.throw(404, 'The given equipment ID doesn\'t exists')
+  }
+
+  if (ctx.params.equipmentId !== ctx.request.body.equipmentId) {
+    ctx.throw(400, 'Inconsistent equipment ID')
+  }
+
+  try {
+    ctx.app.engine.updateSouth(ctx.request.body)
+    ctx.ok('Reloading...')
+  } catch (error) {
+    ctx.throw(500, 'Unable to update equipment')
+  }
 }
 
 /**
@@ -89,7 +111,16 @@ const updateSouth = (ctx) => {
  * @return {void}
  */
 const deleteSouth = (ctx) => {
-  ctx.ok()
+  if (!ctx.app.engine.hasSouth(ctx.params.equipmentId)) {
+    ctx.throw(404, 'The given equipment ID doesn\'t exists')
+  }
+
+  try {
+    ctx.app.engine.deleteSouth(ctx.params.equipmentId)
+    ctx.ok('Reloading...')
+  } catch (error) {
+    ctx.throw(500, 'Unable to delete equipment')
+  }
 }
 
 module.exports = {
