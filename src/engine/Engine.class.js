@@ -1,6 +1,7 @@
 const timexe = require('timexe')
+const path = require('path')
 
-const { tryReadFile } = require('../services/config.service')
+const { tryReadFile, backupConfigFile, saveNewConfig } = require('../services/config.service')
 const VERSION = require('../../package.json').version
 
 // South classes
@@ -41,7 +42,8 @@ class Engine {
    * @return {Object} readConfig - parsed config Object
    */
   constructor(configFile) {
-    this.config = tryReadFile(configFile)
+    this.configFile = path.resolve(configFile)
+    this.config = tryReadFile(this.configFile)
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
@@ -242,6 +244,19 @@ class Engine {
   }
 
   /**
+   * Restart Engine.
+   * @param {number} timeout - The delay to wait before restart
+   * @returns {void}
+   */
+  reload(timeout) {
+    this.stop()
+
+    setTimeout(() => {
+      process.exit(1)
+    }, timeout)
+  }
+
+  /**
    * Return available North applications
    * @return {String[]} - Available North applications
    */
@@ -289,6 +304,63 @@ class Engine {
     }
 
     return null
+  }
+
+  /**
+   * Check if the given application ID already exists
+   * @param {string} applicationId - The application ID to check
+   * @returns {object | undefined} - Whether the given application exists
+   */
+  hasNorth(applicationId) {
+    return this.config.north.applications.find(application => application.applicationId === applicationId)
+  }
+
+  /**
+   * Add North application
+   * @param {object} application - The new application to add
+   * @returns {void}
+   */
+  addNorth(application) {
+    backupConfigFile(this.configFile)
+
+    this.config.north.applications.push(application)
+
+    saveNewConfig(this.config, this.configFile)
+
+    this.reload(1000)
+  }
+
+  /**
+   * Update North application
+   * @param {object} application - The new application to add
+   * @returns {void}
+   */
+  updateNorth(application) {
+    const index = this.config.north.applications.findIndex(element => element.applicationId === application.applicationId)
+    if (index > 0) {
+      backupConfigFile(this.configFile)
+
+      this.config.north.applications[index] = application
+
+      saveNewConfig(this.config, this.configFile)
+
+      this.reload(1000)
+    }
+  }
+
+  /**
+   * Delete North application
+   * @param {string} applicationId - The application to delete
+   * @returns {void}
+   */
+  deleteNorth(applicationId) {
+    backupConfigFile(this.configFile)
+
+    this.config.north.applications = this.config.north.applications.filter(application => application.applicationId !== applicationId)
+
+    saveNewConfig(this.config, this.configFile)
+
+    this.reload(1000)
   }
 }
 
