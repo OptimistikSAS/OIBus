@@ -1,19 +1,20 @@
 const minimist = require('minimist')
 const fs = require('fs')
+const path = require('path')
 const JSON5 = require('json5')
 
 /**
  * Tries to read a file at a given path
- * @param {String} path - Path to the file to read
+ * @param {String} configPath - Path to the file to read
  * @return {*} Content of the file
  */
-const tryReadFile = (path) => {
-  if (!path.endsWith('.json')) {
+const tryReadFile = (configPath) => {
+  if (!configPath.endsWith('.json')) {
     console.error('You must provide a json file for the configuration!')
     return new Error('You must provide a json file for the configuration!')
   }
   try {
-    return JSON5.parse(fs.readFileSync(path, 'utf8')) // Get OIBus configuration file
+    return JSON5.parse(fs.readFileSync(configPath, 'utf8')) // Get OIBus configuration file
   } catch (error) {
     console.error(error)
     return error
@@ -59,4 +60,26 @@ const checkOrCreateConfigFile = (filePath) => {
   }
 }
 
-module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile }
+/**
+ * Backup actual config file.
+ * @param {string} configFile - The config file
+ * @return {void}
+ */
+const backupConfigFile = (configFile) => {
+  const timestamp = new Date().getTime()
+  const backupFilename = `${path.parse(configFile).name}-${timestamp}${path.parse(configFile).ext}`
+  const backupPath = path.join(path.parse(configFile).dir, backupFilename)
+  fs.copyFileSync(configFile, backupPath)
+}
+
+/**
+ * Save configuration
+ * @param {object} config - The config
+ * @param {string} configFile - The config file
+ * @returns {void}
+ */
+const saveNewConfig = (config, configFile) => {
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 4), 'utf8')
+}
+
+module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile, backupConfigFile, saveNewConfig }
