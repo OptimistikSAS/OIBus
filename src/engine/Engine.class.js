@@ -362,6 +362,63 @@ class Engine {
 
     this.reload(1000)
   }
+
+  /**
+   * Check if the given equipment ID already exists
+   * @param {string} equipmentId - The equipment ID to check
+   * @returns {object | undefined} - Whether the given equipment exists
+   */
+  hasSouth(equipmentId) {
+    return this.config.south.equipments.find(equipment => equipment.equipmentId === equipmentId)
+  }
+
+  /**
+   * Add South equipment
+   * @param {object} equipment - The new equipment to add
+   * @returns {void}
+   */
+  addSouth(equipment) {
+    backupConfigFile(this.configFile)
+
+    this.config.south.equipments.push(equipment)
+
+    saveNewConfig(this.config, this.configFile)
+
+    this.reload(1000)
+  }
+
+  /**
+   * Update South equipment
+   * @param {object} equipment - The new equipment to add
+   * @returns {void}
+   */
+  updateSouth(equipment) {
+    const index = this.config.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
+    if (index > -1) {
+      backupConfigFile(this.configFile)
+
+      this.config.south.equipments[index] = equipment
+
+      saveNewConfig(this.config, this.configFile)
+
+      this.reload(1000)
+    }
+  }
+
+  /**
+   * Delete South equipment
+   * @param {string} equipmentId - The equipment to delete
+   * @returns {void}
+   */
+  deleteSouth(equipmentId) {
+    backupConfigFile(this.configFile)
+
+    this.config.south.equipments = this.config.south.equipments.filter(equipment => equipment.equipmentId !== equipmentId)
+
+    saveNewConfig(this.config, this.configFile)
+
+    this.reload(1000)
+  }
 }
 
 module.exports = Engine
