@@ -337,7 +337,7 @@ class Engine {
    */
   updateNorth(application) {
     const index = this.config.north.applications.findIndex(element => element.applicationId === application.applicationId)
-    if (index > 0) {
+    if (index > -1) {
       backupConfigFile(this.configFile)
 
       this.config.north.applications[index] = application
