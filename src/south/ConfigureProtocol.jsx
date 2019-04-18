@@ -42,14 +42,6 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {void}
    */
   const handleDelete = () => {
-    setShowModal(true)
-  }
-
-  /**
-   * Deletes the equipment and redirects to south page
-   * @returns {void}
-   */
-  const onAcceptDelete = () => {
     const { equipmentId } = configJson
     setShowModal(false)
     apis.deleteSouth(equipmentId).then(
@@ -60,14 +52,6 @@ const ConfigureProtocol = ({ match, location }) => {
         console.error(error)
       },
     )
-  }
-
-  /**
-   * Hides the modal if it was dismissed
-   * @returns {void}
-   */
-  const onDenyDelete = () => {
-    setShowModal(false)
   }
 
   const log = type => console.info.bind(console, type)
@@ -85,19 +69,16 @@ const ConfigureProtocol = ({ match, location }) => {
             onSubmit={handleSubmit}
             onError={log('errors')}
           />
-          <Button color="danger" onClick={handleDelete}>
-            Delete
-          </Button>
+          <Modal show={showModal} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+            {confirm => (
+              <Button color="danger" onClick={confirm(handleDelete)}>
+                Delete
+              </Button>
+            )}
+          </Modal>
+          <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
         </>
       )}
-      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
-      <Modal
-        show={showModal}
-        title="Delete equipment"
-        body="Are you sure you want to delete this equipment?"
-        onAccept={onAcceptDelete}
-        onDeny={onDenyDelete}
-      />
     </>
   )
 }

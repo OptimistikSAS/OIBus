@@ -2,11 +2,29 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Modal as BsModal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
-// eslint-disable-next-line no-unused-vars
-const Modal = ({ show, title, body, acceptLabel, denyLabel, onAccept, onDeny }) => {
+const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
   const [open, setOpen] = React.useState(show)
-  const toggle = () => {
-    setOpen(prevState => !prevState)
+  const [callback, setCallback] = React.useState(null)
+
+  const showModal = callbackParam => (event, param) => {
+    event.stopPropagation()
+    const newEvent = {
+      ...event,
+      target: { ...event.target, value: event.target.value },
+    }
+
+    setOpen(true)
+    setCallback({ func: () => callbackParam(newEvent, param) })
+  }
+
+  const hideModal = () => {
+    setOpen(false)
+    setCallback(null)
+  }
+
+  const confirm = () => {
+    callback.func()
+    hideModal()
   }
 
   React.useEffect(() => {
@@ -14,29 +32,31 @@ const Modal = ({ show, title, body, acceptLabel, denyLabel, onAccept, onDeny }) 
   }, [show])
 
   return (
-    <BsModal isOpen={open} toggle={toggle}>
-      <ModalHeader toggle={toggle}>{title}</ModalHeader>
-      <ModalBody>{body}</ModalBody>
-      <ModalFooter>
-        <Button color="primary" onClick={onAccept}>
-          {acceptLabel}
-        </Button>
-        {' '}
-        <Button color="secondary" onClick={onDeny}>
-          {denyLabel}
-        </Button>
-      </ModalFooter>
-    </BsModal>
+    <>
+      {children(showModal)}
+      <BsModal isOpen={open} toggle={hideModal}>
+        <ModalHeader toggle={hideModal}>{title}</ModalHeader>
+        <ModalBody>{body}</ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={confirm}>
+            {acceptLabel}
+          </Button>
+          {' '}
+          <Button color="secondary" onClick={hideModal}>
+            {denyLabel}
+          </Button>
+        </ModalFooter>
+      </BsModal>
+    </>
   )
 }
 Modal.propTypes = {
   show: PropTypes.bool.isRequired,
-  onAccept: PropTypes.func.isRequired,
-  onDeny: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   body: PropTypes.string.isRequired,
   acceptLabel: PropTypes.string,
   denyLabel: PropTypes.string,
+  children: PropTypes.func.isRequired,
 }
 
 Modal.defaultProps = {
