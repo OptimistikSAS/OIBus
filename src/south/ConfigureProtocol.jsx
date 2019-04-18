@@ -10,7 +10,6 @@ import apis from '../client/services/apis'
 const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
-  const [showModal, setShowModal] = React.useState(false)
 
   const updateForm = (formData) => {
     setConfigJson(formData)
@@ -43,7 +42,6 @@ const ConfigureProtocol = ({ match, location }) => {
    */
   const handleDelete = () => {
     const { equipmentId } = configJson
-    setShowModal(false)
     apis.deleteSouth(equipmentId).then(
       () => {
         // TODO: Show loader and redirect to main screen
@@ -69,7 +67,7 @@ const ConfigureProtocol = ({ match, location }) => {
             onSubmit={handleSubmit}
             onError={log('errors')}
           />
-          <Modal show={showModal} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+          <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
             {confirm => (
               <Button color="danger" onClick={confirm(handleDelete)}>
                 Delete
