@@ -2,26 +2,30 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Container, Button, Form, FormGroup, Label, Input } from 'reactstrap'
 import Select from './components/Select.jsx'
+import apis from './services/apis'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
-  /**
-   * Update the equipment's state if any value changed
-   * @param {object} event The event object of the change
-   * @returns {void}
-   */
-
   const [application, setApplication] = React.useState({ applicationId: '', enable: false, api: 'Console' })
+
   const handleChange = (event) => {
     const { target } = event
     const { value } = target
     //  update the new equipment's state
     setApplication(prevState => ({ ...prevState, [target.name]: value }))
   }
+
   const handleAddApplication = () => {
     if (application.applicationId === '') return
-    addApplication(application)
-    // reset the line
-    setApplication({ applicationId: '', enable: false, protocol: 'Console' })
+    apis.addNorth(application).then(
+      () => {
+        addApplication(application)
+        // reset the line
+        setApplication({ applicationId: '', enable: false, api: 'Console' })
+      },
+      (error) => {
+        console.error(error)
+      },
+    )
   }
 
   return (

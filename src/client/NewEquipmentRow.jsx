@@ -2,14 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Container, Button, Form, FormGroup, Label, Input } from 'reactstrap'
 import Select from './components/Select.jsx'
+import apis from './services/apis'
 
 const NewEquipmentRow = ({ protocolList, addEquipment }) => {
-  /**
-   * Update the equipment's state if any value changed
-   * @param {object} event The event object of the change
-   * @returns {void}
-   */
-
   const [equipment, setEquipment] = React.useState({ equipmentId: '', enable: false, protocol: 'Modbus' })
   const handleChange = (event) => {
     const { target } = event
@@ -19,9 +14,19 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
   }
   const handleAddEquipement = () => {
     if (equipment.equipmentId === '') return
-    addEquipment(equipment)
-    // reset the line
-    setEquipment({ equipmentId: '', enable: false, protocol: 'Modbus' })
+
+    // Points is required on server side
+    equipment.points = []
+    apis.addSouth(equipment).then(
+      () => {
+        addEquipment(equipment)
+        // reset the line
+        setEquipment({ equipmentId: '', enable: false, protocol: 'Modbus' })
+      },
+      (error) => {
+        console.error(error)
+      },
+    )
   }
 
   return (
