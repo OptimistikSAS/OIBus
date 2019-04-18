@@ -10,7 +10,6 @@ import Modal from '../client/components/Modal.jsx'
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
-  const [showModal, setShowModal] = React.useState(false)
 
   const updateForm = (formData) => {
     setConfigJson(formData)
@@ -42,16 +41,8 @@ const ConfigureApi = ({ match, location }) => {
    * @returns {void}
    */
   const handleDelete = () => {
-    setShowModal(true)
-  }
-
-  /**
-   * Deletes the application and redirects to north page
-   * @returns {void}
-   */
-  const onAcceptDelete = () => {
     const { applicationId } = configJson
-    setShowModal(false)
+    if (applicationId === '') return
     apis.deleteNorth(applicationId).then(
       () => {
         // TODO: Show loader and redirect to main screen
@@ -60,14 +51,6 @@ const ConfigureApi = ({ match, location }) => {
         console.error(error)
       },
     )
-  }
-
-  /**
-   * Hides the modal if it was dismissed
-   * @returns {void}
-   */
-  const onDenyDelete = () => {
-    setShowModal(false)
   }
 
   const log = type => console.info.bind(console, type)
@@ -84,19 +67,16 @@ const ConfigureApi = ({ match, location }) => {
             onSubmit={handleSubmit}
             onError={log('errors')}
           />
-          <Button color="danger" onClick={handleDelete}>
-            Delete
-          </Button>
+          <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
+            {config => (
+              <Button color="danger" onClick={config(handleDelete)}>
+                Delete
+              </Button>
+            )}
+          </Modal>
         </>
       )}
       <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
-      <Modal
-        show={showModal}
-        title="Delete application"
-        body="Are you sure you want to delete this application?"
-        onAccept={onAcceptDelete}
-        onDeny={onDenyDelete}
-      />
     </>
   )
 }
