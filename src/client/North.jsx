@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
@@ -8,12 +7,9 @@ import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 
-const toDelete = ''
-
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
-  const [showModal, setShowModal] = React.useState(false)
 
   // acquire the North configuration
   React.useEffect(() => {
@@ -92,7 +88,7 @@ const North = ({ history }) => {
   const tableRows = applications.map(({ applicationId, enabled, api }) => [applicationId, enabled ? 'enabled' : '', api])
   return (
     <>
-      <Modal show={showModal} title="Delete application" body="Are you sure you want to delete this application?">
+      <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
         {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
