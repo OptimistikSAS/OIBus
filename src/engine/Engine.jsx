@@ -46,7 +46,10 @@ Engine.schema = {
     filter: {
       type: 'array',
       title: 'filter',
-      items: { type: 'string', oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }] },
+      items: {
+        type: 'string',
+        oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }],
+      },
       minItems: 1,
       uniqueItems: true,
       default: ['127.0.0.1'],
@@ -70,6 +73,41 @@ Engine.schema = {
         cacheFolder: { type: 'string', title: 'Cache Folder', default: './cache' },
         archiveFolder: { type: 'string', title: 'Archive Folder', default: './cache/archived/' },
         archiveMode: { type: 'string', enum: ['archive', 'delete'], title: 'Archive Mode', default: 'archive' },
+      },
+    },
+    proxies: {
+      type: 'array',
+      title: 'Proxies',
+      items: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            title: 'Name',
+          },
+          protocol: {
+            type: 'string',
+            enum: ['http', 'https'],
+            title: 'Protocol',
+            default: 'http',
+          },
+          host: {
+            type: 'string',
+            title: 'Host',
+          },
+          port: {
+            type: 'number',
+            title: 'Port',
+          },
+          username: {
+            type: 'string',
+            title: 'Username',
+          },
+          password: {
+            type: 'string',
+            title: 'Password',
+          },
+        },
       },
     },
     scanModes: {

@@ -4,11 +4,15 @@ import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
 import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
+import Modal from './components/Modal.jsx'
 import apis from './services/apis'
+
+let toDelete = ''
 
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
+  const [showModal, setShowModal] = React.useState(false)
 
   // acquire the North configuration
   React.useEffect(() => {
@@ -63,13 +67,60 @@ const North = ({ history }) => {
     }
   }
 
+  /**
+   * Deletes the chosen application
+   * @param {event} event the event to prevent the table row click event
+   * @param {string} applicationId The id to delete
+   * @returns {void}
+   */
+  const handleDelete = (event, applicationId) => {
+    event.stopPropagation()
+
+    if (applicationId === '') return
+    toDelete = applicationId
+    setShowModal(true)
+  }
+
+  /**
+   * Deletes the selected application
+   * @returns {void}
+   */
+  const onAcceptDelete = () => {
+    setShowModal(false)
+    apis.deleteNorth(toDelete).then(
+      () => {
+        setApplications(prevState => prevState.filter(application => application.applicationId !== toDelete))
+        // TODO: Show loader
+      },
+      (error) => {
+        console.error(error)
+      },
+    )
+  }
+
+  /**
+   * Hides the modal and resets the toDelete variable
+   * @returns {void}
+   */
+  const onDenyDelete = () => {
+    setShowModal(false)
+    toDelete = ''
+  }
+
   const tableHeaders = ['Application ID', 'Enabled', 'Api']
   const tableRows = applications.map(({ applicationId, enabled, api }) => [applicationId, enabled ? 'enabled' : '', api])
   return (
     <>
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} />}
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} onDeleteClick={handleDelete} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
       <ReactJson src={applications} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
+      <Modal
+        show={showModal}
+        title="Delete application"
+        body="Are you sure you want to delete this application?"
+        onAccept={onAcceptDelete}
+        onDeny={onDenyDelete}
+      />
     </>
   )
 }

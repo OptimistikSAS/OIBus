@@ -1,7 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Button } from 'reactstrap'
 
-const TableRows = ({ rows, onRowClick }) => {
+const TableRows = ({ rows, onRowClick, onDeleteClick }) => {
   let counter = 0
 
   const getCounter = () => {
@@ -15,6 +16,11 @@ const TableRows = ({ rows, onRowClick }) => {
           {row.map(field => (
             <td key={`${`${getCounter()}-${field}`}-${field}`}>{field}</td>
           ))}
+          <td key={getCounter() - 'delete'}>
+            <Button color="danger" onClick={event => onDeleteClick(event, row[0])}>
+              Delete
+            </Button>
+          </td>
         </tr>
       ))}
     </tbody>
@@ -24,6 +30,7 @@ const TableRows = ({ rows, onRowClick }) => {
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   onRowClick: PropTypes.func.isRequired,
+  onDeleteClick: PropTypes.func.isRequired,
 }
 
 export default TableRows
