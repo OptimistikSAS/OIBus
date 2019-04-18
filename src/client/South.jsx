@@ -7,12 +7,9 @@ import NewEquipmentRow from './NewEquipmentRow.jsx'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 
-let toDelete = ''
-
 const South = ({ history }) => {
   const [equipments, setEquipments] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
-  const [showModal, setShowModal] = React.useState(false)
 
   // acquire the South configuration
   React.useEffect(() => {
@@ -72,22 +69,10 @@ const South = ({ history }) => {
    * @returns {void}
    */
   const handleDelete = (event, equipmentId) => {
-    event.stopPropagation()
-
     if (equipmentId === '') return
-    toDelete = equipmentId
-    setShowModal(true)
-  }
-
-  /**
-   * Deletes the selected equipment
-   * @returns {void}
-   */
-  const onAcceptDelete = () => {
-    setShowModal(false)
-    apis.deleteSouth(toDelete).then(
+    apis.deleteSouth(equipmentId).then(
       () => {
-        setEquipments(prevState => prevState.filter(equipment => equipment.equipmentId !== toDelete))
+        setEquipments(prevState => prevState.filter(equipment => equipment.equipmentId !== equipmentId))
         // TODO: Show loader
       },
       (error) => {
@@ -96,29 +81,15 @@ const South = ({ history }) => {
     )
   }
 
-  /**
-   * Hides the modal and resets the toDelete variable
-   * @returns {void}
-   */
-  const onDenyDelete = () => {
-    setShowModal(false)
-    toDelete = ''
-  }
-
   const tableHeaders = ['Equipment ID', 'Enabled', 'Protocol']
   const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [equipmentId, enabled ? 'enabled' : '', protocol])
   return (
     <>
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} onDeleteClick={handleDelete} />}
+      <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+        {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} onDeleteClick={confirm(handleDelete)} />}
+      </Modal>
       <NewEquipmentRow protocolList={protocolList} addEquipment={addEquipment} />
       <ReactJson src={equipments} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
-      <Modal
-        show={showModal}
-        title="Delete equipment"
-        body="Are you sure you want to delete this equipment?"
-        onAccept={onAcceptDelete}
-        onDeny={onDenyDelete}
-      />
     </>
   )
 }
