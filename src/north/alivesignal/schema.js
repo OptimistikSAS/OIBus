@@ -54,31 +54,9 @@ module.exports = {
           title: 'Frequency',
           default: 10000,
         },
-        proxy: {
-          type: 'object',
-          title: 'Proxy',
-          properties: {
-            host: {
-              type: 'string',
-              title: 'Host',
-              default: 'http://localhost',
-            },
-            port: {
-              type: 'number',
-              title: 'Port',
-              default: 8888,
-            },
-            username: {
-              type: 'string',
-              title: 'Username',
-              default: 'user',
-            },
-            password: {
-              type: 'string',
-              title: 'Password',
-              default: 'password',
-            },
-          },
+        defaultProxy: {
+          type: 'string',
+          title: 'Default proxy',
         },
       },
     },
