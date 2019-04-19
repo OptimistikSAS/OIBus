@@ -1,8 +1,10 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
+import { Button } from 'reactstrap'
 import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
+import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 
 const ConfigureProtocol = ({ match, location }) => {
@@ -28,22 +30,53 @@ const ConfigureProtocol = ({ match, location }) => {
 
     updateForm(formData)
   }
+
+  const handleSubmit = ({ formData }) => {
+    const { equipmentId } = formData
+    apis.updateSouth(equipmentId, formData)
+  }
+
+  /**
+   * Shows the modal to delete application
+   * @returns {void}
+   */
+  const handleDelete = () => {
+    const { equipmentId } = configJson
+    apis.deleteSouth(equipmentId).then(
+      () => {
+        // TODO: Show loader and redirect to main screen
+      },
+      (error) => {
+        console.error(error)
+      },
+    )
+  }
+
   const log = type => console.info.bind(console, type)
   return (
     <>
       {configJson && configSchema && (
-        <Form
-          formData={configJson}
-          liveValidate
-          schema={configSchema}
-          // uiSchema={configureProtocol.uiModbus}
-          autocomplete="on"
-          onChange={handleChange}
-          onSubmit={log('submitted')}
-          onError={log('errors')}
-        />
+        <>
+          <Form
+            formData={configJson}
+            liveValidate
+            schema={configSchema}
+            // uiSchema={configureProtocol.uiModbus}
+            autocomplete="on"
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onError={log('errors')}
+          />
+          <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+            {confirm => (
+              <Button color="danger" onClick={confirm(handleDelete)}>
+                Delete
+              </Button>
+            )}
+          </Modal>
+          <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
+        </>
       )}
-      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
@@ -54,94 +87,3 @@ ConfigureProtocol.propTypes = {
 }
 
 export default withRouter(ConfigureProtocol)
-
-ConfigureProtocol.schema = {
-  title: 'South',
-  type: 'object',
-  properties: {
-    Modbus: {
-      type: 'object',
-      title: 'Modbus',
-      properties: {
-        addressGap: {
-          type: 'object',
-          title: 'Address Gap',
-          properties: {
-            holdingRegister: { type: 'number', title: 'Holding register' },
-            coil: { type: 'number', title: 'Coil' },
-          },
-        },
-      },
-    },
-    equipments: {
-      type: 'array',
-      title: 'Equipments',
-      items: {
-        type: 'object',
-        properties: {
-          equipmentId: {
-            type: 'string',
-            title: 'Equipment ID',
-          },
-          enabled: {
-            type: 'boolean',
-            title: 'Enabled',
-            default: true,
-          },
-          protocol: {
-            type: 'string',
-            enum: ['CSV', 'MQTT', 'OPCUA', 'RawFile', 'Modbus'],
-            title: 'Protocol',
-            default: 'CSV',
-          },
-          // pointIdRoot: {
-          //   type: 'string',
-          //   title: 'Point ID Root',
-          // },
-          // defaultScanMode: {
-          //   type: 'string',
-          //   title: 'Default Scan Mode',
-          //   default: 'every20Second',
-          // },
-          // '^[A-Z]+$': {
-          //   type: 'object',
-          //   properties: {
-          //     inputFolder: {
-          //       type: 'string',
-          //       title: 'Input Folder',
-          //     },
-          //     archiveFolder: {
-          //       type: 'string',
-          //       title: 'Archive Folder',
-          //     },
-          //     errorFolder: {
-          //       type: 'string',
-          //       title: 'Error Folder',
-          //     },
-          //     separator: {
-          //       type: 'string',
-          //       title: 'Separator',
-          //       default: ',',
-          //     },
-          //     timeColumn: {
-          //       type: 'number',
-          //       title: 'Time Column',
-          //       default: 0,
-          //     },
-          //     hasFirstLine: {
-          //       type: 'boolean',
-          //       title: 'Has First Line',
-          //       default: true,
-          //     },
-          //   },
-          // },
-          // points: {
-          //   type: 'array',
-          //   title: 'Points',
-          //   items: {},
-          // },
-        },
-      },
-    },
-  },
-}
