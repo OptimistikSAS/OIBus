@@ -12,21 +12,20 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
     //  update the new equipment's state
     setEquipment(prevState => ({ ...prevState, [target.name]: value }))
   }
-  const handleAddEquipement = () => {
+  const handleAddEquipement = async () => {
     if (equipment.equipmentId === '') return
 
     // Points is required on server side
     equipment.points = []
-    apis.addSouth(equipment).then(
-      () => {
-        addEquipment(equipment)
-        // reset the line
-        setEquipment({ equipmentId: '', enable: false, protocol: 'Modbus' })
-      },
-      (error) => {
-        console.error(error)
-      },
-    )
+
+    try {
+      await apis.addSouth(equipment)
+      addEquipment(equipment)
+      // reset the line
+      setEquipment({ equipmentId: '', enable: false, protocol: 'Modbus' })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (

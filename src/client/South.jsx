@@ -2,6 +2,7 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
+import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewEquipmentRow from './NewEquipmentRow.jsx'
 import Modal from './components/Modal.jsx'
@@ -40,7 +41,7 @@ const South = ({ history }) => {
    */
   const handleRowClick = (equipment) => {
     const [equipmentId] = equipment
-    const equipmentIndex = getEquipmentIndex(equipmentId)
+    const equipmentIndex = getEquipmentIndex(equipmentId.value)
     if (equipmentIndex === -1) return
     const formData = equipments[equipmentIndex]
     const link = `/south/${formData.protocol}`
@@ -64,25 +65,40 @@ const South = ({ history }) => {
 
   /**
    * Deletes the chosen equipment
-   * @param {event} event the event to prevent the table row click event
    * @param {string} equipmentId The id to delete
    * @returns {void}
    */
-  const handleDelete = (event, equipmentId) => {
+  const handleDelete = async (equipmentId) => {
     if (equipmentId === '') return
-    apis.deleteSouth(equipmentId).then(
-      () => {
-        setEquipments(prevState => prevState.filter(equipment => equipment.equipmentId !== equipmentId))
-        // TODO: Show loader
-      },
-      (error) => {
-        console.error(error)
-      },
-    )
+
+    try {
+      await apis.deleteSouth(equipmentId)
+      // Remove the deleted equipment from the table
+      setEquipments(prevState => prevState.filter(equipment => equipment.equipmentId !== equipmentId))
+      // TODO: Show loader
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const tableHeaders = ['Equipment ID', 'Enabled', 'Protocol']
-  const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [equipmentId, enabled ? 'enabled' : '', protocol])
+  const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [
+    { name: 'id', value: equipmentId },
+    { name: 'enabled', value: enabled ? 'enabled' : '' },
+    { name: 'protocol', value: protocol },
+    {
+      name: 'delete',
+      value: (
+        <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+          {confirm => (
+            <Button color="danger" onClick={confirm(() => handleDelete(equipmentId))}>
+              Delete
+            </Button>
+          )}
+        </Modal>
+      ),
+    },
+  ])
   return (
     <>
       <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">

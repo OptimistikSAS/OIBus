@@ -14,18 +14,17 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
     setApplication(prevState => ({ ...prevState, [target.name]: value }))
   }
 
-  const handleAddApplication = () => {
+  const handleAddApplication = async () => {
     if (application.applicationId === '') return
-    apis.addNorth(application).then(
-      () => {
-        addApplication(application)
-        // reset the line
-        setApplication({ applicationId: '', enable: false, api: 'Console' })
-      },
-      (error) => {
-        console.error(error)
-      },
-    )
+
+    try {
+      await apis.addNorth(application)
+      addApplication(application)
+      // reset the line
+      setApplication({ applicationId: '', enable: false, api: 'Console' })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
