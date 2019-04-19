@@ -30,7 +30,6 @@ const postRequest = async (uri, body) => {
     })
     return response
   } catch (error) {
-    console.error('Request error', error)
     throw new Error(error)
   }
 }
@@ -47,7 +46,6 @@ const putRequest = async (uri, body) => {
     })
     return response
   } catch (error) {
-    console.error('Request error', error)
     throw new Error(error)
   }
 }
@@ -63,7 +61,6 @@ const deleteRequest = async (uri) => {
     })
     return response
   } catch (error) {
-    console.error('Request error', error)
     throw new Error(error)
   }
 }
