@@ -321,6 +321,12 @@
                         "scanMode": "every5Second"
                     }
                 ]
+            },
+            {
+                "equipmentId": "test",
+                "enable": false,
+                "protocol": "Modbus",
+                "points": []
             }
         ]
     },

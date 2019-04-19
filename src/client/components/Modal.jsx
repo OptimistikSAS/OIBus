@@ -6,15 +6,10 @@ const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
   const [open, setOpen] = React.useState(show)
   const [callback, setCallback] = React.useState(null)
 
-  const showModal = callbackParam => (event, param) => {
+  const showModal = callbackParam => (event) => {
     event.stopPropagation()
-    const newEvent = {
-      ...event,
-      target: { ...event.target, value: event.target.value },
-    }
-
     setOpen(true)
-    setCallback({ func: () => callbackParam(newEvent, param) })
+    setCallback({ func: callbackParam })
   }
 
   const hideModal = () => {
@@ -26,10 +21,6 @@ const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
     callback.func()
     hideModal()
   }
-
-  React.useEffect(() => {
-    setOpen(show)
-  }, [show])
 
   return (
     <>
