@@ -6,12 +6,23 @@ import apis from './services/apis'
 
 const NewEquipmentRow = ({ protocolList, addEquipment }) => {
   const [equipment, setEquipment] = React.useState({ equipmentId: '', enable: false, protocol: 'Modbus' })
+
+  /**
+   * Updates the equipment's state
+   * @param {*} event The change event
+   * @returns {void}
+   */
   const handleChange = (event) => {
     const { target } = event
     const { value } = target
     //  update the new equipment's state
     setEquipment(prevState => ({ ...prevState, [target.name]: value }))
   }
+
+  /**
+   * Submits a new equipment
+   * @returns {void}
+   */
   const handleAddEquipement = async () => {
     if (equipment.equipmentId === '') return
 
@@ -20,6 +31,8 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
 
     try {
       await apis.addSouth(equipment)
+
+      // add submitted equipment to the table
       addEquipment(equipment)
       // reset the line
       setEquipment({ equipmentId: '', enable: false, protocol: 'Modbus' })

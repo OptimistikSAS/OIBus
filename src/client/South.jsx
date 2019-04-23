@@ -12,14 +12,20 @@ const South = ({ history }) => {
   const [equipments, setEquipments] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
 
-  // acquire the South configuration
+  /**
+   * Acquire the South configuration
+   * @returns {void}
+   */
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setEquipments(config.south.equipments)
     })
   }, [])
 
-  // acquire the list of Protocols
+  /**
+   * Acquire the list of Protocols
+   * @returns {void}
+   */
   React.useEffect(() => {
     apis.getSouthProtocols().then((protocols) => {
       setProtocolList(protocols)
