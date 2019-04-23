@@ -12,14 +12,20 @@ const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
 
-  // acquire the North configuration
+  /**
+   * Acquire the North configuration
+   * @returns {void}
+   */
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setApplications(config.north.applications)
     })
   }, [])
 
-  // acquire the list of Apis
+  /**
+   * Acquire the list of protocols
+   * @returns {void}
+   */
   React.useEffect(() => {
     apis.getNorthApis().then((application) => {
       setApiList(application)
