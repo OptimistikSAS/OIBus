@@ -11,10 +11,19 @@ const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
 
+  /**
+   * Sets the configuration JSON
+   * @param {Object} formData Data of the form
+   * @returns {void}
+   */
   const updateForm = (formData) => {
     setConfigJson(formData)
   }
 
+  /**
+   * Acquire the schema and set the configuration JSON
+   * @returns {void}
+   */
   React.useEffect(() => {
     const { protocol } = match.params
     const { formData } = location
@@ -25,12 +34,22 @@ const ConfigureProtocol = ({ match, location }) => {
     })
   }, [])
 
-  const handleChange = (data) => {
-    const { formData } = data
+  /**
+   * Handles the form's change
+   * @param {Object} form The data of the form
+   * @returns {void}
+   */
+  const handleChange = (form) => {
+    const { formData } = form
 
     updateForm(formData)
   }
 
+  /**
+   * Handles the form's submittion
+   * @param {*} param0 Object containing formData field
+   * @returns {void}
+   */
   const handleSubmit = ({ formData }) => {
     const { equipmentId } = formData
     apis.updateSouth(equipmentId, formData)
@@ -40,16 +59,14 @@ const ConfigureProtocol = ({ match, location }) => {
    * Shows the modal to delete application
    * @returns {void}
    */
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const { equipmentId } = configJson
-    apis.deleteSouth(equipmentId).then(
-      () => {
-        // TODO: Show loader and redirect to main screen
-      },
-      (error) => {
-        console.error(error)
-      },
-    )
+    try {
+      await apis.deleteSouth(equipmentId)
+      // TODO: Show loader and redirect to main screen
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const log = type => console.info.bind(console, type)

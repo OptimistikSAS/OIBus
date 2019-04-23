@@ -6,17 +6,31 @@ const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
   const [open, setOpen] = React.useState(show)
   const [callback, setCallback] = React.useState(null)
 
+  /**
+   * Shows the confirmation modal
+   * @param {func} callbackParam The function to be called upon confirmation
+   * @param {Object} event The event object
+   * @returns {void}
+   */
   const showModal = callbackParam => (event) => {
     event.stopPropagation()
     setOpen(true)
     setCallback({ func: callbackParam })
   }
 
+  /**
+   * Hides the modal
+   * @returns {void}
+   */
   const hideModal = () => {
     setOpen(false)
     setCallback(null)
   }
 
+  /**
+   * Handles the confirmation of the modal
+   * @returns {void}
+   */
   const confirm = () => {
     callback.func()
     hideModal()
