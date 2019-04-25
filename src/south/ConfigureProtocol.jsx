@@ -77,6 +77,7 @@ const ConfigureProtocol = ({ match, location }) => {
           <Form
             formData={configJson}
             liveValidate
+            showErrorList={false}
             schema={configSchema}
             // uiSchema={configureProtocol.uiModbus}
             autocomplete="on"

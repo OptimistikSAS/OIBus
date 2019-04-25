@@ -9,13 +9,13 @@ const TopHeader = () => {
     setIsOpen(!isOpen)
   }
   return (
-    <Navbar color="dark" dark expand="md">
-      <NavbarBrand tag={Link} to="/">
+    <Navbar expand="md" className="oi-navbar oi-navbar-top navbar-fixed-top">
+      <NavbarBrand className="oi-icone-oi" tag={Link} to="/">
         OIBus
       </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
-        <Nav navbar>
+        <Nav className="ml-auto" navbar>
           <NavItem tag={Link} to="/engine">
             Engine
           </NavItem>
