@@ -52,6 +52,7 @@ class Cache {
         activeApi.config = application.application.caching
         activeApi.canHandleValues = application.canHandleValues
         activeApi.canHandleFiles = application.canHandleFiles
+        activeApi.subscribedTo = application.application.subscribedTo
 
         if (application.canHandleValues) {
           activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
@@ -65,9 +66,30 @@ class Cache {
   }
 
   /**
+   * Check whether a North is subscribed to a South
+   * @param {string} equipmentId - The South generating the value
+   * @param {string[]} subscribedTo - The list of Souths the North is subscribed to
+   * @returns {boolean} - The the North is subscribed to the giben South
+   */
+  static isSubscribed(equipmentId, subscribedTo) {
+    let isSubscribed = false
+
+    if (typeof subscribedTo === 'undefined') {
+      isSubscribed = true
+    }
+
+    if (subscribedTo && Array.isArray(subscribedTo)) {
+      isSubscribed = subscribedTo.includes(equipmentId)
+    }
+
+    return isSubscribed
+  }
+
+  /**
    * Cache a new Value.
    * It will store the value in every database. If doNotCache is "true" it will immediately forward the value
    * to every North application.
+   * @param {string} equipmentId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -75,11 +97,11 @@ class Cache {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  async cacheValues(value, doNotGroup) {
+  async cacheValues(equipmentId, value, doNotGroup) {
     Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-      const { database, config, canHandleValues } = activeApi
+      const { database, config, canHandleValues, subscribedTo } = activeApi
 
-      if (canHandleValues) {
+      if (canHandleValues && Cache.isSubscribed(equipmentId, subscribedTo)) {
         await databaseService.saveValue(database, value)
 
         if (doNotGroup) {
@@ -96,11 +118,12 @@ class Cache {
 
   /**
    * Cache the new raw file.
+   * @param {string} equipmentId - The South generating the file
    * @param {String} filePath - The path of the raw file
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  async cacheFile(filePath, preserveFiles) {
+  async cacheFile(equipmentId, filePath, preserveFiles) {
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
@@ -111,9 +134,9 @@ class Cache {
           this.logger.error(copyError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles } = activeApi
+            const { canHandleFiles, subscribedTo } = activeApi
 
-            if (canHandleFiles) {
+            if (canHandleFiles && Cache.isSubscribed(equipmentId, subscribedTo)) {
               await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
               this.sendCallback(applicationId)
             }
@@ -126,9 +149,9 @@ class Cache {
           this.logger.error(renameError)
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles } = activeApi
+            const { canHandleFiles, subscribedTo } = activeApi
 
-            if (canHandleFiles) {
+            if (canHandleFiles && Cache.isSubscribed(equipmentId, subscribedTo)) {
               await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
               this.sendCallback(applicationId)
             }
