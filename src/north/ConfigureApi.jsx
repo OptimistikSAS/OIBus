@@ -78,6 +78,7 @@ const ConfigureApi = ({ match, location }) => {
           <Form
             formData={configJson}
             liveValidate
+            showErrorList={false}
             schema={configSchema}
             autocomplete="on"
             onChange={handleChange}
