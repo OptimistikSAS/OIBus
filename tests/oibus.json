@@ -403,7 +403,10 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000
-                }
+                },
+                "subscribedTo": [
+                    "RawFileTransfer"
+                ],
             },
             {
                 "applicationId": "AliveSignal",

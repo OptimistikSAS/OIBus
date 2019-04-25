@@ -87,6 +87,7 @@ class Engine {
   /**
    * Add a new Value from an equipment to the Engine.
    * The Engine will forward the Value to the Cache.
+   * @param {string} equipmentId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -94,19 +95,20 @@ class Engine {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue({ pointId, data, timestamp }, doNotGroup) {
-    this.cache.cacheValues({ pointId, data, timestamp }, doNotGroup)
+  addValue(equipmentId, { pointId, data, timestamp }, doNotGroup) {
+    this.cache.cacheValues(equipmentId, { pointId, data, timestamp }, doNotGroup)
   }
 
   /**
    * Add a new File from an equipment to the Engine.
    * The Engine will forward the File to the Cache.
+   * @param {string} equipmentId - The South generating the file
    * @param {string} filePath - The path to the File
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(filePath, preserveFiles) {
-    this.cache.cacheFile(filePath, preserveFiles)
+  addFile(equipmentId, filePath, preserveFiles) {
+    this.cache.cacheFile(equipmentId, filePath, preserveFiles)
   }
 
   /**
