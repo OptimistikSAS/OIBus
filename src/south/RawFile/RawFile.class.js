@@ -122,7 +122,7 @@ class RawFile extends ProtocolHandler {
 
     this.logger.debug(`Sending ${filePath} to Engine.`)
 
-    this.engine.addFile(this.equipment.equipmentId, filePath, this.preserveFiles)
+    this.addFile(filePath)
 
     if (this.preserveFiles) {
       this.storeFile(filename)
