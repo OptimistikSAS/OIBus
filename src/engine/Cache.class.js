@@ -72,17 +72,11 @@ class Cache {
    * @returns {boolean} - The the North is subscribed to the giben South
    */
   static isSubscribed(equipmentId, subscribedTo) {
-    let isSubscribed = false
-
-    if (typeof subscribedTo === 'undefined') {
-      isSubscribed = true
+    if (!subscribedTo) {
+      return true
     }
 
-    if (subscribedTo && Array.isArray(subscribedTo)) {
-      isSubscribed = subscribedTo.includes(equipmentId)
-    }
-
-    return isSubscribed
+    return (Array.isArray(subscribedTo) && subscribedTo.includes(equipmentId))
   }
 
   /**
