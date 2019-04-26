@@ -115,7 +115,7 @@ class OPCUA extends ProtocolHandler {
             }
           })
           value.data = JSON.stringify(data)
-          this.engine.addValue(value, pointsDoNotGroup[pointId])
+          this.addValue(value, pointsDoNotGroup[pointId])
           // @todo handle double values with an array as data
         })
       } else {
