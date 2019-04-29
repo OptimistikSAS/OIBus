@@ -7,8 +7,8 @@ const clientController = require('../controllers/clientController')
 
 const router = new Router()
 
+router.get('/config', configController.getModifiedConfiguration)
 router.get('/config/active', configController.getActiveConfiguration)
-router.get('/config/modified', configController.getModifiedConfiguration)
 router.put('/config/engine', configController.updateEngine)
 router.post('/config/north', configController.addNorth)
 router.put('/config/north/:applicationId', configController.updateNorth)
