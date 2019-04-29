@@ -76,6 +76,7 @@ const deleteNorth = applicationId => deleteRequest(`/config/north/${applicationI
 const addSouth = body => postRequest('/config/south', body)
 const updateSouth = (equipmentId, body) => putRequest(`/config/south/${equipmentId}`, body)
 const deleteSouth = equipmentId => deleteRequest(`/config/south/${equipmentId}`)
+const updateEngine = body => putRequest('/config/engine', body)
 
 export default {
   getSouthProtocols,
@@ -89,4 +90,5 @@ export default {
   addSouth,
   updateSouth,
   deleteSouth,
+  updateEngine,
 }

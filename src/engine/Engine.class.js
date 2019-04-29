@@ -421,6 +421,21 @@ class Engine {
 
     this.reload(1000)
   }
+
+  /**
+   * Update Engine
+   * @param {object} engine - The updated Engine
+   * @returns {void}
+   */
+  updateEngine(engine) {
+    backupConfigFile(this.configFile)
+
+    this.config.engine = engine
+
+    saveNewConfig(this.config, this.configFile)
+
+    this.reload(1000)
+  }
 }
 
 module.exports = Engine
