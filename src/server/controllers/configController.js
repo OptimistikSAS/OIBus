@@ -41,7 +41,7 @@ const updateNorth = (ctx) => {
 
   try {
     ctx.app.engine.updateNorth(ctx.request.body)
-    ctx.ok('Reloading...')
+    ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update application')
   }
@@ -59,7 +59,7 @@ const deleteNorth = (ctx) => {
 
   try {
     ctx.app.engine.deleteNorth(ctx.params.applicationId)
-    ctx.ok('Reloading...')
+    ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to delete application')
   }
@@ -99,7 +99,7 @@ const updateSouth = (ctx) => {
 
   try {
     ctx.app.engine.updateSouth(ctx.request.body)
-    ctx.ok('Reloading...')
+    ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update equipment')
   }
@@ -117,7 +117,7 @@ const deleteSouth = (ctx) => {
 
   try {
     ctx.app.engine.deleteSouth(ctx.params.equipmentId)
-    ctx.ok('Reloading...')
+    ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to delete equipment')
   }
@@ -131,6 +131,20 @@ const deleteSouth = (ctx) => {
 const updateEngine = (ctx) => {
   try {
     ctx.app.engine.updateEngine(ctx.request.body)
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to update Engine')
+  }
+}
+
+/**
+ * Activate the configuration.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const activateConfiguration = (ctx) => {
+  try {
+    ctx.app.engine.activateConfiguration()
     ctx.ok('Reloading...')
   } catch (error) {
     ctx.throw(500, 'Unable to update Engine')
@@ -146,4 +160,5 @@ module.exports = {
   updateSouth,
   deleteSouth,
   updateEngine,
+  activateConfiguration,
 }
