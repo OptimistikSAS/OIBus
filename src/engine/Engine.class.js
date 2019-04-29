@@ -44,7 +44,7 @@ class Engine {
   constructor(configFile) {
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
-    this.modifiedConfig = { ...this.config }
+    this.modifiedConfig = tryReadFile(this.configFile)
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
