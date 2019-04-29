@@ -22,9 +22,9 @@ const Engine = () => {
    * @param {*} engine The changed engine
    * @returns {void}
    */
-  const handleSubmit = (engine) => {
+  const handleSubmit = async (engine) => {
     try {
-      apis.updateEngine(engine)
+      await apis.updateEngine(engine)
     } catch (error) {
       console.error(error)
     }
