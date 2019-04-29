@@ -8,6 +8,7 @@ const clientController = require('../controllers/clientController')
 const router = new Router()
 
 router.get('/config', configController.getConfig)
+router.put('/config/engine', configController.updateEngine)
 router.post('/config/north', configController.addNorth)
 router.put('/config/north/:applicationId', configController.updateNorth)
 router.delete('/config/north/:applicationId', configController.deleteNorth)
