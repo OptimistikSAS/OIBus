@@ -1,6 +1,7 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import ReactJson from 'react-json-view'
+import apis from '../client/services/apis'
 
 const Engine = () => {
   const [configJson, setConfigJson] = React.useState({ engine: {} })
@@ -15,6 +16,20 @@ const Engine = () => {
       }
     })
   }, [])
+
+  /**
+   * Submit the updated engine
+   * @param {*} engine The changed engine
+   * @returns {void}
+   */
+  const handleSubmit = (engine) => {
+    try {
+      apis.updateEngine(engine)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const log = type => console.info.bind(console, type)
   return (
     <>
@@ -25,7 +40,7 @@ const Engine = () => {
         uiSchema={Engine.uiSchema}
         autocomplete="on"
         onChange={log('changed')}
-        onSubmit={log('submitted')}
+        onSubmit={({ formData }) => handleSubmit(formData)}
         onError={log('errors')}
       />
       <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
