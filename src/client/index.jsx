@@ -19,7 +19,7 @@ const Main = () => (
   <Router>
     <>
       <TopHeader />
-      <Container fluid>
+      <Container className="oi-container-with-top-nav" fluid>
         <Switch>
           <Route exact path="/" component={Welcome} />
           <Route exact path="/engine" component={Engine} />
