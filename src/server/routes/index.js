@@ -15,6 +15,7 @@ router.delete('/config/north/:applicationId', configController.deleteNorth)
 router.post('/config/south', configController.addSouth)
 router.put('/config/south/:equipmentId', configController.updateSouth)
 router.delete('/config/south/:equipmentId', configController.deleteSouth)
+router.put('/config/activate', configController.activateConfiguration)
 
 router.get('/config/schemas/north', schemaController.getNorthSchemaList)
 router.get('/config/schemas/north/:api', schemaController.getNorthSchema)
