@@ -1,10 +1,19 @@
 /**
- * Get the configuration.
+ * Get the active configuration.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getConfig = (ctx) => {
+const getActiveConfiguration = (ctx) => {
   ctx.ok({ config: ctx.app.engine.config })
+}
+
+/**
+ * Get the modified configuration.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getModifiedConfiguration = (ctx) => {
+  ctx.ok({ config: ctx.app.engine.modifiedConfig })
 }
 
 /**
@@ -152,7 +161,8 @@ const activateConfiguration = (ctx) => {
 }
 
 module.exports = {
-  getConfig,
+  getActiveConfiguration,
+  getModifiedConfiguration,
   addNorth,
   updateNorth,
   deleteNorth,
