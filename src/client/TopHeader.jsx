@@ -25,6 +25,9 @@ const TopHeader = () => {
           <NavItem tag={Link} to="/south">
             South
           </NavItem>
+          <NavItem tag={Link} to="/activatenewconfig">
+            Activate new configuration
+          </NavItem>
         </Nav>
       </Collapse>
     </Navbar>
