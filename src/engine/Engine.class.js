@@ -405,6 +405,14 @@ class Engine {
     saveNewConfig(this.modifiedConfig, this.configFile)
     this.reload(1000)
   }
+
+  /**
+   * Reset configuration
+   * @returns {void}
+   */
+  resetConfiguration() {
+    this.modifiedConfig = tryReadFile(this.configFile)
+  }
 }
 
 module.exports = Engine
