@@ -68,6 +68,9 @@ const deleteRequest = async (uri) => {
 const getSouthProtocols = () => getRequest('/config/schemas/south')
 const getNorthApis = () => getRequest('/config/schemas/north')
 const getConfig = () => getRequest('config')
+const getActiveConfig = () => getRequest('config/active')
+const updateActiveConfig = () => putRequest('/config/activate')
+const resetModifiedConfig = () => putRequest('/config/reset')
 const getSouthProtocolSchema = protocol => getRequest(`/config/schemas/south/${protocol}`)
 const getNorthApiSchema = api => getRequest(`/config/schemas/north/${api}`)
 const addNorth = body => postRequest('/config/north', body)
@@ -82,6 +85,9 @@ export default {
   getSouthProtocols,
   getNorthApis,
   getConfig,
+  getActiveConfig,
+  updateActiveConfig,
+  resetModifiedConfig,
   getSouthProtocolSchema,
   getNorthApiSchema,
   addNorth,
