@@ -5719,6 +5719,9 @@ input[type="button"].btn-block {
   -o-transition: opacity 0.15s linear;
   transition: opacity 0.15s linear;
 }
+.modal.fade.show {
+  opacity: 1;
+}
 .fade.in {
   opacity: 1;
 }
@@ -8113,6 +8116,7 @@ button.close {
   overflow: hidden;
   -webkit-overflow-scrolling: touch;
   outline: 0;
+  background: rgba(0, 0, 0, .5);
 }
 .modal.fade .modal-dialog {
   -webkit-transform: translate(0, -25%);
@@ -8177,6 +8181,7 @@ button.close {
 .modal-title {
   margin: 0;
   line-height: 1.42857143;
+  color: #627187;
 }
 .modal-body {
   position: relative;
@@ -12946,7 +12951,7 @@ span.invalid {
 /* Body */
 .modal-body {
   background-color: #FAFAFA;
-  padding: 15px 0;
+  padding: 15px;
 }
 .large-modal-window .modal-dialog {
   height: 90% !important;
