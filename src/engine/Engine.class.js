@@ -403,7 +403,7 @@ class Engine {
   activateConfiguration() {
     backupConfigFile(this.configFile)
     saveNewConfig(this.modifiedConfig, this.configFile)
-    this.reload(1000)
+    this.reload(100)
   }
 
   /**
