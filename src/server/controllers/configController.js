@@ -156,7 +156,21 @@ const activateConfiguration = (ctx) => {
     ctx.app.engine.activateConfiguration()
     ctx.ok('Reloading...')
   } catch (error) {
-    ctx.throw(500, 'Unable to update Engine')
+    ctx.throw(500, 'Unable to activate configuration')
+  }
+}
+
+/**
+ * Reset the configuration.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const resetConfiguration = (ctx) => {
+  try {
+    ctx.app.engine.resetConfiguration()
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to reset configuration')
   }
 }
 
@@ -171,4 +185,5 @@ module.exports = {
   deleteSouth,
   updateEngine,
   activateConfiguration,
+  resetConfiguration,
 }
