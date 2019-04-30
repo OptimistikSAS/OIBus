@@ -44,6 +44,7 @@ class Engine {
   constructor(configFile) {
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
+    this.modifiedConfig = tryReadFile(this.configFile)
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
@@ -314,7 +315,7 @@ class Engine {
    * @returns {object | undefined} - Whether the given application exists
    */
   hasNorth(applicationId) {
-    return this.config.north.applications.find(application => application.applicationId === applicationId)
+    return this.modifiedConfig.north.applications.find(application => application.applicationId === applicationId)
   }
 
   /**
@@ -323,30 +324,18 @@ class Engine {
    * @returns {void}
    */
   addNorth(application) {
-    backupConfigFile(this.configFile)
-
-    this.config.north.applications.push(application)
-
-    saveNewConfig(this.config, this.configFile)
-
-    this.reload(1000)
+    this.modifiedConfig.north.applications.push(application)
   }
 
   /**
    * Update North application
-   * @param {object} application - The new application to add
+   * @param {object} application - The updated application
    * @returns {void}
    */
   updateNorth(application) {
-    const index = this.config.north.applications.findIndex(element => element.applicationId === application.applicationId)
+    const index = this.modifiedConfig.north.applications.findIndex(element => element.applicationId === application.applicationId)
     if (index > -1) {
-      backupConfigFile(this.configFile)
-
-      this.config.north.applications[index] = application
-
-      saveNewConfig(this.config, this.configFile)
-
-      this.reload(1000)
+      this.modifiedConfig.north.applications[index] = application
     }
   }
 
@@ -356,13 +345,7 @@ class Engine {
    * @returns {void}
    */
   deleteNorth(applicationId) {
-    backupConfigFile(this.configFile)
-
-    this.config.north.applications = this.config.north.applications.filter(application => application.applicationId !== applicationId)
-
-    saveNewConfig(this.config, this.configFile)
-
-    this.reload(1000)
+    this.modifiedConfig.north.applications = this.modifiedConfig.north.applications.filter(application => application.applicationId !== applicationId)
   }
 
   /**
@@ -371,7 +354,7 @@ class Engine {
    * @returns {object | undefined} - Whether the given equipment exists
    */
   hasSouth(equipmentId) {
-    return this.config.south.equipments.find(equipment => equipment.equipmentId === equipmentId)
+    return this.modifiedConfig.south.equipments.find(equipment => equipment.equipmentId === equipmentId)
   }
 
   /**
@@ -380,30 +363,18 @@ class Engine {
    * @returns {void}
    */
   addSouth(equipment) {
-    backupConfigFile(this.configFile)
-
-    this.config.south.equipments.push(equipment)
-
-    saveNewConfig(this.config, this.configFile)
-
-    this.reload(1000)
+    this.modifiedConfig.south.equipments.push(equipment)
   }
 
   /**
    * Update South equipment
-   * @param {object} equipment - The new equipment to add
+   * @param {object} equipment - The updated equipment
    * @returns {void}
    */
   updateSouth(equipment) {
-    const index = this.config.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
+    const index = this.modifiedConfig.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
     if (index > -1) {
-      backupConfigFile(this.configFile)
-
-      this.config.south.equipments[index] = equipment
-
-      saveNewConfig(this.config, this.configFile)
-
-      this.reload(1000)
+      this.modifiedConfig.south.equipments[index] = equipment
     }
   }
 
@@ -413,13 +384,7 @@ class Engine {
    * @returns {void}
    */
   deleteSouth(equipmentId) {
-    backupConfigFile(this.configFile)
-
-    this.config.south.equipments = this.config.south.equipments.filter(equipment => equipment.equipmentId !== equipmentId)
-
-    saveNewConfig(this.config, this.configFile)
-
-    this.reload(1000)
+    this.modifiedConfig.south.equipments = this.modifiedConfig.south.equipments.filter(equipment => equipment.equipmentId !== equipmentId)
   }
 
   /**
@@ -428,13 +393,25 @@ class Engine {
    * @returns {void}
    */
   updateEngine(engine) {
+    this.modifiedConfig.engine = engine
+  }
+
+  /**
+   * Activate the configuration
+   * @returns {void}
+   */
+  activateConfiguration() {
     backupConfigFile(this.configFile)
+    saveNewConfig(this.modifiedConfig, this.configFile)
+    this.reload(100)
+  }
 
-    this.config.engine = engine
-
-    saveNewConfig(this.config, this.configFile)
-
-    this.reload(1000)
+  /**
+   * Reset configuration
+   * @returns {void}
+   */
+  resetConfiguration() {
+    this.modifiedConfig = tryReadFile(this.configFile)
   }
 }
 

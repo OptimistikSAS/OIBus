@@ -7,7 +7,8 @@ const clientController = require('../controllers/clientController')
 
 const router = new Router()
 
-router.get('/config', configController.getConfig)
+router.get('/config', configController.getModifiedConfiguration)
+router.get('/config/active', configController.getActiveConfiguration)
 router.put('/config/engine', configController.updateEngine)
 router.post('/config/north', configController.addNorth)
 router.put('/config/north/:applicationId', configController.updateNorth)
@@ -15,6 +16,8 @@ router.delete('/config/north/:applicationId', configController.deleteNorth)
 router.post('/config/south', configController.addSouth)
 router.put('/config/south/:equipmentId', configController.updateSouth)
 router.delete('/config/south/:equipmentId', configController.deleteSouth)
+router.put('/config/activate', configController.activateConfiguration)
+router.put('/config/reset', configController.resetConfiguration)
 
 router.get('/config/schemas/north', schemaController.getNorthSchemaList)
 router.get('/config/schemas/north/:api', schemaController.getNorthSchema)
