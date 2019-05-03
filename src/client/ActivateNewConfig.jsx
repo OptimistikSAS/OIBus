@@ -1,6 +1,7 @@
 import React from 'react'
 import { Label, Button } from 'reactstrap'
 import { ReactGhLikeDiff } from 'react-gh-like-diff'
+import stringify from 'json-stable-stringify'
 import 'react-gh-like-diff/lib/diff2html.min.css'
 import apis from './services/apis'
 
@@ -63,8 +64,9 @@ const ActivateNewConfig = () => {
     }
   }
 
-  const activeString = JSON.stringify(configActiveJson, null, 2)
-  const modifiedString = JSON.stringify(configJson, null, 2)
+  // json-stable-stringify is used instead of JSON.stringify to have consistent result in alphabetical order
+  const activeString = stringify(configActiveJson, { space: '  ' })
+  const modifiedString = stringify(configJson, { space: '  ' })
   const isModified = compareActiveWithModified(activeString, modifiedString)
 
   return (
