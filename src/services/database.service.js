@@ -61,6 +61,25 @@ const createRawFilesDatabase = async (databasePath) => {
 }
 
 /**
+ * Initiate SQLite3 database and create the cache table.
+ * @param {string} databasePath - The database file path
+ * @return {BetterSqlite3.Database} - The SQLite3 database
+ */
+const createConfigDatabase = async (databasePath) => {
+  const database = await sqlite.open(databasePath)
+
+  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+                   id INTEGER PRIMARY KEY,
+                   name TEXT UNIQUE,
+                   value TEXT
+                 );`
+  const stmt = await database.prepare(query)
+  await stmt.run()
+
+  return database
+}
+
+/**
  * Save value in database.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {object} value - The value to save
@@ -222,10 +241,46 @@ const getRawFileModifyTime = async (database, filename) => {
   return results.length > 0 ? results[0].modified : null
 }
 
+/**
+ * Upsert config entry.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {string} name - The config entry
+ * @param {string} value - The config value
+ * @return {void}
+ */
+const upsertConfig = async (database, name, value) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (name, value) 
+                 VALUES (?, ?)
+                 ON CONFLICT(name) DO UPDATE SET value = ?`
+  const stmt = await database.prepare(query)
+  await stmt.run(name, value, value)
+}
+
+/**
+ * Get configuration.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {string} name - The config name
+ * @return {string} - The config value
+ */
+const getConfig = async (database, name) => {
+  const query = `SELECT value
+                 FROM ${CACHE_TABLE_NAME}
+                 WHERE name = ?`
+  const stmt = await database.prepare(query)
+  const result = await stmt.get(name)
+
+  if (result) {
+    return result.value
+  }
+
+  return null
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
   createRawFilesDatabase,
+  createConfigDatabase,
   saveValue,
   getValuesCount,
   getValuesToSend,
@@ -236,4 +291,6 @@ module.exports = {
   getFileCount,
   upsertRawFile,
   getRawFileModifyTime,
+  upsertConfig,
+  getConfig,
 }
