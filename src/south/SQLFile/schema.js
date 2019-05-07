@@ -64,7 +64,7 @@ module.exports = {
         },
         tmpFolder: {
           type: 'string',
-          title: 'Temporarily folder',
+          title: 'Temporary folder',
         },
       },
     },
