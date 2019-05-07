@@ -5,6 +5,7 @@ const mssql = require('mssql')
 const Json2csvParser = require('json2csv').Parser
 
 const ProtocolHandler = require('../ProtocolHandler.class')
+const databaseService = require('../../services/database.service')
 
 /**
  * Class SQLFile
@@ -48,6 +49,16 @@ class SQLFile extends ProtocolHandler {
     return new Date().toISOString().slice(0, 23).replace('T', ' ')
   }
 
+  async connect() {
+    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.equipment.equipmentId}.db`
+    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+
+    this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
+    if (!this.lastCompletedAt) {
+      this.lastCompletedAt = SQLFile.getDateTime()
+    }
+  }
+
   /**
    * Get entries from the database since the last query completion, write them into a CSV file and send to the Engine.
    * @param {*} _scanMode - The scan mode
@@ -78,6 +89,7 @@ class SQLFile extends ProtocolHandler {
       }
 
       this.lastCompletedAt = now
+      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
     } catch (error) {
       this.logger.error(error)
     }
