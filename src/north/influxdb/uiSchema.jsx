@@ -17,9 +17,9 @@ const uiSchema = {
     precision: { 'ui:help': '' },
   },
   caching: {
-    sendInterval: { 'ui:help': <div>Value in seconds for data sending interval</div> },
-    retryInterval: { 'ui:help': <div>Value in seconds for retry sending data in case of failure</div> },
-    groupCount: { 'ui:help': <div>Help text</div> },
+    sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
+    retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
+    groupCount: { 'ui:help': <div>The minimum count of data before is sent to the database</div>  },
   },
 }
 
