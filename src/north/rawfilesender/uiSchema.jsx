@@ -1,25 +1,25 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  api: { 'ui:help': <div>Help text</div> },
+  applicationId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
+  api: { 'ui:help': '' },
   RawFileSender: {
-    host: { 'ui:help': <div>Help text</div> },
-    endpoint: { 'ui:help': <div>Help text</div> },
+    host: { 'ui:help': '' },
+    endpoint: { 'ui:help': '' },
     authentication: {
-      type: { 'ui:help': <div>Help text</div> },
-      username: { 'ui:help': <div>Help text</div> },
+      type: { 'ui:help': <div>The type of authentication</div> },
+      username: { 'ui:help': '' },
       password: {
         'ui:widget': 'password',
-        'ui:help': <div>Help text</div>,
+        'ui:help': '',
       },
     },
-    defaultProxy: { 'ui:help': <div>Help text</div> },
+    defaultProxy: { 'ui:help': '' },
   },
   caching: {
-    sendInterval: { 'ui:help': <div>Help text</div> },
-    retryInterval: { 'ui:help': <div>Help text</div> },
+    sendInterval: { 'ui:help': <div>Value in seconds for data sending interval</div> },
+    retryInterval: { 'ui:help': <div>Value in seconds for retry sending data in case of failure</div> },
   },
 }
 

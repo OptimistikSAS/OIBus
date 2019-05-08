@@ -1,27 +1,27 @@
 import React from 'react'
 
 const uiSchema = {
-  equipmentId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  protocol: { 'ui:help': <div>Help text</div> },
-  pointIdRoot: { 'ui:help': <div>Help text</div> },
-  defaultScanMode: { 'ui:help': <div>Help text</div> },
+  equipmentId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
+  protocol: { 'ui:help': '' },
+  pointIdRoot: { 'ui:help': '' },
+  defaultScanMode: { 'ui:help': '' },
   MQTT: {
-    server: { 'ui:help': <div>Help text</div> },
-    protocol: { 'ui:help': <div>Help text</div> },
-    port: { 'ui:help': <div>Help text</div> },
-    username: { 'ui:help': <div>Help text</div> },
+    server: { 'ui:help': '' },
+    protocol: { 'ui:help': '' },
+    port: { 'ui:help': '' },
+    username: { 'ui:help': '' },
     password: {
-      'ui:help': <div>Help text</div>,
+      'ui:help': '',
       'ui:widget': 'password',
     },
   },
   points: {
     items: {
-      MQTT: { topic: { 'ui:help': <div>Help text</div> } },
-      pointId: { 'ui:help': <div>Help text</div> },
-      doNotGroup: { 'ui:help': <div>Help text</div> },
-      scanMode: { 'ui:help': <div>Help text</div> },
+      MQTT: { topic: { 'ui:help': '' } },
+      pointId: { 'ui:help': '' },
+      doNotGroup: { 'ui:help': '' },
+      scanMode: { 'ui:help': <div>Name of the scan mode defined by the user</div> },
     },
   },
 }
