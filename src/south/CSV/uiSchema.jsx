@@ -1,27 +1,27 @@
 import React from 'react'
 
 const uiSchema = {
-  equipmentId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  protocol: { 'ui:help': <div>Help text</div> },
-  pointIdRoot: { 'ui:help': <div>Help text</div> },
-  defaultScanMode: { 'ui:help': <div>Help text</div> },
+  equipmentId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
+  protocol: { 'ui:help': '' },
+  pointIdRoot: { 'ui:help': '' },
+  defaultScanMode: { 'ui:help': '' },
   CSV: {
-    inputFolder: { 'ui:help': <div>Help text</div> },
-    archiveFolder: { 'ui:help': <div>Help text</div> },
-    errorFolder: { 'ui:help': <div>Help text</div> },
-    separator: { 'ui:help': <div>Help text</div> },
-    timeColumn: { 'ui:help': <div>Help text</div> },
-    hasFirstLine: { 'ui:help': <div>Help text</div> },
+    inputFolder: { 'ui:help': <div>Path to the input folder</div> },
+    archiveFolder: { 'ui:help': <div>Path to the archive folder</div> },
+    errorFolder: { 'ui:help': <div>Path to the error folder</div> },
+    separator: { 'ui:help': <div>Separator charachter</div> },
+    timeColumn: { 'ui:help': '' },
+    hasFirstLine: { 'ui:help': '' },
   },
   points: {
     items: {
       CSV: {
-        value: { 'ui:help': <div>Help text</div> },
-        quality: { 'ui:help': <div>Help text</div> },
+        value: { 'ui:help': '' },
+        quality: { 'ui:help': '' },
       },
-      pointId: { 'ui:help': <div>Help text</div> },
-      scanMode: { 'ui:help': <div>Help text</div> },
+      pointId: { 'ui:help': '' },
+      scanMode: { 'ui:help': <div>Name of the scan mode defined by the user</div> },
     },
   },
 }
