@@ -17,7 +17,7 @@ const uiSchema = {
         type: { 'ui:help': '' },
       },
       pointId: { 'ui:help': '' },
-      scanMode: { 'ui:help': <div>Name of the scan mode defined by the user</div> },
+      scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
     },
   },
 }
