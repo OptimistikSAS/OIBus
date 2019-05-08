@@ -1,22 +1,22 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  api: { 'ui:help': <div>Help text</div> },
+  applicationId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
+  api: { 'ui:help': '' },
   AliveSignal: {
-    host: { 'ui:help': <div>Help text</div> },
+    host: { 'ui:help': '' },
     authentication: {
-      type: { 'ui:help': <div>Help text</div> },
-      username: { 'ui:help': <div>Help text</div> },
+      type: { 'ui:help': <div>The type of authentication</div> },
+      username: { 'ui:help': '' },
       password: {
-        'ui:help': <div>Help text</div>,
+        'ui:help': '',
         'ui:widget': 'password',
       },
     },
-    id: { 'ui:help': <div>Help text</div> },
-    frequency: { 'ui:help': <div>Help text</div> },
-    defaultProxy: { 'ui:help': <div>Help text</div> },
+    id: { 'ui:help': '' },
+    frequency: { 'ui:help': '' },
+    defaultProxy: { 'ui:help': '' },
   },
 }
 

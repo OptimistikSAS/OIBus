@@ -1,24 +1,24 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  api: { 'ui:help': <div>Help text</div> },
+  applicationId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
+  api: { 'ui:help': '' },
   AmazonS3: {
-    bucket: { 'ui:help': <div>Help text</div> },
-    folder: { 'ui:help': <div>Help text</div> },
+    bucket: { 'ui:help': <div>The name of the unique bucket</div> },
+    folder: { 'ui:help': <div>The name of the folder</div> },
     authentication: {
-      accessKey: { 'ui:help': <div>Help text</div> },
+      accessKey: { 'ui:help': '' },
       secretKey: {
         'ui:widget': 'password',
-        'ui:help': <div>Help text</div>,
+        'ui:help': '',
       },
     },
-    defaultProxy: { 'ui:help': <div>Help text</div> },
+    defaultProxy: { 'ui:help': '' },
   },
   caching: {
-    sendInterval: { 'ui:help': <div>Help text</div> },
-    retryInterval: { 'ui:help': <div>Help text</div> },
+    sendInterval: { 'ui:help': <div>Value in seconds for data sending interval</div> },
+    retryInterval: { 'ui:help': <div>Value in seconds for retry sending data in case of failure</div> },
   },
 }
 

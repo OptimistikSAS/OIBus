@@ -1,26 +1,26 @@
 import React from 'react'
 
 const uiSchema = {
-  equipmentId: { 'ui:help': <div>Help text</div> },
-  enabled: { 'ui:help': <div>Help text</div> },
-  protocol: { 'ui:help': <div>Help text</div> },
-  pointIdRoot: { 'ui:help': <div>Help text</div> },
-  defaultScanMode: { 'ui:help': <div>Help text</div> },
+  equipmentId: { 'ui:help': '' },
+  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
+  protocol: { 'ui:help': '' },
+  pointIdRoot: { 'ui:help': '' },
+  defaultScanMode: { 'ui:help': '' },
   OPCUA: {
-    host: { 'ui:help': <div>Help text</div> },
-    opcuaPort: { 'ui:help': <div>Help text</div> },
-    httpsPort: { 'ui:help': <div>Help text</div> },
-    endPoint: { 'ui:help': <div>Help text</div> },
-    timeOrigin: { 'ui:help': <div>Help text</div> },
+    host: { 'ui:help': '' },
+    opcuaPort: { 'ui:help': '' },
+    httpsPort: { 'ui:help': '' },
+    endPoint: { 'ui:help': '' },
+    timeOrigin: { 'ui:help': '' },
   },
   points: {
     items: {
       OPCUAnodeId: {
-        ns: { 'ui:help': <div>Help text</div> },
-        s: { 'ui:help': <div>Help text</div> },
+        ns: { 'ui:help': '' },
+        s: { 'ui:help': '' },
       },
-      pointId: { 'ui:help': <div>Help text</div> },
-      scanMode: { 'ui:help': <div>Help text</div> },
+      pointId: { 'ui:help': '' },
+      scanMode: { 'ui:help': <div>Name of the scan mode defined by the user</div> },
     },
   },
 }
