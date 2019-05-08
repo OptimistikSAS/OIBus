@@ -7,8 +7,8 @@ const uiSchema = {
   minimumBuffer: { 'ui:help': <div>The minimum buffer that will ensure date is not sent until value is reached</div> },
   timeStamp: { 'ui:help': '' },
   caching: {
-    sendInterval: { 'ui:help': <div>Value in seconds for data sending interval</div> },
-    retryInterval: { 'ui:help': <div>Value in seconds for retry sending data in case of failure</div> },
+    sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
+    retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
     groupCount: { 'ui:help': '' },
   },
 }

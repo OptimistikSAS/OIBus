@@ -5,7 +5,7 @@ const uiSchema = {
   enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
   protocol: { 'ui:help': '' },
   pointIdRoot: { 'ui:help': '' },
-  defaultScanMode: { 'ui:help': '' },
+  defaultScanMode: { 'ui:help': <div>Default scan mode for every item from points</div> },
   CSV: {
     inputFolder: { 'ui:help': <div>Path to the input folder</div> },
     archiveFolder: { 'ui:help': <div>Path to the archive folder</div> },
