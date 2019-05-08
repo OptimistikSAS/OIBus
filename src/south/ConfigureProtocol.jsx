@@ -49,9 +49,14 @@ const ConfigureProtocol = ({ match, location }) => {
     if (configJson && engineJson && configSchema) {
       const { scanMode } = configSchema.properties.points.items.properties
       const { scanModes } = engineJson
+      const { defaultScanMode } = configSchema.properties
       // check if scanMode, scanModes exists and enum was not already set
       if (scanMode && scanMode.enum === undefined && scanModes) {
         scanMode.enum = scanModes.map(item => item.scanMode)
+      }
+      // check if defaultScanMode, scanModes exists and enum was not already set
+      if (defaultScanMode && defaultScanMode.enum === undefined && scanModes) {
+        defaultScanMode.enum = scanModes.map(item => item.scanMode)
       }
     }
     return configSchema
