@@ -11,6 +11,24 @@ import apis from './services/apis'
 const South = ({ history }) => {
   const [equipments, setEquipments] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
+  const [configEngine, setConfigEngine] = React.useState()
+
+  /**
+   * Acquire the engine configuration and set the configEngine JSON
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    // eslint-disable-next-line consistent-return
+    fetch('/config').then((response) => {
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+        return response.json().then(({ config }) => {
+          const { engine } = config
+          setConfigEngine(engine)
+        })
+      }
+    })
+  }, [])
 
   /**
    * Acquire the South configuration
@@ -51,7 +69,7 @@ const South = ({ history }) => {
     if (equipmentIndex === -1) return
     const formData = equipments[equipmentIndex]
     const link = `/south/${formData.protocol}`
-    history.push({ pathname: link, formData })
+    history.push({ pathname: link, formData, configEngine })
   }
 
   /**
