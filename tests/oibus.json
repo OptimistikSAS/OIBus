@@ -327,6 +327,29 @@
                 "enable": false,
                 "protocol": "Modbus",
                 "points": []
+            },
+            {
+                "equipmentId": "SQLFileTransfer",
+                "enabled": true,
+                "protocol": "SQLFile",
+                "defaultScanMode": "every5Second",
+                "SQLFile": {
+                    "driver": "mssql",
+                    "host": "localhost",
+                    "port": 1433,
+                    "username": "SA",
+                    "password": "Lopicsa2@",
+                    "database": "TestDB",
+                    "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
+                    "delimiter": ",",
+                    "tmpFolder": "./tests/SQLFile",
+                },
+                "points": [
+                    {
+                        "pointId": "SQLFileTransferPointId",
+                        "scanMode": "every5Second"
+                    }
+                ]
             }
         ]
     },
