@@ -11,6 +11,7 @@ protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.RawFile = require('../south/RawFile/RawFile.class')
+protocolList.SQLFile = require('../south/SQLFile/SQLFile.class')
 
 // North classes
 const apiList = {}
