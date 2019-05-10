@@ -58,21 +58,6 @@ const South = ({ history }) => {
   const getEquipmentIndex = equipmentId => equipments.findIndex(equipment => equipment.equipmentId === equipmentId)
 
   /**
-   * Handles the click of the table rows and redirects the
-   * user to the selected south equipment's configuration page
-   * @param {array} equipment Data of the clicked row
-   * @return {void}
-   */
-  const handleRowClick = (equipment) => {
-    const [equipmentId] = equipment
-    const equipmentIndex = getEquipmentIndex(equipmentId.value)
-    if (equipmentIndex === -1) return
-    const formData = equipments[equipmentIndex]
-    const link = `/south/${formData.protocol}`
-    history.push({ pathname: link, formData, configEngine })
-  }
-
-  /**
    * Adds a new equipment row to the table
    * @param {Object} param0 An equipment object containing
    * equipmentId, enabled and protocol fields
@@ -84,6 +69,40 @@ const South = ({ history }) => {
       setEquipments(prev => [...prev, { equipmentId, enabled, protocol }])
     } else {
       throw new Error('equipmentId already exists')
+    }
+  }
+
+  /**
+   * Handles the edit of equpiment and redirects the
+   * user to the selected south equipment's configuration page
+   * @param {string} equipmentId The id to edit
+   * @return {void}
+   */
+  const handleEditClick = (equipmentId) => {
+    const equipmentIndex = getEquipmentIndex(equipmentId)
+    if (equipmentIndex === -1) return
+    const formData = equipments[equipmentIndex]
+    const link = `/south/${formData.protocol}`
+    history.push({ pathname: link, formData, configEngine })
+  }
+
+  /**
+   * Handles the toggle of equpiment beetween
+   * enabled and disabled state
+   * @param {string} equipmentId The id to enable/disable
+   * @return {void}
+   */
+  const handleToggleClick = async (equipmentId) => {
+    const equipmentIndex = getEquipmentIndex(equipmentId)
+    if (equipmentIndex === -1) return
+    const newEquipments = equipments.slice()
+    const formData = newEquipments[equipmentIndex]
+    formData.enabled = !formData.enabled
+    try {
+      await apis.updateSouth(equipmentId, formData)
+      setEquipments(newEquipments)
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -115,9 +134,17 @@ const South = ({ history }) => {
       value: (
         <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
           {confirm => (
-            <Button color="danger" onClick={confirm(() => handleDelete(equipmentId))}>
-              Delete
-            </Button>
+            <div>
+              <Button className="inline-button" color={enabled ? 'danger' : 'success'} onClick={() => handleToggleClick(equipmentId)}>
+                {enabled ? 'Disable' : 'Enable'}
+              </Button>
+              <Button className="inline-button" color="primary" onClick={() => handleEditClick(equipmentId)}>
+                Edit
+              </Button>
+              <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(equipmentId))}>
+                Delete
+              </Button>
+            </div>
           )}
         </Modal>
       ),
@@ -126,7 +153,7 @@ const South = ({ history }) => {
   return (
     <>
       <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
-        {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} onDeleteClick={confirm(handleDelete)} />}
+        {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewEquipmentRow protocolList={protocolList} addEquipment={addEquipment} />
       <ReactJson src={equipments} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
