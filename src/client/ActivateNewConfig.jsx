@@ -1,14 +1,16 @@
 import React from 'react'
-import { Label, Button } from 'reactstrap'
+import { Label, Button, Spinner } from 'reactstrap'
 import { ReactGhLikeDiff } from 'react-gh-like-diff'
 import stringify from 'json-stable-stringify'
 import 'react-gh-like-diff/lib/diff2html.min.css'
+import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 
 
 const ActivateNewConfig = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
+  const [loading, setLoading] = React.useState(null)
 
   /**
    * Acquire the Active configuration
@@ -39,6 +41,17 @@ const ActivateNewConfig = () => {
   const compareActiveWithModified = (active, modified) => (active && modified && (active !== modified))
 
   /**
+   * Disable loading when server reachable
+   * @returns {void}
+   */
+  const stopLoadingWhenReachable = () => {
+    apis.getConfig()
+      .then(() => setLoading(false))
+      // retry getConfig if error catched
+      .catch(() => setTimeout(() => stopLoadingWhenReachable(), 1000))
+  }
+
+  /**
    * Activate new configuration
    * @returns {void}
    */
@@ -46,6 +59,8 @@ const ActivateNewConfig = () => {
     try {
       await apis.updateActiveConfig()
       setConfigActiveJson(configJson)
+      setLoading(true)
+      stopLoadingWhenReachable()
     } catch (error) {
       console.error(error)
     }
@@ -82,9 +97,13 @@ const ActivateNewConfig = () => {
               past={activeString}
               current={modifiedString}
             />
-            <Button color="primary" onClick={() => handleActivate()}>
-              Activate
-            </Button>
+            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
+              {confirm => (
+                <Button color="primary" onClick={confirm(handleActivate)}>
+                  Activate
+                </Button>
+              )}
+            </Modal>
             <Button color="primary" onClick={() => handleDecline()}>
               Decline
             </Button>
@@ -92,6 +111,7 @@ const ActivateNewConfig = () => {
         )
         : <Label>No modifications on configuration</Label>
       }
+      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null }
     </>
   )
 }
