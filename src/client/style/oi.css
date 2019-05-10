@@ -14896,4 +14896,9 @@ span.minute.active,
 .spinner-grow-sm {
 	width: 1rem;
 	height: 1rem
+
+/* buttons */
+.inline-button{
+  display: inline-block;
+  margin: 0 2px;
 }
