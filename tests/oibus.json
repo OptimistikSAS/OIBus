@@ -330,7 +330,7 @@
             },
             {
                 "equipmentId": "SQLFileTransfer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "SQLFile",
                 "defaultScanMode": "every5Second",
                 "SQLFile": {
@@ -342,7 +342,7 @@
                     "database": "TestDB",
                     "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                     "delimiter": ",",
-                    "tmpFolder": "./tests/SQLFile",
+                    "tmpFolder": "./tests/SQLFile"
                 },
                 "points": [
                     {
@@ -429,7 +429,7 @@
                 },
                 "subscribedTo": [
                     "RawFileTransfer"
-                ],
+                ]
             },
             {
                 "applicationId": "AliveSignal",
