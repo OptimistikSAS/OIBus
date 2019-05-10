@@ -14808,3 +14808,9 @@ span.minute.active,
 .modal-header{
   background-color: #323E48; /* #15366B */
 }
+
+/* buttons */
+.inline-button{
+  display: inline-block;
+  margin: 0 2px;
+}
