@@ -11,6 +11,9 @@ const handleResponse = async (response) => {
 const getRequest = async (uri) => {
   try {
     const response = await fetch(uri, { method: 'GET' })
+    if (response.status !== 200) {
+      throw new Error(response.status)
+    }
     return handleResponse(response)
   } catch (error) {
     console.error('Request error', error)
@@ -28,6 +31,9 @@ const postRequest = async (uri, body) => {
       },
       body: JSON.stringify(body),
     })
+    if (response.status !== 200) {
+      throw new Error(response.status)
+    }
     return response
   } catch (error) {
     throw new Error(error)
@@ -44,6 +50,9 @@ const putRequest = async (uri, body) => {
       },
       body: JSON.stringify(body),
     })
+    if (response.status !== 200) {
+      throw new Error(response.status)
+    }
     return response
   } catch (error) {
     throw new Error(error)
@@ -59,6 +68,9 @@ const deleteRequest = async (uri) => {
         'Content-Type': 'application/json',
       },
     })
+    if (response.status !== 200) {
+      throw new Error(response.status)
+    }
     return response
   } catch (error) {
     throw new Error(error)
