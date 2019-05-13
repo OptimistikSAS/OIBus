@@ -12,7 +12,6 @@ import NotFound from './NotFound.jsx'
 import South from './South.jsx'
 import North from './North.jsx'
 import Engine from '../engine/Engine.jsx'
-import ActivateNewConfig from './ActivateNewConfig.jsx'
 import ConfigureApi from '../north/ConfigureApi.jsx'
 import ConfigureProtocol from '../south/ConfigureProtocol.jsx'
 
@@ -28,7 +27,6 @@ const Main = () => (
           <Route exact path="/south/:protocol" component={ConfigureProtocol} />
           <Route exact path="/north" component={North} />
           <Route exact path="/north/:api" component={ConfigureApi} />
-          <Route exact path="/activatenewconfig" component={ActivateNewConfig} />
           <Route component={NotFound} />
         </Switch>
       </Container>
