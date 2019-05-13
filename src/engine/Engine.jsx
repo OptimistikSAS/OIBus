@@ -29,6 +29,13 @@ const Engine = () => {
       console.error(error)
     }
   }
+  const transformErrors = errors => (errors.map((error) => {
+    if (error.schemaPath === '#/properties/filter/items/pattern') {
+      error.message = 'Only IPV4 or IPV6 format is allowed'
+    }
+    return error
+  })
+  )
 
   const log = type => console.info.bind(console, type)
   return (
@@ -43,6 +50,7 @@ const Engine = () => {
         onChange={log('changed')}
         onSubmit={({ formData }) => handleSubmit(formData)}
         onError={log('errors')}
+        transformErrors={transformErrors}
       />
       <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
