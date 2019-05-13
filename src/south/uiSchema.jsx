@@ -3,6 +3,7 @@ import ModbusUISchema from './Modbus/uiSchema.jsx'
 import MQTTUISchema from './MQTT/uiSchema.jsx'
 import OPCUAUISchema from './OPCUA/uiSchema.jsx'
 import RawFileUISchema from './RawFile/uiSchema.jsx'
+import SQLFileUISchema from './SQLFile/uiSchema.jsx'
 
 /**
  * Returns the uiSchema for the protocol
@@ -21,6 +22,8 @@ const uiSchema = (protocol) => {
       return OPCUAUISchema
     case 'RawFile':
       return RawFileUISchema
+    case 'SQLFile':
+      return SQLFileUISchema
     default:
       console.error('protocol has no uiSchema')
       return {}
