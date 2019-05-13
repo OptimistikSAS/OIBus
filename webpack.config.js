@@ -10,6 +10,10 @@ module.exports = {
   },
   // devServer: { contentBase: './build' },
   devtool: 'source-map',
+  performance: {
+    maxEntrypointSize: 3200000,
+    maxAssetSize: 3200000,
+  },
   module: {
     rules: [
       {
