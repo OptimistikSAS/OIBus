@@ -11,6 +11,7 @@ import uiSchema from './uiSchema.jsx'
 const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
+  const [engineJson, setEngineJson] = React.useState()
 
   /**
    * Sets the configuration JSON
@@ -21,19 +22,46 @@ const ConfigureProtocol = ({ match, location }) => {
     setConfigJson(formData)
   }
 
+  const updateEngine = (configEngine) => {
+    setEngineJson(configEngine)
+  }
+
   /**
    * Acquire the schema and set the configuration JSON
    * @returns {void}
    */
   React.useEffect(() => {
     const { protocol } = match.params
-    const { formData } = location
+    const { formData, configEngine } = location
+    updateEngine(configEngine)
 
     apis.getSouthProtocolSchema(protocol).then((schema) => {
       setConfigSchema(schema)
       updateForm(formData)
     })
   }, [])
+
+  /**
+   * Make modification based on engine config to the config schema
+   * @returns {object} config schema
+   */
+  const modifiedConfigSchema = () => {
+    // check if all type configuration are already set
+    if (configJson && engineJson && configSchema) {
+      const { scanMode } = configSchema.properties.points.items.properties
+      const { scanModes } = engineJson
+      const { defaultScanMode } = configSchema.properties
+      // check if scanMode, scanModes exists and enum was not already set
+      if (scanMode && scanMode.enum === undefined && scanModes) {
+        scanMode.enum = scanModes.map(item => item.scanMode)
+      }
+      // check if defaultScanMode, scanModes exists and enum was not already set
+      if (defaultScanMode && defaultScanMode.enum === undefined && scanModes) {
+        defaultScanMode.enum = scanModes.map(item => item.scanMode)
+      }
+    }
+    return configSchema
+  }
 
   /**
    * Handles the form's change
@@ -79,7 +107,7 @@ const ConfigureProtocol = ({ match, location }) => {
             formData={configJson}
             liveValidate
             showErrorList={false}
-            schema={configSchema}
+            schema={modifiedConfigSchema()}
             uiSchema={uiSchema(configJson.protocol)}
             autocomplete="on"
             onChange={handleChange}
