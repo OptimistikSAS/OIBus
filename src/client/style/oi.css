@@ -13,6 +13,8 @@
 	background-color: #ffffff;
 	border: 0;
 	font-size: 11px;
+    max-width: 600px;
+    margin-left: 10px;
 }
 
 .oi-navbar {
@@ -70,4 +72,57 @@
     margin-top: 3px;
     margin-right: 10px;
     margin-left: 10px;
+}
+
+/* overide BS styles */
+.form-control {
+    height: calc(1.5rem + 2px);
+    font-size: 0.7rem;
+    padding: .375rem .5rem;
+}
+
+.btn {
+
+    font-size: 0.7rem;
+    line-height: 1;
+    height: calc(1.5rem + 2px);
+}
+
+.btn-primary,
+.btn-info {
+    color: #fff;
+    background-color: #8291A7;
+    border-color: #8291A7;
+}
+
+.btn:hover {
+    background-color: #F5BB51;
+    border-color: #F5BB51;
+}
+
+.btn-outline-dark  {
+    color: #fff;
+    background-color: #8291A7;
+    border-color: #8291A7;
+}
+
+.btn-outline-dark:disabled  {
+    color: #fff;
+    background-color: #DEDEDE;
+    border-color: #DEDEDE;
+}
+
+td > div > .inline-button {
+    height: 1rem;
+    font-size: 0.65rem;
+    padding: 0 .5rem;
+    width: 60px;
+    margin-right:5px;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 0.2rem;
+    font-weight: bold;
+    font-size: 0.7rem;
 }
