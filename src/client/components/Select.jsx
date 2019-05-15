@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const Select = ({ name, options, onChange }) => (
-  <select onChange={onChange} name={name}>
+  <select onChange={onChange} name={name} className="form-control">
     {options.map(option => (
       <option key={option} value={option}>
         {option}

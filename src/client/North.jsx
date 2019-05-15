@@ -91,19 +91,21 @@ const North = ({ history }) => {
     }
   }
 
-  const tableHeaders = ['Application ID', 'Enabled', 'Api']
+  const tableHeaders = ['Application ID', 'Enabled', 'API', '']
   const tableRows = applications.map(({ applicationId, enabled, api }) => [
     { name: 'id', value: applicationId },
-    { name: 'enabled', value: enabled ? 'enabled' : '' },
+    { name: 'enabled', value: enabled ? 'enabled' : 'Actions' },
     { name: 'api', value: api },
     {
       name: 'delete',
       value: (
         <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
           {confirm => (
-            <Button color="danger" onClick={confirm(() => handleDelete(applicationId))}>
+            <div>
+              <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(applicationId))}>
               Delete
-            </Button>
+              </Button>
+            </div>
           )}
         </Modal>
       ),
