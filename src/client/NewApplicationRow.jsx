@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Container, Button, Form, FormGroup, Label, Input } from 'reactstrap'
+import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
 import Select from './components/Select.jsx'
 import apis from './services/apis'
 
@@ -38,22 +38,25 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
   }
 
   return (
-    <Container>
-      <Form>
-        <FormGroup>
-          <Label for="Id">
-            Application Id:
-            <Input value={application.applicationId} id="Id" name="applicationId" type="text" onChange={handleChange} />
-          </Label>
-        </FormGroup>
-        <FormGroup>
-          <Select value={application.api} id="api" name="api" options={apiList} onChange={handleChange} />
-        </FormGroup>
+    <Form>
+      <FormGroup>
+        <Label for="Id">
+          New Application ID
+        </Label>
+        <Input value={application.applicationId} id="Id" name="applicationId" type="text" onChange={handleChange} />
+      </FormGroup>
+      <FormGroup>
+        <Label for="api">
+          API
+        </Label>
+        <Select value={application.api} id="api" name="api" options={apiList} onChange={handleChange} />
+      </FormGroup>
+      <FormGroup>
         <Button color="primary" onClick={() => handleAddApplication()}>
           Add
         </Button>
-      </Form>
-    </Container>
+      </FormGroup>
+    </Form>
   )
 }
 
