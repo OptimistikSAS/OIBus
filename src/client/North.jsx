@@ -40,14 +40,13 @@ const North = ({ history }) => {
   const getApplicationIndex = applicationId => applications.findIndex(application => application.applicationId === applicationId)
 
   /**
-   * Handles the click of the table rows and redirects the
-   * user to the selected north application's configuration page
-   * @param {array} application Data of the clicked row
+   * Handles the edit of application and redirects the
+   * user to the selected north applications's configuration page
+   * @param {string} applicationId The id to edit
    * @return {void}
    */
-  const handleRowClick = (application) => {
-    const [applicationId] = application
-    const applicationIndex = getApplicationIndex(applicationId.value)
+  const handleEditClick = (applicationId) => {
+    const applicationIndex = getApplicationIndex(applicationId)
     // return if no id is provided
 
     if (applicationIndex === -1) return
@@ -64,12 +63,32 @@ const North = ({ history }) => {
    * @returns {void}
    */
   const addApplication = ({ applicationId, enabled, api }) => {
-    const equipmentIndex = getApplicationIndex(applicationId)
-    if (equipmentIndex === -1) {
+    const applicationIndex = getApplicationIndex(applicationId)
+    if (applicationIndex === -1) {
       // Adds new application to table
       setApplications(prev => [...prev, { applicationId, enabled, api }])
     } else {
       throw new Error('application already exists')
+    }
+  }
+
+  /**
+   * Handles the toggle of application beetween
+   * enabled and disabled state
+   * @param {string} applicationId The id to enable/disable
+   * @return {void}
+   */
+  const handleToggleClick = async (applicationId) => {
+    const applicationIndex = getApplicationIndex(applicationId)
+    if (applicationIndex === -1) return
+    const newApplications = applications.slice()
+    const formData = newApplications[applicationIndex]
+    formData.enabled = !formData.enabled
+    try {
+      await apis.updateNorth(applicationId, formData)
+      setApplications(newApplications)
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -102,8 +121,14 @@ const North = ({ history }) => {
         <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
           {confirm => (
             <div>
+              <Button className="inline-button" color={enabled ? 'danger' : 'success'} onClick={() => handleToggleClick(applicationId)}>
+                {enabled ? 'Disable' : 'Enable'}
+              </Button>
+              <Button className="inline-button" color="primary" onClick={() => handleEditClick(applicationId)}>
+                Edit
+              </Button>
               <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(applicationId))}>
-              Delete
+                Delete
               </Button>
             </div>
           )}
@@ -113,7 +138,7 @@ const North = ({ history }) => {
   ])
   return (
     <>
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={handleRowClick} />}
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
       <ReactJson src={applications} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
