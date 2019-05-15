@@ -89,6 +89,8 @@ Engine.schema = {
         maxsize: { type: 'number', title: 'Max Size (Byte)', default: 1000000 },
         maxFiles: { type: 'number', title: 'Max Files', default: 5 },
         tailable: { type: 'boolean', title: 'Tailable', default: true },
+        sqliteLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'SQLite logging Level', default: 'debug' },
+        sqliteFilename: { type: 'string', title: 'Filename', default: './logs/journal.db' },
       },
     },
     caching: {

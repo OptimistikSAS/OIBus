@@ -276,6 +276,24 @@ const getConfig = async (database, name) => {
   return null
 }
 
+/**
+ * Get logs.
+ * @param {string} databasePath - The database path
+ * @param {string} fromDate - From date
+ * @param {string} toDate - To date
+ * @param {string} verbosity - Verbosity
+ * @return {object[]} - The logs
+ */
+const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
+  const database = await sqlite.open(databasePath)
+  const query = `SELECT *
+                 FROM logs
+                 WHERE timestamp BETWEEN ? AND ?
+                   AND level LIKE ?`
+  const stmt = await database.prepare(query)
+  return stmt.all(fromDate, toDate, verbosity)
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -293,4 +311,5 @@ module.exports = {
   getRawFileModifyTime,
   upsertConfig,
   getConfig,
+  getLogs,
 }
