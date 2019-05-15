@@ -27,9 +27,6 @@ const TopHeader = () => {
           <NavItem className="oi-navitem" tag={Link} to="/south">
             South
           </NavItem>
-          <NavItem className="oi-navitem" tag={Link} to="/activatenewconfig">
-            Activate new configuration
-          </NavItem>
         </Nav>
       </Collapse>
     </Navbar>
