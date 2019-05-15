@@ -4,6 +4,7 @@ const configController = require('../controllers/configController')
 const schemaController = require('../controllers/schemaController')
 const reloadController = require('../controllers/reloadController')
 const clientController = require('../controllers/clientController')
+const logController = require('../controllers/logController')
 
 const router = new Router()
 
@@ -23,6 +24,8 @@ router.get('/config/schemas/north', schemaController.getNorthSchemaList)
 router.get('/config/schemas/north/:api', schemaController.getNorthSchema)
 router.get('/config/schemas/south', schemaController.getSouthSchemaList)
 router.get('/config/schemas/south/:protocol', schemaController.getSouthSchema)
+
+router.get('/logs', logController.getLogs)
 
 router.get('/reload', reloadController.reload)
 
