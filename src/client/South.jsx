@@ -124,20 +124,30 @@ const South = ({ history }) => {
     }
   }
 
-  const tableHeaders = ['Equipment ID', 'Enabled', 'Protocol']
+  const tableHeaders = ['Status', 'Data Source ID', 'Protocol', '']
   const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [
+    {
+      name: 'enabled',
+      value: (
+        <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
+          {confirm => (
+            <div>
+              <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(equipmentId))}>
+                {enabled ? 'Active' : 'Stopped'}
+              </Button>
+            </div>
+          )}
+        </Modal>
+      ),
+    },
     { name: 'id', value: equipmentId },
-    { name: 'enabled', value: enabled ? 'enabled' : '' },
     { name: 'protocol', value: protocol },
     {
       name: 'delete',
       value: (
-        <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+        <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
           {confirm => (
             <div>
-              <Button className="inline-button" color={enabled ? 'danger' : 'success'} onClick={() => handleToggleClick(equipmentId)}>
-                {enabled ? 'Disable' : 'Enable'}
-              </Button>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(equipmentId)}>
                 Edit
               </Button>
@@ -152,7 +162,7 @@ const South = ({ history }) => {
   ])
   return (
     <>
-      <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+      <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
         {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewEquipmentRow protocolList={protocolList} addEquipment={addEquipment} />

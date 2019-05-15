@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Container, Button, Form, FormGroup, Label, Input } from 'reactstrap'
+import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
 import Select from './components/Select.jsx'
 import apis from './services/apis'
 
@@ -42,22 +42,25 @@ const NewEquipmentRow = ({ protocolList, addEquipment }) => {
   }
 
   return (
-    <Container>
-      <Form>
-        <FormGroup>
-          <Label for="Id">
-            Equipment Id:
-            <Input value={equipment.equipmentId} id="Id" name="equipmentId" type="text" onChange={handleChange} />
-          </Label>
-        </FormGroup>
-        <FormGroup>
-          <Select value={equipment.protocol} id="protocol" name="protocol" options={protocolList} onChange={handleChange} />
-        </FormGroup>
+    <Form>
+      <FormGroup>
+        <Label for="Id">
+          New Data Source ID
+        </Label>
+        <Input value={equipment.equipmentId} id="Id" name="equipmentId" type="text" onChange={handleChange} />
+      </FormGroup>
+      <FormGroup>
+        <Label for="protocol">
+          Protocol
+        </Label>
+        <Select value={equipment.protocol} id="protocol" name="protocol" options={protocolList} onChange={handleChange} />
+      </FormGroup>
+      <FormGroup>
         <Button color="primary" onClick={() => handleAddEquipement()}>
           Add
         </Button>
-      </Form>
-    </Container>
+      </FormGroup>
+    </Form>
   )
 }
 

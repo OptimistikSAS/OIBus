@@ -69,7 +69,7 @@ Engine.schema = {
     password: { type: 'string', title: 'Password', default: 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' },
     filter: {
       type: 'array',
-      title: 'filter',
+      title: 'Network Filter',
       items: {
         type: 'string',
         // eslint-disable-next-line max-len
@@ -95,7 +95,7 @@ Engine.schema = {
     },
     caching: {
       type: 'object',
-      title: 'Caching Parameters',
+      title: 'Cache Parameters',
       properties: {
         cacheFolder: { type: 'string', title: 'Cache Folder', default: './cache' },
         archiveFolder: { type: 'string', title: 'Archive Folder', default: './cache/archived/' },
@@ -104,7 +104,7 @@ Engine.schema = {
     },
     proxies: {
       type: 'array',
-      title: 'Proxies',
+      title: 'Proxy Parameters',
       items: {
         type: 'object',
         properties: {
