@@ -64,6 +64,7 @@
     "sqlite": "^3.0.3",
     "timexe": "^0.9.13",
     "tunnel": "0.0.6",
+    "url-loader": "^1.1.2",
     "winston": "^3.2.1"
   },
   "devDependencies": {
