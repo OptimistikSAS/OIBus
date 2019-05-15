@@ -1,7 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { Collapse, Navbar, NavbarToggler, NavbarBrand, Nav, NavItem } from 'reactstrap'
+import { Collapse, Navbar, NavbarToggler, Nav, NavItem } from 'reactstrap'
+
+import logo from './logo-OIBus.png'
 
 const TopHeader = () => {
   const [isOpen, setIsOpen] = React.useState(false)
@@ -10,19 +12,19 @@ const TopHeader = () => {
   }
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top navbar-fixed-top">
-      <NavbarBrand className="oi-icone-oi" tag={Link} to="/">
-        OIBus
-      </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
-        <Nav className="ml-auto" navbar>
-          <NavItem tag={Link} to="/engine">
+        <Nav navbar>
+          <NavItem className="oi-navicon" tag={Link} to="/">
+            <img src={logo} alt="OIBus" height="24px" className="oi-navicon" />
+          </NavItem>
+          <NavItem className="oi-navitem" tag={Link} to="/engine">
             Engine
           </NavItem>
-          <NavItem tag={Link} to="/north">
+          <NavItem className="oi-navitem" tag={Link} to="/north">
             North
           </NavItem>
-          <NavItem tag={Link} to="/south">
+          <NavItem className="oi-navitem" tag={Link} to="/south">
             South
           </NavItem>
         </Nav>
