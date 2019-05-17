@@ -29,6 +29,9 @@ const TopHeader = ({ location }) => {
           <NavItem className="oi-navitem" active={isActive('south')} tag={Link} to="/south">
             South
           </NavItem>
+          <NavItem className="oi-navitem" tag={Link} to="/log">
+            Logs
+          </NavItem>
         </Nav>
       </Collapse>
     </Navbar>
