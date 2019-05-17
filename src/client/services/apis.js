@@ -9,7 +9,6 @@ const handleResponse = async (response) => {
 }
 
 const getRequest = async (uri) => {
-  console.info('uri', uri)
   try {
     const response = await fetch(uri, { method: 'GET' })
     if (response.status !== 200) {
