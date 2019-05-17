@@ -9,6 +9,7 @@ const handleResponse = async (response) => {
 }
 
 const getRequest = async (uri) => {
+  console.info('uri', uri)
   try {
     const response = await fetch(uri, { method: 'GET' })
     if (response.status !== 200) {
@@ -92,6 +93,7 @@ const addSouth = body => postRequest('/config/south', body)
 const updateSouth = (equipmentId, body) => putRequest(`/config/south/${equipmentId}`, body)
 const deleteSouth = equipmentId => deleteRequest(`/config/south/${equipmentId}`)
 const updateEngine = body => putRequest('/config/engine', body)
+const getLogs = (fromDate, toDate, verbosity) => getRequest(`logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=${verbosity}`)
 
 export default {
   getSouthProtocols,
@@ -109,4 +111,5 @@ export default {
   updateSouth,
   deleteSouth,
   updateEngine,
+  getLogs,
 }
