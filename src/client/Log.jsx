@@ -17,7 +17,6 @@ const Log = () => {
    * @returns {void}
    */
   const handleSubmit = async () => {
-    console.info(fromDate, toDate, verbosity)
     try {
       const logsResponse = await apis.getLogs(fromDate, toDate, verbosity)
       setLogs(logsResponse)
