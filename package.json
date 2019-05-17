@@ -65,8 +65,8 @@
     "sqlite3": "^4.0.8",
     "timexe": "^0.9.13",
     "tunnel": "0.0.6",
-    "url-loader": "^1.1.2",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "winston3-sqlite3": "^2.0.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
@@ -98,6 +98,7 @@
     "less-loader": "^5.0.0",
     "pkg": "^4.4.0",
     "style-loader": "^0.23.1",
+    "url-loader": "^1.1.2",
     "webpack": "^4.31.0",
     "webpack-cli": "^3.3.2"
   },
