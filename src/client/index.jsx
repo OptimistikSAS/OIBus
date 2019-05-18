@@ -14,6 +14,7 @@ import North from './North.jsx'
 import Engine from '../engine/Engine.jsx'
 import ConfigureApi from '../north/ConfigureApi.jsx'
 import ConfigureProtocol from '../south/ConfigureProtocol.jsx'
+import Log from './Log.jsx'
 
 const Main = () => (
   <Router>
@@ -27,6 +28,7 @@ const Main = () => (
           <Route exact path="/south/:protocol" component={ConfigureProtocol} />
           <Route exact path="/north" component={North} />
           <Route exact path="/north/:api" component={ConfigureApi} />
+          <Route exact path="/log" component={Log} />
           <Route component={NotFound} />
         </Switch>
       </Container>
