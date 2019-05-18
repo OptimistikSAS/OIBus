@@ -124,8 +124,9 @@ const South = ({ history }) => {
     }
   }
 
-  const tableHeaders = ['Status', 'Data Source ID', 'Protocol', '']
+  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', '']
   const tableRows = equipments.map(({ equipmentId, enabled, protocol }) => [
+    { name: 'id', value: equipmentId },
     {
       name: 'enabled',
       value: (
@@ -140,7 +141,6 @@ const South = ({ history }) => {
         </Modal>
       ),
     },
-    { name: 'id', value: equipmentId },
     { name: 'protocol', value: protocol },
     {
       name: 'delete',
