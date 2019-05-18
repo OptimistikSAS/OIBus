@@ -63,8 +63,11 @@ const Log = () => {
           return (
             <ListGroupItem key={id}>
               <Label>
-                {`${date.toLocaleDateString()} ${date.toLocaleTimeString()}(${id}-${level}-${meta}): ${message}`}
+                {`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}
               </Label>
+              {` | ${id} | ${level} | ${meta}`}
+              <br />
+              {`${message}`}
             </ListGroupItem>
           )
         })}
