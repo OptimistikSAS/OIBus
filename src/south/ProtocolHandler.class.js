@@ -1,3 +1,5 @@
+const encryptionService = require('../services/encryption.service')
+
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  */
@@ -50,6 +52,15 @@ class ProtocolHandler {
    */
   addFile(filePath) {
     this.engine.addFile(this.equipment.equipmentId, filePath, this.preserveFiles)
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @return {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return encryptionService.decryptText(password, this.engine.keyFolder)
   }
 }
 
