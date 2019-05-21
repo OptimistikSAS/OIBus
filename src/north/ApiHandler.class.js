@@ -1,3 +1,5 @@
+const encryptionService = require('../services/encryption.service')
+
 class ApiHandler {
   /**
    * Constructor for Application
@@ -74,6 +76,15 @@ class ApiHandler {
     }
 
     return proxy
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @return {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return encryptionService.decryptText(password, this.engine.keyFolder)
   }
 }
 

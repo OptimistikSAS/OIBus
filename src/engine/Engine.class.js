@@ -2,6 +2,7 @@ const timexe = require('timexe')
 const path = require('path')
 
 const { tryReadFile, backupConfigFile, saveNewConfig } = require('../services/config.service')
+const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
 // South classes
@@ -52,6 +53,10 @@ class Engine {
 
     // Configure the Cache
     this.cache = new Cache(this)
+
+    // Check for private key
+    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
+    encryptionService.checkOrCreatePrivateKey(this.keyFolder)
 
     // prepare config
     // initialize the scanLists with empty arrays
