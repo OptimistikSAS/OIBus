@@ -110,10 +110,23 @@ const North = ({ history }) => {
     }
   }
 
-  const tableHeaders = ['Application ID', 'Enabled', 'API', '']
+  const tableHeaders = ['Application ID', 'Status', 'API', '']
   const tableRows = applications.map(({ applicationId, enabled, api }) => [
     { name: 'id', value: applicationId },
-    { name: 'enabled', value: enabled ? 'enabled' : 'Actions' },
+    {
+      name: 'enabled',
+      value: (
+        <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
+          {confirm => (
+            <div>
+              <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(applicationId))}>
+                {enabled ? 'Active' : 'Stopped'}
+              </Button>
+            </div>
+          )}
+        </Modal>
+      ),
+    },
     { name: 'api', value: api },
     {
       name: 'delete',
@@ -121,9 +134,6 @@ const North = ({ history }) => {
         <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
           {confirm => (
             <div>
-              <Button className="inline-button" color={enabled ? 'danger' : 'success'} onClick={() => handleToggleClick(applicationId)}>
-                {enabled ? 'Disable' : 'Enable'}
-              </Button>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(applicationId)}>
                 Edit
               </Button>
