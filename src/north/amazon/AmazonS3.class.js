@@ -1,5 +1,4 @@
 const fs = require('fs')
-const path = require('path')
 const url = require('url')
 
 const AWS = require('aws-sdk')
@@ -60,7 +59,7 @@ class AmazonS3 extends ApiHandler {
     const params = {
       Bucket: this.bucket,
       Body: fs.createReadStream(filePath),
-      Key: `${this.folder}/${path.basename(filePath)}`,
+      Key: `${this.folder}/${ApiHandler.getFilenameWithoutTimestamp(filePath)}`,
     }
 
     try {
