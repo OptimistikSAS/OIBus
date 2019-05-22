@@ -1,5 +1,4 @@
 const fs = require('fs')
-const path = require('path')
 const url = require('url')
 
 const fetch = require('node-fetch')
@@ -119,7 +118,7 @@ class RawFileSender extends ApiHandler {
 
     const formData = new FormData()
     const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: path.basename(filePath) }
+    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
     formData.append('file', readStream, bodyOptions)
 
     const formHeaders = formData.getHeaders()
@@ -167,7 +166,7 @@ class RawFileSender extends ApiHandler {
       formData: {
         file: {
           value: fs.createReadStream(filePath),
-          options: { filename: path.basename(filePath) },
+          options: { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) },
         },
       },
       proxy,
@@ -205,7 +204,7 @@ class RawFileSender extends ApiHandler {
 
     const formData = new FormData()
     const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: path.basename(filePath) }
+    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
     formData.append('file', readStream, bodyOptions)
 
     const fetchOptions = {
