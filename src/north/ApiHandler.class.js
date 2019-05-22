@@ -1,3 +1,5 @@
+const path = require('path')
+
 class ApiHandler {
   /**
    * Constructor for Application
@@ -74,6 +76,17 @@ class ApiHandler {
     }
 
     return proxy
+  }
+
+  /**
+   * Get filename without timestamp from file path.
+   * @param {string} filePath - The file path
+   * @returns {string} - The filename
+   */
+  static getFilenameWithoutTimestamp(filePath) {
+    const { name, ext } = path.parse(filePath)
+    const filename = name.substr(0, name.lastIndexOf('-'))
+    return `${filename}${ext}`
   }
 }
 
