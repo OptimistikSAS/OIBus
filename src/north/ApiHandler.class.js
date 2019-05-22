@@ -1,3 +1,5 @@
+const path = require('path')
+
 const encryptionService = require('../services/encryption.service')
 
 class ApiHandler {
@@ -85,6 +87,17 @@ class ApiHandler {
    */
   decryptPassword(password) {
     return encryptionService.decryptText(password, this.engine.keyFolder)
+  }
+
+  /**
+   * Get filename without timestamp from file path.
+   * @param {string} filePath - The file path
+   * @returns {string} - The filename
+   */
+  static getFilenameWithoutTimestamp(filePath) {
+    const { name, ext } = path.parse(filePath)
+    const filename = name.substr(0, name.lastIndexOf('-'))
+    return `${filename}${ext}`
   }
 }
 
