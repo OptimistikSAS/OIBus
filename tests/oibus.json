@@ -149,7 +149,7 @@
                     "protocol": "mqtts",
                     "port": 8883,
                     "username": "bai",
-                    "password": "secret"
+                    "password": "nDpvYGwXKU3DMFt7/wj+IFWVB120HWO6SPdA0EwMRfWTQCG+KXjCQyTR84aIzBRkP4x0ZKAnOuXrUSKqkmoFnpkOFPvHF3hxICc8YI4Pyh/QYs+2Tyh0cFVj5PSixwBRMuHHDZ1na1HqYdKw6cq+07lNzaAVu5vI09GYqU/wJPuAO9mcRu+SLHLS1hu0lYV8bYMS/jD+BFXLEWVls4RHNOi2gHzel6H9ALlby5SLZQq774+vkPhVQay9x1yLiV3S5hU4HhQDElss+QdGnbLusRvmB2P37GO8/DV+zKptwtGbH26lmwxIyuaYrR+QKSCwdRUpm/adCMeJqECFNrajby8T8bZYNfi5xvF2EEZ+/2DklnNJi+XiyITYwDBjkhz2rPYy8Q8tq9efEIudENDzCtYukJ1BM1Jg6amdXbh18KxU2zGRsWfSQd9b3LWlz/YMdDu1FfYqeMmqmYZjoLrFBkZM3M4cA8NKMfJZbtxd4Menz95JNQROVe3UIqOsj62fIl53OiQc19fnXS2YHfFE4pSsol0SpyFGGVq0fgqfJGDTOzi2ojqwR+tGttigpqliVAmeVW8Nk5hFqLLl10YCjW2rmWCn5UaFEaH5hGmk3+8XSzRIz2VI0tpD+w1u2DGcgcvbQrYhS4EI/26q63MKN198p/1AVtweZXtuhnpQOc4="
                 },
                 "points": [
                     {
@@ -340,7 +340,7 @@
                     "host": "localhost",
                     "port": 1433,
                     "username": "SA",
-                    "password": "Lopicsa2@",
+                    "password": "kvT92GHHYK/uHrpl5gSa57+5zlZXu+X3KvVjjAn6XrXw+CKXd8oFLhQ5wMJ8iU2QQ54agrixt8EBb5MrIaJfxbRXo2ejX8obKzyc5TbInxTz4stfqCjMl99Nd4xgsr+GqF+1ZjnsN9lU3MSjXoi9+VorBlOLco/Zon0kF3UZDY3cCwpoUs9W3vbiBWIlxWEPb48Wf01x0RmI+fGQPEXcPCXT/j8MuwfPUho+JaC4HIaBGD29Nv/RtW9zw7g5LSJVNnvquw/X6ts7JeCsiFppwSKzseNPQ/IfeWME+ZWZ3MGSNZHIWOspZdEZe3c25HCFikgsRtCjTshSFeO9bFgjr4eZj6GC3WArZ8bh9WnAijVeI1FRNwyYLwRTIu7zjM30fFCGDzZFBpJ/f4eCBUgqy8pdJQAuE48c2O/CiNJBA+AlafUhP9HWHffMtRSJeMholu4oywSc/d6yKwFkwGcRfRYnnYsb0WLCbUUhnPXyyCvewnocGXe6J2cfAgHr1vg66znpYm4yMmKQdGyFp6ZktU3/txQeqC/cB4f8YFjeZtyKnl3rAWYo4iJov9YrcEzLbHoDTkAlEwhT8duBb6YmIrmtZUrmaYXLrma2xyCljiSVumRvGHuSyvKgszqqL7cc3SlNHAJhhcK9t6tRllZnNA4S0bx6y9fXOIT+9pLXhQ8=",
                     "database": "TestDB",
                     "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                     "delimiter": ",",
@@ -364,7 +364,7 @@
                 "maxTimeinBuffer": 500,
                 "InfluxDB": {
                     "user": "admin",
-                    "password": "secret",
+                    "password": "GsvnKRSCLCvhW1DlutB44QOwyk9/SFhH/fE8AaUCs7XQ/i+nb1nimx44JuwOdO0W9BP9aDds7x97O/1QR/QWOJGeyTrhuWYWB+/YzACWTbJlXCj1H4pfcXXUBMomYecbquRV6++Z/Q+bCk23ksCUaGUMhKuoG4HNio09mSrpxvrslbvOrH7wDFsdJwVijOc/cL5x/6tkuf0TvjYzR/k5MBsNEgGjU9vek1hIDxy/MxdTXNwq9+ndjX5HeD7z5DOG9YmxSFyj6cmoBgoHpBxIOzFrHRjOcT6pmh17Iq6r64KpYH48RWIGYbbcqxqgFxnWksj/WKIiPlCz6MOq6KN/+Saj0zPdv672wT3IY75yc8Y/FcMq4NWIsoWn5fnREUQKy+V9PV4zFl7Yv7sjb1QryMHG7RRrFFbQPAJ/YLBYGhjkyH9pgf3uScjTIEaXA+MEg5sV7s0V9YZpxOlO9hdqXUXpwE4BFSL/hhgMdaUEkTag6Rsfi7a9DtFvGhKwCHRhK/HOFd+339ZJNFZOTTYCwvYuvIDdSdG2HbkAuyq5sxU9Kv0hjlU/oEeFJwj/MmNkcnrWpdhQ3XJLlYhs5M8nowycmilvtEq6xwlt/HrvTnUi0JmwUecuZczRmoT1Voh2CcvifatKSXnBu6O+3HYFTq56Gh+9Z6LVI1eEbvSCPt8=",
                     "db": "testdata",
                     "host": "localhost:8086",
                     "precision": "ms"
@@ -382,7 +382,7 @@
                 "minimumBuffer": 10,
                 "TimescaleDB": {
                     "user": "postgres",
-                    "password": "secret",
+                    "password": "MfuwYc/apegQU+blDfB7LzQM60r5Ccy9ZcnSp/nOA5GP2CuEBn+tf+OawA2uieG9u/3CtVGUI53zsfIOSVh4tEHIplqJWL9lHedMLJl/mfwS2KQ3mxOWavwWDUoiGKwkm7oDNpD2C+QwVjt8tnkziws0FlRxMQPh6S4u8aWv9AZMLu8fbCloveJEF2z7UJn/NvtWY8qQO5FuK2Y80fOMAcsosYYBfriDKUmxdi0mt+goYmwETO9oZmKPaViggkkrF4FT2iSJnaHvzWXUnPCIH2CrYnCs9yVtt+7Boi8uI8AfHhX+AD4V0AdA5EZjVB+H+i2PmUyBTF8lXkKMEd62fB5xvbsNQ2MySf7BiRJw/4uExcXayHL3bMMqEW8EJE1h1TLuxjEhf67H1MOaAP4DOYpg2VQ8pGbrGbaveTCGoiGa/2u7L7vRONyjPHoE52Gn/0F3oHx/6N+zxFRZ0dt7SnIPseAogkpCKHXrn0Gcu15erhbVs85rKjp1zioNssO/cTaMM1GroI+EvIo3Bm5GcGic6d6jIixoHhHx0rrW10LVnP7VH/oNwC+3NViEQOLBij/VblRU/q/+v8cG9IfaOKnu9hJys23yj1RZ+rNAhs6MFonzmtsjjLwG2fcYEtPMz5SDswKY+jLZ6VnFGczxBcFLzay//bmtpfAznsa8wE4=",
                     "db": "testdata",
                     "host": "localhost"
                 },
@@ -402,9 +402,9 @@
                     "authentication": {
                         "type": "Basic",
                         "username": "QFPELALDNSUO6BUV8SJ",
-                        "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+                        "password": "fhzdFp40Wo3z9tHOILdUOXGbwPcQGbwaZh6DTms5lxA+qsvyPuGNYi/7wo18izoEbvGYjt19i00HhOAkxP6RrhHLgU5qGxjoOVn8qhJ4GwAg9PDmiII534KR2FpsRt3X3MVFRWeZO6TSDyXbcDVMFgY0UyNngGUOW/81GjQyNpeV4/KsGErNudySv82lIycMxZevJgitSaFhNekAfmfceSKyHXEApfH4swq7lYq9wInptM5Frw6Oq6rh6OW7pilqe4E/16BlM8kMg6emI3P54UlVTL5J/wGMq4xWcbrfrHjUI+ESKpmaqzQaLJJIMfllxHmBD6s13McrpaOGTJia+2LSZ0XWfe8T3t4rESVXY4Zpo3cMu+GBkPtCpgTHWQ9NgGnDZKzlFLoxj/8HhXJZzXmhXL+8/ZFL/MbDYo4hWfdUiD6nQ9pU6DTpTM3ijB+iqCBtCshsbSH3yWh/qayX2mzX2j+jcovP5lCmkPvWISH8bmiBG7s8yDysEIsrRfTQn81ISCiOV3LCZYeXD2woqIpD/3nh+XxHbxeMmdClkuZwpVnZS2SDSvV6X+d3Ywr/i6ylWLsvfg+TIkPd7LoM7tYRbei8LNGY1/WgBJNK1ZXNXC0gLLd2viTFU3T/+syF6sfGMAG04bGrawq2xrKGO0OqWQGF17KnzDz/rDicizU="
                     },
-                    "defaultProxy": "demoProxy",
+                    "defaultProxy": "",
                     "stack": "request"
                 },
                 "caching": {
@@ -421,9 +421,9 @@
                     "folder": "oi_bus_test",
                     "authentication": {
                         "accessKey": "AKIAJPJ46DKBR7Q23FOQ",
-                        "secretKey": "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"
+                        "secretKey": "FwEmFMsbzsQjEZQUVelastH1ByuEn6IQX0SMxitRjJNCLvTwk64sWBK+BBG+rTPJubqJN5e5yUN3dVP2+aS+9mraDWyQjhRlTYMD4NJWTeJW4JntOtGHB+d7GgfJHmeequb7eAtw71hv2869Y87sJEGyrLogtCZnk+/sz0XpM9jCkAwSvTuchCyoepqjthnK/L5n6elTGCeXn8/RDfA5Z2Hv5orXxxqiVkDfgwA3t2yVIWhesticCZZ2xGgQ5G4Mu3usaMnu/rnWJ63LjgQIOwa+xJrCC3uHQs6D4Dovzg6oT7NdtTeV7dEbDDlzApFGklEnjePcDBUTOQouA3qOa4D3Sic5/SFXZPZBgMGSFHraQ8g/fhcerQRTH00bhMC6vrpU8deb2cplIhMKI5hMtCt70Q3FBmmlWdIt5iP5wQwGc9jFfMe7XsOcK/gWYrYH+ViWh+y4hycwoTohgGopP3Yj+xsUJamNSuNSoVC3jLCptEMibseOICwIpZn2oteMrYY2HjOpgmqn+LJ5pG4eU/4mwzF+tvSRNGenONJTUr81wuTwN49H1FaSH+X9TFhIfvEEVH+QApawoct+0e0hKIOkt7HVXgWRvyF3aWYJ0HQ6MR5KYu7jnVUZpCReSuKVfgFWBOPvqbWis8H8jr9XQOIyOcSVVIsPydT0yXNyCJ8="
                     },
-                    "defaultProxy": "demoProxy"
+                    "defaultProxy": ""
                 },
                 "caching": {
                     "sendInterval": 5000,
@@ -442,7 +442,7 @@
                     "authentication": {
                         "type": "Basic",
                         "username": "QFPELALDNSUO6BUV8SJ",
-                        "password": "vQ9mEU1ZN1TIarYQOhM0fF2X8EtqExa5LAm0rxOy"
+                        "password": "GIkIodKLVSr36vhQEaZqo/fRYIpfjcbDgJeGPgPz3SV+zUFuDACKn1CYdtsI6OZXo/NMgJu6gA5qpLW91c4TmKOBkmTSRmQTCpfYTERkaxfTyUmCP34OqardyLlthuM/DemsjzXTyfbgbUrT6OaaM4VtUk2WAImvoPBrZrZHNfBNPmzJLoRUXAh2tEAsZvLMI7IV0yV+xizqgaAfmmR7NSVYQarC7H42olsYSQotQCHw72vtmnYZOcd+dcPV0vw36Rs83hhOFVZB4HNdWrGfoukkon9q+FvL/GBwjm1g7DQN3DXX3Ym32Hu4UP9EbrPCYnVkD88WUSzIHmRiZqiTYktGiUMYbRN0SoZ98d0aqqHrdc3II78Xxz9g7ll3BVAtHMnJ5akBict4WyWNdwnXa5quUimOtOIUilULtKmzwwTujwu6WOaMmCBR+JoNR9+S4YrmeKP7Cyz7RtJcysIt2USRPIUqPZDHJ1iu5Bc0rVkU5qQsHeBtyWpUPRGYNiQSZXbM3jT4yTDfdjNDltyto773k4JQ0oahdmYnXU9hpqzgWWkoIZ1OAHlKFWtgT/lOgcholkyYKsaOMRTxkC7w5UUsiCHun6BOdFfKujbs+wHYDo2O9vfWM9O60UkHkaWwKM0J9gP1QAgvkdFfPck5yuGUp8yYL0GbSbrp6SKpbaA="
                     },
                     "id": "OIBus friendly name test",
                     "frequency": 10000,
