@@ -85,8 +85,7 @@ class ApiHandler {
    */
   static getFilenameWithoutTimestamp(filePath) {
     const { name, ext } = path.parse(filePath)
-    const timestamp = name.split('-').pop()
-    const filename = name.replace(`-${timestamp}`, '')
+    const filename = name.substr(0, name.lastIndexOf('-'))
     return `${filename}${ext}`
   }
 }
