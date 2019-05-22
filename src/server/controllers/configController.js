@@ -4,7 +4,7 @@
  * @return {void}
  */
 const getActiveConfiguration = (ctx) => {
-  ctx.ok({ config: ctx.app.engine.config })
+  ctx.ok({ config: ctx.app.engine.getActiveConfiguration() })
 }
 
 /**
@@ -13,7 +13,7 @@ const getActiveConfiguration = (ctx) => {
  * @return {void}
  */
 const getModifiedConfiguration = (ctx) => {
-  ctx.ok({ config: ctx.app.engine.modifiedConfig })
+  ctx.ok({ config: ctx.app.engine.getModifiedConfiguration() })
 }
 
 /**

@@ -2,6 +2,7 @@ const timexe = require('timexe')
 const path = require('path')
 
 const { tryReadFile, backupConfigFile, saveNewConfig } = require('../services/config.service')
+const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
 // South classes
@@ -45,13 +46,17 @@ class Engine {
   constructor(configFile) {
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
-    this.modifiedConfig = tryReadFile(this.configFile)
+    this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
 
     // Configure the Cache
     this.cache = new Cache(this)
+
+    // Check for private key
+    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
+    encryptionService.checkOrCreatePrivateKey(this.keyFolder)
 
     // prepare config
     // initialize the scanLists with empty arrays
@@ -311,6 +316,28 @@ class Engine {
   }
 
   /**
+   * Get active configuration.
+   * @returns {object} - The active configuration
+   */
+  getActiveConfiguration() {
+    const config = JSON.parse(JSON.stringify(this.config))
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
+    encryptionService.decryptSecrets(config.south.equipments, this.keyFolder)
+    return config
+  }
+
+  /**
+   * Get active configuration.
+   * @returns {object} - The active configuration
+   */
+  getModifiedConfiguration() {
+    const config = JSON.parse(JSON.stringify(this.modifiedConfig))
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
+    encryptionService.decryptSecrets(config.south.equipments, this.keyFolder)
+    return config
+  }
+
+  /**
    * Check if the given application ID already exists
    * @param {string} applicationId - The application ID to check
    * @returns {object | undefined} - Whether the given application exists
@@ -325,6 +352,7 @@ class Engine {
    * @returns {void}
    */
   addNorth(application) {
+    encryptionService.encryptSecrets(application, this.keyFolder)
     this.modifiedConfig.north.applications.push(application)
   }
 
@@ -336,6 +364,7 @@ class Engine {
   updateNorth(application) {
     const index = this.modifiedConfig.north.applications.findIndex(element => element.applicationId === application.applicationId)
     if (index > -1) {
+      encryptionService.encryptSecrets(application, this.keyFolder)
       this.modifiedConfig.north.applications[index] = application
     }
   }
@@ -364,6 +393,7 @@ class Engine {
    * @returns {void}
    */
   addSouth(equipment) {
+    encryptionService.encryptSecrets(equipment, this.keyFolder)
     this.modifiedConfig.south.equipments.push(equipment)
   }
 
@@ -375,6 +405,7 @@ class Engine {
   updateSouth(equipment) {
     const index = this.modifiedConfig.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
     if (index > -1) {
+      encryptionService.encryptSecrets(equipment, this.keyFolder)
       this.modifiedConfig.south.equipments[index] = equipment
     }
   }
