@@ -121,7 +121,7 @@ class SQLFile extends ProtocolHandler {
   async getDataFromMSSQL(query) {
     const config = {
       user: this.username,
-      password: this.password,
+      password: this.decryptPassword(this.password),
       server: this.host,
       port: this.port,
       database: this.database,

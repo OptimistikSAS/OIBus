@@ -65,7 +65,7 @@ class InfluxDB extends ApiHandler {
   makeRequest(entries) {
     return new Promise((resolve, reject) => {
       const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
-      const url = `http://${host}/write?u=${user}&p=${password}&db=${db}&precision=${precision}`
+      const url = `http://${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
 
       let body = ''
 
