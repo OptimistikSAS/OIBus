@@ -67,8 +67,46 @@ const decryptText = (text, keyFolder) => {
   return decrypted.toString('utf8')
 }
 
+/**
+ * Recursively iterate through an object tree and encrypt sensitive fields.
+ * @param {object} configEntry - The object to iterate through
+ * @param {string} keyFolder - The folder where the keys are stored
+ * @returns {void}
+ */
+const encryptSecrets = (configEntry, keyFolder) => {
+  if (configEntry) {
+    Object.entries(configEntry).forEach(([key, value]) => {
+      if (typeof value === 'object') {
+        encryptSecrets(value, keyFolder)
+      } else if (['password', 'secretKey'].includes(key)) {
+        configEntry[key] = encryptText(value, keyFolder)
+      }
+    })
+  }
+}
+
+/**
+ * Recursively iterate through an object tree and decrypt sensitive fields.
+ * @param {object} configEntry - The object to iterate through
+ * @param {string} keyFolder - The folder where the keys are stored
+ * @returns {void}
+ */
+const decryptSecrets = (configEntry, keyFolder) => {
+  if (configEntry) {
+    Object.entries(configEntry).forEach(([key, value]) => {
+      if (typeof value === 'object') {
+        decryptSecrets(value, keyFolder)
+      } else if (['password', 'secretKey'].includes(key)) {
+        configEntry[key] = decryptText(value, keyFolder)
+      }
+    })
+  }
+}
+
 module.exports = {
   checkOrCreatePrivateKey,
   encryptText,
   decryptText,
+  encryptSecrets,
+  decryptSecrets,
 }
