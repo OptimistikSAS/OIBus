@@ -38,7 +38,7 @@ class Engine {
    * Constructor for Engine
    * Reads the config file and create the corresponding Object.
    * Makes the necessary changes to the pointId attributes.
-   * Checks for critical entries such as scanModes and equipments.
+   * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {String} configFile - path to the config file
    * @return {Object} readConfig - parsed config Object
@@ -65,23 +65,21 @@ class Engine {
       this.scanLists[scanMode] = []
     })
 
-    this.config.south.equipments.forEach((equipment) => {
-      equipment.points.forEach((point) => {
-        // 1.replace relative path into absolute paths
-        if (point.pointId.charAt(0) === '.') {
-          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-        }
-        // 2.apply default scanmodes to each points
-        if (!point.scanMode) {
-          point.scanMode = equipment.defaultScanMode
-        }
-        // 3. Associate the scanMode to all it's corresponding equipments
-        if (equipment.enabled) {
-          if (this.scanLists[point.scanMode] && !this.scanLists[point.scanMode].includes(equipment.equipmentId)) {
-            this.scanLists[point.scanMode].push(equipment.equipmentId)
+    this.config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.enabled) {
+        if (dataSource.scanMode) {
+          if (this.scanLists[dataSource.scanMode] && !this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+            this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
+        } else {
+          dataSource.points.forEach((point) => {
+            // Associate the scanMode to all it's corresponding data sources
+            if (this.scanLists[point.scanMode] && !this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+            }
+          })
         }
-      })
+      }
     })
 
     // Will only contain protocols/application used
@@ -92,9 +90,9 @@ class Engine {
   }
 
   /**
-   * Add a new Value from an equipment to the Engine.
+   * Add a new Value from an data source to the Engine.
    * The Engine will forward the Value to the Cache.
-   * @param {string} equipmentId - The South generating the value
+   * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -102,20 +100,20 @@ class Engine {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue(equipmentId, { pointId, data, timestamp }, doNotGroup) {
-    this.cache.cacheValues(equipmentId, { pointId, data, timestamp }, doNotGroup)
+  addValue(dataSourceId, { pointId, data, timestamp }, doNotGroup) {
+    this.cache.cacheValues(dataSourceId, { pointId, data, timestamp }, doNotGroup)
   }
 
   /**
-   * Add a new File from an equipment to the Engine.
+   * Add a new File from an data source to the Engine.
    * The Engine will forward the File to the Cache.
-   * @param {string} equipmentId - The South generating the file
+   * @param {string} dataSourceId - The South generating the file
    * @param {string} filePath - The path to the File
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(equipmentId, filePath, preserveFiles) {
-    this.cache.cacheFile(equipmentId, filePath, preserveFiles)
+  addFile(dataSourceId, filePath, preserveFiles) {
+    this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
   /**
@@ -178,17 +176,17 @@ class Engine {
     const server = new Server(this)
     server.listen()
 
-    // 2. start Protocol for each equipments
-    this.config.south.equipments.forEach((equipment) => {
-      const { protocol, enabled, equipmentId } = equipment
+    // 2. start Protocol for each data sources
+    this.config.south.dataSources.forEach((dataSource) => {
+      const { protocol, enabled, dataSourceId } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
       if (enabled) {
         if (ProtocolHandler) {
-          this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
-          this.activeProtocols[equipmentId].connect()
+          this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
+          this.activeProtocols[dataSourceId].connect()
         } else {
-          throw new Error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
+          throw new Error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
         }
       }
     })
@@ -216,8 +214,8 @@ class Engine {
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = timexe(cronTime, () => {
         // on each scan, activate each protocols
-        this.scanLists[scanMode].forEach((equipmentId) => {
-          this.activeProtocols[equipmentId].onScan(scanMode)
+        this.scanLists[scanMode].forEach((dataSourceId) => {
+          this.activeProtocols[dataSourceId].onScan(scanMode)
         })
       })
       if (job.result !== 'ok') {
@@ -240,8 +238,8 @@ class Engine {
     })
 
     // Stop Protocols
-    Object.entries(this.activeProtocols).forEach(([equipmentId, protocol]) => {
-      this.logger.info(`Stopping ${equipmentId}`)
+    Object.entries(this.activeProtocols).forEach(([dataSourceId, protocol]) => {
+      this.logger.info(`Stopping ${dataSourceId}`)
       protocol.disconnect()
     })
 
@@ -322,7 +320,7 @@ class Engine {
   getActiveConfiguration() {
     const config = JSON.parse(JSON.stringify(this.config))
     encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
-    encryptionService.decryptSecrets(config.south.equipments, this.keyFolder)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder)
     return config
   }
 
@@ -333,7 +331,7 @@ class Engine {
   getModifiedConfiguration() {
     const config = JSON.parse(JSON.stringify(this.modifiedConfig))
     encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
-    encryptionService.decryptSecrets(config.south.equipments, this.keyFolder)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder)
     return config
   }
 
@@ -379,44 +377,44 @@ class Engine {
   }
 
   /**
-   * Check if the given equipment ID already exists
-   * @param {string} equipmentId - The equipment ID to check
-   * @returns {object | undefined} - Whether the given equipment exists
+   * Check if the given data source ID already exists
+   * @param {string} dataSourceId - The data source ID to check
+   * @returns {object | undefined} - Whether the given data source exists
    */
-  hasSouth(equipmentId) {
-    return this.modifiedConfig.south.equipments.find(equipment => equipment.equipmentId === equipmentId)
+  hasSouth(dataSourceId) {
+    return this.modifiedConfig.south.dataSources.find(dataSource => dataSource.dataSourceId === dataSourceId)
   }
 
   /**
-   * Add South equipment
-   * @param {object} equipment - The new equipment to add
+   * Add South data source
+   * @param {object} dataSource - The new data source to add
    * @returns {void}
    */
-  addSouth(equipment) {
-    encryptionService.encryptSecrets(equipment, this.keyFolder)
-    this.modifiedConfig.south.equipments.push(equipment)
+  addSouth(dataSource) {
+    encryptionService.encryptSecrets(dataSource, this.keyFolder)
+    this.modifiedConfig.south.dataSources.push(dataSource)
   }
 
   /**
-   * Update South equipment
-   * @param {object} equipment - The updated equipment
+   * Update South data source
+   * @param {object} dataSource - The updated data source
    * @returns {void}
    */
-  updateSouth(equipment) {
-    const index = this.modifiedConfig.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
+  updateSouth(dataSource) {
+    const index = this.modifiedConfig.south.dataSources.findIndex(element => element.dataSourceId === dataSource.dataSourceId)
     if (index > -1) {
-      encryptionService.encryptSecrets(equipment, this.keyFolder)
-      this.modifiedConfig.south.equipments[index] = equipment
+      encryptionService.encryptSecrets(dataSource, this.keyFolder)
+      this.modifiedConfig.south.dataSources[index] = dataSource
     }
   }
 
   /**
-   * Delete South equipment
-   * @param {string} equipmentId - The equipment to delete
+   * Delete South data source
+   * @param {string} dataSourceId - The data source to delete
    * @returns {void}
    */
-  deleteSouth(equipmentId) {
-    this.modifiedConfig.south.equipments = this.modifiedConfig.south.equipments.filter(equipment => equipment.equipmentId !== equipmentId)
+  deleteSouth(dataSourceId) {
+    this.modifiedConfig.south.dataSources = this.modifiedConfig.south.dataSources.filter(dataSource => dataSource.dataSourceId !== dataSourceId)
   }
 
   /**
