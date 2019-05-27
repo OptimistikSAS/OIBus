@@ -75,60 +75,60 @@ const deleteNorth = (ctx) => {
 }
 
 /**
- * Add South equipment.
+ * Add South data source.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const addSouth = (ctx) => {
-  if (ctx.app.engine.hasSouth(ctx.request.body.equipmentId)) {
-    ctx.throw(409, 'The given equipment ID already exists')
+  if (ctx.app.engine.hasSouth(ctx.request.body.dataSourceId)) {
+    ctx.throw(409, 'The given data source ID already exists')
   }
 
   try {
     ctx.app.engine.addSouth(ctx.request.body)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to add new equipment')
+    ctx.throw(500, 'Unable to add new data source')
   }
 }
 
 /**
- * Update South equipment.
+ * Update South data source.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const updateSouth = (ctx) => {
-  if (!ctx.app.engine.hasSouth(ctx.params.equipmentId)) {
-    ctx.throw(404, 'The given equipment ID doesn\'t exists')
+  if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
+    ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
-  if (ctx.params.equipmentId !== ctx.request.body.equipmentId) {
-    ctx.throw(400, 'Inconsistent equipment ID')
+  if (ctx.params.dataSourceId !== ctx.request.body.dataSourceId) {
+    ctx.throw(400, 'Inconsistent data source ID')
   }
 
   try {
     ctx.app.engine.updateSouth(ctx.request.body)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to update equipment')
+    ctx.throw(500, 'Unable to update data source')
   }
 }
 
 /**
- * Delete South equipment.
+ * Delete South data source.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const deleteSouth = (ctx) => {
-  if (!ctx.app.engine.hasSouth(ctx.params.equipmentId)) {
-    ctx.throw(404, 'The given equipment ID doesn\'t exists')
+  if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
+    ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
   try {
-    ctx.app.engine.deleteSouth(ctx.params.equipmentId)
+    ctx.app.engine.deleteSouth(ctx.params.dataSourceId)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to delete equipment')
+    ctx.throw(500, 'Unable to delete data source')
   }
 }
 

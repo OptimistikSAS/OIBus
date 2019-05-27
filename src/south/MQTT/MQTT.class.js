@@ -16,9 +16,9 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   listen() {
-    const { MQTT: { protocol, server, port, username, password } = {}, points } = this.equipment
+    const { mqttProtocol, server, port, username, password, points } = this.dataSource
     this.client = mqtt.connect(
-      `${protocol}://${server}`,
+      `${mqttProtocol}://${server}`,
       { port, username, password: Buffer.from(password) },
     )
     points.forEach((point) => {

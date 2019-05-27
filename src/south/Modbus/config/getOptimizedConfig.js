@@ -38,7 +38,7 @@ const findAddressesGroup = (object, address) => Object.keys(object).find((group)
 })
 
 /**
- * Groups the equipments by addresses to optimize requests
+ * Groups the data sources by addresses to optimize requests
  * @param {[ Object ]} array - Array of objects to group
  * @param {String} key - Key or nested key address to find it inside the objects
  * @param {int} groupSize - Number of address by group
@@ -66,16 +66,15 @@ const groupAddresses = (array, key, groupSize) => {
 
 /**
  * Gets the configuration file
- * @param {Object} equipment - The equipment
- * @param {*} addressGap - The address gap
+ * @param {Object} dataSource - The data source
  * @return {Object} The scan modes
  */
-const optimizedConfig = (equipment, addressGap) => {
-  const scanModes = groupBy(equipment.points, 'scanMode' /* , { equipmentId } */)
+const optimizedConfig = (dataSource) => {
+  const scanModes = groupBy(dataSource.points, 'scanMode' /* , { dataSourceId } */)
   Object.keys(scanModes).forEach((scan) => {
     scanModes[scan] = groupBy(scanModes[scan], 'Modbus.type')
     Object.keys(scanModes[scan]).forEach((type) => {
-      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'Modbus.address', addressGap[type])
+      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'Modbus.address', dataSource.addressGap[type])
     })
   })
   /*

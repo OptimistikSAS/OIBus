@@ -33,7 +33,7 @@
     ]
   },
   "south": {
-    "equipments": []
+    "dataSources": []
   },
   "north": {
     "applications": [

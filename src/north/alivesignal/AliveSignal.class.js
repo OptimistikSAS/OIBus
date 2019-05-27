@@ -19,12 +19,12 @@ class AliveSignal extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, authentication, id, frequency, defaultProxy = null } = applicationParameters.AliveSignal
+    const { host, authentication, id, frequency, proxy = null } = applicationParameters.AliveSignal
 
     this.host = `${host}?id=${encodeURI(id)}`
     this.authentication = authentication
     this.frequency = frequency
-    this.proxy = this.getProxy(defaultProxy)
+    this.proxy = this.getProxy(proxy)
 
     this.timer = null
   }
