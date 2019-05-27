@@ -54,17 +54,21 @@ const encryptText = (text, keyFolder) => {
  * @return {string} - The decrypted text
  */
 const decryptText = (text, keyFolder) => {
-  const absolutePath = path.resolve(path.join(keyFolder, 'private.pem'))
-  const privateKey = fs.readFileSync(absolutePath, 'utf8')
-  const buffer = Buffer.from(text, 'base64')
-  const decrypted = crypto.privateDecrypt(
-    {
-      key: privateKey.toString(),
-      passphrase: '',
-    },
-    buffer,
-  )
-  return decrypted.toString('utf8')
+  try {
+    const absolutePath = path.resolve(path.join(keyFolder, 'private.pem'))
+    const privateKey = fs.readFileSync(absolutePath, 'utf8')
+    const buffer = Buffer.from(text, 'base64')
+    const decrypted = crypto.privateDecrypt(
+      {
+        key: privateKey.toString(),
+        passphrase: '',
+      },
+      buffer,
+    )
+    return decrypted.toString('utf8')
+  } catch (error) {
+    return ''
+  }
 }
 
 /**
