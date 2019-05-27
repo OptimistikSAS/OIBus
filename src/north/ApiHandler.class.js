@@ -16,7 +16,7 @@ class ApiHandler {
 
     this.application = applicationParameters
     this.engine = engine
-    this.logger = engine.logger
+    this.logger = this.engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
   }
@@ -28,7 +28,7 @@ class ApiHandler {
    * @return {void}
    */
   get(pointId) {
-    this.engine.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
+    this.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
   }
 
   /**
@@ -36,7 +36,7 @@ class ApiHandler {
    * @return {void}
    */
   connect() {
-    this.engine.logger.info('connect')
+    this.logger.info('connect')
   }
 
   /**
@@ -44,7 +44,7 @@ class ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.engine.logger.info('disconnect')
+    this.logger.info('disconnect')
   }
 
   /**
@@ -53,7 +53,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   handleValues(values) {
-    this.engine.logger.info('handleValues', values)
+    this.logger.info('handleValues', values)
   }
 
   /**
@@ -62,7 +62,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   handleFile(filePath) {
-    this.engine.logger.info('handleFile', filePath)
+    this.logger.info('handleFile', filePath)
   }
 
   /**
@@ -86,7 +86,7 @@ class ApiHandler {
    * @return {string} - The decrypted password
    */
   decryptPassword(password) {
-    return encryptionService.decryptText(password, this.engine.keyFolder)
+    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
   }
 
   /**
