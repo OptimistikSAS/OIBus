@@ -7,19 +7,19 @@ class ProtocolHandler {
   /**
    * Constructor for Protocol
    * @constructor
-   * @param {*} equipment - The equipment
+   * @param {*} dataSource - The data source
    * @param {Engine} engine - The engine
    * @return {void}
    */
-  constructor(equipment, engine) {
-    this.equipment = equipment
+  constructor(dataSource, engine) {
+    this.dataSource = dataSource
     this.engine = engine
     this.logger = engine.logger
   }
 
   connect() {
-    const { equipmentId, protocol } = this.equipment
-    this.logger.warn(`equipement ${equipmentId} started with protocol ${protocol}`)
+    const { dataSourceId, protocol } = this.dataSource
+    this.logger.warn(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
   /* eslint-disable-next-line */
   onScan() {}
@@ -39,7 +39,7 @@ class ProtocolHandler {
    */
   addValue({ pointId, data, timestamp }, doNotGroup) {
     this.engine.addValue(
-      this.equipment.equipmentId,
+      this.dataSource.dataSourceId,
       { data, timestamp, pointId },
       doNotGroup,
     )
@@ -51,7 +51,7 @@ class ProtocolHandler {
    * @return {void}
    */
   addFile(filePath) {
-    this.engine.addFile(this.equipment.equipmentId, filePath, this.preserveFiles)
+    this.engine.addFile(this.dataSource.dataSourceId, filePath, this.preserveFiles)
   }
 
   /**

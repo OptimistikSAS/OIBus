@@ -12,8 +12,7 @@ class CSV extends ProtocolHandler {
    * @return {void}
    */
   onScan(_scanMode) {
-    const { CSV: parameters } = this.equipment
-    const { inputFolder } = parameters
+    const { inputFolder } = this.dataSource
 
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (error, files) => {
@@ -40,8 +39,7 @@ class CSV extends ProtocolHandler {
    */
   processFile(inputFolder, filename) {
     const file = `${inputFolder}${filename}`
-    const { points, CSV: parameters } = this.equipment
-    const { timeColumn, hasFirstLine, archiveFolder, errorFolder } = parameters
+    const { points, timeColumn, hasFirstLine, archiveFolder, errorFolder } = this.dataSource
     const readStream = fs.createReadStream(file)
     readStream.on('error', (readError) => {
       this.logger.error(readError)
