@@ -60,7 +60,7 @@ class ProtocolHandler {
    * @return {string} - The decrypted password
    */
   decryptPassword(password) {
-    return encryptionService.decryptText(password, this.engine.keyFolder)
+    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
   }
 }
 
