@@ -51,20 +51,26 @@ const encryptText = (text, keyFolder) => {
  * Decrypt text.
  * @param {string} text - The text to decrypt
  * @param {string} keyFolder - The folder where the keys are stored
+ * @param {Logger} logger - The logger
  * @return {string} - The decrypted text
  */
-const decryptText = (text, keyFolder) => {
-  const absolutePath = path.resolve(path.join(keyFolder, 'private.pem'))
-  const privateKey = fs.readFileSync(absolutePath, 'utf8')
-  const buffer = Buffer.from(text, 'base64')
-  const decrypted = crypto.privateDecrypt(
-    {
-      key: privateKey.toString(),
-      passphrase: '',
-    },
-    buffer,
-  )
-  return decrypted.toString('utf8')
+const decryptText = (text, keyFolder, logger) => {
+  try {
+    const absolutePath = path.resolve(path.join(keyFolder, 'private.pem'))
+    const privateKey = fs.readFileSync(absolutePath, 'utf8')
+    const buffer = Buffer.from(text, 'base64')
+    const decrypted = crypto.privateDecrypt(
+      {
+        key: privateKey.toString(),
+        passphrase: '',
+      },
+      buffer,
+    )
+    return decrypted.toString('utf8')
+  } catch (error) {
+    logger.error(error)
+    return ''
+  }
 }
 
 /**
@@ -89,15 +95,16 @@ const encryptSecrets = (configEntry, keyFolder) => {
  * Recursively iterate through an object tree and decrypt sensitive fields.
  * @param {object} configEntry - The object to iterate through
  * @param {string} keyFolder - The folder where the keys are stored
+ * @param {Logger} logger - The logger
  * @returns {void}
  */
-const decryptSecrets = (configEntry, keyFolder) => {
+const decryptSecrets = (configEntry, keyFolder, logger) => {
   if (configEntry) {
     Object.entries(configEntry).forEach(([key, value]) => {
       if (typeof value === 'object') {
-        decryptSecrets(value, keyFolder)
+        decryptSecrets(value, keyFolder, logger)
       } else if (['password', 'secretKey'].includes(key)) {
-        configEntry[key] = decryptText(value, keyFolder)
+        configEntry[key] = decryptText(value, keyFolder, logger)
       }
     })
   }
