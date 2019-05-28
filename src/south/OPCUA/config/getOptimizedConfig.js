@@ -32,25 +32,25 @@ const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
 
 /**
  * Get optimized config.
- * @param {Object} equipment - The equipment
+ * @param {Object} dataSource - The data source
  * @return {*} The optimized config
  */
-const getOptimizedConfig = equipment => groupBy(equipment.points, 'scanMode')
+const getOptimizedConfig = dataSource => groupBy(dataSource.points, 'scanMode')
 // {
-// const optimized = equipment.reduce((acc, { equipmentId, protocol, points }) => {
-// const scanModes = groupBy(equipment.points, 'scanMode')
+// const optimized = dataSource.reduce((acc, { dataSourceId, protocol, points }) => {
+// const scanModes = groupBy(dataSource.points, 'scanMode')
 // Object.keys(scanModes).forEach((scan) => {
 //   console.log(scan)
 //   console.log(scanModes[scan])
-//   console.log(groupBy(scanModes[scan], 'equipmentId'))
+//   console.log(groupBy(scanModes[scan], 'dataSourceId'))
 //   console.log(scanModes[scan])
-//   scanModes[scan] = groupBy(scanModes[scan], 'equipmentId')
+//   scanModes[scan] = groupBy(scanModes[scan], 'dataSourceId')
 // })
 // Object.keys(scanModes).forEach((scan) => {
 //   if (!acc[scan]) acc[scan] = {}
 //   acc[scan] = { ...acc[scan], ...scanModes[scan] }
 // })
-// return groupBy(equipment.points, 'scanMode')
+// return groupBy(dataSource.points, 'scanMode')
 // }, {})
 // return optimized
 // }
