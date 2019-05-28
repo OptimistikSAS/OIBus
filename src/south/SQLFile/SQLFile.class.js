@@ -14,14 +14,14 @@ class SQLFile extends ProtocolHandler {
   /**
    * Constructor for SQLFile
    * @constructor
-   * @param {Object} equipment - The equipment
+   * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
    * @return {void}
    */
-  constructor(equipment, engine) {
-    super(equipment, engine)
+  constructor(dataSource, engine) {
+    super(dataSource, engine)
 
-    const { SQLFile: { driver, host, port, username, password, database, query, delimiter, tmpFolder } } = this.equipment
+    const { driver, host, port, username, password, database, query, delimiter, tmpFolder } = this.dataSource
 
     this.preserveFiles = false
     this.driver = driver
@@ -50,7 +50,7 @@ class SQLFile extends ProtocolHandler {
   }
 
   async connect() {
-    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.equipment.equipmentId}.db`
+    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
     this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')

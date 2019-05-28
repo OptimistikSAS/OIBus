@@ -35,17 +35,16 @@ class Modbus extends ProtocolHandler {
   /**
    * Constructor for Modbus
    * @constructor
-   * @param {Object} equipment - The equipment
+   * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
    * @return {void}
    */
-  constructor(equipment, engine) {
-    super(equipment, engine)
-    const { addressGap } = this.engine.config.south.Modbus
-    this.optimizedConfig = getOptimizedConfig(this.equipment, addressGap)
+  constructor(dataSource, engine) {
+    super(dataSource, engine)
+    this.optimizedConfig = getOptimizedConfig(this.dataSource)
     this.socket = new net.Socket()
-    this.host = equipment.Modbus.host
-    this.port = equipment.Modbus.port
+    this.host = this.dataSource.host
+    this.port = this.dataSource.port
     this.connected = false
     this.client = new jsmodbus.client.TCP(this.socket)
   }
@@ -58,7 +57,7 @@ class Modbus extends ProtocolHandler {
   onScan(scanMode) {
     const { connected, optimizedConfig } = this
     const scanGroup = optimizedConfig[scanMode]
-    // ignore if scanMode if not relevant to this equipment/ or not connected
+    // ignore if scanMode if not relevant to this data source/ or not connected
     /** @todo we should likely filter onScan at the engine level */
     if (!scanGroup || !connected) return
 
@@ -116,7 +115,7 @@ class Modbus extends ProtocolHandler {
   }
 
   /**
-   * Initiates a connection for every equipment to the right host and port.
+   * Initiates a connection for every data source to the right host and port.
    * @return {void}
    */
   connect() {

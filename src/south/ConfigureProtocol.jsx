@@ -49,14 +49,9 @@ const ConfigureProtocol = ({ match, location }) => {
     if (configJson && engineJson && configSchema) {
       const { scanMode } = configSchema.properties.points.items.properties
       const { scanModes } = engineJson
-      const { defaultScanMode } = configSchema.properties
       // check if scanMode, scanModes exists and enum was not already set
       if (scanMode && scanMode.enum === undefined && scanModes) {
         scanMode.enum = scanModes.map(item => item.scanMode)
-      }
-      // check if defaultScanMode, scanModes exists and enum was not already set
-      if (defaultScanMode && defaultScanMode.enum === undefined && scanModes) {
-        defaultScanMode.enum = scanModes.map(item => item.scanMode)
       }
     }
     return configSchema
@@ -79,8 +74,8 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {void}
    */
   const handleSubmit = ({ formData }) => {
-    const { equipmentId } = formData
-    apis.updateSouth(equipmentId, formData)
+    const { dataSourceId } = formData
+    apis.updateSouth(dataSourceId, formData)
   }
 
   /**
@@ -88,9 +83,9 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {void}
    */
   const handleDelete = async () => {
-    const { equipmentId } = configJson
+    const { dataSourceId } = configJson
     try {
-      await apis.deleteSouth(equipmentId)
+      await apis.deleteSouth(dataSourceId)
       // TODO: Show loader and redirect to main screen
     } catch (error) {
       console.error(error)
@@ -112,7 +107,7 @@ const ConfigureProtocol = ({ match, location }) => {
             onSubmit={handleSubmit}
             onError={log('errors')}
           />
-          <Modal show={false} title="Delete equipment" body="Are you sure you want to delete this equipment?">
+          <Modal show={false} title="Delete data source" body="Are you sure you want to delete this data source?">
             {confirm => (
               <Button color="danger" onClick={confirm(handleDelete)}>
                 Delete

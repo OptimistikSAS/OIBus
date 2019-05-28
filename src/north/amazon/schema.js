@@ -45,9 +45,9 @@ module.exports = {
             },
           },
         },
-        defaultProxy: {
+        proxy: {
           type: 'string',
-          title: 'Default proxy',
+          title: 'Proxy',
         },
       },
     },

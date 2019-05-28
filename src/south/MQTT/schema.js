@@ -2,9 +2,9 @@ module.exports = {
   title: 'Configure MQTT',
   type: 'object',
   properties: {
-    equipmentId: {
+    dataSourceId: {
       type: 'string',
-      title: 'Equipment ID',
+      title: 'Data Source ID',
     },
     enabled: {
       type: 'boolean',
@@ -17,39 +17,25 @@ module.exports = {
       title: 'Protocol',
       default: 'CSV',
     },
-    pointIdRoot: {
+    server: {
       type: 'string',
-      title: 'Point ID Root',
+      title: 'Server',
     },
-    defaultScanMode: {
+    mqttProtocol: {
       type: 'string',
-      title: 'Default Scan Mode',
-      default: 'every20Second',
+      title: 'Protocol',
     },
-    MQTT: {
-      type: 'object',
-      properties: {
-        server: {
-          type: 'string',
-          title: 'Server',
-        },
-        protocol: {
-          type: 'string',
-          title: 'Protocol',
-        },
-        port: {
-          type: 'number',
-          title: 'Port',
-        },
-        username: {
-          type: 'string',
-          title: 'Username',
-        },
-        password: {
-          type: 'string',
-          title: 'Password',
-        },
-      },
+    port: {
+      type: 'number',
+      title: 'Port',
+    },
+    username: {
+      type: 'string',
+      title: 'Username',
+    },
+    password: {
+      type: 'string',
+      title: 'Password',
     },
     points: {
       type: 'array',
