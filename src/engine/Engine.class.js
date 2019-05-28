@@ -319,8 +319,8 @@ class Engine {
    */
   getActiveConfiguration() {
     const config = JSON.parse(JSON.stringify(this.config))
-    encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
-    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder)
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
     return config
   }
 
@@ -330,8 +330,8 @@ class Engine {
    */
   getModifiedConfiguration() {
     const config = JSON.parse(JSON.stringify(this.modifiedConfig))
-    encryptionService.decryptSecrets(config.north.applications, this.keyFolder)
-    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder)
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
     return config
   }
 
