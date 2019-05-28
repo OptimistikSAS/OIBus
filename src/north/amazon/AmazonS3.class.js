@@ -20,7 +20,7 @@ class AmazonS3 extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { bucket, folder, authentication, defaultProxy = null } = applicationParameters.AmazonS3
+    const { bucket, folder, authentication, proxy = null } = applicationParameters.AmazonS3
 
     this.bucket = bucket
     this.folder = folder
@@ -30,9 +30,9 @@ class AmazonS3 extends ApiHandler {
       secretAccessKey: this.decryptPassword(authentication.secretKey),
     })
 
-    const proxy = this.getProxy(defaultProxy)
-    if (proxy) {
-      const { protocol, host, port, username = null, password = null } = proxy
+    const configuredProxy = this.getProxy(proxy)
+    if (configuredProxy) {
+      const { protocol, host, port, username = null, password = null } = configuredProxy
 
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 

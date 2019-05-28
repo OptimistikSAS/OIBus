@@ -2,9 +2,9 @@ module.exports = {
   title: 'Configure OPCUA',
   type: 'object',
   properties: {
-    equipmentId: {
+    dataSourceId: {
       type: 'string',
-      title: 'Equipment ID',
+      title: 'Data Source ID',
     },
     enabled: {
       type: 'boolean',
@@ -17,41 +17,27 @@ module.exports = {
       title: 'Protocol',
       default: 'CSV',
     },
-    pointIdRoot: {
+    host: {
       type: 'string',
-      title: 'Point ID Root',
+      title: 'Host',
+      oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }],
     },
-    defaultScanMode: {
+    opcuaPort: {
+      type: 'number',
+      title: 'OPCUA Port',
+    },
+    httpsPort: {
+      type: 'number',
+      title: 'HTTPS Port',
+    },
+    endPoint: {
       type: 'string',
-      title: 'Default Scan Mode',
-      default: 'every20Second',
+      title: 'Endpoint',
     },
-    OPCUA: {
-      type: 'object',
-      properties: {
-        host: {
-          type: 'string',
-          title: 'Host',
-          oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }],
-        },
-        opcuaPort: {
-          type: 'number',
-          title: 'OPCUA Port',
-        },
-        httpsPort: {
-          type: 'number',
-          title: 'HTTPS Port',
-        },
-        endPoint: {
-          type: 'string',
-          title: 'Endpoint',
-        },
-        timeOrigin: {
-          type: 'string',
-          title: 'Time Origin',
-          default: 'server',
-        },
-      },
+    timeOrigin: {
+      type: 'string',
+      title: 'Time Origin',
+      default: 'server',
     },
     points: {
       type: 'array',
