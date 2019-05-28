@@ -319,6 +319,7 @@ class Engine {
    */
   getActiveConfiguration() {
     const config = JSON.parse(JSON.stringify(this.config))
+    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
     encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
     encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
     return config
@@ -330,6 +331,7 @@ class Engine {
    */
   getModifiedConfiguration() {
     const config = JSON.parse(JSON.stringify(this.modifiedConfig))
+    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
     encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
     encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
     return config
@@ -423,6 +425,7 @@ class Engine {
    * @returns {void}
    */
   updateEngine(engine) {
+    encryptionService.encryptSecrets(engine.proxies, this.keyFolder)
     this.modifiedConfig.engine = engine
   }
 
