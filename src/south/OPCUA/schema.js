@@ -45,7 +45,7 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          OPCUAnodeId: {
+          OPCUA: {
             type: 'object',
             title: 'OPCUA Node ID',
             properties: {
