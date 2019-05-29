@@ -1,7 +1,11 @@
 const cluster = require('cluster')
 
+const VERSION = require('../package.json').version
+
 const { parseArgs, checkOrCreateConfigFile } = require('./services/config.service')
 const Engine = require('./engine/Engine.class')
+
+console.info(`Starting OIBus version: ${VERSION}`)
 
 if (cluster.isMaster) {
   // Fork a worker

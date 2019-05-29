@@ -50,6 +50,7 @@ class Engine {
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
+    this.logger.info(`Starting OIBus version ${VERSION}`)
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -224,7 +225,7 @@ class Engine {
         this.jobs.push(job.id)
       }
     })
-    this.logger.info(`OIBus version ${VERSION} started`)
+    this.logger.info('OIBus started')
   }
 
   /**
