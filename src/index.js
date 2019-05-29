@@ -5,9 +5,8 @@ const VERSION = require('../package.json').version
 const { parseArgs, checkOrCreateConfigFile } = require('./services/config.service')
 const Engine = require('./engine/Engine.class')
 
-console.info(`Starting OIBus version: ${VERSION}`)
-
 if (cluster.isMaster) {
+  console.info(`Starting OIBus version: ${VERSION}`)
   // Fork a worker
   cluster.fork()
 
@@ -26,7 +25,6 @@ if (cluster.isMaster) {
   const { config = './oibus.json' } = args // Get the configuration file path
 
   checkOrCreateConfigFile(config) // Create default config file if it doesn't exist
-
   const engine = new Engine(config)
   engine.start()
 }
