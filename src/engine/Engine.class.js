@@ -50,11 +50,11 @@ class Engine {
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
-    this.logger.info(`Starting OIBus version ${VERSION}`)
+    this.logger.info(`Starting Engine ${VERSION}`)
 
     // Configure the Cache
     this.cache = new Cache(this)
-
+    this.logger.info(`cache folder: ${this.config.engine.caching.cacheFolder}`)
     // Check for private key
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
     encryptionService.checkOrCreatePrivateKey(this.keyFolder)

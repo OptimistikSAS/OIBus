@@ -11,7 +11,9 @@ const checkOrCreatePrivateKey = (keyFolder) => {
   const privateKeyPath = path.join(keyFolder, 'private.pem')
   const publicKeyPath = path.join(keyFolder, 'public.pem')
 
-  fs.mkdirSync(keyFolder, { recursive: true })
+  if (!fs.existsSync(keyFolder)) {
+    fs.mkdirSync(keyFolder, { recursive: true })
+  }
 
   if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
     const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
