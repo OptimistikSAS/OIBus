@@ -136,6 +136,10 @@ td > div > .inline-button {
     margin-bottom: 0;
 }
 
+td > div > .autosize {
+  width: auto;
+}
+
 label {
     display: inline-block;
     margin-bottom: 0.2rem;
