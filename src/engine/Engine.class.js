@@ -54,7 +54,7 @@ class Engine {
 
     // Configure the Cache
     this.cache = new Cache(this)
-    this.logger.info(`cache folder: ${this.config.engine.caching.cacheFolder}`)
+    this.logger.info(`cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
     // Check for private key
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
     encryptionService.checkOrCreatePrivateKey(this.keyFolder)
