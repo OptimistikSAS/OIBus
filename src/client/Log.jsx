@@ -58,16 +58,14 @@ const Log = () => {
         <br />
         {renderFilter()}
         {filteredLogs.filter((_, index) => index < maxLog).map((item) => {
-          const { id, level, meta, message, timestamp } = item
+          const { id, level, message, timestamp } = item
           const date = new Date(timestamp)
           return (
             <ListGroupItem key={id}>
               <Label>
                 {`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}
               </Label>
-              {` | ${id} | ${level} | ${meta}`}
-              <br />
-              {`${message}`}
+              {` | ${level}| ${message}`}
             </ListGroupItem>
           )
         })}
