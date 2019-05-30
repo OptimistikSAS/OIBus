@@ -70,10 +70,6 @@ const updatePoint = (ctx) => {
     ctx.throw(400, 'Missing parameters')
   }
 
-  if (pointId !== ctx.request.body.pointId) {
-    ctx.throw(400, 'Inconsistent point ID')
-  }
-
   try {
     ctx.app.engine.updateSouthPoint(ctx.params.dataSourceId, ctx.request.body)
     ctx.ok()
