@@ -49,7 +49,7 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
-            default: 'every5second',
+            default: 'every5Second',
           },
         },
       },
