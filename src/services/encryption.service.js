@@ -18,7 +18,7 @@ const checkOrCreatePrivateKey = (keyFolder, logger) => {
 
   try {
     if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
-      logger.info('Private or Public key file was not found => creating a new pair')
+      logger.warn('Private or Public key file was not found => creating a new pair')
       const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 4096,
         publicKeyEncoding: {
