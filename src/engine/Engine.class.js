@@ -61,7 +61,7 @@ class Engine {
     this.logger.info(`cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
     // Check for private key
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
-    encryptionService.checkOrCreatePrivateKey(this.keyFolder)
+    encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
 
     // prepare config
     // initialize the scanLists with empty arrays

@@ -5,9 +5,10 @@ const path = require('path')
 /**
  * Check if private/public keys exist and create them if not.
  * @param {string} keyFolder - The folder to store the keys
+ * @param {Logger} logger - logger
  * @returns {void}
  */
-const checkOrCreatePrivateKey = (keyFolder) => {
+const checkOrCreatePrivateKey = (keyFolder, logger) => {
   const privateKeyPath = path.join(keyFolder, 'private.pem')
   const publicKeyPath = path.join(keyFolder, 'public.pem')
 
@@ -15,23 +16,27 @@ const checkOrCreatePrivateKey = (keyFolder) => {
     fs.mkdirSync(keyFolder, { recursive: true })
   }
 
-  if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
-    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem',
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem',
-        cipher: 'aes-256-cbc',
-        passphrase: '',
-      },
-    })
+  try {
+    if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
+      const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 4096,
+        publicKeyEncoding: {
+          type: 'spki',
+          format: 'pem',
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',
+          format: 'pem',
+          cipher: 'aes-256-cbc',
+          passphrase: '',
+        },
+      })
 
-    fs.writeFileSync(privateKeyPath, privateKey)
-    fs.writeFileSync(publicKeyPath, publicKey)
+      fs.writeFileSync(privateKeyPath, privateKey)
+      fs.writeFileSync(publicKeyPath, publicKey)
+    }
+  } catch (error) {
+    logger.error(error)
   }
 }
 
