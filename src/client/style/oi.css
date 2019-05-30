@@ -147,6 +147,15 @@ label {
     font-size: 0.7rem;
 }
 
+.force-row-display {
+  display: flex;
+  flex-direction: row;
+}
+
+.force-row-display > .inline-button {
+  margin-right: .5rem;
+}
+
 /* spinner container */
 .spinner-container {
   position: absolute;
