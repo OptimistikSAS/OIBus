@@ -1,5 +1,40 @@
 const { createLogger, format, transports } = require('winston')
-require('winston3-sqlite3')
+const TransportStream = require('winston-transport')
+const databaseService = require('../services/database.service')
+/**
+ * class to support Winston logging to sqlite
+ *
+ * @class SqliteTransport
+ * @extends {TransportStream}
+ */
+class SqliteTransport extends TransportStream {
+  constructor(options) {
+    super(options)
+    // Expose the name of this Transport on the prototype.
+    this.name = options.name || 'sqlite'
+    this.database = null
+    this.filename = options.filename || ':memory:'
+    this.tableName = options.tableName || 'logs'
+  }
+
+  /**
+   * Core logging method exposed to Winston.
+   * @param {Object} payload - object with logging info
+   * @param {Function} callback - to be called when finished
+   * @returns {undefined}
+   */
+
+  async log(payload, callback) {
+    setImmediate(() => this.emit('logged', payload.level))
+
+    // Perform the writing to the remote service
+    if (!this.database) {
+      this.database = await databaseService.createLogsDatabase(this.filename)
+    }
+    databaseService.addLog(this.database, payload.timestamp, payload.level, payload.message)
+    if (callback) callback()
+  }
+}
 
 const { combine, timestamp, printf, colorize } = format
 
@@ -14,7 +49,7 @@ class Logger {
       transports: [
         new transports.Console({ format: consoleFormat }),
         new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable }),
-        new transports.SQLite3({ filename: sqliteFilename, level: sqliteLevel, tableName: 'logs' }),
+        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel }),
       ],
     })
   }
