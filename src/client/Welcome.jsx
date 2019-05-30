@@ -88,14 +88,16 @@ const Welcome = () => {
       {isModified
         ? (
           <>
-            <ReactGhLikeDiff
-              options={{
-                originalFileName: 'Configuration',
-                updatedFileName: 'Configuration',
-              }}
-              past={activeString}
-              current={modifiedString}
-            />
+            <div className="oi-full-width">
+              <ReactGhLikeDiff
+                options={{
+                  originalFileName: 'Configuration',
+                  updatedFileName: 'Configuration',
+                }}
+                past={activeString}
+                current={modifiedString}
+              />
+            </div>
             <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
               {confirm => (
                 <Button color="primary" onClick={confirm(handleActivate)}>
