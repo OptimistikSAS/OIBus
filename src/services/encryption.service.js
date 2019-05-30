@@ -37,7 +37,7 @@ const checkOrCreatePrivateKey = (keyFolder, logger) => {
       fs.writeFileSync(publicKeyPath, publicKey)
     }
   } catch (error) {
-    logger.error(error)
+    logger.error(`Error creating key files: ${error.message}`)
   }
 }
 
@@ -76,7 +76,7 @@ const decryptText = (text, keyFolder, logger) => {
     )
     return decrypted.toString('utf8')
   } catch (error) {
-    logger.error(error)
+    logger.error(`Error in decryption: ${error.message}`)
     return ''
   }
 }
