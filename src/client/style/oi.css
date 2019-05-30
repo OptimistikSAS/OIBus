@@ -74,6 +74,12 @@
     margin-left: 10px;
 }
 
+.oi-full-width {
+    position: relative;
+    width: 90vw;
+    left: 0;
+}
+
 /* overide BS styles */
 .form-control {
     height: calc(1.5rem + 2px);
