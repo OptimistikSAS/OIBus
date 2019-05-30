@@ -51,6 +51,10 @@ class Engine {
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
     this.logger.info(`Starting Engine ${VERSION}`)
+    this.logger.info(`architecture: ${process.arch}`)
+    this.logger.info(`This platform is ${process.platform}`)
+    this.logger.info(`Current directory: ${process.cwd()}`)
+    this.logger.info(`Version Node: ${process.version}`)
 
     // Configure the Cache
     this.cache = new Cache(this)
