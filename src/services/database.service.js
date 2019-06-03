@@ -1,6 +1,7 @@
 const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
+const LOGS_TABLE_NAME = 'logs'
 
 /**
  * Initiate SQLite3 database and create the cache table.
@@ -277,6 +278,25 @@ const getConfig = async (database, name) => {
 }
 
 /**
+ * Initiate SQLite3 database and create the logs table.
+ * @param {string} databasePath - The database file path
+ * @return {BetterSqlite3.Database} - The SQLite3 database
+ */
+const createLogsDatabase = async (databasePath) => {
+  const database = await sqlite.open(databasePath)
+
+  const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
+                  timestamp DATE,
+                  level TEXT,
+                  message TEXT
+                );`
+  const stmt = await database.prepare(query)
+  await stmt.run()
+
+  return database
+}
+
+/**
  * Get logs.
  * @param {string} databasePath - The database path
  * @param {string} fromDate - From date
@@ -289,11 +309,17 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?
-                   AND level LIKE ?`
+                 AND level LIKE ?`
   const stmt = await database.prepare(query)
   return stmt.all(fromDate, toDate, verbosity)
 }
 
+const addLog = async (database, timestamp, level, message) => {
+  const query = `INSERT INTO ${LOGS_TABLE_NAME} (timestamp, level, message) 
+                 VALUES (?, ?, ?)`
+  const stmt = await database.prepare(query)
+  await stmt.run(timestamp, level, message)
+}
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -311,5 +337,7 @@ module.exports = {
   getRawFileModifyTime,
   upsertConfig,
   getConfig,
+  createLogsDatabase,
   getLogs,
+  addLog,
 }

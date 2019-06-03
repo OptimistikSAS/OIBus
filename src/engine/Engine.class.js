@@ -29,9 +29,9 @@ const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
 
 /**
- * Class Engine :
- * - at startup, handles initialization of applications, protocols and config.
- * - allows to manage the bus for every EventEmitter of protocol and EventListener of application.
+ *
+ * at startup, handles initialization of applications, protocols and config.
+ * @class Engine
  */
 class Engine {
   /**
@@ -50,31 +50,46 @@ class Engine {
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
-
     // Configure the Cache
     this.cache = new Cache(this)
-
+    this.logger.info(`
+    Starting Engine ${VERSION}
+    architecture: ${process.arch}
+    This platform is ${process.platform}
+    Current directory: ${process.cwd()}
+    Version Node: ${process.version}
+    cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
     // Check for private key
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
-    encryptionService.checkOrCreatePrivateKey(this.keyFolder)
+    encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
 
     // prepare config
+    // Associate the scanMode to all it's corresponding data sources
+    // so the engine will know which datasource to activate when a
+    // scanMode has a tick.
+
     // initialize the scanLists with empty arrays
     this.scanLists = {}
     this.config.engine.scanModes.forEach(({ scanMode }) => {
       this.scanLists[scanMode] = []
     })
 
+    // browse config file for the various dataSource and points
     this.config.south.dataSources.forEach((dataSource) => {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
-          if (this.scanLists[dataSource.scanMode] && !this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+          if (!this.scanLists[dataSource.scanMode]) {
+            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
+          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+            // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
         } else {
           dataSource.points.forEach((point) => {
-            // Associate the scanMode to all it's corresponding data sources
-            if (this.scanLists[point.scanMode] && !this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+            if (!this.scanLists[point.scanMode]) {
+              this.logger.error(` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
+            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+              // add the source for this scan only if not already there
               this.scanLists[point.scanMode].push(dataSource.dataSourceId)
             }
           })
@@ -124,7 +139,8 @@ class Engine {
    */
   sendValues(applicationId, values) {
     return new Promise((resolve) => {
-      this.activeApis[applicationId].handleValues(values)
+      this.activeApis[applicationId]
+        .handleValues(values)
         .then(() => {
           resolve(true)
         })
@@ -154,19 +170,6 @@ class Engine {
   }
 
   /**
-   * Register the callback function to the event listener
-   * @param {String} eventName - The name of the event
-   * @param {Function} callback - The callback function
-   * @return {void}
-   * @memberof Engine
-   */
-  register(eventName, callback) {
-    this.bus.on(eventName, (args) => {
-      callback(args)
-    })
-  }
-
-  /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
    * @return {void}
@@ -186,7 +189,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          throw new Error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
+          this.logger.error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
         }
       }
     })
@@ -202,7 +205,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          throw new Error(`API for ${applicationId} is not supported : ${api}`)
+          this.logger.error(`API for ${applicationId} is not supported : ${api}`)
         }
       }
     })
@@ -219,12 +222,12 @@ class Engine {
         })
       })
       if (job.result !== 'ok') {
-        throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
+        this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
       } else {
         this.jobs.push(job.id)
       }
     })
-    this.logger.info(`OIBus version ${VERSION} started`)
+    this.logger.info('OIBus started')
   }
 
   /**
@@ -269,7 +272,6 @@ class Engine {
    */
   getNorthSchemaList() {
     this.logger.debug('Getting North applications')
-
     return Object.keys(apiList)
   }
 
@@ -279,7 +281,6 @@ class Engine {
    */
   getSouthSchemaList() {
     this.logger.debug('Getting South protocols')
-
     return Object.keys(protocolList)
   }
 
