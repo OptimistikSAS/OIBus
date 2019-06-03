@@ -45,21 +45,6 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          OPCUAnodeId: {
-            type: 'object',
-            title: 'OPCUA Node ID',
-            properties: {
-              ns: {
-                type: 'number',
-                title: 'NS',
-              },
-              s: {
-                type: 'string',
-                title: 'S',
-                default: 'Counter1',
-              },
-            },
-          },
           pointId: {
             title: 'Point ID',
             type: 'string',
@@ -68,6 +53,15 @@ module.exports = {
             title: 'Scan Mode',
             type: 'string',
             default: 'everySecond',
+          },
+          ns: {
+            type: 'number',
+            title: 'NS',
+          },
+          s: {
+            type: 'string',
+            title: 'S',
+            default: 'Counter1',
           },
         },
       },
