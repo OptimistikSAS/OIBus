@@ -1,3 +1,5 @@
+const pointService = require('../../services/point.service')
+
 /**
  * Get points for a given South.
  * @param {object} ctx - The KOA context
@@ -131,12 +133,18 @@ const deleteAllPoints = (ctx) => {
  * @param {string} ctx.params.dataSourceId - The data source ID
  * @return {void}
  */
-const exportPoints = (ctx) => {
+const exportPoints = async (ctx) => {
   if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
-  ctx.ok()
+  try {
+    const points = ctx.app.engine.getPointsForSouth(ctx.params.dataSourceId)
+    const csv = await pointService.exportToCSV(points)
+    ctx.ok(csv)
+  } catch (error) {
+    ctx.throw(500, 'Unable to export points')
+  }
 }
 
 /**
