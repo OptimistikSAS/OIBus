@@ -89,7 +89,7 @@ class Modbus extends ProtocolHandler {
       .then(({ response }) => {
         const timestamp = new Date().getTime()
         points.forEach((point) => {
-          const position = parseInt(point.Modbus.address, 16) - startAddress - 1
+          const position = parseInt(point.address, 16) - startAddress - 1
           let data = response.body.valuesAsArray[position]
           switch (point.type) {
             case 'boolean':

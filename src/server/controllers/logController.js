@@ -11,8 +11,10 @@ const databaseService = require('../../services/database.service')
  */
 const getLogs = async (ctx) => {
   const databasePath = ctx.app.engine.config.engine.logParameters.sqliteFilename
-  const fromDate = ctx.query.fromDate || new Date().getTime() - 24 * 3600 * 1000
-  const toDate = ctx.query.toDate || new Date().getTime()
+  const now = Date.now()
+  const dayAgo = new Date(now - 86400000)
+  const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
+  const toDate = ctx.query.toDate || new Date(now).toISOString()
   const verbosity = ctx.query.verbosity || '%'
 
   const logs = await databaseService.getLogs(databasePath, fromDate, toDate, verbosity)

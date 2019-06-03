@@ -41,7 +41,7 @@ class RawFile extends ProtocolHandler {
   onScan(_scanMode) {
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
-      this.logger.info(`The input folder ${this.inputFolder} doesn't exist.`)
+      this.logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
       return
     }
 
