@@ -43,16 +43,6 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          MQTT: {
-            type: 'object',
-            title: 'MQTT',
-            properties: {
-              topic: {
-                type: 'string',
-                title: 'Topic',
-              },
-            },
-          },
           pointId: {
             title: 'Point ID',
             type: 'string',
@@ -65,6 +55,10 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
+          },
+          topic: {
+            type: 'string',
+            title: 'Topic',
           },
         },
       },

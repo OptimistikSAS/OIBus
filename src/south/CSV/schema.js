@@ -50,20 +50,6 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          CSV: {
-            type: 'object',
-            title: 'CSV',
-            properties: {
-              value: {
-                type: 'string', // TODO: Multiple types
-                title: 'Value',
-              },
-              quality: {
-                type: 'string', // TODO: Multiple types
-                title: 'Quality',
-              },
-            },
-          },
           pointId: {
             title: 'Point ID',
             type: 'string',
@@ -71,6 +57,14 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
+          },
+          value: {
+            type: 'string', // TODO: Multiple types
+            title: 'Value',
+          },
+          quality: {
+            type: 'string', // TODO: Multiple types
+            title: 'Quality',
           },
         },
       },

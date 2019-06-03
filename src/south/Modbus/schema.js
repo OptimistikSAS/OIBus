@@ -32,20 +32,6 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          Modbus: {
-            type: 'object',
-            title: 'Modbus',
-            properties: {
-              address: {
-                type: 'string',
-                title: 'Address',
-              },
-              type: {
-                type: 'string',
-                title: 'Type',
-              },
-            },
-          },
           pointId: {
             title: 'Point ID',
             type: 'string',
@@ -53,6 +39,14 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
+          },
+          address: {
+            type: 'string',
+            title: 'Address',
+          },
+          type: {
+            type: 'string',
+            title: 'Type',
           },
         },
       },

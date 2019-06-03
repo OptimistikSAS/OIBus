@@ -111,20 +111,16 @@
                 "hasFirstLine": true,
                 "points": [
                     {
-                        "CSV": {
-                            "value": "sensor1-value",
-                            "quality": "sensor1-quality"
-                        },
                         "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "every20Second"
+                        "scanMode": "every20Second",
+                        "value": "sensor1-value",
+                        "quality": "sensor1-quality"
                     },
                     {
-                        "CSV": {
-                            "value": 3,
-                            "quality": 4
-                        },
                         "pointId": "/fttest.base/Tank 6.tank/333333.temperature",
-                        "scanMode": "every20Second"
+                        "scanMode": "every20Second",
+                        "value": 3,
+                        "quality": 4
                     }
                 ]
             },
@@ -139,19 +135,15 @@
                 "password": "nDpvYGwXKU3DMFt7/wj+IFWVB120HWO6SPdA0EwMRfWTQCG+KXjCQyTR84aIzBRkP4x0ZKAnOuXrUSKqkmoFnpkOFPvHF3hxICc8YI4Pyh/QYs+2Tyh0cFVj5PSixwBRMuHHDZ1na1HqYdKw6cq+07lNzaAVu5vI09GYqU/wJPuAO9mcRu+SLHLS1hu0lYV8bYMS/jD+BFXLEWVls4RHNOi2gHzel6H9ALlby5SLZQq774+vkPhVQay9x1yLiV3S5hU4HhQDElss+QdGnbLusRvmB2P37GO8/DV+zKptwtGbH26lmwxIyuaYrR+QKSCwdRUpm/adCMeJqECFNrajby8T8bZYNfi5xvF2EEZ+/2DklnNJi+XiyITYwDBjkhz2rPYy8Q8tq9efEIudENDzCtYukJ1BM1Jg6amdXbh18KxU2zGRsWfSQd9b3LWlz/YMdDu1FfYqeMmqmYZjoLrFBkZM3M4cA8NKMfJZbtxd4Menz95JNQROVe3UIqOsj62fIl53OiQc19fnXS2YHfFE4pSsol0SpyFGGVq0fgqfJGDTOzi2ojqwR+tGttigpqliVAmeVW8Nk5hFqLLl10YCjW2rmWCn5UaFEaH5hGmk3+8XSzRIz2VI0tpD+w1u2DGcgcvbQrYhS4EI/26q63MKN198p/1AVtweZXtuhnpQOc4=",
                 "points": [
                     {
-                        "MQTT": {
-                            "topic": "temperatureTank1"
-                        },
                         "pointId": "/fttest.base/Tank 5.tank/Sensor22.temperature",
                         "doNotGroup": true,
-                        "scanMode": "listen"
+                        "scanMode": "listen",
+                        "topic": "temperatureTank1"
                     },
                     {
-                        "MQTT": {
-                            "topic": "temperatureTank2"
-                        },
                         "pointId": "/fttest.base/Tank 6.tank/Sensor23.temperature",
-                        "scanMode": "listen"
+                        "scanMode": "listen",
+                        "topic": "temperatureTank2"
                     }
                 ]
             },
@@ -166,20 +158,16 @@
                 "timeOrigin": "server",
                 "points": [
                     {
-                        "OPCUA": {
-                            "ns": "5",
-                            "s": "Counter1"
-                        },
                         "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "ns": "5",
+                        "s": "Counter1"
                     },
                     {
-                        "OPCUA": {
-                            "ns": "5",
-                            "s": "Random1"
-                        },
                         "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "everyNoon"
+                        "scanMode": "everyNoon",
+                        "ns": "5",
+                        "s": "Random1"
                     }
                 ]
             },
@@ -193,12 +181,10 @@
                 "endPoint": "Server/Simulation",
                 "points": [
                     {
-                        "OPCUA": {
-                            "ns": "5",
-                            "s": "Sinusoid1"
-                        },
                         "pointId": "/fttest.base/Tank 9.tank/333333.temperature",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "ns": "5",
+                        "s": "Sinusoid1"
                     }
                 ]
             },
@@ -214,44 +200,34 @@
                 "port": 502,
                 "points": [
                     {
-                        "Modbus": {
-                            "address": "0x0031",
-                            "type": "coil"
-                        },
                         "pointId": "/fttest.base/Tank 3.tank/333333.fill_level",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x0031",
+                        "type": "coil"
                     },
                     {
-                        "Modbus": {
-                            "address": "0x0f8",
-                            "type": "holdingRegister"
-                        },
                         "pointId": "/fttest.base/Tank 2.tank/222222.valve_state",
-                        "scanMode": "everyNoon"
+                        "scanMode": "everyNoon",
+                        "address": "0x0f8",
+                        "type": "holdingRegister"
                     },
                     {
-                        "Modbus": {
-                            "address": "0x76a0",
-                            "type": "coil"
-                        },
                         "pointId": "/fttest.base/Tank 2.tank/222222.fill_level",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x76a0",
+                        "type": "coil"
                     },
                     {
-                        "Modbus": {
-                            "address": "0x76b0",
-                            "type": "coil"
-                        },
                         "pointId": "/fttest.base/Tank 2.tank/222333.fill_level",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x76b0",
+                        "type": "coil"
                     },
                     {
-                        "Modbus": {
-                            "address": "0x83a6",
-                            "type": "coil"
-                        },
                         "pointId": "/fttest.base/Tank 3.tank/111111.valve_state",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x83a6",
+                        "type": "coil"
                     }
                 ]
             },
@@ -267,20 +243,16 @@
                 "port": 502,
                 "points": [
                     {
-                        "Modbus": {
-                            "address": "0x0f",
-                            "type": "coil"
-                        },
                         "pointId": "/fttest.base/Tank4.tank/111111.fill_level",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x0f",
+                        "type": "coil"
                     },
                     {
-                        "Modbus": {
-                            "address": "0x20",
-                            "type": "holdingRegister"
-                        },
                         "pointId": "/fttest.base/Tank4.tank/111111.flow_rate",
-                        "scanMode": "everySecond"
+                        "scanMode": "everySecond",
+                        "address": "0x20",
+                        "type": "holdingRegister"
                     }
                 ]
             },
