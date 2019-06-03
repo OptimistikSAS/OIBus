@@ -140,8 +140,8 @@ const exportPoints = async (ctx) => {
 
   try {
     const points = ctx.app.engine.getPointsForSouth(ctx.params.dataSourceId)
-    const csv = await pointService.exportToCSV(points)
-    ctx.ok(csv)
+    ctx.set('Content-disposition', `attachment; filename=${ctx.params.dataSourceId}.csv`)
+    ctx.body = await pointService.exportToCSV(points)
   } catch (error) {
     ctx.throw(500, 'Unable to export points')
   }
