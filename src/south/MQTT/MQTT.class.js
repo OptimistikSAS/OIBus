@@ -22,7 +22,7 @@ class MQTT extends ProtocolHandler {
       { port, username, password: Buffer.from(password) },
     )
     points.forEach((point) => {
-      const { MQTT: { topic } = {}, pointId, doNotGroup = false } = point
+      const { topic, pointId, doNotGroup = false } = point
       this.client.on('connect', () => {
         this.client.subscribe(topic, (error) => {
           if (error) {
