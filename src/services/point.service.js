@@ -1,3 +1,5 @@
+const { Readable } = require('stream')
+
 const csv = require('fast-csv')
 
 /**
@@ -6,15 +8,21 @@ const csv = require('fast-csv')
  * @returns {Promise<*>} - The result
  */
 const exportToCSV = async points => new Promise((resolve, reject) => {
+  const options = {
+    headers: true,
+    delimiter: ';',
+  }
   csv.writeToString(
     points,
-    { headers: true },
+    options,
     (error, data) => {
       if (error) {
         reject(error)
       } else {
-        console.info(data)
-        resolve(data)
+        const stream = new Readable()
+        stream.push(data)
+        stream.push(null)
+        resolve(stream)
       }
     },
   )
