@@ -72,9 +72,9 @@ const groupAddresses = (array, key, groupSize) => {
 const optimizedConfig = (dataSource) => {
   const scanModes = groupBy(dataSource.points, 'scanMode' /* , { dataSourceId } */)
   Object.keys(scanModes).forEach((scan) => {
-    scanModes[scan] = groupBy(scanModes[scan], 'Modbus.type')
+    scanModes[scan] = groupBy(scanModes[scan], 'type')
     Object.keys(scanModes[scan]).forEach((type) => {
-      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'Modbus.address', dataSource.addressGap[type])
+      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'address', dataSource.addressGap[type])
     })
   })
   /*
