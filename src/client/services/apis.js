@@ -93,6 +93,11 @@ const updateSouth = (dataSourceId, body) => putRequest(`/config/south/${dataSour
 const deleteSouth = dataSourceId => deleteRequest(`/config/south/${dataSourceId}`)
 const updateEngine = body => putRequest('/config/engine', body)
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=${verbosity}`)
+const getPoints = dataSourceId => getRequest(`/config/south/${dataSourceId}/points`)
+const addPoint = (dataSourceId, body) => postRequest(`/config/south/${dataSourceId}/points`, body)
+const updatePoint = (dataSourceId, pointId, body) => putRequest(`/config/south/${dataSourceId}/points/${encodeURIComponent(pointId)}`, body)
+const deletePoint = (dataSourceId, pointId) => deleteRequest(`/config/south/${dataSourceId}/points/${encodeURIComponent(pointId)}`)
+const deleteAllPoints = dataSourceId => deleteRequest(`/config/south/${dataSourceId}/points`)
 
 export default {
   getSouthProtocols,
@@ -111,4 +116,9 @@ export default {
   deleteSouth,
   updateEngine,
   getLogs,
+  getPoints,
+  addPoint,
+  updatePoint,
+  deletePoint,
+  deleteAllPoints,
 }
