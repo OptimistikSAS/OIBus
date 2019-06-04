@@ -516,6 +516,19 @@ class Engine {
   }
 
   /**
+   * Set points for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {object[]} points - The points to set
+   * @returns {void}
+   */
+  setSouthPoints(dataSourceId, points) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource) {
+      dataSource.points = points
+    }
+  }
+
+  /**
    * Activate the configuration
    * @returns {void}
    */
