@@ -8,10 +8,7 @@ const csv = require('fast-csv')
  * @returns {Promise<*>} - The result
  */
 const exportToCSV = async points => new Promise((resolve, reject) => {
-  const options = {
-    headers: true,
-    delimiter: ';',
-  }
+  const options = { headers: true }
   csv.writeToString(
     points,
     options,
@@ -31,12 +28,23 @@ const exportToCSV = async points => new Promise((resolve, reject) => {
 /**
  * Import points configuration from CSV.
  * @param {string} csvContent - The CSV content
- * @returns {object[]} - The points
+ * @returns {Promise<*>} - The result
  */
-const importFromCSV = (csvContent) => {
-  console.info(csvContent)
-  return []
-}
+const importFromCSV = async csvContent => new Promise((resolve) => {
+  const points = []
+  const options = {
+    headers: true,
+    strictColumnHandling: true,
+  }
+  csv
+    .fromString(csvContent, options)
+    .on('data', (csvObjects) => {
+      points.push(csvObjects)
+    })
+    .on('end', () => {
+      resolve(points)
+    })
+})
 
 module.exports = {
   exportToCSV,
