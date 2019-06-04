@@ -164,7 +164,7 @@ const importPoints = async (ctx) => {
   try {
     const points = await pointService.importFromCSV(ctx.request.body)
     ctx.app.engine.setSouthPoints(ctx.params.dataSourceId, points)
-    ctx.ok()
+    ctx.body = points
   } catch (error) {
     ctx.throw(500, 'Unable to import points')
   }
