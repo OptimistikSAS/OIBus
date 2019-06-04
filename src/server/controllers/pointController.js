@@ -152,14 +152,22 @@ const exportPoints = async (ctx) => {
  * @param {object} ctx - The KOA context
  * @param {object} ctx.params - The request parameters
  * @param {string} ctx.params.dataSourceId - The data source ID
+ * @param {object} ctx.request - The request object
+ * @param {string} ctx.request.body - The request body
  * @return {void}
  */
-const importPoints = (ctx) => {
+const importPoints = async (ctx) => {
   if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
-  ctx.ok()
+  try {
+    const points = await pointService.importFromCSV(ctx.request.body)
+    ctx.app.engine.setSouthPoints(ctx.params.dataSourceId, points)
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to import points')
+  }
 }
 
 module.exports = {
