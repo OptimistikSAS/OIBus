@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button } from 'reactstrap'
+import { Button, Input } from 'reactstrap'
 import Form from 'react-jsonschema-form-bs4'
 import Table from '../client/components/table/Table.jsx'
 import Modal from '../client/components/Modal.jsx'
@@ -144,6 +144,45 @@ const ConfigureProtocol = ({ match, location }) => {
     } catch (error) {
       console.error(error)
     }
+  }
+
+  /**
+   * Read content of file as text
+   * @param {Object} file the file returned by input
+   * @returns {void}
+   */
+  const readFileContent = async file => new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.readAsText(file)
+    reader.onload = () => {
+      resolve(reader.result)
+    }
+  })
+
+  /**
+   * Send the imported file content to the backend
+   * @param {Object} file the file returned by input
+   * @returns {void}
+   */
+  const handleImportPoints = async (file) => {
+    const text = await readFileContent(file)
+    const { datasourceid } = match.params
+    try {
+      await apis.importPoints(datasourceid, text).then((points) => {
+        setPointsJson(points)
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  /**
+   * Download export file of points
+   * @returns {void}
+   */
+  const handleExportPoints = () => {
+    const { datasourceid } = match.params
+    apis.exportAllPoints(datasourceid)
   }
 
   /**
@@ -291,6 +330,23 @@ const ConfigureProtocol = ({ match, location }) => {
       <div className="force-row-display">
         <Button className="inline-button" color="primary" onClick={() => setAddingPoint({})}>
               Add
+        </Button>
+        <Button
+          className="inline-button"
+          color="primary"
+          onClick={() => document.getElementById('importFile').click()}
+        >
+              Import
+        </Button>
+        <Input
+          type="file"
+          id="importFile"
+          accept=".csv, text/plain"
+          hidden
+          onChange={event => handleImportPoints(event.target.files[0])}
+        />
+        <Button className="inline-button" color="primary" onClick={handleExportPoints}>
+              Export
         </Button>
         <Modal show={false} title="Delete All Points" body="Are you sure you want to delete All Points from this Data Source?">
           {confirm => (
