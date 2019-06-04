@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { Button, Input } from 'reactstrap'
 import Form from 'react-jsonschema-form-bs4'
 import Table from '../client/components/table/Table.jsx'
+import TablePagination from '../client/components/table/TablePagination.jsx'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 
@@ -14,6 +15,11 @@ const ConfigureProtocol = ({ match, location }) => {
   const [engineJson, setEngineJson] = React.useState()
   const [editingPoint, setEditingPoint] = React.useState()
   const [addingPoint, setAddingPoint] = React.useState()
+  const [selectedPage, setSelectedPage] = React.useState(1)
+  // max points on one page
+  const maxOnPage = 10
+  // this value will be used to calculate the amount of max pagination displayed
+  const maxPaginationDisplay = 11
 
   /**
    * Sets the points schema JSON
@@ -327,6 +333,14 @@ const ConfigureProtocol = ({ match, location }) => {
   const renderTable = (tableHeaders, tableRows) => (
     <div>
       <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
+      {pointsJson.length ? (
+        <TablePagination
+          maxToDisplay={maxPaginationDisplay}
+          selected={selectedPage}
+          total={Math.ceil(pointsJson.length / maxOnPage)}
+          onPagePressed={page => setSelectedPage(page)}
+        />
+      ) : null}
       <div className="force-row-display">
         <Button className="inline-button" color="primary" onClick={() => setAddingPoint({})}>
               Add
@@ -363,7 +377,12 @@ const ConfigureProtocol = ({ match, location }) => {
 
   // configure table header and rows
   const tableHeaders = createTableHeader(configPoint, true)
-  const tableRows = pointsJson.map((point, index) => createTableRow(configPoint, point, index, true))
+  // const tableRows = pointsJson.map((point, index) => createTableRow(configPoint, point, index, true))
+  const pagedPointsJson = pointsJson.filter((_, index) => (
+    index >= selectedPage * maxOnPage - maxOnPage && index < selectedPage * maxOnPage
+  ))
+  const tableRows = pagedPointsJson.map((point, index) => createTableRow(configPoint, point, index, true))
+
   return (
     <>
       {editingPoint || addingPoint
