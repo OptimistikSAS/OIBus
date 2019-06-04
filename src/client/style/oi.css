@@ -162,6 +162,10 @@ label {
   margin-right: .5rem;
 }
 
+.pagination-cell {
+  width: 39px;
+}
+
 /* spinner container */
 .spinner-container {
   position: absolute;
