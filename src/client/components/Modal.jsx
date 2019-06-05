@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Modal as BsModal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
-const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
+const Modal = ({ children, show, title, body, acceptLabel, denyLabel, acceptColor }) => {
   const [open, setOpen] = React.useState(show)
   const [callback, setCallback] = React.useState(null)
 
@@ -43,7 +43,7 @@ const Modal = ({ children, show, title, body, acceptLabel, denyLabel }) => {
         <ModalHeader toggle={hideModal}>{title}</ModalHeader>
         <ModalBody>{body}</ModalBody>
         <ModalFooter>
-          <Button color="primary" onClick={confirm}>
+          <Button color={acceptColor} onClick={confirm}>
             {acceptLabel}
           </Button>
           {' '}
@@ -62,10 +62,12 @@ Modal.propTypes = {
   acceptLabel: PropTypes.string,
   denyLabel: PropTypes.string,
   children: PropTypes.func.isRequired,
+  acceptColor: PropTypes.string,
 }
 
 Modal.defaultProps = {
   acceptLabel: 'Confirm',
   denyLabel: 'Cancel',
+  acceptColor: 'primary',
 }
 export default Modal
