@@ -431,6 +431,105 @@ class Engine {
   }
 
   /**
+   * Get points for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @returns {object} - The points
+   */
+  getPointsForSouth(dataSourceId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(elem => elem.dataSourceId === dataSourceId)
+
+    if (dataSource && dataSource.points) {
+      return dataSource.points
+    }
+
+    return {}
+  }
+
+  /**
+   * Check whether the given South already has a point with the given point ID.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point ID
+   * @returns {boolean} - Whether the given South has a point with the given point ID
+   */
+  hasSouthPoint(dataSourceId, pointId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+
+    if (dataSource && dataSource.points) {
+      return dataSource.points.find(elem => elem.pointId === pointId)
+    }
+
+    return false
+  }
+
+  /**
+   * Add new point for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {object} point - The point to add
+   * @returns {void}
+   */
+  addSouthPoint(dataSourceId, point) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points.push(point)
+    }
+  }
+
+  /**
+   * Update point for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point to update
+   * @param {object} point - The updated point
+   * @returns {void}
+   */
+  updateSouthPoint(dataSourceId, pointId, point) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      const index = dataSource.points.findIndex(element => element.pointId === pointId)
+      if (index > -1) {
+        dataSource.points[index] = point
+      }
+    }
+  }
+
+  /**
+   * Delete point from a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point ID to delete
+   * @returns {void}
+   */
+  deleteSouthPoint(dataSourceId, pointId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points = dataSource.points.filter(point => point.pointId !== pointId)
+    }
+  }
+
+  /**
+   * Delete all points from a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @returns {void}
+   */
+  deleteSouthPoints(dataSourceId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points = []
+    }
+  }
+
+  /**
+   * Set points for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {object[]} points - The points to set
+   * @returns {void}
+   */
+  setSouthPoints(dataSourceId, points) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource) {
+      dataSource.points = points
+    }
+  }
+
+  /**
    * Activate the configuration
    * @returns {void}
    */
