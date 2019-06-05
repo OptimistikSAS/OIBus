@@ -477,13 +477,14 @@ class Engine {
   /**
    * Update point for a given South.
    * @param {string} dataSourceId - The South to get the points for
-   * @param {object} point - The point to update
+   * @param {string} pointId - The point to update
+   * @param {object} point - The updated point
    * @returns {void}
    */
-  updateSouthPoint(dataSourceId, point) {
+  updateSouthPoint(dataSourceId, pointId, point) {
     const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
     if (dataSource && dataSource.points) {
-      const index = dataSource.points.findIndex(element => element.pointId === point.pointId)
+      const index = dataSource.points.findIndex(element => element.pointId === pointId)
       if (index > -1) {
         dataSource.points[index] = point
       }
