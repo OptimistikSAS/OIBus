@@ -21,6 +21,14 @@ const getRequest = async (uri) => {
   }
 }
 
+const downloadFileRequest = async (uri) => {
+  const link = document.createElement('a')
+  link.href = uri
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 const postRequest = async (uri, body) => {
   try {
     const response = await fetch(uri, {
@@ -35,6 +43,25 @@ const postRequest = async (uri, body) => {
       throw new Error(response.status)
     }
     return response
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const postTextRequest = async (uri, body) => {
+  try {
+    const response = await fetch(uri, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'text/plain',
+      },
+      body,
+    })
+    if (response.status !== 200) {
+      throw new Error(response.status)
+    }
+    return handleResponse(response)
   } catch (error) {
     throw new Error(error)
   }
@@ -93,6 +120,13 @@ const updateSouth = (dataSourceId, body) => putRequest(`/config/south/${dataSour
 const deleteSouth = dataSourceId => deleteRequest(`/config/south/${dataSourceId}`)
 const updateEngine = body => putRequest('/config/engine', body)
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=${verbosity}`)
+const getPoints = dataSourceId => getRequest(`/config/south/${dataSourceId}/points`)
+const addPoint = (dataSourceId, body) => postRequest(`/config/south/${dataSourceId}/points`, body)
+const updatePoint = (dataSourceId, pointId, body) => putRequest(`/config/south/${dataSourceId}/points/${encodeURIComponent(pointId)}`, body)
+const deletePoint = (dataSourceId, pointId) => deleteRequest(`/config/south/${dataSourceId}/points/${encodeURIComponent(pointId)}`)
+const deleteAllPoints = dataSourceId => deleteRequest(`/config/south/${dataSourceId}/points`)
+const exportAllPoints = dataSourceId => downloadFileRequest(`/config/south/${dataSourceId}/points/export`)
+const importPoints = (dataSourceId, body) => postTextRequest(`/config/south/${dataSourceId}/points/import`, body)
 
 export default {
   getSouthProtocols,
@@ -111,4 +145,11 @@ export default {
   deleteSouth,
   updateEngine,
   getLogs,
+  getPoints,
+  addPoint,
+  updatePoint,
+  deletePoint,
+  deleteAllPoints,
+  exportAllPoints,
+  importPoints,
 }

@@ -73,6 +73,20 @@ const South = ({ history }) => {
   }
 
   /**
+   * Handles the edit of points and redirects the
+   * user to the selected south data source's points page
+   * @param {string} dataSourceId The id to edit
+   * @return {void}
+   */
+  const handleEditPoints = (dataSourceId) => {
+    const dataSourceIndex = getDataSourceIndex(dataSourceId)
+    if (dataSourceIndex === -1) return
+    const formData = dataSources[dataSourceIndex]
+    const link = `/south/${formData.protocol}/${formData.dataSourceId}/points`
+    history.push({ pathname: link, configEngine })
+  }
+
+  /**
    * Handles the edit of data source and redirects the
    * user to the selected south data source's configuration page
    * @param {string} dataSourceId The id to edit
@@ -124,8 +138,8 @@ const South = ({ history }) => {
     }
   }
 
-  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', '']
-  const tableRows = dataSources.map(({ dataSourceId, enabled, protocol }) => [
+  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']
+  const tableRows = dataSources.map(({ dataSourceId, enabled, protocol, points }) => [
     { name: 'id', value: dataSourceId },
     {
       name: 'enabled',
@@ -143,9 +157,25 @@ const South = ({ history }) => {
     },
     { name: 'protocol', value: protocol },
     {
+      name: 'points',
+      value: (
+        <div>
+          <Button className="inline-button autosize" color={points ? 'success' : 'primary'} onClick={() => handleEditPoints(dataSourceId)}>
+            {`Points ${points ? `(${points.length})` : '(0)'}`}
+          </Button>
+        </div>
+      ),
+    },
+    {
       name: 'delete',
       value: (
-        <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
+        <Modal
+          show={false}
+          title="Delete Data Source"
+          body="Are you sure you want to delete this Data Source?"
+          acceptLabel="Delete"
+          acceptColor="danger"
+        >
           {confirm => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(dataSourceId)}>

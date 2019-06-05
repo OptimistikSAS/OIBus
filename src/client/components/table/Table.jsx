@@ -13,7 +13,7 @@ const Table = ({ headers, rows, onRowClick }) => (
 )
 
 Table.propTypes = {
-  headers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  headers: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   onRowClick: PropTypes.func.isRequired,
 }

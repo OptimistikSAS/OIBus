@@ -131,7 +131,13 @@ const North = ({ history }) => {
     {
       name: 'delete',
       value: (
-        <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
+        <Modal
+          show={false}
+          title="Delete application"
+          body="Are you sure you want to delete this application?"
+          acceptLabel="Delete"
+          acceptColor="danger"
+        >
           {confirm => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(applicationId)}>
