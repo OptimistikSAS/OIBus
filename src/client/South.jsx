@@ -160,7 +160,7 @@ const South = ({ history }) => {
       name: 'points',
       value: (
         <div>
-          <Button className="inline-button autosize" color="primary" onClick={() => handleEditPoints(dataSourceId)}>
+          <Button className="inline-button autosize" color={points ? 'success' : 'primary'} onClick={() => handleEditPoints(dataSourceId)}>
             {`Points ${points ? `(${points.length})` : '(0)'}`}
           </Button>
         </div>
@@ -169,7 +169,13 @@ const South = ({ history }) => {
     {
       name: 'delete',
       value: (
-        <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
+        <Modal
+          show={false}
+          title="Delete Data Source"
+          body="Are you sure you want to delete this Data Source?"
+          acceptLabel="Delete"
+          acceptColor="danger"
+        >
           {confirm => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(dataSourceId)}>

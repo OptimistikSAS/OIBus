@@ -236,13 +236,14 @@ const ConfigureProtocol = ({ match, location }) => {
    * create the array with title for the table header
    * this function is recursive, it will work recursiveli once the schema has objects
    * @param {Object} config of the points from the protocol
-   * @param {boolean} withAddons add addons before actual data
+   * @param {boolean} withBeginAddons add addons before actual data
+   * @param {boolean} withEndAddons add addons after actual data
    * like: Index, action buttons etc.
    * @returns {Array} the titles for columns (headers)
    */
-  const createTableHeader = (config, withAddons = false) => {
+  const createTableHeader = (config, withBeginAddons = false, withEndAddons = false) => {
     const keys = Object.keys(config)
-    let titles = withAddons ? ['Index', 'Actions'] : []
+    let titles = withBeginAddons ? ['Index'] : []
     keys.forEach((key) => {
       if (config[key].type !== 'object') {
         titles.push(
@@ -261,6 +262,7 @@ const ConfigureProtocol = ({ match, location }) => {
         titles = titles.concat(createTableHeader(config[key].properties))
       }
     })
+    titles = titles.concat(withEndAddons ? ['Actions'] : [])
     return titles
   }
 
@@ -281,9 +283,9 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {void}
    */
   const createActions = point => (
-    <Modal show={false} title="Delete Point" body="Are you sure you want to delete this Point?">
+    <Modal show={false} title="Delete Point" body="Are you sure you want to delete this Point?" acceptLabel="Delete" acceptColor="danger">
       {confirm => (
-        <div>
+        <div className="force-row-display ">
           <Button className="inline-button" color="primary" onClick={() => setEditingPoint(point)}>
             Edit
           </Button>
@@ -296,15 +298,23 @@ const ConfigureProtocol = ({ match, location }) => {
   )
 
   /**
-   * create addons array, to be displayed on each row
+   * create addons array, to be displayed on begining of each row
    * @param {number} index index of the row
    * @returns {array} array with name-value for the addons
    */
-  const createAddons = index => [
+  const createBeginAddons = index => [
     {
       name: 'index',
       value: selectedPage * maxOnPage - maxOnPage + index + 1,
     },
+  ]
+
+  /**
+   * create addons array, to be displayed on end of each row
+   * @param {number} index index of the row
+   * @returns {array} array with name-value for the addons
+   */
+  const createEndAddons = index => [
     {
       name: 'actions',
       value: createActions(filteredPointsJson[selectedPage * maxOnPage - maxOnPage + index]),
@@ -317,12 +327,13 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {Object} config of the points from the protocol
    * @param {Object} point data of one point
    * @param {number} index index of the row
-   * @param {boolean} addAddons flag to add row addons
+   * @param {boolean} addBeginAddons flag to add begin row addons
+   * @param {boolean} addEndAddons flag to add end row addons
    * @returns {Array} array with name-value for the cells
    */
-  const createTableRow = (config, point, index = null, addAddons = false) => {
+  const createTableRow = (config, point, index = null, addBeginAddons = false, addEndAddons = false) => {
     const keys = Object.keys(point)
-    let row = addAddons ? createAddons(index) : []
+    let row = addBeginAddons ? createBeginAddons(index) : []
     keys.forEach((key) => {
       if (config[key]) {
         if (config[key].type !== 'object') {
@@ -335,6 +346,9 @@ const ConfigureProtocol = ({ match, location }) => {
         }
       }
     })
+    if (addEndAddons) {
+      row = row.concat(createEndAddons(index))
+    }
     return row
   }
 
@@ -437,14 +451,14 @@ const ConfigureProtocol = ({ match, location }) => {
   )
 
   // configure table header and rows
-  const tableHeaders = createTableHeader(configPoint, true)
+  const tableHeaders = createTableHeader(configPoint, true, true)
   // sorting
   const sortedPointsJson = sortBy ? filteredPointsJson.sort(utils.dynamicSort(sortBy)) : filteredPointsJson
   // paging
   const pagedPointsJson = sortedPointsJson.filter((_, index) => (
     index >= selectedPage * maxOnPage - maxOnPage && index < selectedPage * maxOnPage
   ))
-  const tableRows = pagedPointsJson.map((point, index) => createTableRow(configPoint, point, index, true))
+  const tableRows = pagedPointsJson.map((point, index) => createTableRow(configPoint, point, index, true, true))
 
   return (
     <>

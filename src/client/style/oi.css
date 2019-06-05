@@ -168,6 +168,14 @@ label {
   padding: .5rem 0;
 }
 
+.table thead th {
+  vertical-align: middle;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}
+
 /* spinner container */
 .spinner-container {
   position: absolute;
