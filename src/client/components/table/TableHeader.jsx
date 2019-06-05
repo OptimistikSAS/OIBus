@@ -5,7 +5,7 @@ const TableHeader = ({ headers }) => (
   <thead>
     <tr>
       {headers.map(header => (
-        <th key={header} scope="col">
+        <th key={typeof header === 'object' ? header.key : header} scope="col">
           {header}
         </th>
       ))}
@@ -13,6 +13,7 @@ const TableHeader = ({ headers }) => (
   </thead>
 )
 
-TableHeader.propTypes = { headers: PropTypes.PropTypes.arrayOf(PropTypes.string).isRequired }
+TableHeader.propTypes = { headers: PropTypes.PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired }
+
 
 export default TableHeader

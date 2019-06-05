@@ -1,12 +1,13 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button, Input } from 'reactstrap'
+import { Button, Input, FormGroup, Label } from 'reactstrap'
 import Form from 'react-jsonschema-form-bs4'
 import Table from '../client/components/table/Table.jsx'
 import TablePagination from '../client/components/table/TablePagination.jsx'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
+import utils from '../client/helpers/utils'
 
 const ConfigureProtocol = ({ match, location }) => {
   const [pointsJson, setPointsJson] = React.useState([])
@@ -15,7 +16,10 @@ const ConfigureProtocol = ({ match, location }) => {
   const [engineJson, setEngineJson] = React.useState()
   const [editingPoint, setEditingPoint] = React.useState()
   const [addingPoint, setAddingPoint] = React.useState()
+  const [filteredPointsJson, setFilteredPointsJson] = React.useState([])
   const [selectedPage, setSelectedPage] = React.useState(1)
+  const [sortBy, setSortBy] = React.useState()
+  const [filterText, setFilterText] = React.useState()
   // max points on one page
   const maxOnPage = 10
   // this value will be used to calculate the amount of max pagination displayed
@@ -30,6 +34,40 @@ const ConfigureProtocol = ({ match, location }) => {
     const { points } = schema.properties
     setConfigPoint(points.items.properties)
     setConfigPointSchema(points.items)
+  }
+
+  /**
+   * Update the filtered points JSON
+   * @returns {void}
+   */
+  const updateFilteredPointsJson = () => {
+    setFilteredPointsJson(
+      filterText
+        ? pointsJson.filter(point => (
+          Object.values(point).findIndex(element => (
+            element.toLowerCase().includes(filterText.toLowerCase()))) >= 0))
+        : pointsJson,
+    )
+  }
+
+  /**
+   * Sets the points JSON
+   * @param {Object} points points Json
+   * @returns {void}
+   */
+  const updatePointsJson = (points) => {
+    setPointsJson(points)
+    updateFilteredPointsJson()
+  }
+
+  /**
+   * Sets the filter text
+   * @param {string} value filter value
+   * @returns {void}
+   */
+  const updateFilterText = (value) => {
+    setFilterText(value)
+    updateFilteredPointsJson()
   }
 
   /**
@@ -63,7 +101,7 @@ const ConfigureProtocol = ({ match, location }) => {
     }
     apis.getPoints(datasourceid).then((points) => {
       if (points.length) {
-        setPointsJson(points)
+        updatePointsJson(points)
       }
     })
     apis.getSouthProtocolSchema(protocol).then((schema) => {
@@ -97,7 +135,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.deletePoint(datasourceid, pointId)
-      setPointsJson(pointsJson.filter(point => point.pointId !== pointId))
+      updatePointsJson(pointsJson.filter(point => point.pointId !== pointId))
     } catch (error) {
       console.error(error)
     }
@@ -111,7 +149,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.deleteAllPoints(datasourceid)
-      setPointsJson([])
+      updatePointsJson([])
     } catch (error) {
       console.error(error)
     }
@@ -129,7 +167,7 @@ const ConfigureProtocol = ({ match, location }) => {
       const newPoints = pointsJson.map(oldPoint => (
         oldPoint.pointId === editingPoint.pointId ? point : oldPoint
       ))
-      setPointsJson(newPoints)
+      updatePointsJson(newPoints)
       setEditingPoint()
     } catch (error) {
       console.error(error)
@@ -145,7 +183,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.addPoint(datasourceid, point)
-      setPointsJson([...pointsJson, point])
+      updatePointsJson([...pointsJson, point])
       setAddingPoint()
     } catch (error) {
       console.error(error)
@@ -175,7 +213,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.importPoints(datasourceid, text).then((points) => {
-        setPointsJson(points)
+        updatePointsJson(points)
       })
     } catch (error) {
       console.error(error)
@@ -204,7 +242,17 @@ const ConfigureProtocol = ({ match, location }) => {
     let titles = withAddons ? ['Index', 'Actions'] : []
     keys.forEach((key) => {
       if (config[key].type !== 'object') {
-        titles.push(config[key].title)
+        titles.push(
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }} key={config[key].title}>
+            <span style={{ marginRight: 5, whiteSpace: 'nowrap' }}>{config[key].title}</span>
+            <Button className="inline-button" style={{ marginRight: 5 }} color="primary" onClick={() => setSortBy(key)}>
+              ▲
+            </Button>
+            <Button className="inline-button" color="primary" onClick={() => setSortBy(`-${key}`)}>
+              ▼
+            </Button>
+          </div>,
+        )
       } else {
         // extract titles in case of object
         titles = titles.concat(createTableHeader(config[key].properties))
@@ -252,11 +300,11 @@ const ConfigureProtocol = ({ match, location }) => {
   const createAddons = index => [
     {
       name: 'index',
-      value: index + 1,
+      value: selectedPage * maxOnPage - maxOnPage + index + 1,
     },
     {
       name: 'actions',
-      value: createActions(pointsJson[index]),
+      value: createActions(pointsJson[selectedPage * maxOnPage - maxOnPage + index]),
     },
   ]
 
@@ -332,6 +380,15 @@ const ConfigureProtocol = ({ match, location }) => {
    */
   const renderTable = (tableHeaders, tableRows) => (
     <div>
+      <FormGroup>
+        <Label for="filter-text">Filter</Label>
+        <Input
+          type="text"
+          id="fromDatee"
+          placeholder="Type any points related data"
+          onChange={event => updateFilterText(event.target.value)}
+        />
+      </FormGroup>
       <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
       {pointsJson.length ? (
         <TablePagination
@@ -377,8 +434,10 @@ const ConfigureProtocol = ({ match, location }) => {
 
   // configure table header and rows
   const tableHeaders = createTableHeader(configPoint, true)
-  // const tableRows = pointsJson.map((point, index) => createTableRow(configPoint, point, index, true))
-  const pagedPointsJson = pointsJson.filter((_, index) => (
+  // sorting
+  const sortedPointsJson = sortBy ? filteredPointsJson.sort(utils.dynamicSort(sortBy)) : filteredPointsJson
+  // paging
+  const pagedPointsJson = sortedPointsJson.filter((_, index) => (
     index >= selectedPage * maxOnPage - maxOnPage && index < selectedPage * maxOnPage
   ))
   const tableRows = pagedPointsJson.map((point, index) => createTableRow(configPoint, point, index, true))

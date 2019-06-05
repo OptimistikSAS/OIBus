@@ -10,7 +10,7 @@ const TablePagination = ({ maxToDisplay, selected, total, onPagePressed }) => {
     to = total < maxToDisplay ? total : maxToDisplay
   }
   if (from - to < maxToDisplay && from !== 1) {
-    const newFrom = total - maxToDisplay + 1 >= 1
+    const newFrom = to - maxToDisplay + 1
     from = newFrom >= 1 ? newFrom : 1
   }
 

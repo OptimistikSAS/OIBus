@@ -164,6 +164,8 @@ label {
 
 .pagination-cell {
   width: 39px;
+  text-align: center;
+  padding: .5rem 0;
 }
 
 /* spinner container */
