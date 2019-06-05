@@ -47,7 +47,7 @@ const ConfigureProtocol = ({ match, location }) => {
       filter
         ? points.filter(point => (
           Object.values(point).findIndex(element => (
-            (element || '').toLowerCase().includes(filter.toLowerCase()))) >= 0))
+            element.toString().toLowerCase().includes(filter.toLowerCase()))) >= 0))
         : points,
     )
   }

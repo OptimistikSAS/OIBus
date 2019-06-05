@@ -7,9 +7,11 @@ const dynamicSort = (property) => {
   }
   return (a, b) => {
     let result
-    if (a[prop] < b[prop]) {
+    const valueA = a[prop].toString()
+    const valueB = b[prop].toString()
+    if (valueA < valueB) {
       result = -1
-    } else if (a[prop] > b[prop]) {
+    } else if (valueA > valueB) {
       result = 1
     } else {
       result = 0
