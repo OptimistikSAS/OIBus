@@ -73,7 +73,7 @@ const updatePoint = (ctx) => {
   }
 
   try {
-    ctx.app.engine.updateSouthPoint(ctx.params.dataSourceId, ctx.request.body)
+    ctx.app.engine.updateSouthPoint(ctx.params.dataSourceId, pointId, ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update point')
