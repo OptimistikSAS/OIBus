@@ -38,15 +38,17 @@ const ConfigureProtocol = ({ match, location }) => {
 
   /**
    * Update the filtered points JSON
+   * @param {Object} points points Json
+   * @param {string} filter filter value
    * @returns {void}
    */
-  const updateFilteredPointsJson = () => {
+  const updateFilteredPointsJson = (points, filter) => {
     setFilteredPointsJson(
-      filterText
-        ? pointsJson.filter(point => (
+      filter
+        ? points.filter(point => (
           Object.values(point).findIndex(element => (
-            element.toLowerCase().includes(filterText.toLowerCase()))) >= 0))
-        : pointsJson,
+            (element || '').toLowerCase().includes(filter.toLowerCase()))) >= 0))
+        : points,
     )
   }
 
@@ -57,7 +59,7 @@ const ConfigureProtocol = ({ match, location }) => {
    */
   const updatePointsJson = (points) => {
     setPointsJson(points)
-    updateFilteredPointsJson()
+    updateFilteredPointsJson(points, filterText)
   }
 
   /**
@@ -66,8 +68,9 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {void}
    */
   const updateFilterText = (value) => {
+    setSelectedPage(1)
     setFilterText(value)
-    updateFilteredPointsJson()
+    updateFilteredPointsJson(pointsJson, value)
   }
 
   /**
@@ -304,7 +307,7 @@ const ConfigureProtocol = ({ match, location }) => {
     },
     {
       name: 'actions',
-      value: createActions(pointsJson[selectedPage * maxOnPage - maxOnPage + index]),
+      value: createActions(filteredPointsJson[selectedPage * maxOnPage - maxOnPage + index]),
     },
   ]
 
@@ -385,16 +388,17 @@ const ConfigureProtocol = ({ match, location }) => {
         <Input
           type="text"
           id="fromDatee"
+          defaultValue={filterText}
           placeholder="Type any points related data"
           onChange={event => updateFilterText(event.target.value)}
         />
       </FormGroup>
       <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
-      {pointsJson.length ? (
+      {filteredPointsJson.length ? (
         <TablePagination
           maxToDisplay={maxPaginationDisplay}
           selected={selectedPage}
-          total={Math.ceil(pointsJson.length / maxOnPage)}
+          total={Math.ceil(filteredPointsJson.length / maxOnPage)}
           onPagePressed={page => setSelectedPage(page)}
         />
       ) : null}
