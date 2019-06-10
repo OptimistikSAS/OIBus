@@ -4,10 +4,10 @@ import apis from './services/apis'
 
 const Log = () => {
   const verbosityOptions = ['debug', 'info', 'warning', 'error']
-  const defaultMaxLog = 20
+  const defaultMaxLog = 50
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
-  const [verbosity, setVerbosity] = React.useState(verbosityOptions[0])
+  const [verbosity, setVerbosity] = React.useState(verbosityOptions)
   const [logs, setLogs] = React.useState()
   const [filterText, setFilterText] = React.useState('')
   const [maxLog, setMaxLog] = React.useState(defaultMaxLog)
@@ -18,11 +18,24 @@ const Log = () => {
    */
   const handleSubmit = async () => {
     try {
-      const logsResponse = await apis.getLogs(fromDate, toDate, verbosity)
+      const logsResponse = await apis.getLogs(fromDate, toDate, verbosity.join(','))
       setLogs(logsResponse)
       setMaxLog(defaultMaxLog)
     } catch (error) {
       console.error(error)
+    }
+  }
+
+  /**
+   * Handles the form's submittion and set the logs if any response
+   * @param {string} value checked/unchecled item
+   * @returns {void}
+   */
+  const handleVerbosityChange = (value) => {
+    if (verbosity.includes(value)) {
+      setVerbosity(verbosity.filter(item => item !== value))
+    } else {
+      setVerbosity([...verbosity, value])
     }
   }
 
@@ -92,12 +105,12 @@ const Log = () => {
           placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
           required
           onChange={(event) => {
-            const date = new Date(event.target.value).getTime()
+            const date = new Date(event.target.value).toISOString()
             setFromDate(date)
           }}
         />
         <FormText color="muted">
-            default: Current datetime - 24 hours
+            default: Current datetime - 24 hours (now - 24 hours)
         </FormText>
       </FormGroup>
 
@@ -110,25 +123,30 @@ const Log = () => {
           placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
           required
           onChange={(event) => {
-            const date = new Date(event.target.value).getTime()
+            const date = new Date(event.target.value).toISOString()
             setToDate(date)
           }}
         />
         <FormText color="muted">
-            default: Current datetime
+            default: Current datetime (now)
         </FormText>
       </FormGroup>
 
       <FormGroup>
         <Label for="verbosity">Verbosity</Label>
-        <Input
-          type="select"
-          name="verbosity"
-          id="verbosity"
-          onChange={event => setVerbosity(event.target.value)}
-        >
-          {verbosityOptions.map(item => <option key={item}>{item}</option>)}
-        </Input>
+        {verbosityOptions.map(item => (
+          <FormGroup check key={item}>
+            <Label check>
+              <Input
+                type="checkbox"
+                id="verbosity"
+                onChange={() => handleVerbosityChange(item)}
+                checked={verbosity.includes(item)}
+              />
+              {item}
+            </Label>
+          </FormGroup>
+        ))}
       </FormGroup>
       <Button color="primary" onClick={handleSubmit}>
         Show log
