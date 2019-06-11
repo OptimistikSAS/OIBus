@@ -16,7 +16,7 @@ const uiSchema = {
     },
     id: { 'ui:help': '' },
     frequency: { 'ui:help': <div>The value in milliseconds for get request frequency</div> },
-    defaultProxy: { 'ui:help': '' },
+    proxy: { 'ui:help': '' },
   },
 }
 
