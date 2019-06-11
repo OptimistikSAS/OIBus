@@ -2,9 +2,9 @@ module.exports = {
   title: 'Configure SQLFile',
   type: 'object',
   properties: {
-    equipmentId: {
+    dataSourceId: {
       type: 'string',
-      title: 'Equipment ID',
+      title: 'Data Source ID',
     },
     enabled: {
       type: 'boolean',
@@ -17,56 +17,42 @@ module.exports = {
       title: 'Protocol',
       default: 'SQLFile',
     },
-    pointIdRoot: {
+    driver: {
       type: 'string',
-      title: 'Point ID Root',
+      enum: ['mssql', 'mysql', 'postgresql', 'oracle'],
+      title: 'SQL driver',
+      default: 'mssql',
     },
-    defaultScanMode: {
+    host: {
       type: 'string',
-      title: 'Default Scan Mode',
-      default: 'every20Second',
+      title: 'Host',
+      default: 'localhost',
     },
-    SQLFile: {
-      type: 'object',
-      properties: {
-        driver: {
-          type: 'string',
-          enum: ['mssql', 'mysql', 'postgresql', 'oracle'],
-          title: 'SQL driver',
-          default: 'mssql',
-        },
-        host: {
-          type: 'string',
-          title: 'Host',
-          default: 'localhost',
-        },
-        port: {
-          type: 'number',
-          title: 'Port',
-          default: 1433,
-        },
-        username: {
-          type: 'string',
-          title: 'Username',
-        },
-        password: {
-          type: 'string',
-          title: 'Password',
-        },
-        query: {
-          type: 'string',
-          title: 'Query',
-        },
-        delimiter: {
-          type: 'string',
-          title: 'Delimiter',
-          default: ',',
-        },
-        tmpFolder: {
-          type: 'string',
-          title: 'Temporary folder',
-        },
-      },
+    port: {
+      type: 'number',
+      title: 'Port',
+      default: 1433,
+    },
+    username: {
+      type: 'string',
+      title: 'Username',
+    },
+    password: {
+      type: 'string',
+      title: 'Password',
+    },
+    query: {
+      type: 'string',
+      title: 'Query',
+    },
+    delimiter: {
+      type: 'string',
+      title: 'Delimiter',
+      default: ',',
+    },
+    tmpFolder: {
+      type: 'string',
+      title: 'Temporary folder',
     },
     points: {
       type: 'array',
@@ -81,7 +67,7 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
-            default: 'every5second',
+            default: 'every5Second',
           },
         },
       },

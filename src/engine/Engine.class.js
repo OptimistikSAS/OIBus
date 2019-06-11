@@ -2,6 +2,7 @@ const timexe = require('timexe')
 const path = require('path')
 
 const { tryReadFile, backupConfigFile, saveNewConfig } = require('../services/config.service')
+const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
 // South classes
@@ -28,16 +29,16 @@ const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
 
 /**
- * Class Engine :
- * - at startup, handles initialization of applications, protocols and config.
- * - allows to manage the bus for every EventEmitter of protocol and EventListener of application.
+ *
+ * at startup, handles initialization of applications, protocols and config.
+ * @class Engine
  */
 class Engine {
   /**
    * Constructor for Engine
    * Reads the config file and create the corresponding Object.
    * Makes the necessary changes to the pointId attributes.
-   * Checks for critical entries such as scanModes and equipments.
+   * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {String} configFile - path to the config file
    * @return {Object} readConfig - parsed config Object
@@ -45,38 +46,55 @@ class Engine {
   constructor(configFile) {
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
-    this.modifiedConfig = tryReadFile(this.configFile)
+    this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
-
     // Configure the Cache
     this.cache = new Cache(this)
+    this.logger.info(`
+    Starting Engine ${VERSION}
+    architecture: ${process.arch}
+    This platform is ${process.platform}
+    Current directory: ${process.cwd()}
+    Version Node: ${process.version}
+    cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
+    // Check for private key
+    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
+    encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
 
     // prepare config
+    // Associate the scanMode to all it's corresponding data sources
+    // so the engine will know which datasource to activate when a
+    // scanMode has a tick.
+
     // initialize the scanLists with empty arrays
     this.scanLists = {}
     this.config.engine.scanModes.forEach(({ scanMode }) => {
       this.scanLists[scanMode] = []
     })
 
-    this.config.south.equipments.forEach((equipment) => {
-      equipment.points.forEach((point) => {
-        // 1.replace relative path into absolute paths
-        if (point.pointId.charAt(0) === '.') {
-          point.pointId = equipment.pointIdRoot + point.pointId.slice(1)
-        }
-        // 2.apply default scanmodes to each points
-        if (!point.scanMode) {
-          point.scanMode = equipment.defaultScanMode
-        }
-        // 3. Associate the scanMode to all it's corresponding equipments
-        if (equipment.enabled) {
-          if (this.scanLists[point.scanMode] && !this.scanLists[point.scanMode].includes(equipment.equipmentId)) {
-            this.scanLists[point.scanMode].push(equipment.equipmentId)
+    // browse config file for the various dataSource and points
+    this.config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.enabled) {
+        if (dataSource.scanMode) {
+          if (!this.scanLists[dataSource.scanMode]) {
+            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
+          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+            // add the source for this scan only if not already there
+            this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
+        } else {
+          dataSource.points.forEach((point) => {
+            if (!this.scanLists[point.scanMode]) {
+              this.logger.error(` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
+            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+              // add the source for this scan only if not already there
+              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+            }
+          })
         }
-      })
+      }
     })
 
     // Will only contain protocols/application used
@@ -87,9 +105,9 @@ class Engine {
   }
 
   /**
-   * Add a new Value from an equipment to the Engine.
+   * Add a new Value from an data source to the Engine.
    * The Engine will forward the Value to the Cache.
-   * @param {string} equipmentId - The South generating the value
+   * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
@@ -97,20 +115,20 @@ class Engine {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  addValue(equipmentId, { pointId, data, timestamp }, doNotGroup) {
-    this.cache.cacheValues(equipmentId, { pointId, data, timestamp }, doNotGroup)
+  addValue(dataSourceId, { pointId, data, timestamp }, doNotGroup) {
+    this.cache.cacheValues(dataSourceId, { pointId, data, timestamp }, doNotGroup)
   }
 
   /**
-   * Add a new File from an equipment to the Engine.
+   * Add a new File from an data source to the Engine.
    * The Engine will forward the File to the Cache.
-   * @param {string} equipmentId - The South generating the file
+   * @param {string} dataSourceId - The South generating the file
    * @param {string} filePath - The path to the File
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(equipmentId, filePath, preserveFiles) {
-    this.cache.cacheFile(equipmentId, filePath, preserveFiles)
+  addFile(dataSourceId, filePath, preserveFiles) {
+    this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
   /**
@@ -121,7 +139,8 @@ class Engine {
    */
   sendValues(applicationId, values) {
     return new Promise((resolve) => {
-      this.activeApis[applicationId].handleValues(values)
+      this.activeApis[applicationId]
+        .handleValues(values)
         .then(() => {
           resolve(true)
         })
@@ -151,19 +170,6 @@ class Engine {
   }
 
   /**
-   * Register the callback function to the event listener
-   * @param {String} eventName - The name of the event
-   * @param {Function} callback - The callback function
-   * @return {void}
-   * @memberof Engine
-   */
-  register(eventName, callback) {
-    this.bus.on(eventName, (args) => {
-      callback(args)
-    })
-  }
-
-  /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
    * @return {void}
@@ -173,17 +179,17 @@ class Engine {
     const server = new Server(this)
     server.listen()
 
-    // 2. start Protocol for each equipments
-    this.config.south.equipments.forEach((equipment) => {
-      const { protocol, enabled, equipmentId } = equipment
+    // 2. start Protocol for each data sources
+    this.config.south.dataSources.forEach((dataSource) => {
+      const { protocol, enabled, dataSourceId } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
       if (enabled) {
         if (ProtocolHandler) {
-          this.activeProtocols[equipmentId] = new ProtocolHandler(equipment, this)
-          this.activeProtocols[equipmentId].connect()
+          this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
+          this.activeProtocols[dataSourceId].connect()
         } else {
-          throw new Error(`Protocol for ${equipmentId} is not supported : ${protocol}`)
+          this.logger.error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
         }
       }
     })
@@ -199,7 +205,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          throw new Error(`API for ${applicationId} is not supported : ${api}`)
+          this.logger.error(`API for ${applicationId} is not supported : ${api}`)
         }
       }
     })
@@ -211,17 +217,17 @@ class Engine {
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
       const job = timexe(cronTime, () => {
         // on each scan, activate each protocols
-        this.scanLists[scanMode].forEach((equipmentId) => {
-          this.activeProtocols[equipmentId].onScan(scanMode)
+        this.scanLists[scanMode].forEach((dataSourceId) => {
+          this.activeProtocols[dataSourceId].onScan(scanMode)
         })
       })
       if (job.result !== 'ok') {
-        throw new Error(`The scan  ${scanMode} could not start : ${job.error}`)
+        this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
       } else {
         this.jobs.push(job.id)
       }
     })
-    this.logger.info(`OIBus version ${VERSION} started`)
+    this.logger.info('OIBus started')
   }
 
   /**
@@ -235,8 +241,8 @@ class Engine {
     })
 
     // Stop Protocols
-    Object.entries(this.activeProtocols).forEach(([equipmentId, protocol]) => {
-      this.logger.info(`Stopping ${equipmentId}`)
+    Object.entries(this.activeProtocols).forEach(([dataSourceId, protocol]) => {
+      this.logger.info(`Stopping ${dataSourceId}`)
       protocol.disconnect()
     })
 
@@ -266,7 +272,6 @@ class Engine {
    */
   getNorthSchemaList() {
     this.logger.debug('Getting North applications')
-
     return Object.keys(apiList)
   }
 
@@ -276,7 +281,6 @@ class Engine {
    */
   getSouthSchemaList() {
     this.logger.debug('Getting South protocols')
-
     return Object.keys(protocolList)
   }
 
@@ -311,6 +315,30 @@ class Engine {
   }
 
   /**
+   * Get active configuration.
+   * @returns {object} - The active configuration
+   */
+  getActiveConfiguration() {
+    const config = JSON.parse(JSON.stringify(this.config))
+    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
+    return config
+  }
+
+  /**
+   * Get active configuration.
+   * @returns {object} - The active configuration
+   */
+  getModifiedConfiguration() {
+    const config = JSON.parse(JSON.stringify(this.modifiedConfig))
+    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
+    return config
+  }
+
+  /**
    * Check if the given application ID already exists
    * @param {string} applicationId - The application ID to check
    * @returns {object | undefined} - Whether the given application exists
@@ -325,6 +353,7 @@ class Engine {
    * @returns {void}
    */
   addNorth(application) {
+    encryptionService.encryptSecrets(application, this.keyFolder)
     this.modifiedConfig.north.applications.push(application)
   }
 
@@ -336,6 +365,7 @@ class Engine {
   updateNorth(application) {
     const index = this.modifiedConfig.north.applications.findIndex(element => element.applicationId === application.applicationId)
     if (index > -1) {
+      encryptionService.encryptSecrets(application, this.keyFolder)
       this.modifiedConfig.north.applications[index] = application
     }
   }
@@ -350,42 +380,44 @@ class Engine {
   }
 
   /**
-   * Check if the given equipment ID already exists
-   * @param {string} equipmentId - The equipment ID to check
-   * @returns {object | undefined} - Whether the given equipment exists
+   * Check if the given data source ID already exists
+   * @param {string} dataSourceId - The data source ID to check
+   * @returns {object | undefined} - Whether the given data source exists
    */
-  hasSouth(equipmentId) {
-    return this.modifiedConfig.south.equipments.find(equipment => equipment.equipmentId === equipmentId)
+  hasSouth(dataSourceId) {
+    return this.modifiedConfig.south.dataSources.find(dataSource => dataSource.dataSourceId === dataSourceId)
   }
 
   /**
-   * Add South equipment
-   * @param {object} equipment - The new equipment to add
+   * Add South data source
+   * @param {object} dataSource - The new data source to add
    * @returns {void}
    */
-  addSouth(equipment) {
-    this.modifiedConfig.south.equipments.push(equipment)
+  addSouth(dataSource) {
+    encryptionService.encryptSecrets(dataSource, this.keyFolder)
+    this.modifiedConfig.south.dataSources.push(dataSource)
   }
 
   /**
-   * Update South equipment
-   * @param {object} equipment - The updated equipment
+   * Update South data source
+   * @param {object} dataSource - The updated data source
    * @returns {void}
    */
-  updateSouth(equipment) {
-    const index = this.modifiedConfig.south.equipments.findIndex(element => element.equipmentId === equipment.equipmentId)
+  updateSouth(dataSource) {
+    const index = this.modifiedConfig.south.dataSources.findIndex(element => element.dataSourceId === dataSource.dataSourceId)
     if (index > -1) {
-      this.modifiedConfig.south.equipments[index] = equipment
+      encryptionService.encryptSecrets(dataSource, this.keyFolder)
+      this.modifiedConfig.south.dataSources[index] = dataSource
     }
   }
 
   /**
-   * Delete South equipment
-   * @param {string} equipmentId - The equipment to delete
+   * Delete South data source
+   * @param {string} dataSourceId - The data source to delete
    * @returns {void}
    */
-  deleteSouth(equipmentId) {
-    this.modifiedConfig.south.equipments = this.modifiedConfig.south.equipments.filter(equipment => equipment.equipmentId !== equipmentId)
+  deleteSouth(dataSourceId) {
+    this.modifiedConfig.south.dataSources = this.modifiedConfig.south.dataSources.filter(dataSource => dataSource.dataSourceId !== dataSourceId)
   }
 
   /**
@@ -394,7 +426,107 @@ class Engine {
    * @returns {void}
    */
   updateEngine(engine) {
+    encryptionService.encryptSecrets(engine.proxies, this.keyFolder)
     this.modifiedConfig.engine = engine
+  }
+
+  /**
+   * Get points for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @returns {object} - The points
+   */
+  getPointsForSouth(dataSourceId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(elem => elem.dataSourceId === dataSourceId)
+
+    if (dataSource && dataSource.points) {
+      return dataSource.points
+    }
+
+    return {}
+  }
+
+  /**
+   * Check whether the given South already has a point with the given point ID.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point ID
+   * @returns {boolean} - Whether the given South has a point with the given point ID
+   */
+  hasSouthPoint(dataSourceId, pointId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+
+    if (dataSource && dataSource.points) {
+      return dataSource.points.find(elem => elem.pointId === pointId)
+    }
+
+    return false
+  }
+
+  /**
+   * Add new point for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {object} point - The point to add
+   * @returns {void}
+   */
+  addSouthPoint(dataSourceId, point) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points.push(point)
+    }
+  }
+
+  /**
+   * Update point for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point to update
+   * @param {object} point - The updated point
+   * @returns {void}
+   */
+  updateSouthPoint(dataSourceId, pointId, point) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      const index = dataSource.points.findIndex(element => element.pointId === pointId)
+      if (index > -1) {
+        dataSource.points[index] = point
+      }
+    }
+  }
+
+  /**
+   * Delete point from a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {string} pointId - The point ID to delete
+   * @returns {void}
+   */
+  deleteSouthPoint(dataSourceId, pointId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points = dataSource.points.filter(point => point.pointId !== pointId)
+    }
+  }
+
+  /**
+   * Delete all points from a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @returns {void}
+   */
+  deleteSouthPoints(dataSourceId) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource && dataSource.points) {
+      dataSource.points = []
+    }
+  }
+
+  /**
+   * Set points for a given South.
+   * @param {string} dataSourceId - The South to get the points for
+   * @param {object[]} points - The points to set
+   * @returns {void}
+   */
+  setSouthPoints(dataSourceId, points) {
+    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    if (dataSource) {
+      dataSource.points = points
+    }
   }
 
   /**

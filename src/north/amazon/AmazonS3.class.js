@@ -1,5 +1,4 @@
 const fs = require('fs')
-const path = require('path')
 const url = require('url')
 
 const AWS = require('aws-sdk')
@@ -21,24 +20,24 @@ class AmazonS3 extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { bucket, folder, authentication, defaultProxy = null } = applicationParameters.AmazonS3
+    const { bucket, folder, authentication, proxy = null } = applicationParameters.AmazonS3
 
     this.bucket = bucket
     this.folder = folder
 
     AWS.config.update({
       accessKeyId: authentication.accessKey,
-      secretAccessKey: authentication.secretKey,
+      secretAccessKey: this.decryptPassword(authentication.secretKey),
     })
 
-    const proxy = this.getProxy(defaultProxy)
-    if (proxy) {
-      const { protocol, host, port, username = null, password = null } = proxy
+    const configuredProxy = this.getProxy(proxy)
+    if (configuredProxy) {
+      const { protocol, host, port, username = null, password = null } = configuredProxy
 
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${password}`
+        proxyOptions.auth = `${username}:${this.decryptPassword(password)}`
       }
 
       const agent = new ProxyAgent(proxyOptions)
@@ -60,7 +59,7 @@ class AmazonS3 extends ApiHandler {
     const params = {
       Bucket: this.bucket,
       Body: fs.createReadStream(filePath),
-      Key: `${this.folder}/${path.basename(filePath)}`,
+      Key: `${this.folder}/${ApiHandler.getFilenameWithoutTimestamp(filePath)}`,
     }
 
     try {

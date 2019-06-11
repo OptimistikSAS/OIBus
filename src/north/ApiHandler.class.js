@@ -1,3 +1,7 @@
+const path = require('path')
+
+const encryptionService = require('../services/encryption.service')
+
 class ApiHandler {
   /**
    * Constructor for Application
@@ -12,7 +16,7 @@ class ApiHandler {
 
     this.application = applicationParameters
     this.engine = engine
-    this.logger = engine.logger
+    this.logger = this.engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
   }
@@ -24,7 +28,7 @@ class ApiHandler {
    * @return {void}
    */
   get(pointId) {
-    this.engine.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
+    this.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
   }
 
   /**
@@ -32,7 +36,7 @@ class ApiHandler {
    * @return {void}
    */
   connect() {
-    this.engine.logger.info('connect')
+    this.logger.info('connect')
   }
 
   /**
@@ -40,7 +44,7 @@ class ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.engine.logger.info('disconnect')
+    this.logger.info('disconnect')
   }
 
   /**
@@ -49,7 +53,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   handleValues(values) {
-    this.engine.logger.info('handleValues', values)
+    this.logger.info('handleValues', values)
   }
 
   /**
@@ -58,7 +62,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   handleFile(filePath) {
-    this.engine.logger.info('handleFile', filePath)
+    this.logger.info('handleFile', filePath)
   }
 
   /**
@@ -74,6 +78,26 @@ class ApiHandler {
     }
 
     return proxy
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @return {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
+  }
+
+  /**
+   * Get filename without timestamp from file path.
+   * @param {string} filePath - The file path
+   * @returns {string} - The filename
+   */
+  static getFilenameWithoutTimestamp(filePath) {
+    const { name, ext } = path.parse(filePath)
+    const filename = name.substr(0, name.lastIndexOf('-'))
+    return `${filename}${ext}`
   }
 }
 
