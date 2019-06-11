@@ -81,6 +81,7 @@ const ConfigureProtocol = ({ match, location }) => {
             liveValidate
             showErrorList={false}
             schema={configSchema}
+            uiSchema={uiSchema(configJson.protocol)}
             autocomplete="on"
             onChange={handleChange}
             onSubmit={handleSubmit}
