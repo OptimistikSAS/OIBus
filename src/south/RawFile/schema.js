@@ -2,9 +2,9 @@ module.exports = {
   title: 'Configure RawFile',
   type: 'object',
   properties: {
-    equipmentId: {
+    dataSourceId: {
       type: 'string',
-      title: 'Equipment ID',
+      title: 'Data Source ID',
     },
     enabled: {
       type: 'boolean',
@@ -17,38 +17,24 @@ module.exports = {
       title: 'Protocol',
       default: 'CSV',
     },
-    pointIdRoot: {
+    inputFolder: {
       type: 'string',
-      title: 'Point ID Root',
+      title: 'Input Folder',
     },
-    defaultScanMode: {
+    preserveFiles: {
+      type: 'boolean',
+      title: 'Preserve Files',
+      default: true,
+    },
+    minAge: {
+      type: 'number',
+      title: 'Minimum Age',
+      default: 1000,
+    },
+    regex: {
       type: 'string',
-      title: 'Default Scan Mode',
-      default: 'every20Second',
-    },
-    RawFile: {
-      type: 'object',
-      properties: {
-        inputFolder: {
-          type: 'string',
-          title: 'Input Folder',
-        },
-        preserveFiles: {
-          type: 'boolean',
-          title: 'Preserve Files',
-          default: true,
-        },
-        minAge: {
-          type: 'number',
-          title: 'Minimum Age',
-          default: 1000,
-        },
-        regex: {
-          type: 'string',
-          title: 'Regex',
-          default: '.txt',
-        },
-      },
+      title: 'Regex',
+      default: '.txt',
     },
     points: {
       type: 'array',
@@ -63,7 +49,7 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
-            default: 'every5second',
+            default: 'every5Second',
           },
         },
       },

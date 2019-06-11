@@ -11,15 +11,14 @@ class RawFile extends ProtocolHandler {
   /**
    * Constructor for RawFile
    * @constructor
-   * @param {Object} equipment - The equipment
+   * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
    * @return {void}
    */
-  constructor(equipment, engine) {
-    super(equipment, engine)
+  constructor(dataSource, engine) {
+    super(dataSource, engine)
 
-    const { RawFile: parameters } = this.equipment
-    const { inputFolder, preserveFiles, minAge, regex } = parameters
+    const { inputFolder, preserveFiles, minAge, regex } = this.dataSource
 
     this.inputFolder = path.resolve(inputFolder)
     this.preserveFiles = preserveFiles
@@ -29,7 +28,7 @@ class RawFile extends ProtocolHandler {
 
   async connect() {
     if (this.preserveFiles) {
-      const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.equipment.equipmentId}.db`
+      const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
       this.database = await databaseService.createRawFilesDatabase(databasePath)
     }
   }
@@ -42,7 +41,7 @@ class RawFile extends ProtocolHandler {
   onScan(_scanMode) {
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
-      this.logger.info(`The input folder ${this.inputFolder} doesn't exist.`)
+      this.logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
       return
     }
 

@@ -5,7 +5,7 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
 
 /**
  * Returns the fields array from the point containing passed pointId.
- * The point is from the optimized config hence the scannedEquipment parameter
+ * The point is from the optimized config hence the scannedDataSource parameter
  * @param {Object} pointId - The point ID
  * @param {Array} types - The types
  * @param {Logger} logger - The logger
@@ -37,19 +37,19 @@ class OPCUA extends ProtocolHandler {
   /**
    * Constructor for OPCUA
    * @constructor
-   * @param {Object} equipment - The equipment
+   * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
    * @return {void}
    */
-  constructor(equipment, engine) {
-    super(equipment, engine)
+  constructor(dataSource, engine) {
+    super(dataSource, engine)
     // as OPCUA can group multiple points in a single request
     // we group points based on scanMode
-    this.optimizedConfig = getOptimizedConfig(equipment)
+    this.optimizedConfig = getOptimizedConfig(dataSource)
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = sprintf('opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s', equipment.OPCUA)
-    this.maxAge = equipment.OPCUA.maxAge || 10
+    this.url = sprintf('opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s', dataSource)
+    this.maxAge = dataSource.maxAge || 10
   }
 
   /**
@@ -67,7 +67,7 @@ class OPCUA extends ProtocolHandler {
               this.session = session
               this.connected = true
             } else {
-              this.logger.error(new Error(`Could not connect to: ${this.equipment.equipmentId}`))
+              this.logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
             }
           })
         } else {
@@ -82,7 +82,7 @@ class OPCUA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    * @todo check if every async and await is useful
-   * @todo on the very first Scan equipment.session might not be created yet, find out why
+   * @todo on the very first Scan dataSource.session might not be created yet, find out why
    */
   async onScan(scanMode) {
     const scanGroup = this.optimizedConfig[scanMode]
@@ -90,7 +90,7 @@ class OPCUA extends ProtocolHandler {
     const nodesToRead = {}
     const pointsDoNotGroup = {}
     scanGroup.forEach((point) => {
-      nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point.OPCUAnodeId) }
+      nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point) }
       pointsDoNotGroup[point.pointId] = point.doNotGroup
     })
     this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {

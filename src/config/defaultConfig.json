@@ -10,7 +10,9 @@
       "filename": "./logs/journal.log",
       "maxsize": 1000000,
       "maxFiles": 5,
-      "tailable": true
+      "tailable": true,
+      "sqliteLevel": "debug",
+      "sqliteFilename": "./logs/journal.db"
     },
     "caching": {
       "cacheFolder": "./cache",
@@ -33,7 +35,7 @@
     ]
   },
   "south": {
-    "equipments": []
+    "dataSources": []
   },
   "north": {
     "applications": [
