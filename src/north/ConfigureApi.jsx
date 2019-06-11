@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import ReactJson from 'react-json-view'
 import apis from '../client/services/apis'
 import Modal from '../client/components/Modal.jsx'
+import uiSchema from './uiSchema.jsx'
 
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -80,6 +81,7 @@ const ConfigureApi = ({ match, location }) => {
             liveValidate
             showErrorList={false}
             schema={configSchema}
+            uiSchema={uiSchema(configJson.api)}
             autocomplete="on"
             onChange={handleChange}
             onSubmit={handleSubmit}
