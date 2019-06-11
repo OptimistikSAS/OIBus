@@ -8,6 +8,7 @@ import TablePagination from '../client/components/table/TablePagination.jsx'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 import utils from '../client/helpers/utils'
+import uiSchema from './uiSchema.jsx'
 
 const ConfigureProtocol = ({ match, location }) => {
   const [pointsJson, setPointsJson] = React.useState([])
@@ -371,6 +372,7 @@ const ConfigureProtocol = ({ match, location }) => {
         liveValidate
         showErrorList={false}
         schema={modifiedConfigSchema()}
+        uiSchema={uiSchema(match.params.protocol).points.items}
         autocomplete="on"
         onSubmit={({ formData }) => (
           editingPoint ? handleSubmitEditedPoint(formData) : handleSubmitAddedPoint(formData)

@@ -15,7 +15,7 @@ const uiSchema = {
         'ui:help': '',
       },
     },
-    defaultProxy: { 'ui:help': '' },
+    proxy: { 'ui:help': '' },
   },
   caching: {
     sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
