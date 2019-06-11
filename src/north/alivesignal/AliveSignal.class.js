@@ -19,12 +19,12 @@ class AliveSignal extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, authentication, id, frequency, defaultProxy = null } = applicationParameters.AliveSignal
+    const { host, authentication, id, frequency, proxy = null } = applicationParameters.AliveSignal
 
     this.host = `${host}?id=${encodeURI(id)}`
     this.authentication = authentication
     this.frequency = frequency
-    this.proxy = this.getProxy(defaultProxy)
+    this.proxy = this.getProxy(proxy)
 
     this.timer = null
   }
@@ -51,7 +51,8 @@ class AliveSignal extends ApiHandler {
 
     // Generate authentication header
     if (this.authentication.type === 'Basic') {
-      const basic = Buffer.from(`${this.authentication.username}:${this.authentication.password}`).toString('base64')
+      const decryptedPassword = this.decryptPassword(this.authentication.password)
+      const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
 
@@ -61,7 +62,7 @@ class AliveSignal extends ApiHandler {
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${password}`
+        proxyOptions.auth = `${username}:${this.decryptPassword(password)}`
       }
 
       agent = new ProxyAgent(proxyOptions)

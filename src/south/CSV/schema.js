@@ -2,9 +2,9 @@ module.exports = {
   title: 'Configure CSV',
   type: 'object',
   properties: {
-    equipmentId: {
+    dataSourceId: {
       type: 'string',
-      title: 'Equipment ID',
+      title: 'Data Source ID',
     },
     enabled: {
       type: 'boolean',
@@ -17,46 +17,32 @@ module.exports = {
       title: 'Protocol',
       default: 'CSV',
     },
-    pointIdRoot: {
+    inputFolder: {
       type: 'string',
-      title: 'Point ID Root',
+      title: 'Input Folder',
     },
-    defaultScanMode: {
+    archiveFolder: {
       type: 'string',
-      title: 'Default Scan Mode',
-      default: 'every20Second',
+      title: 'Archive Folder',
     },
-    CSV: {
-      type: 'object',
-      properties: {
-        inputFolder: {
-          type: 'string',
-          title: 'Input Folder',
-        },
-        archiveFolder: {
-          type: 'string',
-          title: 'Archive Folder',
-        },
-        errorFolder: {
-          type: 'string',
-          title: 'Error Folder',
-        },
-        separator: {
-          type: 'string',
-          title: 'Separator',
-          default: ',',
-        },
-        timeColumn: {
-          type: 'number',
-          title: 'Time Column',
-          default: 0,
-        },
-        hasFirstLine: {
-          type: 'boolean',
-          title: 'Has First Line',
-          default: true,
-        },
-      },
+    errorFolder: {
+      type: 'string',
+      title: 'Error Folder',
+    },
+    separator: {
+      type: 'string',
+      title: 'Separator',
+      default: ',',
+    },
+    timeColumn: {
+      type: 'number',
+      title: 'Time Column',
+      default: 0,
+    },
+    hasFirstLine: {
+      type: 'boolean',
+      title: 'Has First Line',
+      default: true,
     },
     points: {
       type: 'array',
@@ -64,20 +50,6 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          CSV: {
-            type: 'object',
-            title: 'CSV',
-            properties: {
-              value: {
-                type: 'string', // TODO: Multiple types
-                title: 'Value',
-              },
-              quality: {
-                type: 'string', // TODO: Multiple types
-                title: 'Quality',
-              },
-            },
-          },
           pointId: {
             title: 'Point ID',
             type: 'string',
@@ -85,6 +57,14 @@ module.exports = {
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
+          },
+          value: {
+            type: 'string', // TODO: Multiple types
+            title: 'Value',
+          },
+          quality: {
+            type: 'string', // TODO: Multiple types
+            title: 'Quality',
           },
         },
       },

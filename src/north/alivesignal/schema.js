@@ -54,9 +54,9 @@ module.exports = {
           title: 'Frequency',
           default: 10000,
         },
-        defaultProxy: {
+        proxy: {
           type: 'string',
-          title: 'Default proxy',
+          title: 'Proxy',
         },
       },
     },

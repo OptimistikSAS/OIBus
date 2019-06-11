@@ -10,7 +10,8 @@
       "name": "Launch Program",
       "program": "${workspaceFolder}/src/index.js",
       "args":  ["--config", "./tests/OIBus.json"],
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true
     }
   ]
 }

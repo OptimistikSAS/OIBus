@@ -1,5 +1,4 @@
 const fs = require('fs')
-const path = require('path')
 const url = require('url')
 
 const fetch = require('node-fetch')
@@ -26,11 +25,11 @@ class RawFileSender extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, defaultProxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
-    this.proxy = this.getProxy(defaultProxy)
+    this.proxy = this.getProxy(proxy)
     this.stack = stack
 
     this.timeout = 60000
@@ -52,7 +51,8 @@ class RawFileSender extends ApiHandler {
 
     // Generate authentication header
     if (this.authentication.type === 'Basic') {
-      const basic = Buffer.from(`${this.authentication.username}:${this.authentication.password}`).toString('base64')
+      const decryptedPassword = this.decryptPassword(this.authentication.password)
+      const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
 
@@ -97,7 +97,7 @@ class RawFileSender extends ApiHandler {
       }
 
       if (username && password) {
-        proxy.proxyAuth = `${username}:${password}`
+        proxy.proxyAuth = `${username}:${this.decryptPassword(password)}`
       }
 
       let tunnelInstance = tunnel.httpsOverHttp({ proxy })
@@ -119,7 +119,7 @@ class RawFileSender extends ApiHandler {
 
     const formData = new FormData()
     const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: path.basename(filePath) }
+    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
     formData.append('file', readStream, bodyOptions)
 
     const formHeaders = formData.getHeaders()
@@ -154,7 +154,7 @@ class RawFileSender extends ApiHandler {
     if (this.proxy) {
       const { protocol, host, port, username = null, password = null } = this.proxy
       if (username && password) {
-        proxy = `${protocol}://${username}:${password}@${host}:${port}`
+        proxy = `${protocol}://${username}:${this.decryptPassword(password)}@${host}:${port}`
       } else {
         proxy = `${protocol}://${host}:${port}`
       }
@@ -167,7 +167,7 @@ class RawFileSender extends ApiHandler {
       formData: {
         file: {
           value: fs.createReadStream(filePath),
-          options: { filename: path.basename(filePath) },
+          options: { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) },
         },
       },
       proxy,
@@ -197,7 +197,7 @@ class RawFileSender extends ApiHandler {
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${password}`
+        proxyOptions.auth = `${username}:${this.decryptPassword(password)}`
       }
 
       agent = new ProxyAgent(proxyOptions)
@@ -205,7 +205,7 @@ class RawFileSender extends ApiHandler {
 
     const formData = new FormData()
     const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: path.basename(filePath) }
+    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
     formData.append('file', readStream, bodyOptions)
 
     const fetchOptions = {

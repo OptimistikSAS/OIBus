@@ -83,7 +83,7 @@ class Server {
     // A body parser for koa, base on co-body. support json, form and text type body.
     this.app.use(
       bodyParser({
-        enableTypes: ['json'],
+        enableTypes: ['json', 'text'],
         jsonLimit: '5mb',
         strict: true,
         onerror(err, ctx) {

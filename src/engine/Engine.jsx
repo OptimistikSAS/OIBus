@@ -29,6 +29,13 @@ const Engine = () => {
       console.error(error)
     }
   }
+  const transformErrors = errors => (errors.map((error) => {
+    if (error.schemaPath === '#/properties/filter/items/pattern') {
+      error.message = 'Only IPV4 or IPV6 format is allowed'
+    }
+    return error
+  })
+  )
 
   const log = type => console.info.bind(console, type)
   return (
@@ -43,6 +50,7 @@ const Engine = () => {
         onChange={log('changed')}
         onSubmit={({ formData }) => handleSubmit(formData)}
         onError={log('errors')}
+        transformErrors={transformErrors}
       />
       <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
@@ -61,7 +69,7 @@ Engine.schema = {
     password: { type: 'string', title: 'Password', default: 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' },
     filter: {
       type: 'array',
-      title: 'filter',
+      title: 'Network Filter',
       items: {
         type: 'string',
         // eslint-disable-next-line max-len
@@ -81,11 +89,13 @@ Engine.schema = {
         maxsize: { type: 'number', title: 'Max Size (Byte)', default: 1000000 },
         maxFiles: { type: 'number', title: 'Max Files', default: 5 },
         tailable: { type: 'boolean', title: 'Tailable', default: true },
+        sqliteLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'SQLite logging Level', default: 'debug' },
+        sqliteFilename: { type: 'string', title: 'Filename', default: './logs/journal.db' },
       },
     },
     caching: {
       type: 'object',
-      title: 'Caching Parameters',
+      title: 'Cache Parameters',
       properties: {
         cacheFolder: { type: 'string', title: 'Cache Folder', default: './cache' },
         archiveFolder: { type: 'string', title: 'Archive Folder', default: './cache/archived/' },
@@ -94,7 +104,7 @@ Engine.schema = {
     },
     proxies: {
       type: 'array',
-      title: 'Proxies',
+      title: 'Proxy Parameters',
       items: {
         type: 'object',
         properties: {
