@@ -140,11 +140,9 @@ class Cache {
     } else {
       fs.rename(filePath, cachePath, (renameError) => {
         if (renameError) {
-          this.logger.error(renameError)
-
           // In case of cross-device link error we copy+delete instead
           if (renameError.code === 'EXDEV') {
-            this.logger.info('Cross-device link error during rename, copy+paste instead')
+            this.logger.debug('Cross-device link error during rename, copy+paste instead')
             fs.copyFile(filePath, cachePath, (copyError) => {
               if (copyError) {
                 this.logger.error(copyError)
@@ -156,6 +154,8 @@ class Cache {
                 })
               }
             })
+          } else {
+            this.logger.error(renameError)
           }
         } else {
           Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
