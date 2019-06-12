@@ -12,7 +12,7 @@
     "build-client": "webpack --mode production",
     "build-doc": "esdoc",
     "test": "jest",
-    "lint": "eslint src"
+    "lint": "eslint src --ext .jsx --ext .js"
   },
   "keywords": [
     "factoryThings"
