@@ -131,7 +131,7 @@ class Cache {
         fs.rename(filePath, cachePath, (renameError) => {
           if (renameError) {
             // In case of cross-device link error we copy+delete instead
-            if (renameError.code === 'EXDEV') throw renameError
+            if (renameError.code !== 'EXDEV') throw renameError
             this.logger.debug('Cross-device link error during rename, copy+paste instead')
             fs.copyFile(filePath, cachePath, (copyError) => {
               if (copyError) throw copyError
