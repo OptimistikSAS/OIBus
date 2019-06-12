@@ -122,52 +122,37 @@ class Cache {
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
-    if (preserveFiles) {
-      fs.copyFile(filePath, cachePath, (copyError) => {
-        if (copyError) {
-          this.logger.error(copyError)
-        } else {
-          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles, subscribedTo } = activeApi
-
-            if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-              this.sendCallback(applicationId)
-            }
-          })
-        }
-      })
-    } else {
-      fs.rename(filePath, cachePath, (renameError) => {
-        if (renameError) {
-          // In case of cross-device link error we copy+delete instead
-          if (renameError.code === 'EXDEV') {
+    try {
+      if (preserveFiles) {
+        fs.copyFile(filePath, cachePath, (copyError) => {
+          if (copyError) throw copyError
+        })
+      } else {
+        fs.rename(filePath, cachePath, (renameError) => {
+          if (renameError) {
+            // In case of cross-device link error we copy+delete instead
+            if (renameError.code === 'EXDEV') throw renameError
             this.logger.debug('Cross-device link error during rename, copy+paste instead')
             fs.copyFile(filePath, cachePath, (copyError) => {
-              if (copyError) {
-                this.logger.error(copyError)
-              } else {
-                fs.unlink(filePath, (unlinkError) => {
-                  if (unlinkError) {
-                    this.logger.error(unlinkError)
-                  }
-                })
-              }
+              if (copyError) throw copyError
+              fs.unlink(filePath, (unlinkError) => {
+                // log error but does not throw so we try sending the file to S3
+                if (unlinkError) this.logger.error(unlinkError)
+              })
             })
-          } else {
-            this.logger.error(renameError)
           }
-        } else {
-          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles, subscribedTo } = activeApi
-
-            if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-              this.sendCallback(applicationId)
-            }
-          })
+        })
+      }
+      // All is good so we send the file to the engine
+      Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
+        const { canHandleFiles, subscribedTo } = activeApi
+        if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+          await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+          this.sendCallback(applicationId)
         }
       })
+    } catch (error) {
+      this.logger.error(error)
     }
   }
 
