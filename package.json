@@ -47,6 +47,7 @@
     "mssql": "^5.1.0",
     "node-fetch": "^2.6.0",
     "node-opcua": "^0.7.2",
+    "oibus-opchda": "git+ssh://git@github.com/factoryThings/OIBus-OPCHDA.git",
     "pg": "^7.11.0",
     "prop-types": "^15.7.2",
     "proxy-agent": "^3.1.0",
