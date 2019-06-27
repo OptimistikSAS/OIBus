@@ -4,7 +4,7 @@ const path = require('path')
 const databaseService = require('../services/database.service')
 
 /**
- * Local cache implementation to group events and store them when the communication with North is down.
+ * Local cache implementation to group events and store them when the communication if North is down.
  */
 class Cache {
   /**
@@ -69,7 +69,7 @@ class Cache {
    * Check whether a North is subscribed to a South
    * @param {string} dataSourceId - The South generating the value
    * @param {string[]} subscribedTo - The list of Souths the North is subscribed to
-   * @returns {boolean} - The the North is subscribed to the giben South
+   * @returns {boolean} - The North is subscribed to the given South
    */
   static isSubscribed(dataSourceId, subscribedTo) {
     if (!subscribedTo) {
@@ -286,6 +286,7 @@ class Cache {
           })
           break
         default:
+          this.logger.error(`unknown Archive Mode: ${this.archiveMode}`)
       }
     }
   }
