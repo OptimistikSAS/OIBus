@@ -9,59 +9,62 @@ const databaseService = require('../services/database.service')
 class Cache {
   /**
    * Constructor for Cache
+   * The Engine parameters is used for the following parameters
+   * cacheFolder: Value mode only: will contain all sqllite databases used to cache values
+   * archiveMode: File mode only: decide if the file is deleted or archived after being sent to the North.
+   * archiveFolder: in 'archive' mode, specifies where the file is archived.
    * @constructor
    * @param {Engine} engine - The Engine
    * @return {void}
    */
   constructor(engine) {
-    this.engine = engine
     this.logger = engine.logger
-
-    const { cacheFolder, archiveFolder, archiveMode } = engine.config.engine.caching
-
+    this.engine = engine
+    const { config } = engine
+    // get parameters for the cache
+    const { cacheFolder, archiveFolder, archiveMode } = config.engine.caching
+    this.archiveMode = archiveMode
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
+      this.logger.info(`creating cache folder in ${this.cacheFolder}`)
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
-
     // Create archive folder if not exists
     this.archiveFolder = path.resolve(archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
+      this.logger.info(`creating archive folder in ${this.archiveFolder}`)
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
-
-    this.archiveMode = archiveMode
-
-    this.activeApis = {}
+    // will contains the list of North apis
+    this.apis = {}
   }
 
   /**
    * Initialize the cache by creating a database for every North application.
-   * @param {object} applications - The North applications
+   * also initializes an internal object for North applications
+   * @param {object} activeApis - The active North applications
    * @return {void}
    */
-  async initialize(applications) {
+  async initialize(activeApis) {
+    this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-
-    Object.values(applications).forEach(async (application) => {
-      if (application.canHandleFiles || application.canHandleValues) {
-        const activeApi = {}
-
-        activeApi.applicationId = application.application.applicationId
-        activeApi.config = application.application.caching
-        activeApi.canHandleValues = application.canHandleValues
-        activeApi.canHandleFiles = application.canHandleFiles
-        activeApi.subscribedTo = application.application.subscribedTo
-
-        if (application.canHandleValues) {
-          activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
-        }
-
-        this.resetTimeout(activeApi, activeApi.config.sendInterval)
-
-        this.activeApis[activeApi.applicationId] = activeApi
+    // initialize the internal object apis with the list of north apis
+    Object.values(activeApis).forEach(async (activeApi) => {
+      const api = {
+        applicationId: activeApi.application.applicationId,
+        config: activeApi.application.caching,
+        canHandleValues: activeApi.canHandleValues,
+        canHandleFiles: activeApi.canHandleFiles,
+        subscribedTo: activeApi.application.subscribedTo,
       }
+      // only initialize the db if the api can handle values
+      if (api.canHandleValues) {
+        this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
+        api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
+      }
+      this.resetTimeout(api, api.config.sendInterval)
+      this.apis[api.applicationId] = api
     })
   }
 
@@ -72,17 +75,14 @@ class Cache {
    * @returns {boolean} - The North is subscribed to the given South
    */
   static isSubscribed(dataSourceId, subscribedTo) {
-    if (!subscribedTo) {
-      return true
-    }
-
-    return (Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId))
+    if (!subscribedTo) return true
+    return Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId)
   }
 
   /**
    * Cache a new Value.
-   * It will store the value in every database. If doNotCache is "true" it will immediately forward the value
-   * to every North application.
+   * It will store the value in every database. If doNotGroup is "true" it will immediately forward the value
+   * to every North application (used for alarm values for example)
    * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
@@ -92,8 +92,8 @@ class Cache {
    * @return {void}
    */
   async cacheValues(dataSourceId, value, doNotGroup) {
-    Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-      const { database, config, canHandleValues, subscribedTo } = activeApi
+    Object.entries(this.apis).forEach(async ([applicationId, api]) => {
+      const { database, config, canHandleValues, subscribedTo } = api
 
       if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
         await databaseService.saveValue(database, value)
@@ -144,8 +144,8 @@ class Cache {
         })
       }
       // All is good so we send the file to the engine
-      Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-        const { canHandleFiles, subscribedTo } = activeApi
+      Object.entries(this.apis).forEach(async ([applicationId, api]) => {
+        const { canHandleFiles, subscribedTo } = api
         if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
           await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
           this.sendCallback(applicationId)
@@ -162,7 +162,7 @@ class Cache {
    * @return {void}
    */
   sendCallback(applicationId) {
-    const application = this.activeApis[applicationId]
+    const application = this.apis[applicationId]
 
     if (application.canHandleValues) {
       this.handleValues(application)
@@ -235,14 +235,14 @@ class Cache {
   /**
    * Send values to a given North application.
    * @param {string} applicationId - The application ID
-   * @param {object[]} values - The values to send
+   * @param {object[]} valueList - The values to send
    * @return {void}
    */
-  async sendValues(applicationId, values) {
-    const success = await this.engine.sendValues(applicationId, values)
+  async sendValues(applicationId, valueList) {
+    const success = await this.engine.sendValues(applicationId, valueList)
 
     if (success) {
-      await databaseService.removeSentValues(this.activeApis[applicationId].database, values)
+      await databaseService.removeSentValues(this.apis[applicationId].database, valueList)
     }
 
     return success
@@ -301,10 +301,7 @@ class Cache {
     if (application.timeout) {
       clearTimeout(application.timeout)
     }
-    application.timeout = setTimeout(
-      this.sendCallback.bind(this, application.applicationId),
-      timeout,
-    )
+    application.timeout = setTimeout(this.sendCallback.bind(this, application.applicationId), timeout)
   }
 }
 
