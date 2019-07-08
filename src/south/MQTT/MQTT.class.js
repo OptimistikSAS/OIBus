@@ -22,9 +22,6 @@ class MQTT extends ProtocolHandler {
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
-    // JFH. review the logic?
-    // 1/ on connect forEachPoint subscribe to all the topics and fill pointIds[topic]
-    // 2/ on message update pointIds[topic] with message
 
     this.client.on('connect', () => {
       points.forEach((point) => {
@@ -38,8 +35,7 @@ class MQTT extends ProtocolHandler {
       })
 
       this.client.on('message', (topic, message) => {
-        console.log(topic.toString(), message.toString())
-
+        this.logger.debug(`topic ${topic}, message ${message}`)
         this.addValue(
           {
             data: message.toString(),

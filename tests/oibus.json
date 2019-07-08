@@ -379,6 +379,18 @@
                     "frequency": 10000,
                     "proxy": "demoProxy"
                 }
+            },
+            {
+                "applicationId": "Console",
+                "enabled": true,
+                "api": "Console",
+                "minimumBuffer": 1,
+                "timeStamp": "OIBus",
+                "caching": {
+                    "sendInterval": 15000,
+                    "retryInterval": 10000,
+                    "groupCount": 6
+                }
             }
         ]
     }
