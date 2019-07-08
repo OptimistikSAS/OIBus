@@ -19,14 +19,17 @@ class ProtocolHandler {
 
   connect() {
     const { dataSourceId, protocol } = this.dataSource
-    this.logger.warn(`Data source ${dataSourceId} started with protocol ${protocol}`)
+    this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
   /* eslint-disable-next-line */
   onScan() {}
   /* eslint-disable-next-line */
   listen() {}
-  /* eslint-disable-next-line */
-  disconnect() {}
+
+  disconnect() {
+    const { dataSourceId } = this.dataSource
+    this.logger.info(`Data source ${dataSourceId} disconnected`)
+  }
 
   /**
    * Add a new Value to the Engine.
@@ -38,11 +41,7 @@ class ProtocolHandler {
    * @return {void}
    */
   addValue({ pointId, data, timestamp }, doNotGroup) {
-    this.engine.addValue(
-      this.dataSource.dataSourceId,
-      { data, timestamp, pointId },
-      doNotGroup,
-    )
+    this.engine.addValue(this.dataSource.dataSourceId, { data, timestamp, pointId }, doNotGroup)
   }
 
   /**
