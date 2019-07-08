@@ -215,16 +215,18 @@ class Engine {
 
     // 5. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = timexe(cronTime, () => {
-        // on each scan, activate each protocols
-        this.scanLists[scanMode].forEach((dataSourceId) => {
-          this.activeProtocols[dataSourceId].onScan(scanMode)
+      if (scanMode !== 'listen') {
+        const job = timexe(cronTime, () => {
+          // on each scan, activate each protocols
+          this.scanLists[scanMode].forEach((dataSourceId) => {
+            this.activeProtocols[dataSourceId].onScan(scanMode)
+          })
         })
-      })
-      if (job.result !== 'ok') {
-        this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
-      } else {
-        this.jobs.push(job.id)
+        if (job.result !== 'ok') {
+          this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
+        } else {
+          this.jobs.push(job.id)
+        }
       }
     })
     this.logger.info('OIBus started')
