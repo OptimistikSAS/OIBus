@@ -19,8 +19,11 @@ class MQTT extends ProtocolHandler {
     const { mqttProtocol, server, port, username, password, points } = this.dataSource
     this.client = mqtt.connect(
       `${mqttProtocol}://${server}`,
-      { port, username, password: Buffer.from(password) },
+      { port, username, password: Buffer.from(this.decryptPassword(password)) },
     )
+    this.client.on('error', (error) => {
+      this.logger.error(error)
+    })
     points.forEach((point) => {
       const { topic, pointId, doNotGroup = false } = point
       this.client.on('connect', () => {
