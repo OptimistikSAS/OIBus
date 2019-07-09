@@ -137,18 +137,14 @@ class Engine {
    * @param {object[]} values - The values to send
    * @return {Promise} - The send promise
    */
-  sendValues(applicationId, values) {
-    return new Promise((resolve) => {
-      this.activeApis[applicationId]
-        .handleValues(values)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  async sendValues(applicationId, values) {
+    let success = false
+    try {
+      success = await this.activeApis[applicationId].handleValues(values)
+    } catch (error) {
+      this.logger.error(error)
+    }
+    return success
   }
 
   /**
@@ -189,7 +185,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          this.logger.error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
+          this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
         }
       }
     })
@@ -205,7 +201,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          this.logger.error(`API for ${applicationId} is not supported : ${api}`)
+          this.logger.error(`API for ${applicationId} is not found : ${api}`)
         }
       }
     })

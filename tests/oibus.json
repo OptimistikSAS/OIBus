@@ -333,13 +333,13 @@
                     "authentication": {
                         "type": "Basic",
                         "username": "QFPELALDNSUO6BUV8SJ",
-                        "password": "fhzdFp40Wo3z9tHOILdUOXGbwPcQGbwaZh6DTms5lxA+qsvyPuGNYi/7wo18izoEbvGYjt19i00HhOAkxP6RrhHLgU5qGxjoOVn8qhJ4GwAg9PDmiII534KR2FpsRt3X3MVFRWeZO6TSDyXbcDVMFgY0UyNngGUOW/81GjQyNpeV4/KsGErNudySv82lIycMxZevJgitSaFhNekAfmfceSKyHXEApfH4swq7lYq9wInptM5Frw6Oq6rh6OW7pilqe4E/16BlM8kMg6emI3P54UlVTL5J/wGMq4xWcbrfrHjUI+ESKpmaqzQaLJJIMfllxHmBD6s13McrpaOGTJia+2LSZ0XWfe8T3t4rESVXY4Zpo3cMu+GBkPtCpgTHWQ9NgGnDZKzlFLoxj/8HhXJZzXmhXL+8/ZFL/MbDYo4hWfdUiD6nQ9pU6DTpTM3ijB+iqCBtCshsbSH3yWh/qayX2mzX2j+jcovP5lCmkPvWISH8bmiBG7s8yDysEIsrRfTQn81ISCiOV3LCZYeXD2woqIpD/3nh+XxHbxeMmdClkuZwpVnZS2SDSvV6X+d3Ywr/i6ylWLsvfg+TIkPd7LoM7tYRbei8LNGY1/WgBJNK1ZXNXC0gLLd2viTFU3T/+syF6sfGMAG04bGrawq2xrKGO0OqWQGF17KnzDz/rDicizU="
+                        "password": "oMhjM629//H23XJhX805PqoyCkjcV8ZBW14xx/iVNWBo4V+1Z7e4lHXPgIHdgoBHSD6YAc3u3dEt5UGrj8VJI5CTTFIBj1MwLP1hZO+xMWGqg/xRq/AkpK7C+zadDXcphrXWD91URaR+qm/UlgUWCJE6i3Cyd3UB/HB6hDZilMPmUOjKC9uhpHCF2Kdpv6HjB1A0uJBjDs63LnPr6fax176u0xLmENcbNM2DiwCc8iI+ilGotp7LfnuSXSGPAmPaaIWXcmKMUIha57QO9Y+UpkpG+AMOmfYU0egkYvLkSKNh00N4Mrq2Lx7iDmm3sobavwvXUO2EZTWno8UmapPsVVPjF0GypJzEzZJM8sHIyXEXrczkTSvd6hTLzrrsTZmyStuiM2XRhZq+Jj6cjoH63IHRYcGj9EZW1VWUPZ/66iT8Tb/5bDnz3n1PgOG6u57ceXDNo7IBN2cprt4fViXKuOanWeLmDSV/Tb3JqC1tvxyDteB9z8R+3cgknLxyGd338xaEeboHKyai/S2oOCy74jmHujc4wxAl+n9GxtnI14Ju8Uu4ZAz/QQyKOazX0sj1gVSkSJ+mLioTYkiB5NOpE8mZYNtqwhCUKYBjIC0VGYRAXz87cClZVQcJBb5RhSYl/Op9A644VktSrzr+PlC4MhIkYq5GmRefPZx5eiScEtM="
                     },
                     "proxy": "",
                     "stack": "request"
                 },
                 "caching": {
-                    "sendInterval": 5000,
+                    "sendInterval": 15000,
                     "retryInterval": 10000
                 }
             },
@@ -389,7 +389,7 @@
                 "caching": {
                     "sendInterval": 15000,
                     "retryInterval": 10000,
-                    "groupCount": 6
+                    "groupCount": 1
                 }
             }
         ]
