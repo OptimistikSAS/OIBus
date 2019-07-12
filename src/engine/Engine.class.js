@@ -138,18 +138,14 @@ class Engine {
    * @param {object[]} values - The values to send
    * @return {Promise} - The send promise
    */
-  sendValues(applicationId, values) {
-    return new Promise((resolve) => {
-      this.activeApis[applicationId]
-        .handleValues(values)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  async sendValues(applicationId, values) {
+    let success = false
+    try {
+      success = await this.activeApis[applicationId].handleValues(values)
+    } catch (error) {
+      this.logger.error(error)
+    }
+    return success
   }
 
   /**
@@ -190,7 +186,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          this.logger.error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
+          this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
         }
       }
     })
@@ -206,7 +202,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          this.logger.error(`API for ${applicationId} is not supported : ${api}`)
+          this.logger.error(`API for ${applicationId} is not found : ${api}`)
         }
       }
     })
@@ -216,16 +212,18 @@ class Engine {
 
     // 5. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = timexe(cronTime, () => {
-        // on each scan, activate each protocols
-        this.scanLists[scanMode].forEach((dataSourceId) => {
-          this.activeProtocols[dataSourceId].onScan(scanMode)
+      if (scanMode !== 'listen') {
+        const job = timexe(cronTime, () => {
+          // on each scan, activate each protocols
+          this.scanLists[scanMode].forEach((dataSourceId) => {
+            this.activeProtocols[dataSourceId].onScan(scanMode)
+          })
         })
-      })
-      if (job.result !== 'ok') {
-        this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
-      } else {
-        this.jobs.push(job.id)
+        if (job.result !== 'ok') {
+          this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
+        } else {
+          this.jobs.push(job.id)
+        }
       }
     })
     this.logger.info('OIBus started')

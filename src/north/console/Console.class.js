@@ -20,12 +20,11 @@ class Console extends ApiHandler {
    * @return {Promise} - The handle status
    */
   /* eslint-disable-next-line class-methods-use-this */
-  handleValues(values) {
+  async handleValues(values) {
     values.forEach((value) => {
       console.info(value)
     })
-
-    return Promise.resolve()
+    return true
   }
 }
 
