@@ -261,7 +261,7 @@
             },
             {
                 "dataSourceId": "RawFileTransfer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "RawFile",
                 "scanMode": "every5Second",
                 "inputFolder": "./tests/RawFile/input/",
@@ -283,6 +283,37 @@
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                 "delimiter": ",",
                 "tmpFolder": "./tests/SQLFile"
+            },
+            {
+                "dataSourceId": "OPC-HDA",
+                "enabled": true,
+                "protocol": "OPCHDA",
+                "slaveFilename": "C:/Users/kukukk/Work/Developer/factoryThings/OIBusOPCHDA/HdaAgent/bin/Debug/HdaAgent.exe",
+                "tcpPort": 3333,
+                "host": "localhost",
+                "serverName": "Matrikon.OPC.Simulation",
+                "points": [
+                    {
+                        "pointId": "Random.Int1",
+                        "scanMode": "every5Second"
+                    },
+                    {
+                        "pointId": "Random.Real4",
+                        "scanMode": "every20Second"
+                    }
+                ],
+                "scanGroups": [
+                    {
+                        "aggregate": "Raw",
+                        "scanMode": "every5Second",
+                        "resampling": "1mn"
+                    },
+                    {
+                        "aggregate": "Raw",
+                        "scanMode": "every20Second",
+                        "resampling": "1mn"
+                    }
+                ]
             }
         ]
     },
