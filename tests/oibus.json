@@ -283,7 +283,6 @@
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                 "delimiter": ",",
                 "tmpFolder": "./tests/SQLFile"
-<<<<<<< HEAD
             },
             {
                 "dataSourceId": "OPC-HDA",
@@ -315,8 +314,6 @@
                         "resampling": "1mn"
                     }
                 ]
-=======
->>>>>>> master
             }
         ]
     },
