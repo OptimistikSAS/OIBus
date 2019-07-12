@@ -36,7 +36,8 @@ class ApiHandler {
    * @return {void}
    */
   connect() {
-    this.logger.info('connect')
+    const { applicationId, api } = this.application
+    this.logger.info(`North API ${applicationId} started with protocol ${api}`)
   }
 
   /**
@@ -44,7 +45,8 @@ class ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.logger.info('disconnect')
+    const { applicationId } = this.application
+    this.logger.info(`North API ${applicationId} disconnected`)
   }
 
   /**
