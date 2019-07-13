@@ -130,13 +130,13 @@
             },
             {
                 "dataSourceId": "MQTTServer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "MQTT",
                 "server": "simulator.factorythings.com",
                 "mqttProtocol": "mqtts",
                 "port": 8883,
                 "username": "bai",
-                "password": "MiY1AB+28prhMRq52ljEYEM3XOVZGURFmumvGVFJvNZqoWVKJoWdRTQGHfC63FyIeFIN+ctHjJPMccpJ9gcOEYXRLNaUesI0JLmfS3ik5R3deOSzvl6434iEr5wIetwKEuqJ4qedh8CnolLoXP/yDH2v8o3iNK+wFITmCEZnM7ZQNdFhpf+jroTJEIlRFWhOWvso0vjyw2rKVLN+yZrBOXLGkoD77CF3C4oDLTbhSYignbq9KyfIx9EtEUZEvqv+WPIOQ067XH40VF+uSMNLT6yUZ8PZSQeL+KuiwnJVNzKIsuqg0jR00KhbigXKWIHVRRHFOeOldLwZKdmps9KE6gm1KOEUSUSp4BLdcETR6d7aEKj5lMpUdZzCqmLIs/xzpWDOGpOxDRJKfu+VAyzhtp1pwCbLap4kJWlI4+BRe+I20Y3idBHQfPPx2nHApmDzD2HuB2urOGv5YVlIjYE9FUBbjOCG96yD/eAx2SwmR+iVa77IlqyHEcvM4IrxOAy7XW3hFsR4nM9dUiD2kaP1TMgzxMfWYHP0sI7/vjTPvvzw7degDMM3MhSvaoIBCpzbV2ChXGDTxLOBfpUlZeQDHHNVQVC0joR5fYEdKxxyM0weiJrNRjXgfEtq6YLeDPFX+iOwhFK5ICunFXmzeWXkDT5zx4S0On+A6/GhzDpu+74=",
+                "password": "Fv+EmylSGvLMumlj3IgMEQt35tks1Mx/H96RgTAiH0HJA7bnCZDblxGlMlSDEqKaxlFuK8LbQ8Ifa1MwIgRqVNoVYbRYi/uA0N7Q2PzcFqTDWMEbI/0KBGRHWLMZDwGss82iHw9QU3Dtls9Y81wz9Mk0E+kTblBJdaDKmAPgsSvdixbMIixJ43ZUoqdVdcbL1LtVEDYzOUIblGRxBzXXl2hB6Jt6Di7n13G5MpCrs7w6f68+OXf8dIOnxe0wWIZA45Gy5fDkCu5CEY7UN5l/KJWuanoF6uJgFT0PyxyYqaXY/3CdAnvQ+Qs/xsl3MmUq1EHAyJLrqsqxzTHK5HUkZO66bzwcNTfagTV8zxFhwMfJzrBh6zQIBQPibYDjM+WuT7H7u0It1GQLjbhAGvGEnITk5NkGwgoPpDYSOMzi4K9zLvK+7niLOHicpLTHFWpET+OSbxJryUCrtHA2ckJiMVjsnqYXK25IXhxaUGtQ+AoiWwID+gzg/Ob8x+0PQMWgWfKp6WhgjRrLKqkxQ7wgQk4b4ZbKzhJjazT3XeIM999VS7qGFLqtZNRkMBg4PDHxxpMUesvtR4VZGw/6Lyu3jzWZ/xVDJIf48Dtjggx5mtBfCTady3VNL1i/b2H4QTBs8KAThbBD+2UFk9bMyMStjhq4vThnY0mu8KiNqrGomS0=",
                 "points": [
                     {
                         "pointId": "/fttest.base/Tank 5.tank/Sensor22.temperature",
@@ -288,9 +288,9 @@
                 "dataSourceId": "OPC-HDA",
                 "enabled": true,
                 "protocol": "OPCHDA",
-                "slaveFilename": "C:/Users/kukukk/Work/Developer/factoryThings/OIBusOPCHDA/HdaAgent/bin/Debug/HdaAgent.exe",
+                "slaveFilename": "./deps/windows/HdaAgent/HdaAgent.exe",
                 "tcpPort": 3333,
-                "host": "localhost",
+                "host": "opcserver",
                 "serverName": "Matrikon.OPC.Simulation",
                 "points": [
                     {
