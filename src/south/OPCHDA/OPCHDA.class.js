@@ -42,7 +42,7 @@ class OPCHDA extends ProtocolHandler {
   connect() {
     if (process.platform === 'win32') {
       const { agentFilename, tcpPort } = this.dataSource
-      this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage)
+      this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort)
       })
