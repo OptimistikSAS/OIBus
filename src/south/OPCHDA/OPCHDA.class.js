@@ -41,10 +41,10 @@ class OPCHDA extends ProtocolHandler {
    */
   connect() {
     if (process.platform === 'win32') {
-      const { slaveFilename, tcpPort } = this.dataSource
+      const { agentFilename, tcpPort } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this)
       this.tcpServer.start(() => {
-        this.launchSlave(slaveFilename, tcpPort)
+        this.launchAgent(agentFilename, tcpPort)
       })
     } else {
       this.logger.error(`Invalid platform to launch OIBusOPCHDA agent: ${process.platform}`)
@@ -69,21 +69,21 @@ class OPCHDA extends ProtocolHandler {
   }
 
   /**
-   * Launch slave application.
-   * @param {string} path - The path to the slave executable
+   * Launch agent application.
+   * @param {string} path - The path to the agent executable
    * @param {number} port - The port to send as command line argument
    * @returns {void}
    */
-  launchSlave(path, port) {
+  launchAgent(path, port) {
     this.logger.info(`Launching ${path} with the arguments: listen -p ${port}`)
     this.child = spawn(path, ['listen', `-p ${port}`])
 
     this.child.stdout.on('data', (data) => {
-      this.logger.debug(`Slave stdout: ${data}`)
+      this.logger.debug(`Agent stdout: ${data}`)
     })
 
     this.child.stderr.on('data', (data) => {
-      this.logger.error(`Slave stderr: ${data}`)
+      this.logger.error(`Agent stderr: ${data}`)
     })
 
     this.child.on('close', (code) => {
