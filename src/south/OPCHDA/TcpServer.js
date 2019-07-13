@@ -27,7 +27,7 @@ class TcpServer {
       this.logger.info(`New connection attempt from ${name}`)
 
       if (!this.session) {
-        this.session = new SocketSession(socket, this, this.logger, this.handleMessage)
+        this.session = new SocketSession(socket, this, this.logger, this.handleMessage.bind(this))
       } else {
         this.logger.error(`Session already open, closing connection from ${name}`)
         socket.destroy()
