@@ -13,9 +13,9 @@ module.exports = {
     },
     protocol: {
       type: 'string',
-      enum: ['OPCUA'],
+      enum: ['OPCHDA'],
       title: 'Protocol',
-      default: 'CSV',
+      default: 'OPCHDA',
     },
     host: {
       type: 'string',
