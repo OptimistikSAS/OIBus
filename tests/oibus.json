@@ -288,7 +288,7 @@
                 "dataSourceId": "OPC-HDA",
                 "enabled": true,
                 "protocol": "OPCHDA",
-                "slaveFilename": "C:/Users/kukukk/Work/Developer/factoryThings/OIBusOPCHDA/HdaAgent/bin/Debug/HdaAgent.exe",
+                "agentFilename": "C:/Users/kukukk/Work/Developer/factoryThings/OIBusOPCHDA/HdaAgent/bin/Debug/HdaAgent.exe",
                 "tcpPort": 3333,
                 "host": "localhost",
                 "serverName": "Matrikon.OPC.Simulation",
