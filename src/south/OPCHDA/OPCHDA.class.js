@@ -42,12 +42,12 @@ class OPCHDA extends ProtocolHandler {
   connect() {
     if (process.platform === 'win32') {
       const { agentFilename, tcpPort } = this.dataSource
-      this.tcpServer = new TcpServer(tcpPort, this.logger, this)
+      this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage)
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort)
       })
     } else {
-      this.logger.error(`Invalid platform to launch OIBusOPCHDA agent: ${process.platform}`)
+      this.logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`)
     }
   }
 
@@ -79,19 +79,19 @@ class OPCHDA extends ProtocolHandler {
     this.child = spawn(path, ['listen', `-p ${port}`])
 
     this.child.stdout.on('data', (data) => {
-      this.logger.debug(`Agent stdout: ${data}`)
+      this.logger.debug(`HDA stdout: ${data}`)
     })
 
     this.child.stderr.on('data', (data) => {
-      this.logger.error(`Agent stderr: ${data}`)
+      this.logger.error(`HDA stderr: ${data}`)
     })
 
     this.child.on('close', (code) => {
-      this.logger.info(`Child process exited with code ${code}`)
+      this.logger.info(`HDA agent exited with code ${code}`)
     })
 
     this.child.on('error', (error) => {
-      this.logger.error(`Failed to start sub-process ${path}`, error)
+      this.logger.error(`Failed to start HDA agent: ${path}`, error)
     })
   }
 
@@ -159,12 +159,17 @@ class OPCHDA extends ProtocolHandler {
   handleMessage(message) {
     try {
       this.logger.debug(`Received: ${message}`)
+      let messageObject
+      try {
+        messageObject = JSON.parse(message)
+      } catch (error) {
+        this.logger.error('Invalid JSON format received from Agent', error)
+      }
 
-      const messageObject = JSON.parse(message)
       let dateString
 
       switch (messageObject.Reply) {
-        case 'Hello':
+        case 'Alive':
           this.agentConnected = true
           this.sendConnectMessage()
           break
@@ -172,6 +177,7 @@ class OPCHDA extends ProtocolHandler {
           this.sendInitializeMessage()
           break
         case 'Initialize':
+          this.logger.debug('received Initialize message')
           break
         case 'Read':
           if (messageObject.Content.Error) {
