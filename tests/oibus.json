@@ -288,7 +288,7 @@
                 "dataSourceId": "OPC-HDA",
                 "enabled": true,
                 "protocol": "OPCHDA",
-                "slaveFilename": "./deps/windows/HdaAgent/HdaAgent.exe",
+                "agentFilename": "./deps/windows/HdaAgent/HdaAgent.exe",
                 "tcpPort": 3333,
                 "host": "opcserver",
                 "serverName": "Matrikon.OPC.Simulation",
