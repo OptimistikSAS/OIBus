@@ -82,7 +82,7 @@ class Cache {
   }
 
   /**
-   * Cache a new Value.
+   * Cache a new Value from the South
    * It will store the value in every database. If urgent is "true" it will immediately forward the value
    * to every North application (used for alarm values for example)
    * @param {string} dataSourceId - The South generating the value
@@ -181,25 +181,29 @@ class Cache {
   }
 
   /**
-   * Handle value resending.
+   * handle the values for the callback
    * @param {object} application - The application to send the values to
    * @return {void}
    */
   async sendCallbackForValues(application) {
     let success = true
+    const { applicationId, database, config } = application
 
     try {
-      const values = await databaseService.getValuesToSend(application.database, application.config.groupCount)
+      const values = await databaseService.getValuesToSend(database, config.groupCount)
 
       if (values) {
-        success = await this.sendValuesToNorth(application.applicationId, values)
+        success = await this.engine.handleValuesFromCache(applicationId, values)
+        if (success) {
+          await databaseService.removeSentValues(database, values)
+        }
       }
     } catch (error) {
       this.logger.error(error)
       success = false
     }
 
-    const timeout = success ? application.config.sendInterval : application.config.retryInterval
+    const timeout = success ? config.sendInterval : config.retryInterval
     this.resetTimeout(application, timeout)
   }
 
@@ -237,22 +241,6 @@ class Cache {
     }
 
     this.resetTimeout(application, timeout)
-  }
-
-  /**
-   * Send values to a given North application.
-   * @param {string} applicationId - The application ID
-   * @param {object[]} valueList - The values to send
-   * @return {void}
-   */
-  async sendValuesToNorth(applicationId, valueList) {
-    const success = await this.engine.handleValuesFromCache(applicationId, valueList)
-
-    if (success) {
-      await databaseService.removeSentValues(this.apis[applicationId].database, valueList)
-    }
-
-    return success
   }
 
   /**
