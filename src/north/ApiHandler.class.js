@@ -10,6 +10,10 @@ class ApiHandler {
    * - **connect**: to allow to establish proper connection to the external application (optional)
    * - **disconnect**: to allow proper disconnection (optional)
    *
+   * The constructor of the API need to initialize:
+   * - **this.canHandleValues** to true in order to receive values with handleValues()
+   * - **this.canHandleFiles** to true in order to receive a file with handleFile()
+   *
    * In addition, it is possible to use a number of helper functions:
    * - **getProxy**: get the proxy handler
    * - **decryptPassword**: to decrypt a password

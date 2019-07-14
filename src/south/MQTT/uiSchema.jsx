@@ -15,7 +15,7 @@ const uiSchema = {
   points: {
     items: {
       pointId: { 'ui:help': '' },
-      doNotGroup: { 'ui:help': '' },
+      urgent: { 'ui:help': '' },
       scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
       topic: { 'ui:help': '' },
     },

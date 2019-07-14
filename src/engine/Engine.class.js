@@ -118,11 +118,11 @@ class Engine {
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  addValue(dataSourceId, { pointId, data, timestamp }, doNotGroup) {
-    this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, doNotGroup)
+  addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
+    this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
   }
 
   /**
@@ -143,7 +143,7 @@ class Engine {
    * @param {object[]} values - The values to send
    * @return {Promise} - The send promise
    */
-  async sendValues(applicationId, values) {
+  async handleValuesFromCache(applicationId, values) {
     let success = false
     try {
       success = await this.activeApis[applicationId].handleValues(values)
