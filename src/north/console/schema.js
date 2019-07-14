@@ -17,16 +17,6 @@ module.exports = {
       enum: ['Console'],
       default: 'Console',
     },
-    minimumBuffer: {
-      type: 'number',
-      title: 'Minimum buffer',
-      default: 1,
-    },
-    timeStamp: {
-      type: 'string',
-      title: 'Timestamp',
-      default: 'OIBus',
-    },
     caching: {
       type: 'object',
       title: 'Caching',
@@ -45,6 +35,11 @@ module.exports = {
           type: 'number',
           title: 'Group count',
           default: 6,
+        },
+        subscribedTo: {
+          type: 'array',
+          title: 'Subscribed To',
+          items: { type: 'string' },
         },
       },
     },

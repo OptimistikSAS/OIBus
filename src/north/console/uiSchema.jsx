@@ -1,16 +1,15 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': '' },
-  enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
-  api: { 'ui:help': '' },
-  minimumBuffer: { 'ui:help': <div>The minimum buffer that will ensure date is not sent until value is reached</div> },
-  timeStamp: { 'ui:help': '' },
+  applicationId: { 'ui:help': <div>Unique name for this Console</div> },
+  enabled: { 'ui:help': <div>Enable or not the Console</div> },
+  api: { 'ui:readonly': true },
   caching: {
     sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
     retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
-    groupCount: { 'ui:help': '' },
+    groupCount: { 'ui:help': <div>The minimum buffer that will ensure date is not sent until value is reached</div> },
   },
+  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
 }
 
 export default uiSchema
