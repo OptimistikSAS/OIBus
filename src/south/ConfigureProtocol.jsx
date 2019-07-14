@@ -71,7 +71,7 @@ const ConfigureProtocol = ({ match, location }) => {
     }
   }
 
-  const log = type => console.info.bind(console, type)
+  const log = (type) => console.info.bind(console, type)
   return (
     <>
       {configJson && configSchema && (
@@ -88,7 +88,7 @@ const ConfigureProtocol = ({ match, location }) => {
             onError={log('errors')}
           />
           <Modal show={false} title="Delete data source" body="Are you sure you want to delete this data source?">
-            {confirm => (
+            {(confirm) => (
               <Button color="danger" onClick={confirm(handleDelete)}>
                 Delete
               </Button>

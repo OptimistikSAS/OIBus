@@ -41,8 +41,8 @@ const { combine, timestamp, printf, colorize } = format
 class Logger {
   constructor(logParameters) {
     const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename } = logParameters
-    const defaultFormat = combine(timestamp(), printf(info => `${info.timestamp} ${info.level}: ${info.message}`))
-    const consoleFormat = combine(colorize({ all: true }), printf(info => `${info.level}: ${info.message}`))
+    const defaultFormat = combine(timestamp(), printf((info) => `${info.timestamp} ${info.level}: ${info.message}`))
+    const consoleFormat = combine(colorize({ all: true }), printf((info) => `${info.level}: ${info.message}`))
     this.logger = createLogger({
       level: consoleLevel,
       format: defaultFormat,
