@@ -49,6 +49,7 @@ class Cache {
   async initialize(activeApis) {
     this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
+    this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
     // initialize the internal object apis with the list of north apis
     Object.values(activeApis).forEach(async (activeApi) => {
       const api = {
@@ -62,6 +63,7 @@ class Cache {
       if (api.canHandleValues) {
         this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
         api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
+        this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
       }
       this.resetTimeout(api, api.config.sendInterval)
       this.apis[api.applicationId] = api
@@ -81,29 +83,35 @@ class Cache {
 
   /**
    * Cache a new Value.
-   * It will store the value in every database. If doNotGroup is "true" it will immediately forward the value
+   * It will store the value in every database. If urgent is "true" it will immediately forward the value
    * to every North application (used for alarm values for example)
    * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  async cacheValue(dataSourceId, value, doNotGroup) {
-    Object.entries(this.apis).forEach(async ([applicationId, api]) => {
+  async cacheValue(dataSourceId, value, urgent) {
+    Object.values(this.apis).forEach(async (api) => {
       const { database, config, canHandleValues, subscribedTo } = api
-
+      // save the value in each North queues that are subscribed to the dataSource
       if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
         await databaseService.saveValue(database, value)
 
-        if (doNotGroup) {
-          this.sendValues(applicationId, [value])
+        // if urgent is set (for example, a sensor indicating an alarm),
+        // we immediately send the cache to the North.
+        if (urgent) {
+          this.logger.debug(`send because urgent flag for ${api.applicationId}`)
+          this.sendCallback(api)
         } else {
-          const count = await databaseService.getValuesCount(database)
+          // if the group size is over the groupCount => we immediately send the cache
+          // to the North even if the timeout is not finished.
+          const count = await databaseService.getCount(database)
           if (count >= config.groupCount) {
-            this.sendCallback(applicationId)
+            this.logger.debug(`send because groupCount reached for ${api.applicationId}`)
+            this.sendCallback(api)
           }
         }
       }
@@ -148,7 +156,8 @@ class Cache {
         const { canHandleFiles, subscribedTo } = api
         if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
           await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-          this.sendCallback(applicationId)
+          this.logger.debug(`send file for ${api.applicationId}`)
+          this.sendCallback(api)
         }
       })
     } catch (error) {
@@ -158,18 +167,16 @@ class Cache {
 
   /**
    * Callback function used by the timer to send the values to the given North application.
-   * @param {string} applicationId - The application ID
+   * @param {object} api - The application
    * @return {void}
    */
-  sendCallback(applicationId) {
-    const application = this.apis[applicationId]
-
-    if (application.canHandleValues) {
-      this.handleValues(application)
+  sendCallback(api) {
+    if (api.canHandleValues) {
+      this.sendCallbackForValues(api)
     }
 
-    if (application.canHandleFiles) {
-      this.handleFiles(application)
+    if (api.canHandleFiles) {
+      this.sendCallbackForFiles(api)
     }
   }
 
@@ -178,14 +185,14 @@ class Cache {
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  async handleValues(application) {
+  async sendCallbackForValues(application) {
     let success = true
 
     try {
       const values = await databaseService.getValuesToSend(application.database, application.config.groupCount)
 
       if (values) {
-        success = await this.sendValues(application.applicationId, values)
+        success = await this.sendValuesToNorth(application.applicationId, values)
       }
     } catch (error) {
       this.logger.error(error)
@@ -201,7 +208,7 @@ class Cache {
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  async handleFiles(application) {
+  async sendCallbackForFiles(application) {
     let timeout = application.config.sendInterval
 
     try {
@@ -238,8 +245,8 @@ class Cache {
    * @param {object[]} valueList - The values to send
    * @return {void}
    */
-  async sendValues(applicationId, valueList) {
-    const success = await this.engine.sendValues(applicationId, valueList)
+  async sendValuesToNorth(applicationId, valueList) {
+    const success = await this.engine.handleValuesFromCache(applicationId, valueList)
 
     if (success) {
       await databaseService.removeSentValues(this.apis[applicationId].database, valueList)
@@ -301,7 +308,7 @@ class Cache {
     if (application.timeout) {
       clearTimeout(application.timeout)
     }
-    application.timeout = setTimeout(this.sendCallback.bind(this, application.applicationId), timeout)
+    application.timeout = setTimeout(this.sendCallback.bind(this, application), timeout)
   }
 }
 

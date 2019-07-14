@@ -47,7 +47,7 @@ module.exports = {
             title: 'Point ID',
             type: 'string',
           },
-          doNotGroup: {
+          urgent: {
             title: 'Do Not Group',
             type: 'boolean',
             default: true,
