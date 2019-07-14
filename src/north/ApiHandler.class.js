@@ -5,14 +5,15 @@ class ApiHandler {
    * Constructor for Application
    * Building a new North API means to extend this class, and to surcharge
    * the following methods:
-   * - handleValues: receive an array of values that need to be sent to an external applications
-   * - handleFile: receive a file that need to be sent to an external application.
-   * - connect: to allow to establish proper connection to the external application (optional)
-   * - disconnect: to allow proper disconnection (optional)
+   * - **handleValues**: receive an array of values that need to be sent to an external applications
+   * - **handleFile**: receive a file that need to be sent to an external application.
+   * - **connect**: to allow to establish proper connection to the external application (optional)
+   * - **disconnect**: to allow proper disconnection (optional)
+   *
    * In addition, it is possible to use a number of helper functions:
-   * - getProxy: get the proxy handler
-   * - decryptPassword: to decrypt a password
-   * - logger: to log an event with different levels (error,warning,info,debug)
+   * - **getProxy**: get the proxy handler
+   * - **decryptPassword**: to decrypt a password
+   * - **logger**: to log an event with different levels (error,warning,info,debug)
    *
    * @constructor
    * @param {Object} applicationParameters - The application parameters
@@ -96,17 +97,6 @@ class ApiHandler {
     const { name, ext } = path.parse(filePath)
     const filename = name.substr(0, name.lastIndexOf('-'))
     return `${filename}${ext}`
-  }
-
-  /**
-   * Method called by Engine to get the stats of the poinId passed
-   * @param {*} pointId - The point ID
-   * @memberof ApiHandler
-   * @return {void}
-   * @todo: Do we use this method??? (JFH)
-   */
-  get(pointId) {
-    this.logger.info('Get the stats of ', pointId, 'from ', this.application.api)
   }
 }
 
