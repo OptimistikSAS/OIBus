@@ -71,7 +71,7 @@ const ConfigureApi = ({ match, location }) => {
     }
   }
 
-  const log = type => console.info.bind(console, type)
+  const log = (type) => console.info.bind(console, type)
   return (
     <>
       {configJson && configSchema && (
@@ -88,7 +88,7 @@ const ConfigureApi = ({ match, location }) => {
             onError={log('errors')}
           />
           <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
-            {config => (
+            {(config) => (
               <Button color="danger" onClick={config(handleDelete)}>
                 Delete
               </Button>

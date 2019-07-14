@@ -16,7 +16,7 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
     const { target } = event
     const { value } = target
     //  update the new application's state
-    setApplication(prevState => ({ ...prevState, [target.name]: value }))
+    setApplication((prevState) => ({ ...prevState, [target.name]: value }))
   }
 
   /**

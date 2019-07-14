@@ -16,7 +16,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
     const { target } = event
     const { value } = target
     //  update the new data source's state
-    setDataSource(prevState => ({ ...prevState, [target.name]: value }))
+    setDataSource((prevState) => ({ ...prevState, [target.name]: value }))
   }
 
   /**

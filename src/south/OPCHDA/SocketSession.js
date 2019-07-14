@@ -2,11 +2,11 @@
  * Class representing a connected session.
  */
 class SocketSession {
-  constructor(socket, tcpServer, logger, handler) {
+  constructor(socket, tcpServer, logger, handleMessage) {
     this.socket = socket
     this.tcpServer = tcpServer
     this.logger = logger
-    this.handler = handler
+    this.handleMessage = handleMessage
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''
 
@@ -38,7 +38,7 @@ class SocketSession {
         TransactionId: '',
         Content: {},
       }
-      this.handler.handleMessage(JSON.stringify(disconnectMessage))
+      this.handleMessage(JSON.stringify(disconnectMessage))
     })
 
     // Listener for the 'error' event
@@ -52,7 +52,7 @@ class SocketSession {
    * @returns {void}
    */
   processReceivedMessage() {
-    this.handler.handleMessage(this.receivedMessage.trim())
+    this.handleMessage(this.receivedMessage.trim())
     this.receivedMessage = ''
   }
 
