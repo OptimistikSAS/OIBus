@@ -195,7 +195,8 @@ class Cache {
       if (values) {
         success = await this.engine.handleValuesFromCache(applicationId, values)
         if (success) {
-          await databaseService.removeSentValues(database, values)
+          const removed = await databaseService.removeSentValues(database, values)
+          if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
         }
       }
     } catch (error) {
