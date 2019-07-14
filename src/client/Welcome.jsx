@@ -99,7 +99,7 @@ const Welcome = () => {
               />
             </div>
             <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
-              {confirm => (
+              {(confirm) => (
                 <Button color="primary" onClick={confirm(handleActivate)}>
                   Activate
                 </Button>

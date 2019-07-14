@@ -29,7 +29,7 @@ const Engine = () => {
       console.error(error)
     }
   }
-  const transformErrors = errors => (errors.map((error) => {
+  const transformErrors = (errors) => (errors.map((error) => {
     if (error.schemaPath === '#/properties/filter/items/pattern') {
       error.message = 'Only IPV4 or IPV6 format is allowed'
     }
@@ -37,7 +37,7 @@ const Engine = () => {
   })
   )
 
-  const log = type => console.info.bind(console, type)
+  const log = (type) => console.info.bind(console, type)
   return (
     <>
       <Form

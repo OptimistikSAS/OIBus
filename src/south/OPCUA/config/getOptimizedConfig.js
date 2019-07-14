@@ -35,7 +35,7 @@ const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
  * @param {Object} dataSource - The data source
  * @return {*} The optimized config
  */
-const getOptimizedConfig = dataSource => groupBy(dataSource.points, 'scanMode')
+const getOptimizedConfig = (dataSource) => groupBy(dataSource.points, 'scanMode')
 // {
 // const optimized = dataSource.reduce((acc, { dataSourceId, protocol, points }) => {
 // const scanModes = groupBy(dataSource.points, 'scanMode')

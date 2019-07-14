@@ -7,7 +7,7 @@ const csv = require('fast-csv')
  * @param {object[]} points - The points to export
  * @returns {Promise<*>} - The result
  */
-const exportToCSV = async points => new Promise((resolve, reject) => {
+const exportToCSV = async (points) => new Promise((resolve, reject) => {
   const options = { headers: true }
   csv.writeToString(
     points,
@@ -30,7 +30,7 @@ const exportToCSV = async points => new Promise((resolve, reject) => {
  * @param {string} csvContent - The CSV content
  * @returns {Promise<*>} - The result
  */
-const importFromCSV = async csvContent => new Promise((resolve) => {
+const importFromCSV = async (csvContent) => new Promise((resolve) => {
   const points = []
   const options = {
     headers: true,
