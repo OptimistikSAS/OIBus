@@ -8,8 +8,8 @@ class MQTT extends ProtocolHandler {
    */
   connect() {
     super.connect()
-    this.listen()
     this.topics = {}
+    this.listen()
   }
 
   /**
