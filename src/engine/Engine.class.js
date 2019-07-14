@@ -121,6 +121,23 @@ class Engine {
   }
 
   /**
+   * Add an array of Values from a data source to the Engine.
+   * The Engine will forward the Value to the Cache.
+   * @param {string} dataSourceId - The South generating the value
+   * @param {object} values - array of values
+   * @param {string} value.pointId - The ID of the point
+   * @param {string} value.data - The value of the point
+   * @param {number} value.timestamp - The timestamp
+   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @return {void}
+   */
+  addValues(dataSourceId, values, doNotGroup) {
+    values.forEach(({ pointId, data, timestamp }) => {
+      this.cache.cacheValues(dataSourceId, { pointId, data, timestamp }, doNotGroup)
+    })
+  }
+
+  /**
    * Add a new File from an data source to the Engine.
    * The Engine will forward the File to the Cache.
    * @param {string} dataSourceId - The South generating the file
