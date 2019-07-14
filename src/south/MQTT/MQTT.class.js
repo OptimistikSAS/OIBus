@@ -8,8 +8,8 @@ class MQTT extends ProtocolHandler {
    */
   connect() {
     super.connect()
-    this.listen()
     this.topics = {}
+    this.listen()
   }
 
   /**
@@ -25,8 +25,8 @@ class MQTT extends ProtocolHandler {
 
     this.client.on('connect', () => {
       points.forEach((point) => {
-        const { topic, pointId, doNotGroup = false } = point
-        this.topics[topic] = { pointId, doNotGroup }
+        const { topic, pointId, urgent = false } = point
+        this.topics[topic] = { pointId, urgent }
         this.client.subscribe(topic, (error) => {
           if (error) {
             this.logger.error(error)
@@ -42,7 +42,7 @@ class MQTT extends ProtocolHandler {
             timestamp: new Date().getTime(),
             pointId: this.topics[topic].pointId,
           },
-          this.topics[topic].doNotGroup,
+          this.topics[topic].urgent,
         )
       })
     })

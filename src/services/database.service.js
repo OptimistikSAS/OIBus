@@ -98,7 +98,7 @@ const saveValue = async (database, value) => {
  * @param {BetterSqlite3.Database} database - The database to use
  * @return {number} - The values count
  */
-const getValuesCount = async (database) => {
+const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
   const stmt = await database.prepare(query)
@@ -137,14 +137,15 @@ const getValuesToSend = async (database, count) => {
  * Remove sent values from the cache for a given North application.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {Object} values - The values to remove
- * @return {void}
+ * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
-  const ids = values.map(value => value.id).join()
+  const ids = values.map((value) => value.id).join()
   const query = `DELETE FROM ${CACHE_TABLE_NAME}
                  WHERE id IN (${ids})`
   const stmt = await database.prepare(query)
   await stmt.run()
+  return stmt.changes
 }
 
 /**
@@ -326,7 +327,7 @@ module.exports = {
   createRawFilesDatabase,
   createConfigDatabase,
   saveValue,
-  getValuesCount,
+  getCount,
   getValuesToSend,
   removeSentValues,
   saveFile,

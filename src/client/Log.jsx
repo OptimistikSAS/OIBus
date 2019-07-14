@@ -52,7 +52,7 @@ const Log = () => {
    * @returns {void}
    */
   const renderLogs = () => {
-    const filteredLogs = logs.filter(item => item.message.toLowerCase().includes(filterText))
+    const filteredLogs = logs.filter((item) => item.message.toLowerCase().includes(filterText))
     return (
       <ListGroup>
         <br />
@@ -125,9 +125,9 @@ const Log = () => {
           type="select"
           name="verbosity"
           id="verbosity"
-          onChange={event => setVerbosity(event.target.value)}
+          onChange={(event) => setVerbosity(event.target.value)}
         >
-          {verbosityOptions.map(item => <option key={item}>{item}</option>)}
+          {verbosityOptions.map((item) => <option key={item}>{item}</option>)}
         </Input>
       </FormGroup>
       <Button color="primary" onClick={handleSubmit}>
