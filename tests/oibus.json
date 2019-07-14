@@ -418,9 +418,9 @@
                 "minimumBuffer": 1,
                 "timeStamp": "OIBus",
                 "caching": {
-                    "sendInterval": 15000,
-                    "retryInterval": 10000,
-                    "groupCount": 1
+                    "sendInterval": 10000,
+                    "retryInterval": 1000,
+                    "groupCount": 20
                 }
             }
         ]
