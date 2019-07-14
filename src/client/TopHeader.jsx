@@ -11,7 +11,7 @@ const TopHeader = ({ location }) => {
   const toggle = () => {
     setIsOpen(!isOpen)
   }
-  const isActive = name => (location.pathname === `/${name}`)
+  const isActive = (name) => (location.pathname === `/${name}`)
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top navbar-fixed-top">
       <NavbarToggler onClick={toggle} />
