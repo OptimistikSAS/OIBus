@@ -190,6 +190,7 @@ class Cache {
     const { applicationId, database, config } = application
 
     try {
+      /** @todo should we limit to groupCount? */
       const values = await databaseService.getValuesToSend(database, config.groupCount)
 
       if (values) {
