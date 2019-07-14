@@ -91,7 +91,7 @@ class Cache {
    * @param {boolean} doNotGroup - Whether to disable grouping
    * @return {void}
    */
-  async cacheValues(dataSourceId, value, doNotGroup) {
+  async cacheValue(dataSourceId, value, doNotGroup) {
     Object.entries(this.apis).forEach(async ([applicationId, api]) => {
       const { database, config, canHandleValues, subscribedTo } = api
 

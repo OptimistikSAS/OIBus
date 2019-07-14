@@ -1,7 +1,16 @@
-const encryptionService = require('../services/encryption.service')
-
 /**
  * Class Protocol : provides general attributes and methods for protocols.
+ * Building a new South Protocol means to extend this class, and to surcharge
+ * the following methods:
+ * - handleValues: receive an array of values that need to be sent to an external applications
+ * - handleFile: receive a file that need to be sent to an external application.
+ * - connect: to allow to establish proper connection to the equipment(optional)
+ * - disconnect: to allow proper disconnection (optional)
+ * In addition, it is possible to use a number of helper functions:
+ * - getProxy: get the proxy handler
+ * - decryptPassword: to decrypt a password
+ * - logger: to log an event with different levels (error,warning,info,debug)
+ *
  */
 class ProtocolHandler {
   /**
@@ -15,16 +24,23 @@ class ProtocolHandler {
     this.dataSource = dataSource
     this.engine = engine
     this.logger = engine.logger
+    this.decryptPassword = this.engine.decryptPassword
   }
 
   connect() {
     const { dataSourceId, protocol } = this.dataSource
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
-  /* eslint-disable-next-line */
-  onScan() {}
-  /* eslint-disable-next-line */
-  listen() {}
+
+  onScan() {
+    const { dataSourceId } = this.dataSource
+    this.logger.error(`Data source ${dataSourceId} should surcharge onScan()`)
+  }
+
+  listen() {
+    const { dataSourceId } = this.dataSource
+    this.logger.error(`Data source ${dataSourceId} should surcharge listen()`)
+  }
 
   disconnect() {
     const { dataSourceId } = this.dataSource
@@ -51,15 +67,6 @@ class ProtocolHandler {
    */
   addFile(filePath) {
     this.engine.addFile(this.dataSource.dataSourceId, filePath, this.preserveFiles)
-  }
-
-  /**
-   * Decrypt password.
-   * @param {string} password - The password to decrypt
-   * @return {string} - The decrypted password
-   */
-  decryptPassword(password) {
-    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
   }
 }
 
