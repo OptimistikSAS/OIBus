@@ -2,14 +2,24 @@
  * Class Protocol : provides general attributes and methods for protocols.
  * Building a new South Protocol means to extend this class, and to surcharge
  * the following methods:
- * - handleValues: receive an array of values that need to be sent to an external applications
- * - handleFile: receive a file that need to be sent to an external application.
- * - connect: to allow to establish proper connection to the equipment(optional)
- * - disconnect: to allow proper disconnection (optional)
+ * - **onScan**: will be called by the engine each time a scanMode is scheduled. it receive the "scanmode" name.
+ * so the driver will be able to look at **this.dataSource** that contains all parameters for this
+ * dataSource including the points to be queried, the informations to connect to the equipment, etc.... It's up to
+ * the driver to decide if additional structure (such as scanGroups for OPCHDA) need to be initialized in the
+ * constructor to simplify or optimize the onScan method.
+ * - **listen**: A special scanMode can be created for a protocol (for example MQTT). In this configuration, the
+ * driver will be able to "listen" for updated values.
+ * - **connect**: to allow to establish proper connection to the equipment(optional)
+ * - **disconnect**: to allow proper disconnection (optional)
  * In addition, it is possible to use a number of helper functions:
- * - getProxy: get the proxy handler
- * - decryptPassword: to decrypt a password
- * - logger: to log an event with different levels (error,warning,info,debug)
+ * - **addValue**: is an **important** mmethod to be used in **onScan** or **Listen**. This will allow to push a value
+ * - **addFile**: is the equivalent of addValue but for a file.
+ * to the OIBus engine. More details on the Engine class.
+ * - **decryptPassword**: to decrypt a password
+ * - **logger**: to log an event with different levels (error,warning,info,debug)
+ *
+ * All other operations (cache, store&forward, communication to North applications) will be
+ * handled by the OIBus engine and should not be taken care at the South level.
  *
  */
 class ProtocolHandler {
@@ -32,9 +42,9 @@ class ProtocolHandler {
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
-  onScan() {
+  onScan(scanMode) {
     const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge onScan()`)
+    this.logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
   }
 
   listen() {
@@ -57,7 +67,7 @@ class ProtocolHandler {
    * @return {void}
    */
   addValue({ pointId, data, timestamp }, doNotGroup) {
-    this.engine.addValue(this.dataSource.dataSourceId, { data, timestamp, pointId }, doNotGroup)
+    this.engine.addValue(this.dataSource.dataSourceId, { pointId, data, timestamp }, doNotGroup)
   }
 
   /**
