@@ -133,12 +133,12 @@ class Engine {
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  addValues(dataSourceId, values, doNotGroup) {
+  addValues(dataSourceId, values, urgent) {
     values.forEach(({ pointId, data, timestamp }) => {
-      this.cache.cacheValues(dataSourceId, { pointId, data, timestamp }, doNotGroup)
+      this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
     })
   }
 
