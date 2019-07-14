@@ -137,7 +137,7 @@ const getValuesToSend = async (database, count) => {
  * Remove sent values from the cache for a given North application.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {Object} values - The values to remove
- * @return {void}
+ * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
   const ids = values.map((value) => value.id).join()
@@ -145,6 +145,7 @@ const removeSentValues = async (database, values) => {
                  WHERE id IN (${ids})`
   const stmt = await database.prepare(query)
   await stmt.run()
+  return stmt.changes
 }
 
 /**
