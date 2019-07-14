@@ -55,7 +55,7 @@ const South = ({ history }) => {
    * @param {string} dataSourceId ID of a data source
    * @returns {object} The selected data source's config
    */
-  const getDataSourceIndex = dataSourceId => dataSources.findIndex(dataSource => dataSource.dataSourceId === dataSourceId)
+  const getDataSourceIndex = (dataSourceId) => dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   /**
    * Adds a new data source row to the table
@@ -66,7 +66,7 @@ const South = ({ history }) => {
   const addDataSource = ({ dataSourceId, enabled, protocol }) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) {
-      setDataSources(prev => [...prev, { dataSourceId, enabled, protocol }])
+      setDataSources((prev) => [...prev, { dataSourceId, enabled, protocol }])
     } else {
       throw new Error('dataSourceId already exists')
     }
@@ -131,7 +131,7 @@ const South = ({ history }) => {
     try {
       await apis.deleteSouth(dataSourceId)
       // Remove the deleted data source from the table
-      setDataSources(prevState => prevState.filter(dataSource => dataSource.dataSourceId !== dataSourceId))
+      setDataSources((prevState) => prevState.filter((dataSource) => dataSource.dataSourceId !== dataSourceId))
       // TODO: Show loader
     } catch (error) {
       console.error(error)
@@ -145,7 +145,7 @@ const South = ({ history }) => {
       name: 'enabled',
       value: (
         <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(dataSourceId))}>
                 {enabled ? 'Active' : 'Stopped'}
@@ -176,7 +176,7 @@ const South = ({ history }) => {
           acceptLabel="Delete"
           acceptColor="danger"
         >
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(dataSourceId)}>
                 Edit
@@ -193,7 +193,7 @@ const South = ({ history }) => {
   return (
     <>
       <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
-        {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
+        {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
       <ReactJson src={dataSources} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />

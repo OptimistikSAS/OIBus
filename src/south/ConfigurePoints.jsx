@@ -46,8 +46,8 @@ const ConfigureProtocol = ({ match, location }) => {
   const updateFilteredPointsJson = (points, filter) => {
     setFilteredPointsJson(
       filter
-        ? points.filter(point => (
-          Object.values(point).findIndex(element => (
+        ? points.filter((point) => (
+          Object.values(point).findIndex((element) => (
             element.toString().toLowerCase().includes(filter.toLowerCase()))) >= 0))
         : points,
     )
@@ -124,7 +124,7 @@ const ConfigureProtocol = ({ match, location }) => {
       const { scanModes } = engineJson
       // check if scanMode, scanModes exists and enum was not already set
       if (scanMode && scanMode.enum === undefined && scanModes) {
-        scanMode.enum = scanModes.map(item => item.scanMode)
+        scanMode.enum = scanModes.map((item) => item.scanMode)
       }
     }
     return configPointSchema
@@ -139,7 +139,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.deletePoint(datasourceid, pointId)
-      updatePointsJson(pointsJson.filter(point => point.pointId !== pointId))
+      updatePointsJson(pointsJson.filter((point) => point.pointId !== pointId))
     } catch (error) {
       console.error(error)
     }
@@ -168,7 +168,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.updatePoint(datasourceid, editingPoint.pointId, point)
-      const newPoints = pointsJson.map(oldPoint => (
+      const newPoints = pointsJson.map((oldPoint) => (
         oldPoint.pointId === editingPoint.pointId ? point : oldPoint
       ))
       updatePointsJson(newPoints)
@@ -199,7 +199,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {Object} file the file returned by input
    * @returns {void}
    */
-  const readFileContent = async file => new Promise((resolve) => {
+  const readFileContent = async (file) => new Promise((resolve) => {
     const reader = new FileReader()
     reader.readAsText(file)
     reader.onload = () => {
@@ -272,7 +272,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {string} value the displayed value
    * @returns {void}
    */
-  const createCell = value => (
+  const createCell = (value) => (
     <div>
       {value}
     </div>
@@ -283,9 +283,9 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {object} point point data
    * @returns {void}
    */
-  const createActions = point => (
+  const createActions = (point) => (
     <Modal show={false} title="Delete Point" body="Are you sure you want to delete this Point?" acceptLabel="Delete" acceptColor="danger">
-      {confirm => (
+      {(confirm) => (
         <div className="force-row-display ">
           <Button className="inline-button" color="primary" onClick={() => setEditingPoint(point)}>
             Edit
@@ -303,7 +303,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {number} index index of the row
    * @returns {array} array with name-value for the addons
    */
-  const createBeginAddons = index => [
+  const createBeginAddons = (index) => [
     {
       name: 'index',
       value: selectedPage * maxOnPage - maxOnPage + index + 1,
@@ -315,7 +315,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {number} index index of the row
    * @returns {array} array with name-value for the addons
    */
-  const createEndAddons = index => [
+  const createEndAddons = (index) => [
     {
       name: 'actions',
       value: createActions(filteredPointsJson[selectedPage * maxOnPage - maxOnPage + index]),
@@ -358,7 +358,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {error} type error type
    * @returns {void}
    */
-  const log = type => console.info.bind(console, type)
+  const log = (type) => console.info.bind(console, type)
 
   /**
    * render add/edit form for point
@@ -406,7 +406,7 @@ const ConfigureProtocol = ({ match, location }) => {
           id="fromDatee"
           defaultValue={filterText}
           placeholder="Type any points related data"
-          onChange={event => updateFilterText(event.target.value)}
+          onChange={(event) => updateFilterText(event.target.value)}
         />
       </FormGroup>
       <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
@@ -415,7 +415,7 @@ const ConfigureProtocol = ({ match, location }) => {
           maxToDisplay={maxPaginationDisplay}
           selected={selectedPage}
           total={Math.ceil(filteredPointsJson.length / maxOnPage)}
-          onPagePressed={page => setSelectedPage(page)}
+          onPagePressed={(page) => setSelectedPage(page)}
         />
       ) : null}
       <div className="force-row-display">
@@ -434,13 +434,13 @@ const ConfigureProtocol = ({ match, location }) => {
           id="importFile"
           accept=".csv, text/plain"
           hidden
-          onChange={event => handleImportPoints(event.target.files[0])}
+          onChange={(event) => handleImportPoints(event.target.files[0])}
         />
         <Button className="inline-button" color="primary" onClick={handleExportPoints}>
               Export
         </Button>
         <Modal show={false} title="Delete All Points" body="Are you sure you want to delete All Points from this Data Source?">
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
                 Delete All Points

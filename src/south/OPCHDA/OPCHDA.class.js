@@ -24,7 +24,7 @@ class OPCHDA extends ProtocolHandler {
     this.ongoingReads = {}
 
     this.scanGroups = this.dataSource.scanGroups.map((scanGroup) => {
-      const points = this.dataSource.points.filter(point => point.scanMode === scanGroup.scanMode).map(point => point.pointId)
+      const points = this.dataSource.points.filter((point) => point.scanMode === scanGroup.scanMode).map((point) => point.pointId)
       this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
       this.ongoingReads[scanGroup.scanMode] = false
       return {

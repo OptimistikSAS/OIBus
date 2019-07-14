@@ -13,7 +13,7 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
  */
 const fieldsFromPointId = (pointId, types, logger) => {
   const type = types.find(
-    typeCompared => typeCompared.type
+    (typeCompared) => typeCompared.type
       === pointId
         .split('.')
         .slice(-1)
