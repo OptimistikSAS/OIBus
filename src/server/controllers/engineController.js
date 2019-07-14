@@ -1,18 +1,15 @@
 /**
- * Add North application.
+ * Add Values to the Engine
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const addValues = async (ctx) => {
-  if (ctx.app.engine.hasNorth(ctx.request.body.applicationId)) {
-    ctx.throw(409, 'The given application ID already exists')
-  }
-
+  const { dataSourceId, values, urgent } = ctx.request.body
   try {
-    ctx.app.engine.addNorth(ctx.request.body)
+    ctx.app.engine.addValues(dataSourceId, values, urgent)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to add new application')
+    ctx.throw(500, `Unable to add values from ${dataSourceId}`)
   }
 }
 
