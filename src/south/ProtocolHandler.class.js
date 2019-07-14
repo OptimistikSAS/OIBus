@@ -63,11 +63,11 @@ class ProtocolHandler {
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  addValue({ pointId, data, timestamp }, doNotGroup) {
-    this.engine.addValue(this.dataSource.dataSourceId, { pointId, data, timestamp }, doNotGroup)
+  addValue({ pointId, data, timestamp }, urgent) {
+    this.engine.addValue(this.dataSource.dataSourceId, { pointId, data, timestamp }, urgent)
   }
 
   /**

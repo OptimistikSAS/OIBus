@@ -98,7 +98,7 @@ const saveValue = async (database, value) => {
  * @param {BetterSqlite3.Database} database - The database to use
  * @return {number} - The values count
  */
-const getValuesCount = async (database) => {
+const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
   const stmt = await database.prepare(query)
@@ -326,7 +326,7 @@ module.exports = {
   createRawFilesDatabase,
   createConfigDatabase,
   saveValue,
-  getValuesCount,
+  getCount,
   getValuesToSend,
   removeSentValues,
   saveFile,
