@@ -195,7 +195,7 @@ class Cache {
 
     if (!this.sendInProgress[applicationId]) {
       this.sendInProgress[applicationId] = true
-      this.resendImmediatelly[applicationId] = false
+      this.resendImmediately[applicationId] = false
 
       try {
         const values = await databaseService.getValuesToSend(database, config.maxSendCount)
@@ -212,13 +212,13 @@ class Cache {
         success = false
       }
 
-      const successTimeout = this.resendImmediatelly[applicationId] ? 0 : config.sendInterval
+      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
       const timeout = success ? successTimeout : config.retryInterval
       this.resetTimeout(application, timeout)
 
       this.sendInProgress[applicationId] = false
     } else {
-      this.resendImmediatelly[applicationId] = true
+      this.resendImmediately[applicationId] = true
     }
   }
 
