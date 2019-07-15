@@ -150,6 +150,8 @@ class OPCHDA extends ProtocolHandler {
         },
       }
       this.sendMessage(message)
+    } else {
+      this.logger.debug(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
     }
   }
 
@@ -170,6 +172,8 @@ class OPCHDA extends ProtocolHandler {
       const messageString = JSON.stringify(message)
       this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
+    } else {
+      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
@@ -236,6 +240,7 @@ class OPCHDA extends ProtocolHandler {
           this.tcpServer.stop()
           break
         default:
+          this.logger.warning(`unknown messageObject.Reply ${messageObject.Reply}`)
       }
     } catch (error) {
       this.logger.error(error)
