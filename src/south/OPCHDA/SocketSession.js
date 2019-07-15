@@ -21,11 +21,11 @@ class SocketSession {
    */
   bindSocketEvents() {
     // Listener for the 'data' event
-    this.socket.on('data', (data) => {
+    this.socket.on('data', async (data) => {
       this.receivedMessage += data.toString()
 
       if (this.receivedMessage.endsWith('\n')) {
-        this.processReceivedMessage()
+        await this.processReceivedMessage()
       }
     })
 
@@ -51,8 +51,8 @@ class SocketSession {
    * Process the received message.
    * @returns {void}
    */
-  processReceivedMessage() {
-    this.handleMessage(this.receivedMessage.trim())
+  async processReceivedMessage() {
+    await this.handleMessage(this.receivedMessage.trim())
     this.receivedMessage = ''
   }
 
