@@ -40,7 +40,7 @@ class Cache {
     this.apis = {}
     // Queuing
     this.sendInProgress = {}
-    this.resendImmediatelly = {}
+    this.resendImmediately = {}
   }
 
   /**
