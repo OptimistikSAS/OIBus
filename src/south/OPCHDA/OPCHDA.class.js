@@ -2,6 +2,7 @@ const { spawn } = require('child_process')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
+const databaseService = require('../../services/database.service')
 
 /**
  * Class OPCHDA.
@@ -39,8 +40,23 @@ class OPCHDA extends ProtocolHandler {
    * Connect.
    * @return {Promise<void>} The connection promise
    */
-  connect() {
+  async connect() {
     if (process.platform === 'win32') {
+      // Initialize lastCompletedAt for every scanGroup
+      const { dataSourceId, startTime } = this.dataSource
+      const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${dataSourceId}.db`
+      this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+
+      const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
+      Object.keys(this.lastCompletedAt)
+        .forEach(async (key) => {
+          let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
+          lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
+          this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
+          this.lastCompletedAt[key] = lastCompletedAt
+        })
+
+      // Launch Agent
       const { agentFilename, tcpPort } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
@@ -57,7 +73,7 @@ class OPCHDA extends ProtocolHandler {
    * @return {Promise<void>} - The on scan promise
    */
   onScan(scanMode) {
-    this.sendReadMessage(scanMode, this.lastCompletedAt[scanMode])
+    this.sendReadMessage(scanMode)
   }
 
   /**
@@ -122,14 +138,14 @@ class OPCHDA extends ProtocolHandler {
     this.sendMessage(message)
   }
 
-  sendReadMessage(scanMode, startTime) {
+  sendReadMessage(scanMode) {
     if (!this.ongoingReads[scanMode]) {
       const message = {
         Request: 'Read',
         TransactionId: this.generateTransactionId(),
         Content: {
           Group: scanMode,
-          StartTime: startTime,
+          StartTime: this.lastCompletedAt[scanMode],
         },
       }
       this.sendMessage(message)
@@ -156,7 +172,7 @@ class OPCHDA extends ProtocolHandler {
     }
   }
 
-  handleMessage(message) {
+  async handleMessage(message) {
     try {
       this.logger.debug(`Received: ${message}`)
       let messageObject
@@ -183,6 +199,7 @@ class OPCHDA extends ProtocolHandler {
           if (messageObject.Content.Error) {
             this.logger.error(messageObject.Content.Error)
           } else {
+            this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
             messageObject.Content.Points.forEach((point) => {
               const value = {
                 pointId: point.ItemId,
@@ -194,10 +211,14 @@ class OPCHDA extends ProtocolHandler {
 
             dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
             this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
-            this.ongoingReads[messageObject.Content.Group] = false
+            await databaseService.upsertConfig(
+              this.configDatabase,
+              `lastCompletedAt-${messageObject.Content.Group}`,
+              this.lastCompletedAt[messageObject.Content.Group],
+            )
+            this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
-            this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
-            this.logger.debug(`Updating lastReadTime for ${messageObject.Content.Group} to ${dateString}`)
+            this.ongoingReads[messageObject.Content.Group] = false
           }
           break
         case 'Disconnect':
