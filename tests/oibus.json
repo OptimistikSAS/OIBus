@@ -334,7 +334,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -351,7 +352,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -420,7 +422,8 @@
                 "caching": {
                     "sendInterval": 15000,
                     "retryInterval": 10000,
-                    "groupCount": 1
+                    "groupCount": 1,
+                    "maxSendCount": 100
                 }
             }
         ]
