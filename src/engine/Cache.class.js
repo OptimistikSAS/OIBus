@@ -38,6 +38,9 @@ class Cache {
     }
     // will contains the list of North apis
     this.apis = {}
+    // Queuing
+    this.sendInProgress = {}
+    this.resendImmediatelly = {}
   }
 
   /**
@@ -190,23 +193,33 @@ class Cache {
     let success = true
     const { applicationId, database, config } = application
 
-    try {
-      const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+    if (!this.sendInProgress[applicationId]) {
+      this.sendInProgress[applicationId] = true
+      this.resendImmediately[applicationId] = false
 
-      if (values) {
-        success = await this.engine.handleValuesFromCache(applicationId, values)
-        if (success) {
-          const removed = await databaseService.removeSentValues(database, values)
-          if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+      try {
+        const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+
+        if (values) {
+          success = await this.engine.handleValuesFromCache(applicationId, values)
+          if (success) {
+            const removed = await databaseService.removeSentValues(database, values)
+            if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+          }
         }
+      } catch (error) {
+        this.logger.error(error)
+        success = false
       }
-    } catch (error) {
-      this.logger.error(error)
-      success = false
-    }
 
-    const timeout = success ? config.sendInterval : config.retryInterval
-    this.resetTimeout(application, timeout)
+      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+      const timeout = success ? successTimeout : config.retryInterval
+      this.resetTimeout(application, timeout)
+
+      this.sendInProgress[applicationId] = false
+    } else {
+      this.resendImmediately[applicationId] = true
+    }
   }
 
   /**
