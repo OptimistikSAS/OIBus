@@ -191,8 +191,7 @@ class Cache {
     const { applicationId, database, config } = application
 
     try {
-      /** @todo should we limit to groupCount? */
-      const values = await databaseService.getValuesToSend(database, config.groupCount)
+      const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
         success = await this.engine.handleValuesFromCache(applicationId, values)
@@ -222,7 +221,7 @@ class Cache {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
-        timeout = 1000
+        timeout = application.config.sendInterval
 
         if (fs.existsSync(filePath)) {
           const success = await this.engine.sendFile(application.applicationId, filePath)
