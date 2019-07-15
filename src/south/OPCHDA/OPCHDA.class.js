@@ -21,6 +21,7 @@ class OPCHDA extends ProtocolHandler {
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
+    this.agentReady = false
     this.lastCompletedAt = {}
     this.ongoingReads = {}
 
@@ -139,7 +140,7 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendReadMessage(scanMode) {
-    if (!this.ongoingReads[scanMode]) {
+    if ((!this.ongoingReads[scanMode]) && this.agentReady) {
       const message = {
         Request: 'Read',
         TransactionId: this.generateTransactionId(),
@@ -190,9 +191,15 @@ class OPCHDA extends ProtocolHandler {
           this.sendConnectMessage()
           break
         case 'Connect':
-          this.sendInitializeMessage()
+          this.logger.debug(`Agent connected to OPC HDA server: ${messageObject.Content.Connected}`)
+          if (messageObject.Content.Connected) {
+            this.sendInitializeMessage()
+          } else {
+            this.logger.error(`Unable to connect to ${this.dataSource.serverName} on ${this.dataSource.host}: ${messageObject.Content.Error}`)
+          }
           break
         case 'Initialize':
+          this.agentReady = true
           this.logger.debug('received Initialize message')
           break
         case 'Read':
@@ -222,6 +229,7 @@ class OPCHDA extends ProtocolHandler {
           }
           break
         case 'Disconnect':
+          this.agentReady = false
           this.agentConnected = false
           break
         case 'Stop':
