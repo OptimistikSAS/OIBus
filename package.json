@@ -7,7 +7,9 @@
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
-    "start-pkg": "./dist/oibus-macos --config ./tests/oibus.json",
+    "start-macos": "./dist/oibus-macos --config ./tests/oibus.json",
+    "start-win": ".\\dist\\oibus-win.exe --config .\\tests\\oibus.json",
+    "start-linux": "./dist/oibus-linux --config ./tests/oibus.json",
     "build": "npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
     "build-client": "webpack --mode production",
     "build-win": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-win --target node10-win-x64",
