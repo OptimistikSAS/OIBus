@@ -180,13 +180,8 @@ class OPCHDA extends ProtocolHandler {
   async handleMessage(message) {
     try {
       this.logger.debug(`Received: ${message}`)
-      let messageObject
-      try {
-        messageObject = JSON.parse(message)
-      } catch (error) {
-        this.logger.error('Invalid JSON format received from Agent', error)
-      }
 
+      const messageObject = JSON.parse(message)
       let dateString
 
       switch (messageObject.Reply) {
