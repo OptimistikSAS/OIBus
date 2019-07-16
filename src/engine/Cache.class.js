@@ -106,14 +106,14 @@ class Cache {
         // if urgent is set (for example, a sensor indicating an alarm),
         // we immediately send the cache to the North.
         if (urgent) {
-          this.logger.debug(`urgent flag: ${urgent}`)
+          this.logger.silly(`urgent flag: ${urgent}`)
           this.sendCallback(api)
         } else {
           // if the group size is over the groupCount => we immediately send the cache
           // to the North even if the timeout is not finished.
           const count = await databaseService.getCount(database)
           if (count >= config.groupCount) {
-            this.logger.debug(`groupCount reached: ${count}>=${config.groupCount}`)
+            this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
             this.sendCallback(api)
           }
         }
@@ -174,7 +174,7 @@ class Cache {
    * @return {void}
    */
   sendCallback(api) {
-    this.logger.debug(`sendCallback ${api.applicationId}`)
+    this.logger.silly(`sendCallback ${api.applicationId}`)
     if (api.canHandleValues) {
       this.sendCallbackForValues(api)
     }
