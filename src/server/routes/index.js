@@ -38,7 +38,7 @@ router.get('/logs', logController.getLogs)
 
 router.get('/reload', reloadController.reload)
 
-router.post('/engine/addValue', engineController.addValues)
+router.post('/engine/addValues', engineController.addValues)
 
 router.get('/*', clientController.serveClient)
 
