@@ -8,7 +8,7 @@
             "::1"
         ],
         "logParameters": {
-            "consoleLevel": "debug",
+            "consoleLevel": "silly",
             "fileLevel": "debug",
             "filename": "./logs/journal.log",
             "maxsize": 1000000,
