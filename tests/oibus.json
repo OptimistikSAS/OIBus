@@ -422,6 +422,21 @@
                     "retryInterval": 1000,
                     "groupCount": 20
                 }
+            },
+            {
+                "applicationId": "Link",
+                "enabled": true,
+                "api": "Link",
+                "Link": {
+                    "host": "http://localhost:2223",
+                    "proxy": "demoProxy",
+                    "stack": "request"
+                },
+                "caching": {
+                    "sendInterval": 5000,
+                    "retryInterval": 10000,
+                    "groupCount": 10
+                }
             }
         ]
     }
