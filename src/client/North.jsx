@@ -1,7 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
@@ -156,7 +155,6 @@ const North = ({ history }) => {
     <>
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
-      <ReactJson src={applications} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

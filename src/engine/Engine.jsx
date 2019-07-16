@@ -1,6 +1,5 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
-import ReactJson from 'react-json-view'
 import apis from '../client/services/apis'
 
 const Engine = () => {
@@ -52,7 +51,6 @@ const Engine = () => {
         onError={log('errors')}
         transformErrors={transformErrors}
       />
-      <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

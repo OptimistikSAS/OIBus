@@ -1,7 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
@@ -196,7 +195,6 @@ const South = ({ history }) => {
         {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
-      <ReactJson src={dataSources} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
