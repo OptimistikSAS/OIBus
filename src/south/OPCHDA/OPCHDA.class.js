@@ -151,7 +151,7 @@ class OPCHDA extends ProtocolHandler {
       }
       this.sendMessage(message)
     } else {
-      this.logger.debug(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
+      this.logger.silly(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
     }
   }
 
@@ -179,7 +179,7 @@ class OPCHDA extends ProtocolHandler {
 
   async handleMessage(message) {
     try {
-      this.logger.debug(`Received: ${message}`)
+      this.logger.silly(`Received: ${message}`)
 
       const messageObject = JSON.parse(message)
       let dateString
