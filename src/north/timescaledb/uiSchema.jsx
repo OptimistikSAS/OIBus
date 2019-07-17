@@ -4,7 +4,6 @@ const uiSchema = {
   applicationId: { 'ui:help': '' },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
-  minimumBuffer: { 'ui:help': <div>The value of minimum buffer</div> },
   TimescaleDB: {
     user: { 'ui:help': '' },
     password: {
