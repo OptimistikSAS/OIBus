@@ -13,7 +13,6 @@ module.exports = {
     },
     protocol: {
       type: 'string',
-      enum: ['OPCHDA'],
       title: 'Protocol',
       default: 'OPCHDA',
     },
@@ -28,7 +27,6 @@ module.exports = {
     host: {
       type: 'string',
       title: 'Host',
-      oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }],
     },
     serverName: {
       type: 'string',
@@ -58,14 +56,14 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          aggregate: {
-            title: 'Aggregate',
-            type: 'string',
-          },
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
             default: 'everySecond',
+          },
+          aggregate: {
+            title: 'Aggregate',
+            type: 'string',
           },
           resampling: {
             title: 'Resampling',
