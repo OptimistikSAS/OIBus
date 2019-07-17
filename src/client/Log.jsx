@@ -3,7 +3,7 @@ import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem } f
 import apis from './services/apis'
 
 const Log = () => {
-  const verbosityOptions = ['debug', 'info', 'warning', 'error']
+  const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
   const defaultMaxLog = 50
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
