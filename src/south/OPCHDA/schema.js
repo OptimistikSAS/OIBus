@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Configure OPCUA',
+  title: 'Configure OPCHDA',
   type: 'object',
   properties: {
     dataSourceId: {
@@ -17,27 +17,22 @@ module.exports = {
       title: 'Protocol',
       default: 'OPCHDA',
     },
+    agentFilename: {
+      type: 'string',
+      title: 'Agent Filename',
+    },
+    tcpPort: {
+      type: 'number',
+      title: 'TCP Port',
+    },
     host: {
       type: 'string',
       title: 'Host',
       oneOf: [{ format: 'ipv4' }, { format: 'ipv6' }],
     },
-    opcuaPort: {
-      type: 'number',
-      title: 'OPCUA Port',
-    },
-    httpsPort: {
-      type: 'number',
-      title: 'HTTPS Port',
-    },
-    endPoint: {
+    serverName: {
       type: 'string',
-      title: 'Endpoint',
-    },
-    timeOrigin: {
-      type: 'string',
-      title: 'Time Origin',
-      default: 'server',
+      title: 'Server Name',
     },
     points: {
       type: 'array',
@@ -54,14 +49,27 @@ module.exports = {
             type: 'string',
             default: 'everySecond',
           },
-          ns: {
-            type: 'number',
-            title: 'NS',
-          },
-          s: {
+        },
+      },
+    },
+    scanGroups: {
+      type: 'array',
+      title: 'Scan Groups',
+      items: {
+        type: 'object',
+        properties: {
+          aggregate: {
+            title: 'Aggregate',
             type: 'string',
-            title: 'S',
-            default: 'Counter1',
+          },
+          scanMode: {
+            title: 'Scan Mode',
+            type: 'string',
+            default: 'everySecond',
+          },
+          resampling: {
+            title: 'Resampling',
+            type: 'string',
           },
         },
       },
