@@ -333,18 +333,16 @@ const ConfigureProtocol = ({ match, location }) => {
    * @returns {Array} array with name-value for the cells
    */
   const createTableRow = (config, point, index = null, addBeginAddons = false, addEndAddons = false) => {
-    const keys = Object.keys(point)
+    const keys = Object.keys(config)
     let row = addBeginAddons ? createBeginAddons(index) : []
     keys.forEach((key) => {
-      if (config[key]) {
-        if (config[key].type !== 'object') {
-          row.push({
-            name: key,
-            value: createCell(point[key].toString()),
-          })
-        } else {
-          row = row.concat(createTableRow(config[key].properties, point[key]))
-        }
+      if (config[key].type !== 'object') {
+        row.push({
+          name: key,
+          value: createCell(point[key] ? point[key].toString() : ''),
+        })
+      } else {
+        row = row.concat(createTableRow(config[key].properties, point[key]))
       }
     })
     if (addEndAddons) {
