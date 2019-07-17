@@ -7,21 +7,21 @@
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
-    "start-macos": "./dist/oibus-macos --config ./tests/oibus.json",
-    "start-win": ".\\dist\\oibus-win.exe --config .\\tests\\oibus.json",
-    "start-linux": "./dist/oibus-linux --config ./tests/oibus.json",
+    "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
+    "start-win": ".\\dist\\win\\oibus.exe --config .\\tests\\oibus.json",
+    "start-linux": "./dist/linux/oibus --config ./tests/oibus.json",
     "build": "npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
     "build-client": "webpack --mode production",
-    "build-win": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-win --target node10-win-x64",
-    "build-macos": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-macos --target node10-macos-x64",
-    "build-linux": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-linux --target node10-linux-x64",
+    "build-win": "rimraf ./dist/win && pkg ./src/index.js --config .pkg.json --output ./dist/win/oibus --target node10-win-x64 && ncp ./deps/win ./dist/win",
+    "build-macos": "rimraf ./dist/macos && pkg ./src/index.js --config .pkg.json --output ./dist/macos/oibus --target node10-macos-x64 && ncp ./deps/macos ./dist/macos",
+    "build-linux": "rimraf ./dist/linux && pkg ./src/index.js --config .pkg.json --output ./dist/linux/oibus --target node10-linux-x64 && ncp ./deps/linux ./dist/linux",
     "start-client": "webpack --mode development --watch",
     "build-doc": "esdoc",
     "test": "jest",
     "lint": "eslint src --ext .jsx --ext .js"
   },
   "keywords": [
-    "factoryThings"
+    "Optimistik"
   ],
   "dependencies": {
     "@babel/runtime": "^7.5.4",
@@ -102,7 +102,9 @@
     "jest": "^24.8.0",
     "less": "^3.9.0",
     "less-loader": "^5.0.0",
+    "ncp": "^2.0.0",
     "pkg": "4.4.0",
+    "rimraf": "^2.6.3",
     "style-loader": "^0.23.1",
     "url-loader": "^2.0.1",
     "webpack": "^4.35.3",

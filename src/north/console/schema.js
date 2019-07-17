@@ -14,8 +14,6 @@ module.exports = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console'],
-      default: 'Console',
     },
     caching: {
       type: 'object',
@@ -34,14 +32,19 @@ module.exports = {
         groupCount: {
           type: 'number',
           title: 'Group count',
-          default: 6,
+          default: 10,
         },
-        subscribedTo: {
-          type: 'array',
-          title: 'Subscribed To',
-          items: { type: 'string' },
+        maxSendCount: {
+          type: 'number',
+          title: 'Max Send Count',
+          default: 100,
         },
       },
+    },
+    subscribedTo: {
+      type: 'array',
+      title: 'Subscribed To',
+      items: { type: 'string' },
     },
   },
 }
