@@ -16,7 +16,6 @@
     "build-macos": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-macos --target node10-macos-x64",
     "build-linux": "pkg ./src/index.js --config .pkg.json --output ./dist/oibus-linux --target node10-linux-x64",
     "start-client": "webpack --mode development --watch",
-    
     "build-doc": "esdoc",
     "test": "jest",
     "lint": "eslint src --ext .jsx --ext .js"
