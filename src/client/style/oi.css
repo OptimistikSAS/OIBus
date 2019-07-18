@@ -153,6 +153,11 @@ label {
     font-size: 0.7rem;
 }
 
+.copyright-label {
+  color: white;
+  padding: 0 20px;
+}
+
 .force-row-display {
   display: flex;
   flex-direction: row;
