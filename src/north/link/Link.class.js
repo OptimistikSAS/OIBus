@@ -19,9 +19,10 @@ class Link extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, proxy = null, stack = 'fetch' } = applicationParameters.Link
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.Link
 
-    this.url = host
+    this.url = `${host}${endpoint}`
+    this.authentication = authentication
     this.proxy = this.getProxy(proxy)
     this.stack = stack
 
@@ -36,16 +37,24 @@ class Link extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
+    // Generate authentication header
+    const headers = {}
+    if (this.authentication.type === 'Basic') {
+      const decryptedPassword = this.decryptPassword(this.authentication.password)
+      const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
+      headers.Authorization = `Basic ${basic}`
+    }
+
     try {
       switch (this.stack) {
         case 'axios':
-          await this.sendWithAxios(values)
+          await this.sendWithAxios(headers, values)
           break
         case 'request':
-          await this.sendWithRequest(values)
+          await this.sendWithRequest(headers, values)
           break
         default:
-          await this.sendWithFetch(values)
+          await this.sendWithFetch(headers, values)
       }
     } catch (error) {
       return Promise.reject(error)
@@ -56,10 +65,11 @@ class Link extends ApiHandler {
 
   /**
    * Send the values using axios
+   * @param {object} headers - The headers
    * @param {object[]} values - The values to send
    * @return {AxiosPromise | *} - The send status
    */
-  async sendWithAxios(values) {
+  async sendWithAxios(headers, values) {
     const source = axios.CancelToken.source()
 
     let axiosInstance = axios.create({
@@ -99,6 +109,7 @@ class Link extends ApiHandler {
     const axiosOptions = {
       method: 'POST',
       url: this.url,
+      headers,
       data: values,
     }
 
@@ -113,10 +124,11 @@ class Link extends ApiHandler {
 
   /**
    * Send the values using request
+   * @param {object} headers - The headers
    * @param {object[]} values - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithRequest(values) {
+  async sendWithRequest(headers, values) {
     let proxy = false
     if (this.proxy) {
       const { protocol, host, port, username = null, password = null } = this.proxy
@@ -130,7 +142,8 @@ class Link extends ApiHandler {
     const requestOptions = {
       method: 'POST',
       url: this.url,
-      body: values,
+      headers,
+      body: JSON.stringify(values),
       proxy,
     }
 
@@ -145,10 +158,11 @@ class Link extends ApiHandler {
 
   /**
    * Send the values using node-fetch
+   * @param {object} headers - The headers
    * @param {object[]} values - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithFetch(values) {
+  async sendWithFetch(headers, values) {
     let agent = null
 
     if (this.proxy) {
@@ -165,6 +179,7 @@ class Link extends ApiHandler {
 
     const fetchOptions = {
       method: 'POST',
+      headers,
       body: values,
       agent,
     }
