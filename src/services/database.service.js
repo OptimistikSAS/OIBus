@@ -306,7 +306,7 @@ const createLogsDatabase = async (databasePath) => {
  * @param {string} databasePath - The database path
  * @param {string} fromDate - From date
  * @param {string} toDate - To date
- * @param {string} verbosity - Verbosity
+ * @param {string[]} verbosity - Verbosity levels
  * @return {object[]} - The logs
  */
 const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
@@ -314,9 +314,9 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?
-                 AND level LIKE ?`
+                 AND level IN (${verbosity.map(_ => '?')})`
   const stmt = await database.prepare(query)
-  return stmt.all(fromDate, toDate, verbosity)
+  return stmt.all([fromDate, toDate, ...verbosity])
 }
 
 const addLog = async (database, timestamp, level, message) => {
