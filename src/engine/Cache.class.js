@@ -101,7 +101,7 @@ class Cache {
       const { database, config, canHandleValues, subscribedTo } = api
       // save the value in each North queues that are subscribed to the dataSource
       if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-        await databaseService.saveValue(database, value)
+        await databaseService.saveValue(database, dataSourceId, value, urgent)
 
         // if urgent is set (for example, a sensor indicating an alarm),
         // we immediately send the cache to the North.
