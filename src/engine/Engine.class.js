@@ -129,16 +129,16 @@ class Engine {
   /**
    * Add an array of Values from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
-   * @param {string} dataSourceId - The South generating the value
    * @param {object[]} values - array of values
+   * @param {string} values.dataSourceId - The South generating the value
    * @param {string} values.pointId - The ID of the point
    * @param {string} values.data - The value of the point
    * @param {number} values.timestamp - The timestamp
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {boolean} values.urgent - Whether to disable grouping
    * @return {void}
    */
-  addValues(dataSourceId, values, urgent) {
-    values.forEach(({ pointId, data, timestamp }) => {
+  addValues(values) {
+    values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
       this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
     })
   }
