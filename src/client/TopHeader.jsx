@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
-import { Collapse, Navbar, NavbarToggler, Nav, NavItem } from 'reactstrap'
+import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Label } from 'reactstrap'
 
 import logo from './logo-OIBus.png'
 
@@ -32,8 +32,14 @@ const TopHeader = ({ location }) => {
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs
           </NavItem>
+          <NavItem className="oi-navitem" active={isActive('health')} tag={Link} to="/health">
+            Health
+          </NavItem>
         </Nav>
       </Collapse>
+      <Label className="copyright-label">
+        {'(c) Copyright 2019 Optimistik, all rights reserved.'}
+      </Label>
     </Navbar>
   )
 }
