@@ -8,6 +8,7 @@ class MQTT extends ProtocolHandler {
    */
   connect() {
     super.connect()
+    this.topics = {}
     this.listen()
   }
 
@@ -17,13 +18,15 @@ class MQTT extends ProtocolHandler {
    */
   listen() {
     const { mqttProtocol, server, port, username, password, points } = this.dataSource
-    this.client = mqtt.connect(
-      `${mqttProtocol}://${server}`,
-      { port, username, password: Buffer.from(password) },
-    )
-    points.forEach((point) => {
-      const { topic, pointId, doNotGroup = false } = point
-      this.client.on('connect', () => {
+    this.client = mqtt.connect(`${mqttProtocol}://${server}`, { port, username, password: Buffer.from(this.decryptPassword(password)) })
+    this.client.on('error', (error) => {
+      this.logger.error(error)
+    })
+
+    this.client.on('connect', () => {
+      points.forEach((point) => {
+        const { topic, pointId, urgent = false } = point
+        this.topics[topic] = { pointId, urgent }
         this.client.subscribe(topic, (error) => {
           if (error) {
             this.logger.error(error)
@@ -31,18 +34,16 @@ class MQTT extends ProtocolHandler {
         })
       })
 
-      this.client.on('message', (topic1, message) => {
-        if (topic1 === topic) {
-          // message is Buffer
-          this.addValue(
-            {
-              data: message.toString(),
-              timestamp: new Date().getTime(),
-              pointId,
-            },
-            doNotGroup,
-          )
-        }
+      this.client.on('message', (topic, message) => {
+        this.logger.silly(`topic ${topic}, message ${message}`)
+        this.addValue(
+          {
+            data: message.toString(),
+            timestamp: new Date().getTime(),
+            pointId: this.topics[topic].pointId,
+          },
+          this.topics[topic].urgent,
+        )
       })
     })
   }

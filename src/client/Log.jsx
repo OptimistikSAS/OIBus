@@ -65,7 +65,7 @@ const Log = () => {
    * @returns {void}
    */
   const renderLogs = () => {
-    const filteredLogs = logs.filter(item => item.message.toLowerCase().includes(filterText))
+    const filteredLogs = logs.filter((item) => item.message.toLowerCase().includes(filterText))
     return (
       <ListGroup>
         <br />

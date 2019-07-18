@@ -8,7 +8,7 @@
             "::1"
         ],
         "logParameters": {
-            "consoleLevel": "debug",
+            "consoleLevel": "silly",
             "fileLevel": "debug",
             "filename": "./logs/journal.log",
             "maxsize": 1000000,
@@ -17,6 +17,11 @@
             "sqliteLevel": "debug",
             "sqliteFilename": "./logs/journal.db"
         },
+        "caching": {
+            "cacheFolder": "./cache",
+            "archiveFolder": "./cache/archived/",
+            "archiveMode": "archive"
+        },
         "proxies": [
             {
                 "name": "demoProxy",
@@ -24,14 +29,9 @@
                 "host": "localhost",
                 "port": 8888,
                 "username": "user",
-                "password": "password"
+                "password": "TYO2wRE3ZW+ILqADfZrJR528GwzgXyhHkLYATfvSdUgP6Nz64FzeV2fVxAGUra5cu2cnzxlbZngWMg7xyrsv6IsVJD0l/tK1d/M3DMbxM6W0UWYamlYoZGdCeqyKClI84wqy7o5mg9pFacAoI2WExW7Cgk5Sz55R+ADjtkXnMLZC8GjtGWfquCWFgnxDxdgw5Yg757qwDJ21NHyJISiu3wee5JGje7+pf+mSjNLXeN1pcu/1A0jl7bXzI/7QTXOUa7n9bRZmJOsLgDj1crhsnWKFcUXmHagqmdafVz/6tjoRW/Z0JpIxAq1Gy+p/ZTGPPhSm3/pSW7tE9no21YDPNkJV0cSqw3wPFfaO3SiKsj+dwoy4ZzF/znori1lFsebyLnRHsU15Cth0LLA6OgNDd57FKFHtP0c5aDrB9bDHfO0+w7oUGTA+rO0L8/SFJ7FXEonI7CINPTQuJyXhHW4a83AZx3oejwmnSTnaXNmdHXDCd4nd/w2xsUx3cpqt61V19UUR7hKbpnCwjFh00tKCzuH3i3IG7b3a7QPpSbwog7P0utuaBjLDgO6X+Svo8dQXqTAv3L4goeS95lkSeHZuOP0fWS9/NJwWy8D4VbUEa3LUALskYKQ+WpjNMi8141yPpF20KhXbyrpQ3EpWXj/9pkEkkfJt6J9YIZT2NX4n+hg="
             }
         ],
-        "caching": {
-            "cacheFolder": "./cache",
-            "archiveFolder": "./cache/archived/",
-            "archiveMode": "archive"
-        },
         "scanModes": [
             {
                 "scanMode": "everySecond",
@@ -52,6 +52,10 @@
             {
                 "scanMode": "every15DaysAt9",
                 "cronTime": "* * /15 9"
+            },
+            {
+                "scanMode": "listen",
+                "cronTime": "listen"
             }
         ],
         "types": [
@@ -132,11 +136,10 @@
                 "mqttProtocol": "mqtts",
                 "port": 8883,
                 "username": "bai",
-                "password": "nDpvYGwXKU3DMFt7/wj+IFWVB120HWO6SPdA0EwMRfWTQCG+KXjCQyTR84aIzBRkP4x0ZKAnOuXrUSKqkmoFnpkOFPvHF3hxICc8YI4Pyh/QYs+2Tyh0cFVj5PSixwBRMuHHDZ1na1HqYdKw6cq+07lNzaAVu5vI09GYqU/wJPuAO9mcRu+SLHLS1hu0lYV8bYMS/jD+BFXLEWVls4RHNOi2gHzel6H9ALlby5SLZQq774+vkPhVQay9x1yLiV3S5hU4HhQDElss+QdGnbLusRvmB2P37GO8/DV+zKptwtGbH26lmwxIyuaYrR+QKSCwdRUpm/adCMeJqECFNrajby8T8bZYNfi5xvF2EEZ+/2DklnNJi+XiyITYwDBjkhz2rPYy8Q8tq9efEIudENDzCtYukJ1BM1Jg6amdXbh18KxU2zGRsWfSQd9b3LWlz/YMdDu1FfYqeMmqmYZjoLrFBkZM3M4cA8NKMfJZbtxd4Menz95JNQROVe3UIqOsj62fIl53OiQc19fnXS2YHfFE4pSsol0SpyFGGVq0fgqfJGDTOzi2ojqwR+tGttigpqliVAmeVW8Nk5hFqLLl10YCjW2rmWCn5UaFEaH5hGmk3+8XSzRIz2VI0tpD+w1u2DGcgcvbQrYhS4EI/26q63MKN198p/1AVtweZXtuhnpQOc4=",
+                "password": "Fv+EmylSGvLMumlj3IgMEQt35tks1Mx/H96RgTAiH0HJA7bnCZDblxGlMlSDEqKaxlFuK8LbQ8Ifa1MwIgRqVNoVYbRYi/uA0N7Q2PzcFqTDWMEbI/0KBGRHWLMZDwGss82iHw9QU3Dtls9Y81wz9Mk0E+kTblBJdaDKmAPgsSvdixbMIixJ43ZUoqdVdcbL1LtVEDYzOUIblGRxBzXXl2hB6Jt6Di7n13G5MpCrs7w6f68+OXf8dIOnxe0wWIZA45Gy5fDkCu5CEY7UN5l/KJWuanoF6uJgFT0PyxyYqaXY/3CdAnvQ+Qs/xsl3MmUq1EHAyJLrqsqxzTHK5HUkZO66bzwcNTfagTV8zxFhwMfJzrBh6zQIBQPibYDjM+WuT7H7u0It1GQLjbhAGvGEnITk5NkGwgoPpDYSOMzi4K9zLvK+7niLOHicpLTHFWpET+OSbxJryUCrtHA2ckJiMVjsnqYXK25IXhxaUGtQ+AoiWwID+gzg/Ob8x+0PQMWgWfKp6WhgjRrLKqkxQ7wgQk4b4ZbKzhJjazT3XeIM999VS7qGFLqtZNRkMBg4PDHxxpMUesvtR4VZGw/6Lyu3jzWZ/xVDJIf48Dtjggx5mtBfCTady3VNL1i/b2H4QTBs8KAThbBD+2UFk9bMyMStjhq4vThnY0mu8KiNqrGomS0=",
                 "points": [
                     {
                         "pointId": "/fttest.base/Tank 5.tank/Sensor22.temperature",
-                        "doNotGroup": true,
                         "scanMode": "listen",
                         "topic": "temperatureTank1"
                     },
@@ -258,7 +261,7 @@
             },
             {
                 "dataSourceId": "RawFileTransfer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "RawFile",
                 "scanMode": "every5Second",
                 "inputFolder": "./tests/RawFile/input/",
@@ -279,7 +282,38 @@
                 "database": "TestDB",
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                 "delimiter": ",",
-                "tmpFolder": "./tests/SQLFile",
+                "tmpFolder": "./tests/SQLFile"
+            },
+            {
+                "dataSourceId": "OPC-HDA",
+                "enabled": true,
+                "protocol": "OPCHDA",
+                "agentFilename": "./deps/windows/HdaAgent/HdaAgent.exe",
+                "tcpPort": 3333,
+                "host": "opcserver",
+                "serverName": "Matrikon.OPC.Simulation",
+                "points": [
+                    {
+                        "pointId": "Random.Int1",
+                        "scanMode": "every5Second"
+                    },
+                    {
+                        "pointId": "Random.Real4",
+                        "scanMode": "every20Second"
+                    }
+                ],
+                "scanGroups": [
+                    {
+                        "aggregate": "Raw",
+                        "scanMode": "every5Second",
+                        "resampling": "1mn"
+                    },
+                    {
+                        "aggregate": "Raw",
+                        "scanMode": "every20Second",
+                        "resampling": "1mn"
+                    }
+                ]
             }
         ]
     },
@@ -300,7 +334,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -317,7 +352,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -330,13 +366,13 @@
                     "authentication": {
                         "type": "Basic",
                         "username": "QFPELALDNSUO6BUV8SJ",
-                        "password": "fhzdFp40Wo3z9tHOILdUOXGbwPcQGbwaZh6DTms5lxA+qsvyPuGNYi/7wo18izoEbvGYjt19i00HhOAkxP6RrhHLgU5qGxjoOVn8qhJ4GwAg9PDmiII534KR2FpsRt3X3MVFRWeZO6TSDyXbcDVMFgY0UyNngGUOW/81GjQyNpeV4/KsGErNudySv82lIycMxZevJgitSaFhNekAfmfceSKyHXEApfH4swq7lYq9wInptM5Frw6Oq6rh6OW7pilqe4E/16BlM8kMg6emI3P54UlVTL5J/wGMq4xWcbrfrHjUI+ESKpmaqzQaLJJIMfllxHmBD6s13McrpaOGTJia+2LSZ0XWfe8T3t4rESVXY4Zpo3cMu+GBkPtCpgTHWQ9NgGnDZKzlFLoxj/8HhXJZzXmhXL+8/ZFL/MbDYo4hWfdUiD6nQ9pU6DTpTM3ijB+iqCBtCshsbSH3yWh/qayX2mzX2j+jcovP5lCmkPvWISH8bmiBG7s8yDysEIsrRfTQn81ISCiOV3LCZYeXD2woqIpD/3nh+XxHbxeMmdClkuZwpVnZS2SDSvV6X+d3Ywr/i6ylWLsvfg+TIkPd7LoM7tYRbei8LNGY1/WgBJNK1ZXNXC0gLLd2viTFU3T/+syF6sfGMAG04bGrawq2xrKGO0OqWQGF17KnzDz/rDicizU="
+                        "password": "oMhjM629//H23XJhX805PqoyCkjcV8ZBW14xx/iVNWBo4V+1Z7e4lHXPgIHdgoBHSD6YAc3u3dEt5UGrj8VJI5CTTFIBj1MwLP1hZO+xMWGqg/xRq/AkpK7C+zadDXcphrXWD91URaR+qm/UlgUWCJE6i3Cyd3UB/HB6hDZilMPmUOjKC9uhpHCF2Kdpv6HjB1A0uJBjDs63LnPr6fax176u0xLmENcbNM2DiwCc8iI+ilGotp7LfnuSXSGPAmPaaIWXcmKMUIha57QO9Y+UpkpG+AMOmfYU0egkYvLkSKNh00N4Mrq2Lx7iDmm3sobavwvXUO2EZTWno8UmapPsVVPjF0GypJzEzZJM8sHIyXEXrczkTSvd6hTLzrrsTZmyStuiM2XRhZq+Jj6cjoH63IHRYcGj9EZW1VWUPZ/66iT8Tb/5bDnz3n1PgOG6u57ceXDNo7IBN2cprt4fViXKuOanWeLmDSV/Tb3JqC1tvxyDteB9z8R+3cgknLxyGd338xaEeboHKyai/S2oOCy74jmHujc4wxAl+n9GxtnI14Ju8Uu4ZAz/QQyKOazX0sj1gVSkSJ+mLioTYkiB5NOpE8mZYNtqwhCUKYBjIC0VGYRAXz87cClZVQcJBb5RhSYl/Op9A644VktSrzr+PlC4MhIkYq5GmRefPZx5eiScEtM="
                     },
                     "proxy": "",
                     "stack": "request"
                 },
                 "caching": {
-                    "sendInterval": 5000,
+                    "sendInterval": 15000,
                     "retryInterval": 10000
                 }
             },
@@ -375,6 +411,19 @@
                     "id": "OIBus friendly name test",
                     "frequency": 10000,
                     "proxy": "demoProxy"
+                }
+            },
+            {
+                "applicationId": "Console",
+                "enabled": true,
+                "api": "Console",
+                "minimumBuffer": 1,
+                "timeStamp": "OIBus",
+                "caching": {
+                    "sendInterval": 15000,
+                    "retryInterval": 10000,
+                    "groupCount": 1,
+                    "maxSendCount": 100
                 }
             }
         ]

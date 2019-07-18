@@ -4,7 +4,7 @@
     "ecmaVersion": 2018,
     "sourceType": "module",
     "ecmaFeatures": {
-      "jsx": false
+      "jsx": true
     }
   },
   "extends": "airbnb",
@@ -36,7 +36,7 @@
     "no-console": [
       "warn",
       {
-        "allow": ["warn", "error", "info"]
+        "allow": ["warn", "error", "info", "table"]
       }
     ],
     "linebreak-style": 0,
@@ -46,6 +46,7 @@
     "semi": ["error", "never"],
     "jsx-a11y/anchor-is-valid": 1,
     "import/extensions": ["error", "ignorePackages"],
+    "arrow-parens": ["error", "always"],
     "react/forbid-prop-types": [
       "error",
       {

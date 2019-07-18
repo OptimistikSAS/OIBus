@@ -12,7 +12,7 @@ const Modal = ({ children, show, title, body, acceptLabel, denyLabel, acceptColo
    * @param {Object} event The event object
    * @returns {void}
    */
-  const showModal = callbackParam => (event) => {
+  const showModal = (callbackParam) => (event) => {
     event.stopPropagation()
     setOpen(true)
     setCallback({ func: callbackParam })
