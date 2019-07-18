@@ -6,6 +6,7 @@ const reloadController = require('../controllers/reloadController')
 const clientController = require('../controllers/clientController')
 const pointController = require('../controllers/pointController')
 const logController = require('../controllers/logController')
+const engineController = require('../controllers/engineController')
 
 const router = new Router()
 
@@ -36,6 +37,8 @@ router.get('/config/schemas/south/:protocol', schemaController.getSouthSchema)
 router.get('/logs', logController.getLogs)
 
 router.get('/reload', reloadController.reload)
+
+router.post('/engine/addValues', engineController.addValues)
 
 router.get('/*', clientController.serveClient)
 
