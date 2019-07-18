@@ -10,7 +10,7 @@ if %errorLevel% == 0 (
     START nssm.exe stop OIBus
 
     echo Installing OIBus as Windows service...
-    START nssm.exe install OIBus "%cd%\oibus-win.exe"
+    START nssm.exe install OIBus "%cd%\oibus.exe"
     START nssm.exe set OIBus AppDirectory "%cd%"
 
     echo Starting OIBus service...
