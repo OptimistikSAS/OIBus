@@ -1,7 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
@@ -160,7 +159,11 @@ const South = ({ history }) => {
       name: 'points',
       value: (
         <div>
-          <Button className="inline-button autosize" color={points ? 'success' : 'primary'} onClick={() => handleEditPoints(dataSourceId)}>
+          <Button
+            className="inline-button autosize"
+            color={points && points.length ? 'success' : 'primary'}
+            onClick={() => handleEditPoints(dataSourceId)}
+          >
             {`Points ${points ? `(${points.length})` : '(0)'}`}
           </Button>
         </div>
@@ -196,7 +199,6 @@ const South = ({ history }) => {
         {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
-      <ReactJson src={dataSources} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

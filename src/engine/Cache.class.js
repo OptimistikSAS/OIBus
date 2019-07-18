@@ -38,6 +38,9 @@ class Cache {
     }
     // will contains the list of North apis
     this.apis = {}
+    // Queuing
+    this.sendInProgress = {}
+    this.resendImmediately = {}
   }
 
   /**
@@ -103,14 +106,14 @@ class Cache {
         // if urgent is set (for example, a sensor indicating an alarm),
         // we immediately send the cache to the North.
         if (urgent) {
-          this.logger.debug(`urgent flag: ${urgent}`)
+          this.logger.silly(`urgent flag: ${urgent}`)
           this.sendCallback(api)
         } else {
           // if the group size is over the groupCount => we immediately send the cache
           // to the North even if the timeout is not finished.
           const count = await databaseService.getCount(database)
           if (count >= config.groupCount) {
-            this.logger.debug(`groupCount reached: ${count}>=${config.groupCount}`)
+            this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
             this.sendCallback(api)
           }
         }
@@ -171,7 +174,7 @@ class Cache {
    * @return {void}
    */
   sendCallback(api) {
-    this.logger.debug(`sendCallback ${api.applicationId}`)
+    this.logger.silly(`sendCallback ${api.applicationId}`)
     if (api.canHandleValues) {
       this.sendCallbackForValues(api)
     }
@@ -190,24 +193,33 @@ class Cache {
     let success = true
     const { applicationId, database, config } = application
 
-    try {
-      /** @todo should we limit to groupCount? */
-      const values = await databaseService.getValuesToSend(database, config.groupCount)
+    if (!this.sendInProgress[applicationId]) {
+      this.sendInProgress[applicationId] = true
+      this.resendImmediately[applicationId] = false
 
-      if (values) {
-        success = await this.engine.handleValuesFromCache(applicationId, values)
-        if (success) {
-          const removed = await databaseService.removeSentValues(database, values)
-          if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+      try {
+        const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+
+        if (values) {
+          success = await this.engine.handleValuesFromCache(applicationId, values)
+          if (success) {
+            const removed = await databaseService.removeSentValues(database, values)
+            if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+          }
         }
+      } catch (error) {
+        this.logger.error(error)
+        success = false
       }
-    } catch (error) {
-      this.logger.error(error)
-      success = false
-    }
 
-    const timeout = success ? config.sendInterval : config.retryInterval
-    this.resetTimeout(application, timeout)
+      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+      const timeout = success ? successTimeout : config.retryInterval
+      this.resetTimeout(application, timeout)
+
+      this.sendInProgress[applicationId] = false
+    } else {
+      this.resendImmediately[applicationId] = true
+    }
   }
 
   /**
@@ -222,7 +234,7 @@ class Cache {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
-        timeout = 1000
+        timeout = application.config.sendInterval
 
         if (fs.existsSync(filePath)) {
           const success = await this.engine.sendFile(application.applicationId, filePath)

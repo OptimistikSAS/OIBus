@@ -69,6 +69,10 @@ class Logger {
   debug(message) {
     this.logger.debug(message)
   }
+
+  silly(message) {
+    this.logger.silly(message)
+  }
 }
 
 module.exports = Logger

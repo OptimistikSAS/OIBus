@@ -35,7 +35,7 @@ class MQTT extends ProtocolHandler {
       })
 
       this.client.on('message', (topic, message) => {
-        this.logger.debug(`topic ${topic}, message ${message}`)
+        this.logger.silly(`topic ${topic}, message ${message}`)
         this.addValue(
           {
             data: message.toString(),
