@@ -130,13 +130,13 @@
             },
             {
                 "dataSourceId": "MQTTServer",
-                "enabled": false,
+                "enabled": true,
                 "protocol": "MQTT",
                 "server": "simulator.factorythings.com",
                 "mqttProtocol": "mqtts",
                 "port": 8883,
                 "username": "bai",
-                "password": "Fv+EmylSGvLMumlj3IgMEQt35tks1Mx/H96RgTAiH0HJA7bnCZDblxGlMlSDEqKaxlFuK8LbQ8Ifa1MwIgRqVNoVYbRYi/uA0N7Q2PzcFqTDWMEbI/0KBGRHWLMZDwGss82iHw9QU3Dtls9Y81wz9Mk0E+kTblBJdaDKmAPgsSvdixbMIixJ43ZUoqdVdcbL1LtVEDYzOUIblGRxBzXXl2hB6Jt6Di7n13G5MpCrs7w6f68+OXf8dIOnxe0wWIZA45Gy5fDkCu5CEY7UN5l/KJWuanoF6uJgFT0PyxyYqaXY/3CdAnvQ+Qs/xsl3MmUq1EHAyJLrqsqxzTHK5HUkZO66bzwcNTfagTV8zxFhwMfJzrBh6zQIBQPibYDjM+WuT7H7u0It1GQLjbhAGvGEnITk5NkGwgoPpDYSOMzi4K9zLvK+7niLOHicpLTHFWpET+OSbxJryUCrtHA2ckJiMVjsnqYXK25IXhxaUGtQ+AoiWwID+gzg/Ob8x+0PQMWgWfKp6WhgjRrLKqkxQ7wgQk4b4ZbKzhJjazT3XeIM999VS7qGFLqtZNRkMBg4PDHxxpMUesvtR4VZGw/6Lyu3jzWZ/xVDJIf48Dtjggx5mtBfCTady3VNL1i/b2H4QTBs8KAThbBD+2UFk9bMyMStjhq4vThnY0mu8KiNqrGomS0=",
+                "password": "k6A5tZP7CUeAxW0rcfi+Kg3zz3ADDJxjZBFWRyr0BtMjFInq3SYAhgmL1wop6gpI2rINMvClA0GpjSToDarUCpvTIfsKm4Zzpiv6YWrNzElL3gsxfejOaGplv0nQp79Kiynocnu+bHC2GgyoB5qi4uo5x33Gq4IIh3Z8dEEQggJUr8aSDTsv+MlP6ggD8dLOLtRTEWPXUQGaaumLTyb+Gpm2bmEr819o8MRzfqUDLITWaDCFoE58lTIRPcyfvL6QPQ0lAJfzua40r2D0qZDLGstDfh+7XHpW7a/Y7Bu7DM4ryBPORwe4wP/B05DaR+YqbdXEKIaAxtvo7vZzarIZDBuKKKh3W21TYTWE+GSCy48SsCKiPbZaV865m+0XaY5QOv377MrTJ2VKgcrsMmD0nVJP2PvMCT5Ac+oxUMRi2pReORNYVFvYFGls6inIN1Ga09FJHd/akToMFHpJO58dEL95mb2EemFdHtjsJR1ewjjsDgBYPsVuPXpTNpv0U1pK/EeeLz8k3zfrsWtqPVSo/s62ltP56W5GOdk3MhT2C57Y/GPRJE4NKDEifgDfzghGQGVcKjpnZ5gfTIAvx9CNMb7K0hrkPezUJimj2fh6b6tfNVJr+73kNTRWMUuF+LQxUwBWO3TJTM7ENCOv1msS+qJoBXw9Bmjw9Wos2drZb/I=",
                 "points": [
                     {
                         "pointId": "/fttest.base/Tank 5.tank/Sensor22.temperature",
@@ -425,6 +425,28 @@
                     "groupCount": 1,
                     "maxSendCount": 100
                 }
+            },
+            {
+                "applicationId": "Link",
+                "enabled": true,
+                "api": "Link",
+                "Link": {
+                    "host": "http://localhost:2223",
+                    "endpoint": "/engine/addValues",
+                    "authentication": {
+                        "type": "Basic",
+                        "username": "admin",
+                        "password": "AcIvgLzSTsldexmqCclyBTPjPB8iooA/qzNipWUEJsDQPk7PgwcX7fR7OoNNuVneeoxO/w9vVVaxGnId2c/+y0VtATLqUjo2L+cZIUOlAJNfZuqbhuxlsEe8MRZMRD172Qm2iOZ2P1w2/KEGwiXvEDkJVWhdaWBsrs3a96QHMFlkxomuc9mq8UCzgqhxDtoqGpLD3Yp2iigZbPtakKc5cBNUmm5SQ6m4qI3/SlrX323qTDrYCvyWrgjcqIiOLxPHxnylLc5E0g1extI6qsM4eK7y86x3XGNiw7vbYcQX2Gq2W8txrXY9cIgYR9d9w0e4eNCui70AAozQ/8rKYsnHFG1g00XAmmPSl2UynCbdx/PMpfgp3BOJKvmynQHRqwAM7paj5tjgV/APHwaSZeW48WncPPhVKQyCa6z/udtKNqzojcWrUx5EVeCQhtYcp//A10zQhs7Iz7BlFDAIfGdxVzV6p84nuyb98oEmOeDIQm4oKE+JZYVfjVV7S/NGtemgkjXandjC7GPjsagPaB2tQgLE/BzJMRyPbt9vpkUli/hJ1T5ApHikZ6BkkF8ftnyRBtEZtZsg+Pftf2aTRvTCg/jiWhpveUTIapUJl0aBvgvO3zR0CWbTC5bnQVZpW/j0Gi6Jba3T0vRMwIGuU5m/g0voYOUM8lWCmOedqs02V4g="
+                    },
+                    "proxy": "",
+                    "stack": "axios"
+                },
+                "caching": {
+                    "sendInterval": 5000,
+                    "retryInterval": 10000,
+                    "groupCount": 10,
+                    "maxSendCount": 10
+                },
             }
         ]
     }
