@@ -8,7 +8,7 @@
             "::1"
         ],
         "logParameters": {
-            "consoleLevel": "debug",
+            "consoleLevel": "silly",
             "fileLevel": "debug",
             "filename": "./logs/journal.log",
             "maxsize": 1000000,
@@ -334,7 +334,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -351,7 +352,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 3
+                    "groupCount": 3,
+                    "maxSendCount": 100
                 }
             },
             {
@@ -418,9 +420,10 @@
                 "minimumBuffer": 1,
                 "timeStamp": "OIBus",
                 "caching": {
-                    "sendInterval": 10000,
-                    "retryInterval": 1000,
-                    "groupCount": 20
+                    "sendInterval": 15000,
+                    "retryInterval": 10000,
+                    "groupCount": 1,
+                    "maxSendCount": 100
                 }
             },
             {

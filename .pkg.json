@@ -1,0 +1,8 @@
+{
+    "pkg": {
+    "assets": [
+      "build/**/*",
+      "src/config/*"
+    ]
+  }
+}

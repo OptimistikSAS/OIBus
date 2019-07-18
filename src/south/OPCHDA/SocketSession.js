@@ -21,12 +21,31 @@ class SocketSession {
    */
   bindSocketEvents() {
     // Listener for the 'data' event
-    this.socket.on('data', (data) => {
-      this.receivedMessage += data.toString()
+    this.socket.on('data', async (data) => {
+      const content = data.toString()
+      const responses = []
 
-      if (this.receivedMessage.endsWith('\n')) {
-        this.processReceivedMessage()
+      if (content.includes('\n')) {
+        const messageParts = content.split('\n')
+
+        messageParts.forEach(async (messagePart, index) => {
+          if (index === 0) {
+            this.receivedMessage += messagePart
+            responses.push(this.receivedMessage)
+            this.receivedMessage = ''
+          } else if (index === messageParts.length - 1) {
+            this.receivedMessage = messagePart
+          } else {
+            responses.push(messagePart)
+          }
+        })
+      } else {
+        this.receivedMessage += content
       }
+
+      responses.forEach(async (response) => {
+        await this.handleMessage(response.trim())
+      })
     })
 
     // Listener for the 'close' event
@@ -45,15 +64,6 @@ class SocketSession {
     this.socket.on('error', (error) => {
       this.logger.error(error.message, error)
     })
-  }
-
-  /**
-   * Process the received message.
-   * @returns {void}
-   */
-  processReceivedMessage() {
-    this.handleMessage(this.receivedMessage.trim())
-    this.receivedMessage = ''
   }
 
   /**

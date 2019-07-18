@@ -2,6 +2,7 @@ const { spawn } = require('child_process')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
+const databaseService = require('../../services/database.service')
 
 /**
  * Class OPCHDA.
@@ -20,6 +21,7 @@ class OPCHDA extends ProtocolHandler {
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
+    this.agentReady = false
     this.lastCompletedAt = {}
     this.ongoingReads = {}
 
@@ -39,8 +41,23 @@ class OPCHDA extends ProtocolHandler {
    * Connect.
    * @return {Promise<void>} The connection promise
    */
-  connect() {
+  async connect() {
     if (process.platform === 'win32') {
+      // Initialize lastCompletedAt for every scanGroup
+      const { dataSourceId, startTime } = this.dataSource
+      const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${dataSourceId}.db`
+      this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+
+      const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
+      Object.keys(this.lastCompletedAt)
+        .forEach(async (key) => {
+          let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
+          lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
+          this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
+          this.lastCompletedAt[key] = lastCompletedAt
+        })
+
+      // Launch Agent
       const { agentFilename, tcpPort } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
@@ -57,7 +74,7 @@ class OPCHDA extends ProtocolHandler {
    * @return {Promise<void>} - The on scan promise
    */
   onScan(scanMode) {
-    this.sendReadMessage(scanMode, this.lastCompletedAt[scanMode])
+    this.sendReadMessage(scanMode)
   }
 
   /**
@@ -122,17 +139,19 @@ class OPCHDA extends ProtocolHandler {
     this.sendMessage(message)
   }
 
-  sendReadMessage(scanMode, startTime) {
-    if (!this.ongoingReads[scanMode]) {
+  sendReadMessage(scanMode) {
+    if ((!this.ongoingReads[scanMode]) && this.agentReady) {
       const message = {
         Request: 'Read',
         TransactionId: this.generateTransactionId(),
         Content: {
           Group: scanMode,
-          StartTime: startTime,
+          StartTime: this.lastCompletedAt[scanMode],
         },
       }
       this.sendMessage(message)
+    } else {
+      this.logger.silly(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
     }
   }
 
@@ -153,19 +172,16 @@ class OPCHDA extends ProtocolHandler {
       const messageString = JSON.stringify(message)
       this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
+    } else {
+      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
-  handleMessage(message) {
+  async handleMessage(message) {
     try {
-      this.logger.debug(`Received: ${message}`)
-      let messageObject
-      try {
-        messageObject = JSON.parse(message)
-      } catch (error) {
-        this.logger.error('Invalid JSON format received from Agent', error)
-      }
+      this.logger.silly(`Received: ${message}`)
 
+      const messageObject = JSON.parse(message)
       let dateString
 
       switch (messageObject.Reply) {
@@ -174,15 +190,22 @@ class OPCHDA extends ProtocolHandler {
           this.sendConnectMessage()
           break
         case 'Connect':
-          this.sendInitializeMessage()
+          this.logger.debug(`Agent connected to OPC HDA server: ${messageObject.Content.Connected}`)
+          if (messageObject.Content.Connected) {
+            this.sendInitializeMessage()
+          } else {
+            this.logger.error(`Unable to connect to ${this.dataSource.serverName} on ${this.dataSource.host}: ${messageObject.Content.Error}`)
+          }
           break
         case 'Initialize':
+          this.agentReady = true
           this.logger.debug('received Initialize message')
           break
         case 'Read':
           if (messageObject.Content.Error) {
             this.logger.error(messageObject.Content.Error)
           } else {
+            this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
             messageObject.Content.Points.forEach((point) => {
               const value = {
                 pointId: point.ItemId,
@@ -194,19 +217,25 @@ class OPCHDA extends ProtocolHandler {
 
             dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
             this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
-            this.ongoingReads[messageObject.Content.Group] = false
+            await databaseService.upsertConfig(
+              this.configDatabase,
+              `lastCompletedAt-${messageObject.Content.Group}`,
+              this.lastCompletedAt[messageObject.Content.Group],
+            )
+            this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
-            this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
-            this.logger.debug(`Updating lastReadTime for ${messageObject.Content.Group} to ${dateString}`)
+            this.ongoingReads[messageObject.Content.Group] = false
           }
           break
         case 'Disconnect':
+          this.agentReady = false
           this.agentConnected = false
           break
         case 'Stop':
           this.tcpServer.stop()
           break
         default:
+          this.logger.warning(`unknown messageObject.Reply ${messageObject.Reply}`)
       }
     } catch (error) {
       this.logger.error(error)

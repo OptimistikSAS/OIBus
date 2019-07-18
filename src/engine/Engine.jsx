@@ -1,6 +1,5 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
-import ReactJson from 'react-json-view'
 import apis from '../client/services/apis'
 
 const Engine = () => {
@@ -29,13 +28,6 @@ const Engine = () => {
       console.error(error)
     }
   }
-  const transformErrors = (errors) => (errors.map((error) => {
-    if (error.schemaPath === '#/properties/filter/items/pattern') {
-      error.message = 'Only IPV4 or IPV6 format is allowed'
-    }
-    return error
-  })
-  )
 
   const log = (type) => console.info.bind(console, type)
   return (
@@ -50,9 +42,7 @@ const Engine = () => {
         onChange={log('changed')}
         onSubmit={({ formData }) => handleSubmit(formData)}
         onError={log('errors')}
-        transformErrors={transformErrors}
       />
-      <ReactJson src={configJson.engine} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
@@ -66,15 +56,15 @@ Engine.schema = {
   properties: {
     port: { type: 'number', title: 'Port', default: 2223, minimum: 1, maximum: 65535 },
     user: { type: 'string', title: 'User', default: 'admin' },
-    password: { type: 'string', title: 'Password', default: 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' },
+    password: {
+      type: 'string',
+      title: 'Password',
+      default: 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1',
+    },
     filter: {
       type: 'array',
       title: 'Network Filter',
-      items: {
-        type: 'string',
-        // eslint-disable-next-line max-len
-        pattern: '((^s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))s*$)|(^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*$))',
-      },
+      items: { type: 'string' },
       minItems: 1,
       uniqueItems: true,
       default: ['127.0.0.1'],
@@ -83,13 +73,28 @@ Engine.schema = {
       type: 'object',
       title: 'Log Parameters',
       properties: {
-        consoleLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'Console Level', default: 'debug' },
-        fileLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'File Level', default: 'debug' },
+        consoleLevel: {
+          type: 'string',
+          enum: ['silly', 'debug', 'info', 'warning', 'error'],
+          title: 'Console Level',
+          default: 'debug',
+        },
+        fileLevel: {
+          type: 'string',
+          enum: ['silly', 'debug', 'info', 'warning', 'error'],
+          title: 'File Level',
+          default: 'debug',
+        },
         filename: { type: 'string', title: 'Filename', default: './logs/journal.log' },
         maxsize: { type: 'number', title: 'Max Size (Byte)', default: 1000000 },
         maxFiles: { type: 'number', title: 'Max Files', default: 5 },
         tailable: { type: 'boolean', title: 'Tailable', default: true },
-        sqliteLevel: { type: 'string', enum: ['debug', 'info', 'warning', 'error'], title: 'SQLite logging Level', default: 'debug' },
+        sqliteLevel: {
+          type: 'string',
+          enum: ['silly', 'debug', 'info', 'warning', 'error'],
+          title: 'SQLite logging Level',
+          default: 'debug',
+        },
         sqliteFilename: { type: 'string', title: 'Filename', default: './logs/journal.db' },
       },
     },
@@ -159,15 +164,16 @@ Engine.schema = {
 }
 
 Engine.uiSchema = {
-  port: { 'ui:help': <div>The port to access the web interface to OIBus. Valid values range from 1 through 65535.</div> },
+  port: { 'ui:help': <div>The port to access the Admin interface. Valid values range from 1 through 65535.</div> },
   password: { 'ui:widget': 'password' },
-  filter: { 'ui:help': <div>The list of IP addresses allowed to access the Web interface</div> },
+  filter: { 'ui:help': <div>The list of IP addresses or hostnames allowed to access the Admin interface</div> },
   logParameters: {
     tailable: {
       'ui:help': (
         <div>
-          If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log
-          lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
+          If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will
+          always have the most recent log lines. The larger the appended number, the older the log file. This option
+          requires maxFiles to be set, or it will be ignored.
         </div>
       ),
     },
@@ -188,7 +194,6 @@ Engine.uiSchema = {
         <br />
         2019 * 1 6 * /5
         <br />
-        <a href="https://github.com/paragi/timexe#readme"> For additional information, please refer the documentation of timexe.</a>
       </div>
     ),
   },
