@@ -314,7 +314,7 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?
-                 AND level IN (${verbosity.map(_ => '?')})`
+                 AND level IN (${verbosity.map((_) => '?')})`
   const stmt = await database.prepare(query)
   return stmt.all([fromDate, toDate, ...verbosity])
 }

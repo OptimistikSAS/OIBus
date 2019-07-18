@@ -33,7 +33,7 @@ const Log = () => {
    */
   const handleVerbosityChange = (value) => {
     if (verbosity.includes(value)) {
-      setVerbosity(verbosity.filter(item => item !== value))
+      setVerbosity(verbosity.filter((item) => item !== value))
     } else {
       setVerbosity([...verbosity, value])
     }
@@ -110,7 +110,7 @@ const Log = () => {
           }}
         />
         <FormText color="muted">
-            default: Current datetime - 24 hours (now - 24 hours)
+          default: Current datetime - 24 hours (now - 24 hours)
         </FormText>
       </FormGroup>
 
@@ -128,13 +128,13 @@ const Log = () => {
           }}
         />
         <FormText color="muted">
-            default: Current datetime (now)
+          default: Current datetime (now)
         </FormText>
       </FormGroup>
 
       <FormGroup>
         <Label for="verbosity">Verbosity</Label>
-        {verbosityOptions.map(item => (
+        {verbosityOptions.map((item) => (
           <FormGroup check key={item}>
             <Label check>
               <Input
