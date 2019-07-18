@@ -176,6 +176,10 @@ label {
   vertical-align: middle;
 }
 
+.form-check-input {
+  margin-top: .172rem;
+}
+
 /* spinner container */
 .spinner-container {
   position: absolute;
