@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 
 const TableRows = ({ rows, onRowClick }) => (
   <tbody>
-    {rows.map(row => (
+    {rows.map((row) => (
       <tr key={row[0].value} onClick={() => onRowClick(row)}>
-        {row.map(field => <td key={field.name}>{field.value}</td>)}
+        {row.map((field) => <td key={field.name}>{field.value}</td>)}
       </tr>
     ))}
   </tbody>

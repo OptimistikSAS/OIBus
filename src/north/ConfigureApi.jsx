@@ -3,9 +3,9 @@ import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import { Button } from 'reactstrap'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import apis from '../client/services/apis'
 import Modal from '../client/components/Modal.jsx'
+import uiSchema from './uiSchema.jsx'
 
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -70,7 +70,7 @@ const ConfigureApi = ({ match, location }) => {
     }
   }
 
-  const log = type => console.info.bind(console, type)
+  const log = (type) => console.info.bind(console, type)
   return (
     <>
       {configJson && configSchema && (
@@ -80,13 +80,14 @@ const ConfigureApi = ({ match, location }) => {
             liveValidate
             showErrorList={false}
             schema={configSchema}
+            uiSchema={uiSchema(configJson.api)}
             autocomplete="on"
             onChange={handleChange}
             onSubmit={handleSubmit}
             onError={log('errors')}
           />
           <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
-            {config => (
+            {(config) => (
               <Button color="danger" onClick={config(handleDelete)}>
                 Delete
               </Button>
@@ -94,7 +95,6 @@ const ConfigureApi = ({ match, location }) => {
           </Modal>
         </>
       )}
-      <ReactJson src={configJson} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

@@ -10,7 +10,6 @@ class Console extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-
     this.canHandleValues = true
   }
 
@@ -20,12 +19,9 @@ class Console extends ApiHandler {
    * @return {Promise} - The handle status
    */
   /* eslint-disable-next-line class-methods-use-this */
-  handleValues(values) {
-    values.forEach((value) => {
-      console.info(value)
-    })
-
-    return Promise.resolve()
+  async handleValues(values) {
+    console.table(values, ['pointId', 'timestamp', 'data'])
+    return true
   }
 }
 

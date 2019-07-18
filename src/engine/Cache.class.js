@@ -4,64 +4,72 @@ const path = require('path')
 const databaseService = require('../services/database.service')
 
 /**
- * Local cache implementation to group events and store them when the communication with North is down.
+ * Local cache implementation to group events and store them when the communication if North is down.
  */
 class Cache {
   /**
    * Constructor for Cache
+   * The Engine parameters is used for the following parameters
+   * cacheFolder: Value mode only: will contain all sqllite databases used to cache values
+   * archiveMode: File mode only: decide if the file is deleted or archived after being sent to the North.
+   * archiveFolder: in 'archive' mode, specifies where the file is archived.
    * @constructor
    * @param {Engine} engine - The Engine
    * @return {void}
    */
   constructor(engine) {
-    this.engine = engine
     this.logger = engine.logger
-
-    const { cacheFolder, archiveFolder, archiveMode } = engine.config.engine.caching
-
+    this.engine = engine
+    const { config } = engine
+    // get parameters for the cache
+    const { cacheFolder, archiveFolder, archiveMode } = config.engine.caching
+    this.archiveMode = archiveMode
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
+      this.logger.info(`creating cache folder in ${this.cacheFolder}`)
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
-
     // Create archive folder if not exists
     this.archiveFolder = path.resolve(archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
+      this.logger.info(`creating archive folder in ${this.archiveFolder}`)
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
-
-    this.archiveMode = archiveMode
-
-    this.activeApis = {}
+    // will contains the list of North apis
+    this.apis = {}
+    // Queuing
+    this.sendInProgress = {}
+    this.resendImmediately = {}
   }
 
   /**
    * Initialize the cache by creating a database for every North application.
-   * @param {object} applications - The North applications
+   * also initializes an internal object for North applications
+   * @param {object} activeApis - The active North applications
    * @return {void}
    */
-  async initialize(applications) {
+  async initialize(activeApis) {
+    this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-
-    Object.values(applications).forEach(async (application) => {
-      if (application.canHandleFiles || application.canHandleValues) {
-        const activeApi = {}
-
-        activeApi.applicationId = application.application.applicationId
-        activeApi.config = application.application.caching
-        activeApi.canHandleValues = application.canHandleValues
-        activeApi.canHandleFiles = application.canHandleFiles
-        activeApi.subscribedTo = application.application.subscribedTo
-
-        if (application.canHandleValues) {
-          activeApi.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${activeApi.applicationId}.db`)
-        }
-
-        this.resetTimeout(activeApi, activeApi.config.sendInterval)
-
-        this.activeApis[activeApi.applicationId] = activeApi
+    this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
+    // initialize the internal object apis with the list of north apis
+    Object.values(activeApis).forEach(async (activeApi) => {
+      const api = {
+        applicationId: activeApi.application.applicationId,
+        config: activeApi.application.caching,
+        canHandleValues: activeApi.canHandleValues,
+        canHandleFiles: activeApi.canHandleFiles,
+        subscribedTo: activeApi.application.subscribedTo,
       }
+      // only initialize the db if the api can handle values
+      if (api.canHandleValues) {
+        this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
+        api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
+        this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
+      }
+      this.resetTimeout(api, api.config.sendInterval)
+      this.apis[api.applicationId] = api
     })
   }
 
@@ -69,41 +77,44 @@ class Cache {
    * Check whether a North is subscribed to a South
    * @param {string} dataSourceId - The South generating the value
    * @param {string[]} subscribedTo - The list of Souths the North is subscribed to
-   * @returns {boolean} - The the North is subscribed to the giben South
+   * @returns {boolean} - The North is subscribed to the given South
    */
   static isSubscribed(dataSourceId, subscribedTo) {
-    if (!subscribedTo) {
-      return true
-    }
-
-    return (Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId))
+    if (!subscribedTo) return true
+    return Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId)
   }
 
   /**
-   * Cache a new Value.
-   * It will store the value in every database. If doNotCache is "true" it will immediately forward the value
-   * to every North application.
+   * Cache a new Value from the South
+   * It will store the value in every database. If urgent is "true" it will immediately forward the value
+   * to every North application (used for alarm values for example)
    * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  async cacheValues(dataSourceId, value, doNotGroup) {
-    Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-      const { database, config, canHandleValues, subscribedTo } = activeApi
-
+  async cacheValue(dataSourceId, value, urgent) {
+    Object.values(this.apis).forEach(async (api) => {
+      const { database, config, canHandleValues, subscribedTo } = api
+      // save the value in each North queues that are subscribed to the dataSource
       if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
         await databaseService.saveValue(database, value)
 
-        if (doNotGroup) {
-          this.sendValues(applicationId, [value])
+        // if urgent is set (for example, a sensor indicating an alarm),
+        // we immediately send the cache to the North.
+        if (urgent) {
+          this.logger.silly(`urgent flag: ${urgent}`)
+          this.sendCallback(api)
         } else {
-          const count = await databaseService.getValuesCount(database)
+          // if the group size is over the groupCount => we immediately send the cache
+          // to the North even if the timeout is not finished.
+          const count = await databaseService.getCount(database)
           if (count >= config.groupCount) {
-            this.sendCallback(applicationId)
+            this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
+            this.sendCallback(api)
           }
         }
       }
@@ -122,77 +133,93 @@ class Cache {
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
-    if (preserveFiles) {
-      fs.copyFile(filePath, cachePath, (copyError) => {
-        if (copyError) {
-          this.logger.error(copyError)
-        } else {
-          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles, subscribedTo } = activeApi
-
-            if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-              this.sendCallback(applicationId)
-            }
-          })
+    try {
+      if (preserveFiles) {
+        fs.copyFile(filePath, cachePath, (copyError) => {
+          if (copyError) throw copyError
+        })
+      } else {
+        fs.rename(filePath, cachePath, (renameError) => {
+          if (renameError) {
+            // In case of cross-device link error we copy+delete instead
+            if (renameError.code !== 'EXDEV') throw renameError
+            this.logger.debug('Cross-device link error during rename, copy+paste instead')
+            fs.copyFile(filePath, cachePath, (copyError) => {
+              if (copyError) throw copyError
+              fs.unlink(filePath, (unlinkError) => {
+                // log error but does not throw so we try sending the file to S3
+                if (unlinkError) this.logger.error(unlinkError)
+              })
+            })
+          }
+        })
+      }
+      // All is good so we send the file to the engine
+      Object.entries(this.apis).forEach(async ([applicationId, api]) => {
+        const { canHandleFiles, subscribedTo } = api
+        if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+          await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+          this.logger.debug(`send file for ${api.applicationId}`)
+          this.sendCallback(api)
         }
       })
-    } else {
-      fs.rename(filePath, cachePath, (renameError) => {
-        if (renameError) {
-          this.logger.error(renameError)
-        } else {
-          Object.entries(this.activeApis).forEach(async ([applicationId, activeApi]) => {
-            const { canHandleFiles, subscribedTo } = activeApi
-
-            if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-              await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-              this.sendCallback(applicationId)
-            }
-          })
-        }
-      })
+    } catch (error) {
+      this.logger.error(error)
     }
   }
 
   /**
    * Callback function used by the timer to send the values to the given North application.
-   * @param {string} applicationId - The application ID
+   * @param {object} api - The application
    * @return {void}
    */
-  sendCallback(applicationId) {
-    const application = this.activeApis[applicationId]
-
-    if (application.canHandleValues) {
-      this.handleValues(application)
+  sendCallback(api) {
+    this.logger.silly(`sendCallback ${api.applicationId}`)
+    if (api.canHandleValues) {
+      this.sendCallbackForValues(api)
     }
 
-    if (application.canHandleFiles) {
-      this.handleFiles(application)
+    if (api.canHandleFiles) {
+      this.sendCallbackForFiles(api)
     }
   }
 
   /**
-   * Handle value resending.
+   * handle the values for the callback
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  async handleValues(application) {
+  async sendCallbackForValues(application) {
     let success = true
+    const { applicationId, database, config } = application
 
-    try {
-      const values = await databaseService.getValuesToSend(application.database, application.config.groupCount)
+    if (!this.sendInProgress[applicationId]) {
+      this.sendInProgress[applicationId] = true
+      this.resendImmediately[applicationId] = false
 
-      if (values) {
-        success = await this.sendValues(application.applicationId, values)
+      try {
+        const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+
+        if (values) {
+          success = await this.engine.handleValuesFromCache(applicationId, values)
+          if (success) {
+            const removed = await databaseService.removeSentValues(database, values)
+            if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+          }
+        }
+      } catch (error) {
+        this.logger.error(error)
+        success = false
       }
-    } catch (error) {
-      this.logger.error(error)
-      success = false
-    }
 
-    const timeout = success ? application.config.sendInterval : application.config.retryInterval
-    this.resetTimeout(application, timeout)
+      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+      const timeout = success ? successTimeout : config.retryInterval
+      this.resetTimeout(application, timeout)
+
+      this.sendInProgress[applicationId] = false
+    } else {
+      this.resendImmediately[applicationId] = true
+    }
   }
 
   /**
@@ -200,14 +227,14 @@ class Cache {
    * @param {object} application - The application to send the values to
    * @return {void}
    */
-  async handleFiles(application) {
+  async sendCallbackForFiles(application) {
     let timeout = application.config.sendInterval
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
 
       if (filePath) {
-        timeout = 1000
+        timeout = application.config.sendInterval
 
         if (fs.existsSync(filePath)) {
           const success = await this.engine.sendFile(application.applicationId, filePath)
@@ -229,22 +256,6 @@ class Cache {
     }
 
     this.resetTimeout(application, timeout)
-  }
-
-  /**
-   * Send values to a given North application.
-   * @param {string} applicationId - The application ID
-   * @param {object[]} values - The values to send
-   * @return {void}
-   */
-  async sendValues(applicationId, values) {
-    const success = await this.engine.sendValues(applicationId, values)
-
-    if (success) {
-      await databaseService.removeSentValues(this.activeApis[applicationId].database, values)
-    }
-
-    return success
   }
 
   /**
@@ -285,6 +296,7 @@ class Cache {
           })
           break
         default:
+          this.logger.error(`unknown Archive Mode: ${this.archiveMode}`)
       }
     }
   }
@@ -299,10 +311,7 @@ class Cache {
     if (application.timeout) {
       clearTimeout(application.timeout)
     }
-    application.timeout = setTimeout(
-      this.sendCallback.bind(this, application.applicationId),
-      timeout,
-    )
+    application.timeout = setTimeout(this.sendCallback.bind(this, application), timeout)
   }
 }
 
