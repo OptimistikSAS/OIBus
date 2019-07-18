@@ -1,7 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
@@ -55,7 +54,7 @@ const South = ({ history }) => {
    * @param {string} dataSourceId ID of a data source
    * @returns {object} The selected data source's config
    */
-  const getDataSourceIndex = dataSourceId => dataSources.findIndex(dataSource => dataSource.dataSourceId === dataSourceId)
+  const getDataSourceIndex = (dataSourceId) => dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   /**
    * Adds a new data source row to the table
@@ -66,7 +65,7 @@ const South = ({ history }) => {
   const addDataSource = ({ dataSourceId, enabled, protocol }) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) {
-      setDataSources(prev => [...prev, { dataSourceId, enabled, protocol }])
+      setDataSources((prev) => [...prev, { dataSourceId, enabled, protocol }])
     } else {
       throw new Error('dataSourceId already exists')
     }
@@ -131,7 +130,7 @@ const South = ({ history }) => {
     try {
       await apis.deleteSouth(dataSourceId)
       // Remove the deleted data source from the table
-      setDataSources(prevState => prevState.filter(dataSource => dataSource.dataSourceId !== dataSourceId))
+      setDataSources((prevState) => prevState.filter((dataSource) => dataSource.dataSourceId !== dataSourceId))
       // TODO: Show loader
     } catch (error) {
       console.error(error)
@@ -145,7 +144,7 @@ const South = ({ history }) => {
       name: 'enabled',
       value: (
         <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(dataSourceId))}>
                 {enabled ? 'Active' : 'Stopped'}
@@ -160,7 +159,11 @@ const South = ({ history }) => {
       name: 'points',
       value: (
         <div>
-          <Button className="inline-button autosize" color={points ? 'success' : 'primary'} onClick={() => handleEditPoints(dataSourceId)}>
+          <Button
+            className="inline-button autosize"
+            color={points && points.length ? 'success' : 'primary'}
+            onClick={() => handleEditPoints(dataSourceId)}
+          >
             {`Points ${points ? `(${points.length})` : '(0)'}`}
           </Button>
         </div>
@@ -176,7 +179,7 @@ const South = ({ history }) => {
           acceptLabel="Delete"
           acceptColor="danger"
         >
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(dataSourceId)}>
                 Edit
@@ -193,10 +196,9 @@ const South = ({ history }) => {
   return (
     <>
       <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
-        {confirm => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
+        {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
-      <ReactJson src={dataSources} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }

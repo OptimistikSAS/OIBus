@@ -14,18 +14,6 @@ module.exports = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Console'],
-      default: 'Console',
-    },
-    minimumBuffer: {
-      type: 'number',
-      title: 'Minimum buffer',
-      default: 1,
-    },
-    timeStamp: {
-      type: 'string',
-      title: 'Timestamp',
-      default: 'OIBus',
     },
     caching: {
       type: 'object',
@@ -44,9 +32,19 @@ module.exports = {
         groupCount: {
           type: 'number',
           title: 'Group count',
-          default: 6,
+          default: 10,
+        },
+        maxSendCount: {
+          type: 'number',
+          title: 'Max Send Count',
+          default: 100,
         },
       },
+    },
+    subscribedTo: {
+      type: 'array',
+      title: 'Subscribed To',
+      items: { type: 'string' },
     },
   },
 }

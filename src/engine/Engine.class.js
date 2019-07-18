@@ -13,6 +13,7 @@ protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.RawFile = require('../south/RawFile/RawFile.class')
 protocolList.SQLFile = require('../south/SQLFile/SQLFile.class')
+protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
 // North classes
 const apiList = {}
@@ -74,7 +75,8 @@ class Engine {
       this.scanLists[scanMode] = []
     })
 
-    // browse config file for the various dataSource and points
+    // browse config file for the various dataSource and points and build the object scanLists
+    // with the list of dataSource to activate for each ScanMode.
     this.config.south.dataSources.forEach((dataSource) => {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
@@ -87,7 +89,11 @@ class Engine {
         } else {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
-              this.logger.error(` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
+              this.logger.error(
+                ` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${
+                  point.scanMode
+                }`,
+              )
             } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
               // add the source for this scan only if not already there
               this.scanLists[point.scanMode].push(dataSource.dataSourceId)
@@ -105,18 +111,18 @@ class Engine {
   }
 
   /**
-   * Add a new Value from an data source to the Engine.
+   * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} dataSourceId - The South generating the value
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
    * @param {string} value.data - The value of the point
    * @param {number} value.timestamp - The timestamp
-   * @param {boolean} doNotGroup - Whether to disable grouping
+   * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
-  addValue(dataSourceId, { pointId, data, timestamp }, doNotGroup) {
-    this.cache.cacheValues(dataSourceId, { pointId, data, timestamp }, doNotGroup)
+  addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
+    this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
   }
 
   /**
@@ -137,18 +143,14 @@ class Engine {
    * @param {object[]} values - The values to send
    * @return {Promise} - The send promise
    */
-  sendValues(applicationId, values) {
-    return new Promise((resolve) => {
-      this.activeApis[applicationId]
-        .handleValues(values)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          this.logger.error(error)
-          resolve(false)
-        })
-    })
+  async handleValuesFromCache(applicationId, values) {
+    let success = false
+    try {
+      success = await this.activeApis[applicationId].handleValues(values)
+    } catch (error) {
+      this.logger.error(error)
+    }
+    return success
   }
 
   /**
@@ -189,7 +191,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          this.logger.error(`Protocol for ${dataSourceId} is not supported : ${protocol}`)
+          this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
         }
       }
     })
@@ -205,7 +207,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          this.logger.error(`API for ${applicationId} is not supported : ${api}`)
+          this.logger.error(`API for ${applicationId} is not found : ${api}`)
         }
       }
     })
@@ -215,16 +217,18 @@ class Engine {
 
     // 5. start the timers for each scan modes
     this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
-      const job = timexe(cronTime, () => {
-        // on each scan, activate each protocols
-        this.scanLists[scanMode].forEach((dataSourceId) => {
-          this.activeProtocols[dataSourceId].onScan(scanMode)
+      if (scanMode !== 'listen') {
+        const job = timexe(cronTime, () => {
+          // on each scan, activate each protocols
+          this.scanLists[scanMode].forEach((dataSourceId) => {
+            this.activeProtocols[dataSourceId].onScan(scanMode)
+          })
         })
-      })
-      if (job.result !== 'ok') {
-        this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
-      } else {
-        this.jobs.push(job.id)
+        if (job.result !== 'ok') {
+          this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
+        } else {
+          this.jobs.push(job.id)
+        }
       }
     })
     this.logger.info('OIBus started')
@@ -264,6 +268,15 @@ class Engine {
     setTimeout(() => {
       process.exit(1)
     }, timeout)
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @return {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
   }
 
   /**
@@ -344,7 +357,7 @@ class Engine {
    * @returns {object | undefined} - Whether the given application exists
    */
   hasNorth(applicationId) {
-    return this.modifiedConfig.north.applications.find(application => application.applicationId === applicationId)
+    return this.modifiedConfig.north.applications.find((application) => application.applicationId === applicationId)
   }
 
   /**
@@ -363,7 +376,9 @@ class Engine {
    * @returns {void}
    */
   updateNorth(application) {
-    const index = this.modifiedConfig.north.applications.findIndex(element => element.applicationId === application.applicationId)
+    const index = this.modifiedConfig.north.applications.findIndex(
+      (element) => element.applicationId === application.applicationId,
+    )
     if (index > -1) {
       encryptionService.encryptSecrets(application, this.keyFolder)
       this.modifiedConfig.north.applications[index] = application
@@ -376,7 +391,9 @@ class Engine {
    * @returns {void}
    */
   deleteNorth(applicationId) {
-    this.modifiedConfig.north.applications = this.modifiedConfig.north.applications.filter(application => application.applicationId !== applicationId)
+    this.modifiedConfig.north.applications = this.modifiedConfig.north.applications.filter(
+      (application) => application.applicationId !== applicationId,
+    )
   }
 
   /**
@@ -385,7 +402,7 @@ class Engine {
    * @returns {object | undefined} - Whether the given data source exists
    */
   hasSouth(dataSourceId) {
-    return this.modifiedConfig.south.dataSources.find(dataSource => dataSource.dataSourceId === dataSourceId)
+    return this.modifiedConfig.south.dataSources.find((dataSource) => dataSource.dataSourceId === dataSourceId)
   }
 
   /**
@@ -404,7 +421,9 @@ class Engine {
    * @returns {void}
    */
   updateSouth(dataSource) {
-    const index = this.modifiedConfig.south.dataSources.findIndex(element => element.dataSourceId === dataSource.dataSourceId)
+    const index = this.modifiedConfig.south.dataSources.findIndex(
+      (element) => element.dataSourceId === dataSource.dataSourceId,
+    )
     if (index > -1) {
       encryptionService.encryptSecrets(dataSource, this.keyFolder)
       this.modifiedConfig.south.dataSources[index] = dataSource
@@ -417,7 +436,9 @@ class Engine {
    * @returns {void}
    */
   deleteSouth(dataSourceId) {
-    this.modifiedConfig.south.dataSources = this.modifiedConfig.south.dataSources.filter(dataSource => dataSource.dataSourceId !== dataSourceId)
+    this.modifiedConfig.south.dataSources = this.modifiedConfig.south.dataSources.filter(
+      (dataSource) => dataSource.dataSourceId !== dataSourceId,
+    )
   }
 
   /**
@@ -436,7 +457,7 @@ class Engine {
    * @returns {object} - The points
    */
   getPointsForSouth(dataSourceId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(elem => elem.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((elem) => elem.dataSourceId === dataSourceId)
 
     if (dataSource && dataSource.points) {
       return dataSource.points
@@ -452,10 +473,10 @@ class Engine {
    * @returns {boolean} - Whether the given South has a point with the given point ID
    */
   hasSouthPoint(dataSourceId, pointId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
 
     if (dataSource && dataSource.points) {
-      return dataSource.points.find(elem => elem.pointId === pointId)
+      return dataSource.points.find((elem) => elem.pointId === pointId)
     }
 
     return false
@@ -468,7 +489,7 @@ class Engine {
    * @returns {void}
    */
   addSouthPoint(dataSourceId, point) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
     if (dataSource && dataSource.points) {
       dataSource.points.push(point)
     }
@@ -482,9 +503,9 @@ class Engine {
    * @returns {void}
    */
   updateSouthPoint(dataSourceId, pointId, point) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
     if (dataSource && dataSource.points) {
-      const index = dataSource.points.findIndex(element => element.pointId === pointId)
+      const index = dataSource.points.findIndex((element) => element.pointId === pointId)
       if (index > -1) {
         dataSource.points[index] = point
       }
@@ -498,9 +519,9 @@ class Engine {
    * @returns {void}
    */
   deleteSouthPoint(dataSourceId, pointId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
     if (dataSource && dataSource.points) {
-      dataSource.points = dataSource.points.filter(point => point.pointId !== pointId)
+      dataSource.points = dataSource.points.filter((point) => point.pointId !== pointId)
     }
   }
 
@@ -510,7 +531,7 @@ class Engine {
    * @returns {void}
    */
   deleteSouthPoints(dataSourceId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
     if (dataSource && dataSource.points) {
       dataSource.points = []
     }
@@ -523,7 +544,7 @@ class Engine {
    * @returns {void}
    */
   setSouthPoints(dataSourceId, points) {
-    const dataSource = this.modifiedConfig.south.dataSources.find(element => element.dataSourceId === dataSourceId)
+    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
     if (dataSource) {
       dataSource.points = points
     }

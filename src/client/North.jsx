@@ -1,7 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import ReactJson from 'react-json-view'
 import { Button } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
@@ -37,7 +36,7 @@ const North = ({ history }) => {
    * @param {string} applicationId ID of an application
    * @returns {object} The selected application's config
    */
-  const getApplicationIndex = applicationId => applications.findIndex(application => application.applicationId === applicationId)
+  const getApplicationIndex = (applicationId) => applications.findIndex((application) => application.applicationId === applicationId)
 
   /**
    * Handles the edit of application and redirects the
@@ -66,7 +65,7 @@ const North = ({ history }) => {
     const applicationIndex = getApplicationIndex(applicationId)
     if (applicationIndex === -1) {
       // Adds new application to table
-      setApplications(prev => [...prev, { applicationId, enabled, api }])
+      setApplications((prev) => [...prev, { applicationId, enabled, api }])
     } else {
       throw new Error('application already exists')
     }
@@ -103,7 +102,7 @@ const North = ({ history }) => {
       await apis.deleteNorth(applicationId)
 
       // Removes the deleted application from table
-      setApplications(prevState => prevState.filter(application => application.applicationId !== applicationId))
+      setApplications((prevState) => prevState.filter((application) => application.applicationId !== applicationId))
       // TODO: Show loader
     } catch (error) {
       console.error(error)
@@ -117,7 +116,7 @@ const North = ({ history }) => {
       name: 'enabled',
       value: (
         <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(applicationId))}>
                 {enabled ? 'Active' : 'Stopped'}
@@ -138,7 +137,7 @@ const North = ({ history }) => {
           acceptLabel="Delete"
           acceptColor="danger"
         >
-          {confirm => (
+          {(confirm) => (
             <div>
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(applicationId)}>
                 Edit
@@ -156,7 +155,6 @@ const North = ({ history }) => {
     <>
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
-      <ReactJson src={applications} name={null} collapsed displayObjectSize={false} displayDataTypes={false} enableClipboard={false} />
     </>
   )
 }
