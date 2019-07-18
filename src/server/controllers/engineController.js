@@ -4,12 +4,11 @@
  * @return {void}
  */
 const addValues = async (ctx) => {
-  const { dataSourceId, values, urgent } = ctx.request.body
   try {
-    ctx.app.engine.addValues(dataSourceId, values, urgent)
+    ctx.app.engine.addValues(ctx.request.body)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, `Unable to add values from ${dataSourceId}`)
+    ctx.throw(500, 'Unable to add values')
   }
 }
 
