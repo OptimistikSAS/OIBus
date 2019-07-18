@@ -429,14 +429,21 @@
                 "api": "Link",
                 "Link": {
                     "host": "http://localhost:2223",
-                    "proxy": "demoProxy",
-                    "stack": "request"
+                    "endpoint": "/engine/addValues",
+                    "authentication": {
+                        "type": "Basic",
+                        "username": "admin",
+                        "password": "AcIvgLzSTsldexmqCclyBTPjPB8iooA/qzNipWUEJsDQPk7PgwcX7fR7OoNNuVneeoxO/w9vVVaxGnId2c/+y0VtATLqUjo2L+cZIUOlAJNfZuqbhuxlsEe8MRZMRD172Qm2iOZ2P1w2/KEGwiXvEDkJVWhdaWBsrs3a96QHMFlkxomuc9mq8UCzgqhxDtoqGpLD3Yp2iigZbPtakKc5cBNUmm5SQ6m4qI3/SlrX323qTDrYCvyWrgjcqIiOLxPHxnylLc5E0g1extI6qsM4eK7y86x3XGNiw7vbYcQX2Gq2W8txrXY9cIgYR9d9w0e4eNCui70AAozQ/8rKYsnHFG1g00XAmmPSl2UynCbdx/PMpfgp3BOJKvmynQHRqwAM7paj5tjgV/APHwaSZeW48WncPPhVKQyCa6z/udtKNqzojcWrUx5EVeCQhtYcp//A10zQhs7Iz7BlFDAIfGdxVzV6p84nuyb98oEmOeDIQm4oKE+JZYVfjVV7S/NGtemgkjXandjC7GPjsagPaB2tQgLE/BzJMRyPbt9vpkUli/hJ1T5ApHikZ6BkkF8ftnyRBtEZtZsg+Pftf2aTRvTCg/jiWhpveUTIapUJl0aBvgvO3zR0CWbTC5bnQVZpW/j0Gi6Jba3T0vRMwIGuU5m/g0voYOUM8lWCmOedqs02V4g="
+                    },
+                    "proxy": "",
+                    "stack": "axios"
                 },
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 10
-                }
+                    "groupCount": 10,
+                    "maxSendCount": 10
+                },
             }
         ]
     }
