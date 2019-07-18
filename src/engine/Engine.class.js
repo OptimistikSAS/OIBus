@@ -23,6 +23,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
+apiList.Link = require('../north/link/Link.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -123,6 +124,23 @@ class Engine {
    */
   addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
     this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
+  }
+
+  /**
+   * Add an array of Values from a data source to the Engine.
+   * The Engine will forward the Value to the Cache.
+   * @param {object[]} values - array of values
+   * @param {string} values.dataSourceId - The South generating the value
+   * @param {string} values.pointId - The ID of the point
+   * @param {string} values.data - The value of the point
+   * @param {number} values.timestamp - The timestamp
+   * @param {boolean} values.urgent - Whether to disable grouping
+   * @return {void}
+   */
+  addValues(values) {
+    values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
+      this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
+    })
   }
 
   /**

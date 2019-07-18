@@ -14,7 +14,9 @@ const createValuesDatabase = async (databasePath) => {
                    id INTEGER PRIMARY KEY,
                    timestamp INTEGER,
                    data TEXT,
-                   point_id TEXT
+                   point_id TEXT,
+                   data_source_id TEXT,
+                   urgent INTEGER
                  );`
   const stmt = await database.prepare(query)
   await stmt.run()
@@ -83,14 +85,16 @@ const createConfigDatabase = async (databasePath) => {
 /**
  * Save value in database.
  * @param {BetterSqlite3.Database} database - The database to use
+ * @param {String} dataSourceId - The data source ID
  * @param {object} value - The value to save
+ * @param {boolean} urgent - Whether to disable grouping
  * @return {void}
  */
-const saveValue = async (database, value) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id) 
-                 VALUES (?, ?, ?)`
+const saveValue = async (database, dataSourceId, value, urgent) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
+                 VALUES (?, ?, ?, ?, ?)`
   const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId)
+  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId, dataSourceId, urgent)
 }
 
 /**
@@ -114,7 +118,7 @@ const getCount = async (database) => {
  * @return {array|null} - The values
  */
 const getValuesToSend = async (database, count) => {
-  const query = `SELECT id, timestamp, data, point_id AS pointId 
+  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId, urgent
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
@@ -302,7 +306,7 @@ const createLogsDatabase = async (databasePath) => {
  * @param {string} databasePath - The database path
  * @param {string} fromDate - From date
  * @param {string} toDate - To date
- * @param {string} verbosity - Verbosity
+ * @param {string[]} verbosity - Verbosity levels
  * @return {object[]} - The logs
  */
 const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
@@ -310,9 +314,9 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?
-                 AND level LIKE ?`
+                 AND level IN (${verbosity.map(_ => '?')})`
   const stmt = await database.prepare(query)
-  return stmt.all(fromDate, toDate, verbosity)
+  return stmt.all([fromDate, toDate, ...verbosity])
 }
 
 const addLog = async (database, timestamp, level, message) => {
