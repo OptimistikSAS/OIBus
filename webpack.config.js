@@ -29,10 +29,10 @@ module.exports = {
           { loader: 'less-loader' }, // compiles Less to CSS
         ],
       },
-        {
-            test: /\.(gif|jpe?g|png|ico)$/,
-            loader: 'url-loader?limit=10000'
-        },
+      {
+        test: /\.(gif|jpe?g|png|ico)$/,
+        loader: 'url-loader?limit=10000',
+      },
     ],
   },
   plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') })],
