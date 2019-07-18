@@ -9,20 +9,14 @@ const csv = require('fast-csv')
  */
 const exportToCSV = async (points) => new Promise((resolve, reject) => {
   const options = { headers: true }
-  csv.writeToString(
-    points,
-    options,
-    (error, data) => {
-      if (error) {
-        reject(error)
-      } else {
+  csv.writeToString(points, options)
+    .then(data => {
         const stream = new Readable()
         stream.push(data)
         stream.push(null)
         resolve(stream)
-      }
-    },
-  )
+    })
+    .catch(error => reject(error))
 })
 
 /**
@@ -37,7 +31,7 @@ const importFromCSV = async (csvContent) => new Promise((resolve) => {
     strictColumnHandling: true,
   }
   csv
-    .fromString(csvContent, options)
+    .parseString(csvContent, options)
     .on('data', (csvObjects) => {
       points.push(csvObjects)
     })
