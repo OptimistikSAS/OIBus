@@ -1,8 +1,10 @@
+const fs = require('fs')
 const { createLogger, format, transports } = require('winston')
 const TransportStream = require('winston-transport')
 const databaseService = require('../services/database.service')
-const fs = require('fs')
-const NUMBER_OF_RECORDS_TO_DELETE = 1 
+
+const NUMBER_OF_RECORDS_TO_DELETE = 1
+
 /**
  * class to support Winston logging to sqlite
  *
