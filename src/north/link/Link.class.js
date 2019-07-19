@@ -38,7 +38,8 @@ class Link extends ApiHandler {
    */
   async handleValues(values) {
     // Generate authentication header
-    const headers = {}
+    const headers = { 'Content-Type': 'application/json' }
+
     if (this.authentication.type === 'Basic') {
       const decryptedPassword = this.decryptPassword(this.authentication.password)
       const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
@@ -180,7 +181,7 @@ class Link extends ApiHandler {
     const fetchOptions = {
       method: 'POST',
       headers,
-      body: values,
+      body: JSON.stringify(values),
       agent,
     }
 
