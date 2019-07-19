@@ -32,13 +32,14 @@ class Link extends ApiHandler {
   }
 
   /**
-   * Handle values by printing them to the console.
+   * Handle messages by sending them to another OIBus
    * @param {object[]} values - The values
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
     // Generate authentication header
-    const headers = {}
+    const headers = { 'Content-Type': 'application/json' }
+
     if (this.authentication.type === 'Basic') {
       const decryptedPassword = this.decryptPassword(this.authentication.password)
       const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
@@ -180,7 +181,7 @@ class Link extends ApiHandler {
     const fetchOptions = {
       method: 'POST',
       headers,
-      body: values,
+      body: JSON.stringify(values),
       agent,
     }
 
