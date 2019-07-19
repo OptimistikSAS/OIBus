@@ -1,6 +1,10 @@
+const fs = require('fs')
 const { createLogger, format, transports } = require('winston')
 const TransportStream = require('winston-transport')
 const databaseService = require('../services/database.service')
+
+const NUMBER_OF_RECORDS_TO_DELETE = 1
+
 /**
  * class to support Winston logging to sqlite
  *
@@ -15,6 +19,7 @@ class SqliteTransport extends TransportStream {
     this.database = null
     this.filename = options.filename || ':memory:'
     this.tableName = options.tableName || 'logs'
+    this.maxFileSize = options.maxFileSize || 2000000
   }
 
   /**
@@ -32,6 +37,12 @@ class SqliteTransport extends TransportStream {
       this.database = await databaseService.createLogsDatabase(this.filename)
     }
     databaseService.addLog(this.database, payload.timestamp, payload.level, payload.message)
+
+    const logFile = fs.statSync(this.filename)
+    if (logFile.size > this.maxFileSize) {
+      databaseService.deleteLog(this.database, NUMBER_OF_RECORDS_TO_DELETE)
+    }
+
     if (callback) callback()
   }
 }
@@ -40,7 +51,7 @@ const { combine, timestamp, printf, colorize } = format
 
 class Logger {
   constructor(logParameters) {
-    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename } = logParameters
+    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
     const defaultFormat = combine(timestamp(), printf((info) => `${info.timestamp} ${info.level}: ${info.message}`))
     const consoleFormat = combine(colorize({ all: true }), printf((info) => `${info.level}: ${info.message}`))
     this.logger = createLogger({
@@ -49,7 +60,7 @@ class Logger {
       transports: [
         new transports.Console({ format: consoleFormat }),
         new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable }),
-        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel }),
+        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize }),
       ],
     })
   }
