@@ -1,5 +1,3 @@
-const { Readable } = require('stream')
-
 const csv = require('fast-csv')
 
 /**
@@ -7,17 +5,10 @@ const csv = require('fast-csv')
  * @param {object[]} points - The points to export
  * @returns {Promise<*>} - The result
  */
-const exportToCSV = async (points) => new Promise((resolve, reject) => {
+const exportToCSV = (points) => {
   const options = { headers: true }
-  csv.writeToString(points, options)
-    .then(data => {
-        const stream = new Readable()
-        stream.push(data)
-        stream.push(null)
-        resolve(stream)
-    })
-    .catch(error => reject(error))
-})
+  return csv.writeToString(points, options)
+}
 
 /**
  * Import points configuration from CSV.
