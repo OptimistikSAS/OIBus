@@ -32,7 +32,7 @@ class Link extends ApiHandler {
   }
 
   /**
-   * Handle values by printing them to the console.
+   * Handle messages by sending them to another OIBus
    * @param {object[]} values - The values
    * @return {Promise} - The handle status
    */
