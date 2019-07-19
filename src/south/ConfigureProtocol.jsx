@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 import uiSchema from './uiSchema.jsx'
+import utils from '../client/helpers/utils'
 
 const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
@@ -32,8 +33,19 @@ const ConfigureProtocol = ({ match, location }) => {
       delete schema.properties.points
       setConfigSchema(schema)
       updateForm(formData)
+      utils.removeSubmitButtonFromForm()
     })
   }, [])
+
+  /**
+   * Handles the form's submittion
+   * @param {*} param0 Object containing formData field
+   * @returns {void}
+   */
+  const handleSubmit = ({ formData }) => {
+    const { dataSourceId } = formData
+    apis.updateSouth(dataSourceId, formData)
+  }
 
   /**
    * Handles the form's change
@@ -44,16 +56,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { formData } = form
 
     updateForm(formData)
-  }
-
-  /**
-   * Handles the form's submittion
-   * @param {*} param0 Object containing formData field
-   * @returns {void}
-   */
-  const handleSubmit = ({ formData }) => {
-    const { dataSourceId } = formData
-    apis.updateSouth(dataSourceId, formData)
+    handleSubmit(form)
   }
 
   /**
@@ -83,7 +86,6 @@ const ConfigureProtocol = ({ match, location }) => {
             uiSchema={uiSchema(configJson.protocol)}
             autocomplete="on"
             onChange={handleChange}
-            onSubmit={handleSubmit}
             onError={log('errors')}
           />
           <Modal show={false} title="Delete data source" body="Are you sure you want to delete this data source?">
