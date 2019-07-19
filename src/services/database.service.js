@@ -291,6 +291,7 @@ const createLogsDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
+                  id INTEGER PRIMARY KEY, 
                   timestamp DATE,
                   level TEXT,
                   message TEXT
@@ -325,6 +326,24 @@ const addLog = async (database, timestamp, level, message) => {
   const stmt = await database.prepare(query)
   await stmt.run(timestamp, level, message)
 }
+
+/**
+ * Delete logs.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {number} numberOfRecords - The number of records to be deleted
+ * @return {void}
+ */
+const deleteLog = async (database, numberOfRecords) => {
+  const query = `DELETE FROM ${LOGS_TABLE_NAME} 
+                 WHERE id IN (
+                   SELECT id FROM ${LOGS_TABLE_NAME} 
+                   ORDER BY id DESC 
+                   LIMIT ?
+                  )`
+  const stmt = await database.prepare(query)
+  await stmt.run(numberOfRecords)
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -345,4 +364,5 @@ module.exports = {
   createLogsDatabase,
   getLogs,
   addLog,
+  deleteLog,
 }
