@@ -1,5 +1,5 @@
 import React from 'react'
-import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem, Card, CardBody, Container, Row, Col } from 'reactstrap'
+import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem, Card, CardBody, Row, Col } from 'reactstrap'
 import apis from './services/apis'
 
 const Log = () => {
