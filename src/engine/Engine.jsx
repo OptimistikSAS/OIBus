@@ -96,6 +96,7 @@ Engine.schema = {
           default: 'debug',
         },
         sqliteFilename: { type: 'string', title: 'Filename', default: './logs/journal.db' },
+        sqliteMaxFileSize: { type: 'number', title: 'Max File Size When To Start Deleting Old Log Records (Byte)', default: 5000000 },
       },
     },
     caching: {
