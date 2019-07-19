@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const mssql = require('mssql')
-const Json2csvParser = require('json2csv').Parser
+const csv = require('fast-csv')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -97,12 +97,12 @@ class SQLFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      const csv = this.generateCSV(result)
-      if (csv) {
+      const csvContent = await this.generateCSV(result)
+      if (csvContent) {
         const filePath = path.join(this.tmpFolder, 'sql.csv')
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
-          fs.writeFileSync(filePath, csv)
+          fs.writeFileSync(filePath, csvContent)
 
           this.logger.debug(`Sending ${filePath} to Engine.`)
           this.addFile(filePath)
@@ -171,17 +171,17 @@ class SQLFile extends ProtocolHandler {
    * @param {object[]} result - The query result
    * @returns {String} - The CSV content
    */
-  generateCSV(result) {
-    let csv = null
+  async generateCSV(result) {
+    let csvContent = null
 
     try {
-      const json2csvParser = new Json2csvParser({ delimiter: this.delimiter })
-      csv = json2csvParser.parse(result)
+      const options = { headers: true }
+      csvContent = await csv.writeToString(result, options)
     } catch (error) {
       this.logger.error(error)
     }
 
-    return csv
+    return csvContent
   }
 }
 
