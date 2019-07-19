@@ -87,21 +87,19 @@ class Engine {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
-        } else {
-          if (dataSource.points) {
-            dataSource.points.forEach((point) => {
-              if (!this.scanLists[point.scanMode]) {
-                this.logger.error(
-                  ` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${
-                    point.scanMode
-                  }`,
-                )
-              } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
-                // add the source for this scan only if not already there
-                this.scanLists[point.scanMode].push(dataSource.dataSourceId)
-              }
-            })
-          }
+        } else if (dataSource.points) {
+          dataSource.points.forEach((point) => {
+            if (!this.scanLists[point.scanMode]) {
+              this.logger.error(
+                ` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${
+                  point.scanMode
+                }`,
+              )
+            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+              // add the source for this scan only if not already there
+              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+            }
+          })
         }
       }
     })
