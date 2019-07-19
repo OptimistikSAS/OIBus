@@ -1,5 +1,5 @@
 import React from 'react'
-import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem } from 'reactstrap'
+import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem, Card, CardBody, Container, Row, Col } from 'reactstrap'
 import apis from './services/apis'
 
 const Log = () => {
@@ -19,6 +19,16 @@ const Log = () => {
   const handleSubmit = async () => {
     try {
       const logsResponse = await apis.getLogs(fromDate, toDate, verbosity.join(','))
+      // sort logs based on timestamp
+      logsResponse.sort((a, b) => {
+        if (a.timestamp > b.timestamp) {
+          return 1
+        }
+        if (b.timestamp > a.timestamp) {
+          return -1
+        }
+        return 0
+      })
       setLogs(logsResponse)
       setMaxLog(defaultMaxLog)
     } catch (error) {
@@ -67,92 +77,105 @@ const Log = () => {
   const renderLogs = () => {
     const filteredLogs = logs.filter((item) => item.message.toLowerCase().includes(filterText))
     return (
-      <ListGroup>
-        <br />
-        {renderFilter()}
-        {filteredLogs.filter((_, index) => index < maxLog).map((item) => {
-          const { id, level, message, timestamp } = item
-          const date = new Date(timestamp)
-          return (
-            <ListGroupItem key={id}>
-              <Label>
-                {`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}
-              </Label>
-              {` | ${level}| ${message}`}
-            </ListGroupItem>
-          )
-        })}
-        {filteredLogs.length > maxLog ? (
-          <Button color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
-            Show more...
-          </Button>
-        ) : null
-        }
-        <br />
-      </ListGroup>
+      <Col className="log-right-panel">
+        <Card>
+          <Label className="label-card-title">Logs</Label>
+          <CardBody className="card-body">
+            <ListGroup>
+              {renderFilter()}
+              {filteredLogs.filter((_, index) => index < maxLog).map((item) => {
+                const { id, level, message, timestamp } = item
+                const date = new Date(timestamp)
+                return (
+                  <ListGroupItem key={id}>
+                    <Label>
+                      {`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}
+                    </Label>
+                    {` | ${level}| ${message}`}
+                  </ListGroupItem>
+                )
+              })}
+              {filteredLogs.length > maxLog ? (
+                <Button color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
+                  Show more...
+                </Button>
+              ) : null
+              }
+              <br />
+            </ListGroup>
+          </CardBody>
+        </Card>
+      </Col>
     )
   }
 
   const maxDateString = new Date().toISOString().substr(0, 16)
   return (
-    <div>
-      <FormGroup>
-        <Label for="fromDate">From date</Label>
-        <Input
-          type="datetime-local"
-          id="fromDatee"
-          max={maxDateString}
-          placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-          required
-          onChange={(event) => {
-            const date = new Date(event.target.value).toISOString()
-            setFromDate(date)
-          }}
-        />
-        <FormText color="muted">
-          default: Current datetime - 24 hours (now - 24 hours)
-        </FormText>
-      </FormGroup>
-
-      <FormGroup>
-        <Label for="toDate">To date</Label>
-        <Input
-          type="datetime-local"
-          id="toDate"
-          max={maxDateString}
-          placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-          required
-          onChange={(event) => {
-            const date = new Date(event.target.value).toISOString()
-            setToDate(date)
-          }}
-        />
-        <FormText color="muted">
-          default: Current datetime (now)
-        </FormText>
-      </FormGroup>
-
-      <FormGroup>
-        <Label for="verbosity">Verbosity</Label>
-        {verbosityOptions.map((item) => (
-          <FormGroup check key={item}>
-            <Label check>
+    <Row>
+      <Col className="log-left-panel">
+        <Card>
+          <Label className="label-card-title">Filters</Label>
+          <CardBody className="card-body">
+            <FormGroup>
+              <Label for="fromDate">From date</Label>
               <Input
-                type="checkbox"
-                id="verbosity"
-                onChange={() => handleVerbosityChange(item)}
-                checked={verbosity.includes(item)}
+                type="datetime-local"
+                id="fromDatee"
+                max={maxDateString}
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required
+                onChange={(event) => {
+                  const date = new Date(event.target.value).toISOString()
+                  setFromDate(date)
+                }}
               />
-              {item}
-            </Label>
-          </FormGroup>
-        ))}
-      </FormGroup>
-      <Button color="primary" onClick={handleSubmit}>
-        Show log
-      </Button>
+              <FormText color="muted">
+                default: Current datetime - 24 hours (now - 24 hours)
+              </FormText>
+            </FormGroup>
+
+            <FormGroup>
+              <Label for="toDate">To date</Label>
+              <Input
+                type="datetime-local"
+                id="toDate"
+                max={maxDateString}
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required
+                onChange={(event) => {
+                  const date = new Date(event.target.value).toISOString()
+                  setToDate(date)
+                }}
+              />
+              <FormText color="muted">
+                default: Current datetime (now)
+              </FormText>
+            </FormGroup>
+
+            <FormGroup>
+              <Label for="verbosity">Verbosity</Label>
+              {verbosityOptions.map((item) => (
+                <FormGroup check key={item}>
+                  <Label check>
+                    <Input
+                      type="checkbox"
+                      id="verbosity"
+                      onChange={() => handleVerbosityChange(item)}
+                      checked={verbosity.includes(item)}
+                    />
+                    {item}
+                  </Label>
+                </FormGroup>
+              ))}
+            </FormGroup>
+            <Button color="primary" onClick={handleSubmit}>
+              Show log
+            </Button>
+          </CardBody>
+        </Card>
+      </Col>
       {logs ? renderLogs() : null}
-    </div>
+    </Row>
   )
 }
 export default Log
