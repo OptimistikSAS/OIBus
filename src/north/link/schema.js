@@ -19,7 +19,7 @@ module.exports = {
     },
     Link: {
       type: 'object',
-      title: 'RawFileSender',
+      title: 'Link',
       properties: {
         host: {
           type: 'string',
