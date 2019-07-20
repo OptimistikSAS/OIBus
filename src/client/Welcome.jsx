@@ -1,8 +1,7 @@
 import React from 'react'
 import { Label, Button, Spinner } from 'reactstrap'
-import { ReactGhLikeDiff } from 'react-gh-like-diff'
-import stringify from 'json-stable-stringify'
-import 'react-gh-like-diff/lib/diff2html.min.css'
+import { formatters, create } from 'jsondiffpatch'
+import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 
@@ -10,6 +9,15 @@ const Welcome = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
+
+  const instance = create({
+    objectHash: (obj, index) => {
+      if (typeof obj.pointId !== 'undefined') {
+        return obj.pointId
+      }
+      return `$$index:${index}`
+    },
+  })
 
   /**
    * Acquire the Active configuration
@@ -30,14 +38,6 @@ const Welcome = () => {
       setConfigJson(config)
     })
   }, [])
-
-  /**
-   * Check if modified is changed compared to active
-   * @param {string} active The current active config JSON string
-   * @param {string} modified The current modified config JSON string
-   * @returns {boolean} compare result
-   */
-  const compareActiveWithModified = (active, modified) => (active && modified && (active !== modified))
 
   /**
    * Disable loading when server reachable
@@ -79,9 +79,10 @@ const Welcome = () => {
   }
 
   // json-stable-stringify is used instead of JSON.stringify to have consistent result in alphabetical order
-  const activeString = stringify(configActiveJson, { space: '  ' })
-  const modifiedString = stringify(configJson, { space: '  ' })
-  const isModified = compareActiveWithModified(activeString, modifiedString)
+  const isModified = true
+  const delta = instance.diff(configActiveJson, configJson)
+  const deltaHTML = formatters.html.format(delta)
+
 
   return (
     <>
@@ -89,14 +90,7 @@ const Welcome = () => {
         ? (
           <>
             <div className="oi-full-width">
-              <ReactGhLikeDiff
-                options={{
-                  originalFileName: 'Configuration',
-                  updatedFileName: 'Configuration',
-                }}
-                past={activeString}
-                current={modifiedString}
-              />
+              <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
             </div>
             <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
               {(confirm) => (
@@ -112,7 +106,7 @@ const Welcome = () => {
         )
         : <Label>No modifications on configuration</Label>
       }
-      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null }
+      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null}
     </>
   )
 }
