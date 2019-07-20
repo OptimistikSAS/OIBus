@@ -12,7 +12,7 @@ const createValuesDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
-                   timestamp INTEGER,
+                   timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
                    data_source_id TEXT,

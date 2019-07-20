@@ -100,7 +100,7 @@ class OPCUA extends ProtocolHandler {
           const data = []
           const value = {
             pointId,
-            timestamp: dataValue.sourceTimestamp.getTime(),
+            timestamp: dataValue.sourceTimestamp.toISOString(),
             data: '',
             dataId: [], // to add after data{} is handled
           }
@@ -114,7 +114,7 @@ class OPCUA extends ProtocolHandler {
               data.push(dataValue.statusCode.value)
             }
           })
-          value.data = JSON.stringify(data)
+          value.data = JSON.stringify(data) // FIXME should extract the value but need to know the signature of data
           this.addValue(value, pointsurgent[pointId])
           // @todo handle double values with an array as data
         })

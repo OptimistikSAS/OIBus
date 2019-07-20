@@ -83,6 +83,7 @@ class InfluxDB extends ApiHandler {
 
         // Converts data into fields for CLI
         let fields = null
+        // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
         // The data received from MQTT is type of string, so we need to transform it to Json
         const dataJson = JSON.parse(decodeURI(data))
         Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
@@ -91,7 +92,7 @@ class InfluxDB extends ApiHandler {
         })
 
         // Convert timestamp to the configured precision
-        let preciseTimestamp = timestamp
+        let preciseTimestamp = new Date(timestamp).getTime()
         switch (precision) {
           case 'ns':
             preciseTimestamp = 1000 * 1000 * timestamp
