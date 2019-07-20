@@ -84,6 +84,7 @@ class TimescaleDB extends ApiHandler {
         let values = null
         let fields = null
 
+        // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
         Nodes.slice(1).forEach(([nodeKey, nodeValue]) => {
           if (!fields) fields = `${escapeSpace(nodeKey)}`
           else fields = `${fields},${escapeSpace(nodeKey)}`
@@ -102,7 +103,7 @@ class TimescaleDB extends ApiHandler {
           else values = `${values},'${fieldValue}'`
         })
         fields += ',timestamp'
-        values += `,'${new Date(timestamp).toISOString()}'`
+        values += `,'${timestamp}'`
 
         statement += `${fields}) values(${values});`
 
