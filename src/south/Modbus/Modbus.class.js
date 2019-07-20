@@ -87,7 +87,7 @@ class Modbus extends ProtocolHandler {
   modbusFunction(funcName, { startAddress, rangeSize }, points) {
     this.client[funcName](startAddress, rangeSize)
       .then(({ response }) => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().toISOString()
         points.forEach((point) => {
           const position = parseInt(point.address, 16) - startAddress - 1
           let data = response.body.valuesAsArray[position]
@@ -104,7 +104,7 @@ class Modbus extends ProtocolHandler {
             pointId: point.pointId,
             timestamp,
             dataId: point.dataId,
-            data: JSON.stringify(data),
+            data: JSON.stringify(data), // FIXME should extract the value but need to know the signature of data
           }
           this.addValue(value, point.urgent)
         })
