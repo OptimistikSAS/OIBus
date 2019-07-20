@@ -10,10 +10,27 @@ const Welcome = () => {
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
 
-  const instance = create({
+  const diffInstance = create({
     objectHash: (obj, index) => {
+      // allow to diff the point list array correctly
       if (typeof obj.pointId !== 'undefined') {
         return obj.pointId
+      }
+      // allow to diff the scanmode list array correctly
+      if (typeof obj.scanMode !== 'undefined') {
+        return obj.scanMode
+      }
+      // allow to diff the proxy list array correctly
+      if (typeof obj.name !== 'undefined') {
+        return obj.name
+      }
+      // allow to diff the north list array correctly
+      if (typeof obj.applicationId !== 'undefined') {
+        return obj.applicationId
+      }
+      // allow to diff the south list array correctly
+      if (typeof obj.dataSourceId !== 'undefined') {
+        return obj.dataSourceId
       }
       return `$$index:${index}`
     },
@@ -78,12 +95,10 @@ const Welcome = () => {
     }
   }
 
-  // json-stable-stringify is used instead of JSON.stringify to have consistent result in alphabetical order
-  const isModified = true
-  const delta = instance.diff(configActiveJson, configJson)
-  const deltaHTML = formatters.html.format(delta)
-
-
+  const delta = diffInstance.diff(configActiveJson, configJson)
+  const isModified = !!delta
+  let deltaHTML = formatters.html.format(delta)
+  if (deltaHTML.length > 10000) deltaHTML = '<div>Too Large<div/>'
   return (
     <>
       {isModified
