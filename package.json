@@ -38,6 +38,7 @@
     "json-stable-stringify": "^1.0.1",
     "json2csv": "^4.5.2",
     "json5": "^2.1.0",
+    "jsondiffpatch": "^0.3.11",
     "koa": "^2.7.0",
     "koa-basic-auth": "^4.0.0",
     "koa-bodyparser": "^4.2.1",
