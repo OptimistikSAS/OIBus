@@ -10,7 +10,7 @@
     "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
     "start-win": ".\\dist\\win\\oibus.exe --config .\\tests\\oibus.json",
     "start-linux": "./dist/linux/oibus --config ./tests/oibus.json",
-    "build": "npm i && npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
+    "build": "npm ci && npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
     "build-client": "webpack --mode production",
     "build-win": "rimraf ./dist/win && pkg ./src/index.js --config .pkg.json --output ./dist/win/oibus --target node10-win-x64 && ncp ./deps/win ./dist/win",
     "build-macos": "rimraf ./dist/macos && pkg ./src/index.js --config .pkg.json --output ./dist/macos/oibus --target node10-macos-x64 && ncp ./deps/macos ./dist/macos",
