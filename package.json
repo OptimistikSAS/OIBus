@@ -19,7 +19,8 @@
     "build-doc": "esdoc",
     "test": "jest",
     "lint": "eslint src --ext .jsx --ext .js",
-    "version": "npm run build"
+    "version": "npm run build",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "Optimistik"
