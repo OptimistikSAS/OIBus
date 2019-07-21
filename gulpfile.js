@@ -27,8 +27,8 @@ gulp.task('build-archives', () => {
 
     let distributionInfo = {
         win: {distPath: "./dist/win/**", packagePath: "./dist/package/win/", archiveName: "OIBus-win32x64"},
-        macos: {distPath: "./dist/macos/**", packagePath: "./dist/package/macos/", archiveName: "OIBus-linux"},
-        linux: {distPath: "./dist/linux/**", packagePath: "./dist/package/linux/", archiveName: "OIBus-macos"}
+        macos: {distPath: "./dist/macos/**", packagePath: "./dist/package/macos/", archiveName: "OIBus-macos"},
+        linux: {distPath: "./dist/linux/**", packagePath: "./dist/package/linux/", archiveName: "OIBus-linux"}
     }
 
     let streams = [];
