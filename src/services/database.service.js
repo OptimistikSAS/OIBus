@@ -94,7 +94,7 @@ const saveValue = async (database, dataSourceId, value, urgent) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
                  VALUES (?, ?, ?, ?, ?)`
   const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId, dataSourceId, urgent)
+  await stmt.run(value.timestamp, JSON.stringify(encodeURI(value.data)), value.pointId, dataSourceId, urgent)
 }
 
 /**
