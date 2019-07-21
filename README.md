@@ -12,4 +12,4 @@
 
 * To buid the client and the executable for each distribution run `npm run build`
 
-* To release (should be run on the release branch after correct merge) run `npm version` this will trigger a full build zip the content of each distribution folder and upload in S3 (you should have s3 credentials properly configured on the build machine) 
+* To release (should be run on the release branch after correct merge) run `npm version {major | minor |patch}` this will trigger a full build zip the content of each distribution folder and upload in S3 (you should have s3 credentials properly configured on the build machine) 
