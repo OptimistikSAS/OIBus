@@ -18,7 +18,8 @@
     "start-client": "webpack --mode development --watch",
     "build-doc": "esdoc",
     "test": "jest",
-    "lint": "eslint src --ext .jsx --ext .js"
+    "lint": "eslint src --ext .jsx --ext .js",
+    "version": "npm run build"
   },
   "keywords": [
     "Optimistik"
