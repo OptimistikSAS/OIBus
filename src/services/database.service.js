@@ -12,7 +12,7 @@ const createValuesDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
-                   timestamp INTEGER,
+                   timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
                    data_source_id TEXT,
@@ -94,7 +94,7 @@ const saveValue = async (database, dataSourceId, value, urgent) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
                  VALUES (?, ?, ?, ?, ?)`
   const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId, dataSourceId, urgent)
+  await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId, urgent)
 }
 
 /**
@@ -129,7 +129,8 @@ const getValuesToSend = async (database, count) => {
 
   if (results.length > 0) {
     values = results.map((value) => {
-      value.data = decodeURI(value.data)
+      // data is a JSON object containing value and quality
+      value.data = JSON.parse(decodeURI(value.data))
       return value
     })
   }
