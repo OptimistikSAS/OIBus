@@ -75,12 +75,12 @@ class CSV extends ProtocolHandler {
               Object.keys(typeColumn).forEach((key) => {
                 data[key] = csvObjects[typeColumn[key]]
               })
-              const timestamp = new Date(csvObjects[timeColumnIndex]).getTime()
+              const timestamp = new Date(csvObjects[timeColumnIndex]).toISOString()
               this.addValue(
                 {
                   pointId: point.pointId,
                   timestamp,
-                  data: JSON.stringify(data),
+                  data: { value: JSON.stringify(data) },
                 },
                 point.urgent,
               )
@@ -96,12 +96,12 @@ class CSV extends ProtocolHandler {
             Object.keys(typeColumn).forEach((key) => {
               data[key] = csvObjects[typeColumn[key]]
             })
-            const timestamp = csvObjects[timeColumn]
+            const timestamp = new Date(csvObjects[timeColumn]).toISOString()
             this.addValue(
               {
                 pointId: point.pointId,
                 timestamp,
-                data: JSON.stringify(data),
+                data: { value: JSON.stringify(data) },
               },
               point.urgent,
             )
