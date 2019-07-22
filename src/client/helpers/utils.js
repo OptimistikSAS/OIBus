@@ -20,11 +20,4 @@ const dynamicSort = (property) => {
   }
 }
 
-const removeSubmitButtonFromForm = () => {
-  const buttons = document.getElementsByClassName('btn-info')
-  if (buttons.length) {
-    buttons[buttons.length - 1].style.display = 'none'
-  }
-}
-
-export default { dynamicSort, removeSubmitButtonFromForm }
+export default { dynamicSort }
