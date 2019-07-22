@@ -36,6 +36,16 @@ const ConfigureProtocol = ({ match, location }) => {
   }, [])
 
   /**
+   * Handles the form's submittion
+   * @param {*} param0 Object containing formData field
+   * @returns {void}
+   */
+  const handleSubmit = ({ formData }) => {
+    const { dataSourceId } = formData
+    apis.updateSouth(dataSourceId, formData)
+  }
+
+  /**
    * Handles the form's change
    * @param {Object} form The data of the form
    * @returns {void}
@@ -44,16 +54,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { formData } = form
 
     updateForm(formData)
-  }
-
-  /**
-   * Handles the form's submittion
-   * @param {*} param0 Object containing formData field
-   * @returns {void}
-   */
-  const handleSubmit = ({ formData }) => {
-    const { dataSourceId } = formData
-    apis.updateSouth(dataSourceId, formData)
+    handleSubmit(form)
   }
 
   /**
@@ -83,9 +84,10 @@ const ConfigureProtocol = ({ match, location }) => {
             uiSchema={uiSchema(configJson.protocol)}
             autocomplete="on"
             onChange={handleChange}
-            onSubmit={handleSubmit}
             onError={log('errors')}
-          />
+          >
+            <></>
+          </Form>
           <Modal show={false} title="Delete data source" body="Are you sure you want to delete this data source?">
             {(confirm) => (
               <Button color="danger" onClick={confirm(handleDelete)}>
