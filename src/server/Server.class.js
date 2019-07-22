@@ -46,7 +46,7 @@ class Server {
     // It provides important security headers to make your app more secure by default.
     this.app.use(helmet())
 
-    // filter IP adresses
+    // filter IP addresses
     this.app.use(ipFilter(filter))
 
     // custom 401 handling
