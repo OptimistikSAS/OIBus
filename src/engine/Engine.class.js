@@ -87,7 +87,7 @@ class Engine {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
-        } else {
+        } else if (dataSource.points) {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
               this.logger.error(
