@@ -61,8 +61,8 @@ class ProtocolHandler {
    * Add a new Value to the Engine.
    * @param {object} value - The new value
    * @param {string} value.pointId - The ID of the point
-   * @param {string} value.data - The value of the point
-   * @param {number} value.timestamp - The timestamp
+   * @param {object} value.data - Data contained by the point in the form of {value: string, quality: string}
+   * @param {string} value.timestamp - The timestamp in iso string format
    * @param {boolean} urgent - Whether to disable grouping
    * @return {void}
    */
