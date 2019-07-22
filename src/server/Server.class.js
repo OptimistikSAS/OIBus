@@ -7,6 +7,7 @@ const respond = require('koa-respond')
 const json = require('koa-json')
 
 const authCrypto = require('./middlewares/auth') // ./auth
+const ipFilter = require('./middlewares/ipFilter')
 
 const router = require('./routes')
 
@@ -46,15 +47,7 @@ class Server {
     this.app.use(helmet())
 
     // filter IP adresses
-    this.app.use(async (ctx, next) => {
-      const { ip } = ctx.request
-      if (filter.includes(ip)) {
-        await next()
-      } else {
-        this.logger.error(new Error(`${ip} is not authorized`))
-        ctx.throw(401, 'access denied ', `${ip} is not authorized`)
-      }
-    })
+    this.app.use(ipFilter(filter))
 
     // custom 401 handling
     this.app.use(async (ctx, next) => {
