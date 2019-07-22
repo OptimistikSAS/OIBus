@@ -9,6 +9,7 @@ const Welcome = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
+  const maxDiffLength = 10000
 
   const diffInstance = create({
     objectHash: (obj, index) => {
@@ -97,26 +98,32 @@ const Welcome = () => {
 
   const delta = diffInstance.diff(configActiveJson, configJson)
   const isModified = !!delta
-  let deltaHTML = formatters.html.format(delta)
-  if (deltaHTML.length > 10000) deltaHTML = '<div>Too Large<div/>'
+  const deltaHTML = formatters.html.format(delta)
+
   return (
     <>
       {isModified
         ? (
           <>
             <div className="oi-full-width">
-              <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
+              {deltaHTML.length > maxDiffLength
+                ? <Label>The configuration difference is too large to display</Label>
+                // eslint-disable-next-line react/no-danger
+                : <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
+              }
             </div>
-            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
-              {(confirm) => (
-                <Button color="primary" onClick={confirm(handleActivate)}>
-                  Activate
-                </Button>
-              )}
-            </Modal>
-            <Button color="primary" onClick={() => handleDecline()}>
-              Decline
-            </Button>
+            <div className="force-row-display">
+              <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
+                {(confirm) => (
+                  <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
+                    Activate
+                  </Button>
+                )}
+              </Modal>
+              <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
+                Decline
+              </Button>
+            </div>
           </>
         )
         : <Label>No modifications on configuration</Label>
