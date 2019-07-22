@@ -160,30 +160,26 @@ const importPoints = async (ctx) => {
   if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
-
+  let points
   try {
-    const points = await pointService.importFromCSV(ctx.request.body)
-    const duplicateIds = pointService.getDuplicateIds(points)
-
-    if (duplicateIds.length) {
-      ctx.body = `Duplicate ids: ${duplicateIds.join(',')}`
-      ctx.status = 409
-      return
-    }
-
-    const scanModes = ctx.app.engine.getScanModes()
-    const invalidScanModes = pointService.getInvalidScanModes(points, scanModes)
-    if (invalidScanModes.length) {
-      ctx.body = `Invalid scan modes: ${invalidScanModes.join(',')}`
-      ctx.status = 400
-      return
-    }
-
-    ctx.app.engine.setSouthPoints(ctx.params.dataSourceId, points)
-    ctx.body = points
+    points = await pointService.importFromCSV(ctx.request.body)
   } catch (error) {
     ctx.throw(500, 'Unable to import points')
   }
+
+  const duplicateIds = pointService.getDuplicateIds(points)
+  if (duplicateIds.length) {
+    ctx.throw(409, `Duplicate ids: ${duplicateIds.join(',')}`)
+  }
+
+  const scanModes = ctx.app.engine.getScanModes()
+  const invalidScanModes = pointService.getInvalidScanModes(points, scanModes)
+  if (invalidScanModes.length) {
+    ctx.throw(400, `Invalid scan modes: ${invalidScanModes.join(',')}`)
+  }
+
+  ctx.app.engine.setSouthPoints(ctx.params.dataSourceId, points)
+  ctx.body = points
 }
 
 module.exports = {
