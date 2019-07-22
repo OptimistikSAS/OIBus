@@ -163,6 +163,21 @@ const importPoints = async (ctx) => {
 
   try {
     const points = await pointService.importFromCSV(ctx.request.body)
+    const duplicateIds = pointService.validateDuplicateId(points)
+    const scanModes = ctx.app.engine.getScanModes()
+    const invalidScanModes = pointService.validateScanMode(points, scanModes)
+
+    if (duplicateIds.length) {
+      ctx.body = `Duplicate ids: ${duplicateIds.join(',')}`
+      ctx.status = 409
+      return
+    }
+    if (invalidScanModes.length) {
+      ctx.body = `Invalid scan modes: ${invalidScanModes.join(',')}`
+      ctx.status = 400
+      return
+    }
+
     ctx.app.engine.setSouthPoints(ctx.params.dataSourceId, points)
     ctx.body = points
   } catch (error) {
