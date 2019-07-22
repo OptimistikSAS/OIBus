@@ -50,6 +50,7 @@
     "koa-respond": "^2.1.0",
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
+    "micromatch": "^4.0.2",
     "minimist": "^1.2.0",
     "mqtt": "^3.0.0",
     "mssql": "^5.1.0",
