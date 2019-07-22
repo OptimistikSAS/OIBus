@@ -177,6 +177,13 @@ class OPCHDA extends ProtocolHandler {
     }
   }
 
+  /**
+   * Handle a message sent by the OPCHDA agent
+   * @param {object} message - the message sent by the OPCHDA agent
+   * Message can be one of the following Alive, Connect, Initialize, Read, Disconnect, Stop
+   * Others will be disregarded
+   * @returns {Promise<void>} - return a promise that will resolve to void
+   */
   async handleMessage(message) {
     try {
       this.logger.silly(`Received: ${message}`)
@@ -207,12 +214,14 @@ class OPCHDA extends ProtocolHandler {
           } else {
             this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
             messageObject.Content.Points.forEach((point) => {
-              const value = {
-                pointId: point.ItemId,
-                timestamp: new Date(point.Timestamp).getTime(),
-                data: JSON.stringify(point.Value),
+              if (point.Timestamp != null && point.Value != null) {
+                const value = {
+                  pointId: point.ItemId,
+                  timestamp: new Date(point.Timestamp).toISOString(),
+                  data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
+                }
+                this.addValue(value, false)
               }
-              this.addValue(value, false)
             })
 
             dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
