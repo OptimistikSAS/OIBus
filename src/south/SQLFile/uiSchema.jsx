@@ -12,6 +12,7 @@ const uiSchema = {
     'ui:help': '',
     'ui:widget': 'password',
   },
+  database: { 'ui:help': '' },
   query: { 'ui:help': '' },
   delimiter: { 'ui:help': '' },
   tmpFolder: { 'ui:help': '' },
