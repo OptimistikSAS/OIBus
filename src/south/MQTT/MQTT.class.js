@@ -38,8 +38,8 @@ class MQTT extends ProtocolHandler {
         this.logger.silly(`topic ${topic}, message ${message}`)
         this.addValue(
           {
-            data: message.toString(),
-            timestamp: new Date().getTime(),
+            data: message.toString(), // FIXME should extract the value but need to know the signature of message
+            timestamp: new Date().toISOString(),
             pointId: this.topics[topic].pointId,
           },
           this.topics[topic].urgent,

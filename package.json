@@ -1,7 +1,7 @@
 {
   "name": "oibus",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "main": "index.js",
   "author": "factoryThings",
   "license": "SEE LICENSE in LICENSE",
@@ -10,7 +10,7 @@
     "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
     "start-win": ".\\dist\\win\\oibus.exe --config .\\tests\\oibus.json",
     "start-linux": "./dist/linux/oibus --config ./tests/oibus.json",
-    "build": "npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
+    "build": "npm ci && npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
     "build-client": "webpack --mode production",
     "build-win": "rimraf ./dist/win && pkg ./src/index.js --config .pkg.json --output ./dist/win/oibus --target node10-win-x64 && ncp ./deps/win ./dist/win",
     "build-macos": "rimraf ./dist/macos && pkg ./src/index.js --config .pkg.json --output ./dist/macos/oibus --target node10-macos-x64 && ncp ./deps/macos ./dist/macos",
@@ -18,7 +18,9 @@
     "start-client": "webpack --mode development --watch",
     "build-doc": "esdoc",
     "test": "jest",
-    "lint": "eslint src --ext .jsx --ext .js"
+    "lint": "eslint src --ext .jsx --ext .js",
+    "version": "npm run build && gulp build-archives",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "Optimistik"
@@ -49,6 +51,7 @@
     "koa-respond": "^2.1.0",
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
+    "micromatch": "^4.0.2",
     "minimist": "^1.2.0",
     "mqtt": "^3.0.0",
     "mssql": "^5.1.0",
@@ -96,12 +99,16 @@
     "eslint-plugin-import": "^2.18.0",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.14.2",
+    "gulp": "^4.0.2",
+    "gulp-awspublish": "^4.0.0",
+    "gulp-zip": "^5.0.0",
     "html-webpack-plugin": "^3.2.0",
     "husky": "^3.0.0",
     "ignore-loader": "^0.1.2",
     "jest": "^24.8.0",
     "less": "^3.9.0",
     "less-loader": "^5.0.0",
+    "merge-stream": "^2.0.0",
     "ncp": "^2.0.0",
     "pkg": "4.4.0",
     "rimraf": "^2.6.3",
