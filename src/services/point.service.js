@@ -36,7 +36,7 @@ const importFromCSV = async (csvContent) => new Promise((resolve) => {
  * @param {object[]} points - Imported Points
  * @returns {string[]} - The result
  */
-const validateDuplicateId = (points) => {
+const getDuplicateIds = (points) => {
   const makeDuplicateArray = points.reduce((duplicateArray, point) => {
     duplicateArray[point.pointId] = point.pointId in duplicateArray ? duplicateArray[point.pointId] += 1 : 0
     return duplicateArray
@@ -52,7 +52,7 @@ const validateDuplicateId = (points) => {
  * @param {string[]} scanModes - The scan modes available
  * @returns {string[]} - The result
  */
-const validateScanMode = (points, scanModes) => {
+const getInvalidScanModes = (points, scanModes) => {
   const scanModeNames = scanModes.map((scanMode) => scanMode.scanMode)
   const filteredPoints = points.filter((point) => !scanModeNames.includes(point.scanMode))
   return filteredPoints.map((point) => point.scanMode)
@@ -61,6 +61,6 @@ const validateScanMode = (points, scanModes) => {
 module.exports = {
   exportToCSV,
   importFromCSV,
-  validateDuplicateId,
-  validateScanMode,
+  getDuplicateIds,
+  getInvalidScanModes,
 }
