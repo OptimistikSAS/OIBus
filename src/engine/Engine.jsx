@@ -187,6 +187,7 @@ Engine.uiSchema = {
     archiveFolder: { 'ui:help': <div>Required when archiveMode is &apos;archive&apos; for files</div> },
     archiveMode: { 'ui:help': <div> Move or delete files</div> },
   },
+  proxies: { items: { password: { 'ui:widget': 'password' } } },
   scanModes: {
     'ui:help': (
       <div>
