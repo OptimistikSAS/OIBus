@@ -12,7 +12,7 @@ const createValuesDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
-                   timestamp INTEGER,
+                   timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
                    data_source_id TEXT,
@@ -94,7 +94,7 @@ const saveValue = async (database, dataSourceId, value, urgent) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
                  VALUES (?, ?, ?, ?, ?)`
   const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(value.data), value.pointId, dataSourceId, urgent)
+  await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId, urgent)
 }
 
 /**
@@ -129,7 +129,8 @@ const getValuesToSend = async (database, count) => {
 
   if (results.length > 0) {
     values = results.map((value) => {
-      value.data = decodeURI(value.data)
+      // data is a JSON object containing value and quality
+      value.data = JSON.parse(decodeURI(value.data))
       return value
     })
   }
@@ -291,6 +292,7 @@ const createLogsDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
+                  id INTEGER PRIMARY KEY, 
                   timestamp DATE,
                   level TEXT,
                   message TEXT
@@ -325,6 +327,24 @@ const addLog = async (database, timestamp, level, message) => {
   const stmt = await database.prepare(query)
   await stmt.run(timestamp, level, message)
 }
+
+/**
+ * Delete logs.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {number} numberOfRecords - The number of records to be deleted
+ * @return {void}
+ */
+const deleteLog = async (database, numberOfRecords) => {
+  const query = `DELETE FROM ${LOGS_TABLE_NAME} 
+                 WHERE id IN (
+                   SELECT id FROM ${LOGS_TABLE_NAME} 
+                   ORDER BY id DESC 
+                   LIMIT ?
+                  )`
+  const stmt = await database.prepare(query)
+  await stmt.run(numberOfRecords)
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -345,4 +365,5 @@ module.exports = {
   createLogsDatabase,
   getLogs,
   addLog,
+  deleteLog,
 }
