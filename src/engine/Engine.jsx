@@ -3,7 +3,7 @@ import Form from 'react-jsonschema-form-bs4'
 import apis from '../client/services/apis'
 
 const Engine = () => {
-  const [configJson, setConfigJson] = React.useState({ engine: {} })
+  const [configJson, setConfigJson] = React.useState()
   React.useEffect(() => {
     // eslint-disable-next-line consistent-return
     fetch('/config').then((response) => {
@@ -32,17 +32,20 @@ const Engine = () => {
   const log = (type) => console.info.bind(console, type)
   return (
     <>
-      <Form
-        formData={configJson && configJson.engine}
-        liveValidate
-        showErrorList={false}
-        schema={Engine.schema}
-        uiSchema={Engine.uiSchema}
-        autocomplete="on"
-        onChange={log('changed')}
-        onSubmit={({ formData }) => handleSubmit(formData)}
-        onError={log('errors')}
-      />
+      {configJson ? (
+        <Form
+          formData={configJson && configJson.engine}
+          liveValidate
+          showErrorList={false}
+          schema={Engine.schema}
+          uiSchema={Engine.uiSchema}
+          autocomplete="on"
+          onChange={({ formData }) => handleSubmit(formData)}
+          onError={log('errors')}
+        >
+          <></>
+        </Form>
+      ) : null }
     </>
   )
 }
