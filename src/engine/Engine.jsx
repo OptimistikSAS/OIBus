@@ -1,7 +1,6 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import apis from '../client/services/apis'
-import utils from '../client/helpers/utils'
 
 const Engine = () => {
   const [configJson, setConfigJson] = React.useState()
@@ -12,7 +11,6 @@ const Engine = () => {
       if (contentType && contentType.indexOf('application/json') !== -1) {
         return response.json().then(({ config }) => {
           setConfigJson(config)
-          utils.removeSubmitButtonFromForm()
         })
       }
     })
@@ -44,7 +42,9 @@ const Engine = () => {
           autocomplete="on"
           onChange={({ formData }) => handleSubmit(formData)}
           onError={log('errors')}
-        />
+        >
+          <></>
+        </Form>
       ) : null }
     </>
   )
