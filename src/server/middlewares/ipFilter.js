@@ -6,17 +6,18 @@ const micromatch = require('micromatch')
 /**
  * Return ipFilter middleware:
  *
- * @param {Array} filter - The filter
- * @return {GeneratorFunction} The middleware function
+ * @param {string[]} filter - The filter
+ * @return {Function} - The middleware function
  * @api public
  */
-const ipFilter = (filter) => (ctx, next) => {
+const ipFilter = (filter) => async (ctx, next) => {
   const { ip } = ctx.request
   if (micromatch.isMatch(ip, filter)) {
-    return next()
+    await next()
+  } else {
+    ctx.app.logger.error(new Error(`${ip} is not authorized`))
+    ctx.throw(401, 'access denied ', `${ip} is not authorized`)
   }
-  ctx.app.logger.error(new Error(`${ip} is not authorized`))
-  return ctx.throw(401, 'access denied ', `${ip} is not authorized`)
 }
 
 module.exports = ipFilter
