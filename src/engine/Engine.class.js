@@ -23,6 +23,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
+apiList.Link = require('../north/link/Link.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -45,6 +46,8 @@ class Engine {
    * @return {Object} readConfig - parsed config Object
    */
   constructor(configFile) {
+    this.version = VERSION
+
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
     this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
@@ -54,7 +57,7 @@ class Engine {
     // Configure the Cache
     this.cache = new Cache(this)
     this.logger.info(`
-    Starting Engine ${VERSION}
+    Starting Engine ${this.version}
     architecture: ${process.arch}
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
@@ -123,6 +126,23 @@ class Engine {
    */
   addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
     this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
+  }
+
+  /**
+   * Add an array of Values from a data source to the Engine.
+   * The Engine will forward the Value to the Cache.
+   * @param {object[]} values - array of values
+   * @param {string} values.dataSourceId - The South generating the value
+   * @param {string} values.pointId - The ID of the point
+   * @param {string} values.data - The value of the point
+   * @param {number} values.timestamp - The timestamp
+   * @param {boolean} values.urgent - Whether to disable grouping
+   * @return {void}
+   */
+  addValues(values) {
+    values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
+      this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
+    })
   }
 
   /**
@@ -566,6 +586,14 @@ class Engine {
    */
   resetConfiguration() {
     this.modifiedConfig = tryReadFile(this.configFile)
+  }
+
+  /**
+   * Get OIBus version
+   * @returns {string} - The OIBus version
+   */
+  getVersion() {
+    return this.version
   }
 }
 

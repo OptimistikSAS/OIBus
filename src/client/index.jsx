@@ -16,7 +16,7 @@ import ConfigureApi from '../north/ConfigureApi.jsx'
 import ConfigureProtocol from '../south/ConfigureProtocol.jsx'
 import ConfigurePoints from '../south/ConfigurePoints.jsx'
 import Log from './Log.jsx'
-import Health from './Health.jsx';
+import Health from './Health.jsx'
 
 const Main = () => (
   <Router>

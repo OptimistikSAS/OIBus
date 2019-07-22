@@ -154,8 +154,16 @@ label {
 }
 
 .copyright-label {
-  color: white;
-  padding: 0 20px;
+    color: white;
+    padding: 0 20px;
+}
+
+.label-card-title {
+  margin: 5px;
+}
+
+.card-body {
+  padding: 10px;
 }
 
 .force-row-display {
@@ -179,6 +187,25 @@ label {
 
 .table td, .table th {
   vertical-align: middle;
+}
+
+.form-check-input {
+  margin-top: .172rem;
+}
+
+/* log pannels */
+
+.log-left-panel {
+  min-width: 200px;
+  width: 200px;
+  position: fixed;
+  padding: 0;
+  z-index: 1;
+}
+
+.log-right-panel {
+  padding: 0;
+  padding-left: 210px;
 }
 
 /* spinner container */
