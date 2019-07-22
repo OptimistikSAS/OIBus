@@ -585,6 +585,14 @@ class Engine {
   resetConfiguration() {
     this.modifiedConfig = tryReadFile(this.configFile)
   }
+
+  /**
+   * Returns all available scan modes
+   * @returns {Array} - Array of available scan modes
+   */
+  getScanModes() {
+    return this.config.engine.scanModes
+  }
 }
 
 module.exports = Engine
