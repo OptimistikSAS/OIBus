@@ -50,9 +50,9 @@ const North = ({ history }) => {
 
     if (applicationIndex === -1) return
 
-    const formData = applications[applicationIndex]
-    const link = `/north/${formData.api}`
-    history.push({ pathname: link, formData })
+    const application = applications[applicationIndex]
+    const link = `/north/${application.api}`
+    history.push({ pathname: link, formData: application })
   }
 
   /**

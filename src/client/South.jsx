@@ -78,7 +78,7 @@ const South = ({ history }) => {
     if (dataSourceIndex === -1) return
     const dataSource = dataSources[dataSourceIndex]
     const link = `/south/${dataSource.protocol}`
-    history.push({ pathname: link, dataSource })
+    history.push({ pathname: link, formData: dataSource })
   }
 
   /**
