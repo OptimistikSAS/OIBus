@@ -76,9 +76,9 @@ const South = ({ history }) => {
   const handleEditClick = (dataSourceId) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) return
-    const formData = dataSources[dataSourceIndex]
-    const link = `/south/${formData.protocol}`
-    history.push({ pathname: link, formData })
+    const dataSource = dataSources[dataSourceIndex]
+    const link = `/south/${dataSource.protocol}`
+    history.push({ pathname: link, formData: dataSource })
   }
 
   /**
