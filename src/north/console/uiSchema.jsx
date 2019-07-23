@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': <div>Unique name for this Console</div> },
+  applicationId: {
+    'ui:help': <div>Unique name for this Console</div>,
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>Enable or not the Console</div> },
   api: { 'ui:readonly': true },
   caching: {
