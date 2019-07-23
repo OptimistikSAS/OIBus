@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': '' },
+  applicationId: {
+    'ui:help': '',
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
   AmazonS3: {
