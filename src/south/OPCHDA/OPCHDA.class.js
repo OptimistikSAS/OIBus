@@ -179,7 +179,7 @@ class OPCHDA extends ProtocolHandler {
 
   /**
    * Handle a message sent by the OPCHDA agent
-   * @param {object} message - the message sent by the OPCHDA agent
+   * @param {string} message - the message sent by the OPCHDA agent
    * Message can be one of the following Alive, Connect, Initialize, Read, Disconnect, Stop
    * Others will be disregarded
    * @returns {Promise<void>} - return a promise that will resolve to void
@@ -244,7 +244,7 @@ class OPCHDA extends ProtocolHandler {
           this.tcpServer.stop()
           break
         default:
-          this.logger.warning(`unknown messageObject.Reply ${messageObject.Reply}`)
+          this.logger.warn(`unknown messageObject.Reply ${messageObject.Reply}`)
       }
     } catch (error) {
       this.logger.error(error)

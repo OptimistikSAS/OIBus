@@ -129,8 +129,12 @@ const getValuesToSend = async (database, count) => {
 
   if (results.length > 0) {
     values = results.map((value) => {
-      // data is a JSON object containing value and quality
-      value.data = JSON.parse(decodeURI(value.data))
+      try {
+        // data is a JSON object containing value and quality
+        value.data = JSON.parse(decodeURI(value.data))
+      } catch (error) {
+        throw error
+      }
       return value
     })
   }

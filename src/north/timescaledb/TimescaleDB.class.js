@@ -94,20 +94,24 @@ class TimescaleDB extends ApiHandler {
         })
         // Converts data into fields for CLI
         // The data received from MQTT is type of string, so we need to transform it to Json
-        const dataJson = JSON.parse(data)
-        Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-          if (!fields) fields = `${escapeSpace(fieldKey)}`
-          else fields = `${fields},${escapeSpace(fieldKey)}`
+        try {
+          const dataJson = JSON.parse(data)
+          Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
+            if (!fields) fields = `${escapeSpace(fieldKey)}`
+            else fields = `${fields},${escapeSpace(fieldKey)}`
 
-          if (!values) values = `'${fieldValue}'`
-          else values = `${values},'${fieldValue}'`
-        })
-        fields += ',timestamp'
-        values += `,'${timestamp}'`
+            if (!values) values = `'${fieldValue}'`
+            else values = `${values},'${fieldValue}'`
+          })
+          fields += ',timestamp'
+          values += `,'${timestamp}'`
 
-        statement += `${fields}) values(${values});`
+          statement += `${fields}) values(${values});`
 
-        query += statement
+          query += statement
+        } catch (error) {
+          this.logger.error(error)
+        }
       })
 
       query += 'COMMIT'
