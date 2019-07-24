@@ -10,6 +10,7 @@ import uiSchema from './uiSchema.jsx'
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
+  const [dataSourceIds, setDataSourceIds] = React.useState([])
 
   /**
    * Sets the configuration JSON
@@ -26,13 +27,31 @@ const ConfigureApi = ({ match, location }) => {
    */
   React.useEffect(() => {
     const { api } = match.params
-    const { formData } = location
+    const { formData, subscribeList } = location
+
+    setDataSourceIds(subscribeList)
 
     apis.getNorthApiSchema(api).then((schema) => {
       setConfigSchema(schema)
       updateForm(formData)
     })
   }, [])
+
+  /**
+   * Make modification based on south dataSources to the config schema
+   * @returns {object} config schema
+   */
+  const modifiedConfigSchema = () => {
+    // check if configSchema is are already set
+    if (configSchema) {
+      const { subscribedTo } = configSchema.properties
+      // check if subscribedTo exists and enum was not already set
+      if (subscribedTo && subscribedTo.enum === undefined) {
+        subscribedTo.items.enum = dataSourceIds
+      }
+    }
+    return configSchema
+  }
 
   /**
    * Handles the form's submittion
@@ -82,7 +101,7 @@ const ConfigureApi = ({ match, location }) => {
             formData={configJson}
             liveValidate
             showErrorList={false}
-            schema={configSchema}
+            schema={modifiedConfigSchema()}
             uiSchema={uiSchema(configJson.api)}
             autocomplete="on"
             onChange={handleChange}

@@ -24,6 +24,7 @@ const uiSchema = {
     sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
     retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
   },
+  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
 }
 
 export default uiSchema
