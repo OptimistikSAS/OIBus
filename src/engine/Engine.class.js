@@ -159,6 +159,7 @@ class Engine {
    * @return {void}
    */
   addFile(dataSourceId, filePath, preserveFiles) {
+    this.logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`)
     this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
@@ -185,6 +186,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async sendFile(applicationId, filePath) {
+    this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
     let success = false
 
     try {
