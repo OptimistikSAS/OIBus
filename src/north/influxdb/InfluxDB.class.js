@@ -70,53 +70,57 @@ class InfluxDB extends ApiHandler {
       let body = ''
 
       entries.forEach((entry) => {
-        const { pointId, data, timestamp } = entry
-        const Nodes = Object.entries(pointIdToNodes(pointId))
-        const measurement = Nodes[Nodes.length - 1][0]
+        try {
+          const { pointId, data, timestamp } = entry
+          const Nodes = Object.entries(pointIdToNodes(pointId))
+          const measurement = Nodes[Nodes.length - 1][0]
 
-        // Convert nodes into tags for CLI
-        let tags = null
-        Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-          if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-          else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-        })
+          // Convert nodes into tags for CLI
+          let tags = null
+          Nodes.slice(1).forEach(([tagKey, tagValue]) => {
+            if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+            else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+          })
 
-        // Converts data into fields for CLI
-        let fields = null
-        // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
-        // The data received from MQTT is type of string, so we need to transform it to Json
-        const dataJson = JSON.parse(decodeURI(data))
-        Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-          if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-          else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-        })
+          // Converts data into fields for CLI
+          let fields = null
+          // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
+          // The data received from MQTT is type of string, so we need to transform it to Json
+          const dataJson = JSON.parse(decodeURI(data))
+          Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
+            if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+            else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+          })
 
-        // Convert timestamp to the configured precision
-        let preciseTimestamp = new Date(timestamp).getTime()
-        switch (precision) {
-          case 'ns':
-            preciseTimestamp = 1000 * 1000 * timestamp
-            break
-          case 'u':
-            preciseTimestamp = 1000 * timestamp
-            break
-          case 'ms':
-            break
-          case 's':
-            preciseTimestamp = Math.floor(timestamp / 1000)
-            break
-          case 'm':
-            preciseTimestamp = Math.floor(timestamp / 1000 / 60)
-            break
-          case 'h':
-            preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
-            break
-          default:
-            preciseTimestamp = timestamp
+          // Convert timestamp to the configured precision
+          let preciseTimestamp = new Date(timestamp).getTime()
+          switch (precision) {
+            case 'ns':
+              preciseTimestamp = 1000 * 1000 * timestamp
+              break
+            case 'u':
+              preciseTimestamp = 1000 * timestamp
+              break
+            case 'ms':
+              break
+            case 's':
+              preciseTimestamp = Math.floor(timestamp / 1000)
+              break
+            case 'm':
+              preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+              break
+            case 'h':
+              preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+              break
+            default:
+              preciseTimestamp = timestamp
+          }
+
+          // Append entry to body
+          body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
+        } catch (error) {
+          this.logger.error(error)
         }
-
-        // Append entry to body
-        body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
       })
 
       // Send data to InfluxDB
