@@ -1,8 +1,7 @@
 import React from 'react'
 import { Label, Button, Spinner } from 'reactstrap'
-import { ReactGhLikeDiff } from 'react-gh-like-diff'
-import stringify from 'json-stable-stringify'
-import 'react-gh-like-diff/lib/diff2html.min.css'
+import { formatters, create } from 'jsondiffpatch'
+import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 
@@ -10,6 +9,33 @@ const Welcome = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
+  const maxDiffLength = 10000
+
+  const diffInstance = create({
+    objectHash: (obj, index) => {
+      // allow to diff the point list array correctly
+      if (typeof obj.pointId !== 'undefined') {
+        return obj.pointId
+      }
+      // allow to diff the scanmode list array correctly
+      if (typeof obj.scanMode !== 'undefined') {
+        return obj.scanMode
+      }
+      // allow to diff the proxy list array correctly
+      if (typeof obj.name !== 'undefined') {
+        return obj.name
+      }
+      // allow to diff the north list array correctly
+      if (typeof obj.applicationId !== 'undefined') {
+        return obj.applicationId
+      }
+      // allow to diff the south list array correctly
+      if (typeof obj.dataSourceId !== 'undefined') {
+        return obj.dataSourceId
+      }
+      return `$$index:${index}`
+    },
+  })
 
   /**
    * Acquire the Active configuration
@@ -30,14 +56,6 @@ const Welcome = () => {
       setConfigJson(config)
     })
   }, [])
-
-  /**
-   * Check if modified is changed compared to active
-   * @param {string} active The current active config JSON string
-   * @param {string} modified The current modified config JSON string
-   * @returns {boolean} compare result
-   */
-  const compareActiveWithModified = (active, modified) => (active && modified && (active !== modified))
 
   /**
    * Disable loading when server reachable
@@ -78,10 +96,9 @@ const Welcome = () => {
     }
   }
 
-  // json-stable-stringify is used instead of JSON.stringify to have consistent result in alphabetical order
-  const activeString = stringify(configActiveJson, { space: '  ' })
-  const modifiedString = stringify(configJson, { space: '  ' })
-  const isModified = compareActiveWithModified(activeString, modifiedString)
+  const delta = diffInstance.diff(configActiveJson, configJson)
+  const isModified = !!delta
+  const deltaHTML = formatters.html.format(delta)
 
   return (
     <>
@@ -89,30 +106,29 @@ const Welcome = () => {
         ? (
           <>
             <div className="oi-full-width">
-              <ReactGhLikeDiff
-                options={{
-                  originalFileName: 'Configuration',
-                  updatedFileName: 'Configuration',
-                }}
-                past={activeString}
-                current={modifiedString}
-              />
+              {deltaHTML.length > maxDiffLength
+                ? <Label>The configuration difference is too large to display</Label>
+                // eslint-disable-next-line react/no-danger
+                : <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
+              }
             </div>
-            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
-              {(confirm) => (
-                <Button color="primary" onClick={confirm(handleActivate)}>
-                  Activate
-                </Button>
-              )}
-            </Modal>
-            <Button color="primary" onClick={() => handleDecline()}>
-              Decline
-            </Button>
+            <div className="force-row-display">
+              <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
+                {(confirm) => (
+                  <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
+                    Activate
+                  </Button>
+                )}
+              </Modal>
+              <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
+                Decline
+              </Button>
+            </div>
           </>
         )
         : <Label>No modifications on configuration</Label>
       }
-      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null }
+      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null}
     </>
   )
 }

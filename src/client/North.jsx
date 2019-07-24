@@ -10,6 +10,7 @@ import apis from './services/apis'
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
+  const [dataSourceIds, setDataSourceIds] = React.useState([])
 
   /**
    * Acquire the North configuration
@@ -18,6 +19,16 @@ const North = ({ history }) => {
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setApplications(config.north.applications)
+    })
+  }, [])
+
+  /**
+   * Acquire the South configuration for the subscribed to list
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    apis.getConfig().then(({ config }) => {
+      setDataSourceIds(config.south.dataSources.map((dataSource) => dataSource.dataSourceId))
     })
   }, [])
 
@@ -50,9 +61,9 @@ const North = ({ history }) => {
 
     if (applicationIndex === -1) return
 
-    const formData = applications[applicationIndex]
-    const link = `/north/${formData.api}`
-    history.push({ pathname: link, formData })
+    const application = applications[applicationIndex]
+    const link = `/north/${application.api}`
+    history.push({ pathname: link, formData: application, subscribeList: dataSourceIds })
   }
 
   /**

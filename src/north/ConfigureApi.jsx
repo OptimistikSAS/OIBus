@@ -10,6 +10,7 @@ import uiSchema from './uiSchema.jsx'
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
+  const [dataSourceIds, setDataSourceIds] = React.useState([])
 
   /**
    * Sets the configuration JSON
@@ -26,7 +27,9 @@ const ConfigureApi = ({ match, location }) => {
    */
   React.useEffect(() => {
     const { api } = match.params
-    const { formData } = location
+    const { formData, subscribeList } = location
+
+    setDataSourceIds(subscribeList)
 
     apis.getNorthApiSchema(api).then((schema) => {
       setConfigSchema(schema)
@@ -35,14 +38,19 @@ const ConfigureApi = ({ match, location }) => {
   }, [])
 
   /**
-   * Handles the form's change
-   * @param {Object} form The data of the form
-   * @returns {void}
+   * Make modification based on south dataSources to the config schema
+   * @returns {object} config schema
    */
-  const handleChange = (form) => {
-    const { formData } = form
-
-    updateForm(formData)
+  const modifiedConfigSchema = () => {
+    // check if configSchema is are already set
+    if (configSchema) {
+      const { subscribedTo } = configSchema.properties
+      // check if subscribedTo exists and enum was not already set
+      if (subscribedTo && subscribedTo.enum === undefined) {
+        subscribedTo.items.enum = dataSourceIds
+      }
+    }
+    return configSchema
   }
 
   /**
@@ -53,6 +61,19 @@ const ConfigureApi = ({ match, location }) => {
   const handleSubmit = ({ formData }) => {
     const { applicationId } = formData
     apis.updateNorth(applicationId, formData)
+  }
+
+  /**
+   * Handles the form's change
+   * @param {Object} form The data of the form
+   * @returns {void}
+   */
+  const handleChange = (form) => {
+    const { formData } = form
+
+    updateForm(formData)
+    // submit change immediately on change
+    handleSubmit(form)
   }
 
   /**
@@ -71,6 +92,7 @@ const ConfigureApi = ({ match, location }) => {
   }
 
   const log = (type) => console.info.bind(console, type)
+
   return (
     <>
       {configJson && configSchema && (
@@ -79,13 +101,14 @@ const ConfigureApi = ({ match, location }) => {
             formData={configJson}
             liveValidate
             showErrorList={false}
-            schema={configSchema}
+            schema={modifiedConfigSchema()}
             uiSchema={uiSchema(configJson.api)}
             autocomplete="on"
             onChange={handleChange}
-            onSubmit={handleSubmit}
             onError={log('errors')}
-          />
+          >
+            <></>
+          </Form>
           <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
             {(config) => (
               <Button color="danger" onClick={config(handleDelete)}>
