@@ -36,9 +36,12 @@ class MQTT extends ProtocolHandler {
 
       this.client.on('message', (topic, message) => {
         this.logger.silly(`topic ${topic}, message ${message}`)
+        const data = JSON.parse(message.toString())
+        data.value = data.value.toString()
+        data.quality = data.quality.toString()
         this.addValue(
           {
-            data: message.toString(), // FIXME should extract the value but need to know the signature of message
+            data,
             timestamp: new Date().toISOString(),
             pointId: this.topics[topic].pointId,
           },
