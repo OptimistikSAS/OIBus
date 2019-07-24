@@ -273,22 +273,22 @@
             },
             {
                 "dataSourceId": "SQLFileTransfer",
-                "enabled": false,
+                "enabled": true,
                 "protocol": "SQLFile",
-                "scanMode": "every5Second",
                 "driver": "mssql",
-                "host": "localhost",
+                "host": "192.168.0.11",
                 "port": 1433,
-                "username": "SA",
-                "password": "kvT92GHHYK/uHrpl5gSa57+5zlZXu+X3KvVjjAn6XrXw+CKXd8oFLhQ5wMJ8iU2QQ54agrixt8EBb5MrIaJfxbRXo2ejX8obKzyc5TbInxTz4stfqCjMl99Nd4xgsr+GqF+1ZjnsN9lU3MSjXoi9+VorBlOLco/Zon0kF3UZDY3cCwpoUs9W3vbiBWIlxWEPb48Wf01x0RmI+fGQPEXcPCXT/j8MuwfPUho+JaC4HIaBGD29Nv/RtW9zw7g5LSJVNnvquw/X6ts7JeCsiFppwSKzseNPQ/IfeWME+ZWZ3MGSNZHIWOspZdEZe3c25HCFikgsRtCjTshSFeO9bFgjr4eZj6GC3WArZ8bh9WnAijVeI1FRNwyYLwRTIu7zjM30fFCGDzZFBpJ/f4eCBUgqy8pdJQAuE48c2O/CiNJBA+AlafUhP9HWHffMtRSJeMholu4oywSc/d6yKwFkwGcRfRYnnYsb0WLCbUUhnPXyyCvewnocGXe6J2cfAgHr1vg66znpYm4yMmKQdGyFp6ZktU3/txQeqC/cB4f8YFjeZtyKnl3rAWYo4iJov9YrcEzLbHoDTkAlEwhT8duBb6YmIrmtZUrmaYXLrma2xyCljiSVumRvGHuSyvKgszqqL7cc3SlNHAJhhcK9t6tRllZnNA4S0bx6y9fXOIT+9pLXhQ8=",
-                "database": "TestDB",
-                "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
+                "username": "oibus_user",
+                "password": "eOpRHLUyRPDMaek0ozGTxeO8U0t4ffaLdlJo3DxEvM+l/WIQ7CDyzmFrkb1JuwgKVfEm4Ngp1EWwrFJxPrlRqJsBzvomOtJANsRcRSKtk801rPiEEGBfUxjz5Sm659d8PgUifkXunl3Pj2mlxaDbsX6DKjRIuXKTdea3MT3i5N+x6a8Z21lOuckLCy+BAqIDEtMdW5+u9F75W2Mi3jDNelyaQlVJP01YnGDUt0PDQxtM8t6odIjnvypFdEXAZr8B7Mwjcickbm6lFcIKkArWbROVXXduNjiKgOJ+GzP3lJP4eU5WjfFrnNXJP1cq2bbChI5Jc/tl71aaVn/6YNNsZ4uVBzaPyGO7s+w03uS1qCAHXYakLxSCVXLP+WGMihKa7Of5ouZm6ZgVI64DeXhLr4ToYqBbz53Uj4sPgbQ5ZOzVpIcHUHCVPnqsmGzJVV2IFxBE/6m70SgNBJCXtuqawch5zxYz1H7QXkMIVirOoR1ubAkZWcCt5DAFZBiioDVpKQOfjRGJCYcM4MxP8LsYFFJztOn910q/VYSKyArzoSxDcRzCzob4MlJHNtv7OysFAHzFY9AaAdbeVqxpgwdlqITr4Gk1aITvsIYLM+VZ3E2YIzp2Ht2BEZrdsRt9oIqvl30Q7eJoxRQGDwIBmEU6cJqgFBpnUYooHW/GCHtFR4w=",
+                "database": "oibus",
+                "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
                 "delimiter": ",",
-                "tmpFolder": "./tests/SQLFile"
+                "tmpFolder": "./tests/SQLFile",
+                "scanMode": "every5Second"
             },
             {
                 "dataSourceId": "OPC-HDA",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "OPCHDA",
                 "agentFilename": "./deps/win/HdaAgent/HdaAgent.exe",
                 "tcpPort": 3333,
@@ -430,7 +430,7 @@
             },
             {
                 "applicationId": "Link",
-                "enabled": true,
+                "enabled": false,
                 "api": "Link",
                 "Link": {
                     "host": "http://localhost:2223",
