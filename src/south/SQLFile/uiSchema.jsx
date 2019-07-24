@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  dataSourceId: { 'ui:help': '' },
+  dataSourceId: {
+    'ui:help': '',
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
   protocol: { 'ui:help': '' },
   driver: { 'ui:help': '' },
@@ -12,6 +15,7 @@ const uiSchema = {
     'ui:help': '',
     'ui:widget': 'password',
   },
+  database: { 'ui:help': '' },
   query: { 'ui:help': '' },
   delimiter: { 'ui:help': '' },
   tmpFolder: { 'ui:help': '' },

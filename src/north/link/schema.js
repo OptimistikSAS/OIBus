@@ -19,7 +19,7 @@ module.exports = {
     },
     Link: {
       type: 'object',
-      title: 'RawFileSender',
+      title: 'Link',
       properties: {
         host: {
           type: 'string',
@@ -86,6 +86,11 @@ module.exports = {
           default: 20,
         },
       },
+    },
+    subscribedTo: {
+      type: 'array',
+      title: 'Subscribed To',
+      items: { type: 'string' },
     },
   },
 }
