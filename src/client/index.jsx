@@ -16,6 +16,7 @@ import ConfigureApi from '../north/ConfigureApi.jsx'
 import ConfigureProtocol from '../south/ConfigureProtocol.jsx'
 import ConfigurePoints from '../south/ConfigurePoints.jsx'
 import Log from './Log.jsx'
+import Health from './Health.jsx'
 
 const Main = () => (
   <Router>
@@ -31,6 +32,7 @@ const Main = () => (
           <Route exact path="/north" component={North} />
           <Route exact path="/north/:api" component={ConfigureApi} />
           <Route exact path="/log" component={Log} />
+          <Route exact path="/health" component={Health} />
           <Route component={NotFound} />
         </Switch>
       </Container>

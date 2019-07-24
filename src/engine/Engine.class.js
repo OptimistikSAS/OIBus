@@ -46,6 +46,8 @@ class Engine {
    * @return {Object} readConfig - parsed config Object
    */
   constructor(configFile) {
+    this.version = VERSION
+
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
 
@@ -62,7 +64,7 @@ class Engine {
     // Configure the Cache
     this.cache = new Cache(this)
     this.logger.info(`
-    Starting Engine ${VERSION}
+    Starting Engine ${this.version}
     architecture: ${process.arch}
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
@@ -605,10 +607,17 @@ class Engine {
     this.modifiedConfig = tryReadFile(this.configFile)
   }
 
-  /**
-   * Returns all available scan modes
-   * @returns {Array} - Array of available scan modes
-   */
+   /**
+    * Get OIBus version
+    * @returns {string} - The OIBus version
+    */
+  getVersion() {
+    return this.version
+  }
+   /**
+    * Returns all available scan modes
+    * @returns {Array} - Array of available scan modes
+    */
   getScanModes() {
     return this.config.engine.scanModes
   }
