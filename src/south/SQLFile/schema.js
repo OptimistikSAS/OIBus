@@ -41,6 +41,10 @@ module.exports = {
       type: 'string',
       title: 'Password',
     },
+    database: {
+      type: 'string',
+      title: 'Database',
+    },
     query: {
       type: 'string',
       title: 'Query',

@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': '' },
+  applicationId: {
+    'ui:help': '',
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
   AliveSignal: {
@@ -18,6 +21,7 @@ const uiSchema = {
     frequency: { 'ui:help': <div>The value in milliseconds for get request frequency</div> },
     proxy: { 'ui:help': '' },
   },
+  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
 }
 
 export default uiSchema

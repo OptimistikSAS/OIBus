@@ -46,16 +46,25 @@ class Engine {
    * @return {Object} readConfig - parsed config Object
    */
   constructor(configFile) {
+    this.version = VERSION
+
     this.configFile = path.resolve(configFile)
     this.config = tryReadFile(this.configFile)
-    this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
 
     // Configure and get the logger
     this.logger = new Logger(this.config.engine.logParameters)
+
+    try {
+      // Make a deep copy to prevent overwriting the config when working on modifiedConfig
+      this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
+    } catch (error) {
+      this.logger.error(error)
+    }
+
     // Configure the Cache
     this.cache = new Cache(this)
     this.logger.info(`
-    Starting Engine ${VERSION}
+    Starting Engine ${this.version}
     architecture: ${process.arch}
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
@@ -152,6 +161,7 @@ class Engine {
    * @return {void}
    */
   addFile(dataSourceId, filePath, preserveFiles) {
+    this.logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`)
     this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
@@ -178,6 +188,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async sendFile(applicationId, filePath) {
+    this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
     let success = false
 
     try {
@@ -350,11 +361,16 @@ class Engine {
    * @returns {object} - The active configuration
    */
   getActiveConfiguration() {
-    const config = JSON.parse(JSON.stringify(this.config))
-    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
-    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
-    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
-    return config
+    try {
+      // Make a deep copy to prevent overwriting the stored config when decrypting the passwords
+      const config = JSON.parse(JSON.stringify(this.config))
+      encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
+      encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+      encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
+      return config
+    } catch (error) {
+      return {}
+    }
   }
 
   /**
@@ -362,11 +378,16 @@ class Engine {
    * @returns {object} - The active configuration
    */
   getModifiedConfiguration() {
-    const config = JSON.parse(JSON.stringify(this.modifiedConfig))
-    encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
-    encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
-    encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
-    return config
+    try {
+      // Make a deep copy to prevent overwriting the stored modifiedConfig when decrypting the passwords
+      const config = JSON.parse(JSON.stringify(this.modifiedConfig))
+      encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
+      encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
+      encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
+      return config
+    } catch (error) {
+      return {}
+    }
   }
 
   /**
@@ -584,6 +605,22 @@ class Engine {
    */
   resetConfiguration() {
     this.modifiedConfig = tryReadFile(this.configFile)
+  }
+
+  /**
+    * Get OIBus version
+    * @returns {string} - The OIBus version
+    */
+  getVersion() {
+    return this.version
+  }
+
+  /**
+    * Returns all available scan modes
+    * @returns {Array} - Array of available scan modes
+    */
+  getScanModes() {
+    return this.config.engine.scanModes
   }
 }
 

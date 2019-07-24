@@ -129,16 +129,19 @@ class Cache {
    * @return {void}
    */
   async cacheFile(dataSourceId, filePath, preserveFiles) {
+    this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
     try {
       if (preserveFiles) {
+        this.logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
         fs.copyFile(filePath, cachePath, (copyError) => {
           if (copyError) throw copyError
         })
       } else {
+        this.logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
         fs.rename(filePath, cachePath, (renameError) => {
           if (renameError) {
             // In case of cross-device link error we copy+delete instead
@@ -158,6 +161,7 @@ class Cache {
       Object.entries(this.apis).forEach(async ([applicationId, api]) => {
         const { canHandleFiles, subscribedTo } = api
         if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+          this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
           await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
           this.logger.debug(`send file for ${api.applicationId}`)
           this.sendCallback(api)
@@ -228,18 +232,22 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForFiles(application) {
+    this.logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
     let timeout = application.config.sendInterval
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
+      this.logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
 
       if (filePath) {
         timeout = application.config.sendInterval
 
         if (fs.existsSync(filePath)) {
+          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${application.applicationId} and ${filePath}`)
           const success = await this.engine.sendFile(application.applicationId, filePath)
 
           if (success) {
+            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${application.applicationId} and ${filePath}`)
             await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
             await this.handleSentFile(filePath)
           } else {
@@ -264,6 +272,7 @@ class Cache {
    * @return {void}
    */
   async handleSentFile(filePath) {
+    this.logger.silly(`Cache handleSentFile() for ${filePath}`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       const archivedFilename = path.basename(filePath)
