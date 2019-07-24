@@ -54,6 +54,11 @@ module.exports = {
           type: 'string',
           title: 'Proxy',
         },
+        stack: {
+          type: 'string',
+          title: 'Stack',
+          enum: ['axios', 'request', 'fetch'],
+        },
       },
     },
     caching: {
