@@ -329,16 +329,16 @@ const addLog = async (database, timestamp, level, message) => {
 }
 
 /**
- * Delete logs.
+ * Delete old logs.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {number} numberOfRecords - The number of records to be deleted
  * @return {void}
  */
-const deleteLog = async (database, numberOfRecords) => {
+const deleteOldLogs = async (database, numberOfRecords) => {
   const query = `DELETE FROM ${LOGS_TABLE_NAME} 
                  WHERE id IN (
                    SELECT id FROM ${LOGS_TABLE_NAME} 
-                   ORDER BY id DESC 
+                   ORDER BY id ASC 
                    LIMIT ?
                   )`
   const stmt = await database.prepare(query)
@@ -365,5 +365,5 @@ module.exports = {
   createLogsDatabase,
   getLogs,
   addLog,
-  deleteLog,
+  deleteOldLogs,
 }
