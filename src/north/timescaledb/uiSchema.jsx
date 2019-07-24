@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  applicationId: { 'ui:help': '' },
+  applicationId: {
+    'ui:help': '',
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
   TimescaleDB: {
@@ -18,6 +21,7 @@ const uiSchema = {
     retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
     groupCount: { 'ui:help': <div>The minimum count of data before is sent to the database</div> },
   },
+  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
 }
 
 export default uiSchema

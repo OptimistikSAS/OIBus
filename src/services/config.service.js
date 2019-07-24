@@ -50,13 +50,17 @@ const parseArgs = () => {
 /**
  * Check if config file exists
  * @param {string} filePath - The location of the config file
- * @return {void}
+ * @return {boolean} - Whether it was successful or not
  */
 const checkOrCreateConfigFile = (filePath) => {
   if (!fs.existsSync(filePath)) {
     console.info('Default config file does not exist. Creating it.')
-    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
-    fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
+    try {
+      const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+      fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
+    } catch (error) {
+      console.error(error)
+    }
   }
 }
 
@@ -82,4 +86,10 @@ const saveNewConfig = (config, configFile) => {
   fs.writeFileSync(configFile, JSON.stringify(config, null, 4), 'utf8')
 }
 
-module.exports = { parseArgs, tryReadFile, checkOrCreateConfigFile, backupConfigFile, saveNewConfig }
+module.exports = {
+  parseArgs,
+  tryReadFile,
+  checkOrCreateConfigFile,
+  backupConfigFile,
+  saveNewConfig,
+}

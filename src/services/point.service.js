@@ -31,7 +31,36 @@ const importFromCSV = async (csvContent) => new Promise((resolve) => {
     })
 })
 
+/**
+ * Validates points for duplicate pointId.
+ * @param {object[]} points - Imported Points
+ * @returns {string[]} - The result
+ */
+const getDuplicateIds = (points) => {
+  const makeDuplicateArray = points.reduce((duplicateArray, point) => {
+    duplicateArray[point.pointId] = point.pointId in duplicateArray ? duplicateArray[point.pointId] += 1 : 0
+    return duplicateArray
+  }, {})
+
+  const duplicateEntries = points.filter((point) => makeDuplicateArray[point.pointId])
+  return Array.from(new Set(duplicateEntries.map((point) => point.pointId)))
+}
+
+/**
+ * Validates points for valid scan modes.
+ * @param {object[]} points - Imported Points
+ * @param {string[]} scanModes - The scan modes available
+ * @returns {string[]} - The result
+ */
+const getInvalidScanModes = (points, scanModes) => {
+  const scanModeNames = scanModes.map((scanMode) => scanMode.scanMode)
+  const filteredPoints = points.filter((point) => !scanModeNames.includes(point.scanMode))
+  return filteredPoints.map((point) => point.scanMode)
+}
+
 module.exports = {
   exportToCSV,
   importFromCSV,
+  getDuplicateIds,
+  getInvalidScanModes,
 }

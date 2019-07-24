@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const mssql = require('mssql')
-const Json2csvParser = require('json2csv').Parser
+const csv = require('fast-csv')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -33,7 +33,6 @@ class SQLFile extends ProtocolHandler {
     this.query = query
     this.delimiter = delimiter
     this.tmpFolder = path.resolve(tmpFolder)
-    this.lastCompletedAt = SQLFile.getDateTime()
 
     // Create tmp folder if not exists
     if (!fs.existsSync(this.tmpFolder)) {
@@ -41,21 +40,15 @@ class SQLFile extends ProtocolHandler {
     }
   }
 
-  /**
-   * Get current date in DateTime format to use in query
-   * @return {string} - The DateTime
-   */
-  static getDateTime() {
-    return new Date().toISOString().slice(0, 23).replace('T', ' ')
-  }
-
   async connect() {
-    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
+    const { dataSourceId, startTime } = this.dataSource
+
+    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
     this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
     if (!this.lastCompletedAt) {
-      this.lastCompletedAt = SQLFile.getDateTime()
+      this.lastCompletedAt = new Date(startTime).toISOString() || new Date().toISOString()
     }
   }
 
@@ -65,31 +58,24 @@ class SQLFile extends ProtocolHandler {
    * @return {void}
    */
   async onScan(_scanMode) {
-    const now = SQLFile.getDateTime()
-    const query = this.query.replace('$date1', this.lastCompletedAt).replace('$date2', now)
-    this.logger.debug(`Executing "${query}"`)
-
     let result = []
     try {
       switch (this.driver) {
         case 'mssql':
-          result = await this.getDataFromMSSQL(query)
+          result = await this.getDataFromMSSQL()
           break
         case 'mysql':
-          result = await this.getDataFromMySQL(query)
+          result = await this.getDataFromMySQL()
           break
         case 'postgresql':
-          result = await this.getDataFromPostgreSQL(query)
+          result = await this.getDataFromPostgreSQL()
           break
         case 'oracle':
-          result = await this.getDataFromOracle(query)
+          result = await this.getDataFromOracle()
           break
         default:
           result = []
       }
-
-      this.lastCompletedAt = now
-      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
     } catch (error) {
       this.logger.error(error)
     }
@@ -97,12 +83,16 @@ class SQLFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      const csv = this.generateCSV(result)
-      if (csv) {
+      this.lastCompletedAt = result.slice(-1).pop().timestamp.toISOString()
+      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
+      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
+
+      const csvContent = await this.generateCSV(result)
+      if (csvContent) {
         const filePath = path.join(this.tmpFolder, 'sql.csv')
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
-          fs.writeFileSync(filePath, csv)
+          fs.writeFileSync(filePath, csvContent)
 
           this.logger.debug(`Sending ${filePath} to Engine.`)
           this.addFile(filePath)
@@ -115,10 +105,12 @@ class SQLFile extends ProtocolHandler {
 
   /**
    * Get new entries from MSSQL database.
-   * @param {string} query - The query to execute
    * @returns {void}
    */
-  async getDataFromMSSQL(query) {
+  async getDataFromMSSQL() {
+    const adaptedQuery = this.query.replace('@date2', 'GETDATE()')
+    this.logger.debug(`Executing "${adaptedQuery}"`)
+
     const config = {
       user: this.username,
       password: this.decryptPassword(this.password),
@@ -126,42 +118,50 @@ class SQLFile extends ProtocolHandler {
       port: this.port,
       database: this.database,
     }
-    await mssql.connect(config)
-    const result = await mssql.query(query)
-    await mssql.close()
 
-    return result.recordsets[0]
+    let data = []
+    try {
+      const pool = await mssql.connect(config)
+      const result = await pool.request()
+        .input('date1', mssql.DateTimeOffset, new Date(this.lastCompletedAt))
+        .query(adaptedQuery)
+      const [first] = result.recordsets
+      data = first
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      await mssql.close()
+    }
+
+    return data
   }
 
   /**
    * Get new entries from MySQL database.
-   * @param {string} query - The query to execute
    * @returns {void}
    */
-  async getDataFromMySQL(query) {
-    this.logger.info(query)
+  async getDataFromMySQL() {
+    this.logger.info(this.query)
 
     return []
   }
 
   /**
    * Get new entries from PostgreSQL database.
-   * @param {string} query - The query to execute
    * @returns {void}
    */
-  async getDataFromPostgreSQL(query) {
-    this.logger.info(query)
+  async getDataFromPostgreSQL() {
+    this.logger.info(this.query)
 
     return []
   }
 
   /**
    * Get new entries from Oracle database.
-   * @param {string} query - The query to execute
    * @returns {void}
    */
-  async getDataFromOracle(query) {
-    this.logger.info(query)
+  async getDataFromOracle() {
+    this.logger.info(this.query)
 
     return []
   }
@@ -169,19 +169,14 @@ class SQLFile extends ProtocolHandler {
   /**
    * Generate CSV file from the values.
    * @param {object[]} result - The query result
-   * @returns {String} - The CSV content
+   * @returns {Promise<string>} - The CSV content
    */
   generateCSV(result) {
-    let csv = null
-
-    try {
-      const json2csvParser = new Json2csvParser({ delimiter: this.delimiter })
-      csv = json2csvParser.parse(result)
-    } catch (error) {
-      this.logger.error(error)
+    const options = {
+      headers: true,
+      delimiter: this.delimiter,
     }
-
-    return csv
+    return csv.writeToString(result, options)
   }
 }
 
