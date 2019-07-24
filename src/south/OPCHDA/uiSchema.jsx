@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  dataSourceId: { 'ui:help': <div>Unique name for this OPCHDA Source</div> },
+  dataSourceId: {
+    'ui:help': <div>Unique name for this OPCHDA Source</div>,
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>Enable this data source</div> },
   protocol: { 'ui:readonly': true },
   agentFilename: { 'ui:help': <div>path to the HDA Agent</div> },
