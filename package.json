@@ -1,9 +1,9 @@
 {
   "name": "oibus",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.3.3",
   "main": "index.js",
-  "author": "factoryThings",
+  "author": "Optimistik",
   "license": "SEE LICENSE in LICENSE",
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
