@@ -37,11 +37,11 @@ class SqliteTransport extends TransportStream {
     if (!this.database) {
       this.database = await databaseService.createLogsDatabase(this.filename)
     }
-    databaseService.addLog(this.database, payload.timestamp, payload.level, payload.message)
+    await databaseService.addLog(this.database, payload.timestamp, payload.level, payload.message)
 
     const logFile = fs.statSync(this.filename)
     if (logFile.size > this.maxFileSize) {
-      databaseService.deleteLog(this.database, NUMBER_OF_RECORDS_TO_DELETE)
+      await databaseService.deleteOldLogs(this.database, NUMBER_OF_RECORDS_TO_DELETE)
     }
 
     if (callback) callback()
