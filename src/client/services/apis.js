@@ -127,6 +127,7 @@ const deletePoint = (dataSourceId, pointId) => deleteRequest(`/config/south/${da
 const deleteAllPoints = (dataSourceId) => deleteRequest(`/config/south/${dataSourceId}/points`)
 const exportAllPoints = (dataSourceId) => downloadFileRequest(`/config/south/${dataSourceId}/points/export`)
 const importPoints = (dataSourceId, body) => postTextRequest(`/config/south/${dataSourceId}/points/import`, body)
+const getStatus = () => getRequest('status')
 
 export default {
   getSouthProtocols,
@@ -152,4 +153,5 @@ export default {
   deleteAllPoints,
   exportAllPoints,
   importPoints,
+  getStatus,
 }
