@@ -67,5 +67,10 @@ module.exports = {
         },
       },
     },
+    subscribedTo: {
+      type: 'array',
+      title: 'Subscribed To',
+      items: { type: 'string' },
+    },
   },
 }
