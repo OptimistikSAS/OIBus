@@ -15,37 +15,6 @@ module.exports = {
       type: 'string',
       title: 'API',
     },
-    caching: {
-      type: 'object',
-      title: 'Caching',
-      properties: {
-        sendInterval: {
-          type: 'number',
-          title: 'Send interval',
-          default: 15000,
-        },
-        retryInterval: {
-          type: 'number',
-          title: 'Retry interval',
-          default: 10000,
-        },
-        groupCount: {
-          type: 'number',
-          title: 'Group count',
-          default: 10,
-        },
-        maxSendCount: {
-          type: 'number',
-          title: 'Max Send Count',
-          default: 100,
-        },
-      },
-      subscribedTo: {
-        type: 'array',
-        title: 'Subscribed To',
-        items: { type: 'string' },
-      },
-    },
     InfluxDB: {
       type: 'object',
       title: 'InfluxDB',
@@ -75,6 +44,37 @@ module.exports = {
           default: 'ms',
         },
       },
+    },
+    caching: {
+      type: 'object',
+      title: 'Caching',
+      properties: {
+        sendInterval: {
+          type: 'number',
+          title: 'Send interval',
+          default: 15000,
+        },
+        retryInterval: {
+          type: 'number',
+          title: 'Retry interval',
+          default: 10000,
+        },
+        groupCount: {
+          type: 'number',
+          title: 'Group count',
+          default: 10,
+        },
+        maxSendCount: {
+          type: 'number',
+          title: 'Max Send Count',
+          default: 100,
+        },
+      },
+    },
+    subscribedTo: {
+      type: 'array',
+      title: 'Subscribed To',
+      items: { type: 'string' },
     },
   },
 }
