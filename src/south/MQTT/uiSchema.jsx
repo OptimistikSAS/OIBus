@@ -1,7 +1,10 @@
 import React from 'react'
 
 const uiSchema = {
-  dataSourceId: { 'ui:help': '' },
+  dataSourceId: {
+    'ui:help': '',
+    'ui:readonly': true,
+  },
   enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
   protocol: { 'ui:help': '' },
   server: { 'ui:help': '' },
