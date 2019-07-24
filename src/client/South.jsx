@@ -10,24 +10,6 @@ import apis from './services/apis'
 const South = ({ history }) => {
   const [dataSources, setDataSources] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
-  const [configEngine, setConfigEngine] = React.useState()
-
-  /**
-   * Acquire the engine configuration and set the configEngine JSON
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    // eslint-disable-next-line consistent-return
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          const { engine } = config
-          setConfigEngine(engine)
-        })
-      }
-    })
-  }, [])
 
   /**
    * Acquire the South configuration
@@ -80,9 +62,9 @@ const South = ({ history }) => {
   const handleEditPoints = (dataSourceId) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) return
-    const formData = dataSources[dataSourceIndex]
-    const link = `/south/${formData.protocol}/${formData.dataSourceId}/points`
-    history.push({ pathname: link, configEngine })
+    const dataSource = dataSources[dataSourceIndex]
+    const link = `/south/${dataSource.protocol}/${dataSource.dataSourceId}/points`
+    history.push({ pathname: link })
   }
 
   /**
@@ -94,9 +76,9 @@ const South = ({ history }) => {
   const handleEditClick = (dataSourceId) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) return
-    const formData = dataSources[dataSourceIndex]
-    const link = `/south/${formData.protocol}`
-    history.push({ pathname: link, formData, configEngine })
+    const dataSource = dataSources[dataSourceIndex]
+    const link = `/south/${dataSource.protocol}`
+    history.push({ pathname: link, formData: dataSource })
   }
 
   /**
