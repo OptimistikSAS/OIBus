@@ -607,14 +607,15 @@ class Engine {
     this.modifiedConfig = tryReadFile(this.configFile)
   }
 
-   /**
+  /**
     * Get OIBus version
     * @returns {string} - The OIBus version
     */
   getVersion() {
     return this.version
   }
-   /**
+
+  /**
     * Returns all available scan modes
     * @returns {Array} - Array of available scan modes
     */
