@@ -78,6 +78,7 @@ const North = ({ history }) => {
       // Adds new application to table
       setApplications((prev) => [...prev, { applicationId, enabled, api }])
     } else {
+      console.error('application already exists')
       throw new Error('application already exists')
     }
   }
