@@ -1,9 +1,12 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import apis from '../client/services/apis'
+import { AlertContext } from '../client/context/AlertContext'
 
 const Engine = () => {
   const [configJson, setConfigJson] = React.useState()
+  const { setAlert } = React.useContext(AlertContext)
+
   React.useEffect(() => {
     // eslint-disable-next-line consistent-return
     fetch('/config').then((response) => {
@@ -26,6 +29,7 @@ const Engine = () => {
       await apis.updateEngine(engine)
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
