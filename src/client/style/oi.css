@@ -80,6 +80,11 @@
     left: 0;
 }
 
+/* override Alert styles */
+.alert-dismissible .close {
+  padding: 0.5rem 1.25rem;
+}
+
 /* overide BS styles */
 .form-control {
     height: calc(1.5rem + 2px);
