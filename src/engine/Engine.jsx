@@ -1,7 +1,9 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
+import { Col } from 'reactstrap'
 import apis from '../client/services/apis'
 import { AlertContext } from '../client/context/AlertContext'
+
 
 const Engine = () => {
   const [configJson, setConfigJson] = React.useState()
@@ -38,7 +40,7 @@ const Engine = () => {
 
   const log = (type) => console.info.bind(console, type)
   return (
-    <>
+    <Col xs="12" md="6">
       {configJson ? (
         <Form
           formData={configJson && configJson.engine}
@@ -53,7 +55,7 @@ const Engine = () => {
           <></>
         </Form>
       ) : null }
-    </>
+    </Col>
   )
 }
 

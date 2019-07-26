@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label } from 'reactstrap'
+import { Label, Col } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import apis from './services/apis'
 import { AlertContext } from './context/AlertContext'
@@ -35,10 +35,10 @@ const Health = () => {
   ))
 
   return (
-    <div>
+    <Col>
       <Label>Health status</Label>
       {tableRows && <Table headers={[]} rows={tableRows} onRowClick={() => null} />}
-    </div>
+    </Col>
   )
 }
 export default Health
