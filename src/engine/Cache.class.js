@@ -177,14 +177,25 @@ class Cache {
    * @param {object} api - The application
    * @return {void}
    */
-  sendCallback(api) {
+  async sendCallback(api) {
     this.logger.silly(`sendCallback ${api.applicationId}`)
-    if (api.canHandleValues) {
-      this.sendCallbackForValues(api)
-    }
+    const { applicationId, canHandleValues, canHandleFiles } = api
 
-    if (api.canHandleFiles) {
-      this.sendCallbackForFiles(api)
+    if (!this.sendInProgress[applicationId]) {
+      this.sendInProgress[applicationId] = true
+      this.resendImmediately[applicationId] = false
+
+      if (canHandleValues) {
+        await this.sendCallbackForValues(api)
+      }
+
+      if (canHandleFiles) {
+        await this.sendCallbackForFiles(api)
+      }
+
+      this.sendInProgress[applicationId] = false
+    } else {
+      this.resendImmediately[applicationId] = true
     }
   }
 
@@ -197,33 +208,24 @@ class Cache {
     let success = true
     const { applicationId, database, config } = application
 
-    if (!this.sendInProgress[applicationId]) {
-      this.sendInProgress[applicationId] = true
-      this.resendImmediately[applicationId] = false
+    try {
+      const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
-      try {
-        const values = await databaseService.getValuesToSend(database, config.maxSendCount)
-
-        if (values) {
-          success = await this.engine.handleValuesFromCache(applicationId, values)
-          if (success) {
-            const removed = await databaseService.removeSentValues(database, values)
-            if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
-          }
+      if (values) {
+        success = await this.engine.handleValuesFromCache(applicationId, values)
+        if (success) {
+          const removed = await databaseService.removeSentValues(database, values)
+          if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
         }
-      } catch (error) {
-        this.logger.error(error)
-        success = false
       }
-
-      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
-      const timeout = success ? successTimeout : config.retryInterval
-      this.resetTimeout(application, timeout)
-
-      this.sendInProgress[applicationId] = false
-    } else {
-      this.resendImmediately[applicationId] = true
+    } catch (error) {
+      this.logger.error(error)
+      success = false
     }
+
+    const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+    const timeout = success ? successTimeout : config.retryInterval
+    this.resetTimeout(application, timeout)
   }
 
   /**
@@ -233,36 +235,36 @@ class Cache {
    */
   async sendCallbackForFiles(application) {
     this.logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
-    let timeout = application.config.sendInterval
+
+    const { applicationId, config } = application
+    let success = true
 
     try {
-      const filePath = await databaseService.getFileToSend(this.filesDatabase, application.applicationId)
+      const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
       this.logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
 
       if (filePath) {
-        timeout = application.config.sendInterval
-
         if (fs.existsSync(filePath)) {
-          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${application.applicationId} and ${filePath}`)
-          const success = await this.engine.sendFile(application.applicationId, filePath)
+          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
+          success = await this.engine.sendFile(applicationId, filePath)
 
           if (success) {
-            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${application.applicationId} and ${filePath}`)
-            await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
+            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
+            await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
             await this.handleSentFile(filePath)
-          } else {
-            timeout = application.config.retryInterval
           }
         } else {
           this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
 
-          await databaseService.deleteSentFile(this.filesDatabase, application.applicationId, filePath)
+          await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
         }
       }
     } catch (error) {
       this.logger.error(error)
     }
 
+    const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+    const timeout = success ? successTimeout : config.retryInterval
     this.resetTimeout(application, timeout)
   }
 
