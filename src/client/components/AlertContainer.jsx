@@ -6,13 +6,13 @@ const AlertContainer = () => {
   const { alert, setAlert } = React.useContext(AlertContext)
 
   return (
-    <div>
+    <>
       {alert ? (
         <Alert color={alert.type || 'info'} toggle={() => setAlert()}>
           {alert.text || 'Something went wrong, please try again later'}
         </Alert>
       ) : null }
-    </div>
+    </>
   )
 }
 
