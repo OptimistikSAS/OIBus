@@ -2,9 +2,11 @@ import React from 'react'
 import { Label } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import apis from './services/apis'
+import { AlertContext } from './context/AlertContext'
 
 const Health = () => {
   const [status, setStatus] = React.useState([])
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Acquire the status
@@ -13,6 +15,9 @@ const Health = () => {
   React.useEffect(() => {
     apis.getStatus().then((response) => {
       setStatus(response)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 

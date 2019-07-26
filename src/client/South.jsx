@@ -6,10 +6,12 @@ import Table from './components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
+import { AlertContext } from './context/AlertContext'
 
 const South = ({ history }) => {
   const [dataSources, setDataSources] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Acquire the South configuration
@@ -18,6 +20,9 @@ const South = ({ history }) => {
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setDataSources(config.south.dataSources)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -28,6 +33,9 @@ const South = ({ history }) => {
   React.useEffect(() => {
     apis.getSouthProtocols().then((protocols) => {
       setProtocolList(protocols)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -98,6 +106,7 @@ const South = ({ history }) => {
       setDataSources(newDataSources)
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -116,6 +125,7 @@ const South = ({ history }) => {
       // TODO: Show loader
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
