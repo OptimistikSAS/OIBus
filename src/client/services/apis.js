@@ -8,11 +8,15 @@ const handleResponse = async (response) => {
   return null
 }
 
+const createErrorMessage = (response) => (
+  `${response.status}${response.statusText ? ` - ${response.statusText}` : ''}`
+)
+
 const getRequest = async (uri) => {
   try {
     const response = await fetch(uri, { method: 'GET' })
     if (response.status !== 200) {
-      throw new Error(response.status)
+      throw new Error(createErrorMessage(response))
     }
     return handleResponse(response)
   } catch (error) {
@@ -40,7 +44,7 @@ const postRequest = async (uri, body) => {
       body: JSON.stringify(body),
     })
     if (response.status !== 200) {
-      throw new Error(response.status)
+      throw new Error(createErrorMessage(response))
     }
     return response
   } catch (error) {
@@ -59,7 +63,7 @@ const postTextRequest = async (uri, body) => {
       body,
     })
     if (response.status !== 200) {
-      throw new Error(response.status)
+      throw new Error(createErrorMessage(response))
     }
     return handleResponse(response)
   } catch (error) {
@@ -78,7 +82,7 @@ const putRequest = async (uri, body) => {
       body: JSON.stringify(body),
     })
     if (response.status !== 200) {
-      throw new Error(response.status)
+      throw new Error(createErrorMessage(response))
     }
     return response
   } catch (error) {
@@ -96,7 +100,7 @@ const deleteRequest = async (uri) => {
       },
     })
     if (response.status !== 200) {
-      throw new Error(response.status)
+      throw new Error(createErrorMessage(response))
     }
     return response
   } catch (error) {
