@@ -6,11 +6,13 @@ import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
+import { AlertContext } from './context/AlertContext'
 
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
   const [dataSourceIds, setDataSourceIds] = React.useState([])
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Acquire the North configuration
@@ -19,6 +21,9 @@ const North = ({ history }) => {
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setApplications(config.north.applications)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -29,6 +34,9 @@ const North = ({ history }) => {
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setDataSourceIds(config.south.dataSources.map((dataSource) => dataSource.dataSourceId))
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -39,6 +47,9 @@ const North = ({ history }) => {
   React.useEffect(() => {
     apis.getNorthApis().then((application) => {
       setApiList(application)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -78,8 +89,9 @@ const North = ({ history }) => {
       // Adds new application to table
       setApplications((prev) => [...prev, { applicationId, enabled, api }])
     } else {
-      console.error('application already exists')
-      throw new Error('application already exists')
+      const error = new Error('application already exists')
+      setAlert({ text: error.message, type: 'danger' })
+      throw error
     }
   }
 
@@ -100,6 +112,7 @@ const North = ({ history }) => {
       setApplications(newApplications)
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -118,6 +131,7 @@ const North = ({ history }) => {
       // TODO: Show loader
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -163,6 +177,7 @@ const North = ({ history }) => {
       ),
     },
   ])
+
   return (
     <>
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}

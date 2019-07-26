@@ -4,10 +4,18 @@ import PropTypes from 'prop-types'
 
 import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Label } from 'reactstrap'
 
+import { AlertContext } from './context/AlertContext'
 import logo from './logo-OIBus.png'
 
 const TopHeader = ({ location }) => {
   const [isOpen, setIsOpen] = React.useState(false)
+  const { setAlert } = React.useContext(AlertContext)
+
+  React.useEffect(() => {
+    // on location changed, clear alert
+    setAlert()
+  }, [location])
+
   const toggle = () => {
     setIsOpen(!isOpen)
   }
