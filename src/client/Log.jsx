@@ -1,6 +1,7 @@
 import React from 'react'
 import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem, Card, CardBody, Row, Col } from 'reactstrap'
 import apis from './services/apis'
+import { AlertContext } from './context/AlertContext'
 
 const Log = () => {
   const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
@@ -11,6 +12,7 @@ const Log = () => {
   const [logs, setLogs] = React.useState()
   const [filterText, setFilterText] = React.useState('')
   const [maxLog, setMaxLog] = React.useState(defaultMaxLog)
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Handles the form's submittion and set the logs if any response
@@ -33,6 +35,7 @@ const Log = () => {
       setMaxLog(defaultMaxLog)
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
