@@ -6,11 +6,13 @@ import PropTypes from 'prop-types'
 import apis from '../client/services/apis'
 import Modal from '../client/components/Modal.jsx'
 import uiSchema from './uiSchema.jsx'
+import { AlertContext } from '../client/context/AlertContext'
 
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
   const [dataSourceIds, setDataSourceIds] = React.useState([])
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Sets the configuration JSON
@@ -34,6 +36,9 @@ const ConfigureApi = ({ match, location }) => {
     apis.getNorthApiSchema(api).then((schema) => {
       setConfigSchema(schema)
       updateForm(formData)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -60,7 +65,10 @@ const ConfigureApi = ({ match, location }) => {
    */
   const handleSubmit = ({ formData }) => {
     const { applicationId } = formData
-    apis.updateNorth(applicationId, formData)
+    apis.updateNorth(applicationId, formData).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    })
   }
 
   /**
@@ -88,6 +96,7 @@ const ConfigureApi = ({ match, location }) => {
       // TODO: Show loader and redirect to main screen
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 

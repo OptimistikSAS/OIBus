@@ -9,6 +9,7 @@ import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 import utils from '../client/helpers/utils'
 import uiSchema from './uiSchema.jsx'
+import { AlertContext } from '../client/context/AlertContext'
 
 const ConfigureProtocol = ({ match, location }) => {
   const [pointsJson, setPointsJson] = React.useState([])
@@ -21,6 +22,7 @@ const ConfigureProtocol = ({ match, location }) => {
   const [selectedPage, setSelectedPage] = React.useState(1)
   const [sortBy, setSortBy] = React.useState()
   const [filterText, setFilterText] = React.useState()
+  const { setAlert } = React.useContext(AlertContext)
   // max points on one page
   const maxOnPage = 10
   // this value will be used to calculate the amount of max pagination displayed
@@ -107,9 +109,16 @@ const ConfigureProtocol = ({ match, location }) => {
       if (points.length) {
         updatePointsJson(points)
       }
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
+
     apis.getSouthProtocolSchema(protocol).then((schema) => {
       updateSchema(schema)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -142,6 +151,7 @@ const ConfigureProtocol = ({ match, location }) => {
       updatePointsJson(pointsJson.filter((point) => point.pointId !== pointId))
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -156,6 +166,7 @@ const ConfigureProtocol = ({ match, location }) => {
       updatePointsJson([])
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -175,6 +186,7 @@ const ConfigureProtocol = ({ match, location }) => {
       setEditingPoint()
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -191,6 +203,7 @@ const ConfigureProtocol = ({ match, location }) => {
       setAddingPoint()
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -221,6 +234,7 @@ const ConfigureProtocol = ({ match, location }) => {
       })
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -230,7 +244,10 @@ const ConfigureProtocol = ({ match, location }) => {
    */
   const handleExportPoints = () => {
     const { datasourceid } = match.params
-    apis.exportAllPoints(datasourceid)
+    apis.exportAllPoints(datasourceid).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    })
   }
 
   /**

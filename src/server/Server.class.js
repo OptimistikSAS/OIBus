@@ -57,7 +57,8 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          ctx.body = 'access was not authorized'
+          console.error(err)
+          ctx.body = JSON.stringify(err)
         } else {
           throw err
         }
