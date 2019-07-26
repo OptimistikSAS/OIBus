@@ -4,11 +4,13 @@ import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
+import { AlertContext } from './context/AlertContext'
 
 const Welcome = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
+  const { setAlert } = React.useContext(AlertContext)
   const maxDiffLength = 10000
 
   const diffInstance = create({
@@ -44,6 +46,9 @@ const Welcome = () => {
   React.useEffect(() => {
     apis.getActiveConfig().then(({ config }) => {
       setConfigActiveJson(config)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -54,6 +59,9 @@ const Welcome = () => {
   React.useEffect(() => {
     apis.getConfig().then(({ config }) => {
       setConfigJson(config)
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
@@ -80,6 +88,7 @@ const Welcome = () => {
       stopLoadingWhenReachable()
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
@@ -93,6 +102,7 @@ const Welcome = () => {
       setConfigJson(configActiveJson)
     } catch (error) {
       console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     }
   }
 
