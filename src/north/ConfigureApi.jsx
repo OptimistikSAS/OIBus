@@ -1,7 +1,7 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
-import { Button } from 'reactstrap'
+import { Button, Col } from 'reactstrap'
 import PropTypes from 'prop-types'
 import apis from '../client/services/apis'
 import Modal from '../client/components/Modal.jsx'
@@ -105,7 +105,7 @@ const ConfigureApi = ({ match, location }) => {
   return (
     <>
       {configJson && configSchema && (
-        <>
+        <Col xs="12" md="6">
           <Form
             formData={configJson}
             liveValidate
@@ -125,7 +125,7 @@ const ConfigureApi = ({ match, location }) => {
               </Button>
             )}
           </Modal>
-        </>
+        </Col>
       )}
     </>
   )

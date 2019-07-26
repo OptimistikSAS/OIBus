@@ -1,7 +1,7 @@
 import React from 'react'
 import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
-import { Button } from 'reactstrap'
+import { Button, Col } from 'reactstrap'
 import PropTypes from 'prop-types'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
@@ -82,7 +82,7 @@ const ConfigureProtocol = ({ match, location }) => {
 
   const log = (type) => console.info.bind(console, type)
   return (
-    <>
+    <Col xs="12" md="6">
       {configJson && configSchema && (
         <>
           <Form
@@ -106,7 +106,7 @@ const ConfigureProtocol = ({ match, location }) => {
           </Modal>
         </>
       )}
-    </>
+    </Col>
   )
 }
 
