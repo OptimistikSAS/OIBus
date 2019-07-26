@@ -186,10 +186,8 @@ const South = ({ history }) => {
     },
   ])
   return (
-    <Col xs="12" md="6">
-      <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
-        {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
-      </Modal>
+    <Col xs="12" md="9">
+      <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>
   )

@@ -45,7 +45,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
   }
 
   return (
-    <Form>
+    <Form className="oi-add-new">
       <FormGroup>
         <Label for="Id">
           New Data Source ID

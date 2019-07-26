@@ -41,7 +41,7 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
   }
 
   return (
-    <Form>
+    <Form className="oi-add-new">
       <FormGroup>
         <Label for="Id">
           New Application ID
