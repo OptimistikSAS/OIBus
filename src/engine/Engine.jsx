@@ -16,6 +16,9 @@ const Engine = () => {
           setConfigJson(config)
         })
       }
+    }).catch((error) => {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
     })
   }, [])
 
