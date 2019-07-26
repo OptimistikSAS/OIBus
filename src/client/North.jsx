@@ -179,7 +179,7 @@ const North = ({ history }) => {
   ])
 
   return (
-    <Col xs="12" md="6">
+    <Col xs="12" md="9">
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
     </Col>
