@@ -80,6 +80,10 @@
   left: 0;
 }
 
+.oi-add-new {
+  width: 50%;
+}
+
 /* override Alert styles */
 .alert-dismissible .close {
   padding: 0.5rem 1.25rem;
