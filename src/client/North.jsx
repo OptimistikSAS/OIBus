@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button } from 'reactstrap'
+import { Button, Col } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from './components/Modal.jsx'
@@ -179,10 +179,10 @@ const North = ({ history }) => {
   ])
 
   return (
-    <>
+    <Col xs="12" md="6">
       {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
-    </>
+    </Col>
   )
 }
 North.propTypes = { history: PropTypes.object.isRequired }

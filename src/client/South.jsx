@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button } from 'reactstrap'
+import { Button, Col } from 'reactstrap'
 import Table from './components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 import Modal from './components/Modal.jsx'
@@ -186,12 +186,12 @@ const South = ({ history }) => {
     },
   ])
   return (
-    <>
+    <Col xs="12" md="6">
       <Modal show={false} title="Delete Data Source" body="Are you sure you want to delete this Data Source?">
         {(confirm) => tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} onDeleteClick={confirm(handleDelete)} />}
       </Modal>
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
-    </>
+    </Col>
   )
 }
 
