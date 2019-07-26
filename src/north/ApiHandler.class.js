@@ -63,7 +63,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.info('handleValues', values)
+    this.logger.warning('handleValues should be surcharged', values)
     return true
   }
 
@@ -73,7 +73,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleFile(filePath) {
-    this.logger.info('handleFile', filePath)
+    this.logger.warning('handleFile should be surcharged', filePath)
     return true
   }
 
