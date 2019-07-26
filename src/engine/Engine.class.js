@@ -529,7 +529,10 @@ class Engine {
    */
   addSouthPoint(dataSourceId, point) {
     const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
+    if (dataSource) {
+      if (!dataSource.points) {
+        dataSource.points = []
+      }
       dataSource.points.push(point)
     }
   }
@@ -608,17 +611,17 @@ class Engine {
   }
 
   /**
-   * Get OIBus version
-   * @returns {string} - The OIBus version
-   */
+    * Get OIBus version
+    * @returns {string} - The OIBus version
+    */
   getVersion() {
     return this.version
   }
 
   /**
-   * Returns all available scan modes
-   * @returns {Array} - Array of available scan modes
-   */
+    * Returns all available scan modes
+    * @returns {Array} - Array of available scan modes
+    */
   getScanModes() {
     return this.config.engine.scanModes
   }
