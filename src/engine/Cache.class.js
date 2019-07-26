@@ -44,6 +44,29 @@ class Cache {
   }
 
   /**
+   * Initialize an active North.
+   * @param {Object} activeApi - The North to initialize
+   * @returns {Promise<void>} - The result
+   */
+  async initializeApi(activeApi) {
+    const api = {
+      applicationId: activeApi.application.applicationId,
+      config: activeApi.application.caching,
+      canHandleValues: activeApi.canHandleValues,
+      canHandleFiles: activeApi.canHandleFiles,
+      subscribedTo: activeApi.application.subscribedTo,
+    }
+    // only initialize the db if the api can handle values
+    if (api.canHandleValues) {
+      this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
+      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
+      this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
+    }
+    this.apis[api.applicationId] = api
+    this.resetTimeout(api, api.config.sendInterval)
+  }
+
+  /**
    * Initialize the cache by creating a database for every North application.
    * also initializes an internal object for North applications
    * @param {object} activeApis - The active North applications
@@ -54,23 +77,8 @@ class Cache {
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
     this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
     // initialize the internal object apis with the list of north apis
-    Object.values(activeApis).forEach(async (activeApi) => {
-      const api = {
-        applicationId: activeApi.application.applicationId,
-        config: activeApi.application.caching,
-        canHandleValues: activeApi.canHandleValues,
-        canHandleFiles: activeApi.canHandleFiles,
-        subscribedTo: activeApi.application.subscribedTo,
-      }
-      // only initialize the db if the api can handle values
-      if (api.canHandleValues) {
-        this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
-        api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
-        this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
-      }
-      this.resetTimeout(api, api.config.sendInterval)
-      this.apis[api.applicationId] = api
-    })
+    const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
+    await Promise.all(actions)
   }
 
   /**
@@ -82,6 +90,44 @@ class Cache {
   static isSubscribed(dataSourceId, subscribedTo) {
     if (!subscribedTo) return true
     return Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId)
+  }
+
+  /**
+   * Cache a new Value from the South for a given North
+   * It will store the value in every database. If urgent is "true" it will immediately forward the value
+   * to every North application (used for alarm values for example)
+   * @param {Object} api - The North to cache the Value for
+   * @param {string} dataSourceId - The South generating the value
+   * @param {object} value - The new value
+   * @param {string} value.pointId - The ID of the point
+   * @param {string} value.data - The value of the point
+   * @param {number} value.timestamp - The timestamp
+   * @param {boolean} urgent - Whether to disable grouping
+   * @return {void}
+   */
+  async cacheValueForApi(api, dataSourceId, value, urgent) {
+    const { database, config, canHandleValues, subscribedTo } = api
+    // save the value in the North's queue if it is subscribed to the dataSource
+    if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+      await databaseService.saveValue(database, dataSourceId, value, urgent)
+
+      // if urgent is set (for example, a sensor indicating an alarm),
+      // we immediately send the cache to the North.
+      if (urgent) {
+        this.logger.silly(`urgent flag: ${urgent}`)
+        return api
+      }
+
+      // if the group size is over the groupCount => we immediately send the cache
+      // to the North even if the timeout is not finished.
+      const count = await databaseService.getCount(database)
+      if (count >= config.groupCount) {
+        this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
+        return api
+      }
+    }
+
+    return false
   }
 
   /**
@@ -97,28 +143,32 @@ class Cache {
    * @return {void}
    */
   async cacheValue(dataSourceId, value, urgent) {
-    Object.values(this.apis).forEach(async (api) => {
-      const { database, config, canHandleValues, subscribedTo } = api
-      // save the value in each North queues that are subscribed to the dataSource
-      if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-        await databaseService.saveValue(database, dataSourceId, value, urgent)
-
-        // if urgent is set (for example, a sensor indicating an alarm),
-        // we immediately send the cache to the North.
-        if (urgent) {
-          this.logger.silly(`urgent flag: ${urgent}`)
-          this.sendCallback(api)
-        } else {
-          // if the group size is over the groupCount => we immediately send the cache
-          // to the North even if the timeout is not finished.
-          const count = await databaseService.getCount(database)
-          if (count >= config.groupCount) {
-            this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
-            this.sendCallback(api)
-          }
-        }
+    const actions = Object.values(this.apis).map((api) => this.cacheValueForApi(api, dataSourceId, value, urgent))
+    const apisToActivate = await Promise.all(actions)
+    apisToActivate.forEach((apiToActivate) => {
+      if (apiToActivate) {
+        this.sendCallback(apiToActivate)
       }
     })
+  }
+
+  /**
+   * Cache the new raw file for a given North.
+   * @param {object} api - The North to cache the file for
+   * @param {string} dataSourceId - The South generating the file
+   * @param {String} cachePath - The path of the raw file
+   * @param {number} timestamp - The timestamp the file was received
+   * @return {void}
+   */
+  async cacheFileForApi(api, dataSourceId, cachePath, timestamp) {
+    const { applicationId, canHandleFiles, subscribedTo } = api
+    if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+      this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
+      await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+      this.logger.debug(`send file for ${api.applicationId}`)
+      return api
+    }
+    return false
   }
 
   /**
@@ -157,14 +207,14 @@ class Cache {
           }
         })
       }
-      // All is good so we send the file to the engine
-      Object.entries(this.apis).forEach(async ([applicationId, api]) => {
-        const { canHandleFiles, subscribedTo } = api
-        if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-          this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
-          await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-          this.logger.debug(`send file for ${api.applicationId}`)
-          this.sendCallback(api)
+
+      // Cache the file for every subscribed North
+      const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, dataSourceId, cachePath, timestamp))
+      const apisToActivate = await Promise.all(actions)
+      // Activate sending
+      apisToActivate.forEach((apiToActivate) => {
+        if (apiToActivate) {
+          this.sendCallback(apiToActivate)
         }
       })
     } catch (error) {
