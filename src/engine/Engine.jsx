@@ -1,62 +1,123 @@
 import React from 'react'
-import Form from 'react-jsonschema-form-bs4'
-import { Col } from 'reactstrap'
-import apis from '../client/services/apis'
-import { AlertContext } from '../client/context/AlertContext'
-
+import { Col, Row, Button, Form, FormGroup, Label, Input, FormText, FormFeedback } from 'reactstrap'
+import { EngineContext } from '../client/context/configContext.jsx'
+import { AlertContext } from '../client/context/AlertContext.js'
 
 const Engine = () => {
-  const [configJson, setConfigJson] = React.useState()
-  const { setAlert } = React.useContext(AlertContext)
+  // const [configJson, setConfigJson] = React.useState()
+  const [validate, setValidate] = React.useState()
+  const { state: configState /* , dispatch: configDispatch */ } = React.useContext(EngineContext)
 
-  React.useEffect(() => {
-    // eslint-disable-next-line consistent-return
-    fetch('/config').then((response) => {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        return response.json().then(({ config }) => {
-          setConfigJson(config)
-        })
-      }
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
-  }, [])
+  const { setAlert } = React.useContext(AlertContext)
 
   /**
    * Submit the updated engine
    * @param {*} engine The changed engine
    * @returns {void}
    */
-  const handleSubmit = async (engine) => {
-    try {
-      await apis.updateEngine(engine)
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
+  /*
+ const handleSubmit = async (engine) => {
+   console.log(engine)
+   try {
+     await apis.updateEngine(engine)
+   } catch (error) {
+     console.error(error)
+     setAlert({ text: error.message, type: 'danger' })
+   }
+}
+   */
+
+  const validateEmail = (e) => {
+    // eslint-disable-next-line max-len
+    const emailRex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    if (emailRex.test(e.target.value)) {
+      setValidate('has-success')
+    } else {
+      setValidate('has-danger')
     }
   }
 
-  const log = (type) => console.info.bind(console, type)
-  return (
-    <Col xs="12" md="6">
-      {configJson ? (
-        <Form
-          formData={configJson && configJson.engine}
-          liveValidate
-          showErrorList={false}
-          schema={Engine.schema}
-          uiSchema={Engine.uiSchema}
-          autocomplete="on"
-          onChange={({ formData }) => handleSubmit(formData)}
-          onError={log('errors')}
-        >
-          <></>
-        </Form>
-      ) : null }
-    </Col>
-  )
+  const handleChange = (event) => {
+    validateEmail(event)
+    const { target } = event
+    const value = target.type === 'checkbox' ? target.checked : target.value
+    const { name } = target
+    console.info('set json avec la nouvelle valeur', name, value)
+
+    /*
+    setConfigJson((json) => {
+      json[name] = value
+      return json
+    })
+    */
+  }
+  console.info(configState)
+  if (configState && configState.error) setAlert({ text: configState.error, type: 'danger' })
+  return configState ? (
+    <>
+      <Form>
+        <Row form>
+          <Col md={6}>
+            <FormGroup>
+              <Label for="exampleEmail">Email</Label>
+              <Input
+                type="email"
+                name="email"
+                id="exampleEmail"
+                placeholder="with a placeholder"
+                invalid={validate === 'has-danger'}
+                onChange={handleChange}
+              />
+              <FormFeedback>Oh noes! that name is not good</FormFeedback>
+              <FormText>Example help text.</FormText>
+            </FormGroup>
+          </Col>
+          <Col md={6}>
+            <FormGroup>
+              <Label for="examplePassword">Password</Label>
+              <Input type="password" name="password" id="examplePassword" placeholder="password placeholder" />
+            </FormGroup>
+          </Col>
+        </Row>
+        <FormGroup>
+          <Label for="exampleAddress">Address</Label>
+          <Input type="text" name="address" id="exampleAddress" placeholder="1234 Main St" />
+        </FormGroup>
+        <FormGroup>
+          <Label for="exampleAddress2">Address 2</Label>
+          <Input type="text" name="address2" id="exampleAddress2" placeholder="Apartment, studio, or floor" />
+        </FormGroup>
+        <Row form>
+          <Col md={6}>
+            <FormGroup>
+              <Label for="exampleCity">City</Label>
+              <Input type="text" name="city" id="exampleCity" />
+            </FormGroup>
+          </Col>
+          <Col md={4}>
+            <FormGroup>
+              <Label for="exampleState">State</Label>
+              <Input type="text" name="state" id="exampleState" />
+            </FormGroup>
+          </Col>
+          <Col md={2}>
+            <FormGroup>
+              <Label for="exampleZip">Zip</Label>
+              <Input type="text" name="zip" id="exampleZip" />
+            </FormGroup>
+          </Col>
+        </Row>
+        <FormGroup check>
+          <Input type="checkbox" name="check" id="exampleCheck" />
+          <Label for="exampleCheck" check>
+            Check me out
+          </Label>
+        </FormGroup>
+        <Button>Sign in</Button>
+      </Form>
+      <pre>{JSON.stringify(configState)}</pre>
+    </>
+  ) : null
 }
 
 export default Engine
@@ -108,7 +169,11 @@ Engine.schema = {
           default: 'debug',
         },
         sqliteFilename: { type: 'string', title: 'Filename', default: './logs/journal.db' },
-        sqliteMaxFileSize: { type: 'number', title: 'Max File Size When To Start Deleting Old Log Records (Byte)', default: 5000000 },
+        sqliteMaxFileSize: {
+          type: 'number',
+          title: 'Max File Size When To Start Deleting Old Log Records (Byte)',
+          default: 5000000,
+        },
       },
     },
     caching: {
