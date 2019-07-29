@@ -19,28 +19,31 @@ import Log from './Log.jsx'
 import Health from './Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import Context from './context/Context.jsx'
+import { EngineProvider } from './context/configContext.jsx'
 
 const Main = () => (
   <Router>
     <>
-      <Context>
-        <TopHeader />
-        <Container className="oi-container-with-top-nav" fluid>
-          <AlertContainer />
-          <Switch>
-            <Route exact path="/" component={Welcome} />
-            <Route exact path="/engine" component={Engine} />
-            <Route exact path="/south" component={South} />
-            <Route exact path="/south/:protocol" component={ConfigureProtocol} />
-            <Route exact path="/south/:protocol/:datasourceid/points" component={ConfigurePoints} />
-            <Route exact path="/north" component={North} />
-            <Route exact path="/north/:api" component={ConfigureApi} />
-            <Route exact path="/log" component={Log} />
-            <Route exact path="/health" component={Health} />
-            <Route component={NotFound} />
-          </Switch>
-        </Container>
-      </Context>
+      <EngineProvider>
+        <Context>
+          <TopHeader />
+          <Container className="oi-container-with-top-nav" fluid>
+            <AlertContainer />
+            <Switch>
+              <Route exact path="/" component={Welcome} />
+              <Route exact path="/engine" component={Engine} />
+              <Route exact path="/south" component={South} />
+              <Route exact path="/south/:protocol" component={ConfigureProtocol} />
+              <Route exact path="/south/:protocol/:datasourceid/points" component={ConfigurePoints} />
+              <Route exact path="/north" component={North} />
+              <Route exact path="/north/:api" component={ConfigureApi} />
+              <Route exact path="/log" component={Log} />
+              <Route exact path="/health" component={Health} />
+              <Route component={NotFound} />
+            </Switch>
+          </Container>
+        </Context>
+      </EngineProvider>
     </>
   </Router>
 )
