@@ -12,8 +12,9 @@
  * - **connect**: to allow to establish proper connection to the equipment(optional)
  * - **disconnect**: to allow proper disconnection (optional)
  * In addition, it is possible to use a number of helper functions:
- * - **addValue**: is an **important** mmethod to be used in **onScan** or **Listen**. This will allow to push a value
- * - **addFile**: is the equivalent of addValue but for a file.
+ * - **addValues**: is an **important** mmethod to be used in **onScan** or **Listen**. This will allow to push an array
+ * of values
+ * - **addFile**: is the equivalent of addValues but for a file.
  * to the OIBus engine. More details on the Engine class.
  * - **decryptPassword**: to decrypt a password
  * - **logger**: to log an event with different levels (error,warning,info,debug)
@@ -59,15 +60,11 @@ class ProtocolHandler {
 
   /**
    * Add a new Value to the Engine.
-   * @param {object} value - The new value
-   * @param {string} value.pointId - The ID of the point
-   * @param {object} value.data - Data contained by the point in the form of {value: string, quality: string}
-   * @param {string} value.timestamp - The timestamp in iso string format
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {array} values - The new value
    * @return {void}
    */
-  addValue({ pointId, data, timestamp }, urgent) {
-    this.engine.addValue(this.dataSource.dataSourceId, { pointId, data, timestamp }, urgent)
+  addValues(values) {
+    this.engine.addValues(this.dataSource.dataSourceId, values)
   }
 
   /**
