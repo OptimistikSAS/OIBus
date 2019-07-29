@@ -128,8 +128,8 @@ class Engine {
    * @param {object} values - array of values
    * @return {void}
    */
-  addValues = async (dataSourceId, values) => {
-    this.logger.silly(`Engine: Adding ${values.length} from ${dataSourceId}`)
+  async addValues(dataSourceId, values) {
+    this.logger.silly(`Engine: Adding ${values ? values.length : '?'} values from ${dataSourceId}`)
     await this.cache.cacheValues(dataSourceId, values)
   }
 
