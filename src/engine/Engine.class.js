@@ -150,8 +150,8 @@ class Engine {
   addValues(values) {
     this.logger.silly(`Adding ${values.length} values from /engine/addValues`)
 
-    values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
-      this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
+    values.forEach(async ({ dataSourceId, pointId, data, timestamp, urgent }) => {
+      await this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
     })
   }
 
