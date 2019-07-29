@@ -1,4 +1,3 @@
-// eslint-disable
 const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
@@ -92,6 +91,7 @@ const createConfigDatabase = async (databasePath) => {
 const saveValues = async (database, dataSourceId, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
                  VALUES (?, ?, ?, ?)`
+  /* eslint-disable-next-line */
   console.time('ici')
   try {
     await database.run('BEGIN;')
@@ -103,6 +103,7 @@ const saveValues = async (database, dataSourceId, values) => {
   } catch (error) {
     throw error
   }
+  /* eslint-disable-next-line */
   console.timeEnd('ici')
 }
 
@@ -167,17 +168,16 @@ const getValuesToSend = async (database, count) => {
  * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
+  let stmt = {}
   try {
     const ids = values.map((value) => value.id).join()
     const query = `DELETE FROM ${CACHE_TABLE_NAME}
                    WHERE id IN (${ids})`
-    const stmt = await database.prepare(query)
+    stmt = await database.prepare(query)
     await stmt.run()
-    
   } catch (error) {
     throw error
   }
-  
   return stmt.changes
 }
 
