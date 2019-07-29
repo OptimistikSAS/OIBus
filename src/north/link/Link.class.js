@@ -37,6 +37,8 @@ class Link extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
+    this.logger.silly(`Link handleValues() call with ${values.length} values`)
+
     // Generate authentication header
     const headers = { 'Content-Type': 'application/json' }
 
@@ -71,6 +73,8 @@ class Link extends ApiHandler {
    * @return {AxiosPromise | *} - The send status
    */
   async sendWithAxios(headers, values) {
+    this.logger.silly(`Link sendWithAxios() call with ${values.length} values`)
+
     const source = axios.CancelToken.source()
 
     let axiosInstance = axios.create({
@@ -130,6 +134,8 @@ class Link extends ApiHandler {
    * @return {Promise} - The send status
    */
   async sendWithRequest(headers, values) {
+    this.logger.silly(`Link sendWithRequest() call with ${values.length} values`)
+
     let proxy = false
     if (this.proxy) {
       const { protocol, host, port, username = null, password = null } = this.proxy
@@ -164,6 +170,8 @@ class Link extends ApiHandler {
    * @return {Promise} - The send status
    */
   async sendWithFetch(headers, values) {
+    this.logger.silly(`Link sendWithFetch() call with ${values.length} values`)
+
     let agent = null
 
     if (this.proxy) {
