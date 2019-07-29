@@ -233,7 +233,7 @@ class OPCHDA extends ProtocolHandler {
               this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
               return {}
             })
-            this.addValues(this.dataSourceId, values)
+            this.addValues(values)
             dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
             this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
             await databaseService.upsertConfig(
