@@ -115,7 +115,7 @@ class RawFileSender extends ApiHandler {
     }
 
     setTimeout(() => {
-      source.cancel('Request cancelled by force to prevent axios hanging')
+      source.cancel('Request cancelled by timeout to prevent axios hanging')
     }, this.timeout)
 
     const formData = new FormData()
