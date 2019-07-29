@@ -94,8 +94,8 @@ const saveValues = async (database, dataSourceId, values) => {
                  VALUES (?, ?, ?, ?)`
   try {
     await database.run('BEGIN;')
+    const stmt = await database.prepare(query)
     values.forEach(async (value) => {
-      const stmt = await database.prepare(query)
       await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
     })
     await database.run('END;')
