@@ -101,6 +101,8 @@ const saveValues = async (database, dataSourceId, values) => {
     })
     await database.run('END;')
   } catch (error) {
+    console.timeEnd('ici')
+    console.error(error)
     throw error
   }
   /* eslint-disable-next-line */
