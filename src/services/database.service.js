@@ -99,8 +99,9 @@ const saveValues = async (database, dataSourceId, values) => {
     values.forEach(async (value) => {
       await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
     })
-    await database.run('END;')
+    await database.run('COMMIT;')
   } catch (error) {
+    /* eslint-disable-next-line */
     console.timeEnd('ici')
     console.error(error)
     throw error
