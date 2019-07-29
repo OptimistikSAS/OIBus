@@ -1,3 +1,4 @@
+// eslint-disable
 const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
