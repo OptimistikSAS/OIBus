@@ -148,6 +148,8 @@ class Engine {
    * @return {void}
    */
   addValues(values) {
+    this.logger.silly(`Adding ${values.length} values from /engine/addValues`)
+
     values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
       this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
     })
@@ -173,6 +175,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async handleValuesFromCache(applicationId, values) {
+    this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
     let success = false
     try {
       success = await this.activeApis[applicationId].handleValues(values)

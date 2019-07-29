@@ -228,8 +228,9 @@ class Cache {
    * @return {void}
    */
   async sendCallback(api) {
-    this.logger.silly(`sendCallback ${api.applicationId}`)
     const { applicationId, canHandleValues, canHandleFiles } = api
+
+    this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`)
 
     if (!this.sendInProgress[applicationId]) {
       this.sendInProgress[applicationId] = true
@@ -255,6 +256,7 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForValues(application) {
+    this.logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
     let success = true
     const { applicationId, database, config } = application
 
@@ -262,10 +264,13 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
+        this.logger.silly(`Cache sendCallbackForValues() got ${values.length} values to send for ${application.applicationId}`)
         success = await this.engine.handleValuesFromCache(applicationId, values)
+        this.logger.silly(`Cache sendCallbackForValues() got ${success} result from engine.handleValuesFromCache() for ${application.applicationId}`)
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
-          if (removed !== values.length) this.logger.debug(`cache ${applicationId}for could not be deleted: ${removed}/${values.length}`)
+          this.logger.silly(`Cache sendCallbackForValues() removed ${removed} values from the ${application.applicationId} database`)
+          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} could not be deleted: ${removed}/${values.length}`)
         }
       }
     } catch (error) {
