@@ -19,9 +19,10 @@ class Link extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.Link
+    const { applicationId, host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.Link
 
     this.url = `${host}${endpoint}`
+    this.applicationId = applicationId
     this.authentication = authentication
     this.proxy = this.getProxy(proxy)
     this.stack = stack
@@ -47,17 +48,17 @@ class Link extends ApiHandler {
       const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
-
+    const body = { dataSourceId: this.applicationId, values }
     try {
       switch (this.stack) {
         case 'axios':
-          await this.sendWithAxios(headers, values)
+          await this.sendWithAxios(headers, body)
           break
         case 'request':
-          await this.sendWithRequest(headers, values)
+          await this.sendWithRequest(headers, body)
           break
         default:
-          await this.sendWithFetch(headers, values)
+          await this.sendWithFetch(headers, body)
       }
     } catch (error) {
       return Promise.reject(error)
