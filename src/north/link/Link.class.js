@@ -70,11 +70,11 @@ class Link extends ApiHandler {
   /**
    * Send the values using axios
    * @param {object} headers - The headers
-   * @param {object[]} values - The values to send
+   * @param {object[]} body - The values to send
    * @return {AxiosPromise | *} - The send status
    */
-  async sendWithAxios(headers, values) {
-    this.logger.silly(`Link sendWithAxios() call with ${values.length} values`)
+  async sendWithAxios(headers, body) {
+    this.logger.silly(`Link sendWithAxios() call with ${body.values.length} values`)
 
     const source = axios.CancelToken.source()
 
@@ -116,7 +116,7 @@ class Link extends ApiHandler {
       method: 'POST',
       url: this.url,
       headers,
-      data: values,
+      data: body,
     }
 
     try {
@@ -131,11 +131,11 @@ class Link extends ApiHandler {
   /**
    * Send the values using request
    * @param {object} headers - The headers
-   * @param {object[]} values - The values to send
+   * @param {object[]} body - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithRequest(headers, values) {
-    this.logger.silly(`Link sendWithRequest() call with ${values.length} values`)
+  async sendWithRequest(headers, body) {
+    this.logger.silly(`Link sendWithRequest() call with ${body.values.length} values`)
 
     let proxy = false
     if (this.proxy) {
@@ -151,7 +151,7 @@ class Link extends ApiHandler {
       method: 'POST',
       url: this.url,
       headers,
-      body: JSON.stringify(values),
+      body: JSON.stringify(body),
       proxy,
     }
 
@@ -167,11 +167,11 @@ class Link extends ApiHandler {
   /**
    * Send the values using node-fetch
    * @param {object} headers - The headers
-   * @param {object[]} values - The values to send
+   * @param {object[]} body - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithFetch(headers, values) {
-    this.logger.silly(`Link sendWithFetch() call with ${values.length} values`)
+  async sendWithFetch(headers, body) {
+    this.logger.silly(`Link sendWithFetch() call with ${body.values.length} values`)
 
     let agent = null
 
@@ -190,7 +190,7 @@ class Link extends ApiHandler {
     const fetchOptions = {
       method: 'POST',
       headers,
-      body: JSON.stringify(values),
+      body: JSON.stringify(body),
       agent,
     }
 
