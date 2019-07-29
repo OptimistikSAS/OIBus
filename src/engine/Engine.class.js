@@ -125,34 +125,12 @@ class Engine {
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} dataSourceId - The South generating the value
-   * @param {object} value - The new value
-   * @param {string} value.pointId - The ID of the point
-   * @param {string} value.data - The value of the point
-   * @param {number} value.timestamp - The timestamp
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {object} values - array of values
    * @return {void}
    */
-  addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
-    this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
-  }
-
-  /**
-   * Add an array of Values from a data source to the Engine.
-   * The Engine will forward the Value to the Cache.
-   * @param {object[]} values - array of values
-   * @param {string} values.dataSourceId - The South generating the value
-   * @param {string} values.pointId - The ID of the point
-   * @param {string} values.data - The value of the point
-   * @param {number} values.timestamp - The timestamp
-   * @param {boolean} values.urgent - Whether to disable grouping
-   * @return {void}
-   */
-  addValues(values) {
-    this.logger.silly(`Adding ${values.length} values from /engine/addValues`)
-
-    values.forEach(async ({ dataSourceId, pointId, data, timestamp, urgent }) => {
-      await this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
-    })
+  addValues = async (dataSourceId, values) => {
+    this.logger.silly(`Engine: Adding ${values.length} from ${dataSourceId}`)
+    await this.cache.cacheValues(dataSourceId, values)
   }
 
   /**

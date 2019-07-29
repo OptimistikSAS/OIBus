@@ -3,7 +3,8 @@ const csv = require('fast-csv')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
- * Class CSV
+ * Class CSV.
+ * @todo: Warning: this protocol needs rework to be production ready.
  */
 class CSV extends ProtocolHandler {
   /**
@@ -76,14 +77,14 @@ class CSV extends ProtocolHandler {
                 data[key] = csvObjects[typeColumn[key]]
               })
               const timestamp = new Date(csvObjects[timeColumnIndex]).toISOString()
-              this.addValue(
+              /** @todo: below should send by batch instead of single points */
+              this.addValues(this.dataSourceId, [
                 {
                   pointId: point.pointId,
                   timestamp,
                   data: { value: JSON.stringify(data) },
                 },
-                point.urgent,
-              )
+              ])
             })
           }
         } else {
@@ -97,14 +98,14 @@ class CSV extends ProtocolHandler {
               data[key] = csvObjects[typeColumn[key]]
             })
             const timestamp = new Date(csvObjects[timeColumn]).toISOString()
-            this.addValue(
+            /** @todo: below should send by batch instead of single points */
+            this.addValues(this.dataSourceId, [
               {
                 pointId: point.pointId,
                 timestamp,
                 data: { value: JSON.stringify(data) },
               },
-              point.urgent,
-            )
+            ])
           })
         }
       })

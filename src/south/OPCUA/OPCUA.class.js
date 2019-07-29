@@ -88,10 +88,8 @@ class OPCUA extends ProtocolHandler {
     const scanGroup = this.optimizedConfig[scanMode]
     if (!this.connected || !scanGroup) return
     const nodesToRead = {}
-    const pointsurgent = {}
     scanGroup.forEach((point) => {
       nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point) }
-      pointsurgent[point.pointId] = point.urgent
     })
     this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {
       if (!error && Object.keys(nodesToRead).length === dataValues.length) {
@@ -114,9 +112,12 @@ class OPCUA extends ProtocolHandler {
               data.push(dataValue.statusCode.value)
             }
           })
-          value.data = JSON.stringify(data) // FIXME should extract the value but need to know the signature of data
-          this.addValue(value, pointsurgent[pointId])
-          // @todo handle double values with an array as data
+          value.data = JSON.stringify(data)
+          /**
+           *  @todo below should send by batch instead of single points
+           *  @todo should extract the value but need to know the signature of data
+           */
+          this.addValues(this.dataSourceId, [value])
         })
       } else {
         this.logger.error(error)
