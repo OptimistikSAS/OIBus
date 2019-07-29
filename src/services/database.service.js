@@ -15,8 +15,7 @@ const createValuesDatabase = async (databasePath) => {
                    timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
-                   data_source_id TEXT,
-                   urgent INTEGER
+                   data_source_id TEXT
                  );`
   const stmt = await database.prepare(query)
   await stmt.run()
@@ -83,18 +82,25 @@ const createConfigDatabase = async (databasePath) => {
 }
 
 /**
- * Save value in database.
+ * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {String} dataSourceId - The data source ID
- * @param {object} value - The value to save
- * @param {boolean} urgent - Whether to disable grouping
+ * @param {object} values - The values to save
  * @return {void}
  */
-const saveValue = async (database, dataSourceId, value, urgent) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
-                 VALUES (?, ?, ?, ?, ?)`
-  const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId, urgent)
+const saveValues = async (database, dataSourceId, values) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
+                 VALUES (?, ?, ?, ?)`
+
+  database.serialize(() => {
+    database.run('BEGIN;')
+    values.forEach(async (value) => {
+      const stmt = await database.prepare(query)
+      await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
+      database.run()
+    })
+    database.run('END;')
+  })
 }
 
 /**
@@ -118,7 +124,7 @@ const getCount = async (database) => {
  * @return {array|null} - The values
  */
 const getValuesToSend = async (database, count) => {
-  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId, urgent
+  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
@@ -354,7 +360,7 @@ module.exports = {
   createFilesDatabase,
   createRawFilesDatabase,
   createConfigDatabase,
-  saveValue,
+  saveValues,
   getCount,
   getValuesToSend,
   removeSentValues,
