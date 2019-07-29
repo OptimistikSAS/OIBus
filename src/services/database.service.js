@@ -1,3 +1,4 @@
+// eslint-disable
 const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
@@ -91,6 +92,7 @@ const createConfigDatabase = async (databasePath) => {
 const saveValues = async (database, dataSourceId, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
                  VALUES (?, ?, ?, ?)`
+  console.time('ici')
   try {
     await database.run('BEGIN;')
     const stmt = await database.prepare(query)
@@ -101,6 +103,7 @@ const saveValues = async (database, dataSourceId, values) => {
   } catch (error) {
     throw error
   }
+  console.timeEnd('ici')
 }
 
 /**
@@ -111,9 +114,13 @@ const saveValues = async (database, dataSourceId, values) => {
 const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
-  const stmt = await database.prepare(query)
-  const result = await stmt.get()
-
+  let result = {}
+  try {
+    const stmt = await database.prepare(query)
+    result = await stmt.get()
+  } catch (error) {
+    throw error
+  }
   return result.count
 }
 
@@ -128,8 +135,13 @@ const getValuesToSend = async (database, count) => {
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
-  const stmt = await database.prepare(query)
-  const results = await stmt.all()
+  let results
+  try {
+    const stmt = await database.prepare(query)
+    results = await stmt.all()
+  } catch (error) {
+    throw error
+  }
 
   let values = null
 
@@ -155,11 +167,17 @@ const getValuesToSend = async (database, count) => {
  * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
-  const ids = values.map((value) => value.id).join()
-  const query = `DELETE FROM ${CACHE_TABLE_NAME}
-                 WHERE id IN (${ids})`
-  const stmt = await database.prepare(query)
-  await stmt.run()
+  try {
+    const ids = values.map((value) => value.id).join()
+    const query = `DELETE FROM ${CACHE_TABLE_NAME}
+                   WHERE id IN (${ids})`
+    const stmt = await database.prepare(query)
+    await stmt.run()
+    
+  } catch (error) {
+    throw error
+  }
+  
   return stmt.changes
 }
 
