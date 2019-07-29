@@ -94,30 +94,18 @@ class Cache {
 
   /**
    * Cache a new Value from the South for a given North
-   * It will store the value in every database. If urgent is "true" it will immediately forward the value
+   * It will store the value in every database.
    * to every North application (used for alarm values for example)
    * @param {Object} api - The North to cache the Value for
    * @param {string} dataSourceId - The South generating the value
-   * @param {object} value - The new value
-   * @param {string} value.pointId - The ID of the point
-   * @param {string} value.data - The value of the point
-   * @param {number} value.timestamp - The timestamp
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {object} values - values
    * @return {void}
    */
-  async cacheValueForApi(api, dataSourceId, value, urgent) {
+  async cacheValuesForApi(api, dataSourceId, values) {
     const { database, config, canHandleValues, subscribedTo } = api
     // save the value in the North's queue if it is subscribed to the dataSource
     if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-      await databaseService.saveValue(database, dataSourceId, value, urgent)
-
-      // if urgent is set (for example, a sensor indicating an alarm),
-      // we immediately send the cache to the North.
-      if (urgent) {
-        this.logger.silly(`urgent flag: ${urgent}`)
-        return api
-      }
-
+      await databaseService.saveValues(database, dataSourceId, values)
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
@@ -126,24 +114,19 @@ class Cache {
         return api
       }
     }
-
     return false
   }
 
   /**
    * Cache a new Value from the South
-   * It will store the value in every database. If urgent is "true" it will immediately forward the value
+   * It will store the value in every database.
    * to every North application (used for alarm values for example)
    * @param {string} dataSourceId - The South generating the value
-   * @param {object} value - The new value
-   * @param {string} value.pointId - The ID of the point
-   * @param {string} value.data - The value of the point
-   * @param {number} value.timestamp - The timestamp
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {object} values - The new value
    * @return {void}
    */
-  async cacheValue(dataSourceId, value, urgent) {
-    const actions = Object.values(this.apis).map((api) => this.cacheValueForApi(api, dataSourceId, value, urgent))
+  async cacheValues(dataSourceId, values) {
+    const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
     const apisToActivate = await Promise.all(actions)
     apisToActivate.forEach((apiToActivate) => {
       if (apiToActivate) {
