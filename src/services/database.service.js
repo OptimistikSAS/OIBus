@@ -91,16 +91,12 @@ const createConfigDatabase = async (databasePath) => {
 const saveValues = async (database, dataSourceId, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
                  VALUES (?, ?, ?, ?)`
-
-  database.serialize(() => {
-    database.run('BEGIN;')
-    values.forEach(async (value) => {
-      const stmt = await database.prepare(query)
-      await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
-      database.run()
-    })
-    database.run('END;')
+  database.run('BEGIN;')
+  values.forEach(async (value) => {
+    const stmt = await database.prepare(query)
+    await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
   })
+  database.run('END;')
 }
 
 /**
