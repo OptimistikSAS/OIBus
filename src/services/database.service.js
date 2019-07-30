@@ -96,9 +96,8 @@ const saveValues = async (database, dataSourceId, values) => {
   try {
     await database.run('BEGIN;')
     const stmt = await database.prepare(query)
-    values.forEach(async (value) => {
-      await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId)
-    })
+    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId))
+    await Promise.all(actions)
     await database.run('COMMIT;')
   } catch (error) {
     /* eslint-disable-next-line */
