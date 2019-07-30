@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const databaseService = require('../services/database.service')
+const Queue = require('../services/queue.class')
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -41,6 +42,8 @@ class Cache {
     // Queuing
     this.sendInProgress = {}
     this.resendImmediately = {}
+    // manage a queue for concurrent request to write to SQL
+    this.queue = new Queue()
   }
 
   /**
@@ -105,7 +108,7 @@ class Cache {
     const { database, config, canHandleValues, subscribedTo } = api
     // save the value in the North's queue if it is subscribed to the dataSource
     if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
-      await databaseService.saveValues(database, dataSourceId, values)
+      this.queue.add(databaseService.saveValues, database, dataSourceId, values)
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
@@ -126,13 +129,18 @@ class Cache {
    * @return {void}
    */
   async cacheValues(dataSourceId, values) {
-    const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
-    const apisToActivate = await Promise.all(actions)
-    apisToActivate.forEach((apiToActivate) => {
-      if (apiToActivate) {
-        this.sendCallback(apiToActivate)
-      }
-    })
+    try {
+      const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
+      const apisToActivate = await Promise.all(actions)
+      apisToActivate.forEach((apiToActivate) => {
+        if (apiToActivate) {
+          this.sendCallback(apiToActivate)
+        }
+      })
+    } catch (error) {
+      console.error(error)
+      this.logger(error)
+    }
   }
 
   /**
@@ -247,13 +255,21 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
-        this.logger.silly(`Cache sendCallbackForValues() got ${values.length} values to send for ${application.applicationId}`)
+        this.logger.silly(
+          `Cache sendCallbackForValues() got ${values.length} values to send for ${application.applicationId}`,
+        )
         success = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(`Cache sendCallbackForValues() got ${success} result from engine.handleValuesFromCache() for ${application.applicationId}`)
+        this.logger.silly(
+          `Cache sendCallbackForValues() got ${success} result from engine.handleValuesFromCache() for ${
+            application.applicationId
+          }`,
+        )
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(`Cache sendCallbackForValues() removed ${removed} values from the ${application.applicationId} database`)
-          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} could not be deleted: ${removed}/${values.length}`)
+          this.logger.silly(
+            `Cache sendCallbackForValues() removed ${removed} values from the ${application.applicationId} database`,
+          )
+          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
         }
       }
     } catch (error) {
