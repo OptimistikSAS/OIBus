@@ -30,6 +30,7 @@ const giveType = (point, types, logger) => {
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
+ * @todo: Warning: this protocol needs rework to be production ready.
  */
 class Modbus extends ProtocolHandler {
   /**
@@ -100,13 +101,14 @@ class Modbus extends ProtocolHandler {
             default:
               this.logger.error(new Error(`This point type was not recognized: ${point.type}`))
           }
-          const value = {
-            pointId: point.pointId,
-            timestamp,
-            dataId: point.dataId,
-            data: JSON.stringify(data), // FIXME should extract the value but need to know the signature of data
-          }
-          this.addValue(value, point.urgent)
+          /** @todo: below should send by batch instead of single points */
+          this.addValues(this.dataSourceId, [
+            {
+              pointId: point.pointId,
+              timestamp,
+              data: { value: JSON.stringify(data) },
+            },
+          ])
         })
       })
       .catch((error) => {

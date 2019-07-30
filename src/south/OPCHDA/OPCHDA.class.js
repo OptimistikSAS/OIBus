@@ -26,7 +26,9 @@ class OPCHDA extends ProtocolHandler {
     this.ongoingReads = {}
 
     this.scanGroups = this.dataSource.scanGroups.map((scanGroup) => {
-      const points = this.dataSource.points.filter((point) => point.scanMode === scanGroup.scanMode).map((point) => point.pointId)
+      const points = this.dataSource.points
+        .filter((point) => point.scanMode === scanGroup.scanMode)
+        .map((point) => point.pointId)
       this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
       this.ongoingReads[scanGroup.scanMode] = false
       return {
@@ -49,13 +51,12 @@ class OPCHDA extends ProtocolHandler {
       this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
       const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
-      Object.keys(this.lastCompletedAt)
-        .forEach(async (key) => {
-          let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
-          lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
-          this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
-          this.lastCompletedAt[key] = lastCompletedAt
-        })
+      Object.keys(this.lastCompletedAt).forEach(async (key) => {
+        let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
+        lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
+        this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
+        this.lastCompletedAt[key] = lastCompletedAt
+      })
 
       // Launch Agent
       const { agentFilename, tcpPort } = this.dataSource
@@ -140,7 +141,7 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendReadMessage(scanMode) {
-    if ((!this.ongoingReads[scanMode]) && this.agentReady) {
+    if (!this.ongoingReads[scanMode] && this.agentReady) {
       const message = {
         Request: 'Read',
         TransactionId: this.generateTransactionId(),
@@ -164,7 +165,7 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendMessage(message) {
-    if ((this.tcpServer) && (this.agentConnected)) {
+    if (this.tcpServer && this.agentConnected) {
       if (message.Request === 'Read') {
         this.ongoingReads[message.Content.Group] = true
       }
@@ -173,7 +174,9 @@ class OPCHDA extends ProtocolHandler {
       this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
     } else {
-      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
+      this.logger.debug(
+        `send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`,
+      )
     }
   }
 
@@ -201,7 +204,11 @@ class OPCHDA extends ProtocolHandler {
           if (messageObject.Content.Connected) {
             this.sendInitializeMessage()
           } else {
-            this.logger.error(`Unable to connect to ${this.dataSource.serverName} on ${this.dataSource.host}: ${messageObject.Content.Error}`)
+            this.logger.error(
+              `Unable to connect to ${this.dataSource.serverName} on ${this.dataSource.host}: ${
+                messageObject.Content.Error
+              }`,
+            )
           }
           break
         case 'Initialize':
@@ -212,18 +219,21 @@ class OPCHDA extends ProtocolHandler {
           if (messageObject.Content.Error) {
             this.logger.error(messageObject.Content.Error)
           } else {
-            this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
-            messageObject.Content.Points.forEach((point) => {
+            this.logger.debug(
+              `Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`,
+            )
+            const values = messageObject.Content.Points.map((point) => {
               if (point.Timestamp != null && point.Value != null) {
-                const value = {
+                return {
                   pointId: point.ItemId,
                   timestamp: new Date(point.Timestamp).toISOString(),
                   data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
                 }
-                this.addValue(value, false)
               }
+              this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
+              return {}
             })
-
+            this.addValues(values)
             dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
             this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
             await databaseService.upsertConfig(

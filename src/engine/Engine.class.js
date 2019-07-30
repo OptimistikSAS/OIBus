@@ -69,7 +69,8 @@ class Engine {
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
-    cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
+    Config file: ${this.configFile}
+    Cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
     // Check for private key
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
     encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
@@ -124,32 +125,12 @@ class Engine {
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} dataSourceId - The South generating the value
-   * @param {object} value - The new value
-   * @param {string} value.pointId - The ID of the point
-   * @param {string} value.data - The value of the point
-   * @param {number} value.timestamp - The timestamp
-   * @param {boolean} urgent - Whether to disable grouping
+   * @param {object} values - array of values
    * @return {void}
    */
-  addValue(dataSourceId, { pointId, data, timestamp }, urgent) {
-    this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
-  }
-
-  /**
-   * Add an array of Values from a data source to the Engine.
-   * The Engine will forward the Value to the Cache.
-   * @param {object[]} values - array of values
-   * @param {string} values.dataSourceId - The South generating the value
-   * @param {string} values.pointId - The ID of the point
-   * @param {string} values.data - The value of the point
-   * @param {number} values.timestamp - The timestamp
-   * @param {boolean} values.urgent - Whether to disable grouping
-   * @return {void}
-   */
-  addValues(values) {
-    values.forEach(({ dataSourceId, pointId, data, timestamp, urgent }) => {
-      this.cache.cacheValue(dataSourceId, { pointId, data, timestamp }, urgent)
-    })
+  async addValues(dataSourceId, values) {
+    this.logger.silly(`Engine: Adding ${values ? values.length : '?'} values from ${dataSourceId}`)
+    await this.cache.cacheValues(dataSourceId, values)
   }
 
   /**
@@ -172,6 +153,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async handleValuesFromCache(applicationId, values) {
+    this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
     let success = false
     try {
       success = await this.activeApis[applicationId].handleValues(values)
