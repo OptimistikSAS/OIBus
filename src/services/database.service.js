@@ -15,8 +15,7 @@ const createValuesDatabase = async (databasePath) => {
                    timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
-                   data_source_id TEXT,
-                   urgent INTEGER
+                   data_source_id TEXT
                  );`
   const stmt = await database.prepare(query)
   await stmt.run()
@@ -83,18 +82,31 @@ const createConfigDatabase = async (databasePath) => {
 }
 
 /**
- * Save value in database.
+ * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {String} dataSourceId - The data source ID
- * @param {object} value - The value to save
- * @param {boolean} urgent - Whether to disable grouping
+ * @param {object} values - The values to save
  * @return {void}
  */
-const saveValue = async (database, dataSourceId, value, urgent) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id, urgent) 
-                 VALUES (?, ?, ?, ?, ?)`
-  const stmt = await database.prepare(query)
-  await stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId, urgent)
+const saveValues = async (database, dataSourceId, values) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
+                 VALUES (?, ?, ?, ?)`
+  /* eslint-disable-next-line */
+  console.time('ici')
+  try {
+    await database.run('BEGIN;')
+    const stmt = await database.prepare(query)
+    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId))
+    await Promise.all(actions)
+    await database.run('COMMIT;')
+  } catch (error) {
+    /* eslint-disable-next-line */
+    console.timeEnd('ici')
+    console.error(error)
+    throw error
+  }
+  /* eslint-disable-next-line */
+  console.timeEnd('ici')
 }
 
 /**
@@ -105,9 +117,13 @@ const saveValue = async (database, dataSourceId, value, urgent) => {
 const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
-  const stmt = await database.prepare(query)
-  const result = await stmt.get()
-
+  let result = {}
+  try {
+    const stmt = await database.prepare(query)
+    result = await stmt.get()
+  } catch (error) {
+    throw error
+  }
   return result.count
 }
 
@@ -118,12 +134,17 @@ const getCount = async (database) => {
  * @return {array|null} - The values
  */
 const getValuesToSend = async (database, count) => {
-  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId, urgent
+  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
-  const stmt = await database.prepare(query)
-  const results = await stmt.all()
+  let results
+  try {
+    const stmt = await database.prepare(query)
+    results = await stmt.all()
+  } catch (error) {
+    throw error
+  }
 
   let values = null
 
@@ -149,11 +170,16 @@ const getValuesToSend = async (database, count) => {
  * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
-  const ids = values.map((value) => value.id).join()
-  const query = `DELETE FROM ${CACHE_TABLE_NAME}
-                 WHERE id IN (${ids})`
-  const stmt = await database.prepare(query)
-  await stmt.run()
+  let stmt = {}
+  try {
+    const ids = values.map((value) => value.id).join()
+    const query = `DELETE FROM ${CACHE_TABLE_NAME}
+                   WHERE id IN (${ids})`
+    stmt = await database.prepare(query)
+    await stmt.run()
+  } catch (error) {
+    throw error
+  }
   return stmt.changes
 }
 
@@ -354,7 +380,7 @@ module.exports = {
   createFilesDatabase,
   createRawFilesDatabase,
   createConfigDatabase,
-  saveValue,
+  saveValues,
   getCount,
   getValuesToSend,
   removeSentValues,

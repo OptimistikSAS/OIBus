@@ -47,11 +47,6 @@ module.exports = {
             title: 'Point ID',
             type: 'string',
           },
-          urgent: {
-            title: 'Do Not Group',
-            type: 'boolean',
-            default: true,
-          },
           scanMode: {
             title: 'Scan Mode',
             type: 'string',
