@@ -102,7 +102,7 @@ class Modbus extends ProtocolHandler {
               this.logger.error(new Error(`This point type was not recognized: ${point.type}`))
           }
           /** @todo: below should send by batch instead of single points */
-          this.addValues(this.dataSourceId, [
+          this.addValues([
             {
               pointId: point.pointId,
               timestamp,
