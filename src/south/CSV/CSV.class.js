@@ -78,7 +78,7 @@ class CSV extends ProtocolHandler {
               })
               const timestamp = new Date(csvObjects[timeColumnIndex]).toISOString()
               /** @todo: below should send by batch instead of single points */
-              this.addValues(this.dataSourceId, [
+              this.addValues([
                 {
                   pointId: point.pointId,
                   timestamp,
@@ -99,7 +99,7 @@ class CSV extends ProtocolHandler {
             })
             const timestamp = new Date(csvObjects[timeColumn]).toISOString()
             /** @todo: below should send by batch instead of single points */
-            this.addValues(this.dataSourceId, [
+            this.addValues([
               {
                 pointId: point.pointId,
                 timestamp,
