@@ -39,7 +39,7 @@ class MQTT extends ProtocolHandler {
         this.logger.silly(`topic ${topic}, message ${message}`)
         try {
           /** @todo: below should send by batch instead of single points */
-          this.addValues(this.dataSourceId, [
+          this.addValues([
             {
               pointId: this.topics[topic].pointId,
               timestamp: new Date().toISOString(),
