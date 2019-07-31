@@ -43,7 +43,7 @@ class Cache {
     this.sendInProgress = {}
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue()
+    this.queue = new Queue(this.logger)
   }
 
   /**

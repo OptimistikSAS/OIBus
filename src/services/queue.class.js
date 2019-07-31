@@ -4,9 +4,10 @@
  * @class Queue
  */
 class Queue {
-  constructor() {
+  constructor(logger) {
     this.queue = []
     this.run = false
+    this.logger = logger
   }
 
   clear() {
@@ -24,7 +25,11 @@ class Queue {
     if (this.run) return
     const { fn, args } = this.queue.shift()
     this.run = true
-    await fn(...args)
+    try {
+      await fn(...args)
+    } catch (error) {
+      this.logger.error(error)
+    }
     this.run = false
     await this.next()
   }
