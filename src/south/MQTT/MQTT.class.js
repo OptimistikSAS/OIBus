@@ -4,6 +4,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 class MQTT extends ProtocolHandler {
   /**
    * Initiate connection and start listening.
+   * @todo: Warning: this protocol needs rework to be production ready
    * @return {void}
    */
   connect() {
@@ -25,8 +26,8 @@ class MQTT extends ProtocolHandler {
 
     this.client.on('connect', () => {
       points.forEach((point) => {
-        const { topic, pointId, urgent = false } = point
-        this.topics[topic] = { pointId, urgent }
+        const { topic, pointId } = point
+        this.topics[topic] = { pointId }
         this.client.subscribe(topic, (error) => {
           if (error) {
             this.logger.error(error)
@@ -37,17 +38,14 @@ class MQTT extends ProtocolHandler {
       this.client.on('message', (topic, message) => {
         this.logger.silly(`topic ${topic}, message ${message}`)
         try {
-          const data = JSON.parse(message.toString())
-          data.value = data.value.toString()
-          data.quality = data.quality.toString()
-          this.addValue(
+          /** @todo: below should send by batch instead of single points */
+          this.addValues([
             {
-              data,
-              timestamp: new Date().toISOString(),
               pointId: this.topics[topic].pointId,
+              timestamp: new Date().toISOString(),
+              data: message.toString(),
             },
-            this.topics[topic].urgent,
-          )
+          ])
         } catch (error) {
           this.logger.error(error)
         }
