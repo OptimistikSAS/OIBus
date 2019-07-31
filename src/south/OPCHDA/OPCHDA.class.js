@@ -59,10 +59,11 @@ class OPCHDA extends ProtocolHandler {
       })
 
       // Launch Agent
-      const { agentFilename, tcpPort } = this.dataSource
+      /** todo: read loglevel from config */
+      const { agentFilename, tcpPort, logLevel = 'silly' } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
-        this.launchAgent(agentFilename, tcpPort)
+        this.launchAgent(agentFilename, tcpPort, logLevel)
       })
     } else {
       this.logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`)
@@ -90,11 +91,12 @@ class OPCHDA extends ProtocolHandler {
    * Launch agent application.
    * @param {string} path - The path to the agent executable
    * @param {number} port - The port to send as command line argument
+   * @param {number} logLevel -to filter HDA Agent logs
    * @returns {void}
    */
-  launchAgent(path, port) {
-    this.logger.info(`Launching ${path} with the arguments: listen -p ${port}`)
-    this.child = spawn(path, ['listen', `-p ${port}`])
+  launchAgent(path, port, logLevel) {
+    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -v ${logLevel}`)
+    this.child = spawn(path, ['listen', `-p ${port}`, `-v ${logLevel}`])
 
     this.child.stdout.on('data', (data) => {
       this.logger.debug(`HDA stdout: ${data}`)
