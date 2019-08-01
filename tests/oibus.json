@@ -17,7 +17,8 @@
             "tailable": true,
             "sqliteLevel": "debug",
             "sqliteFilename": "./logs/journal.db",
-            "sqliteMaxFileSize": 500000
+            "sqliteMaxFileSize": 500000,
+            "agentLevel": "silly"
         },
         "caching": {
             "cacheFolder": "./cache",
