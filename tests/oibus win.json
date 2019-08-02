@@ -4,9 +4,7 @@
         "user": "admin",
         "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
         "filter": [
-            "127.0.0.1",
-            "::1",
-            "::ffff:127.0.0.1"
+            "*"
         ],
         "logParameters": {
             "consoleLevel": "silly",
@@ -17,8 +15,7 @@
             "tailable": true,
             "sqliteLevel": "debug",
             "sqliteFilename": "./logs/journal.db",
-            "sqliteMaxFileSize": 500000,
-            "agentLevel": "silly"
+            "sqliteMaxFileSize": 500000
         },
         "caching": {
             "cacheFolder": "./cache",
@@ -162,20 +159,7 @@
                 "httpsPort": "53443",
                 "endPoint": "Server/Simulation",
                 "timeOrigin": "server",
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "everySecond",
-                        "ns": "5",
-                        "s": "Counter1"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "everyNoon",
-                        "ns": "5",
-                        "s": "Random1"
-                    }
-                ]
+                "points": []
             },
             {
                 "dataSourceId": "SimulationServerBis",
@@ -185,14 +169,7 @@
                 "opcuaPort": "53530",
                 "httpsPort": "53443",
                 "endPoint": "Server/Simulation",
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank 9.tank/333333.temperature",
-                        "scanMode": "everySecond",
-                        "ns": "5",
-                        "s": "Sinusoid1"
-                    }
-                ]
+                "points": []
             },
             {
                 "dataSourceId": "PLC-35",
@@ -204,38 +181,7 @@
                 },
                 "host": "35.180.153.134",
                 "port": 502,
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank 3.tank/333333.fill_level",
-                        "scanMode": "everySecond",
-                        "address": "0x0031",
-                        "type": "coil"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 2.tank/222222.valve_state",
-                        "scanMode": "everyNoon",
-                        "address": "0x0f8",
-                        "type": "holdingRegister"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 2.tank/222222.fill_level",
-                        "scanMode": "everySecond",
-                        "address": "0x76a0",
-                        "type": "coil"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 2.tank/222333.fill_level",
-                        "scanMode": "everySecond",
-                        "address": "0x76b0",
-                        "type": "coil"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 3.tank/111111.valve_state",
-                        "scanMode": "everySecond",
-                        "address": "0x83a6",
-                        "type": "coil"
-                    }
-                ]
+                "points": []
             },
             {
                 "dataSourceId": "PLC-42",
@@ -247,20 +193,7 @@
                 },
                 "host": "35.180.153.134",
                 "port": 502,
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank4.tank/111111.fill_level",
-                        "scanMode": "everySecond",
-                        "address": "0x0f",
-                        "type": "coil"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank4.tank/111111.flow_rate",
-                        "scanMode": "everySecond",
-                        "address": "0x20",
-                        "type": "holdingRegister"
-                    }
-                ]
+                "points": []
             },
             {
                 "dataSourceId": "RawFileTransfer",
@@ -274,26 +207,27 @@
             },
             {
                 "dataSourceId": "SQLFileTransfer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "SQLFile",
+                "scanMode": "every5Second",
                 "driver": "mssql",
-                "host": "192.168.0.11",
+                "host": "localhost",
                 "port": 1433,
-                "username": "oibus_user",
-                "password": "eOpRHLUyRPDMaek0ozGTxeO8U0t4ffaLdlJo3DxEvM+l/WIQ7CDyzmFrkb1JuwgKVfEm4Ngp1EWwrFJxPrlRqJsBzvomOtJANsRcRSKtk801rPiEEGBfUxjz5Sm659d8PgUifkXunl3Pj2mlxaDbsX6DKjRIuXKTdea3MT3i5N+x6a8Z21lOuckLCy+BAqIDEtMdW5+u9F75W2Mi3jDNelyaQlVJP01YnGDUt0PDQxtM8t6odIjnvypFdEXAZr8B7Mwjcickbm6lFcIKkArWbROVXXduNjiKgOJ+GzP3lJP4eU5WjfFrnNXJP1cq2bbChI5Jc/tl71aaVn/6YNNsZ4uVBzaPyGO7s+w03uS1qCAHXYakLxSCVXLP+WGMihKa7Of5ouZm6ZgVI64DeXhLr4ToYqBbz53Uj4sPgbQ5ZOzVpIcHUHCVPnqsmGzJVV2IFxBE/6m70SgNBJCXtuqawch5zxYz1H7QXkMIVirOoR1ubAkZWcCt5DAFZBiioDVpKQOfjRGJCYcM4MxP8LsYFFJztOn910q/VYSKyArzoSxDcRzCzob4MlJHNtv7OysFAHzFY9AaAdbeVqxpgwdlqITr4Gk1aITvsIYLM+VZ3E2YIzp2Ht2BEZrdsRt9oIqvl30Q7eJoxRQGDwIBmEU6cJqgFBpnUYooHW/GCHtFR4w=",
-                "database": "oibus",
-                "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
+                "username": "SA",
+                "password": "kvT92GHHYK/uHrpl5gSa57+5zlZXu+X3KvVjjAn6XrXw+CKXd8oFLhQ5wMJ8iU2QQ54agrixt8EBb5MrIaJfxbRXo2ejX8obKzyc5TbInxTz4stfqCjMl99Nd4xgsr+GqF+1ZjnsN9lU3MSjXoi9+VorBlOLco/Zon0kF3UZDY3cCwpoUs9W3vbiBWIlxWEPb48Wf01x0RmI+fGQPEXcPCXT/j8MuwfPUho+JaC4HIaBGD29Nv/RtW9zw7g5LSJVNnvquw/X6ts7JeCsiFppwSKzseNPQ/IfeWME+ZWZ3MGSNZHIWOspZdEZe3c25HCFikgsRtCjTshSFeO9bFgjr4eZj6GC3WArZ8bh9WnAijVeI1FRNwyYLwRTIu7zjM30fFCGDzZFBpJ/f4eCBUgqy8pdJQAuE48c2O/CiNJBA+AlafUhP9HWHffMtRSJeMholu4oywSc/d6yKwFkwGcRfRYnnYsb0WLCbUUhnPXyyCvewnocGXe6J2cfAgHr1vg66znpYm4yMmKQdGyFp6ZktU3/txQeqC/cB4f8YFjeZtyKnl3rAWYo4iJov9YrcEzLbHoDTkAlEwhT8duBb6YmIrmtZUrmaYXLrma2xyCljiSVumRvGHuSyvKgszqqL7cc3SlNHAJhhcK9t6tRllZnNA4S0bx6y9fXOIT+9pLXhQ8=",
+                "database": "TestDB",
+                "query": "SELECT created_at AS timestamp, value1 AS temperature FROM history WHERE created_at > '$date1' AND created_at <= '$date2'",
                 "delimiter": ",",
-                "tmpFolder": "./tests/SQLFile",
-                "scanMode": "every5Second"
+                "tmpFolder": "./tests/SQLFile"
             },
             {
                 "dataSourceId": "OPC-HDA",
-                "enabled": false,
+                "enabled": true,
                 "protocol": "OPCHDA",
                 "agentFilename": "./deps/win/HdaAgent/HdaAgent.exe",
                 "tcpPort": 3333,
                 "host": "opcserver",
+                "logLevel": "silly",
                 "serverName": "Matrikon.OPC.Simulation",
                 "scanGroups": [
                     {
@@ -431,15 +365,15 @@
             },
             {
                 "applicationId": "Link",
-                "enabled": false,
+                "enabled": true,
                 "api": "Link",
                 "Link": {
-                    "host": "http://localhost:2223",
+                    "host": "http://18.196.45.163:2223",
                     "endpoint": "/engine/addValues",
                     "authentication": {
                         "type": "Basic",
                         "username": "admin",
-                        "password": "DurG28c1S03iMh2N7OLhVWfK7iZFQdD9iqtNQ2H8NZA4eWUq9Z5nl3X5v261VA900PwTPUa0uqOHq3SEas/D9gYA2lxdewK6mwA2E4z5Ad4N32qESwl8KZ/zxtafFi0HtPsYaH/OU2Br3NpUWvpOQCo51xS+aDXB2u0u5fIYk2Td2O+JUrTtCLcHJp7prf0BRQ+fdmZglBcR9ZToJ8CJwU3akQJTpg/2+HEwN/gnEaBjzD0PXpc3PzyFMZXCggr/hCgmTUGnDAjJ0q1hR0Zb5yYrfEpwogN3IBrU8xOosenV6vD07pA0182h9YCis0rJJUg1p/jBUdeFsCBrp/1O7HvcCugIrNdfyRrp0cYXZmMKHEoGUmq67pXzMTOScQBEFt/6Y0G4Y+0ECgCPMd483dhDZpewWYjhRc96h5IFewRHOesqYAv+CzzHxasEIk5h2Vj708ZhOvKV3f1vuUZxOP3A8hzDrOweoDVrr6OHNzpymRGaLCiI6Am6pt4GGLNRfA5sECtMNYOOfXDkfb01HsAHhLbK2hQJjRtOPaqI7qMnQd1k2fGWx5Fp+kv5xcZiWfSoD7NG6kz1kSwFVfvzr1+LiILSinrv36oz1DUd05mKEaB5d9K6pRl2C2AW5tQA7Sjz5rCpMB29uehj5jeKx5XdpKWNFL6aIgkT1sh9Sug="
+                        "password": "m4UADNsDIYnUmy3ZIy2vPKMj07lRYRwSsm7BMo+pjxubbD/nP/3IszY6nmtJM87m51T1i3bT9xhDldKKd3CPfn8tR16b+o61pETppExSZctUUY1f5bO0tc1JxJRyRnzoCFNXtMpzW5LcoepwbLbiH/uN10tj8zf4oShSpMROL1vBC+7856+HeW+ww+QDpSfE/Xth1ITwA09ELviNPtVz3bvN+dilnJDJvqAn2M00d9sHDBFBBAKUAwTJ8dNZBgqOTl9jOdQqtPDovxsr+YiiEx/odHswpXUHsEfgu0hWFiwnVWU39eubxx2BAQV2YklSMvBnYFn0kkR8C4IB6esPjF6voWHWfEeoNLv4AZ1UVXcyhjb7FZildSsPlYZx5qud0jLXqyjqlfIuQUJtstv0iqCxs0sN5hRCbgHP28cI66VdV6OmQdmqXSV0wvXzpKsm8KlyvuCurOypU2z3YRIrfALzm53XQJCXq3ZJZ9rAYNkO/oNdbqs7WywwJWS48SlWo9dJkVqznD/8K4ZXh51Yw07Xkh6V1X9n3X4jn4O9vReU3RZ+RXEf2MOjhWlWodhJzuvpvXWmanNYdvfy1MOHiW3KfVhFuLQrKLzZKqWePxq+VPgLPyKe4LO4HPEyIxbgUwHfRq+tdgPoaKC0sEFZnc8NL8Pp957I/9TcTD31uNI="
                     },
                     "proxy": "",
                     "stack": "axios"
@@ -447,8 +381,8 @@
                 "caching": {
                     "sendInterval": 5000,
                     "retryInterval": 10000,
-                    "groupCount": 10,
-                    "maxSendCount": 10
+                    "groupCount": 5000,
+                    "maxSendCount": 10000
                 }
             }
         ]
