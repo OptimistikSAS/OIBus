@@ -24,6 +24,7 @@ class OPCHDA extends ProtocolHandler {
     this.agentReady = false
     this.lastCompletedAt = {}
     this.ongoingReads = {}
+    this.receivedLog = ''
 
     this.scanGroups = this.dataSource.scanGroups.map((scanGroup) => {
       const points = this.dataSource.points
@@ -59,8 +60,7 @@ class OPCHDA extends ProtocolHandler {
       })
 
       // Launch Agent
-      /** todo: read loglevel from config */
-      const { agentFilename, tcpPort, logLevel = 'silly' } = this.dataSource
+      const { agentFilename, tcpPort, logLevel } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
@@ -91,15 +91,15 @@ class OPCHDA extends ProtocolHandler {
    * Launch agent application.
    * @param {string} path - The path to the agent executable
    * @param {number} port - The port to send as command line argument
-   * @param {number} logLevel -to filter HDA Agent logs
+   * @param {string} logLevel - The logging level for the Agent
    * @returns {void}
    */
   launchAgent(path, port, logLevel) {
-    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -v ${logLevel}`)
-    this.child = spawn(path, ['listen', `-p ${port}`, `-v ${logLevel}`])
+    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -l ${logLevel} -x none`)
+    this.child = spawn(path, ['listen', `-p ${port}`, `-l ${logLevel}`, '-x none'])
 
     this.child.stdout.on('data', (data) => {
-      this.logger.debug(`HDA stdout: ${data}`)
+      this.handleAgentLog(data)
     })
 
     this.child.stderr.on('data', (data) => {
@@ -113,6 +113,62 @@ class OPCHDA extends ProtocolHandler {
     this.child.on('error', (error) => {
       this.logger.error(`Failed to start HDA agent: ${path}`, error)
     })
+  }
+
+  handleAgentLog(data) {
+    const content = data.toString()
+    const logs = []
+
+    if (content.includes('\n')) {
+      const messageParts = content.split('\r\n')
+
+      messageParts.forEach(async (messagePart, index) => {
+        if (index === 0) {
+          this.receivedLog += messagePart
+          logs.push(this.receivedLog)
+          this.receivedLog = ''
+        } else if (index === messageParts.length - 1) {
+          this.receivedLog = messagePart
+        } else {
+          logs.push(messagePart)
+        }
+      })
+    } else {
+      this.receivedLog += content
+    }
+
+    logs.forEach(async (log) => {
+      if (log.length > 0) {
+        this.logMessage(log.trim())
+      }
+    })
+  }
+
+  logMessage(log) {
+    try {
+      const parsedLog = JSON.parse(log)
+      const message = `Agent stdout: ${parsedLog.Message}`
+      switch (parsedLog.Level) {
+        case 'error':
+          this.logger.error(message)
+          break
+        case 'info':
+          this.logger.info(message)
+          break
+        case 'debug':
+          this.logger.debug(message)
+          break
+        case 'silly':
+          this.logger.silly(message)
+          break
+        default:
+          this.logger.debug(message)
+          break
+      }
+    } catch (error) {
+      this.logger.error(error)
+      this.logger.debug(`Agent stdout error: ${log}`)
+    }
   }
 
   generateTransactionId() {
