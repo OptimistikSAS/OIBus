@@ -24,6 +24,12 @@ module.exports = {
       type: 'number',
       title: 'TCP Port',
     },
+    logLevel: {
+      type: 'string',
+      enum: ['silly', 'debug', 'info', 'warning', 'error'],
+      title: 'Agent Logging Level',
+      default: 'debug',
+    },
     host: {
       type: 'string',
       title: 'Host',
