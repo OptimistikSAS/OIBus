@@ -96,8 +96,8 @@ class OPCHDA extends ProtocolHandler {
    * @returns {void}
    */
   launchAgent(path, port, logLevel) {
-    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -v ${logLevel}`)
-    this.child = spawn(path, ['listen', `-p ${port}`, `-v ${logLevel}`])
+    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -v ${logLevel} -x none`)
+    this.child = spawn(path, ['listen', `-p ${port}`, `-l ${logLevel}`, '-x none'])
 
     this.child.stdout.on('data', (data) => {
       this.handleAgentLog(data)
