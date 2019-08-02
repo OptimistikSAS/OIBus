@@ -48,7 +48,7 @@ class SQLFile extends ProtocolHandler {
 
     this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
     if (!this.lastCompletedAt) {
-      this.lastCompletedAt = new Date(startTime).toISOString() || new Date().toISOString()
+      this.lastCompletedAt = startTime ? new Date(startTime).toISOString() : new Date().toISOString()
     }
   }
 
