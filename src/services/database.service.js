@@ -92,8 +92,6 @@ const saveValues = async (database, dataSourceId, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
                  VALUES (?, ?, ?, ?)`
   try {
-    /* eslint-disable-next-line */
-    console.time('ici')
     await database.run('BEGIN;')
     const stmt = await database.prepare(query)
     const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId))
@@ -102,9 +100,6 @@ const saveValues = async (database, dataSourceId, values) => {
   } catch (error) {
     console.error(error)
     throw error
-  } finally {
-    /* eslint-disable-next-line */
-    console.timeEnd('ici')
   }
 }
 
