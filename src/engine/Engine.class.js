@@ -76,7 +76,7 @@ class Engine {
     encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
 
     // prepare config
-    // Associate the scanMode to all it's corresponding data sources
+    // Associate the scanMode to all corresponding data sources
     // so the engine will know which datasource to activate when a
     // scanMode has a tick.
 
@@ -129,7 +129,7 @@ class Engine {
    * @return {void}
    */
   async addValues(dataSourceId, values) {
-    this.logger.silly(`Engine: Adding ${values ? values.length : '?'} values from ${dataSourceId}`)
+    this.logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
     await this.cache.cacheValues(dataSourceId, values)
   }
 
