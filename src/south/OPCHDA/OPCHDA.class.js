@@ -60,8 +60,7 @@ class OPCHDA extends ProtocolHandler {
       })
 
       // Launch Agent
-      const { agentFilename, tcpPort } = this.dataSource
-      const logLevel = this.engine.config.engine.logParameters.agentLevel
+      const { agentFilename, tcpPort, logLevel } = this.dataSource
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
@@ -96,7 +95,7 @@ class OPCHDA extends ProtocolHandler {
    * @returns {void}
    */
   launchAgent(path, port, logLevel) {
-    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -v ${logLevel} -x none`)
+    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -l ${logLevel} -x none`)
     this.child = spawn(path, ['listen', `-p ${port}`, `-l ${logLevel}`, '-x none'])
 
     this.child.stdout.on('data', (data) => {
