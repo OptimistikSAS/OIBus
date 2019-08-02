@@ -117,7 +117,7 @@ class OPCUA extends ProtocolHandler {
            *  @todo below should send by batch instead of single points
            *  @todo should extract the value but need to know the signature of data
            */
-          this.addValues(this.dataSourceId, [value])
+          this.addValues([value])
         })
       } else {
         this.logger.error(error)

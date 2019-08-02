@@ -7,14 +7,14 @@
     <framework targetVersion="4.5" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="HdaAgent.exe.manifest" size="7517">
+    <dependentAssembly dependencyType="install" codebase="HdaAgent.exe.manifest" size="7515">
       <assemblyIdentity name="HdaAgent.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>1G97B5uiXgUkEhaYVWJZdmsFrGpfmAFya3dW5mK/jjA=</dsig:DigestValue>
+        <dsig:DigestValue>nnbSZM5Pjr2UjLxOgMqh+lRBSlTt1iZ1Gfu7br648Bc=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
