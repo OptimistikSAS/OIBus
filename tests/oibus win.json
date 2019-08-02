@@ -227,6 +227,7 @@
                 "agentFilename": "./deps/win/HdaAgent/HdaAgent.exe",
                 "tcpPort": 3333,
                 "host": "opcserver",
+                "logLevel": "silly",
                 "serverName": "Matrikon.OPC.Simulation",
                 "scanGroups": [
                     {
