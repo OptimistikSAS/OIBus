@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
-import Select from './components/Select.jsx'
-import apis from './services/apis'
-import { AlertContext } from './context/AlertContext'
+import Select from '../components/Select.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
   const [application, setApplication] = React.useState({ applicationId: '', enable: false, api: 'Console' })

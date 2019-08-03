@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
-import Select from './components/Select.jsx'
-import apis from './services/apis'
-import { AlertContext } from './context/AlertContext'
+import Select from '../components/Select.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext'
 
 const NewDataSourceRow = ({ protocolList, addDataSource }) => {
   const [dataSource, setDataSource] = React.useState({ dataSourceId: '', enable: false, protocol: 'Modbus' })

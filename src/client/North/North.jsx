@@ -2,11 +2,11 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { Button, Col } from 'reactstrap'
-import Table from './components/table/Table.jsx'
+import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
-import Modal from './components/Modal.jsx'
-import apis from './services/apis'
-import { AlertContext } from './context/AlertContext'
+import Modal from '../components/Modal.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext'
 
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
