@@ -2,8 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input } from 'reactstrap'
 
-const OIbCheckBox = ({ label, help, defaultValue, id, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(defaultValue)
+const OIbCheckBox = ({ label, help, value, id, onChange }) => {
+  const [currentValue, setCurrentValue] = React.useState(value)
 
   const handleChange = (event) => {
     const { target } = event
@@ -19,7 +19,6 @@ const OIbCheckBox = ({ label, help, defaultValue, id, onChange }) => {
         type="checkbox"
         id={id}
         name={id}
-        defaultValue={defaultValue}
         onChange={handleChange}
         value={currentValue}
       />
@@ -30,9 +29,9 @@ const OIbCheckBox = ({ label, help, defaultValue, id, onChange }) => {
 OIbCheckBox.propTypes = {
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.string.isRequired,
+  help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
-  defaultValue: PropTypes.number.isRequired,
+  value: PropTypes.bool.isRequired,
 }
 
 export default OIbCheckBox
