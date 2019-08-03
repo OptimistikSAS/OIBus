@@ -9,14 +9,14 @@ import './style/main.less'
 import TopHeader from './TopHeader.jsx'
 import Welcome from './Welcome.jsx'
 import NotFound from './NotFound.jsx'
-import South from './South.jsx'
-import North from './North.jsx'
-import Engine from '../engine/Engine.jsx'
+import South from './South/South.jsx'
+import North from './North/North.jsx'
+import Engine from './Engine/Engine.jsx'
 import ConfigureApi from '../north/ConfigureApi.jsx'
 import ConfigureProtocol from '../south/ConfigureProtocol.jsx'
 import ConfigurePoints from '../south/ConfigurePoints.jsx'
-import Log from './Log.jsx'
-import Health from './Health.jsx'
+import Logs from './Logs/Logs.jsx'
+import Health from './Health/Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import Context from './context/Context.jsx'
 import { EngineProvider } from './context/configContext.jsx'
@@ -37,7 +37,7 @@ const Main = () => (
               <Route exact path="/south/:protocol/:datasourceid/points" component={ConfigurePoints} />
               <Route exact path="/north" component={North} />
               <Route exact path="/north/:api" component={ConfigureApi} />
-              <Route exact path="/log" component={Log} />
+              <Route exact path="/log" component={Logs} />
               <Route exact path="/health" component={Health} />
               <Route component={NotFound} />
             </Switch>
