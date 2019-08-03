@@ -2,7 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Table from '../components/table/Table.jsx'
 
-const ScanModes = ({ scanModes }) => scanModes && <Table headers={['scanMode', 'cron']} rows={scanModes} onRowClick={() => null} />
+const ScanModes = ({ scanModes }) => scanModes && (
+  <Table
+    headers={['scanMode', 'cron']}
+    rows={scanModes.map((scanMode) => Object.entries(scanMode).map(([name, value]) => ({ name, value })))}
+    onRowClick={() => null}
+  />
+)
 
 ScanModes.propTypes = { scanModes: PropTypes.arrayOf(String).isRequired }
 

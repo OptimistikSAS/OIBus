@@ -2,15 +2,14 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbText = ({ label, help, regExp, defaultValue, id, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(defaultValue)
-  const isValid = (value) => (regExp ? true : regExp.test(value))
+const OIbText = ({ label, help, regExp, value, id, onChange }) => {
+  const [currentValue, setCurrentValue] = React.useState(value)
+  const isValid = (val) => (regExp ? regExp.test(val) : null)
 
   const handleChange = (event) => {
     const { target } = event
-    const { value, name } = target
     setCurrentValue(value)
-    if (isValid(value)) onChange(name, value)
+    if (isValid(value)) onChange(target.name, target.value)
   }
 
   return (
@@ -21,7 +20,6 @@ const OIbText = ({ label, help, regExp, defaultValue, id, onChange }) => {
         id={id}
         name={id}
         invalid={!isValid(currentValue)}
-        defaultValue={defaultValue}
         onChange={handleChange}
         value={currentValue}
       />
@@ -33,9 +31,9 @@ const OIbText = ({ label, help, regExp, defaultValue, id, onChange }) => {
 OIbText.propTypes = {
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.string.isRequired,
+  help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
-  defaultValue: PropTypes.number.isRequired,
+  value: PropTypes.string.isRequired,
   regExp: PropTypes.instanceOf(RegExp),
 }
 OIbText.defaultProps = { regExp: null }
