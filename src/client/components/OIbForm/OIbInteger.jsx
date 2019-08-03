@@ -2,14 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbInteger = ({ label, help, min, max, defaultValue, id, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(defaultValue)
-  const isValid = (value) => (value <= max && value >= min)
+const OIbInteger = ({ label, help, min, max, value, id, onChange }) => {
+  const [currentValue, setCurrentValue] = React.useState(value)
+  const isValid = (val) => ((max ? val <= max : true) && ((min ? val >= min : true)))
 
   const handleChange = (event) => {
     const { target } = event
-    const { value, name } = target
-    console.info('set json avec la nouvelle valeur', name, value)
+    console.info('set json avec la nouvelle valeur', target.name, target.value)
     setCurrentValue(value)
     if (isValid(value)) onChange(value)
   }
@@ -24,9 +23,8 @@ const OIbInteger = ({ label, help, min, max, defaultValue, id, onChange }) => {
         id={id}
         name={id}
         invalid={!isValid(currentValue)}
-        defaultValue={defaultValue}
+        value={value}
         onChange={handleChange}
-        value={currentValue}
       />
       <FormFeedback>Invalid Entry</FormFeedback>
       <FormText>{help}</FormText>
@@ -36,9 +34,9 @@ const OIbInteger = ({ label, help, min, max, defaultValue, id, onChange }) => {
 OIbInteger.propTypes = {
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.string.isRequired,
+  help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
-  defaultValue: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
   min: PropTypes.number,
   max: PropTypes.number,
 }

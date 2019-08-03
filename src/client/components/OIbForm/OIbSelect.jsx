@@ -1,31 +1,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormText, Label, Input } from 'reactstrap'
 
-const OIbSelect = ({ label, help, regExp, defaultValue, id, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(defaultValue)
-  const isValid = (value) => (regExp ? true : regExp.test(value))
+const OIbSelect = ({ label, help, option, options, id, onChange }) => {
+  const [currentOption, setCurrentOption] = React.useState(option)
 
   const handleChange = (event) => {
     const { target } = event
-    const { value, name } = target
-    setCurrentValue(value)
-    if (isValid(value)) onChange(name, value)
+    setCurrentOption(target.value)
+    onChange(target.name, target.value)
   }
 
   return (
     <FormGroup>
       <Label for={id}>{label}</Label>
-      <Input
-        type="text"
-        id={id}
-        name={id}
-        invalid={!isValid(currentValue)}
-        defaultValue={defaultValue}
-        onChange={handleChange}
-        value={currentValue}
-      />
-      <FormFeedback>Invalid Entry</FormFeedback>
+      <Input type="select" id={id} name={id} onChange={handleChange} option={currentOption}>
+        { options.map((o) => <option key={o}>{o}</option>) }
+      </Input>
       <FormText>{help}</FormText>
     </FormGroup>
   )
@@ -33,12 +24,10 @@ const OIbSelect = ({ label, help, regExp, defaultValue, id, onChange }) => {
 OIbSelect.propTypes = {
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.string.isRequired,
+  help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
-  defaultValue: PropTypes.number.isRequired,
-  regExp: PropTypes.instanceOf(RegExp),
+  options: PropTypes.arrayOf(String).isRequired,
+  option: PropTypes.string.isRequired,
 }
-OIbSelect.defaultProps = { regExp: null }
-
 
 export default OIbSelect

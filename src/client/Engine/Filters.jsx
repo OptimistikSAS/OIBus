@@ -2,11 +2,17 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Table from '../components/table/Table.jsx'
 
-const IpFilters = ({ adresses }) => adresses && <Table headers={['adresse']} rows={adresses} onRowClick={() => null} />
+const Filters = ({ filters }) => filters && (
+  <Table
+    headers={['adresse']}
+    rows={filters.map((filter) => [{ name: 'filter', value: filter }])}
+    onRowClick={() => null}
+  />
+)
 
-IpFilters.propTypes = { adresses: PropTypes.arrayOf(String).isRequired }
+Filters.propTypes = { filters: PropTypes.arrayOf(String).isRequired }
 
-export default IpFilters
+export default Filters
 
 /*
     label="Network Filter"

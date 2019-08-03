@@ -3,7 +3,7 @@ import { Col, Row, Form } from 'reactstrap'
 import { EngineContext } from '../context/configContext.jsx'
 import { AlertContext } from '../context/AlertContext.js'
 import { OIbInteger, OIbText, OIbPassword } from '../components/OIbForm'
-import IpFilters from './IpFilters.jsx'
+import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
@@ -54,7 +54,7 @@ const Engine = () => {
   }
   console.info(configState)
   if (configState && configState.error) setAlert({ text: configState.error, type: 'danger' })
-  return configState ? (
+  return configState.config ? (
     <>
       <Form>
         <h1>Engine Parameters</h1>
@@ -63,7 +63,7 @@ const Engine = () => {
             <OIbInteger
               id="port"
               label="Port"
-              defaultValue={2223}
+              value={configState.config.engine.port || 2223}
               min={1}
               max={65535}
               help={<div>The port to access the Admin interface</div>}
@@ -72,8 +72,9 @@ const Engine = () => {
           </Col>
           <Col md={4}>
             <OIbText
-              label="Admin Name"
-              defaultValue="admin"
+              id="user"
+              label="Admin user name"
+              value={configState.config.engine.user || 'admin'}
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
             />
@@ -81,20 +82,21 @@ const Engine = () => {
           <Col md={4}>
             <OIbPassword
               label="Admin Password"
+              id="password"
               onChange={onChange}
-              defaultValue="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+              value={configState.config.engine.password || 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1'}
               help={<div>The password of the Admin user</div>}
             />
           </Col>
         </Row>
-        <Logging />
-        <IpFilters />
-        <Caching onChange={onChange} />
+        <Logging onChange={onChange} logParameters={configState.config.engine.logParameters} />
+        <Filters onChange={onChange} filters={configState.config.engine.filter} />
+        <Caching onChange={onChange} caching={configState.config.engine.caching} />
         <Row>
-          <Proxies onChange={onChange} />
+          <Proxies onChange={onChange} proxies={configState.config.engine.proxies} />
         </Row>
         <Row>
-          <ScanModes onChange={onChange} />
+          <ScanModes onChange={onChange} scanModes={configState.config.engine.scanModes} />
         </Row>
       </Form>
       <pre>{JSON.stringify(configState)}</pre>
