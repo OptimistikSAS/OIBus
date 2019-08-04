@@ -15,12 +15,28 @@ const reducer = (state, action) => {
       newState = Object.assign(Object.assign({}, state))
       newState.errors = validity
       keys = name.split('.')
-      if (keys[1]) { state.config.engine[keys[0]][keys[1]] = value } else { state.config.engine[keys[0]] = value }
+      if (keys[1]) {
+        state.config.engine[keys[0]][keys[1]] = value
+      } else {
+        state.config.engine[keys[0]] = value
+      }
+      return newState
+    case 'updateFilters':
+      newState = Object.assign(Object.assign({}, state))
+      newState.errors = validity
+      console.info('ici', validity, name, value)
+      /*
+      keys = name.split('.')
+      if (keys[1]) {
+        state.config.engine[keys[0]][keys[1]] = value
+      } else {
+        state.config.engine[keys[0]] = value
+      }
+      */
       return newState
     default:
-      break
+      throw new Error(`unknown action type: ${type}`)
   }
-  return {}
 }
 const engineInitialState = {}
 const EngineContext = React.createContext(engineInitialState)
