@@ -7,7 +7,7 @@ const Logging = ({ logParameters, onChange }) => (
   <>
     <h2>Log Parameters</h2>
     <Row>
-      <Col md={2}>
+      <Col md={3}>
         <OIbSelect
           label="Console Level"
           name="logParameters.consoleLevel"
@@ -17,7 +17,7 @@ const Logging = ({ logParameters, onChange }) => (
           onChange={onChange}
         />
       </Col>
-      <Col md={2}>
+      <Col md={3}>
         <OIbSelect
           name="logParameters.fileLevel"
           label="File Level"
@@ -27,7 +27,7 @@ const Logging = ({ logParameters, onChange }) => (
           onChange={onChange}
         />
       </Col>
-      <Col md={2}>
+      <Col md={3}>
         <OIbSelect
           label="Sqlite Level"
           name="logParameters.sqliteLevel"
@@ -48,6 +48,7 @@ const Logging = ({ logParameters, onChange }) => (
           onChange={onChange}
         />
       </Col>
+      <Col md={1} />
       <Col md={4}>
         <OIbText
           name="logParameters.sqliteFilename"
