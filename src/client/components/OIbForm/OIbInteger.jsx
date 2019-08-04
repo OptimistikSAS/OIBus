@@ -3,14 +3,11 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(value)
   const isValid = (val) => ((max ? val <= max : true) && ((min ? val >= min : true)))
-
   const handleChange = (event) => {
     const { target } = event
-    console.info('set json avec la nouvelle valeur', target.name, target.value)
-    setCurrentValue(value)
-    if (isValid(value)) onChange(value)
+    const { value: newVal } = target
+    onChange(name, isValid(newVal) ? parseInt(newVal, 10) : newVal)
   }
 
   return (
@@ -22,7 +19,7 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
         max={max}
         id={name}
         name={name}
-        invalid={!isValid(currentValue)}
+        invalid={!isValid(value)}
         value={value}
         onChange={handleChange}
       />
@@ -36,7 +33,7 @@ OIbInteger.propTypes = {
   label: PropTypes.string.isRequired,
   help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.number.isRequired,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   min: PropTypes.number,
   max: PropTypes.number,
 }

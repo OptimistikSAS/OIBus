@@ -5,11 +5,15 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const reducer = (state, action) => {
-  switch (action.type) {
+  const { name, json, value, type } = action
+  let keys
+  switch (type) {
     case 'update':
-      return action.json
-    case 'test':
-      break
+      return json
+    case 'updateEngine':
+      keys = name.split('.')
+      if (keys[1]) { state.config.engine[keys[1]][keys[0]] = value } else { state.config.engine[keys[0]] = value }
+      return Object.assign({}, state)
     default:
       break
   }
@@ -18,7 +22,7 @@ const reducer = (state, action) => {
 const engineInitialState = {}
 const EngineContext = React.createContext(engineInitialState)
 const EngineProvider = ({ children }) => {
-  const [state, dispatch] = React.useReducer(reducer, engineInitialState)
+  const [configState, configDispatch] = React.useReducer(reducer, engineInitialState)
   React.useEffect(() => {
     const getConfig = async () => {
       let mounted = true
@@ -27,10 +31,10 @@ const EngineProvider = ({ children }) => {
         const contentType = response.headers.get('content-type')
         if (!contentType || contentType.indexOf('application/json') === -1) throw new Error('bad header')
         const json = await response.json()
-        if (mounted) dispatch({ type: 'update', json })
+        if (mounted) configDispatch({ type: 'update', json })
       } catch (error) {
         console.error(error)
-        if (mounted) dispatch({ type: 'error', error })
+        if (mounted) configDispatch({ type: 'error', error })
       }
       return () => {
         mounted = false
@@ -38,7 +42,7 @@ const EngineProvider = ({ children }) => {
     }
     getConfig()
   }, [])
-  return <EngineContext.Provider value={{ state, dispatch }}>{children}</EngineContext.Provider>
+  return <EngineContext.Provider value={{ configState, configDispatch }}>{children}</EngineContext.Provider>
 }
 
 EngineProvider.propTypes = { children: PropTypes.element.isRequired }
