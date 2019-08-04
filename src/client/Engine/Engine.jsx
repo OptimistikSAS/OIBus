@@ -1,5 +1,5 @@
 import React from 'react'
-import { Col, Row, Form } from 'reactstrap'
+import { Col, Row, Form, Spinner } from 'reactstrap'
 import { EngineContext } from '../context/configContext.jsx'
 import { AlertContext } from '../context/AlertContext.js'
 import { OIbInteger, OIbText, OIbPassword } from '../components/OIbForm'
@@ -10,30 +10,12 @@ import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
 
 const Engine = () => {
-  // eslint-disable-next-line no-unused-vars
   const { configState, configDispatch } = React.useContext(EngineContext)
   const { setAlert } = React.useContext(AlertContext)
 
-  /**
-   * Submit the updated engine
-   * @param {*} engine The changed engine
-   * @returns {void}
-   */
-  /*
- const handleSubmit = async (engine) => {
-   console.log(engine)
-   try {
-     await apis.updateEngine(engine)
-   } catch (error) {
-     console.error(error)
-     setAlert({ text: error.message, type: 'danger' })
-   }
-}
-  */
-
-  const onChange = (name, value) => {
-    console.info('dispatch:', name, value)
-    configDispatch({ type: 'updateEngine', name, value })
+  const onChange = (name, value, validity) => {
+    console.info('dispatch:', name, value, validity)
+    configDispatch({ type: 'updateEngine', name, value, validity })
   }
   const { error, config } = configState
   if (error) setAlert({ text: error, type: 'danger' })
@@ -58,7 +40,7 @@ const Engine = () => {
               name="user"
               label="Admin user name"
               value={config.engine.user}
-              regExp={/^.{2,}$/}
+              regExp={/^.{2,}$/} // i.e. min size = 2
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
             />
@@ -80,9 +62,14 @@ const Engine = () => {
         <Proxies onChange={onChange} proxies={configState.config.engine.proxies} />
         <ScanModes onChange={onChange} scanModes={configState.config.engine.scanModes} />
       </Form>
-      <pre>{JSON.stringify(configState)}</pre>
+      <pre>{JSON.stringify(configState.config)}</pre>
     </>
-  ) : null
+  ) : (
+    <div className="spinner-container">
+      <Spinner color="primary" />
+      ...loading configuration from OIBus server...
+    </div>
+  )
 }
 
 export default Engine

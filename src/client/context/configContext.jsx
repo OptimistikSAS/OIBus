@@ -5,15 +5,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const reducer = (state, action) => {
-  const { name, json, value, type } = action
+  const { name, json, value, type, validity } = action
   let keys
+  let newState
   switch (type) {
     case 'update':
       return json
     case 'updateEngine':
+      newState = Object.assign(Object.assign({}, state))
+      newState.errors = validity
       keys = name.split('.')
       if (keys[1]) { state.config.engine[keys[0]][keys[1]] = value } else { state.config.engine[keys[0]] = value }
-      return Object.assign({}, state)
+      return newState
     default:
       break
   }
