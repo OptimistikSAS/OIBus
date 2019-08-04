@@ -1,6 +1,6 @@
 import React from 'react'
 import { Alert } from 'reactstrap'
-import { AlertContext } from '../context/AlertContext'
+import { AlertContext } from '../context/AlertContext.jsx'
 
 const AlertContainer = () => {
   const { alert, setAlert } = React.useContext(AlertContext)

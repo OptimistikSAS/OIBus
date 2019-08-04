@@ -18,14 +18,14 @@ import ConfigurePoints from '../south/ConfigurePoints.jsx'
 import Logs from './Logs/Logs.jsx'
 import Health from './Health/Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
-import Context from './context/Context.jsx'
+import { AlertProvider } from './context/AlertContext.jsx'
 import { EngineProvider } from './context/configContext.jsx'
 
 const Main = () => (
   <Router>
     <>
       <EngineProvider>
-        <Context>
+        <AlertProvider>
           <TopHeader />
           <Container className="oi-container-with-top-nav" fluid>
             <AlertContainer />
@@ -42,7 +42,7 @@ const Main = () => (
               <Route component={NotFound} />
             </Switch>
           </Container>
-        </Context>
+        </AlertProvider>
       </EngineProvider>
     </>
   </Router>
