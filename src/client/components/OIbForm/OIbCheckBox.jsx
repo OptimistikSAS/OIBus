@@ -3,12 +3,9 @@ import PropTypes from 'prop-types'
 import { FormGroup, Label, Input } from 'reactstrap'
 
 const OIbCheckBox = ({ label, value, name, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(value)
-
   const handleChange = (event) => {
     const { target } = event
     const { checked } = target
-    setCurrentValue(checked)
     onChange(name, checked)
   }
 
@@ -17,7 +14,7 @@ const OIbCheckBox = ({ label, value, name, onChange }) => {
       <Label>
         {label}
       </Label>
-      <Input type="checkbox" id={name} name={name} onChange={handleChange} value={currentValue} style={{ position: 'relative', top: '1.5rem' }} />
+      <Input type="checkbox" id={name} name={name} onChange={handleChange} value={value} style={{ position: 'relative', top: '1.5rem' }} />
     </FormGroup>
   )
 }

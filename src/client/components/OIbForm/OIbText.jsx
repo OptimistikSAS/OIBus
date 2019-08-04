@@ -3,13 +3,12 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbText = ({ label, help, regExp, value, name, onChange }) => {
-  const [currentValue, setCurrentValue] = React.useState(value)
   const isValid = (val) => (regExp ? regExp.test(val) : true)
 
   const handleChange = (event) => {
     const { target } = event
-    setCurrentValue(value)
-    if (isValid(value)) onChange(target.name, target.value)
+    const { value: newVal } = target
+    onChange(name, newVal)
   }
 
   return (
@@ -19,9 +18,9 @@ const OIbText = ({ label, help, regExp, value, name, onChange }) => {
         type="text"
         id={name}
         name={name}
-        invalid={!isValid(currentValue)}
+        invalid={!isValid(value)}
         onChange={handleChange}
-        value={currentValue}
+        value={value}
       />
       <FormFeedback>Invalid Entry</FormFeedback>
       <FormText>{help}</FormText>

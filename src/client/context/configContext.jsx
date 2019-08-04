@@ -12,7 +12,7 @@ const reducer = (state, action) => {
       return json
     case 'updateEngine':
       keys = name.split('.')
-      if (keys[1]) { state.config.engine[keys[1]][keys[0]] = value } else { state.config.engine[keys[0]] = value }
+      if (keys[1]) { state.config.engine[keys[0]][keys[1]] = value } else { state.config.engine[keys[0]] = value }
       return Object.assign({}, state)
     default:
       break
