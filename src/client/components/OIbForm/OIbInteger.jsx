@@ -3,15 +3,20 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
-  const isValid = (val) => ((max ? val <= max : true) && ((min ? val >= min : true)))
+  const isValid = (val) => (max ? val <= max : true) && (min ? val >= min : true)
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, isValid(newVal) ? parseInt(newVal, 10) : newVal, isValid(newVal) ? `incorrect entry for ${name}` : '')
+    onChange(
+      name,
+      isValid(newVal) ? parseInt(newVal, 10) : newVal,
+      isValid(newVal) ? '' : `incorrect entry for ${name}`,
+    )
   }
-
+  // if no label, we are in a table so we need to minimize the row height
+  const style = label ? null : { style: { marginBottom: 0 } }
   return (
-    <FormGroup>
+    <FormGroup {...style}>
       <Label for={name}>{label}</Label>
       <Input
         type="integer"
@@ -41,6 +46,5 @@ OIbInteger.defaultProps = {
   min: null,
   max: null,
 }
-
 
 export default OIbInteger

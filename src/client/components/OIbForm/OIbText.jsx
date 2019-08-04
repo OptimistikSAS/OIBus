@@ -8,33 +8,27 @@ const OIbText = ({ label, help, regExp, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal, isValid(newVal) ? `incorrect entry for ${name}` : '')
+    onChange(name, newVal, isValid(newVal) ? '' : `incorrect entry for ${name}`)
   }
+  // if no label, we are in a table so we need to minimize the row height
+  const style = label ? null : { style: { marginBottom: 0 } }
   return (
-    <FormGroup>
-      <Label for={name}>{label}</Label>
-      <Input
-        type="text"
-        id={name}
-        name={name}
-        invalid={!isValid(value)}
-        onChange={handleChange}
-        value={value}
-      />
+    <FormGroup {...style}>
+      {label && <Label for={name}>{label}</Label>}
+      <Input type="text" id={name} name={name} invalid={!isValid(value)} onChange={handleChange} value={value} />
       <FormFeedback>Invalid Entry</FormFeedback>
-      <FormText>{help}</FormText>
+      {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
 }
 OIbText.propTypes = {
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
+  label: PropTypes.string,
+  help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string.isRequired,
   regExp: PropTypes.instanceOf(RegExp),
 }
-OIbText.defaultProps = { regExp: null }
-
+OIbText.defaultProps = { regExp: null, label: null, help: null }
 
 export default OIbText
