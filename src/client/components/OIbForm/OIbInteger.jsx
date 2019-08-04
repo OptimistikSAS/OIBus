@@ -7,7 +7,7 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, isValid(newVal) ? parseInt(newVal, 10) : newVal)
+    onChange(name, isValid(newVal) ? parseInt(newVal, 10) : newVal, isValid(newVal) ? `incorrect entry for ${name}` : '')
   }
 
   return (

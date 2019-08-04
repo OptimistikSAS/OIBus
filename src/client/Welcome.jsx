@@ -5,12 +5,15 @@ import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 import { AlertContext } from './context/AlertContext'
+import { EngineContext } from './context/configContext.jsx'
 
 const Welcome = () => {
   const [configActiveJson, setConfigActiveJson] = React.useState(null)
   const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
   const { setAlert } = React.useContext(AlertContext)
+  // eslint-disable-next-line no-unused-vars
+  const { configState, configDispatch } = React.useContext(EngineContext)
   const maxDiffLength = 10000
 
   const diffInstance = create({
@@ -44,12 +47,15 @@ const Welcome = () => {
    * @returns {void}
    */
   React.useEffect(() => {
-    apis.getActiveConfig().then(({ config }) => {
-      setConfigActiveJson(config)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getActiveConfig()
+      .then(({ config }) => {
+        setConfigActiveJson(config)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }, [])
 
   /**
@@ -57,12 +63,15 @@ const Welcome = () => {
    * @returns {void}
    */
   React.useEffect(() => {
-    apis.getConfig().then(({ config }) => {
-      setConfigJson(config)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getConfig()
+      .then(({ config }) => {
+        setConfigJson(config)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }, [])
 
   /**
@@ -70,7 +79,8 @@ const Welcome = () => {
    * @returns {void}
    */
   const stopLoadingWhenReachable = () => {
-    apis.getConfig()
+    apis
+      .getConfig()
       .then(() => setLoading(false))
       // retry getConfig if error catched
       .catch(() => setTimeout(() => stopLoadingWhenReachable(), 1000))
@@ -112,33 +122,38 @@ const Welcome = () => {
 
   return (
     <>
-      {isModified
-        ? (
-          <>
-            <div className="oi-full-width">
-              {deltaHTML.length > maxDiffLength
-                ? <Label>The configuration difference is too large to display</Label>
-                // eslint-disable-next-line react/no-danger
-                : <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
-              }
-            </div>
-            <div className="force-row-display">
-              <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
-                {(confirm) => (
-                  <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
-                    Activate
-                  </Button>
-                )}
-              </Modal>
-              <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
-                Decline
-              </Button>
-            </div>
-          </>
-        )
-        : <Label>No modifications on configuration</Label>
-      }
-      {loading ? <div className="spinner-container"><Spinner color="primary" /></div> : null}
+      <pre>{JSON.stringify(configState.errors)}</pre>
+      {isModified ? (
+        <>
+          <div className="oi-full-width">
+            {deltaHTML.length > maxDiffLength ? (
+              <Label>The configuration difference is too large to display</Label>
+            ) : (
+              // eslint-disable-next-line react/no-danger
+              <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
+            )}
+          </div>
+          <div className="force-row-display">
+            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
+              {(confirm) => (
+                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
+                  Activate
+                </Button>
+              )}
+            </Modal>
+            <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
+              Decline
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Label>No modifications on configuration</Label>
+      )}
+      {loading ? (
+        <div className="spinner-container">
+          <Spinner color="primary" />
+        </div>
+      ) : null}
     </>
   )
 }
