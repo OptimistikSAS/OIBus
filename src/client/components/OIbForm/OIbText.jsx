@@ -8,9 +8,8 @@ const OIbText = ({ label, help, regExp, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal)
+    onChange(name, newVal, isValid(newVal) ? `incorrect entry for ${name}` : '')
   }
-
   return (
     <FormGroup>
       <Label for={name}>{label}</Label>
