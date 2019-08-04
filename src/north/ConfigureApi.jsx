@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'
 import apis from '../client/services/apis'
 import Modal from '../client/components/Modal.jsx'
 import uiSchema from './uiSchema.jsx'
-import { AlertContext } from '../client/context/AlertContext'
+import { AlertContext } from '../client/context/AlertContext.jsx'
 
 const ConfigureApi = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()

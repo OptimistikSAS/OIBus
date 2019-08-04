@@ -6,7 +6,7 @@ import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
-import { AlertContext } from '../context/AlertContext'
+import { AlertContext } from '../context/AlertContext.jsx'
 
 const North = ({ history }) => {
   const [applications, setApplications] = React.useState([])
