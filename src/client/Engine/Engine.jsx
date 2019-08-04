@@ -11,7 +11,7 @@ import Caching from './Caching.jsx'
 
 const Engine = () => {
   // eslint-disable-next-line no-unused-vars
-  const { state: configState, dispatch: configDispatch } = React.useContext(EngineContext)
+  const { configState, configDispatch } = React.useContext(EngineContext)
   const { setAlert } = React.useContext(AlertContext)
 
   /**
@@ -32,13 +32,8 @@ const Engine = () => {
   */
 
   const onChange = (name, value) => {
-    console.info('set json avec la nouvelle valeur', name, value)
-    /*
-    setConfigJson((json) => {
-      json[name] = value
-      return json
-    })
-    */
+    console.info('dispatch:', name, value)
+    configDispatch({ type: 'updateEngine', name, value })
   }
   const { error, config } = configState
   if (error) setAlert({ text: error, type: 'danger' })
