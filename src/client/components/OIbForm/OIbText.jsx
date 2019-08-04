@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbText = ({ label, help, regExp, value, id, onChange }) => {
+const OIbText = ({ label, help, regExp, value, name, onChange }) => {
   const [currentValue, setCurrentValue] = React.useState(value)
-  const isValid = (val) => (regExp ? regExp.test(val) : null)
+  const isValid = (val) => (regExp ? regExp.test(val) : true)
 
   const handleChange = (event) => {
     const { target } = event
@@ -14,11 +14,11 @@ const OIbText = ({ label, help, regExp, value, id, onChange }) => {
 
   return (
     <FormGroup>
-      <Label for={id}>{label}</Label>
+      <Label for={name}>{label}</Label>
       <Input
         type="text"
-        id={id}
-        name={id}
+        id={name}
+        name={name}
         invalid={!isValid(currentValue)}
         onChange={handleChange}
         value={currentValue}
@@ -29,7 +29,7 @@ const OIbText = ({ label, help, regExp, value, id, onChange }) => {
   )
 }
 OIbText.propTypes = {
-  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,

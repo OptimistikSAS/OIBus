@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbPassword = ({ label, help, value, id, onChange }) => {
+const OIbPassword = ({ label, help, value, name, onChange }) => {
   const [currentValue, setCurrentValue] = React.useState(value)
   /** @todo:  ask for a second password */
   // const isValid = (value) => (regExp ? true : regExp.test(value))
@@ -15,11 +15,11 @@ const OIbPassword = ({ label, help, value, id, onChange }) => {
 
   return (
     <FormGroup>
-      <Label for={id}>{label}</Label>
+      <Label for={name}>{label}</Label>
       <Input
         type="password"
-        id={id}
-        name={id}
+        id={name}
+        name={name}
         // invalid={!isValid(currentValue)}
         onChange={handleChange}
         value={currentValue}
@@ -30,7 +30,7 @@ const OIbPassword = ({ label, help, value, id, onChange }) => {
   )
 }
 OIbPassword.propTypes = {
-  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
