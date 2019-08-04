@@ -4,7 +4,7 @@ import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
-import { AlertContext } from './context/AlertContext'
+import { AlertContext } from './context/AlertContext.jsx'
 import { EngineContext } from './context/configContext.jsx'
 
 const Welcome = () => {
