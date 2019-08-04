@@ -1,7 +1,7 @@
 import React from 'react'
 import { Col, Row, Form, Spinner } from 'reactstrap'
 import { EngineContext } from '../context/configContext.jsx'
-import { AlertContext } from '../context/AlertContext.js'
+import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbInteger, OIbText, OIbPassword } from '../components/OIbForm'
 import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
@@ -66,7 +66,7 @@ const Engine = () => {
     </>
   ) : (
     <div className="spinner-container">
-      <Spinner color="primary" />
+      <Spinner color="primary" type="grow" />
       ...loading configuration from OIBus server...
     </div>
   )
