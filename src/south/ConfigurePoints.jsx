@@ -9,7 +9,7 @@ import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 import utils from '../client/helpers/utils'
 import uiSchema from './uiSchema.jsx'
-import { AlertContext } from '../client/context/AlertContext'
+import { AlertContext } from '../client/context/AlertContext.jsx'
 
 const ConfigureProtocol = ({ match, location }) => {
   const [pointsJson, setPointsJson] = React.useState([])
