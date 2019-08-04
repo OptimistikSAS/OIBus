@@ -2,7 +2,7 @@ import React from 'react'
 import { Label, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
-import { AlertContext } from '../context/AlertContext'
+import { AlertContext } from '../context/AlertContext.jsx'
 
 const Health = () => {
   const [status, setStatus] = React.useState([])
