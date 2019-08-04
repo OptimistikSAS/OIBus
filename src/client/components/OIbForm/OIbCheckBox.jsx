@@ -1,35 +1,29 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, Label, Input } from 'reactstrap'
 
-const OIbCheckBox = ({ label, help, value, id, onChange }) => {
+const OIbCheckBox = ({ label, value, name, onChange }) => {
   const [currentValue, setCurrentValue] = React.useState(value)
 
   const handleChange = (event) => {
     const { target } = event
-    const { checked, name } = target
+    const { checked } = target
     setCurrentValue(checked)
     onChange(name, checked)
   }
 
   return (
     <FormGroup>
-      <Label for={id}>{label}</Label>
-      <Input
-        type="checkbox"
-        id={id}
-        name={id}
-        onChange={handleChange}
-        value={currentValue}
-      />
-      <FormText>{help}</FormText>
+      <Label>
+        {label}
+      </Label>
+      <Input type="checkbox" id={name} name={name} onChange={handleChange} value={currentValue} style={{ position: 'relative', top: '1.5rem' }} />
     </FormGroup>
   )
 }
 OIbCheckBox.propTypes = {
-  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.bool.isRequired,
 }

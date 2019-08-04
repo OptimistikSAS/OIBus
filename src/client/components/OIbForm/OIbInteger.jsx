@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbInteger = ({ label, help, min, max, value, id, onChange }) => {
+const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
   const [currentValue, setCurrentValue] = React.useState(value)
   const isValid = (val) => ((max ? val <= max : true) && ((min ? val >= min : true)))
 
@@ -15,13 +15,13 @@ const OIbInteger = ({ label, help, min, max, value, id, onChange }) => {
 
   return (
     <FormGroup>
-      <Label for={id}>{label}</Label>
+      <Label for={name}>{label}</Label>
       <Input
         type="integer"
         min={min}
         max={max}
-        id={id}
-        name={id}
+        id={name}
+        name={name}
         invalid={!isValid(currentValue)}
         value={value}
         onChange={handleChange}
@@ -32,7 +32,7 @@ const OIbInteger = ({ label, help, min, max, value, id, onChange }) => {
   )
 }
 OIbInteger.propTypes = {
-  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   help: PropTypes.element.isRequired,
   onChange: PropTypes.func.isRequired,

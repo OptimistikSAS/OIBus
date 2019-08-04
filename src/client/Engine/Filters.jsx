@@ -1,13 +1,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 
+
 const Filters = ({ filters }) => filters && (
-  <Table
-    headers={['adresse']}
-    rows={filters.map((filter) => [{ name: 'filter', value: filter }])}
-    onRowClick={() => null}
-  />
+  <>
+    <h2>IP Filters</h2>
+    <Row>
+      <Col md={6}>
+        <Table
+          headers={['adresse']}
+          rows={filters.map((filter) => [{ name: 'filter', value: filter }])}
+          onRowClick={() => null}
+        />
+      </Col>
+    </Row>
+  </>
 )
 
 Filters.propTypes = { filters: PropTypes.arrayOf(String).isRequired }

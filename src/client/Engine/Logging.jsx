@@ -1,117 +1,107 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbInteger, OIbSelect, OIbText, OIbCheckBox } from '../components/OIbForm'
+import { OIbInteger, OIbSelect, OIbText, OIbCheckBox, OIbHelp } from '../components/OIbForm'
 
-const Logging = ({ logParameters, onChange }) => {
-  // eslint-disable-next-line no-unused-vars
-  const [currentLog, setCurrentLog] = React.useState(logParameters)
-  console.info(currentLog)
-
-  return (
-    <>
-      <h2>Log Parameters</h2>
-      <Row>
-        <Col md={4}>
-          <OIbSelect
-            label="Console Level"
-            id="consoleLevel"
-            option="info"
-            options={['silly', 'debug', 'info', 'warning', 'error']}
-            help={<div>The level for the Console log</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={4}>
-          <OIbSelect
-            id="fileLevel"
-            label="File Level"
-            options={['silly', 'debug', 'info', 'warning', 'error']}
-            option="info"
-            help={<div>The level for the file log</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={4}>
-          <OIbSelect
-            label="Sqlite Level"
-            id="sqlLevel"
-            options={['silly', 'debug', 'info', 'warning', 'error']}
-            option="info"
-            help={<div>The level for the sqlite log</div>}
-            onChange={onChange}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <OIbText
-            id=""
-            label="Filename for the log"
-            value="./logs/journal.log"
-            help={<div>The filename of the log file</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={6}>
-          <OIbText
-            id="sqlitename"
-            label="Filename for the sqlite journal"
-            value="./logs/journal.db"
-            help={<div>The filename of the db file</div>}
-            onChange={onChange}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col md={3}>
-          <OIbInteger
-            id="maxsize"
-            label="Max Size of the journal file (Bytes)"
-            value={100000}
-            help={<div>The filename of the log file</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={3}>
-          <OIbInteger
-            id="maxold"
-            label="Max File Size When To Start Deleting Old Log Records (Byte)"
-            value={500000}
-            help={<div>The filename of the log file</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={3}>
-          <OIbInteger
-            id="max"
-            label="number of journal files"
-            value={5}
-            min={1}
-            max={10}
-            help={<div>The number of journal files (rotating)</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={3}>
-          <OIbCheckBox
-            label="Tailable"
-            id="tailable"
-            value={false}
-            help={(
-              <div>
-                If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename
-                will always have the most recent log lines. The larger the appended number, the older the log file. This
-                option requires maxFiles to be set, or it will be ignored.
-              </div>
-            )}
-            onChange={onChange}
-          />
-        </Col>
-      </Row>
-    </>
-  )
-}
+const Logging = ({ logParameters, onChange }) => (
+  <>
+    <h2>Log Parameters</h2>
+    <Row>
+      <Col md={2}>
+        <OIbSelect
+          label="Console Level"
+          name="logParameters.consoleLevel"
+          option={logParameters.consoleLevel}
+          options={['silly', 'debug', 'info', 'warning', 'error']}
+          help={<div>The level for the Console log</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={2}>
+        <OIbSelect
+          name="logParameters.fileLevel"
+          label="File Level"
+          options={['silly', 'debug', 'info', 'warning', 'error']}
+          option={logParameters.fileLevel}
+          help={<div>The level for the file log</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={2}>
+        <OIbSelect
+          label="Sqlite Level"
+          name="logParameters.sqliteLevel"
+          options={['silly', 'debug', 'info', 'warning', 'error']}
+          option={logParameters.sqliteLevel}
+          help={<div>The level for the sqlite log</div>}
+          onChange={onChange}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md={4}>
+        <OIbText
+          name="logParameters.filename"
+          label="Filename for the log file"
+          value={logParameters.filename}
+          help={<div>The filename of the log file</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={4}>
+        <OIbText
+          name="logParameters.sqliteFilename"
+          label="Filename of sqlite db"
+          value={logParameters.sqliteFilename}
+          help={<div>The filename of the db file</div>}
+          onChange={onChange}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md={3}>
+        <OIbInteger
+          name="maxsize"
+          label="Max size of the journal file"
+          value={logParameters.maxsize}
+          help={<div>Maximum size of file logs (Bytes)</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={3}>
+        <OIbInteger
+          name="logParameters.sqliteMaxFileSize"
+          label="Max size of sqlite db"
+          value={logParameters.sqliteMaxFileSize}
+          help={<div>Max File Size of the sqlite database (Byte)</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={3}>
+        <OIbInteger
+          name="logParameters.maxFiles"
+          label="number of journal files"
+          value={logParameters.maxFiles}
+          min={1}
+          max={10}
+          help={<div>The number of journal files (rotating)</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={3}>
+        <OIbCheckBox
+          label="Tailable"
+          name="logParameters.tailable"
+          value={logParameters.tailable}
+          onChange={onChange}
+        />
+      </Col>
+    </Row>
+    <OIbHelp>
+      <div>Ceci est une aide qui peut être trés longue</div>
+    </OIbHelp>
+  </>
+)
 
 Logging.propTypes = {
   onChange: PropTypes.func.isRequired,

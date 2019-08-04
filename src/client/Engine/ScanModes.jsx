@@ -1,13 +1,21 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 
 const ScanModes = ({ scanModes }) => scanModes && (
-  <Table
-    headers={['scanMode', 'cron']}
-    rows={scanModes.map((scanMode) => Object.entries(scanMode).map(([name, value]) => ({ name, value })))}
-    onRowClick={() => null}
-  />
+  <>
+    <h2>Scan Modes</h2>
+    <Row>
+      <Col md={6}>
+        <Table
+          headers={['scanMode', 'cron']}
+          rows={scanModes.map((scanMode) => Object.entries(scanMode).map(([name, value]) => ({ name, value })))}
+          onRowClick={() => null}
+        />
+      </Col>
+    </Row>
+  </>
 )
 
 ScanModes.propTypes = { scanModes: PropTypes.arrayOf(String).isRequired }
