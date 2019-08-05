@@ -57,6 +57,7 @@ const EngineProvider = ({ children }) => {
       }
       return () => {
         mounted = false
+        console.info('unmount')
       }
     }
     getConfig()
