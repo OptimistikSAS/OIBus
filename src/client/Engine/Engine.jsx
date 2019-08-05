@@ -8,10 +8,13 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
+import apis from '../services/apis'
 
 const Engine = () => {
   const { configState, configDispatch } = React.useContext(EngineContext)
   const { setAlert } = React.useContext(AlertContext)
+  // update the Engine on the server when quitting this page
+  React.useEffect(() => (() => apis.updateEngine(configState.config.engine)), [])
 
   const onChange = (name, value, validity) => {
     console.info('dispatch:', name, value, validity)
@@ -27,12 +30,12 @@ const Engine = () => {
             <p>In this section, you must define:</p>
             <ul>
               <li>
-                The number of the port to access OIBus. The default value is 2223 can be kept unless it conflicts with
-                an existing value.
+                                The number of the port to access OIBus. The default value is 2223 can be kept unless it
+                                conflicts with an existing value.
               </li>
               <li>
-                The user name and password that will be used to access this console. Make sure the default password is
-                changed to avoid unauthorized access.
+                                The user name and password that will be used to access this console. Make sure the
+                                default password is changed to avoid unauthorized access.
               </li>
             </ul>
           </>
@@ -81,7 +84,7 @@ const Engine = () => {
   ) : (
     <div className="spinner-container">
       <Spinner color="primary" type="grow" />
-      ...loading configuration from OIBus server...
+            ...loading configuration from OIBus server...
     </div>
   )
 }
