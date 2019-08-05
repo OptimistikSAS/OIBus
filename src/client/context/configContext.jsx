@@ -3,22 +3,36 @@
 // provide then json and a way to update as a reducer
 import React from 'react'
 import PropTypes from 'prop-types'
+import apis from '../services/apis'
 
 const reducer = (state, action) => {
-  const { name, json, value, type, validity } = action
+  const { name, value, json, type, validity } = action
   let keys
   let newState
   switch (type) {
     case 'update':
       return json
+    case 'saveEngine':
+      // will not modify the state but save to server
+      apis.updateEngine(state.config.engine)
+      return state
     case 'updateEngine':
       newState = Object.assign(Object.assign({}, state))
       newState.errors = validity
       keys = name.split('.')
-      if (keys[1]) {
-        state.config.engine[keys[0]][keys[1]] = value
-      } else {
-        state.config.engine[keys[0]] = value
+      /** @todo: make this recursive would allow to support any number */
+      switch (keys.length) {
+        case 1:
+          state.config.engine[keys[0]] = value
+          break
+        case 2:
+          state.config.engine[keys[0]][keys[1]] = value
+          break
+        case 3:
+          state.config.engine[keys[0]][keys[1]][keys[2]] = value
+          break
+        default:
+          throw new Error(`name ${name} should have 0 to 2 points max`)
       }
       return newState
     case 'updateFilters':
