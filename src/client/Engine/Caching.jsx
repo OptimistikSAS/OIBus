@@ -1,11 +1,26 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
-import { OIbText, OIbSelect } from '../components/OIbForm'
+import { OIbText, OIbSelect, OIbTitle } from '../components/OIbForm'
 
 const Caching = ({ onChange, caching }) => (
   <>
-    <h2>Cache Parameters</h2>
+    <OIbTitle title="Cache parameters">
+      <>
+        <p>
+          In case a communication errors prevents OIBus to send information to a North application, The values will be
+          stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+        </p>
+        <p>
+          When the communication is restored, all values in the cache will be forwarded to the North application. The
+          location of these caches on the OIBus server is indicated in the cache folder parameters.
+        </p>
+        <p>
+          When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they
+          have been sent to the North application or to archive them in the Archive folder).
+        </p>
+      </>
+    </OIbTitle>
     <Row>
       <Col md={4}>
         <OIbText
