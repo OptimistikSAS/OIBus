@@ -2,19 +2,25 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
-import { OIbText } from '../components/OIbForm'
+import { OIbText, OIbTitle } from '../components/OIbForm'
 import { EngineContext } from '../context/configContext.jsx'
 
 const Filters = ({ filters }) => {
   const { configDispatch } = React.useContext(EngineContext)
   const onChange = (name, value, validity) => {
     console.info('dispatch:', name, value, validity)
-    configDispatch({ type: 'updateFilters', name, value, validity })
+    configDispatch({ type: 'updateEngine', name, value, validity })
   }
   return (
     filters && (
       <>
-        <h2>IP Filters</h2>
+        <OIbTitle title="IP Filters">
+          <p>
+            This is the list of IP adresses (or hostnames) that will be allowed to access the admin console. By default,
+            it is only the local host. It is possible to use wildcards (such as 192.168.1.*) in the IP adress to
+            authorize a subnet for example.
+          </p>
+        </OIbTitle>
         <Row>
           <Col md={6}>
             <Table
@@ -25,10 +31,10 @@ const Filters = ({ filters }) => {
                   value: i,
                 },
                 {
-                  name: `filter[${i}]`,
+                  name: `filter.${i}`,
                   value: (
                     <OIbText
-                      name={`filter[${i}]`}
+                      name={`filter.${i}`}
                       value={filter}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
@@ -48,12 +54,3 @@ const Filters = ({ filters }) => {
 Filters.propTypes = { filters: PropTypes.arrayOf(String).isRequired }
 
 export default Filters
-
-/*
-    label="Network Filter"
-     defaultIpAddresses={['127.0.0.1']}
-            help={(
-              <div>
-                The list of IP addresses or hostnames allowed to access the Admin interface (can use * as a wildcard)
-              </div>
-*/

@@ -2,7 +2,7 @@ import React from 'react'
 import { Col, Row, Form, Spinner } from 'reactstrap'
 import { EngineContext } from '../context/configContext.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
-import { OIbInteger, OIbText, OIbPassword } from '../components/OIbForm'
+import { OIbInteger, OIbText, OIbPassword, OIbTitle } from '../components/OIbForm'
 import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
@@ -22,7 +22,21 @@ const Engine = () => {
   return config ? (
     <>
       <Form>
-        <h1>Engine Parameters</h1>
+        <OIbTitle title="Engine Parameters">
+          <>
+            <p>In this section, you must define:</p>
+            <ul>
+              <li>
+                The number of the port to access OIBus. The default value is 2223 can be kept unless it conflicts with
+                an existing value.
+              </li>
+              <li>
+                The user name and password that will be used to access this console. Make sure the default password is
+                changed to avoid unauthorized access.
+              </li>
+            </ul>
+          </>
+        </OIbTitle>
         <Row form>
           <Col md={3}>
             <OIbInteger
