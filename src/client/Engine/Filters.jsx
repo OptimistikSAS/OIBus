@@ -9,7 +9,6 @@ import { EngineContext } from '../context/configContext.jsx'
 const Filters = ({ filters }) => {
   const { configDispatch } = React.useContext(EngineContext)
   const onChange = (name, value, validity) => {
-    console.info('dispatch:', name, value, validity)
     configDispatch({ type: 'updateEngine', name, value, validity })
   }
   return (
@@ -25,16 +24,12 @@ const Filters = ({ filters }) => {
         <Row>
           <Col md={6}>
             <Table
-              headers={['#',
+              headers={[
                 <>
                   <FaPlusCircle className="oi-icon" />
                   <span>adresse</span>
                 </>, '']}
               rows={filters.map((filter, i) => [
-                {
-                  name: `key[${i}]`,
-                  value: i,
-                },
                 {
                   name: `filter.${i}`,
                   value: (
