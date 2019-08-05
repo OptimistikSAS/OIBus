@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Row, Col } from 'reactstrap'
+import { Row, Col, Button } from 'reactstrap'
+import { FaTrashAlt, FaPlusCircle } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import { OIbText, OIbTitle } from '../components/OIbForm'
 import { EngineContext } from '../context/configContext.jsx'
@@ -24,7 +25,11 @@ const Filters = ({ filters }) => {
         <Row>
           <Col md={6}>
             <Table
-              headers={['#', 'adresse']}
+              headers={['#',
+                <>
+                  <FaPlusCircle className="oi-icon" />
+                  <span>adresse</span>
+                </>, '']}
               rows={filters.map((filter, i) => [
                 {
                   name: `key[${i}]`,
@@ -40,6 +45,10 @@ const Filters = ({ filters }) => {
                       onChange={onChange}
                     />
                   ),
+                },
+                {
+                  name: 'actions',
+                  value: <Button close><FaTrashAlt className="oi-icon" /></Button>,
                 },
               ])}
               onRowClick={() => null}
