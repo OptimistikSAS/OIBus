@@ -14,12 +14,13 @@ const getStatus = async (ctx) => {
     CurrentDirectory: process.cwd(),
     'Node Version': process.version,
     Executable: process.execPath,
-    'Free/Total Memory/': `${os.freemem()}/${os.totalmem()}`,
+    'Free/Total Memory/%': `${os.freemem()}/${os.totalmem()}/${Number(os.freemem() / os.totalmem() * 100).toFixed(2)}%`,
     'Process Id': process.pid,
     'Up time': process.uptime(),
     Hostname: os.hostname(),
     'OS release': os.release(),
     'OS type': os.type(),
+    Copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
   }
   ctx.ok(status)
 }

@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
-import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Label } from 'reactstrap'
+import { Collapse, Navbar, NavbarToggler, Nav, NavItem } from 'reactstrap'
 
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
@@ -45,9 +45,6 @@ const TopHeader = ({ location }) => {
           </NavItem>
         </Nav>
       </Collapse>
-      <Label className="copyright-label">
-        {'(c) Copyright 2019 Optimistik, all rights reserved.'}
-      </Label>
     </Navbar>
   )
 }
