@@ -131,7 +131,7 @@ const South = ({ history }) => {
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']
   const tableRows = dataSources.map(({ dataSourceId, enabled, protocol, points }) => [
-    { name: 'id', value: dataSourceId },
+    { name: dataSourceId, value: dataSourceId },
     {
       name: 'enabled',
       value: (
