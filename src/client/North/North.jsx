@@ -137,7 +137,7 @@ const North = ({ history }) => {
 
   const tableHeaders = ['Application ID', 'Status', 'API', '']
   const tableRows = applications.map(({ applicationId, enabled, api }) => [
-    { name: 'id', value: applicationId },
+    { name: applicationId, value: applicationId },
     {
       name: 'enabled',
       value: (

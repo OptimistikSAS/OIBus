@@ -125,6 +125,18 @@ const Welcome = () => {
       <pre>{JSON.stringify(configState.errors)}</pre>
       {isModified ? (
         <>
+          <div className="force-row-display">
+            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
+              {(confirm) => (
+                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
+                  Activate
+                </Button>
+              )}
+            </Modal>
+            <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
+              Decline
+            </Button>
+          </div>
           <div className="oi-full-width">
             {deltaHTML.length > maxDiffLength ? (
               <Label>The configuration difference is too large to display</Label>
