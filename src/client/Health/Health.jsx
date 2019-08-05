@@ -24,7 +24,7 @@ const Health = () => {
   const tableRows = Object.keys(status).map((key) => (
     [
       {
-        name: 'name',
+        name: key,
         value: key,
       },
       {
