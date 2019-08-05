@@ -40,7 +40,7 @@ const Engine = () => {
           </>
         </OIbTitle>
         <Row form>
-          <Col md={3}>
+          <Col md={2}>
             <OIbInteger
               name="port"
               label="Port"
@@ -51,6 +51,8 @@ const Engine = () => {
               onChange={onChange}
             />
           </Col>
+        </Row>
+        <Row form>
           <Col md={3}>
             <OIbText
               name="user"
@@ -72,11 +74,11 @@ const Engine = () => {
             />
           </Col>
         </Row>
-        <Logging onChange={onChange} logParameters={config.engine.logParameters} />
         <Filters onChange={onChange} filters={config.engine.filter} />
+        <Logging onChange={onChange} logParameters={config.engine.logParameters} />
+        <ScanModes onChange={onChange} scanModes={config.engine.scanModes} />
         <Caching onChange={onChange} caching={config.engine.caching} />
         <Proxies onChange={onChange} proxies={config.engine.proxies} />
-        <ScanModes onChange={onChange} scanModes={config.engine.scanModes} />
       </Form>
       <pre>{JSON.stringify(config)}</pre>
     </>
