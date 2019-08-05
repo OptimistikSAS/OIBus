@@ -308,3 +308,13 @@ label {
   margin-bottom: 15px;
   margin-left: 0px;
 }
+.oi-icon {
+  width: 8px;
+  margin-right: 2px;
+}
+
+.oi-icon:hover {
+  text-decoration: none;
+  color: #F5BB51;
+}
+
