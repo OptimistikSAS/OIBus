@@ -19,6 +19,7 @@ const Proxies = ({ proxies }) => proxies && (
           headers={['Name', 'Protocol', 'Host', 'Port', 'User', 'Password']}
           rows={proxies.map((proxie) => Object.entries(proxie).map(([name, value]) => ({ name, value })))}
           onRowClick={() => null}
+          actions
         />
       </Col>
     </Row>

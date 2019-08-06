@@ -86,6 +86,7 @@ const ScanModes = ({ scanModes }) => {
                 },
               ])}
               onRowClick={() => null}
+              actions
             />
           </Col>
         </Row>
