@@ -22,7 +22,7 @@ const Filters = ({ filters }) => {
           </p>
         </OIbTitle>
         <Row>
-          <Col md={6}>
+          <Col md={4}>
             <Table
               headers={[
                 <>

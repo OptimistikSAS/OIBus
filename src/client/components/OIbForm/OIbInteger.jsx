@@ -7,11 +7,7 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(
-      name,
-      isValid(newVal) ? parseInt(newVal, 10) : newVal,
-      isValid(newVal) ? '' : `incorrect entry for ${name}`,
-    )
+    onChange(name, isValid(newVal) ? parseInt(newVal, 10) : newVal, isValid(newVal) ? '' : `incorrect entry for ${name}`)
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { style: { marginBottom: 0 } }
@@ -19,6 +15,7 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
     <FormGroup {...style}>
       <Label for={name}>{label}</Label>
       <Input
+        className="oi-form-input"
         type="integer"
         min={min}
         max={max}
