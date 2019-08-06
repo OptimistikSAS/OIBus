@@ -18,8 +18,8 @@ const OIbCheckBox = ({ label, value, name, onChange }) => {
         id={name}
         name={name}
         onChange={handleChange}
-        value={value}
-        style={{ position: 'relative', top: '1.5rem' }}
+        checked={value}
+        style={{ position: 'relative', left: '1.5rem' }}
       />
     </FormGroup>
   )
