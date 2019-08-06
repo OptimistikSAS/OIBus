@@ -5,7 +5,7 @@ import { UncontrolledCollapse, Button, Row } from 'reactstrap'
 const Help = ({ title, children }) => (
   <>
     <Row>
-      <h2>
+      <h3>
         {title}
         {children && (
           // remove spaces so it can used as an Id
@@ -13,7 +13,7 @@ const Help = ({ title, children }) => (
             Help
           </Button>
         )}
-      </h2>
+      </h3>
     </Row>
     {children && (
       <UncontrolledCollapse toggler={title.replace(/ /g, '')}>

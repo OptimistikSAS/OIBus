@@ -50,7 +50,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
         <Label for="Id">
           New Data Source ID
         </Label>
-        <Input value={dataSource.dataSourceId} id="Id" name="dataSourceId" type="text" onChange={handleChange} />
+        <Input className="oi-form-input" value={dataSource.dataSourceId} id="Id" name="dataSourceId" type="text" onChange={handleChange} />
       </FormGroup>
       <FormGroup>
         <Label for="protocol">

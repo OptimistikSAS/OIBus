@@ -313,3 +313,17 @@ label {
   color: #F5BB51;
 }
 
+.oi-form-input {
+  font-size: 11px;
+  padding: 0 6px;
+  margin-top: 2px;
+  margin-bottom: 7px;
+  height: 20px;
+  width: 100%;
+  overflow: hidden;
+}
+
+h3 {
+  font-size: 24px;
+}
+

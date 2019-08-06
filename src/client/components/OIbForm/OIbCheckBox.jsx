@@ -11,10 +11,16 @@ const OIbCheckBox = ({ label, value, name, onChange }) => {
 
   return (
     <FormGroup>
-      <Label>
-        {label}
-      </Label>
-      <Input type="checkbox" id={name} name={name} onChange={handleChange} value={value} style={{ position: 'relative', top: '1.5rem' }} />
+      <Label>{label}</Label>
+      <Input
+        className="oi-form-input"
+        type="checkbox"
+        id={name}
+        name={name}
+        onChange={handleChange}
+        value={value}
+        style={{ position: 'relative', top: '1.5rem' }}
+      />
     </FormGroup>
   )
 }
