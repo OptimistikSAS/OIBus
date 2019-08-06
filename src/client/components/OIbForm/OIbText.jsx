@@ -15,7 +15,7 @@ const OIbText = ({ label, help, regExp, value, name, onChange }) => {
   return (
     <FormGroup {...style}>
       {label && <Label for={name}>{label}</Label>}
-      <Input type="text" id={name} name={name} invalid={!isValid(value)} onChange={handleChange} value={value} />
+      <Input className="oi-form-input" type="text" id={name} name={name} invalid={!isValid(value)} onChange={handleChange} value={value} />
       <FormFeedback>Invalid Entry</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>

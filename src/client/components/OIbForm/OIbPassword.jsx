@@ -16,6 +16,7 @@ const OIbPassword = ({ label, help, value, name, onChange, regExp }) => {
     <FormGroup>
       <Label for={name}>{label}</Label>
       <Input
+        className="oi-form-input"
         type="password"
         id={name}
         name={name}
@@ -38,6 +39,5 @@ OIbPassword.propTypes = {
 }
 
 OIbPassword.defaultProps = { regExp: null }
-
 
 export default OIbPassword

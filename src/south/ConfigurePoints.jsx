@@ -48,9 +48,12 @@ const ConfigureProtocol = ({ match, location }) => {
   const updateFilteredPointsJson = (points, filter) => {
     setFilteredPointsJson(
       filter
-        ? points.filter((point) => (
-          Object.values(point).findIndex((element) => (
-            element.toString().toLowerCase().includes(filter.toLowerCase()))) >= 0))
+        ? points.filter(
+          (point) => Object.values(point).findIndex((element) => element
+            .toString()
+            .toLowerCase()
+            .includes(filter.toLowerCase())) >= 0,
+        )
         : points,
     )
   }
@@ -105,21 +108,27 @@ const ConfigureProtocol = ({ match, location }) => {
     } else {
       getEngine()
     }
-    apis.getPoints(datasourceid).then((points) => {
-      if (points.length) {
-        updatePointsJson(points)
-      }
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getPoints(datasourceid)
+      .then((points) => {
+        if (points.length) {
+          updatePointsJson(points)
+        }
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
 
-    apis.getSouthProtocolSchema(protocol).then((schema) => {
-      updateSchema(schema)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getSouthProtocolSchema(protocol)
+      .then((schema) => {
+        updateSchema(schema)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }, [])
 
   /**
@@ -179,9 +188,7 @@ const ConfigureProtocol = ({ match, location }) => {
     const { datasourceid } = match.params
     try {
       await apis.updatePoint(datasourceid, editingPoint.pointId, point)
-      const newPoints = pointsJson.map((oldPoint) => (
-        oldPoint.pointId === editingPoint.pointId ? point : oldPoint
-      ))
+      const newPoints = pointsJson.map((oldPoint) => (oldPoint.pointId === editingPoint.pointId ? point : oldPoint))
       updatePointsJson(newPoints)
       setEditingPoint()
     } catch (error) {
@@ -289,11 +296,7 @@ const ConfigureProtocol = ({ match, location }) => {
    * @param {string} value the displayed value
    * @returns {void}
    */
-  const createCell = (value) => (
-    <div>
-      {value}
-    </div>
-  )
+  const createCell = (value) => <div>{value}</div>
 
   /**
    * create actions buttons
@@ -389,9 +392,7 @@ const ConfigureProtocol = ({ match, location }) => {
         schema={modifiedConfigSchema()}
         uiSchema={uiSchema(match.params.protocol).points.items}
         autocomplete="on"
-        onSubmit={({ formData }) => (
-          editingPoint ? handleSubmitEditedPoint(formData) : handleSubmitAddedPoint(formData)
-        )}
+        onSubmit={({ formData }) => (editingPoint ? handleSubmitEditedPoint(formData) : handleSubmitAddedPoint(formData))}
         onError={log('errors')}
       />
       <Button
@@ -417,6 +418,7 @@ const ConfigureProtocol = ({ match, location }) => {
       <FormGroup>
         <Label for="filter-text">Filter</Label>
         <Input
+          className="oi-form-input"
           type="text"
           id="fromDatee"
           defaultValue={filterText}
@@ -435,16 +437,13 @@ const ConfigureProtocol = ({ match, location }) => {
       ) : null}
       <div className="force-row-display">
         <Button className="inline-button" color="primary" onClick={() => setAddingPoint({})}>
-              Add
+          Add
         </Button>
-        <Button
-          className="inline-button"
-          color="primary"
-          onClick={() => document.getElementById('importFile').click()}
-        >
-              Import
+        <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
+          Import
         </Button>
         <Input
+          className="oi-form-input"
           type="file"
           id="importFile"
           accept=".csv, text/plain"
@@ -452,7 +451,7 @@ const ConfigureProtocol = ({ match, location }) => {
           onChange={(event) => handleImportPoints(event.target.files[0])}
         />
         <Button className="inline-button" color="primary" onClick={handleExportPoints}>
-              Export
+          Export
         </Button>
         <Modal show={false} title="Delete All Points" body="Are you sure you want to delete All Points from this Data Source?">
           {(confirm) => (
@@ -472,19 +471,10 @@ const ConfigureProtocol = ({ match, location }) => {
   // sorting
   const sortedPointsJson = sortBy ? filteredPointsJson.sort(utils.dynamicSort(sortBy)) : filteredPointsJson
   // paging
-  const pagedPointsJson = sortedPointsJson.filter((_, index) => (
-    index >= selectedPage * maxOnPage - maxOnPage && index < selectedPage * maxOnPage
-  ))
+  const pagedPointsJson = sortedPointsJson.filter((_, index) => index >= selectedPage * maxOnPage - maxOnPage && index < selectedPage * maxOnPage)
   const tableRows = pagedPointsJson.map((point, index) => createTableRow(configPoint, point, index, true, true))
 
-  return (
-    <>
-      {editingPoint || addingPoint
-        ? renderAddEditForm(editingPoint || addingPoint)
-        : renderTable(tableHeaders, tableRows)
-      }
-    </>
-  )
+  return <>{editingPoint || addingPoint ? renderAddEditForm(editingPoint || addingPoint) : renderTable(tableHeaders, tableRows)}</>
 }
 
 ConfigureProtocol.propTypes = {

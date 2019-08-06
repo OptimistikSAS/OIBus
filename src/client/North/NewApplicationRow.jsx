@@ -46,7 +46,7 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
         <Label for="Id">
           New Application ID
         </Label>
-        <Input value={application.applicationId} id="Id" name="applicationId" type="text" onChange={handleChange} />
+        <Input className="oi-form-input" value={application.applicationId} id="Id" name="applicationId" type="text" onChange={handleChange} />
       </FormGroup>
       <FormGroup>
         <Label for="api">
