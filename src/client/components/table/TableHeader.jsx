@@ -2,11 +2,11 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FaPlusCircle } from 'react-icons/fa'
 
-const TableHeader = ({ headers, actions }) => {
-  if (actions) {
+const TableHeader = ({ headers, handleAdd }) => {
+  if (handleAdd) {
     headers[0] = ( // add Icon in the header
       <>
-        <FaPlusCircle className="oi-icon" />
+        <FaPlusCircle className="oi-icon" onClick={handleAdd} />
         <span>{headers[0]}</span>
       </>
     )
@@ -27,8 +27,8 @@ const TableHeader = ({ headers, actions }) => {
 
 TableHeader.propTypes = {
   headers: PropTypes.PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
-  actions: PropTypes.bool,
+  handleAdd: PropTypes.func,
 }
-TableHeader.defaultProps = { actions: false }
+TableHeader.defaultProps = { handleAdd: null }
 
 export default TableHeader

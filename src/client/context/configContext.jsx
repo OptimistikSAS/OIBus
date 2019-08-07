@@ -35,6 +35,12 @@ const reducer = (state, action) => {
           throw new Error(`name ${name} should have 0 to 2 points max`)
       }
       return newState
+    case 'deleteRow':
+      keys = name.split('.')
+      newState = Object.assign(Object.assign({}, state))
+      newState.config[keys[0]][keys[1]].splice(action.rowIndex, 1)
+      // copy into the new state
+      return newState
     case 'updateFilters':
       newState = Object.assign(Object.assign({}, state))
       newState.errors = validity
