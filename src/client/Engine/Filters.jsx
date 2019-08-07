@@ -7,6 +7,13 @@ import { EngineContext } from '../context/configContext.jsx'
 
 const Filters = ({ filters }) => {
   const { configDispatch } = React.useContext(EngineContext)
+  const handleDelete = (rowIndex) => {
+    console.info('delete filter', rowIndex)
+    configDispatch({ type: 'deleteRow', name: 'engine.filter', rowIndex })
+  }
+  const handleAdd = () => {
+    console.info('add')
+  }
   const onChange = (name, value, validity) => {
     configDispatch({ type: 'updateEngine', name, value, validity })
   }
@@ -37,7 +44,8 @@ const Filters = ({ filters }) => {
                 },
               ])}
               onRowClick={() => null}
-              actions
+              handleDelete={handleDelete}
+              handleAdd={handleAdd}
             />
           </Col>
         </Row>

@@ -7,6 +7,13 @@ import { EngineContext } from '../context/configContext.jsx'
 
 const ScanModes = ({ scanModes }) => {
   const { configDispatch } = React.useContext(EngineContext)
+  const handleDelete = (rowIndex) => {
+    console.info('delete scanmodes', rowIndex)
+    configDispatch({ type: 'deleteRow', name: 'engine.scanModes', rowIndex })
+  }
+  const handleAdd = () => {
+    console.info('add')
+  }
   const onChange = (name, value, validity) => {
     configDispatch({ type: 'updateEngine', name, value, validity })
   }
@@ -86,7 +93,8 @@ const ScanModes = ({ scanModes }) => {
                 },
               ])}
               onRowClick={() => null}
-              actions
+              handleDelete={handleDelete}
+              handleAdd={handleAdd}
             />
           </Col>
         </Row>
