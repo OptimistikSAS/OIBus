@@ -41,6 +41,12 @@ const reducer = (state, action) => {
       newState.config[keys[0]][keys[1]].splice(action.rowIndex, 1)
       // copy into the new state
       return newState
+    case 'addRow':
+      keys = name.split('.')
+      newState = Object.assign(Object.assign({}, state))
+      newState.config[keys[0]][keys[1]].push(action.value)
+      // copy into the new state
+      return newState
     case 'updateFilters':
       newState = Object.assign(Object.assign({}, state))
       newState.errors = validity

@@ -14,30 +14,22 @@ const OIbPassword = ({ label, help, value, name, onChange, regExp }) => {
 
   return (
     <FormGroup>
-      <Label for={name}>{label}</Label>
-      <Input
-        className="oi-form-input"
-        type="password"
-        id={name}
-        name={name}
-        invalid={!isValid(value)}
-        onChange={handleChange}
-        value={value}
-      />
+      {label && <Label for={name}>{label}</Label>}
+      <Input className="oi-form-input" type="password" id={name} name={name} invalid={!isValid(value)} onChange={handleChange} value={value} />
       <FormFeedback>Invalid Entry</FormFeedback>
-      <FormText>{help}</FormText>
+      {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
 }
 OIbPassword.propTypes = {
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
+  label: PropTypes.string,
+  help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string.isRequired,
   regExp: PropTypes.instanceOf(RegExp),
 }
 
-OIbPassword.defaultProps = { regExp: null }
+OIbPassword.defaultProps = { regExp: null, label: null, help: null }
 
 export default OIbPassword

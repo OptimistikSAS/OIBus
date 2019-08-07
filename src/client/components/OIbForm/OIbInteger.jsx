@@ -13,7 +13,7 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
   const style = label ? null : { style: { marginBottom: 0 } }
   return (
     <FormGroup {...style}>
-      <Label for={name}>{label}</Label>
+      {label && <Label for={name}>{label}</Label>}
       <Input
         className="oi-form-input"
         type="integer"
@@ -26,14 +26,14 @@ const OIbInteger = ({ label, help, min, max, value, name, onChange }) => {
         onChange={handleChange}
       />
       <FormFeedback>Invalid Entry</FormFeedback>
-      <FormText>{help}</FormText>
+      {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
 }
 OIbInteger.propTypes = {
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
+  label: PropTypes.string,
+  help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   min: PropTypes.number,
@@ -42,6 +42,8 @@ OIbInteger.propTypes = {
 OIbInteger.defaultProps = {
   min: null,
   max: null,
+  label: null,
+  help: null,
 }
 
 export default OIbInteger
