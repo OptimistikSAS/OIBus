@@ -3,17 +3,23 @@ import PropTypes from 'prop-types'
 import { FaTrashAlt } from 'react-icons/fa'
 import { Button } from 'reactstrap'
 
-const TableRows = ({ rows, onRowClick, actions }) => (
+const TableRows = ({ rows, onRowClick, handleDelete }) => (
   <tbody>
-    {rows.map((row) => (
+    {rows.map((row, index) => (
       <tr key={row[0].name} onClick={() => onRowClick(row)}>
         {row.map((field) => (
           <td key={field.name}>{field.value}</td>
         ))}
-        {actions && (
+        {handleDelete && (
           <td>
             <Button close>
-              <FaTrashAlt className="oi-icon" />
+              <FaTrashAlt
+                className="oi-icon"
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleDelete(index)
+                }}
+              />
             </Button>
           </td>
         )}
@@ -25,9 +31,9 @@ const TableRows = ({ rows, onRowClick, actions }) => (
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   onRowClick: PropTypes.func.isRequired,
-  actions: PropTypes.bool,
+  handleDelete: PropTypes.func,
 }
 
-TableRows.defaultProps = { actions: false }
+TableRows.defaultProps = { handleDelete: null }
 
 export default TableRows
