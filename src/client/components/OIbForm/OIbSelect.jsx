@@ -11,21 +11,26 @@ const OIbSelect = ({ label, help, option, options, name, onChange }) => {
 
   return (
     <FormGroup>
-      <Label for={name}>{label}</Label>
+      {label && <Label for={name}>{label}</Label>}
       <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={option}>
-        { options.map((o) => <option key={o} value={o}>{o}</option>) }
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
       </Input>
-      <FormText>{help}</FormText>
+      {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
 }
 OIbSelect.propTypes = {
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
+  label: PropTypes.string,
+  help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(String).isRequired,
   option: PropTypes.string.isRequired,
 }
+OIbSelect.defaultProps = { label: null, help: null }
 
 export default OIbSelect

@@ -153,6 +153,10 @@ td > div > .autosize {
   width: auto;
 }
 
+tr {
+  vertical-align: middle;
+}
+
 label {
   display: inline-block;
   margin-bottom: 0.2rem;
@@ -181,15 +185,6 @@ label {
   width: 39px;
   text-align: center;
   padding: 0.5rem 0;
-}
-
-.table thead th {
-  vertical-align: middle;
-}
-
-.table td,
-.table th {
-  vertical-align: middle;
 }
 
 .form-check-input {
