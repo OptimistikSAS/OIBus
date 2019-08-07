@@ -45,7 +45,7 @@ const Caching = ({ onChange, caching }) => (
       <Col md={2}>
         <OIbSelect
           label="Archive Mode"
-          name="cachine.archiveMode"
+          name="caching.archiveMode"
           options={['archive', 'delete']}
           option={caching.archiveMode}
           help={<div> Move to Archive Folders or Delete files</div>}

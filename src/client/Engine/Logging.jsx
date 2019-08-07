@@ -87,7 +87,7 @@ const Logging = ({ logParameters, onChange }) => (
       </Col>
       <Col md={2}>
         <OIbInteger
-          name="maxsize"
+          name="logParameters.maxsize"
           label="File Max size"
           value={logParameters.maxsize}
           help={<div>Maximum size of file logs (Bytes)</div>}
