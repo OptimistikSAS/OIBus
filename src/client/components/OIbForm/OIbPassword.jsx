@@ -2,21 +2,20 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbPassword = ({ label, help, value, name, onChange, regExp }) => {
-  const isValid = (val) => (regExp ? true : regExp.test(val))
+const OIbPassword = ({ label, help, value, name, onChange, valid }) => {
   /** @todo:  ask for a second password? */
 
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal)
+    onChange(name, newVal, valid(newVal))
   }
-
+  const validCheck = valid ? valid(value) : null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="password" id={name} name={name} invalid={!isValid(value)} onChange={handleChange} value={value} />
-      <FormFeedback>Invalid Entry</FormFeedback>
+      <Input className="oi-form-input" type="password" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={value} />
+      <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
@@ -27,9 +26,9 @@ OIbPassword.propTypes = {
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string.isRequired,
-  regExp: PropTypes.instanceOf(RegExp),
+  valid: PropTypes.func,
 }
 
-OIbPassword.defaultProps = { regExp: null, label: null, help: null }
+OIbPassword.defaultProps = { valid: null, label: null, help: null }
 
 export default OIbPassword

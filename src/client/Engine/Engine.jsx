@@ -45,8 +45,7 @@ const Engine = () => {
               name="engine.port"
               label="Port"
               value={config.engine.port}
-              min={1}
-              max={65535}
+              valid={(val) => ((val >= 1) && (val <= 65535) ? null : 'value should be between 1 and 65535')}
               help={<div>The port to access the Admin interface</div>}
               onChange={onChange}
             />
@@ -58,7 +57,7 @@ const Engine = () => {
               name="engine.user"
               label="Admin user name"
               value={config.engine.user}
-              regExp={/^.{2,}$/} // i.e. min size = 2
+              valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
             />
@@ -68,7 +67,7 @@ const Engine = () => {
               label="Admin Password"
               name="engine.password"
               onChange={onChange}
-              regExp={/^.{4,}$/}
+              valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 4')}
               value={configState.config.engine.password}
               help={<div>The password of the Admin user</div>}
             />

@@ -99,8 +99,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.maxFiles"
           label="number of files"
           value={logParameters.maxFiles}
-          min={1}
-          max={10}
+          valid={(val) => ((val >= 1) && (val <= 10) ? null : 'value should be between 1 and 10')}
           help={<div>The number of journal files (rotating)</div>}
           onChange={onChange}
         />

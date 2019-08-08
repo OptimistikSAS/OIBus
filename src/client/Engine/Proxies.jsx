@@ -37,7 +37,7 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.name`}
                       value={proxy.name}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
                       onChange={onChange}
                     />
                   ),
@@ -52,14 +52,21 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.host`}
                       value={proxy.host}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
                       onChange={onChange}
                     />
                   ),
                 },
                 {
                   name: `engine.proxies.${i}.port`,
-                  value: <OIbInteger name={`engine.proxies.${i}.port`} value={proxy.port} min={1} max={65535} onChange={onChange} />,
+                  value: (
+                    <OIbInteger
+                      name={`engine.proxies.${i}.port`}
+                      value={proxy.port}
+                      valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
+                      onChange={onChange}
+                    />
+                  ),
                 },
                 {
                   name: `engine.proxies.${i}.username`,
@@ -67,7 +74,7 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.username`}
                       value={proxy.username}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
                       onChange={onChange}
                     />
                   ),
@@ -78,7 +85,7 @@ const Proxies = ({ proxies }) => {
                     <OIbPassword
                       name={`engine.proxies.${i}.password`}
                       value={proxy.password}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
                       onChange={onChange}
                     />
                   ),
