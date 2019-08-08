@@ -8,13 +8,13 @@ import { EngineContext } from '../context/configContext.jsx'
 const Filters = ({ filters }) => {
   const { configDispatch } = React.useContext(EngineContext)
   const handleDelete = (rowIndex) => {
-    configDispatch({ type: 'deleteRow', name: 'engine.filter', rowIndex })
+    configDispatch({ type: 'deleteRow', name: `engine.filter.${rowIndex}` })
   }
   const handleAdd = () => {
     configDispatch({ type: 'addRow', name: 'engine.filter', value: '' })
   }
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'updateEngine', name, value, validity })
+    configDispatch({ type: 'update', name, value, validity })
   }
   return (
     filters && (
@@ -31,10 +31,10 @@ const Filters = ({ filters }) => {
               headers={['adresse']}
               rows={filters.map((filter, i) => [
                 {
-                  name: `filter.${i}`,
+                  name: `engine.filter.${i}`,
                   value: (
                     <OIbText
-                      name={`filter.${i}`}
+                      name={`engine.filter.${i}`}
                       value={filter}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}

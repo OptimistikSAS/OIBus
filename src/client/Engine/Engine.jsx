@@ -20,7 +20,7 @@ const Engine = () => {
 
   const onChange = (name, value, validity) => {
     console.info('dispatch:', name, value, validity)
-    configDispatch({ type: 'updateEngine', name, value, validity })
+    configDispatch({ type: 'update', name, value, validity })
   }
   const { error, config } = configState
   if (error) setAlert({ text: error, type: 'danger' })
@@ -42,7 +42,7 @@ const Engine = () => {
         <Row form>
           <Col md={2}>
             <OIbInteger
-              name="port"
+              name="engine.port"
               label="Port"
               value={config.engine.port}
               min={1}
@@ -55,7 +55,7 @@ const Engine = () => {
         <Row form>
           <Col md={3}>
             <OIbText
-              name="user"
+              name="engine.user"
               label="Admin user name"
               value={config.engine.user}
               regExp={/^.{2,}$/} // i.e. min size = 2
@@ -66,7 +66,7 @@ const Engine = () => {
           <Col md={3}>
             <OIbPassword
               label="Admin Password"
-              name="password"
+              name="engine.password"
               onChange={onChange}
               regExp={/^.{4,}$/}
               value={configState.config.engine.password}
