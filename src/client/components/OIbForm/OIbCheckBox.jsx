@@ -6,7 +6,7 @@ const OIbCheckBox = ({ label, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { checked } = target
-    onChange(name, checked)
+    onChange(name, checked, null)
   }
 
   return (

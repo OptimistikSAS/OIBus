@@ -6,7 +6,7 @@ const OIbSelect = ({ label, help, option, options, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal)
+    onChange(name, newVal, null)
   }
 
   return (

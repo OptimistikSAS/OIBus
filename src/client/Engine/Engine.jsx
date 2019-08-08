@@ -19,7 +19,6 @@ const Engine = () => {
   )
 
   const onChange = (name, value, validity) => {
-    console.info('dispatch:', name, value, validity)
     configDispatch({ type: 'update', name, value, validity })
   }
   const { error, config } = configState

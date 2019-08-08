@@ -10,7 +10,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid }) => {
     const { value: newVal } = target
     onChange(name, newVal, valid(newVal))
   }
-  const validCheck = valid ? valid(value) : null
+  const validCheck = valid(value)
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
@@ -29,6 +29,6 @@ OIbPassword.propTypes = {
   valid: PropTypes.func,
 }
 
-OIbPassword.defaultProps = { valid: null, label: null, help: null }
+OIbPassword.defaultProps = { valid: () => null, label: null, help: null }
 
 export default OIbPassword
