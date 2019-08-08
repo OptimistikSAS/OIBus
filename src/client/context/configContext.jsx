@@ -3,62 +3,30 @@
 // provide then json and a way to update as a reducer
 import React from 'react'
 import PropTypes from 'prop-types'
+import objectPath from 'object-path'
 import apis from '../services/apis'
+
 
 const reducer = (state, action) => {
   const { name, value, json, type, validity } = action
-  let keys
-  let newState
+  const newState = Object.assign(Object.assign({}, state))
   switch (type) {
-    case 'update':
+    case 'fetch':
       return json
+    case 'update':
+      newState.errors = validity
+      objectPath.set(newState.config, name, value)
+      return newState
     case 'saveEngine':
-      // will not modify the state but save to server
+      // no change to state but save to server
       apis.updateEngine(state.config.engine)
       return state
-    case 'updateEngine':
-      newState = Object.assign(Object.assign({}, state))
-      newState.errors = validity
-      keys = name.split('.')
-      /** @todo: make this recursive would allow to support any number */
-      switch (keys.length) {
-        case 1:
-          state.config.engine[keys[0]] = value
-          break
-        case 2:
-          state.config.engine[keys[0]][keys[1]] = value
-          break
-        case 3:
-          state.config.engine[keys[0]][keys[1]][keys[2]] = value
-          break
-        default:
-          throw new Error(`name ${name} should have 0 to 2 points max`)
-      }
-      return newState
     case 'deleteRow':
-      keys = name.split('.')
-      newState = Object.assign(Object.assign({}, state))
-      newState.config[keys[0]][keys[1]].splice(action.rowIndex, 1)
-      // copy into the new state
+      objectPath.del(newState.config, name)
       return newState
     case 'addRow':
-      keys = name.split('.')
-      newState = Object.assign(Object.assign({}, state))
-      newState.config[keys[0]][keys[1]].push(action.value)
+      objectPath.push(newState.config, name, action.value)
       // copy into the new state
-      return newState
-    case 'updateFilters':
-      newState = Object.assign(Object.assign({}, state))
-      newState.errors = validity
-      console.info('ici', validity, name, value)
-      /*
-      keys = name.split('.')
-      if (keys[1]) {
-        state.config.engine[keys[0]][keys[1]] = value
-      } else {
-        state.config.engine[keys[0]] = value
-      }
-      */
       return newState
     default:
       throw new Error(`unknown action type: ${type}`)
@@ -76,10 +44,10 @@ const EngineProvider = ({ children }) => {
         const contentType = response.headers.get('content-type')
         if (!contentType || contentType.indexOf('application/json') === -1) throw new Error('bad header')
         const json = await response.json()
-        if (mounted) configDispatch({ type: 'update', json })
+        if (mounted) configDispatch({ type: 'fetch', json })
       } catch (error) {
         console.error(error)
-        if (mounted) configDispatch({ type: 'error', error })
+        throw error
       }
       return () => {
         mounted = false

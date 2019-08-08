@@ -25,7 +25,7 @@ const Caching = ({ onChange, caching }) => (
       <Col md={4}>
         <OIbText
           label="Cache Folder"
-          name="caching.cacheFolder"
+          name="engine.caching.cacheFolder"
           value={caching.cacheFolder}
           help={<div>Where to store the cached data</div>}
           onChange={onChange}
@@ -35,7 +35,7 @@ const Caching = ({ onChange, caching }) => (
     <Row>
       <Col md={4}>
         <OIbText
-          name="caching.archiveFolder"
+          name="engine.caching.archiveFolder"
           label="Archive Folder"
           value={caching.archiveFolder}
           help={<div>Where to store the cached data</div>}
@@ -45,7 +45,7 @@ const Caching = ({ onChange, caching }) => (
       <Col md={2}>
         <OIbSelect
           label="Archive Mode"
-          name="caching.archiveMode"
+          name="engine.caching.archiveMode"
           options={['archive', 'delete']}
           option={caching.archiveMode}
           help={<div> Move to Archive Folders or Delete files</div>}
