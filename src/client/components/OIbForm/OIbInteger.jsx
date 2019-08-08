@@ -10,7 +10,7 @@ const OIbInteger = ({ label, help, valid, value, name, onChange }) => {
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { style: { marginBottom: 0 } }
-  const validCheck = valid ? valid(value) : null
+  const validCheck = valid(value)
   return (
     <FormGroup {...style}>
       {label && <Label for={name}>{label}</Label>}
@@ -29,7 +29,7 @@ OIbInteger.propTypes = {
   valid: PropTypes.func,
 }
 OIbInteger.defaultProps = {
-  valid: null,
+  valid: () => null,
   label: null,
   help: null,
 }
