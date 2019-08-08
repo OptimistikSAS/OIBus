@@ -47,7 +47,7 @@ const Logging = ({ logParameters, onChange }) => (
       <Col md={3}>
         <OIbSelect
           label="Console Level"
-          name="logParameters.consoleLevel"
+          name="engine.logParameters.consoleLevel"
           option={logParameters.consoleLevel}
           options={['silly', 'debug', 'info', 'warning', 'error']}
           help={<div>The level for the Console log</div>}
@@ -56,7 +56,7 @@ const Logging = ({ logParameters, onChange }) => (
       </Col>
       <Col md={3}>
         <OIbSelect
-          name="logParameters.fileLevel"
+          name="engine.logParameters.fileLevel"
           label="File Level"
           options={['silly', 'debug', 'info', 'warning', 'error']}
           option={logParameters.fileLevel}
@@ -67,7 +67,7 @@ const Logging = ({ logParameters, onChange }) => (
       <Col md={3}>
         <OIbSelect
           label="Sqlite Level"
-          name="logParameters.sqliteLevel"
+          name="engine.logParameters.sqliteLevel"
           options={['silly', 'debug', 'info', 'warning', 'error']}
           option={logParameters.sqliteLevel}
           help={<div>The level for the sqlite log</div>}
@@ -78,7 +78,7 @@ const Logging = ({ logParameters, onChange }) => (
     <Row>
       <Col md={4}>
         <OIbText
-          name="logParameters.filename"
+          name="engine.logParameters.filename"
           label="Filename for the log file"
           value={logParameters.filename}
           help={<div>The filename of the log file</div>}
@@ -87,7 +87,7 @@ const Logging = ({ logParameters, onChange }) => (
       </Col>
       <Col md={2}>
         <OIbInteger
-          name="logParameters.maxsize"
+          name="engine.logParameters.maxsize"
           label="File Max size"
           value={logParameters.maxsize}
           help={<div>Maximum size of file logs (Bytes)</div>}
@@ -96,7 +96,7 @@ const Logging = ({ logParameters, onChange }) => (
       </Col>
       <Col md={2}>
         <OIbInteger
-          name="logParameters.maxFiles"
+          name="engine.logParameters.maxFiles"
           label="number of files"
           value={logParameters.maxFiles}
           min={1}
@@ -112,7 +112,7 @@ const Logging = ({ logParameters, onChange }) => (
     <Row>
       <Col md={4}>
         <OIbText
-          name="logParameters.sqliteFilename"
+          name="engine.logParameters.sqliteFilename"
           label="Filename of sqlite db"
           value={logParameters.sqliteFilename}
           help={<div>The filename of the db file</div>}
@@ -121,7 +121,7 @@ const Logging = ({ logParameters, onChange }) => (
       </Col>
       <Col md={2}>
         <OIbInteger
-          name="logParameters.sqliteMaxFileSize"
+          name="engine.logParameters.sqliteMaxFileSize"
           label="Db Max size"
           value={logParameters.sqliteMaxFileSize}
           help={<div>Max File Size of the sqlite database (Byte)</div>}

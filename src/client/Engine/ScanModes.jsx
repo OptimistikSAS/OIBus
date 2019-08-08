@@ -8,13 +8,13 @@ import { EngineContext } from '../context/configContext.jsx'
 const ScanModes = ({ scanModes }) => {
   const { configDispatch } = React.useContext(EngineContext)
   const handleDelete = (rowIndex) => {
-    configDispatch({ type: 'deleteRow', name: 'engine.scanModes', rowIndex })
+    configDispatch({ type: 'deleteRow', name: `engine.scanModes.${rowIndex}` })
   }
   const handleAdd = () => {
     configDispatch({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
   }
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'updateEngine', name, value, validity })
+    configDispatch({ type: 'update', name, value, validity })
   }
   return (
     scanModes && (
@@ -69,10 +69,10 @@ const ScanModes = ({ scanModes }) => {
               headers={['scanMode', 'cron']}
               rows={scanModes.map((scanMode, i) => [
                 {
-                  name: `scanModes.${i}.scanMode`,
+                  name: `engine.scanModes.${i}.scanMode`,
                   value: (
                     <OIbText
-                      name={`scanModes.${i}.scanMode`}
+                      name={`engine.scanModes.${i}.scanMode`}
                       value={scanMode.scanMode}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
@@ -80,10 +80,10 @@ const ScanModes = ({ scanModes }) => {
                   ),
                 },
                 {
-                  name: `scanModes.${i}.cronTime`,
+                  name: `engine.scanModes.${i}.cronTime`,
                   value: (
                     <OIbText
-                      name={`scanModes.${i}.cronTime`}
+                      name={`engine.scanModes.${i}.cronTime`}
                       value={scanMode.cronTime}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}

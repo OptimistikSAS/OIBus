@@ -8,11 +8,11 @@ import { EngineContext } from '../context/configContext.jsx'
 const Proxies = ({ proxies }) => {
   const { configDispatch } = React.useContext(EngineContext)
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'updateEngine', name, value, validity })
+    configDispatch({ type: 'update', name, value, validity })
   }
   const handleDelete = (rowIndex) => {
     console.info('delete', rowIndex)
-    configDispatch({ type: 'deleteRow', name: 'engine.proxies', rowIndex })
+    configDispatch({ type: 'deleteRow', name: `engine.proxies.${rowIndex}` })
   }
   const handleAdd = () => {
     configDispatch({ type: 'addRow', name: 'engine.proxies', value: { name: '', protocol: '', host: '', port: '', username: '', password: '' } })
@@ -32,10 +32,10 @@ const Proxies = ({ proxies }) => {
               headers={['Name', 'Protocol', 'Host', 'Port', 'User', 'Password']}
               rows={proxies.map((proxy, i) => [
                 {
-                  name: `proxies.${i}.name`,
+                  name: `engine.proxies.${i}.name`,
                   value: (
                     <OIbText
-                      name={`proxies.${i}.name`}
+                      name={`engine.proxies.${i}.name`}
                       value={proxy.name}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
@@ -43,14 +43,14 @@ const Proxies = ({ proxies }) => {
                   ),
                 },
                 {
-                  name: `proxies.${i}.protocol`,
+                  name: `engine.proxies.${i}.protocol`,
                   value: <OIbSelect name={`proxies.${i}.protocol`} options={['http', 'https']} option={proxy.protocol} onChange={onChange} />,
                 },
                 {
-                  name: `proxies.${i}.host`,
+                  name: `engine.proxies.${i}.host`,
                   value: (
                     <OIbText
-                      name={`proxies.${i}.host`}
+                      name={`engine.proxies.${i}.host`}
                       value={proxy.host}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
@@ -58,14 +58,14 @@ const Proxies = ({ proxies }) => {
                   ),
                 },
                 {
-                  name: `proxies.${i}.port`,
-                  value: <OIbInteger name={`proxies.${i}.port`} value={proxy.port} min={1} max={65535} onChange={onChange} />,
+                  name: `engine.proxies.${i}.port`,
+                  value: <OIbInteger name={`engine.proxies.${i}.port`} value={proxy.port} min={1} max={65535} onChange={onChange} />,
                 },
                 {
-                  name: `proxies.${i}.username`,
+                  name: `engine.proxies.${i}.username`,
                   value: (
                     <OIbText
-                      name={`proxies.${i}.username`}
+                      name={`engine.proxies.${i}.username`}
                       value={proxy.username}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
@@ -73,10 +73,10 @@ const Proxies = ({ proxies }) => {
                   ),
                 },
                 {
-                  name: `proxies.${i}.password`,
+                  name: `engine.proxies.${i}.password`,
                   value: (
                     <OIbPassword
-                      name={`proxies.${i}.password`}
+                      name={`engine.proxies.${i}.password`}
                       value={proxy.password}
                       regExp={/^.{2,}$/} // i.e. min size = 2
                       onChange={onChange}
