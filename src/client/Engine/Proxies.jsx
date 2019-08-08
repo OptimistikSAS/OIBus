@@ -11,7 +11,6 @@ const Proxies = ({ proxies }) => {
     configDispatch({ type: 'update', name, value, validity })
   }
   const handleDelete = (rowIndex) => {
-    console.info('delete', rowIndex)
     configDispatch({ type: 'deleteRow', name: `engine.proxies.${rowIndex}` })
   }
   const handleAdd = () => {

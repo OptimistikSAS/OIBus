@@ -10,7 +10,7 @@ const OIbText = ({ label, help, valid, value, name, onChange }) => {
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { style: { marginBottom: 0 } }
-  const validCheck = valid ? valid(value) : null
+  const validCheck = valid(value)
   return (
     <FormGroup {...style}>
       {label && <Label for={name}>{label}</Label>}
@@ -28,6 +28,6 @@ OIbText.propTypes = {
   value: PropTypes.string.isRequired,
   valid: PropTypes.func,
 }
-OIbText.defaultProps = { valid: null, label: null, help: null }
+OIbText.defaultProps = { valid: () => null, label: null, help: null }
 
 export default OIbText
