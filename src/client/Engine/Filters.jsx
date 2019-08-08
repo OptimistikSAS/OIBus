@@ -36,7 +36,7 @@ const Filters = ({ filters }) => {
                     <OIbText
                       name={`engine.filter.${i}`}
                       value={filter}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
                       onChange={onChange}
                     />
                   ),

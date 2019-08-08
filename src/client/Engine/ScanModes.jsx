@@ -74,7 +74,7 @@ const ScanModes = ({ scanModes }) => {
                     <OIbText
                       name={`engine.scanModes.${i}.scanMode`}
                       value={scanMode.scanMode}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
                       onChange={onChange}
                     />
                   ),
@@ -85,7 +85,7 @@ const ScanModes = ({ scanModes }) => {
                     <OIbText
                       name={`engine.scanModes.${i}.cronTime`}
                       value={scanMode.cronTime}
-                      regExp={/^.{2,}$/} // i.e. min size = 2
+                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
                       onChange={onChange}
                     />
                   ),
