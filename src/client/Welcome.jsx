@@ -5,17 +5,14 @@ import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 import { AlertContext } from './context/AlertContext.jsx'
-import { EngineContext } from './context/configContext.jsx'
+import { ConfigContext } from './context/configContext.jsx'
 
 const Welcome = () => {
-  const [configActiveJson, setConfigActiveJson] = React.useState(null)
-  const [configJson, setConfigJson] = React.useState(null)
   const [loading, setLoading] = React.useState(null)
   const { setAlert } = React.useContext(AlertContext)
-  // eslint-disable-next-line no-unused-vars
-  const { configState, configDispatch } = React.useContext(EngineContext)
-  const maxDiffLength = 10000
-
+  const { newConfig, dispatchNewConfig, activeConfig, setActiveConfig } = React.useContext(ConfigContext)
+  const MAX_DIFF_LENGTH = 10000
+  // function to help the diff library
   const diffInstance = create({
     objectHash: (obj, index) => {
       // allow to diff the point list array correctly
@@ -41,43 +38,7 @@ const Welcome = () => {
       return `$$index:${index}`
     },
   })
-
-  /**
-   * Acquire the Active configuration
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis
-      .getActiveConfig()
-      .then(({ config }) => {
-        setConfigActiveJson(config)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }, [])
-
-  /**
-   * Acquire the Current Modified configuration
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis
-      .getConfig()
-      .then(({ config }) => {
-        setConfigJson(config)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }, [])
-
-  /**
-   * Disable loading when server reachable
-   * @returns {void}
-   */
+  // Disable loading when server reachable
   const stopLoadingWhenReachable = () => {
     apis
       .getConfig()
@@ -85,15 +46,11 @@ const Welcome = () => {
       // retry getConfig if error catched
       .catch(() => setTimeout(() => stopLoadingWhenReachable(), 1000))
   }
-
-  /**
-   * Activate new configuration
-   * @returns {void}
-   */
+  // button to activate the modified configuration
   const handleActivate = async () => {
     try {
       await apis.updateActiveConfig()
-      setConfigActiveJson(configJson)
+      setActiveConfig(newConfig)
       setLoading(true)
       stopLoadingWhenReachable()
     } catch (error) {
@@ -101,28 +58,22 @@ const Welcome = () => {
       setAlert({ text: error.message, type: 'danger' })
     }
   }
-
-  /**
-   * Reset modified configuration
-   * @returns {void}
-   */
+  // button to remove modification to the config
   const handleDecline = async () => {
     try {
       await apis.resetModifiedConfig()
-      setConfigJson(configActiveJson)
+      dispatchNewConfig({ type: 'reset', config: JSON.parse(JSON.stringify(activeConfig)) })
     } catch (error) {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
     }
   }
-
-  const delta = diffInstance.diff(configActiveJson, configJson)
-  const isModified = !!delta
-  const deltaHTML = formatters.html.format(delta)
-
+  const delta = diffInstance.diff(activeConfig, newConfig)
+  const isModified = (delta !== undefined)
+  const deltaHTML = isModified && formatters.html.format(delta)
   return (
     <>
-      <pre>{JSON.stringify(configState.errors)}</pre>
+      <pre>{newConfig && JSON.stringify(newConfig.errors)}</pre>
       {isModified ? (
         <>
           <div className="force-row-display">
@@ -138,24 +89,12 @@ const Welcome = () => {
             </Button>
           </div>
           <div className="oi-full-width">
-            {deltaHTML.length > maxDiffLength ? (
+            {deltaHTML.length > MAX_DIFF_LENGTH ? (
               <Label>The configuration difference is too large to display</Label>
             ) : (
               // eslint-disable-next-line react/no-danger
               <div dangerouslySetInnerHTML={{ __html: deltaHTML }} />
             )}
-          </div>
-          <div className="force-row-display">
-            <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
-              {(confirm) => (
-                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
-                  Activate
-                </Button>
-              )}
-            </Modal>
-            <Button className="inline-button" color="primary" onClick={() => handleDecline()}>
-              Decline
-            </Button>
           </div>
         </>
       ) : (
