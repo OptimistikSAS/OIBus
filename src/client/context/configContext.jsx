@@ -14,7 +14,13 @@ const reducer = (state, action) => {
       return JSON.parse(JSON.stringify(config))
     case 'update':
       if (!newState.errors) newState.errors = {}
-      newState.errors[name] = validity
+      if (validity) {
+        newState.errors[name] = validity
+      } else {
+        // clean the error object
+        delete newState.errors[name]
+        if (Object.keys(newState.errors).length === 0) delete newState.errors
+      }
       objectPath.set(newState, name, value)
       return newState
     case 'deleteRow':
