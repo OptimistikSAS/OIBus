@@ -47,7 +47,7 @@ const Proxies = ({ proxies }) => {
                 },
                 {
                   name: `engine.proxies.${i}.protocol`,
-                  value: <OIbSelect name={`proxies.${i}.protocol`} options={['http', 'https']} option={proxy.protocol} onChange={onChange} />,
+                  value: <OIbSelect name={`engine.proxies.${i}.protocol`} options={['http', 'https']} option={proxy.protocol} onChange={onChange} />,
                 },
                 {
                   name: `engine.proxies.${i}.host`,
