@@ -10,15 +10,11 @@ import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
 
 const Engine = () => {
-  const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
-  console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   // const { setAlert } = React.useContext(AlertContext)
 
   const onChange = (name, value, validity) => {
-    console.log('onchange', name, value, validity)
-    console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
     dispatchNewConfig({ type: 'update', name, value, validity })
-    console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
   }
   return newConfig ? (
     <>

@@ -1,7 +1,6 @@
 const handleResponse = async (response) => {
   try {
     const json = await response.json()
-    console.log('resp', json, json.config.engine.port)
     return json
   } catch (error) {
     console.error('Error parsing JSON', error)

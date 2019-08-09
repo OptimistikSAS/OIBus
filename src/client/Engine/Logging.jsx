@@ -105,7 +105,7 @@ const Logging = ({ logParameters, onChange }) => (
         />
       </Col>
       <Col md={3}>
-        <OIbCheckBox label="Tailable" name="logParameters.tailable" value={logParameters.tailable} onChange={onChange} />
+        <OIbCheckBox label="Tailable" name="engine.logParameters.tailable" value={logParameters.tailable} onChange={onChange} />
       </Col>
     </Row>
     <Row>
