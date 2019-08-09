@@ -5,8 +5,9 @@ import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 const OIbInteger = ({ label, help, valid, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
-    const { value: newVal } = target
-    onChange(name, valid(newVal) ? parseInt(newVal || 0, 10) : newVal, valid(newVal))
+    const { value: v } = target
+    const newVal = Number.isNaN(parseInt(v, 10)) ? v : parseInt(v, 10)
+    onChange(name, newVal, valid(newVal))
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { style: { marginBottom: 0 } }

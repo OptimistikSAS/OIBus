@@ -3,18 +3,22 @@ import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm'
-import { EngineContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const Proxies = ({ proxies }) => {
-  const { configDispatch } = React.useContext(EngineContext)
+  const { dispatchNewConfig } = React.useContext(ConfigContext)
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'update', name, value, validity })
+    dispatchNewConfig({ type: 'update', name, value, validity })
   }
   const handleDelete = (rowIndex) => {
-    configDispatch({ type: 'deleteRow', name: `engine.proxies.${rowIndex}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `engine.proxies.${rowIndex}` })
   }
   const handleAdd = () => {
-    configDispatch({ type: 'addRow', name: 'engine.proxies', value: { name: '', protocol: '', host: '', port: '', username: '', password: '' } })
+    dispatchNewConfig({
+      type: 'addRow',
+      name: 'engine.proxies',
+      value: { name: '', protocol: '', host: '', port: '', username: '', password: '' },
+    })
   }
   return (
     proxies && (
