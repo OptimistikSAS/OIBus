@@ -1,7 +1,7 @@
 import React from 'react'
 import { Col, Row, Form, Spinner } from 'reactstrap'
-import { EngineContext } from '../context/configContext.jsx'
-import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
+// import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbInteger, OIbText, OIbPassword, OIbTitle } from '../components/OIbForm'
 import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
@@ -10,20 +10,17 @@ import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
 
 const Engine = () => {
-  const { configState, configDispatch } = React.useContext(EngineContext)
-  const { setAlert } = React.useContext(AlertContext)
-  // update the Engine on the server when quitting this page
-  React.useEffect(
-    () => () => configDispatch({ type: 'saveEngine' }),
-    [],
-  )
+  const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
+  console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
+  // const { setAlert } = React.useContext(AlertContext)
 
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'update', name, value, validity })
+    console.log('onchange', name, value, validity)
+    console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
+    dispatchNewConfig({ type: 'update', name, value, validity })
+    console.log(activeConfig && activeConfig.engine.port, newConfig && newConfig.engine.port)
   }
-  const { error, config } = configState
-  if (error) setAlert({ text: error, type: 'danger' })
-  return config ? (
+  return newConfig ? (
     <>
       <Form>
         <OIbTitle title="Engine Parameters">
@@ -43,8 +40,8 @@ const Engine = () => {
             <OIbInteger
               name="engine.port"
               label="Port"
-              value={config.engine.port}
-              valid={(val) => ((val >= 1) && (val <= 65535) ? null : 'value should be between 1 and 65535')}
+              value={newConfig.engine.port}
+              valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
               help={<div>The port to access the Admin interface</div>}
               onChange={onChange}
             />
@@ -55,8 +52,8 @@ const Engine = () => {
             <OIbText
               name="engine.user"
               label="Admin user name"
-              value={config.engine.user}
-              valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
+              value={newConfig.engine.user}
+              valid={(val) => ((val.length > 2) ? null : 'Length should be greater than 2')}
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
             />
@@ -67,18 +64,18 @@ const Engine = () => {
               name="engine.password"
               onChange={onChange}
               valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 4')}
-              value={configState.config.engine.password}
+              value={newConfig.engine.password}
               help={<div>The password of the Admin user</div>}
             />
           </Col>
         </Row>
-        <Filters onChange={onChange} filters={config.engine.filter} />
-        <Logging onChange={onChange} logParameters={config.engine.logParameters} />
-        <ScanModes onChange={onChange} scanModes={config.engine.scanModes} />
-        <Caching onChange={onChange} caching={config.engine.caching} />
-        <Proxies onChange={onChange} proxies={config.engine.proxies} />
+        <Filters onChange={onChange} filters={newConfig.engine.filter} />
+        <Logging onChange={onChange} logParameters={newConfig.engine.logParameters} />
+        <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
+        <Caching onChange={onChange} caching={newConfig.engine.caching} />
+        <Proxies onChange={onChange} proxies={newConfig.engine.proxies} />
       </Form>
-      <pre>{JSON.stringify(config)}</pre>
+      <pre>{JSON.stringify(newConfig)}</pre>
     </>
   ) : (
     <div className="spinner-container">

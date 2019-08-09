@@ -3,18 +3,18 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText } from '../components/OIbForm'
-import { EngineContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const ScanModes = ({ scanModes }) => {
-  const { configDispatch } = React.useContext(EngineContext)
+  const { dispatchNewConfig } = React.useContext(ConfigContext)
   const handleDelete = (rowIndex) => {
-    configDispatch({ type: 'deleteRow', name: `engine.scanModes.${rowIndex}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `engine.scanModes.${rowIndex}` })
   }
   const handleAdd = () => {
-    configDispatch({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
+    dispatchNewConfig({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
   }
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'update', name, value, validity })
+    dispatchNewConfig({ type: 'update', name, value, validity })
   }
   return (
     scanModes && (

@@ -6,58 +6,56 @@ import PropTypes from 'prop-types'
 import objectPath from 'object-path'
 import apis from '../services/apis'
 
-
 const reducer = (state, action) => {
-  const { name, value, json, type, validity } = action
-  const newState = Object.assign(Object.assign({}, state))
+  const { name, value, config, type, validity } = action
+  const newState = JSON.parse(JSON.stringify(state))
   switch (type) {
-    case 'fetch':
-      return json
+    case 'reset':
+      return JSON.parse(JSON.stringify(config))
     case 'update':
-      newState.errors = validity
-      objectPath.set(newState.config, name, value)
+      if (!newState.errors) newState.errors = {}
+      newState.errors[name] = validity
+      objectPath.set(newState, name, value)
       return newState
-    case 'saveEngine':
-      // no change to state but save to server
-      apis.updateEngine(state.config.engine)
-      return state
     case 'deleteRow':
-      objectPath.del(newState.config, name)
+      objectPath.del(newState, name)
       return newState
     case 'addRow':
-      objectPath.push(newState.config, name, action.value)
+      objectPath.push(newState, name, action.value)
       // copy into the new state
       return newState
     default:
       throw new Error(`unknown action type: ${type}`)
   }
 }
-const engineInitialState = {}
-const EngineContext = React.createContext(engineInitialState)
-const EngineProvider = ({ children }) => {
-  const [configState, configDispatch] = React.useReducer(reducer, engineInitialState)
+const configInitialState = null
+const ConfigContext = React.createContext(configInitialState)
+const ConfigProvider = ({ children }) => {
+  const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
+  const [activeConfig, setActiveConfig] = React.useState(null)
+  // On mount, acquire the Active config from server.
   React.useEffect(() => {
-    const getConfig = async () => {
-      let mounted = true
+    let mounted = true
+    const fetchActiveConfig = async () => {
       try {
-        const response = await fetch('/config')
-        const contentType = response.headers.get('content-type')
-        if (!contentType || contentType.indexOf('application/json') === -1) throw new Error('bad header')
-        const json = await response.json()
-        if (mounted) configDispatch({ type: 'fetch', json })
+        const { config } = await apis.getActiveConfig()
+        if (mounted) {
+          dispatchNewConfig({ type: 'reset', config })
+          setActiveConfig(JSON.parse(JSON.stringify(config)))
+        }
       } catch (error) {
         console.error(error)
-        throw error
-      }
-      return () => {
-        mounted = false
-        console.info('unmount')
       }
     }
-    getConfig()
+    fetchActiveConfig()
+    return () => {
+      mounted = false
+      console.info('unmount')
+    }
   }, [])
-  return <EngineContext.Provider value={{ configState, configDispatch }}>{children}</EngineContext.Provider>
+  // the provider return the new and active config and their respective setters
+  return <ConfigContext.Provider value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig }}>{children}</ConfigContext.Provider>
 }
 
-EngineProvider.propTypes = { children: PropTypes.element.isRequired }
-export { EngineContext, EngineProvider }
+ConfigProvider.propTypes = { children: PropTypes.element.isRequired }
+export { ConfigContext, ConfigProvider }

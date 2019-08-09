@@ -3,18 +3,18 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbText, OIbTitle } from '../components/OIbForm'
-import { EngineContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const Filters = ({ filters }) => {
-  const { configDispatch } = React.useContext(EngineContext)
+  const { dispatchNewConfig } = React.useContext(ConfigContext)
   const handleDelete = (rowIndex) => {
-    configDispatch({ type: 'deleteRow', name: `engine.filter.${rowIndex}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `engine.filter.${rowIndex}` })
   }
   const handleAdd = () => {
-    configDispatch({ type: 'addRow', name: 'engine.filter', value: '' })
+    dispatchNewConfig({ type: 'addRow', name: 'engine.filter', value: '' })
   }
   const onChange = (name, value, validity) => {
-    configDispatch({ type: 'update', name, value, validity })
+    dispatchNewConfig({ type: 'update', name, value, validity })
   }
   return (
     filters && (
