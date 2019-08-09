@@ -7,36 +7,28 @@ import NewDataSourceRow from './NewDataSourceRow.jsx'
 import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const South = ({ history }) => {
-  const [dataSources, setDataSources] = React.useState([])
   const [protocolList, setProtocolList] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
-
-  /**
-   * Acquire the South configuration
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis.getConfig().then(({ config }) => {
-      setDataSources(config.south.dataSources)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
-  }, [])
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const dataSources = (newConfig && newConfig.south && newConfig.south.dataSources) || []
 
   /**
    * Acquire the list of Protocols
    * @returns {void}
    */
   React.useEffect(() => {
-    apis.getSouthProtocols().then((protocols) => {
-      setProtocolList(protocols)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getSouthProtocols()
+      .then((protocols) => {
+        setProtocolList(protocols)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }, [])
 
   /**
@@ -52,10 +44,10 @@ const South = ({ history }) => {
    * dataSourceId, enabled and protocol fields
    * @returns {void}
    */
-  const addDataSource = ({ dataSourceId, enabled, protocol }) => {
+  const addDataSource = ({ dataSourceId /* , enabled, protocol */ }) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) {
-      setDataSources((prev) => [...prev, { dataSourceId, enabled, protocol }])
+      // setDataSources((prev) => [...prev, { dataSourceId, enabled, protocol }])
     } else {
       throw new Error('dataSourceId already exists')
     }
@@ -95,19 +87,12 @@ const South = ({ history }) => {
    * @param {string} dataSourceId The id to enable/disable
    * @return {void}
    */
-  const handleToggleClick = async (dataSourceId) => {
-    const dataSourceIndex = getDataSourceIndex(dataSourceId)
-    if (dataSourceIndex === -1) return
+  const handleToggleClick = (dataSourceId) => {
+    const index = getDataSourceIndex(dataSourceId)
+    if (index === -1) return
     const newDataSources = dataSources.slice()
-    const formData = newDataSources[dataSourceIndex]
-    formData.enabled = !formData.enabled
-    try {
-      await apis.updateSouth(dataSourceId, formData)
-      setDataSources(newDataSources)
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    }
+    const { enabled } = newDataSources[index]
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${index}.enabled`, value: !enabled })
   }
 
   /**
@@ -115,18 +100,11 @@ const South = ({ history }) => {
    * @param {string} dataSourceId The id to delete
    * @returns {void}
    */
-  const handleDelete = async (dataSourceId) => {
+  const handleDelete = (dataSourceId) => {
     if (dataSourceId === '') return
-
-    try {
-      await apis.deleteSouth(dataSourceId)
-      // Remove the deleted data source from the table
-      setDataSources((prevState) => prevState.filter((dataSource) => dataSource.dataSourceId !== dataSourceId))
-      // TODO: Show loader
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    }
+    const index = getDataSourceIndex(dataSourceId)
+    if (index === -1) return
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${index}` })
   }
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']

@@ -7,50 +7,29 @@ import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const North = ({ history }) => {
-  const [applications, setApplications] = React.useState([])
   const [apiList, setApiList] = React.useState([])
-  const [dataSourceIds, setDataSourceIds] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const applications = (newConfig && newConfig.north && newConfig.north.applications) || []
+  const dataSourceIds = newConfig && newConfig.south.dataSources.map((dataSource) => dataSource.dataSourceId)
 
   /**
-   * Acquire the North configuration
+   * Acquire the list of API
    * @returns {void}
    */
   React.useEffect(() => {
-    apis.getConfig().then(({ config }) => {
-      setApplications(config.north.applications)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
-  }, [])
-
-  /**
-   * Acquire the South configuration for the subscribed to list
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis.getConfig().then(({ config }) => {
-      setDataSourceIds(config.south.dataSources.map((dataSource) => dataSource.dataSourceId))
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
-  }, [])
-
-  /**
-   * Acquire the list of protocols
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis.getNorthApis().then((application) => {
-      setApiList(application)
-    }).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    apis
+      .getNorthApis()
+      .then((application) => {
+        setApiList(application)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }, [])
 
   /**
@@ -83,11 +62,11 @@ const North = ({ history }) => {
    * applicationId, enabled and api fields
    * @returns {void}
    */
-  const addApplication = ({ applicationId, enabled, api }) => {
+  const addApplication = ({ applicationId /* , enabled, api */ }) => {
     const applicationIndex = getApplicationIndex(applicationId)
     if (applicationIndex === -1) {
       // Adds new application to table
-      setApplications((prev) => [...prev, { applicationId, enabled, api }])
+      // setApplications((prev) => [...prev, { applicationId, enabled, api }])
     } else {
       const error = new Error('application already exists')
       setAlert({ text: error.message, type: 'danger' })
@@ -101,19 +80,12 @@ const North = ({ history }) => {
    * @param {string} applicationId The id to enable/disable
    * @return {void}
    */
-  const handleToggleClick = async (applicationId) => {
-    const applicationIndex = getApplicationIndex(applicationId)
-    if (applicationIndex === -1) return
+  const handleToggleClick = (applicationId) => {
+    const index = getApplicationIndex(applicationId)
+    if (index === -1) return
     const newApplications = applications.slice()
-    const formData = newApplications[applicationIndex]
-    formData.enabled = !formData.enabled
-    try {
-      await apis.updateNorth(applicationId, formData)
-      setApplications(newApplications)
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    }
+    const { enabled } = newApplications[index]
+    dispatchNewConfig({ type: 'update', name: `north.applications.${index}.enabled`, value: !enabled })
   }
 
   /**
@@ -121,18 +93,11 @@ const North = ({ history }) => {
    * @param {string} applicationId The id to delete
    * @returns {void}
    */
-  const handleDelete = async (applicationId) => {
+  const handleDelete = (applicationId) => {
     if (applicationId === '') return
-    try {
-      await apis.deleteNorth(applicationId)
-
-      // Removes the deleted application from table
-      setApplications((prevState) => prevState.filter((application) => application.applicationId !== applicationId))
-      // TODO: Show loader
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    }
+    const index = getApplicationIndex(applicationId)
+    if (index === -1) return
+    dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${index}` })
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API', '']
