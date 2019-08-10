@@ -97,18 +97,16 @@ const South = ({ history }) => {
 
   /**
    * Deletes the chosen data source
-   * @param {string} dataSourceId The id to delete
+   * @param {integer} index The id to delete
    * @returns {void}
    */
-  const handleDelete = (dataSourceId) => {
-    if (dataSourceId === '') return
-    const index = getDataSourceIndex(dataSourceId)
+  const handleDelete = (index) => {
     if (index === -1) return
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${index}` })
   }
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']
-  const tableRows = dataSources.map(({ dataSourceId, enabled, protocol, points }) => [
+  const tableRows = dataSources.map(({ dataSourceId, enabled, protocol, points }, index) => [
     { name: dataSourceId, value: dataSourceId },
     {
       name: 'enabled',
@@ -154,7 +152,7 @@ const South = ({ history }) => {
               <Button className="inline-button" color="primary" onClick={() => handleEditClick(dataSourceId)}>
                 Edit
               </Button>
-              <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(dataSourceId))}>
+              <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(index))}>
                 Delete
               </Button>
             </div>
@@ -165,7 +163,7 @@ const South = ({ history }) => {
   ])
   return (
     <Col xs="12" md="9">
-      <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
+      <Table headers={tableHeaders} rows={tableRows} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>
   )
