@@ -94,7 +94,6 @@ const Proxies = ({ proxies }) => {
                   ),
                 },
               ])}
-              onRowClick={() => null}
               handleDelete={handleDelete}
               handleAdd={handleAdd}
             />
