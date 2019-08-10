@@ -11,7 +11,7 @@ import { ConfigContext } from '../context/configContext.jsx'
 const North = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
-  const applications = (newConfig && newConfig.north && newConfig.north.applications)
+  const applications = newConfig && newConfig.north && newConfig.north.applications
 
   /**
    * Gets the config json of a north application
@@ -38,11 +38,11 @@ const North = ({ history }) => {
    * applicationId, enabled and api fields
    * @returns {void}
    */
-  const addApplication = ({ applicationId /* , enabled, api */ }) => {
+  const addApplication = ({ applicationId, api }) => {
     const applicationIndex = getApplicationIndex(applicationId)
     if (applicationIndex === -1) {
-      // Adds new application to table
-      // setApplications((prev) => [...prev, { applicationId, enabled, api }])
+      // Adds new application
+      dispatchNewConfig({ type: 'addRow', name: 'north.applications', value: { applicationId, api, enabled: false } })
     } else {
       const error = new Error('application already exists')
       setAlert({ text: error.message, type: 'danger' })
@@ -71,24 +71,25 @@ const North = ({ history }) => {
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API', '']
-  const tableRows = applications && applications.map(({ applicationId, enabled, api }, index) => [
-    { name: applicationId, value: applicationId },
-    {
-      name: 'enabled',
-      value: (
-        <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-          {(confirm) => (
-            <div>
-              <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
-                {enabled ? 'Active' : 'Stopped'}
-              </Button>
-            </div>
-          )}
-        </Modal>
-      ),
-    },
-    { name: 'api', value: api },
-  ])
+  const tableRows = applications
+    && applications.map(({ applicationId, enabled, api }, index) => [
+      { name: applicationId, value: applicationId },
+      {
+        name: 'enabled',
+        value: (
+          <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
+            {(confirm) => (
+              <div>
+                <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
+                  {enabled ? 'Active' : 'Stopped'}
+                </Button>
+              </div>
+            )}
+          </Modal>
+        ),
+      },
+      { name: 'api', value: api },
+    ])
 
   return applications ? (
     <Col md="6">

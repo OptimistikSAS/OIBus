@@ -2,10 +2,10 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
 // import { AlertContext } from '../context/AlertContext.jsx'
-import { OIbTitle, OIbCheckBox, OIbInteger } from '../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 
-import Link from '../../north/link/Link.Form.jsx'
+import Link from '../../../north/link/Link.Form.jsx'
 
 const ApiForms = { Link }
 
