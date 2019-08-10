@@ -9,7 +9,7 @@ const Help = ({ title, children }) => {
   return (
     <>
       <Row>
-        <h3>
+        <h5>
           {title}
           {children && (
             // remove spaces so it can used as an Id
@@ -17,7 +17,7 @@ const Help = ({ title, children }) => {
               Help
             </Button>
           )}
-        </h3>
+        </h5>
       </Row>
       {children && (
         <UncontrolledCollapse toggler={id}>
