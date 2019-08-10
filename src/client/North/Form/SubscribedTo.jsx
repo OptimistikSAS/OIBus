@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import Table from '../components/table/Table.jsx'
-import { OIbSelect, OIbTitle } from '../components/OIbForm'
-import { ConfigContext } from '../context/configContext.jsx'
+import Table from '../../components/table/Table.jsx'
+import { OIbSelect, OIbTitle } from '../../components/OIbForm'
+import { ConfigContext } from '../../context/configContext.jsx'
 
 const SubscribedTo = ({ subscribedTo }) => {
   const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)

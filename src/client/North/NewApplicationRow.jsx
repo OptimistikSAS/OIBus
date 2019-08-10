@@ -1,64 +1,54 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
-import Select from '../components/Select.jsx'
-import apis from '../services/apis'
-import { AlertContext } from '../context/AlertContext.jsx'
+import { Button, Form, Col, Row } from 'reactstrap'
+import { OIbText, OIbSelect } from '../components/OIbForm/index.js'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
-  const [application, setApplication] = React.useState({ applicationId: '', enable: false, api: 'Console' })
-  const { setAlert } = React.useContext(AlertContext)
-
+  const [applicationId, setApplicationId] = React.useState('')
+  const [api, setApi] = React.useState(apiList[0])
   /**
    * Updates the application's state
    * @param {*} event The change event
    * @returns {void}
    */
-  const handleChange = (event) => {
-    const { target } = event
-    const { value } = target
+  const handleAddApplication = () => {
     //  update the new application's state
-    setApplication((prevState) => ({ ...prevState, [target.name]: value }))
+    if (applicationId === '') return
+    addApplication({ applicationId, api })
   }
 
-  /**
-   * Submits a new application
-   * @returns {void}
-   */
-  const handleAddApplication = async () => {
-    if (application.applicationId === '') return
-
-    try {
-      await apis.addNorth(application)
-      // add submitted application to the table
-      addApplication(application)
-      // reset the line
-      setApplication({ applicationId: '', enable: false, api: 'Console' })
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
+  const handleChange = (name, value) => {
+    switch (name) {
+      case 'applicationId':
+        setApplicationId(value)
+        break
+      case 'api':
+      default:
+        setApi(value)
+        break
     }
   }
 
   return (
-    <Form className="oi-add-new">
-      <FormGroup>
-        <Label for="Id">
-          New Application ID
-        </Label>
-        <Input className="oi-form-input" value={application.applicationId} id="Id" name="applicationId" type="text" onChange={handleChange} />
-      </FormGroup>
-      <FormGroup>
-        <Label for="api">
-          API
-        </Label>
-        <Select value={application.api} id="api" name="api" options={apiList} onChange={handleChange} />
-      </FormGroup>
-      <FormGroup>
-        <Button color="primary" onClick={() => handleAddApplication()}>
-          Add
-        </Button>
-      </FormGroup>
+    <Form>
+      <Row>
+        <Col md="5">
+          <OIbText
+            label="New Application ID"
+            value={applicationId}
+            name="applicationId"
+            onChange={handleChange}
+          />
+        </Col>
+        <Col md="3">
+          <OIbSelect label="API" option={api} name="api" options={apiList} onChange={handleChange} />
+        </Col>
+        <Col md="3">
+          <Button color="primary" onClick={() => handleAddApplication()}>
+            Add
+          </Button>
+        </Col>
+      </Row>
     </Form>
   )
 }

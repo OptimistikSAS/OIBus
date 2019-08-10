@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom'
 import { Spinner } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { ConfigContext } from '../context/configContext.jsx'
-import NorthForm from './NorthForm.jsx'
+import NorthForm from './Form/NorthForm.jsx'
 
 const ConfigureApi = ({ match }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
