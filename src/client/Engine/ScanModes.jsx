@@ -91,7 +91,6 @@ const ScanModes = ({ scanModes }) => {
                   ),
                 },
               ])}
-              onRowClick={() => null}
               handleDelete={handleDelete}
               handleAdd={handleAdd}
             />
