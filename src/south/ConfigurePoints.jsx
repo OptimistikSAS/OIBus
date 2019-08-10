@@ -426,7 +426,7 @@ const ConfigureProtocol = ({ match, location }) => {
           onChange={(event) => updateFilterText(event.target.value)}
         />
       </FormGroup>
-      <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />
+      <Table headers={tableHeaders} rows={tableRows} />
       {filteredPointsJson.length ? (
         <TablePagination
           maxToDisplay={maxPaginationDisplay}

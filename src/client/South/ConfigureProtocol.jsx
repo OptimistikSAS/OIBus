@@ -3,15 +3,13 @@ import Form from 'react-jsonschema-form-bs4'
 import { withRouter } from 'react-router-dom'
 import { Button, Col } from 'reactstrap'
 import PropTypes from 'prop-types'
-import apis from '../client/services/apis'
-import Modal from '../client/components/Modal.jsx'
-import uiSchema from './uiSchema.jsx'
-import { AlertContext } from '../client/context/AlertContext.jsx'
+import Modal from '../components/Modal.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext.jsx'
 
-const ConfigureApi = ({ match, location }) => {
+const ConfigureProtocol = ({ match, location }) => {
   const [configJson, setConfigJson] = React.useState()
   const [configSchema, setConfigSchema] = React.useState()
-  const [dataSourceIds, setDataSourceIds] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
 
   /**
@@ -28,12 +26,11 @@ const ConfigureApi = ({ match, location }) => {
    * @returns {void}
    */
   React.useEffect(() => {
-    const { api } = match.params
-    const { formData, subscribeList } = location
+    const { protocol } = match.params
+    const { formData } = location
 
-    setDataSourceIds(subscribeList)
-
-    apis.getNorthApiSchema(api).then((schema) => {
+    apis.getSouthProtocolSchema(protocol).then((schema) => {
+      delete schema.properties.points
       setConfigSchema(schema)
       updateForm(formData)
     }).catch((error) => {
@@ -43,29 +40,13 @@ const ConfigureApi = ({ match, location }) => {
   }, [])
 
   /**
-   * Make modification based on south dataSources to the config schema
-   * @returns {object} config schema
-   */
-  const modifiedConfigSchema = () => {
-    // check if configSchema is are already set
-    if (configSchema) {
-      const { subscribedTo } = configSchema.properties
-      // check if subscribedTo exists and enum was not already set
-      if (subscribedTo && subscribedTo.enum === undefined) {
-        subscribedTo.items.enum = dataSourceIds
-      }
-    }
-    return configSchema
-  }
-
-  /**
    * Handles the form's submittion
    * @param {*} param0 Object containing formData field
    * @returns {void}
    */
   const handleSubmit = ({ formData }) => {
-    const { applicationId } = formData
-    apis.updateNorth(applicationId, formData).catch((error) => {
+    const { dataSourceId } = formData
+    apis.updateSouth(dataSourceId, formData).catch((error) => {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
     })
@@ -80,7 +61,6 @@ const ConfigureApi = ({ match, location }) => {
     const { formData } = form
 
     updateForm(formData)
-    // submit change immediately on change
     handleSubmit(form)
   }
 
@@ -89,10 +69,9 @@ const ConfigureApi = ({ match, location }) => {
    * @returns {void}
    */
   const handleDelete = async () => {
-    const { applicationId } = configJson
-    if (applicationId === '') return
+    const { dataSourceId } = configJson
     try {
-      await apis.deleteNorth(applicationId)
+      await apis.deleteSouth(dataSourceId)
       // TODO: Show loader and redirect to main screen
     } catch (error) {
       console.error(error)
@@ -101,38 +80,38 @@ const ConfigureApi = ({ match, location }) => {
   }
 
   const log = (type) => console.info.bind(console, type)
-
   return (
-    <>
+    <Col xs="12" md="6">
       {configJson && configSchema && (
-        <Col xs="12" md="6">
+        <>
           <Form
             formData={configJson}
             liveValidate
             showErrorList={false}
-            schema={modifiedConfigSchema()}
-            uiSchema={uiSchema(configJson.api)}
+            schema={configSchema}
+            // uiSchema={uiSchema(configJson.protocol)}
             autocomplete="on"
             onChange={handleChange}
             onError={log('errors')}
           >
             <></>
           </Form>
-          <Modal show={false} title="Delete application" body="Are you sure you want to delete this application?">
-            {(config) => (
-              <Button color="danger" onClick={config(handleDelete)}>
+          <Modal show={false} title="Delete data source" body="Are you sure you want to delete this data source?">
+            {(confirm) => (
+              <Button color="danger" onClick={confirm(handleDelete)}>
                 Delete
               </Button>
             )}
           </Modal>
-        </Col>
+        </>
       )}
-    </>
+    </Col>
   )
 }
 
-ConfigureApi.propTypes = {
+ConfigureProtocol.propTypes = {
   match: PropTypes.object.isRequired,
   location: PropTypes.object.isRequired,
 }
-export default withRouter(ConfigureApi)
+
+export default withRouter(ConfigureProtocol)
