@@ -5,31 +5,13 @@ import { Button, Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from '../components/Modal.jsx'
-import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 
 const North = ({ history }) => {
-  const [apiList, setApiList] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
   const applications = (newConfig && newConfig.north && newConfig.north.applications)
-
-  /**
-   * Acquire the list of API
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis
-      .getNorthApis()
-      .then((application) => {
-        setApiList(application)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }, [])
 
   /**
    * Gets the config json of a north application

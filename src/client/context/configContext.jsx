@@ -39,15 +39,49 @@ const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
   const [activeConfig, setActiveConfig] = React.useState(null)
+  const [apiList, setApiList] = React.useState([])
+  const [protocolList, setProtocolList] = React.useState([])
+
+  /**
+   * Acquire the list of API
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    apis
+      .getNorthApis()
+      .then((application) => {
+        setApiList(application)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }, [])
+
+  /**
+   * Acquire the list of Protocols
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    apis
+      .getSouthProtocols()
+      .then((protocols) => {
+        setProtocolList(protocols)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }, [])
+
   // On mount, acquire the Active config from server.
   React.useEffect(() => {
     let mounted = true
     const fetchActiveConfig = async () => {
       try {
-        const { config } = await apis.getActiveConfig()
-        if (mounted) {
-          dispatchNewConfig({ type: 'reset', config })
-          setActiveConfig(JSON.parse(JSON.stringify(config)))
+        const resp = await apis.getActiveConfig()
+        if (mounted && resp) {
+          dispatchNewConfig({ type: 'reset', config: resp.config })
+          // parse/stringify to create deep copy:
+          setActiveConfig(JSON.parse(JSON.stringify(resp.config)))
         }
       } catch (error) {
         console.error(error)
@@ -60,7 +94,11 @@ const ConfigProvider = ({ children }) => {
     }
   }, [])
   // the provider return the new and active config and their respective setters
-  return <ConfigContext.Provider value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig }}>{children}</ConfigContext.Provider>
+  return (
+    <ConfigContext.Provider value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList }}>
+      {children}
+    </ConfigContext.Provider>
+  )
 }
 
 ConfigProvider.propTypes = { children: PropTypes.element.isRequired }
