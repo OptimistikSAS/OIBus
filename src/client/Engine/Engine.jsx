@@ -30,7 +30,7 @@ const Engine = () => {
             </ul>
           </>
         </OIbTitle>
-        <Row form>
+        <Row>
           <Col md={2}>
             <OIbInteger
               name="engine.port"
@@ -42,7 +42,7 @@ const Engine = () => {
             />
           </Col>
         </Row>
-        <Row form>
+        <Row>
           <Col md={3}>
             <OIbText
               name="engine.user"
@@ -70,7 +70,6 @@ const Engine = () => {
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies} />
       </Form>
-      <pre>{JSON.stringify(newConfig)}</pre>
     </>
   ) : (
     <div className="spinner-container">

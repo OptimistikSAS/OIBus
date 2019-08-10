@@ -5,31 +5,11 @@ import { Button, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 import Modal from '../components/Modal.jsx'
-import apis from '../services/apis'
-import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 
 const South = ({ history }) => {
-  const [protocolList, setProtocolList] = React.useState([])
-  const { setAlert } = React.useContext(AlertContext)
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig, protocolList } = React.useContext(ConfigContext)
   const dataSources = (newConfig && newConfig.south && newConfig.south.dataSources) || []
-
-  /**
-   * Acquire the list of Protocols
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    apis
-      .getSouthProtocols()
-      .then((protocols) => {
-        setProtocolList(protocols)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }, [])
 
   /**
    * Gets the json of a south data source
