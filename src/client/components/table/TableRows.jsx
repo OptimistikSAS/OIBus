@@ -22,7 +22,7 @@ const TableRows = ({ rows, handleEdit, handleDelete }) => (
               />
             </Button>
           )}
-          {handleDelete && (
+          {handleEdit && (
             <Button close>
               <FaPencilAlt
                 className="oi-icon"
