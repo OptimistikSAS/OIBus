@@ -206,6 +206,4 @@ class Link extends ApiHandler {
   }
 }
 
-Link.schema = require('./schema')
-
 module.exports = Link
