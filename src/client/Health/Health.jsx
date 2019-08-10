@@ -37,7 +37,7 @@ const Health = () => {
   return (
     <Col>
       <Label>Health status</Label>
-      {tableRows && <Table headers={[]} rows={tableRows} onRowClick={() => null} />}
+      {tableRows && <Table headers={[]} rows={tableRows} />}
     </Col>
   )
 }

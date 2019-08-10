@@ -42,7 +42,6 @@ const Filters = ({ filters }) => {
                   ),
                 },
               ])}
-              onRowClick={() => null}
               handleDelete={handleDelete}
               handleAdd={handleAdd}
             />
