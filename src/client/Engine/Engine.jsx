@@ -1,7 +1,6 @@
 import React from 'react'
 import { Col, Row, Form, Spinner } from 'reactstrap'
 import { ConfigContext } from '../context/configContext.jsx'
-// import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbInteger, OIbText, OIbPassword, OIbTitle } from '../components/OIbForm'
 import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
