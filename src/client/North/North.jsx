@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button, Col } from 'reactstrap'
+import { Button, Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from '../components/Modal.jsx'
@@ -13,8 +13,7 @@ const North = ({ history }) => {
   const [apiList, setApiList] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const applications = (newConfig && newConfig.north && newConfig.north.applications) || []
-  const dataSourceIds = newConfig && newConfig.south.dataSources.map((dataSource) => dataSource.dataSourceId)
+  const applications = (newConfig && newConfig.north && newConfig.north.applications)
 
   /**
    * Acquire the list of API
@@ -42,18 +41,13 @@ const North = ({ history }) => {
   /**
    * Handles the edit of application and redirects the
    * user to the selected north applications's configuration page
-   * @param {string} applicationId The id to edit
+   * @param {integer} index The id to edit
    * @return {void}
    */
-  const handleEditClick = (applicationId) => {
-    const applicationIndex = getApplicationIndex(applicationId)
-    // return if no id is provided
-
-    if (applicationIndex === -1) return
-
-    const application = applications[applicationIndex]
-    const link = `/north/${application.api}`
-    history.push({ pathname: link, formData: application, subscribeList: dataSourceIds })
+  const handleEdit = (index) => {
+    const application = applications[index]
+    const link = `/north/${application.applicationId}`
+    history.push({ pathname: link })
   }
 
   /**
@@ -77,31 +71,25 @@ const North = ({ history }) => {
   /**
    * Handles the toggle of application beetween
    * enabled and disabled state
-   * @param {string} applicationId The id to enable/disable
+   * @param {integer} index The id to enable/disable
    * @return {void}
    */
-  const handleToggleClick = (applicationId) => {
-    const index = getApplicationIndex(applicationId)
-    if (index === -1) return
-    const newApplications = applications.slice()
-    const { enabled } = newApplications[index]
+  const handleToggleClick = (index) => {
+    const { enabled } = applications[index]
     dispatchNewConfig({ type: 'update', name: `north.applications.${index}.enabled`, value: !enabled })
   }
 
   /**
    * Deletes the chosen application
-   * @param {string} applicationId The id to delete
+   * @param {integer} index The id to delete
    * @returns {void}
    */
-  const handleDelete = (applicationId) => {
-    if (applicationId === '') return
-    const index = getApplicationIndex(applicationId)
-    if (index === -1) return
+  const handleDelete = (index) => {
     dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${index}` })
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API', '']
-  const tableRows = applications.map(({ applicationId, enabled, api }) => [
+  const tableRows = applications && applications.map(({ applicationId, enabled, api }, index) => [
     { name: applicationId, value: applicationId },
     {
       name: 'enabled',
@@ -109,7 +97,7 @@ const North = ({ history }) => {
         <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
           {(confirm) => (
             <div>
-              <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(applicationId))}>
+              <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
                 {enabled ? 'Active' : 'Stopped'}
               </Button>
             </div>
@@ -118,36 +106,18 @@ const North = ({ history }) => {
       ),
     },
     { name: 'api', value: api },
-    {
-      name: 'delete',
-      value: (
-        <Modal
-          show={false}
-          title="Delete application"
-          body="Are you sure you want to delete this application?"
-          acceptLabel="Delete"
-          acceptColor="danger"
-        >
-          {(confirm) => (
-            <div>
-              <Button className="inline-button" color="primary" onClick={() => handleEditClick(applicationId)}>
-                Edit
-              </Button>
-              <Button className="inline-button" color="danger" onClick={confirm(() => handleDelete(applicationId))}>
-                Delete
-              </Button>
-            </div>
-          )}
-        </Modal>
-      ),
-    },
   ])
 
-  return (
-    <Col xs="12" md="9">
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} onRowClick={() => null} />}
+  return applications ? (
+    <Col md="6">
+      {tableRows && <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
     </Col>
+  ) : (
+    <div className="spinner-container">
+      <Spinner color="primary" type="grow" />
+      ...loading configuration from OIBus server...
+    </div>
   )
 }
 North.propTypes = { history: PropTypes.object.isRequired }
