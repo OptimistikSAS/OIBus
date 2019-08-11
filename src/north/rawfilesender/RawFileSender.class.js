@@ -229,6 +229,4 @@ class RawFileSender extends ApiHandler {
   }
 }
 
-RawFileSender.schema = require('./schema')
-
 module.exports = RawFileSender
