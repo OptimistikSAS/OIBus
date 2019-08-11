@@ -17,6 +17,18 @@ const ApiForms = { Link, AliveSignal, AmazonS3, Console, InfluxDB, RawFileSender
 
 const NorthForm = ({ application, onChange }) => {
   const { api, applicationId } = application
+  // Create the sections for the api (for example application.Link) for application not yet initialized
+  if (!application[api]) application[api] = {}
+  if (!application.caching) {
+    application.caching = {
+      sendInterval: '',
+      retryInterval: '',
+      maxSendCount: '',
+      groupCount: '',
+    }
+  }
+  if (!application.subscribedTo) application.subscribedTo = []
+  // load the proper form based on the api name.
   const ApiForm = ApiForms[api]
   return (
     <Form>
@@ -62,10 +74,15 @@ const NorthForm = ({ application, onChange }) => {
           />
         </Col>
         <Col md="4">
-          <OIbInteger onChange={onChange} value={application.caching.maxSendCount} name="caching.maxSendCount" help={<div />} />
+          <OIbInteger
+            onChange={onChange}
+            value={application.caching.maxSendCount}
+            name="caching.maxSendCount"
+            help={<div />}
+          />
         </Col>
       </Row>
-      <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo || []} />
+      <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo} />
     </Form>
   )
 }
