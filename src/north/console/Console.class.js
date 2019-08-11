@@ -25,6 +25,4 @@ class Console extends ApiHandler {
   }
 }
 
-Console.schema = require('./schema')
-
 module.exports = Console
