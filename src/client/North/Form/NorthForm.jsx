@@ -6,8 +6,14 @@ import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 
 import Link from '../../../north/link/Link.Form.jsx'
+import AliveSignal from '../../../north/alivesignal/AliveSignal.Form.jsx'
+import AmazonS3 from '../../../north/amazon/AmazonS3.Form.jsx'
+import Console from '../../../north/console/Console.Form.jsx'
+import InfluxDB from '../../../north/influxdb/InfluxDB.Form.jsx'
+import RawFileSender from '../../../north/rawfilesender/RawFileSender.Form.jsx'
+import TimeScaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
 
-const ApiForms = { Link }
+const ApiForms = { Link, AliveSignal, AmazonS3, Console, InfluxDB, RawFileSender, TimeScaleDB }
 
 const NorthForm = ({ application, onChange }) => {
   const { api, applicationId } = application
