@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import { Container } from 'reactstrap'
-import '@fortawesome/fontawesome-free/js/all.js'
 
 import './style/main.less'
 
