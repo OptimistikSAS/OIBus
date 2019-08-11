@@ -9,10 +9,10 @@ const OIbText = ({ label, help, valid, value, name, onChange }) => {
     onChange(name, newVal, valid(newVal))
   }
   // if no label, we are in a table so we need to minimize the row height
-  const style = label ? null : { style: { marginBottom: 0 } }
+  const style = label ? null : { marginBottom: 0 }
   const validCheck = valid(value)
   return (
-    <FormGroup {...style}>
+    <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
       <Input className="oi-form-input" type="text" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={value} />
       <FormFeedback>{validCheck}</FormFeedback>
