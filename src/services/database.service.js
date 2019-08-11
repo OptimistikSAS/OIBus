@@ -116,6 +116,7 @@ const getCount = async (database) => {
     const stmt = await database.prepare(query)
     result = await stmt.get()
   } catch (error) {
+    console.error(error)
     throw error
   }
   return result.count
@@ -137,6 +138,7 @@ const getValuesToSend = async (database, count) => {
     const stmt = await database.prepare(query)
     results = await stmt.all()
   } catch (error) {
+    console.error(error)
     throw error
   }
 
@@ -148,6 +150,7 @@ const getValuesToSend = async (database, count) => {
         // data is a JSON object containing value and quality
         value.data = JSON.parse(decodeURI(value.data))
       } catch (error) {
+        console.error(error)
         throw error
       }
       return value
@@ -172,6 +175,7 @@ const removeSentValues = async (database, values) => {
     stmt = await database.prepare(query)
     await stmt.run()
   } catch (error) {
+    console.error(error)
     throw error
   }
   return stmt.changes
