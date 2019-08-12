@@ -68,7 +68,7 @@ class Modbus extends ProtocolHandler {
       const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
       // Dynamic call of the appropriate function based on type
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach((point) => giveType(point, this.engine.config.engine.types, this.logger))
+        points.forEach((point) => giveType(point, this.engine.configService.config.engine.types, this.logger))
         const rangeAddresses = range.split('-')
         const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
         const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group

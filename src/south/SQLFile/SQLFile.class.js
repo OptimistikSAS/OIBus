@@ -43,7 +43,7 @@ class SQLFile extends ProtocolHandler {
   async connect() {
     const { dataSourceId, startTime } = this.dataSource
 
-    const databasePath = `${this.engine.config.engine.caching.cacheFolder}/${dataSourceId}.db`
+    const databasePath = `${this.engine.configService.config.engine.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
     this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
