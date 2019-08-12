@@ -299,8 +299,9 @@ label {
   margin-left: 0px;
 }
 .oi-icon {
-  width: 8px;
+  width: 10px;
   margin-right: 2px;
+  padding-bottom: 12px;
 }
 
 .oi-icon:hover {
@@ -323,6 +324,7 @@ h3 {
 }
 
 .oi-add-button {
-  margin-top: 15px;
+  margin-top: 20px;
+  height: 20px;
 }
 
