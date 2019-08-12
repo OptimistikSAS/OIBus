@@ -5,7 +5,7 @@ import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }) => {
   /** @todo:  ask for a second password? */
   React.useLayoutEffect(() => {
-    if (!value) onChange(name, defaultValue)
+    if (value === null) onChange(name, defaultValue)
   }, [value])
   const handleChange = (event) => {
     const { target } = event

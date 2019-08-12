@@ -6,7 +6,7 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
   // if no value was found, load the context with the default value
   // (this will cause a rerender with the correct value)
   React.useLayoutEffect(() => {
-    if (!value) onChange(name, defaultValue)
+    if (value === null) onChange(name, defaultValue)
   }, [value])
   const handleChange = (event) => {
     const { target } = event

@@ -4,7 +4,7 @@ import { FormGroup, FormText, Label, Input } from 'reactstrap'
 
 const OIbSelect = ({ label, help, option, options, name, onChange, defaultOption }) => {
   React.useEffect(() => {
-    if (!option) onChange(name, defaultOption)
+    if (option === null) onChange(name, defaultOption)
   }, [option])
 
   const handleChange = (event) => {
