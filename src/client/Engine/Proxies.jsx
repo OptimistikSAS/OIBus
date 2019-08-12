@@ -47,7 +47,13 @@ const Proxies = ({ proxies }) => {
                 },
                 {
                   name: `engine.proxies.${i}.protocol`,
-                  value: <OIbSelect name={`engine.proxies.${i}.protocol`} options={['http', 'https']} option={proxy.protocol} onChange={onChange} />,
+                  value: <OIbSelect
+                    name={`engine.proxies.${i}.protocol`}
+                    options={['http', 'https']}
+                    defaultOption="http"
+                    option={proxy.protocol}
+                    onChange={onChange}
+                  />,
                 },
                 {
                   name: `engine.proxies.${i}.host`,
@@ -66,6 +72,7 @@ const Proxies = ({ proxies }) => {
                     <OIbInteger
                       name={`engine.proxies.${i}.port`}
                       value={proxy.port}
+                      defaultValue=""
                       valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
                       onChange={onChange}
                     />

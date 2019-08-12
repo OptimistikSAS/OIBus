@@ -36,6 +36,7 @@ const Engine = () => {
               name="engine.port"
               label="Port"
               value={newConfig.engine.port}
+              defaultValue={2223}
               valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
               help={<div>The port to access the Admin interface</div>}
               onChange={onChange}
@@ -49,6 +50,7 @@ const Engine = () => {
               label="Admin user name"
               value={newConfig.engine.user}
               valid={(val) => ((val.length > 2) ? null : 'Length should be greater than 2')}
+              defaultValue="admin"
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
             />
