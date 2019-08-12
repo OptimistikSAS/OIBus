@@ -180,6 +180,4 @@ class SQLFile extends ProtocolHandler {
   }
 }
 
-SQLFile.schema = require('./schema')
-
 module.exports = SQLFile
