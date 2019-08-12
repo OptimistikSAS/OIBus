@@ -41,7 +41,14 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
           />
         </Col>
         <Col md="3">
-          <OIbSelect label="API" option={protocol} name="protocol" options={protocolList} defaultOption={protocolList[0]} onChange={handleChange} />
+          <OIbSelect
+            label="Protocol"
+            option={protocol}
+            name="protocol"
+            options={protocolList}
+            defaultOption={protocolList[0]}
+            onChange={handleChange}
+          />
         </Col>
         <Col md="3">
           <Button size="sm" className="oi-add-button" color="primary" onClick={() => handleAddDataSource()}>
