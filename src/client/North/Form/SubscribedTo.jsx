@@ -35,6 +35,7 @@ const SubscribedTo = ({ subscribedTo }) => {
                       name={`subscribedTo.${i}`}
                       option={subscribedTo[i]}
                       options={dataSourceIds}
+                      defaultOption={dataSourceIds[0]}
                       onChange={onChange}
                     />
                   ),

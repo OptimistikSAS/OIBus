@@ -34,6 +34,7 @@ const RawFileSenderForm = ({ application, onChange }) => (
           onChange={onChange}
           option={application.RawFileSender.authentication.type}
           options={['Basic']}
+          defaultOption="Basic"
           name="RawFileSender.authentication.type"
           help={<div />}
         />
@@ -77,6 +78,7 @@ const RawFileSenderForm = ({ application, onChange }) => (
           option={application.RawFileSender.stack}
           name="RawFileSender.stack"
           options={['axios', 'request', 'fetch']}
+          defaultOption="fetch"
           help={<div />}
         />
       </Col>

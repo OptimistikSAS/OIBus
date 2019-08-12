@@ -27,6 +27,7 @@ const Caching = ({ onChange, caching }) => (
           label="Cache Folder"
           name="engine.caching.cacheFolder"
           value={caching.cacheFolder}
+          defaultValue="./cache"
           help={<div>Where to store the cached data</div>}
           onChange={onChange}
         />
@@ -38,6 +39,7 @@ const Caching = ({ onChange, caching }) => (
           name="engine.caching.archiveFolder"
           label="Archive Folder"
           value={caching.archiveFolder}
+          defaultValue="./cache/archive"
           help={<div>Where to store the cached data</div>}
           onChange={onChange}
         />
@@ -48,6 +50,7 @@ const Caching = ({ onChange, caching }) => (
           name="engine.caching.archiveMode"
           options={['archive', 'delete']}
           option={caching.archiveMode}
+          defaultOption="archive"
           help={<div> Move to Archive Folders or Delete files</div>}
           onChange={onChange}
         />

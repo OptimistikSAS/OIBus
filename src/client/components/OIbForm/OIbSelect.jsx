@@ -2,13 +2,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input } from 'reactstrap'
 
-const OIbSelect = ({ label, help, option, options, name, onChange }) => {
+const OIbSelect = ({ label, help, option, options, name, onChange, defaultOption }) => {
+  React.useEffect(() => {
+    if (!option) onChange(name, defaultOption)
+  }, [option])
+
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
     onChange(name, newVal, null)
   }
-
+  // if value is null, no need to render
+  if (option === null) return null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
@@ -29,8 +34,9 @@ OIbSelect.propTypes = {
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(String).isRequired,
-  option: PropTypes.string.isRequired,
+  option: PropTypes.string,
+  defaultOption: PropTypes.string.isRequired,
 }
-OIbSelect.defaultProps = { label: null, help: null }
+OIbSelect.defaultProps = { label: null, help: null, option: null }
 
 export default OIbSelect

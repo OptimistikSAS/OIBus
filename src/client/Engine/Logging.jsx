@@ -50,6 +50,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.consoleLevel"
           option={logParameters.consoleLevel}
           options={['silly', 'debug', 'info', 'warning', 'error']}
+          defaultOption="info"
           help={<div>The level for the Console log</div>}
           onChange={onChange}
         />
@@ -59,6 +60,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.fileLevel"
           label="File Level"
           options={['silly', 'debug', 'info', 'warning', 'error']}
+          defaultOption="info"
           option={logParameters.fileLevel}
           help={<div>The level for the file log</div>}
           onChange={onChange}
@@ -69,6 +71,7 @@ const Logging = ({ logParameters, onChange }) => (
           label="Sqlite Level"
           name="engine.logParameters.sqliteLevel"
           options={['silly', 'debug', 'info', 'warning', 'error']}
+          defaultOption="info"
           option={logParameters.sqliteLevel}
           help={<div>The level for the sqlite log</div>}
           onChange={onChange}
@@ -90,6 +93,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.maxsize"
           label="File Max size"
           value={logParameters.maxsize}
+          defaultValue={100000}
           help={<div>Maximum size of file logs (Bytes)</div>}
           onChange={onChange}
         />
@@ -99,6 +103,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.maxFiles"
           label="number of files"
           value={logParameters.maxFiles}
+          defaultValue={5}
           valid={(val) => ((val >= 1) && (val <= 10) ? null : 'value should be between 1 and 10')}
           help={<div>The number of journal files (rotating)</div>}
           onChange={onChange}
@@ -123,6 +128,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.sqliteMaxFileSize"
           label="Db Max size"
           value={logParameters.sqliteMaxFileSize}
+          defaultValue={1000000}
           help={<div>Max File Size of the sqlite database (Byte)</div>}
           onChange={onChange}
         />

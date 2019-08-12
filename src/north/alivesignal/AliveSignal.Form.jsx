@@ -31,6 +31,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           onChange={onChange}
           option={application.AliveSignal.authentication.type}
           options={['Basic']}
+          defaultOption="Basic"
           name="AliveSignal.type"
           help={<div />}
         />
@@ -66,7 +67,14 @@ const AliveSignalForm = ({ application, onChange }) => (
         <OIbText label="ID" onChange={onChange} value={application.AliveSignal.id} name="AliveSignal.id" help={<div />} />
       </Col>
       <Col md="4">
-        <OIbInteger label="Frequency" onChange={onChange} value={application.AliveSignal.frequency} name="AliveSignal.frequency" help={<div />} />
+        <OIbInteger
+          label="Frequency"
+          onChange={onChange}
+          value={application.AliveSignal.frequency}
+          defaultValue={10000}
+          name="AliveSignal.frequency"
+          help={<div />}
+        />
       </Col>
     </Row>
     <Row>

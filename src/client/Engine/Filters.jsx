@@ -38,6 +38,7 @@ const Filters = ({ filters }) => {
                       value={filter}
                       valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
                       onChange={onChange}
+                      defaultValue=""
                     />
                   ),
                 },

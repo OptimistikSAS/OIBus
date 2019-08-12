@@ -20,12 +20,7 @@ const NorthForm = ({ application, onChange }) => {
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
   if (!application.caching) {
-    application.caching = {
-      sendInterval: '',
-      retryInterval: '',
-      maxSendCount: '',
-      groupCount: '',
-    }
+    application.caching = {}
   }
   if (!application.subscribedTo) application.subscribedTo = []
   // load the proper form based on the api name.
@@ -51,6 +46,7 @@ const NorthForm = ({ application, onChange }) => {
           <OIbInteger
             onChange={onChange}
             value={application.caching.sendInterval}
+            defaultValue={10000}
             name="caching.sendInterval"
             help={<div>Value in milliseconds for data sending interval</div>}
           />
@@ -59,6 +55,7 @@ const NorthForm = ({ application, onChange }) => {
           <OIbInteger
             onChange={onChange}
             value={application.caching.retryInterval}
+            defaultValue={5000}
             name="caching.retryInterval"
             help={<div>Value in milliseconds for retry sending data in case of failure</div>}
           />
@@ -70,6 +67,7 @@ const NorthForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.caching.groupCount}
             name="caching.groupCount"
+            defaultValue={1000}
             help={<div>The minimum buffer that will ensure date is not sent until value is reached</div>}
           />
         </Col>
@@ -78,6 +76,7 @@ const NorthForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.caching.maxSendCount}
             name="caching.maxSendCount"
+            defaultValue={10000}
             help={<div />}
           />
         </Col>
