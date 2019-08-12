@@ -36,7 +36,14 @@ const NorthForm = ({ application, onChange }) => {
       </OIbTitle>
       <Row>
         <Col md={2}>
-          <OIbCheckBox name="enabled" label="Enabled" value={application.enabled} help={<div>Enable this application</div>} onChange={onChange} />
+          <OIbCheckBox
+            name="enabled"
+            label="Enabled"
+            defaultValue={false}
+            value={application.enabled}
+            help={<div>Enable this application</div>}
+            onChange={onChange}
+          />
         </Col>
       </Row>
       <ApiForm onChange={onChange} application={application} />
