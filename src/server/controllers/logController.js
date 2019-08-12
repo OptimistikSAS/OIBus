@@ -10,7 +10,7 @@ const databaseService = require('../../services/database.service')
  * @return {void}
  */
 const getLogs = async (ctx) => {
-  const databasePath = ctx.app.engine.config.engine.logParameters.sqliteFilename
+  const databasePath = ctx.app.engine.configService.config.engine.logParameters.sqliteFilename
   const now = Date.now()
   const dayAgo = new Date(now - 86400000)
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
