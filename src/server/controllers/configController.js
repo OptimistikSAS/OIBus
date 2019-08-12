@@ -4,7 +4,7 @@
  * @return {void}
  */
 const getActiveConfiguration = (ctx) => {
-  ctx.ok({ config: ctx.app.engine.getActiveConfiguration() })
+  ctx.ok({ config: ctx.app.engine.configService.getActiveConfiguration() })
 }
 
 /**
@@ -13,7 +13,7 @@ const getActiveConfiguration = (ctx) => {
  * @return {void}
  */
 const getModifiedConfiguration = (ctx) => {
-  ctx.ok({ config: ctx.app.engine.getModifiedConfiguration() })
+  ctx.ok({ config: ctx.app.engine.configService.getModifiedConfiguration() })
 }
 
 /**
@@ -22,12 +22,12 @@ const getModifiedConfiguration = (ctx) => {
  * @return {void}
  */
 const addNorth = async (ctx) => {
-  if (ctx.app.engine.hasNorth(ctx.request.body.applicationId)) {
+  if (ctx.app.engine.configService.hasNorth(ctx.request.body.applicationId)) {
     ctx.throw(409, 'The given application ID already exists')
   }
 
   try {
-    ctx.app.engine.addNorth(ctx.request.body)
+    ctx.app.engine.configService.addNorth(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to add new application')
@@ -40,7 +40,7 @@ const addNorth = async (ctx) => {
  * @return {void}
  */
 const updateNorth = (ctx) => {
-  if (!ctx.app.engine.hasNorth(ctx.params.applicationId)) {
+  if (!ctx.app.engine.configService.hasNorth(ctx.params.applicationId)) {
     ctx.throw(404, 'The given application ID doesn\'t exists')
   }
 
@@ -49,7 +49,7 @@ const updateNorth = (ctx) => {
   }
 
   try {
-    ctx.app.engine.updateNorth(ctx.request.body)
+    ctx.app.engine.configService.updateNorth(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update application')
@@ -62,12 +62,12 @@ const updateNorth = (ctx) => {
  * @return {void}
  */
 const deleteNorth = (ctx) => {
-  if (!ctx.app.engine.hasNorth(ctx.params.applicationId)) {
+  if (!ctx.app.engine.configService.hasNorth(ctx.params.applicationId)) {
     ctx.throw(404, 'The given application ID doesn\'t exists')
   }
 
   try {
-    ctx.app.engine.deleteNorth(ctx.params.applicationId)
+    ctx.app.engine.configService.deleteNorth(ctx.params.applicationId)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to delete application')
@@ -80,12 +80,12 @@ const deleteNorth = (ctx) => {
  * @return {void}
  */
 const addSouth = (ctx) => {
-  if (ctx.app.engine.hasSouth(ctx.request.body.dataSourceId)) {
+  if (ctx.app.engine.configService.hasSouth(ctx.request.body.dataSourceId)) {
     ctx.throw(409, 'The given data source ID already exists')
   }
 
   try {
-    ctx.app.engine.addSouth(ctx.request.body)
+    ctx.app.engine.configService.addSouth(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to add new data source')
@@ -98,7 +98,7 @@ const addSouth = (ctx) => {
  * @return {void}
  */
 const updateSouth = (ctx) => {
-  if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
+  if (!ctx.app.engine.configService.hasSouth(ctx.params.dataSourceId)) {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
@@ -107,7 +107,7 @@ const updateSouth = (ctx) => {
   }
 
   try {
-    ctx.app.engine.updateSouth(ctx.request.body)
+    ctx.app.engine.configService.updateSouth(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update data source')
@@ -120,12 +120,12 @@ const updateSouth = (ctx) => {
  * @return {void}
  */
 const deleteSouth = (ctx) => {
-  if (!ctx.app.engine.hasSouth(ctx.params.dataSourceId)) {
+  if (!ctx.app.engine.configService.hasSouth(ctx.params.dataSourceId)) {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
   try {
-    ctx.app.engine.deleteSouth(ctx.params.dataSourceId)
+    ctx.app.engine.configService.deleteSouth(ctx.params.dataSourceId)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to delete data source')
@@ -139,7 +139,7 @@ const deleteSouth = (ctx) => {
  */
 const updateEngine = (ctx) => {
   try {
-    ctx.app.engine.updateEngine(ctx.request.body)
+    ctx.app.engine.configService.updateEngine(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update Engine')
@@ -153,7 +153,7 @@ const updateEngine = (ctx) => {
  */
 const activateConfiguration = (ctx) => {
   try {
-    ctx.app.engine.activateConfiguration()
+    ctx.app.engine.configService.activateConfiguration()
     ctx.ok('Reloading...')
   } catch (error) {
     ctx.throw(500, 'Unable to activate configuration')
@@ -167,7 +167,7 @@ const activateConfiguration = (ctx) => {
  */
 const resetConfiguration = (ctx) => {
   try {
-    ctx.app.engine.resetConfiguration()
+    ctx.app.engine.configService.resetConfiguration()
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to reset configuration')
