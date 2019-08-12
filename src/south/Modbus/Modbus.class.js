@@ -147,6 +147,4 @@ class Modbus extends ProtocolHandler {
   }
 }
 
-Modbus.schema = require('./schema')
-
 module.exports = Modbus
