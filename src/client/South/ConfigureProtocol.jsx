@@ -1,67 +1,30 @@
 import React from 'react'
+import { withRouter } from 'react-router-dom'
+import { Spinner } from 'reactstrap'
 import PropTypes from 'prop-types'
-import { Button, Form, Col, Row } from 'reactstrap'
-import { OIbText, OIbSelect } from '../components/OIbForm/index.js'
+import { ConfigContext } from '../context/configContext.jsx'
+import SouthForm from './Form/SouthForm.jsx'
 
-const NewDataSourceRow = ({ protocolList, addDataSource }) => {
-  const [dataSourceId, setDataSourceId] = React.useState('')
-  const [protocol, setProtocol] = React.useState(protocolList[0])
-  /**
-   * Updates the dataSource's state
-   * @param {*} event The change event
-   * @returns {void}
-   */
-  const handleAddDataSource = () => {
-    //  update the new application's state
-    if (dataSourceId === '') return
-    addDataSource({ dataSourceId, protocol })
+const ConfigureProtocol = ({ match }) => {
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const dataSources = newConfig && newConfig.south.dataSources // array of all defined dataSources
+  const { dataSourceId } = match.params // the dataSourceId passed in the url
+  const dataSourceIndex = dataSources && dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+
+  const onChange = (name, value, validity) => {
+    // add the proper index
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
   }
 
-  const handleChange = (name, value) => {
-    switch (name) {
-      case 'dataSourceId':
-        setDataSourceId(value)
-        break
-      case 'protocol':
-      default:
-        setProtocol(value)
-        break
-    }
-  }
-  return (
-    <Form>
-      <Row>
-        <Col md="5">
-          <OIbText
-            label="New Data Source ID"
-            value={dataSourceId}
-            name="dataSourceId"
-            onChange={handleChange}
-            defaultValue=""
-          />
-        </Col>
-        <Col md="3">
-          <OIbSelect
-            label="protocol"
-            option={protocol}
-            name="protocol"
-            options={protocolList}
-            defaultOption={protocolList[0]}
-            onChange={handleChange}
-          />
-        </Col>
-        <Col md="3">
-          <Button size="sm" className="oi-add-button" color="primary" onClick={() => handleAddDataSource()}>
-            Add
-          </Button>
-        </Col>
-      </Row>
-    </Form>
+  return dataSources ? (
+    <SouthForm dataSource={dataSources[dataSourceIndex]} onChange={onChange} />
+  ) : (
+    <div className="spinner-container">
+      <Spinner color="primary" type="grow" />
+      ...loading configuration from OIBus server...
+    </div>
   )
 }
 
-NewDataSourceRow.propTypes = {
-  protocolList: PropTypes.arrayOf(PropTypes.string).isRequired,
-  addDataSource: PropTypes.func.isRequired,
-}
-export default NewDataSourceRow
+ConfigureProtocol.propTypes = { match: PropTypes.object.isRequired }
+export default withRouter(ConfigureProtocol)
