@@ -17,8 +17,8 @@ class ConfigService {
     this.logger = console
 
     const args = this.parseArgs() || {} // Arguments of the command
-    const { configFile = './oibus.json' } = args // Get the configuration file path
-    this.configFile = path.resolve(configFile)
+    const { config = './oibus.json' } = args // Get the configuration file path
+    this.configFile = path.resolve(config)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
