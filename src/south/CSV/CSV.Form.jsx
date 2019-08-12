@@ -1,26 +1,82 @@
 import React from 'react'
+import PropTypes from 'prop-types'
+import { Row, Col } from 'reactstrap'
+// import { ConfigContext } from '../context/configContext.jsx'
+import { OIbText, OIbInteger, OIbCheckBox } from '../../client/components/OIbForm'
 
-const uiSchema = {
-  dataSourceId: {
-    'ui:help': '',
-    'ui:readonly': true,
-  },
-  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
-  protocol: { 'ui:help': '' },
-  inputFolder: { 'ui:help': <div>Path to the input folder</div> },
-  archiveFolder: { 'ui:help': <div>Path to the archive folder</div> },
-  errorFolder: { 'ui:help': <div>Path to the error folder</div> },
-  separator: { 'ui:help': <div>Separator charachter</div> },
-  timeColumn: { 'ui:help': '' },
-  hasFirstLine: { 'ui:help': '' },
-  points: {
-    items: {
-      pointId: { 'ui:help': '' },
-      scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
-      value: { 'ui:help': '' },
-      quality: { 'ui:help': '' },
-    },
-  },
-}
+const CSVForm = ({ dataSource, onChange }) => (
+  <>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Input Folder"
+          onChange={onChange}
+          value={dataSource.CSV.inputFolder}
+          name="CSV.inputFolder"
+          help={<div>Path to the input folder</div>}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Archive Folder"
+          onChange={onChange}
+          value={dataSource.CSV.archiveFolder}
+          name="CSV.archiveFolder"
+          help={<div>Path to the archive folder</div>}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Error Folder"
+          onChange={onChange}
+          value={dataSource.CSV.errorFolder}
+          name="CSV.errorFolder"
+          help={<div>Path to the error folder</div>}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="CSV separator"
+          onChange={onChange}
+          value={dataSource.CSV.separator}
+          defaultValue=","
+          name="CSV.separator"
+          help={<div>(often , or ;)</div>}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbInteger
+          label="time column"
+          onChange={onChange}
+          value={dataSource.CSV.timeColumn}
+          defaultValue={0}
+          name="CSV.timeColumn"
+          help={<div>Column with the timestamp</div>}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbCheckBox
+          label="Has first line"
+          onChange={onChange}
+          value={dataSource.CSV.hasFirstLine}
+          defaultValue
+          name="CSV.hasFirstLine"
+          help={<div>indicates if the file starts with a header line</div>}
+        />
+      </Col>
+    </Row>
+  </>
+)
+CSVForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
-export default uiSchema
+export default CSVForm
