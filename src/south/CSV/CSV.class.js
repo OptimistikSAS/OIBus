@@ -123,6 +123,4 @@ class CSV extends ProtocolHandler {
   }
 }
 
-CSV.schema = require('./schema')
-
 module.exports = CSV

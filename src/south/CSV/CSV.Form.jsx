@@ -1,3 +1,31 @@
+/*
+    points: {
+      type: 'array',
+      title: 'Points',
+      items: {
+        type: 'object',
+        properties: {
+          pointId: {
+            title: 'Point ID',
+            type: 'string',
+          },
+          scanMode: {
+            title: 'Scan Mode',
+            type: 'string',
+          },
+          value: {
+            type: 'string', // TODO: Multiple types
+            title: 'Value',
+          },
+          quality: {
+            type: 'string', // TODO: Multiple types
+            title: 'Quality',
+          },
+        },
+      },
+    },
+    */
+
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
@@ -13,6 +41,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           value={dataSource.CSV.inputFolder}
           name="CSV.inputFolder"
+          defaultValue="./csv/input"
           help={<div>Path to the input folder</div>}
         />
       </Col>
@@ -24,6 +53,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           value={dataSource.CSV.archiveFolder}
           name="CSV.archiveFolder"
+          defaultValue="./csv/archive"
           help={<div>Path to the archive folder</div>}
         />
       </Col>
@@ -34,6 +64,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="Error Folder"
           onChange={onChange}
           value={dataSource.CSV.errorFolder}
+          defaultValue="./csv/error"
           name="CSV.errorFolder"
           help={<div>Path to the error folder</div>}
         />
