@@ -28,6 +28,7 @@ apiList.Link = require('../north/link/Link.class')
 const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
+const ConfigService = require('../services/config.service.class')
 
 /**
  *
@@ -41,18 +42,16 @@ class Engine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
-   * @param {ConfigService} configService - Config service
    */
-  constructor(configService) {
+  constructor() {
     this.version = VERSION
 
-    this.configService = configService
+    this.configService = new ConfigService(this)
 
     // Configure and get the logger
     this.logger = new Logger(this.configService.config.engine.logParameters)
 
     this.configService.setLogger(this.logger)
-    this.configService.setEngine(this)
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -65,8 +64,7 @@ class Engine {
     Config file: ${this.configFile}
     Cache folder: ${path.resolve(this.configService.config.engine.caching.cacheFolder)}`)
     // Check for private key
-    this.keyFolder = path.join(this.configService.config.engine.caching.cacheFolder, 'keys')
-    encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
+    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
 
     // prepare config
     // Associate the scanMode to all corresponding data sources
