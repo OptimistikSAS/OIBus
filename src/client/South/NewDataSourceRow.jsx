@@ -1,68 +1,54 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, FormGroup, Label, Input } from 'reactstrap'
-import Select from '../components/Select.jsx'
-import apis from '../services/apis'
-import { AlertContext } from '../context/AlertContext.jsx'
+import { Button, Form, Col, Row } from 'reactstrap'
+import { OIbText, OIbSelect } from '../components/OIbForm/index.js'
 
 const NewDataSourceRow = ({ protocolList, addDataSource }) => {
-  const [dataSource, setDataSource] = React.useState({ dataSourceId: '', enable: false, protocol: 'Modbus' })
-  const { setAlert } = React.useContext(AlertContext)
-
+  const [dataSourceId, setDataSourceId] = React.useState('')
+  const [protocol, setProtocol] = React.useState(protocolList[0])
   /**
-   * Updates the data source's state
+   * Updates the dataSource's state
    * @param {*} event The change event
    * @returns {void}
    */
-  const handleChange = (event) => {
-    const { target } = event
-    const { value } = target
-    //  update the new data source's state
-    setDataSource((prevState) => ({ ...prevState, [target.name]: value }))
+  const handleAddDataSource = () => {
+    //  update the new dataSource's state
+    if (dataSourceId === '') return
+    addDataSource({ dataSourceId, protocol })
   }
 
-  /**
-   * Submits a new data source
-   * @returns {void}
-   */
-  const handleAddDataSource = async () => {
-    if (dataSource.dataSourceId === '') return
-
-    // Points is required on server side
-    dataSource.points = []
-
-    try {
-      await apis.addSouth(dataSource)
-
-      // add submitted dataSource to the table
-      addDataSource(dataSource)
-      // reset the line
-      setDataSource({ dataSourceId: '', enable: false, protocol: 'Modbus' })
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
+  const handleChange = (name, value) => {
+    switch (name) {
+      case 'dataSourceId':
+        setDataSourceId(value)
+        break
+      case 'protocol':
+      default:
+        setProtocol(value)
+        break
     }
   }
-
   return (
-    <Form className="oi-add-new">
-      <FormGroup>
-        <Label for="Id">
-          New Data Source ID
-        </Label>
-        <Input className="oi-form-input" value={dataSource.dataSourceId} id="Id" name="dataSourceId" type="text" onChange={handleChange} />
-      </FormGroup>
-      <FormGroup>
-        <Label for="protocol">
-          Protocol
-        </Label>
-        <Select value={dataSource.protocol} id="protocol" name="protocol" options={protocolList} onChange={handleChange} />
-      </FormGroup>
-      <FormGroup>
-        <Button color="primary" onClick={() => handleAddDataSource()}>
-          Add
-        </Button>
-      </FormGroup>
+    <Form>
+      <Row>
+        <Col md="5">
+          <OIbText
+            label="New DataSource ID"
+            value={dataSourceId}
+            name="dataSourceId"
+            onChange={handleChange}
+            defaultValue=""
+          />
+        </Col>
+        <Col md="3">
+          <OIbSelect label="API" option={protocol} name="protocol" options={protocolList} defaultOption={protocolList[0]} onChange={handleChange} />
+        </Col>
+        <Col md="3">
+          <Button size="sm" className="oi-add-button" color="primary" onClick={() => handleAddDataSource()}>
+            Add
+          </Button>
+        </Col>
+      </Row>
     </Form>
   )
 }
