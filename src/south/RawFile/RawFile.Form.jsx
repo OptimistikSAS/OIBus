@@ -1,22 +1,57 @@
 import React from 'react'
+import PropTypes from 'prop-types'
+import { Row, Col } from 'reactstrap'
+import { OIbText, OIbCheckBox, OIbInteger } from '../../client/components/OIbForm'
 
-const uiSchema = {
-  dataSourceId: {
-    'ui:help': '',
-    'ui:readonly': true,
-  },
-  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
-  protocol: { 'ui:help': '' },
-  inputFolder: { 'ui:help': <div>Path to input folder</div> },
-  preserveFiles: { 'ui:help': <div>If enabled, will preserve files</div> },
-  minAge: { 'ui:help': '' },
-  regex: { 'ui:help': '' },
-  points: {
-    items: {
-      pointId: { 'ui:help': '' },
-      scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
-    },
-  },
-}
+const RawFileForm = ({ dataSource, onChange }) => (
+  <>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Input Folder"
+          onChange={onChange}
+          value={dataSource.RawFile.inputFolder}
+          name="RawFile.inputFolder"
+          defaultValue=""
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md={2}>
+        <OIbCheckBox
+          name="RawFile.preserve"
+          label="Preserve Files"
+          defaultValue={false}
+          value={dataSource.RawFile.preserve}
+          onChange={onChange}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbInteger
+          label="Minimum Age"
+          onChange={onChange}
+          value={dataSource.RawFile.minAge}
+          defaultValue={1000}
+          name="RawFile.minAge"
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="RegExp"
+          onChange={onChange}
+          value={dataSource.RawFile.regex}
+          name="RawFile.username"
+          defaultValue=".txt"
+        />
+      </Col>
+    </Row>
+  </>
+)
 
-export default uiSchema
+RawFileForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+
+export default RawFileForm
