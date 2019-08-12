@@ -1,14 +1,14 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button, Input, FormGroup, Label } from 'reactstrap'
-import Form from 'react-jsonschema-form-bs4'
+import { Form, Button, Input, FormGroup, Label } from 'reactstrap'
+// import Form from 'react-jsonschema-form-bs4'
 import Table from '../client/components/table/Table.jsx'
 import TablePagination from '../client/components/table/TablePagination.jsx'
 import Modal from '../client/components/Modal.jsx'
 import apis from '../client/services/apis'
 import utils from '../client/helpers/utils'
-import uiSchema from './uiSchema.jsx'
+// import uiSchema from './uiSchema.jsx'
 import { AlertContext } from '../client/context/AlertContext.jsx'
 
 const ConfigureProtocol = ({ match, location }) => {
@@ -390,7 +390,7 @@ const ConfigureProtocol = ({ match, location }) => {
         liveValidate
         showErrorList={false}
         schema={modifiedConfigSchema()}
-        uiSchema={uiSchema(match.params.protocol).points.items}
+        // uiSchema={uiSchema(match.params.protocol).points.items}
         autocomplete="on"
         onSubmit={({ formData }) => (editingPoint ? handleSubmitEditedPoint(formData) : handleSubmitAddedPoint(formData))}
         onError={log('errors')}
