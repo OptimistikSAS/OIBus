@@ -62,6 +62,4 @@ class MQTT extends ProtocolHandler {
   }
 }
 
-MQTT.schema = require('./schema')
-
 module.exports = MQTT
