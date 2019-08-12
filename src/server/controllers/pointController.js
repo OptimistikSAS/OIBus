@@ -12,7 +12,7 @@ const getPoints = (ctx) => {
     ctx.throw(404, 'The given data source ID doesn\'t exists')
   }
 
-  ctx.ok(ctx.app.engine.getPointsForSouth(ctx.params.dataSourceId))
+  ctx.ok(ctx.app.engine.configService.getPointsForSouth(ctx.params.dataSourceId))
 }
 
 /**
