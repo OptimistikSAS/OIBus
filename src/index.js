@@ -2,7 +2,6 @@ const cluster = require('cluster')
 
 const VERSION = require('../package.json').version
 
-const ConfigService = require('./services/config.service.class')
 const Engine = require('./engine/Engine.class')
 
 if (cluster.isMaster) {
@@ -23,7 +22,6 @@ if (cluster.isMaster) {
 } else {
   // this condition is reached only for a worker (i.e. not master)
   // so this is here where we execute the OIBus Engine
-  const configService = new ConfigService()
-  const engine = new Engine(configService)
+  const engine = new Engine()
   engine.start()
 }

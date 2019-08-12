@@ -8,9 +8,12 @@ const encryptionService = require('./encryption.service')
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
+ * @param {Engine} engine - The Engine
+ * @return {void}
  */
 class ConfigService {
-  constructor() {
+  constructor(engine) {
+    this.engine = engine
     this.logger = console
 
     const args = this.parseArgs() || {} // Arguments of the command
@@ -21,6 +24,8 @@ class ConfigService {
 
     this.config = this.tryReadFile(this.configFile)
     this.modifiedConfig = this.duplicateConfig(this.config)
+
+    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
   }
 
   /**
@@ -30,15 +35,6 @@ class ConfigService {
    */
   setLogger(logger) {
     this.logger = logger
-  }
-
-  /**
-   * Set engine
-   * @param {Object} engine - The engine
-   * @returns {void}
-   */
-  setEngine(engine) {
-    this.engine = engine
   }
 
   /**
@@ -115,9 +111,9 @@ class ConfigService {
     try {
       const duplicateConfig = JSON.parse(JSON.stringify(config))
       if (decryptSecrets) {
-        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.engine.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.engine.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.engine.keyFolder, this.logger)
+        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder, this.logger)
+        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder, this.logger)
+        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder, this.logger)
       }
       return duplicateConfig
     } catch (error) {
