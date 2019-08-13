@@ -29,6 +29,30 @@ class ConfigService {
   }
 
   /**
+   * Get Engine config.
+   * @returns {object} - The Engine config
+   */
+  getEngineConfig() {
+    return this.config.engine
+  }
+
+  /**
+   * Get South config.
+   * @returns {object} - The South config
+   */
+  getSouthConfig() {
+    return this.config.south
+  }
+
+  /**
+   * Get North config.
+   * @returns {object} - The North config
+   */
+  getNorthConfig() {
+    return this.config.north
+  }
+
+  /**
    * Set logger.
    * @param {object} logger - The logger to use.
    * @returns {void}

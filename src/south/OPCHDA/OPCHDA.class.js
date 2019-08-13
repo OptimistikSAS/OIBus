@@ -48,7 +48,7 @@ class OPCHDA extends ProtocolHandler {
     if (process.platform === 'win32') {
       // Initialize lastCompletedAt for every scanGroup
       const { dataSourceId, startTime } = this.dataSource
-      const databasePath = `${this.engine.configService.config.engine.caching.cacheFolder}/${dataSourceId}.db`
+      const databasePath = `${this.engine.configService.getEngineConfig().caching.cacheFolder}/${dataSourceId}.db`
       this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
       const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()

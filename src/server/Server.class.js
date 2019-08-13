@@ -27,7 +27,7 @@ class Server {
     this.app.engine = engine
     this.app.logger = engine.logger
     // Get the config entries
-    const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.configService.config.engine
+    const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engine.configService.getEngineConfig()
 
     this.logger = engine.logger
     this.debug = debug
