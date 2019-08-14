@@ -29,4 +29,10 @@ if (cluster.isMaster) {
   checkOrCreateConfigFile(config) // Create default config file if it doesn't exist
   const engine = new Engine(config)
   engine.start()
+
+  // Catch Ctrl+C and properly stop the Engine
+  process.on('SIGINT', () => {
+    engine.stop()
+    process.exit()
+  })
 }
