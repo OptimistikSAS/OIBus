@@ -7,6 +7,7 @@ import NewDataSourceRow from './NewDataSourceRow.jsx'
 import Modal from '../components/Modal.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
+import PointsButton from './PointsButton.jsx'
 
 const South = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -29,14 +30,6 @@ const South = ({ history }) => {
   const handleEdit = (index) => {
     const dataSource = dataSources[index]
     const link = `/south/${dataSource.dataSourceId}`
-    history.push({ pathname: link })
-  }
-
-  const handleEditPoints = (dataSourceId) => {
-    const dataSourceIndex = getDataSourceIndex(dataSourceId)
-    if (dataSourceIndex === -1) return
-    const dataSource = dataSources[dataSourceIndex]
-    const link = `/south/${dataSource.protocol}/${dataSource.dataSourceId}/points`
     history.push({ pathname: link })
   }
 
@@ -80,36 +73,26 @@ const South = ({ history }) => {
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']
   const tableRows = dataSources
-    && dataSources.map(({ dataSourceId, enabled, protocol, points }, index) => [
-      { name: dataSourceId, value: dataSourceId },
+    && dataSources.map((dataSource, index) => [
+      { name: dataSource.dataSourceId, value: dataSource.dataSourceId },
       {
         name: 'enabled',
         value: (
           <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
             {(confirm) => (
               <div>
-                <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
-                  {enabled ? 'Enabled' : 'Disabled'}
+                <Button className="inline-button" color={dataSource.enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
+                  {dataSource.enabled ? 'Enabled' : 'Disabled'}
                 </Button>
               </div>
             )}
           </Modal>
         ),
       },
-      { name: 'protocol', value: protocol },
+      { name: 'protocol', value: dataSource.protocol },
       {
         name: 'points',
-        value: (
-          <div>
-            <Button
-              className="inline-button autosize"
-              color={points && points.length ? 'success' : 'primary'}
-              onClick={() => handleEditPoints(dataSourceId)}
-            >
-              {`Points ${points ? `(${points.length})` : '(0)'}`}
-            </Button>
-          </div>
-        ),
+        value: <PointsButton dataSource={dataSource} />,
       },
     ])
 
