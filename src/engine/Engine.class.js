@@ -180,7 +180,7 @@ class Engine {
    * @return {void}
    */
   start() {
-    const { southConfig,  northConfig, engineConfig } = this.configService.getConfig()
+    const { southConfig, northConfig, engineConfig } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
     server.listen()
