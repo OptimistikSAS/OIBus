@@ -29,27 +29,15 @@ class ConfigService {
   }
 
   /**
-   * Get Engine config.
-   * @returns {object} - The Engine config
+   * Get config.
+   * @returns {object} - The config
    */
-  getEngineConfig() {
-    return this.config.engine
-  }
-
-  /**
-   * Get South config.
-   * @returns {object} - The South config
-   */
-  getSouthConfig() {
-    return this.config.south
-  }
-
-  /**
-   * Get North config.
-   * @returns {object} - The North config
-   */
-  getNorthConfig() {
-    return this.config.north
+  getConfig() {
+    return {
+      engineConfig: this.config.engine,
+      southConfig: this.config.south,
+      northConfig: this.config.north,
+    }
   }
 
   /**

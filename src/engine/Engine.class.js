@@ -47,9 +47,10 @@ class Engine {
     this.version = VERSION
 
     this.configService = new ConfigService(this)
+    const { engineConfig, southConfig } = this.configService.getConfig()
 
     // Configure and get the logger
-    this.logger = new Logger(this.configService.getEngineConfig().logParameters)
+    this.logger = new Logger(engineConfig.logParameters)
 
     this.configService.setLogger(this.logger)
 
@@ -62,7 +63,7 @@ class Engine {
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
     Config file: ${this.configFile}
-    Cache folder: ${path.resolve(this.configService.getEngineConfig().caching.cacheFolder)}`)
+    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
     encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
 
@@ -73,13 +74,13 @@ class Engine {
 
     // initialize the scanLists with empty arrays
     this.scanLists = {}
-    this.configService.getEngineConfig().scanModes.forEach(({ scanMode }) => {
+    engineConfig.scanModes.forEach(({ scanMode }) => {
       this.scanLists[scanMode] = []
     })
 
     // browse config file for the various dataSource and points and build the object scanLists
     // with the list of dataSource to activate for each ScanMode.
-    this.configService.getSouthConfig().dataSources.forEach((dataSource) => {
+    southConfig.dataSources.forEach((dataSource) => {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
@@ -184,7 +185,8 @@ class Engine {
     server.listen()
 
     // 2. start Protocol for each data sources
-    this.configService.getSouthConfig().dataSources.forEach((dataSource) => {
+    const { southConfig } = this.configService.getConfig()
+    southConfig.dataSources.forEach((dataSource) => {
       const { protocol, enabled, dataSourceId } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
@@ -200,7 +202,8 @@ class Engine {
 
     // 3. start Applications
     this.pointApplication = {}
-    this.configService.getNorthConfig().applications.forEach((application) => {
+    const { northConfig } = this.configService.getConfig()
+    northConfig.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
       const ApiHandler = apiList[api]
@@ -218,7 +221,8 @@ class Engine {
     this.cache.initialize(this.activeApis)
 
     // 5. start the timers for each scan modes
-    this.configService.getEngineConfig().scanModes.forEach(({ scanMode, cronTime }) => {
+    const { engineConfig } = this.configService.getConfig()
+    engineConfig.scanModes.forEach(({ scanMode, cronTime }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
