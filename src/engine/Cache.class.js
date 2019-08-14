@@ -21,9 +21,9 @@ class Cache {
   constructor(engine) {
     this.logger = engine.logger
     this.engine = engine
-    const { config } = engine
     // get parameters for the cache
-    const { cacheFolder, archiveFolder, archiveMode } = config.engine.caching
+    const { engineConfig } = engine.configService.getConfig()
+    const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching
     this.archiveMode = archiveMode
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)

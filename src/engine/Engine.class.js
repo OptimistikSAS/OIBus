@@ -1,7 +1,6 @@
 const timexe = require('timexe')
 const path = require('path')
 
-const { tryReadFile, backupConfigFile, saveNewConfig } = require('../services/config.service')
 const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
@@ -29,6 +28,7 @@ apiList.Link = require('../north/link/Link.class')
 const Server = require('../server/Server.class')
 const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
+const ConfigService = require('../services/config.service.class')
 
 /**
  *
@@ -42,24 +42,17 @@ class Engine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
-   * @param {String} configFile - path to the config file
-   * @return {Object} readConfig - parsed config Object
    */
-  constructor(configFile) {
+  constructor() {
     this.version = VERSION
 
-    this.configFile = path.resolve(configFile)
-    this.config = tryReadFile(this.configFile)
+    this.configService = new ConfigService(this)
+    const { engineConfig, southConfig } = this.configService.getConfig()
 
     // Configure and get the logger
-    this.logger = new Logger(this.config.engine.logParameters)
+    this.logger = new Logger(engineConfig.logParameters)
 
-    try {
-      // Make a deep copy to prevent overwriting the config when working on modifiedConfig
-      this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
-    } catch (error) {
-      this.logger.error(error)
-    }
+    this.configService.setLogger(this.logger)
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -70,10 +63,9 @@ class Engine {
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
     Config file: ${this.configFile}
-    Cache folder: ${path.resolve(this.config.engine.caching.cacheFolder)}`)
+    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
-    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
-    encryptionService.checkOrCreatePrivateKey(this.keyFolder, this.logger)
+    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
 
     // prepare config
     // Associate the scanMode to all corresponding data sources
@@ -82,13 +74,13 @@ class Engine {
 
     // initialize the scanLists with empty arrays
     this.scanLists = {}
-    this.config.engine.scanModes.forEach(({ scanMode }) => {
+    engineConfig.scanModes.forEach(({ scanMode }) => {
       this.scanLists[scanMode] = []
     })
 
     // browse config file for the various dataSource and points and build the object scanLists
     // with the list of dataSource to activate for each ScanMode.
-    this.config.south.dataSources.forEach((dataSource) => {
+    southConfig.dataSources.forEach((dataSource) => {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
@@ -188,12 +180,13 @@ class Engine {
    * @return {void}
    */
   start() {
+    const { southConfig,  northConfig, engineConfig } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
     server.listen()
 
     // 2. start Protocol for each data sources
-    this.config.south.dataSources.forEach((dataSource) => {
+    southConfig.dataSources.forEach((dataSource) => {
       const { protocol, enabled, dataSourceId } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
@@ -209,7 +202,7 @@ class Engine {
 
     // 3. start Applications
     this.pointApplication = {}
-    this.config.north.applications.forEach((application) => {
+    northConfig.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
       const ApiHandler = apiList[api]
@@ -227,7 +220,7 @@ class Engine {
     this.cache.initialize(this.activeApis)
 
     // 5. start the timers for each scan modes
-    this.config.engine.scanModes.forEach(({ scanMode, cronTime }) => {
+    engineConfig.scanModes.forEach(({ scanMode, cronTime }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
@@ -287,7 +280,7 @@ class Engine {
    * @return {string} - The decrypted password
    */
   decryptPassword(password) {
-    return encryptionService.decryptText(password, this.engine.keyFolder, this.logger)
+    return encryptionService.decryptText(password, this.configService.keyFolder, this.logger)
   }
 
   /**
@@ -339,273 +332,11 @@ class Engine {
   }
 
   /**
-   * Get active configuration.
-   * @returns {object} - The active configuration
-   */
-  getActiveConfiguration() {
-    try {
-      // Make a deep copy to prevent overwriting the stored config when decrypting the passwords
-      const config = JSON.parse(JSON.stringify(this.config))
-      encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
-      encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
-      encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
-      return config
-    } catch (error) {
-      return {}
-    }
-  }
-
-  /**
-   * Get active configuration.
-   * @returns {object} - The active configuration
-   */
-  getModifiedConfiguration() {
-    try {
-      // Make a deep copy to prevent overwriting the stored modifiedConfig when decrypting the passwords
-      const config = JSON.parse(JSON.stringify(this.modifiedConfig))
-      encryptionService.decryptSecrets(config.engine.proxies, this.keyFolder, this.logger)
-      encryptionService.decryptSecrets(config.north.applications, this.keyFolder, this.logger)
-      encryptionService.decryptSecrets(config.south.dataSources, this.keyFolder, this.logger)
-      return config
-    } catch (error) {
-      return {}
-    }
-  }
-
-  /**
-   * Check if the given application ID already exists
-   * @param {string} applicationId - The application ID to check
-   * @returns {object | undefined} - Whether the given application exists
-   */
-  hasNorth(applicationId) {
-    return this.modifiedConfig.north.applications.find((application) => application.applicationId === applicationId)
-  }
-
-  /**
-   * Add North application
-   * @param {object} application - The new application to add
-   * @returns {void}
-   */
-  addNorth(application) {
-    encryptionService.encryptSecrets(application, this.keyFolder)
-    this.modifiedConfig.north.applications.push(application)
-  }
-
-  /**
-   * Update North application
-   * @param {object} application - The updated application
-   * @returns {void}
-   */
-  updateNorth(application) {
-    const index = this.modifiedConfig.north.applications.findIndex(
-      (element) => element.applicationId === application.applicationId,
-    )
-    if (index > -1) {
-      encryptionService.encryptSecrets(application, this.keyFolder)
-      this.modifiedConfig.north.applications[index] = application
-    }
-  }
-
-  /**
-   * Delete North application
-   * @param {string} applicationId - The application to delete
-   * @returns {void}
-   */
-  deleteNorth(applicationId) {
-    this.modifiedConfig.north.applications = this.modifiedConfig.north.applications.filter(
-      (application) => application.applicationId !== applicationId,
-    )
-  }
-
-  /**
-   * Check if the given data source ID already exists
-   * @param {string} dataSourceId - The data source ID to check
-   * @returns {object | undefined} - Whether the given data source exists
-   */
-  hasSouth(dataSourceId) {
-    return this.modifiedConfig.south.dataSources.find((dataSource) => dataSource.dataSourceId === dataSourceId)
-  }
-
-  /**
-   * Add South data source
-   * @param {object} dataSource - The new data source to add
-   * @returns {void}
-   */
-  addSouth(dataSource) {
-    encryptionService.encryptSecrets(dataSource, this.keyFolder)
-    this.modifiedConfig.south.dataSources.push(dataSource)
-  }
-
-  /**
-   * Update South data source
-   * @param {object} dataSource - The updated data source
-   * @returns {void}
-   */
-  updateSouth(dataSource) {
-    const index = this.modifiedConfig.south.dataSources.findIndex(
-      (element) => element.dataSourceId === dataSource.dataSourceId,
-    )
-    if (index > -1) {
-      encryptionService.encryptSecrets(dataSource, this.keyFolder)
-      this.modifiedConfig.south.dataSources[index] = dataSource
-    }
-  }
-
-  /**
-   * Delete South data source
-   * @param {string} dataSourceId - The data source to delete
-   * @returns {void}
-   */
-  deleteSouth(dataSourceId) {
-    this.modifiedConfig.south.dataSources = this.modifiedConfig.south.dataSources.filter(
-      (dataSource) => dataSource.dataSourceId !== dataSourceId,
-    )
-  }
-
-  /**
-   * Update Engine
-   * @param {object} engine - The updated Engine
-   * @returns {void}
-   */
-  updateEngine(engine) {
-    encryptionService.encryptSecrets(engine.proxies, this.keyFolder)
-    this.modifiedConfig.engine = engine
-  }
-
-  /**
-   * Get points for a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @returns {object} - The points
-   */
-  getPointsForSouth(dataSourceId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((elem) => elem.dataSourceId === dataSourceId)
-
-    if (dataSource && dataSource.points) {
-      return dataSource.points
-    }
-
-    return {}
-  }
-
-  /**
-   * Check whether the given South already has a point with the given point ID.
-   * @param {string} dataSourceId - The South to get the points for
-   * @param {string} pointId - The point ID
-   * @returns {boolean} - Whether the given South has a point with the given point ID
-   */
-  hasSouthPoint(dataSourceId, pointId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-
-    if (dataSource && dataSource.points) {
-      return dataSource.points.find((elem) => elem.pointId === pointId)
-    }
-
-    return false
-  }
-
-  /**
-   * Add new point for a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @param {object} point - The point to add
-   * @returns {void}
-   */
-  addSouthPoint(dataSourceId, point) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource) {
-      if (!dataSource.points) {
-        dataSource.points = []
-      }
-      dataSource.points.push(point)
-    }
-  }
-
-  /**
-   * Update point for a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @param {string} pointId - The point to update
-   * @param {object} point - The updated point
-   * @returns {void}
-   */
-  updateSouthPoint(dataSourceId, pointId, point) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
-      const index = dataSource.points.findIndex((element) => element.pointId === pointId)
-      if (index > -1) {
-        dataSource.points[index] = point
-      }
-    }
-  }
-
-  /**
-   * Delete point from a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @param {string} pointId - The point ID to delete
-   * @returns {void}
-   */
-  deleteSouthPoint(dataSourceId, pointId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
-      dataSource.points = dataSource.points.filter((point) => point.pointId !== pointId)
-    }
-  }
-
-  /**
-   * Delete all points from a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @returns {void}
-   */
-  deleteSouthPoints(dataSourceId) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
-      dataSource.points = []
-    }
-  }
-
-  /**
-   * Set points for a given South.
-   * @param {string} dataSourceId - The South to get the points for
-   * @param {object[]} points - The points to set
-   * @returns {void}
-   */
-  setSouthPoints(dataSourceId, points) {
-    const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource) {
-      dataSource.points = points
-    }
-  }
-
-  /**
-   * Activate the configuration
-   * @returns {void}
-   */
-  activateConfiguration() {
-    backupConfigFile(this.configFile)
-    saveNewConfig(this.modifiedConfig, this.configFile)
-    this.reload(100)
-  }
-
-  /**
-   * Reset configuration
-   * @returns {void}
-   */
-  resetConfiguration() {
-    this.modifiedConfig = tryReadFile(this.configFile)
-  }
-
-  /**
     * Get OIBus version
     * @returns {string} - The OIBus version
     */
   getVersion() {
     return this.version
-  }
-
-  /**
-    * Returns all available scan modes
-    * @returns {Array} - Array of available scan modes
-    */
-  getScanModes() {
-    return this.config.engine.scanModes
   }
 }
 

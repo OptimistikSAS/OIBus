@@ -103,8 +103,11 @@ class OPCUA extends ProtocolHandler {
             dataId: [], // to add after data{} is handled
           }
           this.logger.debug(pointId, scanGroup)
-          this.logger.debug(fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger))
-          fieldsFromPointId(pointId, this.engine.config.engine.types, this.logger).forEach((field) => {
+
+          const { engineConfig } = this.engine.configService.getConfig()
+          const fields = fieldsFromPointId(pointId, engineConfig.types, this.logger)
+          this.logger.debug(fields)
+          fields.forEach((field) => {
             value.dataId.push(field.name)
             if (field.name !== 'quality') {
               data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value

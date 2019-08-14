@@ -33,7 +33,6 @@ class ApiHandler {
     this.logger = this.engine.logger
     this.config = this.engine.config
     this.scanModes = this.engine.scanModes
-    this.decryptPassword = this.engine.decryptPassword
   }
 
   /**
@@ -90,6 +89,15 @@ class ApiHandler {
     }
 
     return proxy
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @returns {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return this.engine.decryptPassword(password)
   }
 
   /**
