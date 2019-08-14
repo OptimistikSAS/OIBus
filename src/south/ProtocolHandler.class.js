@@ -35,7 +35,6 @@ class ProtocolHandler {
     this.dataSource = dataSource
     this.engine = engine
     this.logger = engine.logger
-    this.decryptPassword = this.engine.decryptPassword
   }
 
   connect() {
@@ -74,6 +73,15 @@ class ProtocolHandler {
    */
   addFile(filePath) {
     this.engine.addFile(this.dataSource.dataSourceId, filePath, this.preserveFiles)
+  }
+
+  /**
+   * Decrypt password.
+   * @param {string} password - The password to decrypt
+   * @returns {string} - The decrypted password
+   */
+  decryptPassword(password) {
+    return this.engine.decryptPassword(password)
   }
 }
 
