@@ -180,12 +180,12 @@ class Engine {
    * @return {void}
    */
   start() {
+    const { southConfig,  northConfig, engineConfig } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
     server.listen()
 
     // 2. start Protocol for each data sources
-    const { southConfig } = this.configService.getConfig()
     southConfig.dataSources.forEach((dataSource) => {
       const { protocol, enabled, dataSourceId } = dataSource
       // select the correct Handler
@@ -202,7 +202,6 @@ class Engine {
 
     // 3. start Applications
     this.pointApplication = {}
-    const { northConfig } = this.configService.getConfig()
     northConfig.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
@@ -221,7 +220,6 @@ class Engine {
     this.cache.initialize(this.activeApis)
 
     // 5. start the timers for each scan modes
-    const { engineConfig } = this.configService.getConfig()
     engineConfig.scanModes.forEach(({ scanMode, cronTime }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
