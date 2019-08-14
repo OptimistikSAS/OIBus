@@ -28,7 +28,8 @@ class RawFile extends ProtocolHandler {
 
   async connect() {
     if (this.preserveFiles) {
-      const databasePath = `${this.engine.configService.getEngineConfig().caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
+      const { engineConfig } = this.engine.configService.getConfig()
+      const databasePath = `${engineConfig.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
       this.database = await databaseService.createRawFilesDatabase(databasePath)
     }
   }
