@@ -14,11 +14,11 @@
             type: 'string',
           },
           value: {
-            type: 'string', // TODO: Multiple types
+            type: 'string',
             title: 'Value',
           },
           quality: {
-            type: 'string', // TODO: Multiple types
+            type: 'string',
             title: 'Quality',
           },
         },

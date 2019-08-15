@@ -14,7 +14,7 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
     const newVal = Number.isNaN(parseInt(v, 10)) ? v : parseInt(v, 10)
     onChange(name, newVal, valid(newVal))
   }
-  // if no label, we are in a table so we need to minimize the row height
+  // if no label, we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
   const validCheck = valid(value)
   // if value is null, no need to render

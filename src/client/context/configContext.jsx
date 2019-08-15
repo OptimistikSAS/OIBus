@@ -97,6 +97,11 @@ const ConfigProvider = ({ children }) => {
     }
   }, [])
   // the provider return the new and active config and their respective setters
+  /**
+   * @todo: component using this context (.i.e the whole application) will rerender
+   * 4 times (when apiList, protocolList, activeConfig and newConfig are updated).
+   * we could make a single call to the server to avoid this effect.
+   */
   return (
     <ConfigContext.Provider value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList }}>
       {children}
