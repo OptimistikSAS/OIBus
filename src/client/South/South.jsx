@@ -96,9 +96,9 @@ const South = ({ history }) => {
       },
     ])
 
-  return (dataSources && protocolList) ? (
+  return (dataSources !== null && Array.isArray(protocolList)) ? (
     <Col md="8">
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />}
+      <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>
   ) : (

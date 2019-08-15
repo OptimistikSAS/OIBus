@@ -28,7 +28,6 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
         break
     }
   }
-  console.log(dataSourceId, protocolList[0])
   return (
     <Form>
       <Row>

@@ -39,8 +39,8 @@ const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
   const [activeConfig, setActiveConfig] = React.useState(null)
-  const [apiList, setApiList] = React.useState([])
-  const [protocolList, setProtocolList] = React.useState([])
+  const [apiList, setApiList] = React.useState()
+  const [protocolList, setProtocolList] = React.useState()
 
   /**
    * Acquire the list of API
