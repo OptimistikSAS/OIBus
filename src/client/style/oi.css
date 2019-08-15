@@ -301,7 +301,7 @@ label {
 .oi-icon {
   width: 10px;
   margin-right: 2px;
-  margin-bottom: 12px;
+  margin-bottom: 0px;
 }
 
 .oi-icon:hover {
