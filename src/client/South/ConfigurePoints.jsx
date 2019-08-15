@@ -104,7 +104,7 @@ const ConfigurePoints = ({ match }) => {
    * @param {string} id ID of an dataSource
    * @returns {object} The selected dataSource's config
    */
-  const { points, protocol } = newConfig.south.dataSources[dataSourceIndex]
+  const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
   const ProtocolForm = ProtocolForms[protocol]
   // configure table header and rows
   const tableHeaders = ProtocolForm.renderHeaders()
