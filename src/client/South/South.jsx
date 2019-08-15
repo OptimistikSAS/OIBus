@@ -29,8 +29,8 @@ const South = ({ history }) => {
    */
   const handleEdit = (index) => {
     const dataSource = dataSources[index]
-    const link = `/south/${dataSource.dataSourceId}`
-    history.push({ pathname: link })
+    const pathname = `/south/${dataSource.dataSourceId}`
+    history.push({ pathname })
   }
 
   /**
@@ -96,7 +96,7 @@ const South = ({ history }) => {
       },
     ])
 
-  return dataSources ? (
+  return (dataSources && protocolList) ? (
     <Col md="8">
       {tableRows && <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />}
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />

@@ -91,7 +91,7 @@ const North = ({ history }) => {
       { name: 'api', value: api },
     ])
 
-  return applications ? (
+  return (applications && apiList) ? (
     <Col md="6">
       {tableRows && <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />}
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
