@@ -43,7 +43,7 @@ const MQTTForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           options={['mqtt', 'mqtts']}
           option={dataSource.MQTT.mqttProtocol}
-          defaultValue="mqtts"
+          defaultOption="mqtts"
           name="MQTT.mqttProtocol"
           help={<div>Protocol MQTT</div>}
         />
@@ -74,10 +74,30 @@ const MQTTForm = ({ dataSource, onChange }) => (
 
 MQTTForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
-MQTTForm.pointDef = {
-  pointId: { label: 'Point Id', type: 'text' },
-  scanMode: { label: 'Scan Mode', type: 'text' },
-  topic: { label: 'Topic', type: 'text' },
+/**
+ * The following keys will be used by the ConfigurePoints form to display the headers
+ * and the rows that are specific for each protocol.
+ * @returns {array} Headers for each column
+ */
+MQTTForm.renderHeaders = () => ['Point Id', 'ScanMode', 'Topic']
+MQTTForm.renderPoints = (points, onChange) => {
+  const rows = points.map((point, index) => (
+    [
+      {
+        name: `points.${index}.pointId`,
+        value: <OIbText title="Point Id" name={`points.${index}.pointId`} value={point.pointId} onChange={onChange} defaultValue="" />,
+      },
+      {
+        name: `points.${index}.scanMode`,
+        value: <OIbText title="ScanMode" name={`points.${index}.scanMode`} value={point.scanMode} onChange={onChange} defaultValue="" />,
+      },
+      {
+        name: `points.${index}.topic`,
+        value: <OIbText title="Topic" name={`points.${index}.topic`} value={point.topic} onChange={onChange} defaultValue="" />,
+      },
+    ]
+  ))
+  return rows
 }
 
 export default MQTTForm

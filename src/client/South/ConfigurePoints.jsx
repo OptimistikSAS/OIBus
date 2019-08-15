@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Form, Button, Input } from 'reactstrap'
+import { Button, Input } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
 import { OIbText } from '../components/OIbForm'
@@ -13,8 +13,7 @@ import ProtocolForms from './Protocols.jsx'
 
 const ConfigurePoints = ({ match }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const [filterText, setFilterText] = React.useState() // used to limit the list of points
-  const [filteredPoints, setFilteredPoints] = React.useState([]) // filtered list
+  const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
   const { setAlert } = React.useContext(AlertContext)
   // max points on one page
@@ -23,33 +22,8 @@ const ConfigurePoints = ({ match }) => {
   const MAX_PAGINATION_DISPLAY = 11
 
   const { dataSourceId } = match.params
-
-  /**
-   * Gets the config json of a south dataSource
-   * @param {string} id ID of an dataSource
-   * @returns {object} The selected dataSource's config
-   */
-  const DataSourceIndex = newConfig.south.dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
-  const { points, protocol } = newConfig.south.dataSources[DataSourceIndex]
-  const ProtocolForm = ProtocolForms[protocol]
-
-  /**
-   * Update the filtered points JSON
-   * @param {string} filter filter value
-   * @returns {void}
-   */
-  const updateFilteredPoints = (filter) => {
-    setFilteredPoints(
-      filter
-        ? points.filter(
-          (point) => Object.values(point).findIndex((element) => element
-            .toString()
-            .toLowerCase()
-            .includes(filter.toLowerCase())) >= 0,
-        )
-        : points,
-    )
-  }
+  const dataSourceIndex = newConfig.south.dataSources
+    .findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   /**
    * Sets the filter text
@@ -59,7 +33,6 @@ const ConfigurePoints = ({ match }) => {
   const updateFilterText = (value) => {
     setSelectedPage(1)
     setFilterText(value)
-    updateFilteredPoints(points, value)
   }
 
   /**
@@ -67,16 +40,16 @@ const ConfigurePoints = ({ match }) => {
    * @returns {void}
    */
   const handleAdd = () => {
-    dispatchNewConfig({ type: 'addPoint', dataSourceId })
+    dispatchNewConfig({ type: 'addRow', name: `south.dataSources.${dataSourceIndex}.points`, value: {} })
   }
 
   /**
    * Delete point
-   * @param {string} pointId the id of point
+   * @param {string} index the index of point
    * @returns {void}
    */
-  const handleDelete = (pointId) => {
-    dispatchNewConfig({ type: 'deletePoint', dataSourceId, pointId })
+  const handleDelete = (index) => {
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${index}` })
   }
 
   /**
@@ -84,7 +57,7 @@ const ConfigurePoints = ({ match }) => {
    * @returns {void}
    */
   const handleDeleteAllPoint = () => {
-    dispatchNewConfig({ type: 'deleteAllPoints', dataSourceId })
+    dispatchNewConfig({ type: 'deleteAllRows', name: `south.dataSources.${dataSourceIndex}.points` })
   }
 
   /**
@@ -123,30 +96,33 @@ const ConfigurePoints = ({ match }) => {
     })
   }
 
+  const onChangePoint = (name, value, validity) => {
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
+  }
   /**
-   * render add/edit form for point
-   * @param {Object} [point] data of editing point(optional).
-   * @returns {Object} form JSX
+   * Gets the config json of a south dataSource
+   * @param {string} id ID of an dataSource
+   * @returns {object} The selected dataSource's config
    */
-  const handleEdit = () => (
-    <div>
-      <Form />
-      <Button
-        color="primary"
-      >
-        Cancel
-      </Button>
-    </div>
-  )
-
+  const { points, protocol } = newConfig.south.dataSources[dataSourceIndex]
+  const ProtocolForm = ProtocolForms[protocol]
   // configure table header and rows
-  const tableHeaders = Object.keys(ProtocolForm.pointDef)
+  const tableHeaders = ProtocolForm.renderHeaders()
 
+  // filter
+  const filteredPoints = filterText
+    ? points.filter(
+      (point) => Object.values(point).findIndex((element) => element
+        .toString()
+        .toLowerCase()
+        .includes(filterText.toLowerCase())) >= 0,
+    )
+    : points
   // paging
   const pagedPoints = filteredPoints.filter(
     (_, index) => index >= selectedPage * MAX_ON_PAGE - MAX_ON_PAGE && index < selectedPage * MAX_ON_PAGE,
   )
-  const tableRows = pagedPoints
+  const tableRows = ProtocolForm.renderPoints(pagedPoints, onChangePoint)
 
   return (
     <>
@@ -155,14 +131,13 @@ const ConfigurePoints = ({ match }) => {
         name="filterText"
         value={filterText}
         help={<div>Type any points related data</div>}
-        onChange={(val) => updateFilterText(val)}
+        onChange={(_name, val) => updateFilterText(val)}
       />
       <Table
         headers={tableHeaders}
         rows={tableRows}
         handleAdd={handleAdd}
         handleDelete={handleDelete}
-        handleEdit={handleEdit}
       />
       {filteredPoints.length && (
         <TablePagination
