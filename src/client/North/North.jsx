@@ -91,9 +91,9 @@ const North = ({ history }) => {
       { name: 'api', value: api },
     ])
 
-  return (applications && apiList) ? (
+  return (applications !== null && Array.isArray(apiList)) ? (
     <Col md="6">
-      {tableRows && <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />}
+      <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
     </Col>
   ) : (
