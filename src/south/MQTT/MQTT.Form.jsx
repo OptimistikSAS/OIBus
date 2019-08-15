@@ -74,4 +74,10 @@ const MQTTForm = ({ dataSource, onChange }) => (
 
 MQTTForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
+MQTTForm.pointDef = {
+  pointId: { label: 'Point Id', type: 'text' },
+  scanMode: { label: 'Scan Mode', type: 'text' },
+  topic: { label: 'Topic', type: 'text' },
+}
+
 export default MQTTForm

@@ -1,17 +1,17 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Form, Button, Input, FormGroup, Label } from 'reactstrap'
-// import Form from 'react-jsonschema-form-bs4'
-import Table from '../client/components/table/Table.jsx'
-import TablePagination from '../client/components/table/TablePagination.jsx'
-import Modal from '../client/components/Modal.jsx'
-import apis from '../client/services/apis'
-// import uiSchema from './uiSchema.jsx'
-import { AlertContext } from '../client/context/AlertContext.jsx'
-import { ConfigContext } from '../client/context/configContext.jsx'
+import { Form, Button, Input } from 'reactstrap'
+import Table from '../components/table/Table.jsx'
+import TablePagination from '../components/table/TablePagination.jsx'
+import { OIbText } from '../components/OIbForm'
+import Modal from '../components/Modal.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
+import ProtocolForms from './Protocols.jsx'
 
-const ConfigureProtocol = ({ match }) => {
+const ConfigurePoints = ({ match }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [filterText, setFilterText] = React.useState() // used to limit the list of points
   const [filteredPoints, setFilteredPoints] = React.useState([]) // filtered list
@@ -23,7 +23,15 @@ const ConfigureProtocol = ({ match }) => {
   const MAX_PAGINATION_DISPLAY = 11
 
   const { dataSourceId } = match.params
-  const { points } = newConfig.south[dataSourceId]
+
+  /**
+   * Gets the config json of a south dataSource
+   * @param {string} id ID of an dataSource
+   * @returns {object} The selected dataSource's config
+   */
+  const DataSourceIndex = newConfig.south.dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+  const { points, protocol } = newConfig.south.dataSources[DataSourceIndex]
+  const ProtocolForm = ProtocolForms[protocol]
 
   /**
    * Update the filtered points JSON
@@ -116,36 +124,6 @@ const ConfigureProtocol = ({ match }) => {
   }
 
   /**
-   * create one cell with the value
-   * @param {string} value the displayed value
-   * @returns {void}
-   */
-  const createCell = (value) => <div>{value}</div>
-
-  /**
-   * create the array with cells on a particular row
-   * this function is recursive, it will work recursiveli once the schema has objects
-   * @param {Object} config of the points from the protocol
-   * @param {Object} point data of one point
-   * @returns {Array} array with name-value for the cells
-   */
-  const createTableRow = (config, point) => {
-    const keys = Object.keys(config)
-    let row = []
-    keys.forEach((key) => {
-      if (config[key].type !== 'object') {
-        row.push({
-          name: key,
-          value: createCell(point[key] ? point[key].toString() : ''),
-        })
-      } else {
-        row = row.concat(createTableRow(config[key].properties, point[key]))
-      }
-    })
-    return row
-  }
-
-  /**
    * render add/edit form for point
    * @param {Object} [point] data of editing point(optional).
    * @returns {Object} form JSX
@@ -162,27 +140,23 @@ const ConfigureProtocol = ({ match }) => {
   )
 
   // configure table header and rows
-  const tableHeaders = []
+  const tableHeaders = Object.keys(ProtocolForm.pointDef)
 
   // paging
-  const pagedPointsJson = filteredPoints.filter(
+  const pagedPoints = filteredPoints.filter(
     (_, index) => index >= selectedPage * MAX_ON_PAGE - MAX_ON_PAGE && index < selectedPage * MAX_ON_PAGE,
   )
-  const tableRows = pagedPointsJson.map((point, index) => createTableRow(point, index))
+  const tableRows = pagedPoints
 
   return (
-    <div>
-      <FormGroup>
-        <Label for="filter-text">Filter</Label>
-        <Input
-          className="oi-form-input"
-          type="text"
-          id="fromDatee"
-          defaultValue={filterText}
-          placeholder="Type any points related data"
-          onChange={(event) => updateFilterText(event.target.value)}
-        />
-      </FormGroup>
+    <>
+      <OIbText
+        label="Filter"
+        name="filterText"
+        value={filterText}
+        help={<div>Type any points related data</div>}
+        onChange={(val) => updateFilterText(val)}
+      />
       <Table
         headers={tableHeaders}
         rows={tableRows}
@@ -190,14 +164,14 @@ const ConfigureProtocol = ({ match }) => {
         handleDelete={handleDelete}
         handleEdit={handleEdit}
       />
-      {filteredPoints.length ? (
+      {filteredPoints.length && (
         <TablePagination
           maxToDisplay={MAX_PAGINATION_DISPLAY}
           selected={selectedPage}
           total={Math.ceil(filteredPoints.length / MAX_ON_PAGE)}
           onPagePressed={(page) => setSelectedPage(page)}
         />
-      ) : null}
+      )}
       <div className="force-row-display">
         <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
           Import
@@ -223,10 +197,10 @@ const ConfigureProtocol = ({ match }) => {
           )}
         </Modal>
       </div>
-    </div>
+    </>
   )
 }
 
-ConfigureProtocol.propTypes = { match: PropTypes.object.isRequired }
+ConfigurePoints.propTypes = { match: PropTypes.object.isRequired }
 
-export default withRouter(ConfigureProtocol)
+export default withRouter(ConfigurePoints)
