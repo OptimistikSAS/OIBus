@@ -71,7 +71,7 @@ const South = ({ history }) => {
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${index}` })
   }
 
-  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points', '']
+  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
   const tableRows = dataSources
     && dataSources.map((dataSource, index) => [
       { name: dataSource.dataSourceId, value: dataSource.dataSourceId },
