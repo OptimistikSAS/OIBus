@@ -7,7 +7,7 @@ import TableRows from './TableRows.jsx'
 
 const Table = ({ headers, rows, handleAdd, handleDelete, handleEdit }) => (
   <BsTable striped hover size="sm">
-    <TableHeader headers={headers} handleAdd={handleAdd} />
+    <TableHeader headers={headers} handleAdd={handleAdd} handleDelete={handleDelete} />
     <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} />
   </BsTable>
 )
