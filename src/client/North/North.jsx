@@ -70,7 +70,7 @@ const North = ({ history }) => {
     dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${index}` })
   }
 
-  const tableHeaders = ['Application ID', 'Status', 'API', '']
+  const tableHeaders = ['Application ID', 'Status', 'API']
   const tableRows = applications
     && applications.map(({ applicationId, enabled, api }, index) => [
       { name: applicationId, value: applicationId },

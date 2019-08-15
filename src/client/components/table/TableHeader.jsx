@@ -12,7 +12,11 @@ const TableHeader = ({ headers, handleAdd, handleDelete }) => {
       </>
     )
   }
-  if (handleDelete) decoratedHeaders.push('') // add column for the delete icon
+  if (handleDelete) {
+    decoratedHeaders.push('') // add column for the delete icon
+    // headers.push('actions') // used for the unique key
+  }
+
   return (
     <thead>
       <tr>
