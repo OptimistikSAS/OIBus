@@ -49,6 +49,7 @@ const Welcome = () => {
   // button to activate the modified configuration
   const handleActivate = async () => {
     try {
+      await apis.updateConfig(newConfig)
       await apis.updateActiveConfig()
       setActiveConfig(newConfig)
       setLoading(true)

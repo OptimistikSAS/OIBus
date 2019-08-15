@@ -252,12 +252,18 @@ class ConfigService {
 
   /**
    * Update Engine
-   * @param {object} engine - The updated Engine
+   * @param {object} config - The updated Engine
    * @returns {void}
    */
-  updateEngine(engine) {
-    encryptionService.encryptSecrets(engine.proxies, this.keyFolder)
-    this.modifiedConfig.engine = engine
+  updateConfig(config) {
+    encryptionService.encryptSecrets(config.engine.proxies, this.keyFolder)
+    config.north.applications.forEach((application) => {
+      encryptionService.encryptSecrets(application, this.keyFolder)
+    })
+    config.south.dataSources.forEach((dataSource) => {
+      encryptionService.encryptSecrets(dataSource, this.keyFolder)
+    })
+    this.modifiedConfig.config = config
   }
 
   /**
