@@ -24,4 +24,11 @@ if (cluster.isMaster) {
   // so this is here where we execute the OIBus Engine
   const engine = new Engine()
   engine.start()
+
+  // Catch Ctrl+C and properly stop the Engine
+  process.on('SIGINT', () => {
+    engine.logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+    engine.stop()
+    process.exit()
+  })
 }
