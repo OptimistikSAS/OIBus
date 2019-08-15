@@ -26,6 +26,9 @@ const reducer = (state, action) => {
     case 'deleteRow':
       objectPath.del(newState, name)
       return newState
+    case 'deleteAllRows':
+      objectPath.empty(newState, name)
+      return newState
     case 'addRow':
       objectPath.push(newState, name, action.value)
       // copy into the new state
