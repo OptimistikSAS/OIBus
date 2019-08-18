@@ -50,14 +50,14 @@ const ConfigProvider = ({ children }) => {
    * @returns {void}
    */
   React.useEffect(() => {
-    apis
-      .getNorthApis()
-      .then((application) => {
-        setApiList(application)
-      })
-      .catch((error) => {
+    const call = async () => {
+      try {
+        setApiList(await apis.getNorthApis())
+      } catch (error) {
         console.error(error)
-      })
+      }
+    }
+    call()
   }, [])
 
   /**
@@ -65,14 +65,14 @@ const ConfigProvider = ({ children }) => {
    * @returns {void}
    */
   React.useEffect(() => {
-    apis
-      .getSouthProtocols()
-      .then((protocols) => {
-        setProtocolList(protocols)
-      })
-      .catch((error) => {
+    const call = async () => {
+      try {
+        setProtocolList(await apis.getSouthProtocols())
+      } catch (error) {
         console.error(error)
-      })
+      }
+    }
+    call()
   }, [])
 
   // On mount, acquire the Active config from server.
@@ -103,7 +103,9 @@ const ConfigProvider = ({ children }) => {
    * we could make a single call to the server to avoid this effect.
    */
   return (
-    <ConfigContext.Provider value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList }}>
+    <ConfigContext.Provider
+      value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList }}
+    >
       {children}
     </ConfigContext.Provider>
   )
