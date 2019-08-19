@@ -3,7 +3,7 @@ node_modules/
 .idea/
 dist/
 docs/
-logs/
+/logs/
 cache/
 build/
 oibus-*.json
