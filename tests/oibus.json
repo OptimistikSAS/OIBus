@@ -283,6 +283,8 @@
                 "password": "eOpRHLUyRPDMaek0ozGTxeO8U0t4ffaLdlJo3DxEvM+l/WIQ7CDyzmFrkb1JuwgKVfEm4Ngp1EWwrFJxPrlRqJsBzvomOtJANsRcRSKtk801rPiEEGBfUxjz5Sm659d8PgUifkXunl3Pj2mlxaDbsX6DKjRIuXKTdea3MT3i5N+x6a8Z21lOuckLCy+BAqIDEtMdW5+u9F75W2Mi3jDNelyaQlVJP01YnGDUt0PDQxtM8t6odIjnvypFdEXAZr8B7Mwjcickbm6lFcIKkArWbROVXXduNjiKgOJ+GzP3lJP4eU5WjfFrnNXJP1cq2bbChI5Jc/tl71aaVn/6YNNsZ4uVBzaPyGO7s+w03uS1qCAHXYakLxSCVXLP+WGMihKa7Of5ouZm6ZgVI64DeXhLr4ToYqBbz53Uj4sPgbQ5ZOzVpIcHUHCVPnqsmGzJVV2IFxBE/6m70SgNBJCXtuqawch5zxYz1H7QXkMIVirOoR1ubAkZWcCt5DAFZBiioDVpKQOfjRGJCYcM4MxP8LsYFFJztOn910q/VYSKyArzoSxDcRzCzob4MlJHNtv7OysFAHzFY9AaAdbeVqxpgwdlqITr4Gk1aITvsIYLM+VZ3E2YIzp2Ht2BEZrdsRt9oIqvl30Q7eJoxRQGDwIBmEU6cJqgFBpnUYooHW/GCHtFR4w=",
                 "database": "oibus",
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
+                "connectionTimeout": 1000,
+                "requestTimeout": 1000,
                 "delimiter": ",",
                 "tmpFolder": "./tests/SQLFile",
                 "scanMode": "every5Second"

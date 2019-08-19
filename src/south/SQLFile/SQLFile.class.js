@@ -21,7 +21,7 @@ class SQLFile extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { driver, host, port, username, password, database, query, delimiter, tmpFolder } = this.dataSource
+    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, delimiter, tmpFolder } = this.dataSource
 
     this.preserveFiles = false
     this.driver = driver
@@ -31,6 +31,8 @@ class SQLFile extends ProtocolHandler {
     this.password = password
     this.database = database
     this.query = query
+    this.connectionTimeout = connectionTimeout
+    this.requestTimeout = requestTimeout
     this.delimiter = delimiter
     this.tmpFolder = path.resolve(tmpFolder)
 
@@ -118,6 +120,8 @@ class SQLFile extends ProtocolHandler {
       server: this.host,
       port: this.port,
       database: this.database,
+      connectionTimeout: this.connectionTimeout,
+      requestTimeout: this.requestTimeout,
     }
 
     let data = []
