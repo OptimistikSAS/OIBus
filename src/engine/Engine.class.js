@@ -62,7 +62,7 @@ class Engine {
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
-    Config file: ${this.configFile}
+    Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
     encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
