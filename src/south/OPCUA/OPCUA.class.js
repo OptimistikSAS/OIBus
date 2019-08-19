@@ -1,5 +1,4 @@
 const Opcua = require('node-opcua')
-const { sprintf } = require('sprintf-js')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
 
@@ -48,7 +47,7 @@ class OPCUA extends ProtocolHandler {
     this.optimizedConfig = getOptimizedConfig(dataSource)
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = sprintf('opc.tcp://%(host)s:%(opcuaPort)s/%(endPoint)s', dataSource)
+    this.url = `opc.tcp://${dataSource.host}:${dataSource.opcuaPort}/${dataSource.endPoint}`
     this.maxAge = dataSource.maxAge || 10
   }
 
@@ -89,7 +88,7 @@ class OPCUA extends ProtocolHandler {
     if (!this.connected || !scanGroup) return
     const nodesToRead = {}
     scanGroup.forEach((point) => {
-      nodesToRead[point.pointId] = { nodeId: sprintf('ns=%(ns)s;s=%(s)s', point) }
+      nodesToRead[point.pointId] = { nodeId: `ns=${point.ns};s=${point.s}` }
     })
     this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {
       if (!error && Object.keys(nodesToRead).length === dataValues.length) {

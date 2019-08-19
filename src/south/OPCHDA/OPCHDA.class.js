@@ -276,34 +276,49 @@ class OPCHDA extends ProtocolHandler {
           break
         case 'Read':
           if (messageObject.Content.Error) {
-            this.logger.error(messageObject.Content.Error)
-          } else {
-            this.logger.debug(
-              `Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`,
-            )
-            const values = messageObject.Content.Points.map((point) => {
-              if (point.Timestamp != null && point.Value != null) {
-                return {
-                  pointId: point.ItemId,
-                  timestamp: new Date(point.Timestamp).toISOString(),
-                  data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
-                }
-              }
-              this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
-              return {}
-            })
-            this.addValues(values)
-            dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
-            this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
-            await databaseService.upsertConfig(
-              this.configDatabase,
-              `lastCompletedAt-${messageObject.Content.Group}`,
-              this.lastCompletedAt[messageObject.Content.Group],
-            )
-            this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
-
             this.ongoingReads[messageObject.Content.Group] = false
+            this.logger.error(messageObject.Content.Error)
+            return
           }
+
+          if (messageObject.Content.Points === undefined) {
+            this.ongoingReads[messageObject.Content.Group] = false
+            this.logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`)
+            return
+          }
+
+          if (messageObject.Content.Points.length === 0) {
+            this.ongoingReads[messageObject.Content.Group] = false
+            this.logger.debug(`Empty Points response for ${messageObject.Content.Group}`)
+            return
+          }
+
+          this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
+
+          // eslint-disable-next-line no-case-declarations
+          const values = messageObject.Content.Points.map((point) => {
+            if (point.Timestamp != null && point.Value != null) {
+              return {
+                pointId: point.ItemId,
+                timestamp: new Date(point.Timestamp).toISOString(),
+                data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
+              }
+            }
+            this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
+            return {}
+          })
+          this.addValues(values)
+
+          dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
+          this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
+          await databaseService.upsertConfig(
+            this.configDatabase,
+            `lastCompletedAt-${messageObject.Content.Group}`,
+            this.lastCompletedAt[messageObject.Content.Group],
+          )
+          this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+
+          this.ongoingReads[messageObject.Content.Group] = false
           break
         case 'Disconnect':
           this.agentReady = false
