@@ -49,6 +49,16 @@ module.exports = {
       type: 'string',
       title: 'Query',
     },
+    connectionTimeout: {
+      type: 'number',
+      title: 'Connection timeout',
+      default: 1000,
+    },
+    requestTimeout: {
+      type: 'number',
+      title: 'Request timeout',
+      default: 1000,
+    },
     delimiter: {
       type: 'string',
       title: 'Delimiter',
