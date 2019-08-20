@@ -17,6 +17,8 @@ const uiSchema = {
   },
   database: { 'ui:help': '' },
   query: { 'ui:help': '' },
+  connectionTimeout: { 'ui:help': '' },
+  requestTimeout: { 'ui:help': '' },
   delimiter: { 'ui:help': '' },
   tmpFolder: { 'ui:help': '' },
   points: {
