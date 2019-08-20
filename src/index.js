@@ -2,7 +2,6 @@ const cluster = require('cluster')
 
 const VERSION = require('../package.json').version
 
-const { parseArgs, checkOrCreateConfigFile } = require('./services/config.service')
 const Engine = require('./engine/Engine.class')
 
 if (cluster.isMaster) {
@@ -23,10 +22,13 @@ if (cluster.isMaster) {
 } else {
   // this condition is reached only for a worker (i.e. not master)
   // so this is here where we execute the OIBus Engine
-  const args = parseArgs() || {} // Arguments of the command
-  const { config = './oibus.json' } = args // Get the configuration file path
-
-  checkOrCreateConfigFile(config) // Create default config file if it doesn't exist
-  const engine = new Engine(config)
+  const engine = new Engine()
   engine.start()
+
+  // Catch Ctrl+C and properly stop the Engine
+  process.on('SIGINT', () => {
+    engine.logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+    engine.stop()
+    process.exit()
+  })
 }
