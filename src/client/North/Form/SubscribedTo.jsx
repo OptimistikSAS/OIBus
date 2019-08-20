@@ -5,17 +5,18 @@ import Table from '../../components/table/Table.jsx'
 import { OIbSelect, OIbTitle } from '../../components/OIbForm'
 import { ConfigContext } from '../../context/configContext.jsx'
 
-const SubscribedTo = ({ subscribedTo }) => {
+const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
   const dataSourceIds = newConfig && newConfig.south.dataSources.map((dataSource) => dataSource.dataSourceId)
   const handleDelete = (rowIndex) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `engine.filter.${rowIndex}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${applicationIndex}.subscribedTo.${rowIndex}` })
   }
   const handleAdd = () => {
-    dispatchNewConfig({ type: 'addRow', name: 'engine.filter', value: '' })
+    const defaultValue = dataSourceIds[0]
+    dispatchNewConfig({ type: 'addRow', name: `north.applications.${applicationIndex}.subscribedTo`, value: defaultValue })
   }
-  const onChange = (name, value, validity) => {
-    dispatchNewConfig({ type: 'update', name, value, validity })
+  const onChange = (name, value) => {
+    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.${name}`, value })
   }
   return (
     subscribedTo && (

@@ -17,7 +17,7 @@ const ConfigureApi = ({ match }) => {
   }
 
   return applications ? (
-    <NorthForm application={applications[applicationIndex]} onChange={onChange} />
+    <NorthForm application={applications[applicationIndex]} applicationIndex={applicationIndex} onChange={onChange} />
   ) : (
     <div className="spinner-container">
       <Spinner color="primary" type="grow" />
