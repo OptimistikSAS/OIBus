@@ -8,7 +8,7 @@ const TimescaleDBForm = ({ application, onChange }) => (
   <>
     <Row>
       <Col md="4">
-        <OIbText label="User name" onChange={onChange} value={application.TimescaleDB.username} name="TimescaleDB.username" help={<div />} />
+        <OIbText label="User name" onChange={onChange} value={application.TimescaleDB.user} name="TimescaleDB.user" help={<div />} />
       </Col>
       <Col md="4">
         <OIbPassword label="Password" onChange={onChange} value={application.TimescaleDB.password} name="TimescaleDB.password" help={<div />} />

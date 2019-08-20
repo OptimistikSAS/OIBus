@@ -8,7 +8,7 @@ const InfluxDBForm = ({ application, onChange }) => (
   <>
     <Row>
       <Col md="4">
-        <OIbText label="User name" onChange={onChange} value={application.InfluxDB.username} name="InfluxDB.username" help={<div />} />
+        <OIbText label="User name" onChange={onChange} value={application.InfluxDB.user} name="InfluxDB.user" help={<div />} />
       </Col>
       <Col md="4">
         <OIbPassword label="Password" onChange={onChange} value={application.InfluxDB.password} name="InfluxDB.password" help={<div />} />
