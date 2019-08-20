@@ -11,11 +11,11 @@ import AmazonS3 from '../../../north/amazon/AmazonS3.Form.jsx'
 import Console from '../../../north/console/Console.Form.jsx'
 import InfluxDB from '../../../north/influxdb/InfluxDB.Form.jsx'
 import RawFileSender from '../../../north/rawfilesender/RawFileSender.Form.jsx'
-import TimeScaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
+import TimescaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
 
-const ApiForms = { Link, AliveSignal, AmazonS3, Console, InfluxDB, RawFileSender, TimeScaleDB }
+const ApiForms = { Link, AliveSignal, AmazonS3, Console, InfluxDB, RawFileSender, TimescaleDB }
 
-const NorthForm = ({ application, onChange }) => {
+const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
@@ -88,11 +88,11 @@ const NorthForm = ({ application, onChange }) => {
           />
         </Col>
       </Row>
-      <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo} />
+      <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo} applicationIndex={applicationIndex} />
     </Form>
   )
 }
 
-NorthForm.propTypes = { application: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+NorthForm.propTypes = { application: PropTypes.object.isRequired, applicationIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
 
 export default NorthForm
