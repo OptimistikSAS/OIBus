@@ -21,12 +21,7 @@ const uiSchema = {
   requestTimeout: { 'ui:help': '' },
   delimiter: { 'ui:help': '' },
   tmpFolder: { 'ui:help': '' },
-  points: {
-    items: {
-      pointId: { 'ui:help': '' },
-      scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
-    },
-  },
+  scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
 }
 
 export default uiSchema
