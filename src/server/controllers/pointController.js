@@ -172,7 +172,7 @@ const importPoints = async (ctx) => {
     ctx.throw(409, `Duplicate ids: ${duplicateIds.join(',')}`)
   }
 
-  const scanModes = ctx.app.engine.getScanModes()
+  const scanModes = ctx.app.engine.configService.getScanModes()
   const invalidScanModes = pointService.getInvalidScanModes(points, scanModes)
   if (invalidScanModes.length) {
     ctx.throw(400, `Invalid scan modes: ${invalidScanModes.join(',')}`)
