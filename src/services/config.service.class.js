@@ -1,6 +1,5 @@
 const path = require('path')
 const fs = require('fs')
-const os = require('os')
 
 const minimist = require('minimist')
 
@@ -18,44 +17,15 @@ class ConfigService {
     this.logger = console
 
     const args = this.parseArgs() || {} // Arguments of the command
-    const { config = './oibus/oibus.json' } = args // Get the configuration file path
-    this.configFile = path.isAbsolute(config) ? path.resolve(config) : path.resolve(os.homedir(), config)
+    const { config = './oibus.json' } = args // Get the configuration file path
+    this.configFile = path.resolve(config)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
     this.config = this.tryReadFile(this.configFile)
     this.modifiedConfig = this.duplicateConfig(this.config)
 
-    // Create cache folder
-    this.config.engine.caching.cacheFolder = this.createFolder(this.config.engine.caching.cacheFolder)
-
-    // Create archive folder
-    this.config.engine.caching.archiveFolder = this.createFolder(this.config.engine.caching.archiveFolder)
-
-    // Create key folder
-    const keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
-    this.keyFolder = this.createFolder(keyFolder)
-
-    // Create file log folder
-    this.config.engine.logParameters.filename = this.createFolder(this.config.engine.logParameters.filename)
-
-    // Create SQLite log folder
-    this.config.engine.logParameters.sqliteFilename = this.createFolder(this.config.engine.logParameters.sqliteFilename)
-  }
-
-  /**
-   * Create folder if not exists
-   * @param {string} configPath - The path to create folder for
-   * @returns {string} - The absolute path
-   */
-  createFolder(configPath) {
-    const fullPath = path.isAbsolute(configPath) ? path.resolve(configPath) : path.resolve(os.homedir(), configPath)
-    const fullPathBaseDir = path.extname(fullPath) ? path.parse(fullPath).dir : fullPath
-    if (!fs.existsSync(fullPathBaseDir)) {
-      this.logger.info(`Creating folder ${fullPathBaseDir}`)
-      fs.mkdirSync(fullPathBaseDir, { recursive: true })
-    }
-    return fullPath
+    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
   }
 
   /**
@@ -116,8 +86,6 @@ class ConfigService {
     if (!fs.existsSync(filePath)) {
       this.logger.info('Default config file does not exist. Creating it.')
       try {
-        fs.mkdirSync(path.dirname(filePath), { recursive: true })
-
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {

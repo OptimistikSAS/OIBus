@@ -7,18 +7,18 @@
     "logParameters": {
       "consoleLevel": "debug",
       "fileLevel": "debug",
-      "filename": "./oibus/logs/journal.log",
+      "filename": "./logs/journal.log",
       "maxsize": 1000000,
       "maxFiles": 5,
       "tailable": true,
       "sqliteLevel": "debug",
-      "sqliteFilename": "./oibus/logs/journal.db",
+      "sqliteFilename": "./logs/journal.db",
       "sqliteMaxFileSize": 50000000
     },
     "caching": {
-      "cacheFolder": "./oibus/cache",
+      "cacheFolder": "./cache",
       "archiveMode": "archive",
-      "archiveFolder": "./oibus/cache/archived"
+      "archiveFolder": "./cache/archived/"
     },
     "scanModes": [
       {
