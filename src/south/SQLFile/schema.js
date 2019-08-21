@@ -68,23 +68,10 @@ module.exports = {
       type: 'string',
       title: 'Temporary folder',
     },
-    points: {
-      type: 'array',
-      title: 'Points',
-      items: {
-        type: 'object',
-        properties: {
-          pointId: {
-            title: 'Point ID',
-            type: 'string',
-          },
-          scanMode: {
-            title: 'Scan Mode',
-            type: 'string',
-            default: 'every5Second',
-          },
-        },
-      },
+    scanMode: {
+      title: 'Scan Mode',
+      type: 'string',
+      default: 'every5Second',
     },
   },
 }
