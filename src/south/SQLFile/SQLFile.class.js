@@ -3,6 +3,7 @@ const path = require('path')
 
 const mssql = require('mssql')
 const csv = require('fast-csv')
+const fecha = require('fecha')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -21,7 +22,7 @@ class SQLFile extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, delimiter } = this.dataSource
+    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, filename, delimiter } = this.dataSource
 
     this.preserveFiles = false
     this.driver = driver
@@ -33,6 +34,7 @@ class SQLFile extends ProtocolHandler {
     this.query = query
     this.connectionTimeout = connectionTimeout
     this.requestTimeout = requestTimeout
+    this.filename = filename
     this.delimiter = delimiter
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
     this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
@@ -93,7 +95,8 @@ class SQLFile extends ProtocolHandler {
 
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
-        const filePath = path.join(this.tmpFolder, 'sql.csv')
+        const filename = this.filename.replace('@date', fecha.format(new Date(), 'YYYY_MM_DD_HH_mm_ss'))
+        const filePath = path.join(this.tmpFolder, filename)
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
           fs.writeFileSync(filePath, csvContent)
