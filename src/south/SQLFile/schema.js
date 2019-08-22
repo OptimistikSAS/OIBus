@@ -64,6 +64,11 @@ module.exports = {
       title: 'Delimiter',
       default: ',',
     },
+    filename: {
+      type: 'string',
+      title: 'Filename',
+      default: 'sql-@date.csv',
+    },
     scanMode: {
       title: 'Scan Mode',
       type: 'string',
