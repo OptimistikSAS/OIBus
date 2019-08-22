@@ -64,10 +64,6 @@ module.exports = {
       title: 'Delimiter',
       default: ',',
     },
-    tmpFolder: {
-      type: 'string',
-      title: 'Temporary folder',
-    },
     scanMode: {
       title: 'Scan Mode',
       type: 'string',
