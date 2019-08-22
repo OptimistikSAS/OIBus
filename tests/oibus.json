@@ -286,7 +286,6 @@
                 "connectionTimeout": 1000,
                 "requestTimeout": 1000,
                 "delimiter": ",",
-                "tmpFolder": "./tests/SQLFile",
                 "scanMode": "every5Second"
             },
             {

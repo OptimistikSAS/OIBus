@@ -21,7 +21,7 @@ class SQLFile extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, delimiter, tmpFolder } = this.dataSource
+    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, delimiter } = this.dataSource
 
     this.preserveFiles = false
     this.driver = driver
@@ -34,7 +34,8 @@ class SQLFile extends ProtocolHandler {
     this.connectionTimeout = connectionTimeout
     this.requestTimeout = requestTimeout
     this.delimiter = delimiter
-    this.tmpFolder = path.resolve(tmpFolder)
+    const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
+    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
 
     // Create tmp folder if not exists
     if (!fs.existsSync(this.tmpFolder)) {
