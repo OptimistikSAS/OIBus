@@ -20,7 +20,6 @@ const uiSchema = {
   connectionTimeout: { 'ui:help': '' },
   requestTimeout: { 'ui:help': '' },
   delimiter: { 'ui:help': '' },
-  tmpFolder: { 'ui:help': '' },
   scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
 }
 
