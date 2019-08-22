@@ -64,9 +64,10 @@ module.exports = {
       title: 'Delimiter',
       default: ',',
     },
-    tmpFolder: {
+    filename: {
       type: 'string',
-      title: 'Temporary folder',
+      title: 'Filename',
+      default: 'sql-@date.csv',
     },
     scanMode: {
       title: 'Scan Mode',
