@@ -285,8 +285,8 @@
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
                 "connectionTimeout": 1000,
                 "requestTimeout": 1000,
+                "filename": "sqlfile-@date.csv",
                 "delimiter": ",",
-                "tmpFolder": "./tests/SQLFile",
                 "scanMode": "every5Second"
             },
             {
