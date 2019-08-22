@@ -19,8 +19,8 @@ const uiSchema = {
   query: { 'ui:help': '' },
   connectionTimeout: { 'ui:help': '' },
   requestTimeout: { 'ui:help': '' },
+  filename: { 'ui:help': <div>Possible placeholders: @date</div> },
   delimiter: { 'ui:help': '' },
-  tmpFolder: { 'ui:help': '' },
   scanMode: { 'ui:help': <div>List of the scan modes defined by the user</div> },
 }
 
