@@ -4,7 +4,7 @@ import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox } from '../../components/OIbForm'
 import ProtocolForms from '../Protocols.jsx'
 
-const SouthForm = ({ dataSource, onChange }) => {
+const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -34,11 +34,11 @@ const SouthForm = ({ dataSource, onChange }) => {
           />
         </Col>
       </Row>
-      <ProtocolForm onChange={onChange} dataSource={dataSource} />
+      <ProtocolForm onChange={onChange} dataSource={dataSource} dataSourceIndex={dataSourceIndex} />
     </Form>
   )
 }
 
-SouthForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+SouthForm.propTypes = { dataSource: PropTypes.object.isRequired, dataSourceIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
 
 export default SouthForm

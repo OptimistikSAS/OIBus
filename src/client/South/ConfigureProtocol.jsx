@@ -17,7 +17,7 @@ const ConfigureProtocol = ({ match }) => {
   }
 
   return dataSources ? (
-    <SouthForm dataSource={dataSources[dataSourceIndex]} onChange={onChange} />
+    <SouthForm dataSource={dataSources[dataSourceIndex]} dataSourceIndex={dataSourceIndex} onChange={onChange} />
   ) : (
     <div className="spinner-container">
       <Spinner color="primary" type="grow" />
