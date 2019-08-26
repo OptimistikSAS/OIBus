@@ -17,9 +17,10 @@ class ConfigService {
     this.engine = engine
     this.logger = console
 
+    const defaultPath = path.resolve(os.homedir(), 'oibus/oibus.json')
     const args = this.parseArgs() || {} // Arguments of the command
-    const { config = './oibus/oibus.json' } = args // Get the configuration file path
-    this.configFile = path.isAbsolute(config) ? path.resolve(config) : path.resolve(os.homedir(), config)
+    const { config = defaultPath } = args // Get the configuration file path
+    this.configFile = path.resolve(config)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
