@@ -3,7 +3,7 @@
   <asmv1:assemblyIdentity name="HdaAgent.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
   <application />
   <entryPoint>
-    <assemblyIdentity name="HdaAgent" version="1.0.2.0" language="neutral" processorArchitecture="msil" />
+    <assemblyIdentity name="HdaAgent" version="1.0.3.0" language="neutral" processorArchitecture="msil" />
     <commandLine file="HdaAgent.exe" parameters="" />
   </entryPoint>
   <trustInfo>
@@ -54,14 +54,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="HdaAgent.exe" size="39424">
-      <assemblyIdentity name="HdaAgent" version="1.0.2.0" language="neutral" processorArchitecture="msil" />
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="HdaAgent.exe" size="40448">
+      <assemblyIdentity name="HdaAgent" version="1.0.3.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>Im3n3KLteAsjoQrkhaaprJjDLHmnLV3NtI1OlNcoB5k=</dsig:DigestValue>
+        <dsig:DigestValue>8sT3ufme3D6CKLPAjJY8M5AuO6Z6g1O58cbLaP57ELU=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

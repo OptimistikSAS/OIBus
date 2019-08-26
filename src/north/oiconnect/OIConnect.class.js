@@ -1,22 +1,16 @@
-const fs = require('fs')
 const url = require('url')
 
 const fetch = require('node-fetch')
-// eslint-disable-next-line import/no-unresolved
 const axios = require('axios').default
 const request = require('request-promise-native')
 const tunnel = require('tunnel')
-const FormData = require('form-data')
 const ProxyAgent = require('proxy-agent')
 
 const ApiHandler = require('../ApiHandler.class')
 
-/**
- * Class RawFileSender - sends files through a POST Multipart HTTP
- */
-class RawFileSender extends ApiHandler {
+class OIConnect extends ApiHandler {
   /**
-   * Constructor for RawFilePoster
+   * Constructor for OIConnect
    * @constructor
    * @param {Object} applicationParameters - The application parameters
    * @param {Engine} engine - The Engine
@@ -25,7 +19,7 @@ class RawFileSender extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.OIConnect
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
@@ -34,39 +28,36 @@ class RawFileSender extends ApiHandler {
 
     this.timeout = 60000
 
-    this.canHandleFiles = true
+    this.canHandleValues = true
   }
 
   /**
-   * Handle the file.
-   * @param {String} filePath - The path of the file
-   * @return {Promise} - The send status
+   * Handle messages by sending them to another OIBus
+   * @param {object[]} values - The values
+   * @return {Promise} - The handle status
    */
-  async handleFile(filePath) {
-    this.logger.silly(`RawFileSender handleFile() call with ${filePath}`)
-    const stats = fs.statSync(filePath)
-    const fileSizeInBytes = stats.size
-    this.logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`)
-
-    const headers = {}
+  async handleValues(values) {
+    this.logger.silly(`Link handleValues() call with ${values.length} values`)
 
     // Generate authentication header
+    const headers = { 'Content-Type': 'application/json' }
+
     if (this.authentication.type === 'Basic') {
       const decryptedPassword = this.decryptPassword(this.authentication.password)
       const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
-
+    const body = { dataSourceId: this.application.applicationId, values }
     try {
       switch (this.stack) {
         case 'axios':
-          await this.sendWithAxios(headers, filePath)
+          await this.sendWithAxios(headers, body)
           break
         case 'request':
-          await this.sendWithRequest(headers, filePath)
+          await this.sendWithRequest(headers, body)
           break
         default:
-          await this.sendWithFetch(headers, filePath)
+          await this.sendWithFetch(headers, body)
       }
     } catch (error) {
       return Promise.reject(error)
@@ -76,12 +67,14 @@ class RawFileSender extends ApiHandler {
   }
 
   /**
-   * Send the file using axios
+   * Send the values using axios
    * @param {object} headers - The headers
-   * @param {string} filePath - The file to send
+   * @param {object[]} body - The values to send
    * @return {AxiosPromise | *} - The send status
    */
-  async sendWithAxios(headers, filePath) {
+  async sendWithAxios(headers, body) {
+    this.logger.silly(`Link sendWithAxios() call with ${body.values.length} values`)
+
     const source = axios.CancelToken.source()
 
     let axiosInstance = axios.create({
@@ -115,24 +108,14 @@ class RawFileSender extends ApiHandler {
     }
 
     setTimeout(() => {
-      source.cancel('Request cancelled by timeout to prevent axios hanging')
+      source.cancel('Request cancelled by force to prevent axios hanging')
     }, this.timeout)
-
-    const formData = new FormData()
-    const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
-    formData.append('file', readStream, bodyOptions)
-
-    const formHeaders = formData.getHeaders()
-    Object.keys(formHeaders).forEach((key) => {
-      headers[key] = formHeaders[key]
-    })
 
     const axiosOptions = {
       method: 'POST',
       url: this.url,
       headers,
-      data: formData,
+      data: body,
     }
 
     try {
@@ -145,12 +128,14 @@ class RawFileSender extends ApiHandler {
   }
 
   /**
-   * Send the file using axios
+   * Send the values using request
    * @param {object} headers - The headers
-   * @param {string} filePath - The file to send
+   * @param {object[]} body - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithRequest(headers, filePath) {
+  async sendWithRequest(headers, body) {
+    this.logger.silly(`Link sendWithRequest() call with ${body.values.length} values`)
+
     let proxy = false
     if (this.proxy) {
       const { protocol, host, port, username = null, password = null } = this.proxy
@@ -165,12 +150,7 @@ class RawFileSender extends ApiHandler {
       method: 'POST',
       url: this.url,
       headers,
-      formData: {
-        file: {
-          value: fs.createReadStream(filePath),
-          options: { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) },
-        },
-      },
+      body: JSON.stringify(body),
       proxy,
     }
 
@@ -184,12 +164,14 @@ class RawFileSender extends ApiHandler {
   }
 
   /**
-   * Send the file using node-fetch
+   * Send the values using node-fetch
    * @param {object} headers - The headers
-   * @param {string} filePath - The file to send
+   * @param {object[]} body - The values to send
    * @return {Promise} - The send status
    */
-  async sendWithFetch(headers, filePath) {
+  async sendWithFetch(headers, body) {
+    this.logger.silly(`Link sendWithFetch() call with ${body.values.length} values`)
+
     let agent = null
 
     if (this.proxy) {
@@ -204,15 +186,10 @@ class RawFileSender extends ApiHandler {
       agent = new ProxyAgent(proxyOptions)
     }
 
-    const formData = new FormData()
-    const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: ApiHandler.getFilenameWithoutTimestamp(filePath) }
-    formData.append('file', readStream, bodyOptions)
-
     const fetchOptions = {
       method: 'POST',
       headers,
-      body: formData,
+      body: JSON.stringify(body),
       agent,
     }
 
@@ -229,4 +206,4 @@ class RawFileSender extends ApiHandler {
   }
 }
 
-module.exports = RawFileSender
+module.exports = OIConnect
