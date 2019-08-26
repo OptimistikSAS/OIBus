@@ -7,7 +7,7 @@ const uiSchema = {
   },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
-  RawFileSender: {
+  OIAnalyticsFile: {
     host: { 'ui:help': '' },
     endpoint: { 'ui:help': '' },
     authentication: {
@@ -25,7 +25,7 @@ const uiSchema = {
     sendInterval: { 'ui:help': <div>Value in milliseconds for data sending interval</div> },
     retryInterval: { 'ui:help': <div>Value in milliseconds for retry sending data in case of failure</div> },
   },
-  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
+  subscribedTo: { 'ui:help': <div>allow to select South data source (default is to receive from all enabled data source of the current OIBus</div> },
 }
 
 export default uiSchema

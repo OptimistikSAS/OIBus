@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Configure SQLFile',
+  title: 'Configure SQLDbToFile',
   type: 'object',
   properties: {
     dataSourceId: {
@@ -13,9 +13,9 @@ module.exports = {
     },
     protocol: {
       type: 'string',
-      enum: ['SQLFile'],
+      enum: ['SQLDbToFile'],
       title: 'Protocol',
-      default: 'SQLFile',
+      default: 'SQLDbToFile',
     },
     driver: {
       type: 'string',
