@@ -5,15 +5,15 @@ import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 
-import Link from '../../../north/oiconnect/OIConnect.Form.jsx'
+import OIConnect from '../../../north/oiconnect/OIConnect.Form.jsx'
 import AliveSignal from '../../../north/alivesignal/AliveSignal.Form.jsx'
 import AmazonS3 from '../../../north/amazon/AmazonS3.Form.jsx'
 import Console from '../../../north/console/Console.Form.jsx'
 import InfluxDB from '../../../north/influxdb/InfluxDB.Form.jsx'
-import RawFileSender from '../../../north/oianalyticsfile/OIAnalyticsFile.Form.jsx'
+import OIAnalyticsFile from '../../../north/oianalyticsfile/OIAnalyticsFile.Form.jsx'
 import TimescaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
 
-const ApiForms = { Link, AliveSignal, AmazonS3, Console, InfluxDB, RawFileSender, TimescaleDB }
+const ApiForms = { OIConnect, AliveSignal, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB }
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
