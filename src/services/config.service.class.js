@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 
 const minimist = require('minimist')
 
@@ -17,8 +18,8 @@ class ConfigService {
     this.logger = console
 
     const args = this.parseArgs() || {} // Arguments of the command
-    const { config = './oibus.json' } = args // Get the configuration file path
-    this.configFile = path.resolve(config)
+    const { config = './oibus/oibus.json' } = args // Get the configuration file path
+    this.configFile = path.isAbsolute(config) ? path.resolve(config) : path.resolve(os.homedir(), config)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
@@ -78,6 +79,23 @@ class ConfigService {
   }
 
   /**
+   * Recursively iterate through an object tree and adapt default paths.
+   * @param {object} configEntry - The object to iterate through
+   * @returns {void}
+   */
+  adaptDefaultPaths(configEntry) {
+    if (configEntry) {
+      Object.entries(configEntry).forEach(([key, value]) => {
+        if (typeof value === 'object') {
+          this.adaptDefaultPaths(value)
+        } else if ((typeof value === 'string') && value.startsWith('./oibus')) {
+          configEntry[key] = path.resolve(os.homedir(), value)
+        }
+      })
+    }
+  }
+
+  /**
    * Check if config file exists
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
@@ -87,6 +105,14 @@ class ConfigService {
       this.logger.info('Default config file does not exist. Creating it.')
       try {
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+        this.adaptDefaultPaths(defaultConfig)
+
+        const fullPathBaseDir = path.extname(filePath) ? path.parse(filePath).dir : filePath
+        if (!fs.existsSync(fullPathBaseDir)) {
+          this.logger.info(`Creating folder ${fullPathBaseDir}`)
+          fs.mkdirSync(fullPathBaseDir, { recursive: true })
+        }
+
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
         this.logger.error(error)
