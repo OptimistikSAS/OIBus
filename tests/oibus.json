@@ -263,11 +263,11 @@
                 ]
             },
             {
-                "dataSourceId": "RawFileTransfer",
+                "dataSourceId": "FolderScanner",
                 "enabled": false,
-                "protocol": "RawFile",
+                "protocol": "FolderScanner",
                 "scanMode": "every5Second",
-                "inputFolder": "./tests/RawFile/input/",
+                "inputFolder": "./tests/FolderScanner/input/",
                 "preserveFiles": false,
                 "minAge": 1000,
                 "regex": ".txt"
