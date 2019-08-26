@@ -3,7 +3,7 @@ import ModbusUISchema from './Modbus/uiSchema.jsx'
 import MQTTUISchema from './MQTT/uiSchema.jsx'
 import OPCHDAUISchema from './OPCHDA/uiSchema.jsx'
 import OPCUAUISchema from './OPCUA/uiSchema.jsx'
-import RawFileUISchema from './RawFile/uiSchema.jsx'
+import FolderScannerUISchema from './FolderScanner/uiSchema.jsx'
 import SQLFileUISchema from './SQLFile/uiSchema.jsx'
 
 /**
@@ -23,8 +23,8 @@ const uiSchema = (protocol) => {
       return OPCHDAUISchema
     case 'OPCUA':
       return OPCUAUISchema
-    case 'RawFile':
-      return RawFileUISchema
+    case 'FolderScanner':
+      return FolderScannerUISchema
     case 'SQLFile':
       return SQLFileUISchema
     default:
