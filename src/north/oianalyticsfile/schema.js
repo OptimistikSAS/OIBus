@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Configure RawFileSender',
+  title: 'Configure OIAnalyticsFile',
   type: 'object',
   properties: {
     applicationId: {
@@ -14,12 +14,12 @@ module.exports = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['RawFileSender'],
-      default: 'Console',
+      enum: ['OIAnalyticsFile'],
+      default: 'OIAnalyticsFile',
     },
-    RawFileSender: {
+    OIAnalyticsFile: {
       type: 'object',
-      title: 'RawFileSender',
+      title: 'OIAnalyticsFile',
       properties: {
         host: {
           type: 'string',
