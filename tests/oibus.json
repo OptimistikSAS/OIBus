@@ -273,9 +273,9 @@
                 "regex": ".txt"
             },
             {
-                "dataSourceId": "SQLFileTransfer",
+                "dataSourceId": "SQLDbToFile",
                 "enabled": true,
-                "protocol": "SQLFile",
+                "protocol": "SQLDbToFile",
                 "driver": "mssql",
                 "host": "192.168.0.11",
                 "port": 1433,
