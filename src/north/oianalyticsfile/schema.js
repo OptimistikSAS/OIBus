@@ -15,7 +15,7 @@ module.exports = {
       type: 'string',
       title: 'API',
       enum: ['OIAnalyticsFile'],
-      default: 'Console',
+      default: 'OIAnalyticsFile',
     },
     OIAnalyticsFile: {
       type: 'object',
