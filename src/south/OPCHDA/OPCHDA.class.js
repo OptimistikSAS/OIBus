@@ -336,6 +336,4 @@ class OPCHDA extends ProtocolHandler {
   }
 }
 
-OPCHDA.schema = require('./schema')
-
 module.exports = OPCHDA
