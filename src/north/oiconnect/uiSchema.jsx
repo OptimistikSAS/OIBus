@@ -7,7 +7,7 @@ const uiSchema = {
   },
   enabled: { 'ui:help': <div>Enable or not the Link</div> },
   api: { 'ui:readonly': true },
-  Link: {
+  OIConnect: {
     host: { 'ui:help': <div>The host for the another OIBus</div> },
     endpoint: { 'ui:help': '' },
     authentication: {
