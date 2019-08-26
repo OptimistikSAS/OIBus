@@ -9,11 +9,11 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
 
 /**
- * Class SQLFile
+ * Class SQLDbToFile
  */
-class SQLFile extends ProtocolHandler {
+class SQLDbToFile extends ProtocolHandler {
   /**
-   * Constructor for SQLFile
+   * Constructor for SQLDbToFile
    * @constructor
    * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
@@ -189,6 +189,6 @@ class SQLFile extends ProtocolHandler {
   }
 }
 
-SQLFile.schema = require('./schema')
+SQLDbToFile.schema = require('./schema')
 
-module.exports = SQLFile
+module.exports = SQLDbToFile

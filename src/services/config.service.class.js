@@ -20,6 +20,13 @@ class ConfigService {
     const { config = './oibus.json' } = args // Get the configuration file path
     this.configFile = path.resolve(config)
 
+    const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
+    if (!fs.existsSync(baseDir)) {
+      this.logger.info(`Creating folder ${baseDir}`)
+      fs.mkdirSync(baseDir, { recursive: true })
+    }
+    process.chdir(path.parse(this.configFile).dir)
+
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
     this.config = this.tryReadFile(this.configFile)
