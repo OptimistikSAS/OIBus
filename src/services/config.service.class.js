@@ -1,6 +1,5 @@
 const path = require('path')
 const fs = require('fs')
-const os = require('os')
 
 const minimist = require('minimist')
 
@@ -19,7 +18,7 @@ class ConfigService {
 
     const args = this.parseArgs() || {} // Arguments of the command
 
-    const { config = path.resolve(os.homedir(), 'oibus/oibus.json') } = args // Get the configuration file path
+    const { config = './oibus.json' } = args // Get the configuration file path
     this.configFile = path.resolve(config)
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
