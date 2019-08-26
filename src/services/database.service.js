@@ -48,7 +48,7 @@ const createFilesDatabase = async (databasePath) => {
  * @param {string} databasePath - The database file path
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
-const createRawFilesDatabase = async (databasePath) => {
+const createFolderScannerDatabase = async (databasePath) => {
   const database = await sqlite.open(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
@@ -248,7 +248,7 @@ const getFileCount = async (database, filePath) => {
  * @param {number} modified - The modify time
  * @return {void}
  */
-const upsertRawFile = async (database, filename, modified) => {
+const upsertFolderScanner = async (database, filename, modified) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (filename, modified) 
                  VALUES (?, ?)
                  ON CONFLICT(filename) DO UPDATE SET modified = ?`
@@ -262,7 +262,7 @@ const upsertRawFile = async (database, filename, modified) => {
  * @param {string} filename - The filename
  * @return {string|null} - The modify time
  */
-const getRawFileModifyTime = async (database, filename) => {
+const getFolderScannerModifyTime = async (database, filename) => {
   const query = `SELECT modified 
                  FROM ${CACHE_TABLE_NAME}
                  WHERE filename = ?`
@@ -372,7 +372,7 @@ const deleteOldLogs = async (database, numberOfRecords) => {
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
-  createRawFilesDatabase,
+  createFolderScannerDatabase,
   createConfigDatabase,
   saveValues,
   getCount,
@@ -382,8 +382,8 @@ module.exports = {
   getFileToSend,
   deleteSentFile,
   getFileCount,
-  upsertRawFile,
-  getRawFileModifyTime,
+  upsertFolderScanner,
+  getFolderScannerModifyTime,
   upsertConfig,
   getConfig,
   createLogsDatabase,

@@ -10,8 +10,8 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.RawFile = require('../south/RawFile/RawFile.class')
-protocolList.SQLFile = require('../south/SQLFile/SQLFile.class')
+protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
+protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
 // North classes
@@ -22,7 +22,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
-apiList.Link = require('../north/link/Link.class')
+apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
