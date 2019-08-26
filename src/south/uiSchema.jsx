@@ -4,7 +4,7 @@ import MQTTUISchema from './MQTT/uiSchema.jsx'
 import OPCHDAUISchema from './OPCHDA/uiSchema.jsx'
 import OPCUAUISchema from './OPCUA/uiSchema.jsx'
 import RawFileUISchema from './RawFile/uiSchema.jsx'
-import SQLFileUISchema from './SQLFile/uiSchema.jsx'
+import SQLDbToFileUISchema from './SQLDbToFile/uiSchema.jsx'
 
 /**
  * Returns the uiSchema for the protocol
@@ -25,8 +25,8 @@ const uiSchema = (protocol) => {
       return OPCUAUISchema
     case 'RawFile':
       return RawFileUISchema
-    case 'SQLFile':
-      return SQLFileUISchema
+    case 'SQLDbToFile':
+      return SQLDbToFileUISchema
     default:
       console.error('protocol has no uiSchema')
       return {}
