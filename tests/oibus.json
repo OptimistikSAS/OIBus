@@ -263,19 +263,19 @@
                 ]
             },
             {
-                "dataSourceId": "RawFileTransfer",
+                "dataSourceId": "FolderScanner",
                 "enabled": false,
-                "protocol": "RawFile",
+                "protocol": "FolderScanner",
                 "scanMode": "every5Second",
-                "inputFolder": "./tests/RawFile/input/",
+                "inputFolder": "./tests/FolderScanner/input/",
                 "preserveFiles": false,
                 "minAge": 1000,
                 "regex": ".txt"
             },
             {
-                "dataSourceId": "SQLFileTransfer",
+                "dataSourceId": "SQLDbToFile",
                 "enabled": true,
-                "protocol": "SQLFile",
+                "protocol": "SQLDbToFile",
                 "driver": "mssql",
                 "host": "192.168.0.11",
                 "port": 1433,
@@ -362,10 +362,10 @@
                 }
             },
             {
-                "applicationId": "RawFileSender",
-                "enabled": false,
-                "api": "RawFileSender",
-                "RawFileSender": {
+                "applicationId": "OIAnalyticsFile",
+                "enabled": true,
+                "api": "OIAnalyticsFile",
+                "OIAnalyticsFile": {
                     "host": "https://demo.oianalytics.fr",
                     "endpoint": "/api/optimistik/data/values/upload",
                     "authentication": {
@@ -432,16 +432,16 @@
                 }
             },
             {
-                "applicationId": "Link",
+                "applicationId": "OIConnect",
                 "enabled": false,
-                "api": "Link",
-                "Link": {
+                "api": "OIConnect",
+                "OIConnect": {
                     "host": "http://localhost:2223",
                     "endpoint": "/engine/addValues",
                     "authentication": {
                         "type": "Basic",
                         "username": "admin",
-                        "password": "DurG28c1S03iMh2N7OLhVWfK7iZFQdD9iqtNQ2H8NZA4eWUq9Z5nl3X5v261VA900PwTPUa0uqOHq3SEas/D9gYA2lxdewK6mwA2E4z5Ad4N32qESwl8KZ/zxtafFi0HtPsYaH/OU2Br3NpUWvpOQCo51xS+aDXB2u0u5fIYk2Td2O+JUrTtCLcHJp7prf0BRQ+fdmZglBcR9ZToJ8CJwU3akQJTpg/2+HEwN/gnEaBjzD0PXpc3PzyFMZXCggr/hCgmTUGnDAjJ0q1hR0Zb5yYrfEpwogN3IBrU8xOosenV6vD07pA0182h9YCis0rJJUg1p/jBUdeFsCBrp/1O7HvcCugIrNdfyRrp0cYXZmMKHEoGUmq67pXzMTOScQBEFt/6Y0G4Y+0ECgCPMd483dhDZpewWYjhRc96h5IFewRHOesqYAv+CzzHxasEIk5h2Vj708ZhOvKV3f1vuUZxOP3A8hzDrOweoDVrr6OHNzpymRGaLCiI6Am6pt4GGLNRfA5sECtMNYOOfXDkfb01HsAHhLbK2hQJjRtOPaqI7qMnQd1k2fGWx5Fp+kv5xcZiWfSoD7NG6kz1kSwFVfvzr1+LiILSinrv36oz1DUd05mKEaB5d9K6pRl2C2AW5tQA7Sjz5rCpMB29uehj5jeKx5XdpKWNFL6aIgkT1sh9Sug="
+                        "password": "tqntWY15H+rxJRFMhcN4c15A7xQZQbQTXrbZ4mmOZBZ00EK7v93wbZTF4fLfWQ2beY6sWXBFhfj+/n7iMimpAkv05skIpM8lv+a/zqcGqXQIuKpLng0L4tfQkoF7G5raHw5IVZOuFVQ0Ql0zyQcvvxuy6FNokKlWEHSSo/5zQAdUKxwcJOCK3acZTIXWzhxvl1TB2i5Wo8PUD1qKXehM34T7+42IU5+0D97VIfjpslMcogXTTV1tHMvPOf36l/GB8LY6JoJXr/JCaZdO+p28MCWVhyNTeGb8D4ZA2Jupc6dbikBV4ty1xaMXJb8KcaImJHkWHJRnH9HcMZ/GQBkjna0DE9cuDo5z1vzWj/5X6HvGsXKdllMqv64awCSQD6ndnXLJjN3RE0EFt1fGVdIqSl233vBxL3FIeyEbO1djcFc8iMOOKPsStPkE/QYdQhKLo3YeTYKjcdafD/5Yyz2NAZ8jmoCr+y7uypFOJxwtkaDyiIgKmMyyEqbdO+rtUq3pf/cQ7jaHA1W/gqVuIsNGC0128OKwQZpBDQSgvTA2kDoo0uCbS7REEY9sDG0KUx7Px9KoDK7Zp0M9wOGnt697iDqLMVdxCz59sFxgXAd6TNaJjlCdcIbcRTiyDxyhIx4nMCTfyt58lB9LwgUcBzvyBh3IEj3F7Imd+Xi73wfQ4tc="
                     },
                     "proxy": "",
                     "stack": "axios"
