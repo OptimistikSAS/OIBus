@@ -39,7 +39,7 @@ OIbText.defaultProps = {
   label: null,
   help: null,
   value: null,
-  defaultValue: null,
+  defaultValue: '',
 }
 
 export default OIbText
