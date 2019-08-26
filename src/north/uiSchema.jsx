@@ -2,7 +2,7 @@ import AliveSignalUISchema from './alivesignal/uiSchema.jsx'
 import AmazonS3UISchema from './amazon/uiSchema.jsx'
 import ConsoleUISchema from './console/uiSchema.jsx'
 import InfluxDBUISchema from './influxdb/uiSchema.jsx'
-import Link from './link/uiSchema.jsx'
+import OIConnect from './oiconnect/uiSchema.jsx'
 import RawFileSenderUISchema from './rawfilesender/uiSchema.jsx'
 import TimescaleDBUISchema from './timescaledb/uiSchema.jsx'
 
@@ -21,8 +21,8 @@ const uiSchema = (api) => {
       return ConsoleUISchema
     case 'InfluxDB':
       return InfluxDBUISchema
-    case 'Link':
-      return Link
+    case 'OIConnect':
+      return OIConnect
     case 'RawFileSender':
       return RawFileSenderUISchema
     case 'TimescaleDB':
