@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Configure Link',
+  title: 'Configure OIConnect',
   type: 'object',
   properties: {
     applicationId: {
@@ -14,12 +14,12 @@ module.exports = {
     api: {
       type: 'string',
       title: 'API',
-      enum: ['Link'],
-      default: 'Link',
+      enum: ['OIConnect'],
+      default: 'OIConnect',
     },
-    Link: {
+    OIConnect: {
       type: 'object',
-      title: 'Link',
+      title: 'OIConnect',
       properties: {
         host: {
           type: 'string',
