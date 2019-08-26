@@ -10,7 +10,7 @@ protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.RawFile = require('../south/RawFile/RawFile.class')
+protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
 protocolList.SQLFile = require('../south/SQLFile/SQLFile.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 

@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Configure RawFile',
+  title: 'Configure FolderScanner',
   type: 'object',
   properties: {
     dataSourceId: {
@@ -13,9 +13,9 @@ module.exports = {
     },
     protocol: {
       type: 'string',
-      enum: ['RawFile'],
+      enum: ['FolderScanner'],
       title: 'Protocol',
-      default: 'CSV',
+      default: 'FolderScanner',
     },
     inputFolder: {
       type: 'string',
