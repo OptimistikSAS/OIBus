@@ -8,9 +8,9 @@ const ProxyAgent = require('proxy-agent')
 
 const ApiHandler = require('../ApiHandler.class')
 
-class Link extends ApiHandler {
+class OIConnect extends ApiHandler {
   /**
-   * Constructor for Link
+   * Constructor for OIConnect
    * @constructor
    * @param {Object} applicationParameters - The application parameters
    * @param {Engine} engine - The Engine
@@ -19,7 +19,7 @@ class Link extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.Link
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.OIConnect
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
@@ -206,6 +206,6 @@ class Link extends ApiHandler {
   }
 }
 
-Link.schema = require('./schema')
+OIConnect.schema = require('./schema')
 
-module.exports = Link
+module.exports = OIConnect

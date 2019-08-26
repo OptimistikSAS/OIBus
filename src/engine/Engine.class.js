@@ -22,7 +22,7 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.RawFileSender = require('../north/rawfilesender/RawFileSender.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
-apiList.Link = require('../north/link/Link.class')
+apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
