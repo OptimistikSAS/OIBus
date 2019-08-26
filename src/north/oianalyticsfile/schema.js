@@ -24,7 +24,7 @@ module.exports = {
         host: {
           type: 'string',
           title: 'Host',
-          default: 'https://demo.oianalytics.fr/',
+          default: 'https://demo.oianalytics.fr',
         },
         endpoint: {
           type: 'string',
