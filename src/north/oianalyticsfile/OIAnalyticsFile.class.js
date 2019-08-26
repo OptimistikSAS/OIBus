@@ -12,11 +12,11 @@ const ProxyAgent = require('proxy-agent')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
- * Class RawFileSender - sends files through a POST Multipart HTTP
+ * Class OIAnalyticsFile - sends files through a POST Multipart HTTP
  */
-class RawFileSender extends ApiHandler {
+class OIAnalyticsFile extends ApiHandler {
   /**
-   * Constructor for RawFilePoster
+   * Constructor for OIAnalyticsFile
    * @constructor
    * @param {Object} applicationParameters - The application parameters
    * @param {Engine} engine - The Engine
@@ -25,7 +25,7 @@ class RawFileSender extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.RawFileSender
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.OIAnalyticsFile
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
@@ -43,7 +43,7 @@ class RawFileSender extends ApiHandler {
    * @return {Promise} - The send status
    */
   async handleFile(filePath) {
-    this.logger.silly(`RawFileSender handleFile() call with ${filePath}`)
+    this.logger.silly(`OIAnalyticsFile handleFile() call with ${filePath}`)
     const stats = fs.statSync(filePath)
     const fileSizeInBytes = stats.size
     this.logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`)
@@ -229,6 +229,6 @@ class RawFileSender extends ApiHandler {
   }
 }
 
-RawFileSender.schema = require('./schema')
+OIAnalyticsFile.schema = require('./schema')
 
-module.exports = RawFileSender
+module.exports = OIAnalyticsFile
