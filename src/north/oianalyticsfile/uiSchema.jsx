@@ -7,7 +7,7 @@ const uiSchema = {
   },
   enabled: { 'ui:help': <div>If enabled, appication will be enabled</div> },
   api: { 'ui:help': '' },
-  RawFileSender: {
+  OIAnalyticsFile: {
     host: { 'ui:help': '' },
     endpoint: { 'ui:help': '' },
     authentication: {
