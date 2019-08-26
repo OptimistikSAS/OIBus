@@ -88,8 +88,9 @@ class ConfigService {
       Object.entries(configEntry).forEach(([key, value]) => {
         if (typeof value === 'object') {
           this.adaptDefaultPaths(value)
-        } else if ((typeof value === 'string') && value.startsWith('./oibus')) {
-          configEntry[key] = path.resolve(os.homedir(), value)
+        } else if ((typeof value === 'string') && value.startsWith('./')) {
+          const baseDir = path.parse(this.configFile).dir
+          configEntry[key] = path.resolve(baseDir, value)
         }
       })
     }
