@@ -5,7 +5,7 @@ const uiSchema = {
     'ui:help': '',
     'ui:readonly': true,
   },
-  enabled: { 'ui:help': <div>If enabled, equipment will be enabled</div> },
+  enabled: { 'ui:help': <div>If enabled, data source will be enabled</div> },
   protocol: { 'ui:help': '' },
   driver: { 'ui:help': '' },
   host: { 'ui:help': '' },
