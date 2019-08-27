@@ -93,7 +93,7 @@ const encryptSecrets = (configEntry, keyFolder) => {
       if (typeof value === 'object') {
         encryptSecrets(value, keyFolder)
       } else if (['password', 'secretKey'].includes(key) && value.startsWith('{{notEncrypted}}')) {
-        configEntry[key] = encryptText(value, keyFolder)
+        configEntry[key] = encryptText(value.replace('{{notEncrypted}}', ''), keyFolder)
       }
     })
   }
