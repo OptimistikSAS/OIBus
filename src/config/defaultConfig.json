@@ -39,18 +39,6 @@
     "dataSources": []
   },
   "north": {
-    "applications": [
-      {
-        "applicationId": "MyConsole",
-        "enabled": true,
-        "api": "Console",
-        "caching": {
-          "sendInterval": 1000,
-          "retryInterval": 1000,
-          "groupCount": 1,
-          "maxSendCount": 100
-        }
-      }
-    ]
+    "applications": []
   }
 }

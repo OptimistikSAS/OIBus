@@ -13,7 +13,7 @@ const uiSchema = {
     groupCount: { 'ui:help': <div>The minimum buffer that will ensure date is not sent until value is reached</div> },
     maxSendCount: { 'ui:help': <div>The maximum buffer that the north app can support</div> },
   },
-  subscribedTo: { 'ui:help': <div>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus</div> },
+  subscribedTo: { 'ui:help': <div>allow to select South data source (default is to receive from all enabled data source of the current OIBus</div> },
 }
 
 export default uiSchema
