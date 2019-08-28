@@ -6,14 +6,12 @@ import { OIbText, OIbTitle, OIbScanMode } from '../../components/OIbForm'
 import { ConfigContext } from '../../context/configContext.jsx'
 
 const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
-  const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
+  const { dispatchNewConfig } = React.useContext(ConfigContext)
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.scanGroups.${rowIndex}` })
   }
   const handleAdd = () => {
-    const { scanModes } = newConfig.engine // scan modes defined in engine
-    const defaultOption = scanModes.length ? scanModes[0].scanMode : ''
-    const defaultValue = { scanMode: defaultOption, aggregate: '', resampling: '' }
+    const defaultValue = { scanMode: '', aggregate: '', resampling: '' }
     dispatchNewConfig({ type: 'addRow', name: `south.dataSources.${dataSourceIndex}.scanGroups`, value: defaultValue })
   }
   const onChange = (name, value) => {
