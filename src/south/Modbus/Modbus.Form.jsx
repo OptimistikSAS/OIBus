@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbInteger } from '../../client/components/OIbForm'
+import { OIbText, OIbInteger, OIbSelect } from '../../client/components/OIbForm'
 
 const ModbusForm = ({ dataSource, onChange }) => (
   <>
@@ -81,12 +81,11 @@ ModbusForm.renderPoints = (points, onChange) => {
     {
       name: `points.${index}.type`,
       value: (
-        <OIbText
-          title="Type"
-          name={`points.${index}.type`}
-          value={point.type}
+        <OIbSelect
           onChange={onChange}
-          defaultValue=""
+          options={['boolean', 'number']}
+          option={point.type}
+          name={`points.${index}.type`}
         />
       ),
     },
