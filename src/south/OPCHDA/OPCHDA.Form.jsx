@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbInteger, OIbSelect } from '../../client/components/OIbForm'
+import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
 import ScanGroups from '../../client/South/Form/ScanGroups.jsx'
 
 const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
@@ -94,12 +94,10 @@ OPCHDAForm.renderPoints = (points, onChange) => {
     {
       name: `points.${index}.scanMode`,
       value: (
-        <OIbText
-          title="ScanMode"
+        <OIbScanMode
           name={`points.${index}.scanMode`}
-          value={point.scanMode}
+          option={point.scanMode}
           onChange={onChange}
-          defaultValue="everySecond"
         />
       ),
     },
