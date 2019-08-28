@@ -53,9 +53,11 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                 {
                   name: `scanGroups.${i}.resampling`,
                   value: (
-                    <OIbText
+                    <OIbSelect
                       onChange={onChange}
-                      value={dataSource.resampling}
+                      options={['None', 'Minute', 'Hour', 'Day']}
+                      option={dataSource.resampling}
+                      defaultOption="None"
                       name={`scanGroups.${i}.resampling`}
                     />
                   ),
