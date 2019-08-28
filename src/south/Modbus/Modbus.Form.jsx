@@ -59,7 +59,7 @@ ModbusForm.renderPoints = (points, onChange) => {
       value: (
         <OIbScanMode
           name={`points.${index}.scanMode`}
-          option={point.scanMode}
+          scanMode={point.scanMode}
           onChange={onChange}
         />
       ),
