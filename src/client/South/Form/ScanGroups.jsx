@@ -33,7 +33,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                   value: (
                     <OIbScanMode
                       name={`scanGroups.${i}.scanMode`}
-                      option={dataSource.scanMode}
+                      scanMode={dataSource.scanMode}
                       onChange={onChange}
                     />
                   ),

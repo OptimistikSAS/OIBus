@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input } from 'reactstrap'
 import { ConfigContext } from '../../context/configContext.jsx'
 
-const OIbScanMode = ({ label, help, option, name, onChange }) => {
+const OIbScanMode = ({ label, help, scanMode, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const { scanModes } = newConfig.engine // scan modes defined in engine
   let options = scanModes.map((e) => e.scanMode)
@@ -13,8 +13,8 @@ const OIbScanMode = ({ label, help, option, name, onChange }) => {
   const defaultOption = options[0]
 
   React.useEffect(() => {
-    if (option === null) onChange(name, defaultOption)
-  }, [option])
+    if (scanMode === null) onChange(name, defaultOption)
+  }, [scanMode])
 
   const handleChange = (event) => {
     const { target } = event
@@ -22,11 +22,11 @@ const OIbScanMode = ({ label, help, option, name, onChange }) => {
     onChange(name, newVal, null)
   }
   // if value is null, no need to render
-  if (option === null) return null
+  if (scanMode === null) return null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={option}>
+      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={scanMode}>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -42,8 +42,8 @@ OIbScanMode.propTypes = {
   label: PropTypes.string,
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
-  option: PropTypes.string,
+  scanMode: PropTypes.string,
 }
-OIbScanMode.defaultProps = { label: null, help: null, option: null }
+OIbScanMode.defaultProps = { label: null, help: null, scanMode: null }
 
 export default OIbScanMode
