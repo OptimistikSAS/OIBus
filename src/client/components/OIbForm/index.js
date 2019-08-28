@@ -3,6 +3,7 @@ import OIbInteger from './OIbInteger.jsx'
 import OIbText from './OIbText.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
+import OIbScanMode from './OIbScanMode.jsx'
 import OIbTitle from './OIbTitle.jsx'
 
 export {
@@ -11,5 +12,6 @@ export {
   OIbText,
   OIbPassword,
   OIbSelect,
+  OIbScanMode,
   OIbTitle,
 }
