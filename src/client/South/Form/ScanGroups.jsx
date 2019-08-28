@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../../components/table/Table.jsx'
-import { OIbText, OIbTitle } from '../../components/OIbForm'
+import { OIbText, OIbTitle, OIbSelect } from '../../components/OIbForm'
 import { ConfigContext } from '../../context/configContext.jsx'
 
 const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
@@ -41,9 +41,11 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                 {
                   name: `scanGroups.${i}.aggregate`,
                   value: (
-                    <OIbText
+                    <OIbSelect
                       onChange={onChange}
-                      value={dataSource.aggregate}
+                      options={['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End']}
+                      option={dataSource.aggregate}
+                      defaultOption="Raw"
                       name={`scanGroups.${i}.aggregate`}
                     />
                   ),
@@ -51,9 +53,11 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                 {
                   name: `scanGroups.${i}.resampling`,
                   value: (
-                    <OIbText
+                    <OIbSelect
                       onChange={onChange}
-                      value={dataSource.resampling}
+                      options={['None', 'Minute', 'Hour', 'Day']}
+                      option={dataSource.resampling}
+                      defaultOption="None"
                       name={`scanGroups.${i}.resampling`}
                     />
                   ),
