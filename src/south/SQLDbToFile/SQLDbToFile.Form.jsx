@@ -131,42 +131,7 @@ const SQLFileForm = ({ dataSource, onChange }) => (
 
 SQLFileForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
-/**
- * The following keys will be used by the **ConfigurePoints** form to display the headers
- * and the rows that are specific for each protocol.
- * Note: alternatively, we can send a "fake" point array to get the headers
- * using: ProtocolForm.renderPoints([{}],()=>null)[0].map(el => el.value.props.title)
- * @returns {array} Headers for each column
- */
-SQLFileForm.renderHeaders = () => ['Point Id', 'ScanMode']
-SQLFileForm.renderPoints = (points, onChange) => {
-  const rows = points.map((point, index) => [
-    {
-      name: `points.${index}.pointId`,
-      value: (
-        <OIbText
-          title="Point Id"
-          name={`points.${index}.pointId`}
-          value={point.pointId}
-          onChange={onChange}
-          defaultValue=""
-        />
-      ),
-    },
-    {
-      name: `points.${index}.scanMode`,
-      value: (
-        <OIbText
-          title="ScanMode"
-          name={`points.${index}.scanMode`}
-          value={point.scanMode}
-          onChange={onChange}
-          defaultValue="everySecond"
-        />
-      ),
-    },
-  ])
-  return rows
-}
+/** this South Protocol is in "File" mode so we set renderPoints to null */
+SQLFileForm.renderPoints = null
 
 export default SQLFileForm
