@@ -39,19 +39,6 @@ const OPCUAForm = ({ dataSource, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbSelect
-          label="OPCUA protocol"
-          onChange={onChange}
-          options={['mqtt', 'mqtts']}
-          option={dataSource.OPCUA.mqttProtocol}
-          defaultOption="mqtts"
-          name="OPCUA.mqttProtocol"
-          help={<div>Protocol OPCUA</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
         <OIbText
           label="End Point"
           onChange={onChange}
