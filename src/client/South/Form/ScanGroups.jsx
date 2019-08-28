@@ -2,16 +2,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../../components/table/Table.jsx'
-import { OIbText, OIbTitle } from '../../components/OIbForm'
+import { OIbText, OIbTitle, OIbScanMode } from '../../components/OIbForm'
 import { ConfigContext } from '../../context/configContext.jsx'
 
 const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
-  const { dispatchNewConfig } = React.useContext(ConfigContext)
+  const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.scanGroups.${rowIndex}` })
   }
   const handleAdd = () => {
-    const defaultValue = { scanMode: 'everySecond', aggregate: '', resampling: '' }
+    const { scanModes } = newConfig.engine // scan modes defined in engine
+    const defaultOption = scanModes.length ? scanModes[0].scanMode : ''
+    const defaultValue = { scanMode: defaultOption, aggregate: '', resampling: '' }
     dispatchNewConfig({ type: 'addRow', name: `south.dataSources.${dataSourceIndex}.scanGroups`, value: defaultValue })
   }
   const onChange = (name, value) => {
@@ -31,10 +33,10 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                 {
                   name: `scanGroups.${i}.scanMode`,
                   value: (
-                    <OIbText
-                      onChange={onChange}
-                      value={dataSource.scanMode}
+                    <OIbScanMode
                       name={`scanGroups.${i}.scanMode`}
+                      option={dataSource.scanMode}
+                      onChange={onChange}
                     />
                   ),
                 },
