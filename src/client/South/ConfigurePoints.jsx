@@ -80,8 +80,7 @@ const ConfigurePoints = ({ match }) => {
    */
   const handleImportPoints = async (file) => {
     const text = await readFileContent(file)
-    const { datasourceid } = match.params
-    dispatchNewConfig({ type: 'importPoints', datasourceid, text })
+    dispatchNewConfig({ type: 'importPoints', name: `south.dataSources.${dataSourceIndex}.points`, value: text })
   }
 
   /**
@@ -89,8 +88,7 @@ const ConfigurePoints = ({ match }) => {
    * @returns {void}
    */
   const handleExportPoints = () => {
-    const { datasourceid } = match.params
-    apis.exportAllPoints(datasourceid).catch((error) => {
+    apis.exportAllPoints(dataSourceId).catch((error) => {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
     })
