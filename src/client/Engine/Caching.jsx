@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
 import { OIbText, OIbSelect, OIbTitle } from '../components/OIbForm'
+import validation from '../helpers/validation'
 
 const Caching = ({ onChange, caching }) => (
   <>
@@ -28,6 +29,7 @@ const Caching = ({ onChange, caching }) => (
           name="engine.caching.cacheFolder"
           value={caching.cacheFolder}
           defaultValue="./cache"
+          valid={validation.engine.caching.cacheFolder}
           help={<div>Where to store the cached data</div>}
           onChange={onChange}
         />
@@ -40,6 +42,7 @@ const Caching = ({ onChange, caching }) => (
           label="Archive Folder"
           value={caching.archiveFolder}
           defaultValue="./cache/archive"
+          valid={validation.engine.caching.archiveFolder}
           help={<div>Where to store the cached data</div>}
           onChange={onChange}
         />
