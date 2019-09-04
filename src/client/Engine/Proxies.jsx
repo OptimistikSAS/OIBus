@@ -4,6 +4,7 @@ import { Col, Row } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
+import validation from '../helpers/validation'
 
 const Proxies = ({ proxies }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
@@ -40,7 +41,7 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.name`}
                       value={proxy.name}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
+                      valid={validation.engine.proxies.name}
                       onChange={onChange}
                     />
                   ),
@@ -61,7 +62,7 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.host`}
                       value={proxy.host}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
+                      valid={validation.engine.proxies.host}
                       onChange={onChange}
                     />
                   ),
@@ -73,7 +74,7 @@ const Proxies = ({ proxies }) => {
                       name={`engine.proxies.${i}.port`}
                       value={proxy.port}
                       defaultValue=""
-                      valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
+                      valid={validation.engine.proxies.port}
                       onChange={onChange}
                     />
                   ),
@@ -84,7 +85,7 @@ const Proxies = ({ proxies }) => {
                     <OIbText
                       name={`engine.proxies.${i}.username`}
                       value={proxy.username}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
+                      valid={validation.engine.proxies.username}
                       onChange={onChange}
                     />
                   ),
@@ -95,7 +96,7 @@ const Proxies = ({ proxies }) => {
                     <OIbPassword
                       name={`engine.proxies.${i}.password`}
                       value={proxy.password}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 2')}
+                      valid={validation.engine.proxies.password}
                       onChange={onChange}
                     />
                   ),

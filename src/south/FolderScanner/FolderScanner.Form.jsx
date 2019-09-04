@@ -2,16 +2,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbCheckBox, OIbInteger } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
-const RawFileForm = ({ dataSource, onChange }) => (
+const FolderScannerForm = ({ dataSource, onChange }) => (
   <>
     <Row>
       <Col md="4">
         <OIbText
           label="Input Folder"
           onChange={onChange}
-          value={dataSource.RawFile.inputFolder}
-          name="RawFile.inputFolder"
+          value={dataSource.FolderScanner.inputFolder}
+          valid={validation.south.FolderScanner.inputFolder}
+          name="FolderScanner.inputFolder"
           defaultValue=""
         />
       </Col>
@@ -19,10 +21,10 @@ const RawFileForm = ({ dataSource, onChange }) => (
     <Row>
       <Col md={2}>
         <OIbCheckBox
-          name="RawFile.preserve"
+          name="FolderScanner.preserve"
           label="Preserve Files"
           defaultValue={false}
-          value={dataSource.RawFile.preserve}
+          value={dataSource.FolderScanner.preserve}
           onChange={onChange}
         />
       </Col>
@@ -32,9 +34,10 @@ const RawFileForm = ({ dataSource, onChange }) => (
         <OIbInteger
           label="Minimum Age"
           onChange={onChange}
-          value={dataSource.RawFile.minAge}
+          value={dataSource.FolderScanner.minAge}
+          valid={validation.south.FolderScanner.minAge}
           defaultValue={1000}
-          name="RawFile.minAge"
+          name="FolderScanner.minAge"
         />
       </Col>
     </Row>
@@ -43,8 +46,9 @@ const RawFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="RegExp"
           onChange={onChange}
-          value={dataSource.RawFile.regex}
-          name="RawFile.regex"
+          value={dataSource.FolderScanner.regex}
+          valid={validation.south.FolderScanner.regex}
+          name="FolderScanner.regex"
           defaultValue=".txt"
         />
       </Col>
@@ -52,9 +56,9 @@ const RawFileForm = ({ dataSource, onChange }) => (
   </>
 )
 
-RawFileForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+FolderScannerForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
 /** this South Protocol is in "File" mode so we set renderPoints to null */
-RawFileForm.renderPoints = null
+FolderScannerForm.renderPoints = null
 
-export default RawFileForm
+export default FolderScannerForm

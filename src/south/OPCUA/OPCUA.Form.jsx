@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
 const OPCUAForm = ({ dataSource, onChange }) => (
   <>
@@ -11,6 +12,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           label="Host"
           onChange={onChange}
           value={dataSource.OPCUA.host}
+          valid={validation.south.OPCUA.host}
           name="OPCUA.host"
           defaultValue=""
           help={<div>IP address of the OPC-UA server</div>}
@@ -21,6 +23,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           label="OPCUA Port"
           onChange={onChange}
           value={dataSource.OPCUA.opcuaPort}
+          valid={validation.south.OPCUA.opcuaPort}
           name="OPCUA.opcuaPort"
           defaultValue="8888"
           help={<div>Port number of the OPCUA server</div>}
@@ -31,6 +34,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           label="HTTPS Port"
           onChange={onChange}
           value={dataSource.OPCUA.httpsPort}
+          valid={validation.south.OPCUA.httpsPort}
           name="OPCUA.httpsPort"
           defaultValue="8889"
           help={<div>HTTPS port number</div>}
@@ -43,6 +47,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           label="End Point"
           onChange={onChange}
           value={dataSource.OPCUA.endPoint}
+          valid={validation.south.OPCUA.endPoint}
           name="OPCUA.endPoint"
           defaultValue=""
         />
@@ -83,6 +88,7 @@ OPCUAForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
+          valid={validation.south.OPCUA.points.pointId}
           onChange={onChange}
           defaultValue=""
         />
@@ -101,10 +107,11 @@ OPCUAForm.renderPoints = (points, onChange) => {
     {
       name: `points.${index}.ns`,
       value: (
-        <OIbText
+        <OIbInteger
           title="NS"
           name={`points.${index}.ns`}
           value={point.ns}
+          valid={validation.south.OPCUA.points.ns}
           onChange={onChange}
           defaultValue=""
         />
@@ -117,6 +124,7 @@ OPCUAForm.renderPoints = (points, onChange) => {
           title="S"
           name={`points.${index}.s`}
           value={point.s}
+          valid={validation.south.OPCUA.points.s}
           onChange={onChange}
           defaultValue="Counter1"
         />

@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-// import { ConfigContext } from '../context/configContext.jsx'
 import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
-const LinkForm = ({ application, onChange }) => {
-  if (!application.Link.authentication) {
-    application.Link.authentication = {}
+const OIConnectForm = ({ application, onChange }) => {
+  if (!application.OIConnect.authentication) {
+    application.OIConnect.authentication = {}
   }
   return (
     <>
@@ -15,14 +15,23 @@ const LinkForm = ({ application, onChange }) => {
           <OIbText
             label="Host"
             onChange={onChange}
-            value={application.Link.host}
+            value={application.OIConnect.host}
             defaultValue=""
-            name="Link.host"
+            valid={validation.north.OIConnect.host}
+            name="OIConnect.host"
             help={<div>host for the target</div>}
           />
         </Col>
         <Col md="4">
-          <OIbText label="End point" onChange={onChange} value={application.Link.endpoint} defaultValue="" name="Link.endpoint" help={<div />} />
+          <OIbText
+            label="End point"
+            onChange={onChange}
+            value={application.OIConnect.endpoint}
+            defaultValue=""
+            valid={validation.north.OIConnect.endpoint}
+            name="OIConnect.endpoint"
+            help={<div />}
+          />
         </Col>
       </Row>
       <Row>
@@ -37,10 +46,10 @@ const LinkForm = ({ application, onChange }) => {
           <OIbSelect
             label="Type"
             onChange={onChange}
-            option={application.Link.authentication.type}
+            option={application.OIConnect.authentication.type}
             options={['Basic']}
             defaultOption="Basic"
-            name="Link.type"
+            name="OIConnect.type"
             help={<div />}
           />
         </Col>
@@ -48,9 +57,10 @@ const LinkForm = ({ application, onChange }) => {
           <OIbText
             label="User name"
             onChange={onChange}
-            value={application.Link.authentication.username}
+            value={application.OIConnect.authentication.username}
             defaultValue=""
-            name="Link.username"
+            valid={validation.north.OIConnect.authentication.username}
+            name="OIConnect.username"
             help={<div />}
           />
         </Col>
@@ -58,9 +68,10 @@ const LinkForm = ({ application, onChange }) => {
           <OIbPassword
             label="Password"
             onChange={onChange}
-            value={application.Link.authentication.password}
+            value={application.OIConnect.authentication.password}
             defaultValue=""
-            name="Link.password"
+            valid={validation.north.OIConnect.authentication.password}
+            name="OIConnect.password"
             help={<div />}
           />
         </Col>
@@ -74,7 +85,15 @@ const LinkForm = ({ application, onChange }) => {
       </Row>
       <Row>
         <Col md="4">
-          <OIbText label="Proxie" onChange={onChange} value={application.Link.proxy} defaultValue="" name="Link.proxy" help={<div />} />
+          <OIbText
+            label="Proxie"
+            onChange={onChange}
+            value={application.OIConnect.proxy}
+            defaultValue=""
+            valid={validation.north.OIConnect.proxy}
+            name="OIConnect.proxy"
+            help={<div />}
+          />
         </Col>
       </Row>
       <Row>
@@ -82,8 +101,8 @@ const LinkForm = ({ application, onChange }) => {
           <OIbSelect
             label="Stack"
             onChange={onChange}
-            option={application.Link.stack}
-            name="Link.stack"
+            option={application.OIConnect.stack}
+            name="OIConnect.stack"
             options={['axios', 'request', 'fetch']}
             defaultOption="fetch"
             help={<div />}
@@ -93,6 +112,6 @@ const LinkForm = ({ application, onChange }) => {
     </>
   )
 }
-LinkForm.propTypes = { application: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+OIConnectForm.propTypes = { application: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
-export default LinkForm
+export default OIConnectForm

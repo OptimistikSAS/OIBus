@@ -4,6 +4,7 @@ import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
+import validation from '../helpers/validation'
 
 const ScanModes = ({ scanModes }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
@@ -74,7 +75,7 @@ const ScanModes = ({ scanModes }) => {
                     <OIbText
                       name={`engine.scanModes.${i}.scanMode`}
                       value={scanMode.scanMode}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
+                      valid={validation.engine.scanModes.scanMode}
                       onChange={onChange}
                     />
                   ),
@@ -85,7 +86,7 @@ const ScanModes = ({ scanModes }) => {
                     <OIbText
                       name={`engine.scanModes.${i}.cronTime`}
                       value={scanMode.cronTime}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
+                      valid={validation.engine.scanModes.cronTime}
                       onChange={onChange}
                     />
                   ),

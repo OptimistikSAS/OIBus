@@ -7,6 +7,7 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
+import validation from '../helpers/validation'
 
 const Engine = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -36,7 +37,7 @@ const Engine = () => {
               label="Port"
               value={newConfig.engine.port}
               defaultValue={2223}
-              valid={(val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535')}
+              valid={validation.engine.port}
               help={<div>The port to access the Admin interface</div>}
               onChange={onChange}
             />
@@ -48,7 +49,7 @@ const Engine = () => {
               name="engine.user"
               label="Admin user name"
               value={newConfig.engine.user}
-              valid={(val) => ((val.length > 2) ? null : 'Length should be greater than 2')}
+              valid={validation.engine.user}
               defaultValue="admin"
               onChange={onChange}
               help={<div>The username of the Admin user</div>}
@@ -59,7 +60,7 @@ const Engine = () => {
               label="Admin Password"
               name="engine.password"
               onChange={onChange}
-              valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greater than 4')}
+              valid={validation.engine.password}
               value={newConfig.engine.password}
               help={<div>The password of the Admin user</div>}
             />

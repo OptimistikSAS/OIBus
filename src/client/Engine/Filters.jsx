@@ -4,6 +4,7 @@ import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbText, OIbTitle } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
+import validation from '../helpers/validation'
 
 const Filters = ({ filters }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
@@ -36,7 +37,7 @@ const Filters = ({ filters }) => {
                     <OIbText
                       name={`engine.filter.${i}`}
                       value={filter}
-                      valid={(val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2')}
+                      valid={validation.engine.filter}
                       onChange={onChange}
                       defaultValue=""
                     />
