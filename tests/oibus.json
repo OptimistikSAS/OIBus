@@ -366,7 +366,7 @@
                 "enabled": true,
                 "api": "OIAnalyticsFile",
                 "OIAnalyticsFile": {
-                    "host": "https://demo.oianalytics.fr/",
+                    "host": "https://demo.oianalytics.fr",
                     "endpoint": "/api/optimistik/data/values/upload",
                     "authentication": {
                         "type": "Basic",

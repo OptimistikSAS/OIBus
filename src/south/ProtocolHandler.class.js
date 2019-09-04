@@ -4,12 +4,12 @@
  * the following methods:
  * - **onScan**: will be called by the engine each time a scanMode is scheduled. it receive the "scanmode" name.
  * so the driver will be able to look at **this.dataSource** that contains all parameters for this
- * dataSource including the points to be queried, the informations to connect to the equipment, etc.... It's up to
+ * dataSource including the points to be queried, the informations to connect to the data source, etc.... It's up to
  * the driver to decide if additional structure (such as scanGroups for OPCHDA) need to be initialized in the
  * constructor to simplify or optimize the onScan method.
  * - **listen**: A special scanMode can be created for a protocol (for example MQTT). In this configuration, the
  * driver will be able to "listen" for updated values.
- * - **connect**: to allow to establish proper connection to the equipment(optional)
+ * - **connect**: to allow to establish proper connection to the data source(optional)
  * - **disconnect**: to allow proper disconnection (optional)
  * In addition, it is possible to use a number of helper functions:
  * - **addValues**: is an **important** mmethod to be used in **onScan** or **Listen**. This will allow to push an array
