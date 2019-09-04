@@ -69,8 +69,17 @@ const Welcome = () => {
       setAlert({ text: error.message, type: 'danger' })
     }
   }
-  const delta = diffInstance.diff(activeConfig, newConfig)
-  const isModified = (delta !== undefined)
+
+  let delta
+  let diffError
+  try {
+    delta = diffInstance.diff(activeConfig, newConfig)
+  } catch (e) {
+    console.error('Diff cannot be done: ', e.message)
+    diffError = 'Diff cannot be done'
+  }
+
+  const isModified = (delta !== undefined) || (diffError !== undefined)
   const deltaHTML = isModified && formatters.html.format(delta)
   return (
     <>
@@ -90,6 +99,9 @@ const Welcome = () => {
             </Button>
           </div>
           <div className="oi-full-width">
+            {diffError ? (
+              <Label>{diffError}</Label>
+            ) : null}
             {deltaHTML.length > MAX_DIFF_LENGTH ? (
               <Label>The configuration difference is too large to display</Label>
             ) : (
