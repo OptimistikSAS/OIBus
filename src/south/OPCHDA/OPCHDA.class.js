@@ -274,7 +274,7 @@ class OPCHDA extends ProtocolHandler {
                 messageObject.Content.Error
               }`,
             )
-            this.reconnectTimeout = setTimeout(this.sendConnectMessage, this.dataSource.retryInterval)
+            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.dataSource.retryInterval)
           }
           break
         case 'Initialize':
