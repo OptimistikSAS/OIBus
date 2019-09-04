@@ -4,6 +4,7 @@ import { Form, Row, Col } from 'reactstrap'
 // import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
+import validation from '../../helpers/validation'
 
 import OIConnect from '../../../north/oiconnect/OIConnect.Form.jsx'
 import AliveSignal from '../../../north/alivesignal/AliveSignal.Form.jsx'
@@ -54,6 +55,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             onChange={onChange}
             value={application.caching.sendInterval}
             defaultValue={10000}
+            valid={validation.north.caching.sendInterval}
             name="caching.sendInterval"
             help={<div>Value in milliseconds for data sending interval</div>}
           />
@@ -63,6 +65,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             onChange={onChange}
             value={application.caching.retryInterval}
             defaultValue={5000}
+            valid={validation.north.caching.retryInterval}
             name="caching.retryInterval"
             help={<div>Value in milliseconds for retry sending data in case of failure</div>}
           />
@@ -75,6 +78,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             value={application.caching.groupCount}
             name="caching.groupCount"
             defaultValue={1000}
+            valid={validation.north.caching.groupCount}
             help={<div>The minimum buffer that will ensure date is not sent until value is reached</div>}
           />
         </Col>
@@ -84,6 +88,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             value={application.caching.maxSendCount}
             name="caching.maxSendCount"
             defaultValue={10000}
+            valid={validation.north.caching.maxSendCount}
             help={<div />}
           />
         </Col>

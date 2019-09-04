@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
 const ModbusForm = ({ dataSource, onChange }) => (
   <>
@@ -11,6 +12,7 @@ const ModbusForm = ({ dataSource, onChange }) => (
           label="Host"
           onChange={onChange}
           value={dataSource.Modbus.host}
+          valid={validation.south.Modbus.host}
           name="Modbus.host"
           defaultValue=""
           help={<div>IP address of the Modbus source</div>}
@@ -21,6 +23,7 @@ const ModbusForm = ({ dataSource, onChange }) => (
           label="Port"
           onChange={onChange}
           value={dataSource.Modbus.port}
+          valid={validation.south.Modbus.port}
           name="Modbus.port"
           defaultValue="502"
           help={<div>Port number of the Modbus source</div>}
@@ -49,6 +52,7 @@ ModbusForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
+          valid={validation.south.Modbus.points.pointId}
           onChange={onChange}
           defaultValue=""
         />
@@ -71,6 +75,7 @@ ModbusForm.renderPoints = (points, onChange) => {
           title="Address"
           name={`points.${index}.address`}
           value={point.address}
+          valid={validation.south.Modbus.points.address}
           onChange={onChange}
           defaultValue=""
         />
