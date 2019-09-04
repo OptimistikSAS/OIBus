@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../../components/table/Table.jsx'
-import { OIbText, OIbTitle, OIbSelect, OIbScanMode } from '../../components/OIbForm'
+import { OIbTitle, OIbSelect, OIbScanMode } from '../../components/OIbForm'
 import { ConfigContext } from '../../context/configContext.jsx'
 
 const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
