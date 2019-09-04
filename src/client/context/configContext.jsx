@@ -5,6 +5,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import objectPath from 'object-path'
 import apis from '../services/apis'
+import utils from '../helpers/utils'
 
 const reducer = (state, action) => {
   const { name, value, config, type, validity } = action
@@ -30,8 +31,11 @@ const reducer = (state, action) => {
       objectPath.empty(newState, name)
       return newState
     case 'addRow':
-      objectPath.push(newState, name, action.value)
+      objectPath.push(newState, name, value)
       // copy into the new state
+      return newState
+    case 'importPoints':
+      objectPath.set(newState, name, utils.parseCSV(value, ','))
       return newState
     default:
       throw new Error(`unknown action type: ${type}`)
