@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbPassword, OIbTitle, OIbScanMode } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
 const MQTTForm = ({ dataSource, onChange }) => (
   <>
@@ -36,6 +37,7 @@ const MQTTForm = ({ dataSource, onChange }) => (
           label="Server"
           onChange={onChange}
           value={dataSource.MQTT.server}
+          valid={validation.south.MQTT.server}
           name="MQTT.server"
           defaultValue=""
           help={<div>MQTT server address</div>}
@@ -46,8 +48,9 @@ const MQTTForm = ({ dataSource, onChange }) => (
           label="Port"
           onChange={onChange}
           value={dataSource.MQTT.port}
+          valid={validation.south.MQTT.port}
           name="MQTT.port"
-          defaultValue="8883"
+          defaultValue={8883}
           help={<div>MQTT server port</div>}
         />
       </Col>
@@ -71,6 +74,7 @@ const MQTTForm = ({ dataSource, onChange }) => (
           label="User"
           onChange={onChange}
           value={dataSource.MQTT.username}
+          valid={validation.south.MQTT.username}
           help={<div>authorized user</div>}
           name="MQTT.username"
           defaultValue=""
@@ -81,6 +85,7 @@ const MQTTForm = ({ dataSource, onChange }) => (
           label="Password"
           onChange={onChange}
           value={dataSource.MQTT.password}
+          valid={validation.south.MQTT.password}
           name="MQTT.password"
           help={<div>password</div>}
           defaultValue=""
@@ -109,6 +114,7 @@ MQTTForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
+          valid={validation.south.MQTT.points.pointId}
           onChange={onChange}
           defaultValue=""
         />
@@ -127,7 +133,14 @@ MQTTForm.renderPoints = (points, onChange) => {
     {
       name: `points.${index}.topic`,
       value: (
-        <OIbText title="Topic" name={`points.${index}.topic`} value={point.topic} onChange={onChange} defaultValue="" />
+        <OIbText
+          title="Topic"
+          name={`points.${index}.topic`}
+          value={point.topic}
+          valid={validation.south.MQTT.points.topic}
+          onChange={onChange}
+          defaultValue=""
+        />
       ),
     },
   ])

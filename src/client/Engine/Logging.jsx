@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbInteger, OIbSelect, OIbText, OIbCheckBox, OIbTitle } from '../components/OIbForm'
+import validation from '../helpers/validation'
 
 const Logging = ({ logParameters, onChange }) => (
   <>
@@ -84,6 +85,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.filename"
           label="Filename for the log file"
           value={logParameters.filename}
+          valid={validation.engine.logParameters.filename}
           help={<div>The filename of the log file</div>}
           onChange={onChange}
         />
@@ -94,6 +96,7 @@ const Logging = ({ logParameters, onChange }) => (
           label="File Max size"
           value={logParameters.maxsize}
           defaultValue={100000}
+          valid={validation.engine.logParameters.maxsize}
           help={<div>Maximum size of file logs (Bytes)</div>}
           onChange={onChange}
         />
@@ -104,7 +107,7 @@ const Logging = ({ logParameters, onChange }) => (
           label="number of files"
           value={logParameters.maxFiles}
           defaultValue={5}
-          valid={(val) => ((val >= 1) && (val <= 10) ? null : 'value should be between 1 and 10')}
+          valid={validation.engine.logParameters.maxFiles}
           help={<div>The number of journal files (rotating)</div>}
           onChange={onChange}
         />
@@ -119,6 +122,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.sqliteFilename"
           label="Filename of sqlite db"
           value={logParameters.sqliteFilename}
+          valid={validation.engine.logParameters.sqliteFilename}
           help={<div>The filename of the db file</div>}
           onChange={onChange}
         />
@@ -129,6 +133,7 @@ const Logging = ({ logParameters, onChange }) => (
           label="Db Max size"
           value={logParameters.sqliteMaxFileSize}
           defaultValue={1000000}
+          valid={validation.engine.logParameters.sqliteMaxFileSize}
           help={<div>Max File Size of the sqlite database (Byte)</div>}
           onChange={onChange}
         />

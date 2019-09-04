@@ -1,23 +1,31 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-// import { ConfigContext } from '../context/configContext.jsx'
 import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
-const RawFileSenderForm = ({ application, onChange }) => (
+const OIAnalyticsFileForm = ({ application, onChange }) => (
   <>
     <Row>
       <Col md="4">
         <OIbText
           label="Host"
           onChange={onChange}
-          value={application.RawFileSender.host}
-          name="RawFileSender.host"
+          value={application.OIAnalyticsFile.host}
+          valid={validation.north.OIAnalyticsFile.host}
+          name="OIAnalyticsFile.host"
           help={<div>host for the target</div>}
         />
       </Col>
       <Col md="4">
-        <OIbText label="End point" onChange={onChange} value={application.RawFileSender.endpoint} name="RawFileSender.endpoint" help={<div />} />
+        <OIbText
+          label="End point"
+          onChange={onChange}
+          value={application.OIAnalyticsFile.endpoint}
+          valid={validation.north.OIAnalyticsFile.endpoint}
+          name="OIAnalyticsFile.endpoint"
+          help={<div />}
+        />
       </Col>
     </Row>
     <Row>
@@ -32,10 +40,10 @@ const RawFileSenderForm = ({ application, onChange }) => (
         <OIbSelect
           label="Type"
           onChange={onChange}
-          option={application.RawFileSender.authentication.type}
+          option={application.OIAnalyticsFile.authentication.type}
           options={['Basic']}
           defaultOption="Basic"
-          name="RawFileSender.authentication.type"
+          name="OIAnalyticsFile.authentication.type"
           help={<div />}
         />
       </Col>
@@ -43,8 +51,9 @@ const RawFileSenderForm = ({ application, onChange }) => (
         <OIbText
           label="User name"
           onChange={onChange}
-          value={application.RawFileSender.authentication.username}
-          name="RawFileSender.authentication.username"
+          value={application.OIAnalyticsFile.authentication.username}
+          valid={validation.north.OIAnalyticsFile.authentication.username}
+          name="OIAnalyticsFile.authentication.username"
           help={<div />}
         />
       </Col>
@@ -52,8 +61,9 @@ const RawFileSenderForm = ({ application, onChange }) => (
         <OIbPassword
           label="Password"
           onChange={onChange}
-          value={application.RawFileSender.authentication.password}
-          name="RawFileSender.password"
+          value={application.OIAnalyticsFile.authentication.password}
+          valid={validation.north.OIAnalyticsFile.authentication.password}
+          name="OIAnalyticsFile.password"
           help={<div />}
         />
       </Col>
@@ -67,7 +77,14 @@ const RawFileSenderForm = ({ application, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText label="Proxie" onChange={onChange} value={application.RawFileSender.proxy} name="RawFileSender.proxy" help={<div />} />
+        <OIbText
+          label="Proxie"
+          onChange={onChange}
+          value={application.OIAnalyticsFile.proxy}
+          valid={validation.north.OIAnalyticsFile.proxy}
+          name="OIAnalyticsFile.proxy"
+          help={<div />}
+        />
       </Col>
     </Row>
     <Row>
@@ -75,8 +92,8 @@ const RawFileSenderForm = ({ application, onChange }) => (
         <OIbSelect
           label="Stack"
           onChange={onChange}
-          option={application.RawFileSender.stack}
-          name="RawFileSender.stack"
+          option={application.OIAnalyticsFile.stack}
+          name="OIAnalyticsFile.stack"
           options={['axios', 'request', 'fetch']}
           defaultOption="fetch"
           help={<div />}
@@ -85,6 +102,6 @@ const RawFileSenderForm = ({ application, onChange }) => (
     </Row>
   </>
 )
-RawFileSenderForm.propTypes = { application: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+OIAnalyticsFileForm.propTypes = { application: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
-export default RawFileSenderForm
+export default OIAnalyticsFileForm

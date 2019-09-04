@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-// import { ConfigContext } from '../context/configContext.jsx'
 import { OIbText, OIbInteger, OIbCheckBox, OIbScanMode } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
 const CSVForm = ({ dataSource, onChange }) => (
   <>
@@ -12,6 +12,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="Input Folder"
           onChange={onChange}
           value={dataSource.CSV.inputFolder}
+          valid={validation.south.CSV.inputFolder}
           name="CSV.inputFolder"
           defaultValue="./csv/input"
           help={<div>Path to the input folder</div>}
@@ -24,6 +25,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="Archive Folder"
           onChange={onChange}
           value={dataSource.CSV.archiveFolder}
+          valid={validation.south.CSV.archiveFolder}
           name="CSV.archiveFolder"
           defaultValue="./csv/archive"
           help={<div>Path to the archive folder</div>}
@@ -36,6 +38,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="Error Folder"
           onChange={onChange}
           value={dataSource.CSV.errorFolder}
+          valid={validation.south.CSV.errorFolder}
           defaultValue="./csv/error"
           name="CSV.errorFolder"
           help={<div>Path to the error folder</div>}
@@ -48,6 +51,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="CSV separator"
           onChange={onChange}
           value={dataSource.CSV.separator}
+          valid={validation.south.CSV.separator}
           defaultValue=","
           name="CSV.separator"
           help={<div>(often , or ;)</div>}
@@ -60,6 +64,7 @@ const CSVForm = ({ dataSource, onChange }) => (
           label="time column"
           onChange={onChange}
           value={dataSource.CSV.timeColumn}
+          valid={validation.south.CSV.timeColumn}
           defaultValue={0}
           name="CSV.timeColumn"
           help={<div>Column with the timestamp</div>}
@@ -99,6 +104,7 @@ CSVForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
+          valid={validation.south.CSV.points.pointId}
           onChange={onChange}
           defaultValue=""
         />
@@ -121,6 +127,7 @@ CSVForm.renderPoints = (points, onChange) => {
           title="Value"
           name={`points.${index}.value`}
           value={point.value}
+          valid={validation.south.CSV.points.value}
           onChange={onChange}
           defaultValue=""
         />
@@ -133,6 +140,7 @@ CSVForm.renderPoints = (points, onChange) => {
           title="Quality"
           name={`points.${index}.quality`}
           value={point.quality}
+          valid={validation.south.CSV.points.quality}
           onChange={onChange}
           defaultValue=""
         />

@@ -1,17 +1,31 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-// import { ConfigContext } from '../context/configContext.jsx'
 import { OIbText, OIbPassword, OIbTitle } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
 const AmazonS3Form = ({ application, onChange }) => (
   <>
     <Row>
       <Col md="4">
-        <OIbText label="Bucket" onChange={onChange} value={application.AmazonS3.bucket} name="AmazonS3.bucket" help={<div />} />
+        <OIbText
+          label="Bucket"
+          onChange={onChange}
+          value={application.AmazonS3.bucket}
+          valid={validation.north.AmazonS3.bucket}
+          name="AmazonS3.bucket"
+          help={<div />}
+        />
       </Col>
       <Col md="4">
-        <OIbText label="Folder" onChange={onChange} value={application.AmazonS3.folder} name="AmazonS3.folder" help={<div />} />
+        <OIbText
+          label="Folder"
+          onChange={onChange}
+          value={application.AmazonS3.folder}
+          valid={validation.north.AmazonS3.folder}
+          name="AmazonS3.folder"
+          help={<div />}
+        />
       </Col>
     </Row>
     <Row>
@@ -27,6 +41,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Access Key"
           onChange={onChange}
           value={application.AmazonS3.authentication.accessKey}
+          valid={validation.north.AmazonS3.authentication.accessKey}
           name="AmazonS3.authentication.accessKey"
           help={<div />}
         />
@@ -36,6 +51,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Secret Key"
           onChange={onChange}
           value={application.AmazonS3.authentication.secretKey}
+          valid={validation.north.AmazonS3.authentication.secretKey}
           name="AmazonS3.authentication.secretKey"
           help={<div />}
         />
@@ -50,7 +66,14 @@ const AmazonS3Form = ({ application, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText label="Proxie" onChange={onChange} value={application.AmazonS3.proxy} name="AmazonS3.proxy" help={<div />} />
+        <OIbText
+          label="Proxie"
+          onChange={onChange}
+          value={application.AmazonS3.proxy}
+          valid={validation.north.AmazonS3.proxy}
+          name="AmazonS3.proxy"
+          help={<div />}
+        />
       </Col>
     </Row>
   </>
