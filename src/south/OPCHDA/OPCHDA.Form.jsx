@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
 import ScanGroups from '../../client/South/Form/ScanGroups.jsx'
+import validation from '../../client/helpers/validation'
 
 const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
   <>
@@ -12,6 +13,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Agent Filename"
           onChange={onChange}
           value={dataSource.OPCHDA.agentFilename}
+          valid={validation.south.OPCHDA.agentFilename}
           name="OPCHDA.agentFilename"
           defaultValue=""
           help={<div>Path to the HDA Agent</div>}
@@ -22,6 +24,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="TCP Port"
           onChange={onChange}
           value={dataSource.OPCHDA.tcpPort}
+          valid={validation.south.OPCHDA.tcpPort}
           name="OPCHDA.tcpPort"
           defaultValue=""
           help={<div>TCP Port of the HDA Agent executable</div>}
@@ -47,19 +50,31 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Host"
           onChange={onChange}
           value={dataSource.OPCHDA.host}
+          valid={validation.south.OPCHDA.host}
           name="OPCHDA.host"
           defaultValue=""
           help={<div>IP address or hostname of the HDA server</div>}
         />
       </Col>
       <Col md="4">
-        <OIbInteger
+        <OIbText
           label="Server Name"
           onChange={onChange}
           value={dataSource.OPCHDA.serverName}
+          valid={validation.south.OPCHDA.serverName}
           name="OPCHDA.serverName"
           defaultValue=""
           help={<div>Name of the HDA server</div>}
+        />
+      </Col>
+      <Col md="4">
+        <OIbInteger
+          label="Retry interval"
+          onChange={onChange}
+          value={dataSource.OPCHDA.retryInterval}
+          valid={validation.south.OPCHDA.retryInterval}
+          name="OPCHDA.retryInterval"
+          defaultValue={10000}
         />
       </Col>
     </Row>
@@ -86,6 +101,7 @@ OPCHDAForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
+          valid={validation.south.OPCHDA.points.pointId}
           onChange={onChange}
           defaultValue=""
         />

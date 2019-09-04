@@ -2,16 +2,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbPassword } from '../../client/components/OIbForm'
+import validation from '../../client/helpers/validation'
 
-const SQLFileForm = ({ dataSource, onChange }) => (
+const SQLDbToFileForm = ({ dataSource, onChange }) => (
   <>
     <Row>
       <Col md="4">
         <OIbText
           label="Host"
           onChange={onChange}
-          value={dataSource.SQLFile.host}
-          name="SQLFile.host"
+          value={dataSource.SQLDbToFile.host}
+          valid={validation.south.SQLDbToFile.host}
+          name="SQLDbToFile.host"
           defaultValue="localhost"
           help={<div>IP address of the OPC-UA server</div>}
         />
@@ -20,10 +22,11 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbInteger
           label="Port"
           onChange={onChange}
-          value={dataSource.SQLFile.port}
-          name="SQLFile.port"
+          value={dataSource.SQLDbToFile.port}
+          valid={validation.south.SQLDbToFile.port}
+          name="SQLDbToFile.port"
           defaultValue="1433"
-          help={<div>Port number of the SQLFile server</div>}
+          help={<div>Port number of the SQLDbToFile server</div>}
         />
       </Col>
     </Row>
@@ -33,9 +36,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
           label="Driver"
           onChange={onChange}
           options={['mssql', 'mysql', 'postgresql', 'oracle']}
-          option={dataSource.SQLFile.driver}
+          option={dataSource.SQLDbToFile.driver}
           defaultOption="mssql"
-          name="SQLFile.driver"
+          name="SQLDbToFile.driver"
           help={<div>Driver SQL</div>}
         />
       </Col>
@@ -45,8 +48,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="User"
           onChange={onChange}
-          value={dataSource.SQLFile.username}
-          name="SQLFile.username"
+          value={dataSource.SQLDbToFile.username}
+          valid={validation.south.SQLDbToFile.username}
+          name="SQLDbToFile.username"
           defaultValue=""
         />
       </Col>
@@ -54,8 +58,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbPassword
           label="Password"
           onChange={onChange}
-          value={dataSource.SQLFile.password}
-          name="SQLFile.password"
+          value={dataSource.SQLDbToFile.password}
+          valid={validation.south.SQLDbToFile.password}
+          name="SQLDbToFile.password"
           defaultValue=""
         />
       </Col>
@@ -65,8 +70,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="Database"
           onChange={onChange}
-          value={dataSource.SQLFile.database}
-          name="SQLFile.database"
+          value={dataSource.SQLDbToFile.database}
+          valid={validation.south.SQLDbToFile.database}
+          name="SQLDbToFile.database"
           defaultValue="db"
           help={<div>Name of the SQL database</div>}
         />
@@ -77,8 +83,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="Query"
           onChange={onChange}
-          value={dataSource.SQLFile.query}
-          name="SQLFile.query"
+          value={dataSource.SQLDbToFile.query}
+          valid={validation.south.SQLDbToFile.query}
+          name="SQLDbToFile.query"
           defaultValue=""
           help={<div>SQL query</div>}
         />
@@ -89,18 +96,20 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbInteger
           label="Connection timeout"
           onChange={onChange}
-          value={dataSource.SQLFile.connectionTimeout}
+          value={dataSource.SQLDbToFile.connectionTimeout}
+          valid={validation.south.SQLDbToFile.connectionTimeout}
           defaultValue={1000}
-          name="SQLFile.connectionTimeout"
+          name="SQLDbToFile.connectionTimeout"
         />
       </Col>
       <Col md="4">
         <OIbInteger
           label="Request Timeout"
           onChange={onChange}
-          value={dataSource.SQLFile.requestTimeout}
+          value={dataSource.SQLDbToFile.requestTimeout}
+          valid={validation.south.SQLDbToFile.requestTimeout}
           defaultValue={1000}
-          name="SQLFile.requestTimeout"
+          name="SQLDbToFile.requestTimeout"
         />
       </Col>
     </Row>
@@ -109,8 +118,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="Delimiter"
           onChange={onChange}
-          value={dataSource.SQLFile.delimiter}
-          name="SQLFile.delimiter"
+          value={dataSource.SQLDbToFile.delimiter}
+          valid={validation.south.SQLDbToFile.delimiter}
+          name="SQLDbToFile.delimiter"
           defaultValue=","
         />
       </Col>
@@ -120,8 +130,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
         <OIbText
           label="Filename"
           onChange={onChange}
-          value={dataSource.SQLFile.filename}
-          name="SQLFile.filename"
+          value={dataSource.SQLDbToFile.filename}
+          valid={validation.south.SQLDbToFile.filename}
+          name="SQLDbToFile.filename"
           defaultValue="sql-@date.csv"
         />
       </Col>
@@ -129,9 +140,9 @@ const SQLFileForm = ({ dataSource, onChange }) => (
   </>
 )
 
-SQLFileForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+SQLDbToFileForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
 
 /** this South Protocol is in "File" mode so we set renderPoints to null */
-SQLFileForm.renderPoints = null
+SQLDbToFileForm.renderPoints = null
 
-export default SQLFileForm
+export default SQLDbToFileForm
