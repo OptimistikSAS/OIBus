@@ -338,6 +338,14 @@ class Engine {
   getVersion() {
     return this.version
   }
+
+  /**
+   * Get active Protocols.
+   * @returns {string[]} - The active Protocols
+   */
+  getActiveProtocols() {
+    return Object.keys(this.activeProtocols)
+  }
 }
 
 module.exports = Engine
