@@ -79,7 +79,7 @@ class Server {
     this.app.use(
       bodyParser({
         enableTypes: ['json', 'text'],
-        jsonLimit: '5mb',
+        jsonLimit: '20mb',
         strict: true,
         onerror(err, ctx) {
           ctx.throw('body parse error', 422)

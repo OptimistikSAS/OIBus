@@ -384,7 +384,7 @@ class ConfigService {
     fs.writeFileSync(this.configFile, JSON.stringify(this.modifiedConfig, null, 4), 'utf8')
 
     // Reload
-    this.engine.reload(100)
+    this.engine.reload(3000)
   }
 
   /**
