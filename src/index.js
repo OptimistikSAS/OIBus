@@ -28,7 +28,8 @@ if (cluster.isMaster) {
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {
     engine.logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-    engine.stop()
-    process.exit()
+    engine.stop().then(() => {
+      process.exit()
+    })
   })
 }
