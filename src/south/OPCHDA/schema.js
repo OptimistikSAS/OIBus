@@ -38,6 +38,11 @@ module.exports = {
       type: 'string',
       title: 'Server Name',
     },
+    retryInterval: {
+      type: 'number',
+      title: 'Retry interval',
+      default: 10000,
+    },
     points: {
       type: 'array',
       title: 'Points',

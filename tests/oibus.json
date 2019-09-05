@@ -133,13 +133,13 @@
             },
             {
                 "dataSourceId": "MQTTServer",
-                "enabled": false,
+                "enabled": true,
                 "protocol": "MQTT",
                 "server": "simulator.factorythings.com",
                 "mqttProtocol": "mqtts",
                 "port": 8883,
                 "username": "bai",
-                "password": "k6A5tZP7CUeAxW0rcfi+Kg3zz3ADDJxjZBFWRyr0BtMjFInq3SYAhgmL1wop6gpI2rINMvClA0GpjSToDarUCpvTIfsKm4Zzpiv6YWrNzElL3gsxfejOaGplv0nQp79Kiynocnu+bHC2GgyoB5qi4uo5x33Gq4IIh3Z8dEEQggJUr8aSDTsv+MlP6ggD8dLOLtRTEWPXUQGaaumLTyb+Gpm2bmEr819o8MRzfqUDLITWaDCFoE58lTIRPcyfvL6QPQ0lAJfzua40r2D0qZDLGstDfh+7XHpW7a/Y7Bu7DM4ryBPORwe4wP/B05DaR+YqbdXEKIaAxtvo7vZzarIZDBuKKKh3W21TYTWE+GSCy48SsCKiPbZaV865m+0XaY5QOv377MrTJ2VKgcrsMmD0nVJP2PvMCT5Ac+oxUMRi2pReORNYVFvYFGls6inIN1Ga09FJHd/akToMFHpJO58dEL95mb2EemFdHtjsJR1ewjjsDgBYPsVuPXpTNpv0U1pK/EeeLz8k3zfrsWtqPVSo/s62ltP56W5GOdk3MhT2C57Y/GPRJE4NKDEifgDfzghGQGVcKjpnZ5gfTIAvx9CNMb7K0hrkPezUJimj2fh6b6tfNVJr+73kNTRWMUuF+LQxUwBWO3TJTM7ENCOv1msS+qJoBXw9Bmjw9Wos2drZb/I=",
+                "password": "L6Zbv3VUGU7uEoT8LEidfmfqRxOu/1HLcbwmtF/tCSN1MciHcJ7z9FcB67BO2BxIvwLjpbIY00EFJXitAR4rKCweciS01EDa6EOsfZ4KGz5o5XdT9RuvHpLzdssiB9FcWcfPOuDiXRs1n+9kK019crQWwYyMW9L16vH07bJwX8HgA1Ri0GF1NoVcv6bS2kGGsJXokp+2rpDJS6+wrp3SEDTl9tuOwW7pMSsvUrLVrcLjv9Sfn0LgW1hiGlkYHKuGgfnVuwgpGgnVQIEqo+jaYp3MIXfRLPqHmUrhHi31ibLNIIXJwmLeMlWbRz41l6KcvIeK03n1P5E0NZl7OCD8HL/wEqoLGOQpocYlXu98RIg0HDgznwus4nVd7mWP2ltMhjNqF8A5+oUGUDEt7OkfwYzS1GaCr8rpbG1GewSWhn2sPoSVDgyuddP+1Rw7EMIiakTmJ1dSOIrxK/K0FxcMVSyU7Vrm+zIXE2MuOMB5/1sjlNJUr4P0hIGEbZI/kouGnSnleUQ5NzaSx+DnQIWqk+rBMBgHQr9occQnQVLuUxCaEaQa+POHCWFaqfaYadMBY4apkK2K8ukL4Qd4ffhs3xRUtBBX7Wr56X2qkCKMqcayNriSj6lCiLP4SZdDXgv7gZuCD9ggkV1mf86lkGm1+TctY5TucpDwvwcRs8n2jcI=",
                 "points": [
                     {
                         "pointId": "/fttest.base/Tank 5.tank/Sensor22.temperature",
@@ -274,13 +274,13 @@
             },
             {
                 "dataSourceId": "SQLDbToFile",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "SQLDbToFile",
                 "driver": "mssql",
                 "host": "192.168.0.11",
                 "port": 1433,
                 "username": "oibus_user",
-                "password": "eOpRHLUyRPDMaek0ozGTxeO8U0t4ffaLdlJo3DxEvM+l/WIQ7CDyzmFrkb1JuwgKVfEm4Ngp1EWwrFJxPrlRqJsBzvomOtJANsRcRSKtk801rPiEEGBfUxjz5Sm659d8PgUifkXunl3Pj2mlxaDbsX6DKjRIuXKTdea3MT3i5N+x6a8Z21lOuckLCy+BAqIDEtMdW5+u9F75W2Mi3jDNelyaQlVJP01YnGDUt0PDQxtM8t6odIjnvypFdEXAZr8B7Mwjcickbm6lFcIKkArWbROVXXduNjiKgOJ+GzP3lJP4eU5WjfFrnNXJP1cq2bbChI5Jc/tl71aaVn/6YNNsZ4uVBzaPyGO7s+w03uS1qCAHXYakLxSCVXLP+WGMihKa7Of5ouZm6ZgVI64DeXhLr4ToYqBbz53Uj4sPgbQ5ZOzVpIcHUHCVPnqsmGzJVV2IFxBE/6m70SgNBJCXtuqawch5zxYz1H7QXkMIVirOoR1ubAkZWcCt5DAFZBiioDVpKQOfjRGJCYcM4MxP8LsYFFJztOn910q/VYSKyArzoSxDcRzCzob4MlJHNtv7OysFAHzFY9AaAdbeVqxpgwdlqITr4Gk1aITvsIYLM+VZ3E2YIzp2Ht2BEZrdsRt9oIqvl30Q7eJoxRQGDwIBmEU6cJqgFBpnUYooHW/GCHtFR4w=",
+                "password": "Zli5zpT9s33vvGOzW2F8vNFRi7rKRCFb9FJ++g8v1DkmRLR/e9K8ax9AbnArUq90n1HcMavB7g3HeS+5NLDizy/W2M1tSFfcU0Xuiqu2APzte5GoK82Ue7CyI7LpC2jE0i1iJBPq3Id0bcPp2wwaxHvIav5X1KCstD5+zO1rrZANeaiehuqTbyOhOhdFlto/mJSWJPRZhbjBNnG0KzWw3CuiPnPK62PUmMm3CXbzAwMdkruL9Riotb3ZqT/KAA9mg6tRkvGhHpCkK3i+giBMH+0pPeGzLcg45IIsJbyXhqCJWBtld0i7FhKyXh2RG9F128B8JHNsjG/c0CtsEEet6nKLOrtNg9q8lRTewQfSOWDVKUWagzFXEUZS/SOiEAip4vkbJzMOrNLxkTPU3ALQL2QY2zYoP2TKSHwOozA0xy9iJ01wxmbiEGNSr3NmLuP6IUdSKU5F+aaHZK1pSg6XT4oUSwpPOgk/jGF3GKWgiXmywOC20hf101n+nhR2LFk7Pghq+MMntgMIN1bxuMA4gED/BlmQtny2lhdb9kEEFfldsPADCaoU27xjUmcLiXt80ziNwSpAxuK2FrnAZ7urL0rvBU5YBjJIxmXnIxfrwofRXgNs2DoL0IfErSKasYoHGJS7JAsBNzSStWB6M8/8Ep5N4u+4JoYYW3pJFs4lnQI=",
                 "database": "oibus",
                 "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
                 "connectionTimeout": 1000,
