@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './InfluxDB.validation'
 
 const InfluxDBForm = ({ application, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           label="User name"
           onChange={onChange}
           value={application.InfluxDB.user}
-          valid={validation.north.InfluxDB.user}
+          valid={validation.InfluxDB.user}
           name="InfluxDB.user"
           help={<div />}
         />
@@ -22,7 +22,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           label="Password"
           onChange={onChange}
           value={application.InfluxDB.password}
-          valid={validation.north.InfluxDB.password}
+          valid={validation.InfluxDB.password}
           name="InfluxDB.password"
           help={<div />}
         />
@@ -34,7 +34,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           label="Database"
           onChange={onChange}
           value={application.InfluxDB.db}
-          valid={validation.north.InfluxDB.db}
+          valid={validation.InfluxDB.db}
           name="InfluxDB.db"
           help={<div />}
         />
@@ -44,7 +44,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           label="Host"
           onChange={onChange}
           value={application.InfluxDB.host}
-          valid={validation.north.InfluxDB.host}
+          valid={validation.InfluxDB.host}
           name="InfluxDB.host"
           help={<div />}
         />
@@ -54,7 +54,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           label="Precision"
           onChange={onChange}
           value={application.InfluxDB.precision}
-          valid={validation.north.InfluxDB.precision}
+          valid={validation.InfluxDB.precision}
           name="InfluxDB.precision"
           help={<div />}
         />

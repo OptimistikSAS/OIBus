@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
 import ScanGroups from '../../client/South/Form/ScanGroups.jsx'
-import validation from '../../client/helpers/validation'
+import validation from './OPCHDA.validation'
 
 const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
   <>
@@ -13,7 +13,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Agent Filename"
           onChange={onChange}
           value={dataSource.OPCHDA.agentFilename}
-          valid={validation.south.OPCHDA.agentFilename}
+          valid={validation.OPCHDA.agentFilename}
           name="OPCHDA.agentFilename"
           defaultValue=""
           help={<div>Path to the HDA Agent</div>}
@@ -24,7 +24,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="TCP Port"
           onChange={onChange}
           value={dataSource.OPCHDA.tcpPort}
-          valid={validation.south.OPCHDA.tcpPort}
+          valid={validation.OPCHDA.tcpPort}
           name="OPCHDA.tcpPort"
           defaultValue=""
           help={<div>TCP Port of the HDA Agent executable</div>}
@@ -50,7 +50,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Host"
           onChange={onChange}
           value={dataSource.OPCHDA.host}
-          valid={validation.south.OPCHDA.host}
+          valid={validation.OPCHDA.host}
           name="OPCHDA.host"
           defaultValue=""
           help={<div>IP address or hostname of the HDA server</div>}
@@ -61,7 +61,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Server Name"
           onChange={onChange}
           value={dataSource.OPCHDA.serverName}
-          valid={validation.south.OPCHDA.serverName}
+          valid={validation.OPCHDA.serverName}
           name="OPCHDA.serverName"
           defaultValue=""
           help={<div>Name of the HDA server</div>}
@@ -72,7 +72,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Retry interval"
           onChange={onChange}
           value={dataSource.OPCHDA.retryInterval}
-          valid={validation.south.OPCHDA.retryInterval}
+          valid={validation.OPCHDA.retryInterval}
           name="OPCHDA.retryInterval"
           defaultValue={10000}
         />
@@ -101,7 +101,7 @@ OPCHDAForm.renderPoints = (points, onChange) => {
           title="Point Id"
           name={`points.${index}.pointId`}
           value={point.pointId}
-          valid={validation.south.OPCHDA.points.pointId}
+          valid={validation.OPCHDA.points.pointId}
           onChange={onChange}
           defaultValue=""
         />
