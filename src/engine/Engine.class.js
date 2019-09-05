@@ -242,7 +242,7 @@ class Engine {
    * Gracefully stop every Timer, Protocol and Application
    * @return {void}
    */
-  stop() {
+  async stop() {
     // Stop timers
     this.jobs.forEach((id) => {
       timexe.remove(id)
@@ -259,6 +259,13 @@ class Engine {
       this.logger.info(`Stopping ${applicationId}`)
       application.disconnect()
     })
+
+    // Log cache data
+    const apisCacheStats = await this.cache.getCacheStatsForApis()
+    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
+
+    const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
+    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
   }
 
   /**
@@ -266,8 +273,8 @@ class Engine {
    * @param {number} timeout - The delay to wait before restart
    * @returns {void}
    */
-  reload(timeout) {
-    this.stop()
+  async reload(timeout) {
+    await this.stop()
 
     setTimeout(() => {
       process.exit(1)
@@ -337,6 +344,14 @@ class Engine {
     */
   getVersion() {
     return this.version
+  }
+
+  /**
+   * Get active Protocols.
+   * @returns {string[]} - The active Protocols
+   */
+  getActiveProtocols() {
+    return Object.keys(this.activeProtocols)
   }
 }
 
