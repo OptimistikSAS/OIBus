@@ -1,4 +1,3 @@
-const process = require('process')
 const os = require('os')
 
 /**
@@ -7,6 +6,9 @@ const os = require('os')
  * @return {void}
  */
 const getStatus = async (ctx) => {
+  const apisCacheStats = await ctx.app.engine.cache.getCacheStatsForApis()
+  const protocolsCacheStats = await ctx.app.engine.cache.getCacheStatsForProtocols()
+
   const status = {
     Version: ctx.app.engine.getVersion(),
     'Configuration File': ctx.app.engine.configFile,
@@ -20,6 +22,8 @@ const getStatus = async (ctx) => {
     Hostname: os.hostname(),
     'OS release': os.release(),
     'OS type': os.type(),
+    ...apisCacheStats,
+    ...protocolsCacheStats,
   }
   ctx.ok(status)
 }
