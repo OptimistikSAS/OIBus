@@ -44,6 +44,8 @@ class Cache {
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
     this.queue = new Queue(this.logger)
+    // Cache stats
+    this.cacheStats = {}
   }
 
   /**
@@ -82,9 +84,6 @@ class Cache {
     // initialize the internal object apis with the list of north apis
     const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
     await Promise.all(actions)
-
-    // Create database for Cache stats
-    this.statsDatabase = await databaseService.createConfigDatabase(`${this.cacheFolder}/cacheStats.db`)
   }
 
   /**
@@ -112,9 +111,7 @@ class Cache {
     // save the value in the North's queue if it is subscribed to the dataSource
     if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
       // Update stats for api
-      let totalCount = await databaseService.getConfig(this.statsDatabase, applicationId)
-      totalCount = totalCount ? parseInt(totalCount, 10) + values.length : values.length
-      await databaseService.upsertConfig(this.statsDatabase, applicationId, `${totalCount}`)
+      this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
       // Queue saving values.
       this.queue.add(databaseService.saveValues, database, dataSourceId, values)
@@ -141,9 +138,7 @@ class Cache {
   async cacheValues(dataSourceId, values) {
     try {
       // Update stats for dataSourceId
-      let totalCount = await databaseService.getConfig(this.statsDatabase, dataSourceId)
-      totalCount = totalCount ? parseInt(totalCount, 10) + values.length : values.length
-      await databaseService.upsertConfig(this.statsDatabase, dataSourceId, `${totalCount}`)
+      this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + values.length
 
       // Cache values
       const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
@@ -171,9 +166,7 @@ class Cache {
     const { applicationId, canHandleFiles, subscribedTo } = api
     if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
       // Update stats for api
-      let totalCount = await databaseService.getConfig(this.statsDatabase, applicationId)
-      totalCount = totalCount ? parseInt(totalCount, 10) + 1 : 1
-      await databaseService.upsertConfig(this.statsDatabase, applicationId, `${totalCount}`)
+      this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
 
       // Cache file
       this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
@@ -193,9 +186,7 @@ class Cache {
    */
   async cacheFile(dataSourceId, filePath, preserveFiles) {
     // Update stats for dataSourceId
-    let totalCount = await databaseService.getConfig(this.statsDatabase, dataSourceId)
-    totalCount = totalCount ? parseInt(totalCount, 10) + 1 : 1
-    await databaseService.upsertConfig(this.statsDatabase, dataSourceId, `${totalCount}`)
+    this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
 
     // Cache files
     this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
@@ -431,20 +422,14 @@ class Cache {
   async getCacheStatsForApis() {
     // Get points APIs stats
     const pointApis = Object.values(this.apis).filter((api) => api.canHandleValues)
-
-    const valuesTotalCountActions = pointApis.map((api) => databaseService.getConfig(this.statsDatabase, api.applicationId))
-    const valuesTotalCounts = await Promise.all(valuesTotalCountActions)
-
+    const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.applicationId])
     const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
     const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)
     const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes)
 
     // Get file APIs stats
     const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
-
-    const filesTotalCountActions = fileApis.map((api) => databaseService.getConfig(this.statsDatabase, api.applicationId))
-    const filesTotalCounts = await Promise.all(filesTotalCountActions)
-
+    const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.applicationId])
     const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.applicationId))
     const filesCacheSizes = await Promise.all(filesCacheSizeActions)
     const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes)
@@ -459,16 +444,11 @@ class Cache {
    */
   async getCacheStatsForProtocols() {
     const protocols = this.engine.getActiveProtocols()
-
-    const totalCountActions = protocols.map((protocol) => databaseService.getConfig(this.statsDatabase, protocol))
-    const totalCounts = await Promise.all(totalCountActions)
-
-    const protocolsStats = protocols.map((protocol, i) => {
+    const protocolsStats = protocols.map((protocol) => {
       const retVal = {}
-      retVal[`${protocol} Count`] = totalCounts[i] || 0
+      retVal[`${protocol} Count`] = this.cacheStats[protocol] || 0
       return retVal
     })
-
     return protocolsStats.reduce((total, current) => Object.assign(total, current), [])
   }
 }
