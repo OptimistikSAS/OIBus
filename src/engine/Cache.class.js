@@ -435,7 +435,7 @@ class Cache {
     const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes)
 
     // Merge results
-    return [...pointApisStats, ...fileApisStats].reduce((total, current) => Object.assign(total, current), [])
+    return { ...[...pointApisStats, ...fileApisStats].reduce((total, current) => Object.assign(total, current), []) }
   }
 
   /**
@@ -449,7 +449,7 @@ class Cache {
       retVal[`${protocol} Count`] = this.cacheStats[protocol] || 0
       return retVal
     })
-    return protocolsStats.reduce((total, current) => Object.assign(total, current), [])
+    return { ...protocolsStats.reduce((total, current) => Object.assign(total, current), []) }
   }
 }
 
