@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbCheckBox, OIbInteger } from '../../client/components/OIbForm'
+import { OIbText, OIbCheckBox, OIbInteger, OIbScanMode } from '../../client/components/OIbForm'
 import validation from './FolderScanner.validation'
 
 const FolderScannerForm = ({ dataSource, onChange }) => (
@@ -15,6 +15,14 @@ const FolderScannerForm = ({ dataSource, onChange }) => (
           valid={validation.FolderScanner.inputFolder}
           name="FolderScanner.inputFolder"
           defaultValue=""
+        />
+      </Col>
+      <Col md="4">
+        <OIbScanMode
+          label="Scan Mode"
+          name="FolderScanner.scanMode"
+          scanMode={dataSource.FolderScanner.scanMode}
+          onChange={onChange}
         />
       </Col>
     </Row>
