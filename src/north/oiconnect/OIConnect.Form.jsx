@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './OIConnect.validation'
 
 const OIConnectForm = ({ application, onChange }) => {
   if (!application.OIConnect.authentication) {
@@ -17,7 +17,7 @@ const OIConnectForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.OIConnect.host}
             defaultValue=""
-            valid={validation.north.OIConnect.host}
+            valid={validation.OIConnect.host}
             name="OIConnect.host"
             help={<div>host for the target</div>}
           />
@@ -28,7 +28,7 @@ const OIConnectForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.OIConnect.endpoint}
             defaultValue=""
-            valid={validation.north.OIConnect.endpoint}
+            valid={validation.OIConnect.endpoint}
             name="OIConnect.endpoint"
             help={<div />}
           />
@@ -59,7 +59,7 @@ const OIConnectForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.OIConnect.authentication.username}
             defaultValue=""
-            valid={validation.north.OIConnect.authentication.username}
+            valid={validation.OIConnect.authentication.username}
             name="OIConnect.username"
             help={<div />}
           />
@@ -70,7 +70,7 @@ const OIConnectForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.OIConnect.authentication.password}
             defaultValue=""
-            valid={validation.north.OIConnect.authentication.password}
+            valid={validation.OIConnect.authentication.password}
             name="OIConnect.password"
             help={<div />}
           />
@@ -90,7 +90,7 @@ const OIConnectForm = ({ application, onChange }) => {
             onChange={onChange}
             value={application.OIConnect.proxy}
             defaultValue=""
-            valid={validation.north.OIConnect.proxy}
+            valid={validation.OIConnect.proxy}
             name="OIConnect.proxy"
             help={<div />}
           />

@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword, OIbTitle } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './AmazonS3.validation'
 
 const AmazonS3Form = ({ application, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Bucket"
           onChange={onChange}
           value={application.AmazonS3.bucket}
-          valid={validation.north.AmazonS3.bucket}
+          valid={validation.AmazonS3.bucket}
           name="AmazonS3.bucket"
           help={<div />}
         />
@@ -22,7 +22,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Folder"
           onChange={onChange}
           value={application.AmazonS3.folder}
-          valid={validation.north.AmazonS3.folder}
+          valid={validation.AmazonS3.folder}
           name="AmazonS3.folder"
           help={<div />}
         />
@@ -41,7 +41,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Access Key"
           onChange={onChange}
           value={application.AmazonS3.authentication.accessKey}
-          valid={validation.north.AmazonS3.authentication.accessKey}
+          valid={validation.AmazonS3.authentication.accessKey}
           name="AmazonS3.authentication.accessKey"
           help={<div />}
         />
@@ -51,7 +51,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Secret Key"
           onChange={onChange}
           value={application.AmazonS3.authentication.secretKey}
-          valid={validation.north.AmazonS3.authentication.secretKey}
+          valid={validation.AmazonS3.authentication.secretKey}
           name="AmazonS3.authentication.secretKey"
           help={<div />}
         />
@@ -70,7 +70,7 @@ const AmazonS3Form = ({ application, onChange }) => (
           label="Proxie"
           onChange={onChange}
           value={application.AmazonS3.proxy}
-          valid={validation.north.AmazonS3.proxy}
+          valid={validation.AmazonS3.proxy}
           name="AmazonS3.proxy"
           help={<div />}
         />

@@ -7,7 +7,7 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
-import validation from '../helpers/validation'
+import validation from './Engine.validation'
 
 const Engine = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)

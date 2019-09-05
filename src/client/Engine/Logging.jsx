@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbInteger, OIbSelect, OIbText, OIbCheckBox, OIbTitle } from '../components/OIbForm'
-import validation from '../helpers/validation'
+import validation from './Engine.validation'
 
 const Logging = ({ logParameters, onChange }) => (
   <>
