@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
 import { OIbText, OIbSelect, OIbTitle } from '../components/OIbForm'
-import validation from '../helpers/validation'
+import validation from './Engine.validation'
 
 const Caching = ({ onChange, caching }) => (
   <>
