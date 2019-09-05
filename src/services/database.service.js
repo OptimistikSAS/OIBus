@@ -242,6 +242,22 @@ const getFileCount = async (database, filePath) => {
 }
 
 /**
+ * Get file count for API.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {string} api - The api to get file count
+ * @return {number} - The file count
+ */
+const getFileCountForApi = async (database, api) => {
+  const query = `SELECT COUNT(*) AS count 
+                 FROM ${CACHE_TABLE_NAME}
+                 WHERE application = ?`
+  const stmt = await database.prepare(query)
+  const result = await stmt.get(api)
+
+  return result.count
+}
+
+/**
  * Upsert handled raw file.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {string} filename - The filename
@@ -382,6 +398,7 @@ module.exports = {
   getFileToSend,
   deleteSentFile,
   getFileCount,
+  getFileCountForApi,
   upsertFolderScanner,
   getFolderScannerModifyTime,
   upsertConfig,

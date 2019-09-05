@@ -1,5 +1,5 @@
-const reload = (ctx) => {
-  ctx.app.engine.reload(10000)
+const reload = async (ctx) => {
+  await ctx.app.engine.reload(10000)
 
   ctx.ok('Reloading...')
 }

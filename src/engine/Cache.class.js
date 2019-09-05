@@ -44,6 +44,8 @@ class Cache {
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
     this.queue = new Queue(this.logger)
+    // Cache stats
+    this.cacheStats = {}
   }
 
   /**
@@ -105,10 +107,15 @@ class Cache {
    * @return {void}
    */
   async cacheValuesForApi(api, dataSourceId, values) {
-    const { database, config, canHandleValues, subscribedTo } = api
+    const { applicationId, database, config, canHandleValues, subscribedTo } = api
     // save the value in the North's queue if it is subscribed to the dataSource
     if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+      // Update stats for api
+      this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
+
+      // Queue saving values.
       this.queue.add(databaseService.saveValues, database, dataSourceId, values)
+
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
@@ -130,6 +137,10 @@ class Cache {
    */
   async cacheValues(dataSourceId, values) {
     try {
+      // Update stats for dataSourceId
+      this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + values.length
+
+      // Cache values
       const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
       const apisToActivate = await Promise.all(actions)
       apisToActivate.forEach((apiToActivate) => {
@@ -154,6 +165,10 @@ class Cache {
   async cacheFileForApi(api, dataSourceId, cachePath, timestamp) {
     const { applicationId, canHandleFiles, subscribedTo } = api
     if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+      // Update stats for api
+      this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
+
+      // Cache file
       this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       this.logger.debug(`send file for ${api.applicationId}`)
@@ -170,6 +185,10 @@ class Cache {
    * @return {void}
    */
   async cacheFile(dataSourceId, filePath, preserveFiles) {
+    // Update stats for dataSourceId
+    this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
+
+    // Cache files
     this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
@@ -377,6 +396,60 @@ class Cache {
       clearTimeout(application.timeout)
     }
     application.timeout = setTimeout(this.sendCallback.bind(this, application), timeout)
+  }
+
+  /**
+   * Generate cache stat for APIs
+   * @param {string[]} apiNames - The North/South list
+   * @param {number[]} totalCounts - The total count list
+   * @param {number[]} cacheSizes - The cache size list
+   * @returns {*} - The stats
+   */
+  /* eslint-disable-next-line class-methods-use-this */
+  generateApiCacheStat(apiNames, totalCounts, cacheSizes) {
+    return apiNames.map((api, i) => {
+      const retVal = {}
+      retVal[`${api.applicationId} Count`] = totalCounts[i] || 0
+      retVal[`${api.applicationId} Cache`] = cacheSizes[i] || 0
+      return retVal
+    })
+  }
+
+  /**
+   * Get cache stats for APIs
+   * @returns {object} - Cache stats
+   */
+  async getCacheStatsForApis() {
+    // Get points APIs stats
+    const pointApis = Object.values(this.apis).filter((api) => api.canHandleValues)
+    const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.applicationId])
+    const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
+    const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)
+    const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes)
+
+    // Get file APIs stats
+    const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
+    const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.applicationId])
+    const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.applicationId))
+    const filesCacheSizes = await Promise.all(filesCacheSizeActions)
+    const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes)
+
+    // Merge results
+    return { ...[...pointApisStats, ...fileApisStats].reduce((total, current) => Object.assign(total, current), []) }
+  }
+
+  /**
+   * Get cache stats for Protocols
+   * @returns {object} - Cache stats
+   */
+  async getCacheStatsForProtocols() {
+    const protocols = this.engine.getActiveProtocols()
+    const protocolsStats = protocols.map((protocol) => {
+      const retVal = {}
+      retVal[`${protocol} Count`] = this.cacheStats[protocol] || 0
+      return retVal
+    })
+    return { ...protocolsStats.reduce((total, current) => Object.assign(total, current), []) }
   }
 }
 
