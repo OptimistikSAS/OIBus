@@ -4,7 +4,7 @@ import { Col, Row } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
-import validation from '../helpers/validation'
+import validation from './Engine.validation'
 
 const Proxies = ({ proxies }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

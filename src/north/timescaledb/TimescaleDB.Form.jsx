@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './TimescaleDB.validation'
 
 const TimescaleDBForm = ({ application, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const TimescaleDBForm = ({ application, onChange }) => (
           label="User name"
           onChange={onChange}
           value={application.TimescaleDB.user}
-          valid={validation.north.TimescaleDB.user}
+          valid={validation.TimescaleDB.user}
           name="TimescaleDB.user"
           help={<div />}
         />
@@ -22,7 +22,7 @@ const TimescaleDBForm = ({ application, onChange }) => (
           label="Password"
           onChange={onChange}
           value={application.TimescaleDB.password}
-          valid={validation.north.TimescaleDB.password}
+          valid={validation.TimescaleDB.password}
           name="TimescaleDB.password"
           help={<div />}
         />
@@ -34,7 +34,7 @@ const TimescaleDBForm = ({ application, onChange }) => (
           label="Database"
           onChange={onChange}
           value={application.TimescaleDB.db}
-          valid={validation.north.TimescaleDB.db}
+          valid={validation.TimescaleDB.db}
           name="TimescaleDB.db"
           help={<div />}
         />
@@ -44,7 +44,7 @@ const TimescaleDBForm = ({ application, onChange }) => (
           label="Host"
           onChange={onChange}
           value={application.TimescaleDB.host}
-          valid={validation.north.TimescaleDB.host}
+          valid={validation.TimescaleDB.host}
           name="TimescaleDB.host"
           help={<div />}
         />

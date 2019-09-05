@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './OIAnalyticsFile.validation'
 
 const OIAnalyticsFileForm = ({ application, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           label="Host"
           onChange={onChange}
           value={application.OIAnalyticsFile.host}
-          valid={validation.north.OIAnalyticsFile.host}
+          valid={validation.OIAnalyticsFile.host}
           name="OIAnalyticsFile.host"
           help={<div>host for the target</div>}
         />
@@ -22,7 +22,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           label="End point"
           onChange={onChange}
           value={application.OIAnalyticsFile.endpoint}
-          valid={validation.north.OIAnalyticsFile.endpoint}
+          valid={validation.OIAnalyticsFile.endpoint}
           name="OIAnalyticsFile.endpoint"
           help={<div />}
         />
@@ -52,7 +52,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           label="User name"
           onChange={onChange}
           value={application.OIAnalyticsFile.authentication.username}
-          valid={validation.north.OIAnalyticsFile.authentication.username}
+          valid={validation.OIAnalyticsFile.authentication.username}
           name="OIAnalyticsFile.authentication.username"
           help={<div />}
         />
@@ -62,7 +62,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           label="Password"
           onChange={onChange}
           value={application.OIAnalyticsFile.authentication.password}
-          valid={validation.north.OIAnalyticsFile.authentication.password}
+          valid={validation.OIAnalyticsFile.authentication.password}
           name="OIAnalyticsFile.password"
           help={<div />}
         />
@@ -81,7 +81,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           label="Proxie"
           onChange={onChange}
           value={application.OIAnalyticsFile.proxy}
-          valid={validation.north.OIAnalyticsFile.proxy}
+          valid={validation.OIAnalyticsFile.proxy}
           name="OIAnalyticsFile.proxy"
           help={<div />}
         />
