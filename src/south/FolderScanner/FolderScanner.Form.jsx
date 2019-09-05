@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbCheckBox, OIbInteger } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './FolderScanner.validation'
 
 const FolderScannerForm = ({ dataSource, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const FolderScannerForm = ({ dataSource, onChange }) => (
           label="Input Folder"
           onChange={onChange}
           value={dataSource.FolderScanner.inputFolder}
-          valid={validation.south.FolderScanner.inputFolder}
+          valid={validation.FolderScanner.inputFolder}
           name="FolderScanner.inputFolder"
           defaultValue=""
         />
@@ -35,7 +35,7 @@ const FolderScannerForm = ({ dataSource, onChange }) => (
           label="Minimum Age"
           onChange={onChange}
           value={dataSource.FolderScanner.minAge}
-          valid={validation.south.FolderScanner.minAge}
+          valid={validation.FolderScanner.minAge}
           defaultValue={1000}
           name="FolderScanner.minAge"
         />
@@ -47,7 +47,7 @@ const FolderScannerForm = ({ dataSource, onChange }) => (
           label="RegExp"
           onChange={onChange}
           value={dataSource.FolderScanner.regex}
-          valid={validation.south.FolderScanner.regex}
+          valid={validation.FolderScanner.regex}
           name="FolderScanner.regex"
           defaultValue=".txt"
         />

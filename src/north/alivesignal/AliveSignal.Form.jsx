@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbPassword, OIbInteger, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './AliveSignal.validation'
 
 const AliveSignalForm = ({ application, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           label="Host"
           onChange={onChange}
           value={application.AliveSignal.host}
-          valid={validation.north.AliveSignal.host}
+          valid={validation.AliveSignal.host}
           name="AliveSignal.host"
           help={<div>host for the target (OIBus)</div>}
         />
@@ -42,7 +42,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           label="User name"
           onChange={onChange}
           value={application.AliveSignal.authentication.username}
-          valid={validation.north.AliveSignal.authentication.username}
+          valid={validation.AliveSignal.authentication.username}
           name="AliveSignal.username"
           help={<div />}
         />
@@ -52,7 +52,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           label="Password"
           onChange={onChange}
           value={application.AliveSignal.authentication.password}
-          valid={validation.north.AliveSignal.authentication.password}
+          valid={validation.AliveSignal.authentication.password}
           name="AliveSignal.password"
           help={<div />}
         />
@@ -71,7 +71,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           label="ID"
           onChange={onChange}
           value={application.AliveSignal.id}
-          valid={validation.north.AliveSignal.id}
+          valid={validation.AliveSignal.id}
           name="AliveSignal.id"
           help={<div />}
         />
@@ -82,7 +82,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           onChange={onChange}
           value={application.AliveSignal.frequency}
           defaultValue={10000}
-          valid={validation.north.AliveSignal.frequency}
+          valid={validation.AliveSignal.frequency}
           name="AliveSignal.frequency"
           help={<div />}
         />
@@ -101,7 +101,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           label="Proxie"
           onChange={onChange}
           value={application.AliveSignal.proxy}
-          valid={validation.north.AliveSignal.proxy}
+          valid={validation.AliveSignal.proxy}
           name="AliveSignal.proxy"
           help={<div />}
         />

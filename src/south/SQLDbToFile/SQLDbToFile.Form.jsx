@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbPassword } from '../../client/components/OIbForm'
-import validation from '../../client/helpers/validation'
+import validation from './SQLDbToFile.validation'
 
 const SQLDbToFileForm = ({ dataSource, onChange }) => (
   <>
@@ -12,7 +12,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Host"
           onChange={onChange}
           value={dataSource.SQLDbToFile.host}
-          valid={validation.south.SQLDbToFile.host}
+          valid={validation.SQLDbToFile.host}
           name="SQLDbToFile.host"
           defaultValue="localhost"
           help={<div>IP address of the OPC-UA server</div>}
@@ -23,7 +23,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Port"
           onChange={onChange}
           value={dataSource.SQLDbToFile.port}
-          valid={validation.south.SQLDbToFile.port}
+          valid={validation.SQLDbToFile.port}
           name="SQLDbToFile.port"
           defaultValue="1433"
           help={<div>Port number of the SQLDbToFile server</div>}
@@ -49,7 +49,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="User"
           onChange={onChange}
           value={dataSource.SQLDbToFile.username}
-          valid={validation.south.SQLDbToFile.username}
+          valid={validation.SQLDbToFile.username}
           name="SQLDbToFile.username"
           defaultValue=""
         />
@@ -59,7 +59,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Password"
           onChange={onChange}
           value={dataSource.SQLDbToFile.password}
-          valid={validation.south.SQLDbToFile.password}
+          valid={validation.SQLDbToFile.password}
           name="SQLDbToFile.password"
           defaultValue=""
         />
@@ -71,7 +71,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Database"
           onChange={onChange}
           value={dataSource.SQLDbToFile.database}
-          valid={validation.south.SQLDbToFile.database}
+          valid={validation.SQLDbToFile.database}
           name="SQLDbToFile.database"
           defaultValue="db"
           help={<div>Name of the SQL database</div>}
@@ -84,7 +84,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Query"
           onChange={onChange}
           value={dataSource.SQLDbToFile.query}
-          valid={validation.south.SQLDbToFile.query}
+          valid={validation.SQLDbToFile.query}
           name="SQLDbToFile.query"
           defaultValue=""
           help={<div>SQL query</div>}
@@ -97,7 +97,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Connection timeout"
           onChange={onChange}
           value={dataSource.SQLDbToFile.connectionTimeout}
-          valid={validation.south.SQLDbToFile.connectionTimeout}
+          valid={validation.SQLDbToFile.connectionTimeout}
           defaultValue={1000}
           name="SQLDbToFile.connectionTimeout"
         />
@@ -107,7 +107,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Request Timeout"
           onChange={onChange}
           value={dataSource.SQLDbToFile.requestTimeout}
-          valid={validation.south.SQLDbToFile.requestTimeout}
+          valid={validation.SQLDbToFile.requestTimeout}
           defaultValue={1000}
           name="SQLDbToFile.requestTimeout"
         />
@@ -119,7 +119,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Delimiter"
           onChange={onChange}
           value={dataSource.SQLDbToFile.delimiter}
-          valid={validation.south.SQLDbToFile.delimiter}
+          valid={validation.SQLDbToFile.delimiter}
           name="SQLDbToFile.delimiter"
           defaultValue=","
         />
@@ -131,7 +131,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Filename"
           onChange={onChange}
           value={dataSource.SQLDbToFile.filename}
-          valid={validation.south.SQLDbToFile.filename}
+          valid={validation.SQLDbToFile.filename}
           name="SQLDbToFile.filename"
           defaultValue="sql-@date.csv"
         />

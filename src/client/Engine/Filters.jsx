@@ -4,7 +4,7 @@ import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbText, OIbTitle } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
-import validation from '../helpers/validation'
+import validation from './Engine.validation'
 
 const Filters = ({ filters }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
