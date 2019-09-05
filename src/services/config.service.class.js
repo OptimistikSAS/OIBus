@@ -270,7 +270,7 @@ class ConfigService {
     config.south.dataSources.forEach((dataSource) => {
       encryptionService.encryptSecrets(dataSource, this.keyFolder)
     })
-    this.modifiedConfig.config = config
+    this.modifiedConfig = config
   }
 
   /**
