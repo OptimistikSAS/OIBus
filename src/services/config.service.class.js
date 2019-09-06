@@ -146,12 +146,7 @@ class ConfigService {
    * @returns {object} - The active configuration
    */
   getActiveConfiguration() {
-    try {
-      // Make a deep copy to prevent overwriting the stored config when decrypting the passwords
-      return this.duplicateConfig(this.config, true)
-    } catch (error) {
-      return {}
-    }
+    return this.configFile
   }
 
   /**
@@ -159,12 +154,7 @@ class ConfigService {
    * @returns {object} - The active configuration
    */
   getModifiedConfiguration() {
-    try {
-      // Make a deep copy to prevent overwriting the stored modifiedConfig when decrypting the passwords
-      return this.duplicateConfig(this.modifiedConfig, true)
-    } catch (error) {
-      return {}
-    }
+    return this.modifiedConfig
   }
 
   /**
