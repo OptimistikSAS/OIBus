@@ -8,7 +8,7 @@ const validation = {
     endPoint: type.string,
     points: {
       pointId: type.string,
-      ns: type.number,
+      ns: type.stringOrNumber,
       s: type.string,
     },
   },
