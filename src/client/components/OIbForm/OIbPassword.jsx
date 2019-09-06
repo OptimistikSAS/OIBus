@@ -1,15 +1,27 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, Button } from 'reactstrap'
 
 const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }) => {
+  const PREFIX = '{{notEncrypted}}'
+  const [edited, setEdited] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false)
   /** @todo:  ask for a second password? */
   React.useLayoutEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
   const handleChange = (event) => {
     const { target } = event
-    const { value: newVal } = target
+    let { value: newVal } = target
+    // if edit occures add prefix for the API to know this is not encrypted
+    if (!newVal.startsWith(PREFIX)) {
+      if (!edited) {
+        newVal = PREFIX
+        setEdited(true)
+      } else {
+        newVal = `${PREFIX}${newVal}`
+      }
+    }
     onChange(name, newVal, valid(newVal))
   }
   const validCheck = valid(value)
@@ -18,7 +30,20 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="password" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={value} />
+      <Input
+        className="oi-form-input"
+        type={showPassword ? 'text' : 'password'}
+        id={name}
+        name={name}
+        invalid={validCheck !== null}
+        onChange={handleChange}
+        value={value.replace(PREFIX, '')}
+      />
+      {edited ? (
+        <Button color="primary" onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? 'Hide Password' : 'Show Password'}
+        </Button>
+      ) : null}
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>

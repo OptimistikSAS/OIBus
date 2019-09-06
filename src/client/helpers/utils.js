@@ -36,4 +36,28 @@ const parseCSV = (csv, delimiter) => {
   return result
 }
 
-export default { dynamicSort, parseCSV }
+const replaceValuesHelper = (obj, keys, value) => {
+  if (!obj) return
+  if (obj instanceof Array) {
+    obj.forEach((i) => {
+      replaceValuesHelper(obj[i], keys, value)
+    })
+    return
+  }
+  keys.forEach((key) => {
+    if (obj[key]) obj[key] = [value, value]
+  })
+
+  if ((typeof obj === 'object') && (obj !== null)) {
+    const children = Object.keys(obj)
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i += 1) {
+        replaceValuesHelper(obj[children[i]], keys, value)
+      }
+    }
+  }
+}
+
+const replaceValues = (obj, keys, value) => replaceValuesHelper(obj, keys, value)
+
+export default { dynamicSort, parseCSV, replaceValues }
