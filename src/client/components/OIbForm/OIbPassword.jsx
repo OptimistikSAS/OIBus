@@ -1,10 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, Button } from 'reactstrap'
 
 const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }) => {
   const PREFIX = '{{notEncrypted}}'
   const [edited, setEdited] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false)
   /** @todo:  ask for a second password? */
   React.useLayoutEffect(() => {
     if (value === null) onChange(name, defaultValue)
@@ -31,13 +32,18 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
       {label && <Label for={name}>{label}</Label>}
       <Input
         className="oi-form-input"
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         id={name}
         name={name}
         invalid={validCheck !== null}
         onChange={handleChange}
         value={value.replace(PREFIX, '')}
       />
+      {edited ? (
+        <Button color="primary" onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? 'Hide Password' : 'Show Password'}
+        </Button>
+      ) : null}
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
