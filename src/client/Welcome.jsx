@@ -6,6 +6,7 @@ import Modal from './components/Modal.jsx'
 import apis from './services/apis'
 import { AlertContext } from './context/AlertContext.jsx'
 import { ConfigContext } from './context/configContext.jsx'
+import utils from './helpers/utils'
 
 const Welcome = () => {
   const [loading, setLoading] = React.useState(null)
@@ -70,6 +71,16 @@ const Welcome = () => {
     }
   }
 
+  /**
+   * replace secret values in delta
+   * @param {Object} delta diff delta
+   * @returns {String} html delta formatted
+   */
+  const removeSecretValues = (delta) => {
+    utils.replaceValues(delta, ['password', 'secretKey'], '******')
+    return formatters.html.format(delta)
+  }
+
   let delta
   let diffError
   try {
@@ -80,7 +91,7 @@ const Welcome = () => {
   }
 
   const isModified = (delta !== undefined) || (diffError !== undefined)
-  const deltaHTML = isModified && formatters.html.format(delta)
+  const deltaHTML = isModified && removeSecretValues(delta)
   return (
     <>
       <pre>{newConfig && JSON.stringify(newConfig.errors)}</pre>
