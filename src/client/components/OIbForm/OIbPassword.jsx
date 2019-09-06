@@ -29,7 +29,15 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="password" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={value.replace(PREFIX, '')} />
+      <Input
+        className="oi-form-input"
+        type="password"
+        id={name}
+        name={name}
+        invalid={validCheck !== null}
+        onChange={handleChange}
+        value={value.replace(PREFIX, '')}
+      />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
