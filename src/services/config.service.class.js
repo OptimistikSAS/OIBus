@@ -146,7 +146,7 @@ class ConfigService {
    * @returns {object} - The active configuration
    */
   getActiveConfiguration() {
-    return this.configFile
+    return this.config
   }
 
   /**
