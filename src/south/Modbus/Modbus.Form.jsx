@@ -89,6 +89,7 @@ ModbusForm.renderPoints = (points, onChange) => {
           options={['boolean', 'number']}
           option={point.type}
           name={`points.${index}.type`}
+          defaultOption="boolean"
         />
       ),
     },
