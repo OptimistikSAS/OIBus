@@ -25,7 +25,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           value={dataSource.SQLDbToFile.port}
           valid={validation.SQLDbToFile.port}
           name="SQLDbToFile.port"
-          defaultValue="1433"
+          defaultValue={1433}
           help={<div>Port number of the SQLDbToFile server</div>}
         />
       </Col>

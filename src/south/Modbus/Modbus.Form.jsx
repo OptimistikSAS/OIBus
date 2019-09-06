@@ -25,7 +25,7 @@ const ModbusForm = ({ dataSource, onChange }) => (
           value={dataSource.Modbus.port}
           valid={validation.Modbus.port}
           name="Modbus.port"
-          defaultValue="502"
+          defaultValue={502}
           help={<div>Port number of the Modbus source</div>}
         />
       </Col>
