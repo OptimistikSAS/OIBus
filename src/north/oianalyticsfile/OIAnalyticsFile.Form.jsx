@@ -63,7 +63,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           onChange={onChange}
           value={application.OIAnalyticsFile.authentication.password}
           valid={validation.OIAnalyticsFile.authentication.password}
-          name="OIAnalyticsFile.password"
+          name="OIAnalyticsFile.authentication.password"
           help={<div />}
         />
       </Col>
