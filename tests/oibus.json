@@ -133,7 +133,7 @@
             },
             {
                 "dataSourceId": "MQTTServer",
-                "enabled": true,
+                "enabled": false,
                 "protocol": "MQTT",
                 "server": "simulator.factorythings.com",
                 "mqttProtocol": "mqtts",
