@@ -25,6 +25,7 @@ class OPCHDA extends ProtocolHandler {
     this.lastCompletedAt = {}
     this.ongoingReads = {}
     this.receivedLog = ''
+    this.reconnectTimeout = null
 
     this.scanGroups = this.dataSource.scanGroups.map((scanGroup) => {
       const points = this.dataSource.points
@@ -85,6 +86,10 @@ class OPCHDA extends ProtocolHandler {
    * @return {void}
    */
   disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+    }
+
     this.sendStopMessage()
   }
 
@@ -178,6 +183,7 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendConnectMessage() {
+    this.reconnectTimeout = null
     const { host, serverName } = this.dataSource
     const message = {
       Request: 'Connect',
@@ -268,6 +274,7 @@ class OPCHDA extends ProtocolHandler {
                 messageObject.Content.Error
               }`,
             )
+            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.dataSource.retryInterval)
           }
           break
         case 'Initialize':
