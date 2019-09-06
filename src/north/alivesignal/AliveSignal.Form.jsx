@@ -33,7 +33,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           option={application.AliveSignal.authentication.type}
           options={['Basic']}
           defaultOption="Basic"
-          name="AliveSignal.type"
+          name="AliveSignal.authentication.type"
           help={<div />}
         />
       </Col>
@@ -43,7 +43,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           onChange={onChange}
           value={application.AliveSignal.authentication.username}
           valid={validation.AliveSignal.authentication.username}
-          name="AliveSignal.username"
+          name="AliveSignal.authentication.username"
           help={<div />}
         />
       </Col>
@@ -53,7 +53,7 @@ const AliveSignalForm = ({ application, onChange }) => (
           onChange={onChange}
           value={application.AliveSignal.authentication.password}
           valid={validation.AliveSignal.authentication.password}
-          name="AliveSignal.password"
+          name="AliveSignal.authentication.password"
           help={<div />}
         />
       </Col>

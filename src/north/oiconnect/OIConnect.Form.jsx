@@ -49,7 +49,7 @@ const OIConnectForm = ({ application, onChange }) => {
             option={application.OIConnect.authentication.type}
             options={['Basic']}
             defaultOption="Basic"
-            name="OIConnect.type"
+            name="OIConnect.authentication.type"
             help={<div />}
           />
         </Col>
@@ -60,7 +60,7 @@ const OIConnectForm = ({ application, onChange }) => {
             value={application.OIConnect.authentication.username}
             defaultValue=""
             valid={validation.OIConnect.authentication.username}
-            name="OIConnect.username"
+            name="OIConnect.authentication.username"
             help={<div />}
           />
         </Col>
@@ -71,7 +71,7 @@ const OIConnectForm = ({ application, onChange }) => {
             value={application.OIConnect.authentication.password}
             defaultValue=""
             valid={validation.OIConnect.authentication.password}
-            name="OIConnect.password"
+            name="OIConnect.authentication.password"
             help={<div />}
           />
         </Col>
