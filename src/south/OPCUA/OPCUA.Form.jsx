@@ -25,7 +25,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           value={dataSource.OPCUA.opcuaPort}
           valid={validation.OPCUA.opcuaPort}
           name="OPCUA.opcuaPort"
-          defaultValue="8888"
+          defaultValue={8888}
           help={<div>Port number of the OPCUA server</div>}
         />
       </Col>
@@ -36,7 +36,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           value={dataSource.OPCUA.httpsPort}
           valid={validation.OPCUA.httpsPort}
           name="OPCUA.httpsPort"
-          defaultValue="8889"
+          defaultValue={8889}
           help={<div>HTTPS port number</div>}
         />
       </Col>
