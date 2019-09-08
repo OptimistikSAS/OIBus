@@ -87,14 +87,15 @@ class Cache {
   }
 
   /**
-   * Check whether a North is subscribed to a South
+   * Check whether a North is subscribed to a South. if subscribedTo is not defined
+   * or an empty array, the subscription is true.
    * @param {string} dataSourceId - The South generating the value
    * @param {string[]} subscribedTo - The list of Souths the North is subscribed to
    * @returns {boolean} - The North is subscribed to the given South
    */
   static isSubscribed(dataSourceId, subscribedTo) {
-    if (!subscribedTo) return true
-    return Array.isArray(subscribedTo) && subscribedTo.includes(dataSourceId)
+    if (!Array.isArray(subscribedTo) || subscribedTo.length === 0) return true
+    return subscribedTo.includes(dataSourceId)
   }
 
   /**
@@ -275,18 +276,16 @@ class Cache {
 
       if (values) {
         this.logger.silly(
-          `Cache sendCallbackForValues() got ${values.length} values to send for ${application.applicationId}`,
+          `Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`,
         )
         success = await this.engine.handleValuesFromCache(applicationId, values)
         this.logger.silly(
-          `Cache sendCallbackForValues() got ${success} result from engine.handleValuesFromCache() for ${
-            application.applicationId
-          }`,
+          `Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`,
         )
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
           this.logger.silly(
-            `Cache sendCallbackForValues() removed ${removed} values from the ${application.applicationId} database`,
+            `Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`,
           )
           if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
         }
