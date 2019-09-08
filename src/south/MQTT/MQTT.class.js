@@ -29,15 +29,15 @@ class MQTT extends ProtocolHandler {
       points.forEach((point) => {
         const { topic, pointId } = point
         this.topics[topic] = { pointId }
-        this.client.subscribe(topic, (error) => {
+        this.client.subscribe(topic, { qos: 2 }, (error) => {
           if (error) {
             this.logger.error(error)
           }
         })
       })
 
-      this.client.on('message', (topic, message) => {
-        this.logger.silly(`topic ${topic}, message ${message}`)
+      this.client.on('message', (topic, message, packet) => {
+        this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
         try {
           /** @todo: below should send by batch instead of single points */
           this.addValues([

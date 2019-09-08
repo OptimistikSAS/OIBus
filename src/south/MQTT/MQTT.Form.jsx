@@ -60,7 +60,7 @@ const MQTTForm = ({ dataSource, onChange }) => (
         <OIbSelect
           label="MQTT protocol"
           onChange={onChange}
-          options={['mqtt', 'mqtts']}
+          options={['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss']}
           option={dataSource.MQTT.mqttProtocol}
           defaultOption="mqtts"
           name="MQTT.mqttProtocol"
