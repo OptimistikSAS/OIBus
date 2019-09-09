@@ -7,6 +7,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   const PREFIX = '{{notEncrypted}}'
   const [edited, setEdited] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
+  const [encryptedPassword] = React.useState(value)
   /** @todo:  ask for a second password? */
   React.useLayoutEffect(() => {
     if (value === null) onChange(name, defaultValue)
@@ -14,16 +15,30 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   const handleChange = (event) => {
     const { target } = event
     let { value: newVal } = target
-    // if edit occures add prefix for the API to know this is not encrypted
     if (!newVal.startsWith(PREFIX)) {
-      if (!edited) {
-        newVal = PREFIX
-        setEdited(true)
+      if (newVal === '') {
+        // keep original password, user cleared the input
+        newVal = encryptedPassword
+        setEdited(false)
+        setShowPassword(false)
       } else {
+        // add prefix to the API to know this is not encrypted
         newVal = `${PREFIX}${newVal}`
       }
     }
     onChange(name, newVal, valid(newVal))
+  }
+  const handleKeyDown = (event) => {
+    const { target } = event
+    let { value: newVal } = target
+    if (!newVal.startsWith(PREFIX)) {
+      if (!edited) {
+        // edit started add prefix for the API to know this is not encrypted
+        newVal = PREFIX
+        setEdited(true)
+        onChange(name, newVal, valid(newVal))
+      }
+    }
   }
   const validCheck = valid(value)
   // if value is null, no need to render
@@ -39,6 +54,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
           id={name}
           name={name}
           invalid={validCheck !== null}
+          onKeyDown={handleKeyDown}
           onChange={handleChange}
           value={value.replace(PREFIX, '')}
         />
