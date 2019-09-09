@@ -23,10 +23,10 @@ const Log = () => {
       const logsResponse = await apis.getLogs(fromDate, toDate, verbosity.join(','))
       // sort logs based on timestamp
       logsResponse.sort((a, b) => {
-        if (a.timestamp > b.timestamp) {
+        if (a.timestamp < b.timestamp) {
           return 1
         }
-        if (b.timestamp > a.timestamp) {
+        if (b.timestamp < a.timestamp) {
           return -1
         }
         return 0
