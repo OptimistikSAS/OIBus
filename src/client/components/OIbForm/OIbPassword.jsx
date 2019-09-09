@@ -43,7 +43,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
           value={value.replace(PREFIX, '')}
         />
         {edited && (
-          <InputGroupAddon addonType="append">
+          <InputGroupAddon className="oi-form-append" addonType="append">
             {showPassword
               ? <FaEye onClick={() => setShowPassword(false)} />
               : <FaEyeSlash onClick={() => setShowPassword(true)} />}
