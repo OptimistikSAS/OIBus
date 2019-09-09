@@ -319,6 +319,18 @@ label {
   overflow: hidden;
 }
 
+.oi-form-append {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #dedede;
+  border: 1px solid lightgray;
+  margin-top: 2px;
+  margin-left: 5px;
+  border-radius: 2px;
+}
+
 h3 {
   font-size: 24px;
 }
