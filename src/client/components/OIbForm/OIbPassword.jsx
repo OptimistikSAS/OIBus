@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input, Button } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, InputGroup, InputGroupAddon } from 'reactstrap'
+import { FaEyeSlash, FaEye } from 'react-icons/fa'
 
 const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }) => {
   const PREFIX = '{{notEncrypted}}'
@@ -27,23 +28,28 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   const validCheck = valid(value)
   // if value is null, no need to render
   if (value === null) return null
+
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input
-        className="oi-form-input"
-        type={showPassword ? 'text' : 'password'}
-        id={name}
-        name={name}
-        invalid={validCheck !== null}
-        onChange={handleChange}
-        value={value.replace(PREFIX, '')}
-      />
-      {edited ? (
-        <Button color="primary" onClick={() => setShowPassword(!showPassword)}>
-          {showPassword ? 'Hide Password' : 'Show Password'}
-        </Button>
-      ) : null}
+      <InputGroup>
+        <Input
+          className="oi-form-input"
+          type={showPassword ? 'text' : 'password'}
+          id={name}
+          name={name}
+          invalid={validCheck !== null}
+          onChange={handleChange}
+          value={value.replace(PREFIX, '')}
+        />
+        {edited && (
+          <InputGroupAddon className="oi-form-append" addonType="append">
+            {showPassword
+              ? <FaEye onClick={() => setShowPassword(false)} />
+              : <FaEyeSlash onClick={() => setShowPassword(true)} />}
+          </InputGroupAddon>
+        )}
+      </InputGroup>
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
