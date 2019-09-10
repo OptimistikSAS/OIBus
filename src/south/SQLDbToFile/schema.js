@@ -69,7 +69,7 @@ module.exports = {
       title: 'Filename',
       default: 'sql-@date.csv',
     },
-    timeColum: {
+    timeColumn: {
       type: 'string',
       title: 'Time Column',
       default: 'timestamp',
