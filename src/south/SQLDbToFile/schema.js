@@ -19,7 +19,7 @@ module.exports = {
     },
     driver: {
       type: 'string',
-      enum: ['mssql', 'mysql', 'postgresql', 'oracle'],
+      enum: ['mssql'],
       title: 'SQL driver',
       default: 'mssql',
     },
@@ -68,6 +68,11 @@ module.exports = {
       type: 'string',
       title: 'Filename',
       default: 'sql-@date.csv',
+    },
+    timeColumn: {
+      type: 'string',
+      title: 'Time Column',
+      default: 'timestamp',
     },
     scanMode: {
       title: 'Scan Mode',
