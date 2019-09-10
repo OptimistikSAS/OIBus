@@ -225,7 +225,11 @@ class Engine {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
           this.scanLists[scanMode].forEach((dataSourceId) => {
-            this.activeProtocols[dataSourceId].onScan(scanMode)
+            try {
+              this.activeProtocols[dataSourceId].onScan(scanMode)
+            } catch (error) {
+              this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
+            }
           })
         })
         if (job.result !== 'ok') {
