@@ -22,7 +22,20 @@ class SQLDbToFile extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { driver, host, port, username, password, database, query, connectionTimeout, requestTimeout, filename, delimiter } = this.dataSource
+    const {
+      driver,
+      host,
+      port,
+      username,
+      password,
+      database,
+      query,
+      connectionTimeout,
+      requestTimeout,
+      filename,
+      delimiter,
+      timeColumn,
+    } = this.dataSource
 
     this.preserveFiles = false
     this.driver = driver
@@ -33,6 +46,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.database = database
     this.query = query
     this.connectionTimeout = connectionTimeout
+    this.timeColumn = timeColumn
     this.requestTimeout = requestTimeout
     this.filename = filename
     this.delimiter = delimiter
@@ -71,15 +85,10 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromMSSQL()
           break
         case 'mysql':
-          result = await this.getDataFromMySQL()
-          break
         case 'postgresql':
-          result = await this.getDataFromPostgreSQL()
-          break
         case 'oracle':
-          result = await this.getDataFromOracle()
-          break
         default:
+          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
           result = []
       }
     } catch (error) {
@@ -89,7 +98,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      this.lastCompletedAt = result.slice(-1).pop().timestamp.toISOString()
+      this.lastCompletedAt = result[result.length - 1][this.timeColumn].toISOString()
       this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
 
@@ -143,36 +152,6 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     return data
-  }
-
-  /**
-   * Get new entries from MySQL database.
-   * @returns {void}
-   */
-  async getDataFromMySQL() {
-    this.logger.info(this.query)
-
-    return []
-  }
-
-  /**
-   * Get new entries from PostgreSQL database.
-   * @returns {void}
-   */
-  async getDataFromPostgreSQL() {
-    this.logger.info(this.query)
-
-    return []
-  }
-
-  /**
-   * Get new entries from Oracle database.
-   * @returns {void}
-   */
-  async getDataFromOracle() {
-    this.logger.info(this.query)
-
-    return []
   }
 
   /**
