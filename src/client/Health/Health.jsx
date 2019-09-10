@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label, Col } from 'reactstrap'
+import { Label, Row, Button } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -12,13 +12,20 @@ const Health = () => {
    * Acquire the status
    * @returns {void}
    */
-  React.useEffect(() => {
+  const fetchStatus = () => {
     apis.getStatus().then((response) => {
       setStatus(response)
     }).catch((error) => {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
     })
+  }
+  /**
+   * Fetch status after render
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    fetchStatus()
   }, [])
 
   const tableRows = Object.keys(status).map((key) => (
@@ -35,10 +42,17 @@ const Health = () => {
   ))
 
   return (
-    <Col>
-      <Label>Health status</Label>
-      {tableRows && <Table headers={[]} rows={tableRows} />}
-    </Col>
+    <>
+      <Row>
+        <Button color="primary" onClick={fetchStatus}>
+          Refresh
+        </Button>
+      </Row>
+      <Row>
+        <Label>Health status</Label>
+        {tableRows && <Table headers={[]} rows={tableRows} />}
+      </Row>
+    </>
   )
 }
 export default Health
