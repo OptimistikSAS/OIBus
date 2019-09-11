@@ -1,8 +1,10 @@
 import React from 'react'
-import { Label, Row, Button } from 'reactstrap'
+import { Label, Row } from 'reactstrap'
+import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
+
 
 const Health = () => {
   const [status, setStatus] = React.useState([])
@@ -42,17 +44,15 @@ const Health = () => {
   ))
 
   return (
-    <>
-      <Row>
-        <Button color="primary" onClick={fetchStatus}>
-          Refresh
-        </Button>
-      </Row>
-      <Row>
-        <Label>Health status</Label>
-        {tableRows && <Table headers={[]} rows={tableRows} />}
-      </Row>
-    </>
+    <Row>
+      <Label>
+        <span>
+          Health status&nbsp;
+          <FaSync className="oi-icon" onClick={fetchStatus} />
+        </span>
+      </Label>
+      {tableRows && <Table headers={[]} rows={tableRows} />}
+    </Row>
   )
 }
 export default Health
