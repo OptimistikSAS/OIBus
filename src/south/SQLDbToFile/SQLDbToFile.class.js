@@ -160,9 +160,16 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<string>} - The CSV content
    */
   generateCSV(result) {
+    const transform = (row) => {
+      if (row[this.timeColumn] instanceof Date) {
+        row[this.timeColumn] = row[this.timeColumn].toISOString()
+      }
+      return (row)
+    }
     const options = {
       headers: true,
       delimiter: this.delimiter,
+      transform,
     }
     return csv.writeToString(result, options)
   }
