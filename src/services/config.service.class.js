@@ -16,9 +16,7 @@ class ConfigService {
     this.engine = engine
     this.logger = console
 
-    const args = this.parseArgs() || {} // Arguments of the command
-    const { config = './oibus.json' } = args // Get the configuration file path
-    this.configFile = path.resolve(config)
+    this.configFile = ConfigService.getConfigFile()
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
@@ -29,10 +27,67 @@ class ConfigService {
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
-    this.config = this.tryReadFile(this.configFile)
+    this.config = ConfigService.tryReadFile(this.configFile)
     this.modifiedConfig = this.duplicateConfig(this.config)
 
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
+  }
+
+  /**
+   * Checks if the right arguments have been passed to the command
+   * @param {Object} args - Arguments of the command
+   * @return {boolean} - Whether the right arguments have been passed or not
+   */
+  static isValidArgs({ config }) {
+    if (!config) {
+      this.logger.error('No config file specified, example: --config ./config/config.json')
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * Retrieves the arguments passed to the command
+   * @return {Object} args - Retrieved arguments, or null
+   */
+  static parseArgs() {
+    const args = minimist(process.argv.slice(2))
+
+    if (ConfigService.isValidArgs(args)) {
+      return args
+    }
+
+    return null
+  }
+
+  /**
+   * Get config file from console arguments
+   * @returns {string} - the config file
+   */
+  static getConfigFile() {
+    const args = ConfigService.parseArgs() || {} // Arguments of the command
+    const { config = './oibus.json' } = args // Get the configuration file path
+    return path.resolve(config)
+  }
+
+  /**
+   * Tries to read a file at a given path
+   * @param {string} filePath - The location of the config file
+   * @return {*} Content of the file
+   */
+  static tryReadFile(filePath) {
+    if (!filePath.endsWith('.json')) {
+      this.logger.error('You must provide a json file for the configuration!')
+      throw new Error('You must provide a json file for the configuration!')
+    }
+
+    try {
+      return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
+    } catch (error) {
+      this.logger.error(error)
+      throw error
+    }
   }
 
   /**
@@ -57,34 +112,6 @@ class ConfigService {
   }
 
   /**
-   * Retrieves the arguments passed to the command
-   * @return {Object} args - Retrieved arguments, or null
-   */
-  parseArgs() {
-    const args = minimist(process.argv.slice(2))
-
-    if (this.isValidArgs(args)) {
-      return args
-    }
-
-    return null
-  }
-
-  /**
-   * Checks if the right arguments have been passed to the command
-   * @param {Object} args - Arguments of the command
-   * @return {boolean} - Whether the right arguments have been passed or not
-   */
-  isValidArgs({ config }) {
-    if (!config) {
-      this.logger.error('No config file specified, example: --config ./config/config.json')
-      return false
-    }
-
-    return true
-  }
-
-  /**
    * Check if config file exists
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
@@ -98,25 +125,6 @@ class ConfigService {
       } catch (error) {
         this.logger.error(error)
       }
-    }
-  }
-
-  /**
-   * Tries to read a file at a given path
-   * @param {string} filePath - The location of the config file
-   * @return {*} Content of the file
-   */
-  tryReadFile(filePath) {
-    if (!filePath.endsWith('.json')) {
-      this.logger.error('You must provide a json file for the configuration!')
-      throw new Error('You must provide a json file for the configuration!')
-    }
-
-    try {
-      return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
-    } catch (error) {
-      this.logger.error(error)
-      throw error
     }
   }
 
