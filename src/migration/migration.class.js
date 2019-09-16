@@ -12,20 +12,6 @@ class Migration {
   }
 
   /**
-   * Migrate to the next version.
-   * @param {string} fromVersion - The version to migrate from
-   * @param {string} toVersion - The version to migrate to
-   * @param {object[]} rules - The rules to execute
-   * @returns {void}
-   */
-  migrateToVersion(fromVersion, toVersion, rules) {
-    console.info(`Migrating from ${fromVersion} to ${toVersion}`)
-    console.info(rules)
-
-    this.fromVersion = toVersion
-  }
-
-  /**
    * Migration implementation.
    * Sort version and migrate until we reach actual OIBus version.
    * @returns {void}
@@ -34,8 +20,11 @@ class Migration {
     Object.keys(migrationRules)
       .sort()
       .forEach((version) => {
-        if (version <= this.oibusVersion) {
-          this.migrateToVersion(this.fromVersion, version, migrationRules[version])
+        if ((version > this.fromVersion) && (version <= this.oibusVersion)) {
+          if (migrationRules[version] instanceof Function) {
+            migrationRules[version](this.config, this.fromVersion)
+          }
+          this.fromVersion = version
         }
       })
   }
