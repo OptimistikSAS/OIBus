@@ -152,6 +152,7 @@ class OIConnect extends ApiHandler {
       headers,
       body: JSON.stringify(body),
       proxy,
+      timeout: this.timeout,
     }
 
     try {
@@ -191,6 +192,7 @@ class OIConnect extends ApiHandler {
       headers,
       body: JSON.stringify(body),
       agent,
+      timeout: this.timeout,
     }
 
     try {
