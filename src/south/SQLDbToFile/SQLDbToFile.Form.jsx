@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbInteger, OIbSelect, OIbPassword, OIbScanMode } from '../../client/components/OIbForm'
+import { OIbText, OIbTextArea, OIbInteger, OIbSelect, OIbPassword, OIbScanMode } from '../../client/components/OIbForm'
 import validation from './SQLDbToFile.validation'
 
 const SQLDbToFileForm = ({ dataSource, onChange }) => (
@@ -80,7 +80,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText
+        <OIbTextArea
           label="Query"
           onChange={onChange}
           value={dataSource.SQLDbToFile.query}
