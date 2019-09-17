@@ -9,6 +9,7 @@ const validation = {
       password: type.string,
     },
     proxy: type.string,
+    timeout: type.number,
   },
 }
 
