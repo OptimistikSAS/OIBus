@@ -139,7 +139,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     let data = []
     try {
-      const pool = await mssql.connect(config)
+      const pool = await new mssql.ConnectionPool(config).connect()
       const result = await pool.request()
         .input('date1', mssql.DateTimeOffset, new Date(this.lastCompletedAt))
         .query(adaptedQuery)
