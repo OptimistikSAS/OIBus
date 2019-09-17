@@ -98,8 +98,12 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      this.lastCompletedAt = result[result.length - 1][this.timeColumn].toISOString()
-      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
+      if (this.timeColumn && result[result.length - 1][this.timeColumn]) {
+        this.lastCompletedAt = result[result.length - 1][this.timeColumn].toISOString()
+        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
+      } else {
+        this.logger.debug('lastCompletedAt not used')
+      }
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
 
       const csvContent = await this.generateCSV(result)
@@ -109,7 +113,6 @@ class SQLDbToFile extends ProtocolHandler {
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
           fs.writeFileSync(filePath, csvContent)
-
           this.logger.debug(`Sending ${filePath} to Engine.`)
           this.addFile(filePath)
         } catch (error) {
