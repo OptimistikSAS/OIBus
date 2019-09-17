@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbSelect, OIbTitle, OIbInteger } from '../../client/components/OIbForm'
 import validation from './OIConnect.validation'
 
 const OIConnectForm = ({ application, onChange }) => {
@@ -105,6 +105,19 @@ const OIConnectForm = ({ application, onChange }) => {
             name="OIConnect.stack"
             options={['axios', 'request', 'fetch']}
             defaultOption="fetch"
+            help={<div />}
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col md="3">
+          <OIbInteger
+            label="Timeout"
+            onChange={onChange}
+            value={application.OIConnect.timeout}
+            defaultValue=""
+            valid={validation.OIConnect.timeout}
+            name="OIConnect.timeout"
             help={<div />}
           />
         </Col>

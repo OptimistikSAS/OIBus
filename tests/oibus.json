@@ -473,7 +473,8 @@
                         "password": "tqntWY15H+rxJRFMhcN4c15A7xQZQbQTXrbZ4mmOZBZ00EK7v93wbZTF4fLfWQ2beY6sWXBFhfj+/n7iMimpAkv05skIpM8lv+a/zqcGqXQIuKpLng0L4tfQkoF7G5raHw5IVZOuFVQ0Ql0zyQcvvxuy6FNokKlWEHSSo/5zQAdUKxwcJOCK3acZTIXWzhxvl1TB2i5Wo8PUD1qKXehM34T7+42IU5+0D97VIfjpslMcogXTTV1tHMvPOf36l/GB8LY6JoJXr/JCaZdO+p28MCWVhyNTeGb8D4ZA2Jupc6dbikBV4ty1xaMXJb8KcaImJHkWHJRnH9HcMZ/GQBkjna0DE9cuDo5z1vzWj/5X6HvGsXKdllMqv64awCSQD6ndnXLJjN3RE0EFt1fGVdIqSl233vBxL3FIeyEbO1djcFc8iMOOKPsStPkE/QYdQhKLo3YeTYKjcdafD/5Yyz2NAZ8jmoCr+y7uypFOJxwtkaDyiIgKmMyyEqbdO+rtUq3pf/cQ7jaHA1W/gqVuIsNGC0128OKwQZpBDQSgvTA2kDoo0uCbS7REEY9sDG0KUx7Px9KoDK7Zp0M9wOGnt697iDqLMVdxCz59sFxgXAd6TNaJjlCdcIbcRTiyDxyhIx4nMCTfyt58lB9LwgUcBzvyBh3IEj3F7Imd+Xi73wfQ4tc="
                     },
                     "proxy": "",
-                    "stack": "axios"
+                    "stack": "axios",
+                    "timeout": 60000
                 },
                 "caching": {
                     "sendInterval": 5000,
