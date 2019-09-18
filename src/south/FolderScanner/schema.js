@@ -36,23 +36,10 @@ module.exports = {
       title: 'Regex',
       default: '.txt',
     },
-    points: {
-      type: 'array',
-      title: 'Points',
-      items: {
-        type: 'object',
-        properties: {
-          pointId: {
-            title: 'Point ID',
-            type: 'string',
-          },
-          scanMode: {
-            title: 'Scan Mode',
-            type: 'string',
-            default: 'every5Second',
-          },
-        },
-      },
+    scanMode: {
+      title: 'Scan Mode',
+      type: 'string',
+      default: 'every5Second',
     },
   },
 }
