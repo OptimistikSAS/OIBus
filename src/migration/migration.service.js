@@ -21,6 +21,7 @@ const migrateImpl = (configVersion, oibusVersion, config) => {
     .forEach((version) => {
       if ((version > iterateVersion) && (version <= oibusVersion)) {
         if (migrationRules[version] instanceof Function) {
+          console.info(`Migrating from version ${iterateVersion} to version ${version}`)
           config.version = version
           migrationRules[version](config, iterateVersion)
         }
