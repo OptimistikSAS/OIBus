@@ -12,9 +12,9 @@ class Logger {
       level: consoleLevel,
       format: defaultFormat,
       transports: [
-        new transports.Console({ format: consoleFormat }),
-        new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable }),
-        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize }),
+        new transports.Console({ format: consoleFormat, handleExceptions: true }),
+        new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable, handleExceptions: true }),
+        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize, handleExceptions: true }),
       ],
     })
   }
