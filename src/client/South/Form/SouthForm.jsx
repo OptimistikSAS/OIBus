@@ -18,7 +18,8 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
       <OIbTitle title={`${dataSourceId} parameters (protocol: ${protocol})`}>
         <>
           <ul>
-            <li>...</li>
+            <li>This form allows to configure protocol-specific parameters.</li>
+            <li>You need to activate the protocol with the enabled checkbox.</li>
           </ul>
         </>
       </OIbTitle>

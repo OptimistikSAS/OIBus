@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { UncontrolledCollapse, Button, Row } from 'reactstrap'
+import { UncontrolledCollapse, Button, Row, Col, Container } from 'reactstrap'
+import { FaRegQuestionCircle } from 'react-icons/fa'
 
 const Help = ({ title, children }) => {
   const id = `id${Math.random()
@@ -13,17 +14,25 @@ const Help = ({ title, children }) => {
           {title}
           {children && (
             // remove spaces so it can used as an Id
-            <Button size="sm" color="link" id={id}>
-              Help
+            <Button close color="link" id={id}>
+              <FaRegQuestionCircle
+                className="oi-help"
+              />
             </Button>
           )}
         </h5>
       </Row>
-      {children && (
-        <UncontrolledCollapse toggler={id}>
-          <Row className="oi-help">{children}</Row>
-        </UncontrolledCollapse>
-      )}
+      <Container fluid>
+        {children && (
+          <UncontrolledCollapse toggler={id}>
+            <Row>
+              <Col>
+                {children}
+              </Col>
+            </Row>
+          </UncontrolledCollapse>
+        )}
+      </Container>
     </>
   )
 }

@@ -9,7 +9,7 @@ const Caching = ({ onChange, caching }) => (
     <OIbTitle title="Cache parameters">
       <>
         <p>
-          In case a communication errors prevents OIBus to send information to a North application, The values will be stored in a local cache (one
+          In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one
           cache is needed for each North application) and they will be retried regularly.
         </p>
         <p>

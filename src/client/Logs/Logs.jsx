@@ -5,7 +5,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 
 const Log = () => {
   const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
-  const defaultMaxLog = 50
+  const defaultMaxLog = 200
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
@@ -176,7 +176,7 @@ const Log = () => {
           </CardBody>
         </Card>
       </Col>
-      {logs ? renderLogs() : null}
+      {logs && renderLogs()}
     </Row>
   )
 }

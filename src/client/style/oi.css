@@ -295,8 +295,9 @@ label {
 }
 
 .oi-help {
-  margin-bottom: 15px;
-  margin-left: 0px;
+  margin-bottom: 5px;
+  margin-left: 6px;
+  width: 12px;
 }
 .oi-icon {
   width: 10px;
@@ -304,7 +305,7 @@ label {
   margin-bottom: 0px;
 }
 
-.oi-icon:hover {
+.oi-icon:hover,.oi-help:hover{
   text-decoration: none;
   color: #F5BB51;
 }

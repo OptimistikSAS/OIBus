@@ -31,7 +31,8 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
       <OIbTitle title={`${applicationId} parameters (api: ${api})`}>
         <>
           <ul>
-            <li>...</li>
+            <li>This form allows to configure north-specific parameters.</li>
+            <li>You need to activate the application with the enabled checkbox.</li>
           </ul>
         </>
       </OIbTitle>
@@ -48,7 +49,38 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Col>
       </Row>
       <ApiForm onChange={onChange} application={application} />
-      <OIbTitle title="Caching" />
+      <OIbTitle title="Caching">
+        <>
+          <p>
+            The cache is a local file storage to allow OIBus to store values or files when
+            the communication with the north application is interrupted. The more space is
+            allocated to the cache, the longer the interruption can be. The parameters below
+            are important to understand.
+          </p>
+          <ul>
+            <li>
+              sendInterval: the cache will try to group a maximum of values in a buffer and to send them
+              in a single transaction. However, if the sendInterval (in ms) is reached, the transaction
+              will be sent even if the buffer is not full.
+            </li>
+            <li>
+              Retry Interval: If the communication is broken, OIBus will try to resend the buffer after
+              this interval of time  (in ms) until the communication is restored.
+            </li>
+            <li>
+              Group Count: OIBus will try to group the number of values specified here when the
+              communication is normal. Please note that one value is an JSON object with a size
+              that can be between 10 to 100 bytes.
+            </li>
+            <li>
+              Max Group Count: In normal operations, the group count above is used but if
+              the cache has grown because of a communication issue, it will try to group the
+              largest possible transaction but limited to this count. This is to avoid a too
+              large transaction.
+            </li>
+          </ul>
+        </>
+      </OIbTitle>
       <Row>
         <Col md="4">
           <OIbInteger
@@ -57,7 +89,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             defaultValue={10000}
             valid={validation.caching.sendInterval}
             name="caching.sendInterval"
-            help={<div>Value in milliseconds for data sending interval</div>}
+            help={<div>Send interval (ms)</div>}
           />
         </Col>
         <Col md="4">
@@ -67,7 +99,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             defaultValue={5000}
             valid={validation.caching.retryInterval}
             name="caching.retryInterval"
-            help={<div>Value in milliseconds for retry sending data in case of failure</div>}
+            help={<div>Retry interval (ms)</div>}
           />
         </Col>
       </Row>
@@ -79,7 +111,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             name="caching.groupCount"
             defaultValue={1000}
             valid={validation.caching.groupCount}
-            help={<div>The minimum buffer that will ensure date is not sent until value is reached</div>}
+            help={<div>Group count</div>}
           />
         </Col>
         <Col md="4">
@@ -89,7 +121,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             name="caching.maxSendCount"
             defaultValue={10000}
             valid={validation.caching.maxSendCount}
-            help={<div />}
+            help={<div>Max group count</div>}
           />
         </Col>
       </Row>
