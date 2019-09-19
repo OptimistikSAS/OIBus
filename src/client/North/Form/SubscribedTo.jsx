@@ -22,7 +22,10 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
     subscribedTo && (
       <>
         <OIbTitle title="Subscribed To">
-          <p>allow to select South equipment (default is to receive from all enabled equipment of the current OIBus </p>
+          <p>
+            Allow to select what South equipment are connected to this North application.
+            The default is to receive from all enabled south equipments of the current OIBus.
+          </p>
         </OIbTitle>
         <Row>
           <Col md={4}>

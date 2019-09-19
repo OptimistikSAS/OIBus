@@ -6,6 +6,9 @@ import validation from './OIAnalyticsFile.validation'
 
 const OIAnalyticsFileForm = ({ application, onChange }) => (
   <>
+    <OIbTitle title="Endpoint">
+      <p>default endpoint for OIAnalytics is /api/optimistik/data/values/upload</p>
+    </OIbTitle>
     <Row>
       <Col md="4">
         <OIbText
@@ -14,7 +17,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.host}
           valid={validation.OIAnalyticsFile.host}
           name="OIAnalyticsFile.host"
-          help={<div>host for the target</div>}
+          help={<div>host</div>}
         />
       </Col>
       <Col md="4">
@@ -24,14 +27,14 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.endpoint}
           valid={validation.OIAnalyticsFile.endpoint}
           name="OIAnalyticsFile.endpoint"
-          help={<div />}
+          help={<div>endpoint</div>}
         />
       </Col>
     </Row>
     <Row>
       <Col>
         <OIbTitle title="Authentication">
-          <div>todo</div>
+          <div>Authentication parameters for the API</div>
         </OIbTitle>
       </Col>
     </Row>
@@ -44,7 +47,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           options={['Basic']}
           defaultOption="Basic"
           name="OIAnalyticsFile.authentication.type"
-          help={<div />}
+          help={<div>Authentication mode</div>}
         />
       </Col>
       <Col md="4">
@@ -54,7 +57,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.authentication.username}
           valid={validation.OIAnalyticsFile.authentication.username}
           name="OIAnalyticsFile.authentication.username"
-          help={<div />}
+          help={<div>User</div>}
         />
       </Col>
       <Col md="4">
@@ -64,14 +67,26 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.authentication.password}
           valid={validation.OIAnalyticsFile.authentication.password}
           name="OIAnalyticsFile.authentication.password"
-          help={<div />}
+          help={<div>Password</div>}
         />
       </Col>
     </Row>
     <Row>
       <Col>
         <OIbTitle title="Network">
-          <div>todo</div>
+          <>
+            <div>Please specify here network specific parameters</div>
+            <ul>
+              <li>Proxy: proxy name to use (proxy parameters are defined in the Engine page)</li>
+              <li>
+                Stack: OIBus can use several IP stacks to communicate with the host. In certain
+                network configuration (firewall settings for example), it might be useful to try
+                a different stack. We generally advise to leave &apos;fetch&apos; as it is
+                the native nodej stack but we also use axios as it reports good messages to
+                diagnostic network errors.
+              </li>
+            </ul>
+          </>
         </OIbTitle>
       </Col>
     </Row>
@@ -83,11 +98,9 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.proxy}
           valid={validation.OIAnalyticsFile.proxy}
           name="OIAnalyticsFile.proxy"
-          help={<div />}
+          help={<div>Proxy</div>}
         />
       </Col>
-    </Row>
-    <Row>
       <Col md="3">
         <OIbSelect
           label="Stack"
@@ -96,7 +109,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           name="OIAnalyticsFile.stack"
           options={['axios', 'request', 'fetch']}
           defaultOption="fetch"
-          help={<div />}
+          help={<div>Stack</div>}
         />
       </Col>
     </Row>
