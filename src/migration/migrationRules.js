@@ -1,11 +1,11 @@
 module.exports = {
-  '0.3.12': (config) => {
+  2: (config) => {
     // Rename filename => logFilename
     console.info('config.engine.logParameters.filename => config.engine.logParameters.logFilename')
     config.engine.logParameters.logFilename = config.engine.logParameters.filename
     delete config.engine.logParameters.filename
   },
-  '0.3.13': (config) => {
+  3: (config) => {
     // Rename logFilename => filename
     console.info('config.engine.logParameters.logFilename => config.engine.logParameters.filename')
     config.engine.logParameters.filename = config.engine.logParameters.logFilename
@@ -21,7 +21,7 @@ module.exports = {
       }
     })
   },
-  '0.4.6': (config) => {
+  4: (config) => {
     // Rename RawFile => FolderScanner
     console.info('RawFile => FolderScanner')
     config.south.dataSources.forEach((dataSource) => {
