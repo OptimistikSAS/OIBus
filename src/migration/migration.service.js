@@ -3,7 +3,7 @@ const fs = require('fs')
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 
-const REQUIRED_SCHEMA_VERSION = 5
+const REQUIRED_SCHEMA_VERSION = 1
 const DEFAULT_VERSION = 1
 
 const configFile = ConfigService.getConfigFile()
