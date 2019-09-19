@@ -106,7 +106,7 @@ class ConfigService {
   /**
    * Save the configuration.
    * @param {string} configFile - The file path where to save the configuration
-   * @param {string} config - The configuration
+   * @param {object} config - The configuration
    * @returns {void}
    */
   static saveConfig(configFile, config) {
