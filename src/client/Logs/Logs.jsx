@@ -5,7 +5,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 
 const Log = () => {
   const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
-  const defaultMaxLog = 200
+  const defaultMaxLog = 300
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
@@ -93,7 +93,7 @@ const Log = () => {
                   const { id, level, message, timestamp } = item
                   const date = new Date(timestamp)
                   return (
-                    <ListGroupItem key={id}>
+                    <ListGroupItem key={id} className="oi-log">
                       <Label>{`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}</Label>
                       {` | ${level}| ${message}`}
                     </ListGroupItem>
