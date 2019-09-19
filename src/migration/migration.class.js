@@ -9,6 +9,7 @@ class Migration {
   constructor(version) {
     this.oibusVersion = version
     this.configFile = ConfigService.getConfigFile()
+    this.config = null
   }
 
   /**
@@ -27,6 +28,9 @@ class Migration {
           this.fromVersion = version
         }
       })
+
+    ConfigService.backupConfigFile(this.configFile)
+    ConfigService.saveConfig(this.configFile, this.config)
   }
 
   /**

@@ -91,6 +91,29 @@ class ConfigService {
   }
 
   /**
+   * Backup the configuration file.
+   * @param {string} configFile - The config file
+   * @returns {void}
+   */
+  static backupConfigFile(configFile) {
+    // Backup config file
+    const timestamp = new Date().getTime()
+    const backupFilename = `${path.parse(configFile).name}-${timestamp}${path.parse(configFile).ext}`
+    const backupPath = path.join(path.parse(configFile).dir, backupFilename)
+    fs.copyFileSync(configFile, backupPath)
+  }
+
+  /**
+   * Save the configuration.
+   * @param {string} configFile - The file path where to save the configuration
+   * @param {string} config - The configuration
+   * @returns {void}
+   */
+  static saveConfig(configFile, config) {
+    fs.writeFileSync(configFile, JSON.stringify(config, null, 4), 'utf8')
+  }
+
+  /**
    * Get config.
    * @returns {object} - The config
    */
@@ -378,16 +401,8 @@ class ConfigService {
    * @returns {void}
    */
   activateConfiguration() {
-    // Backup config file
-    const timestamp = new Date().getTime()
-    const backupFilename = `${path.parse(this.configFile).name}-${timestamp}${path.parse(this.configFile).ext}`
-    const backupPath = path.join(path.parse(this.configFile).dir, backupFilename)
-    fs.copyFileSync(this.configFile, backupPath)
-
-    // Save modified config
-    fs.writeFileSync(this.configFile, JSON.stringify(this.modifiedConfig, null, 4), 'utf8')
-
-    // Reload
+    ConfigService.backupConfigFile(this.configFile)
+    ConfigService.saveConfig(this.configFile, this.modifiedConfig)
     this.engine.reload(3000)
   }
 
