@@ -26,7 +26,7 @@ const Proxies = ({ proxies }) => {
       <>
         <OIbTitle title="Proxies">
           <p>
-            Some north applications requires to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by
+            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by
             other OIBus section. This section can be left empty if you dont use proxies on your network.
           </p>
         </OIbTitle>

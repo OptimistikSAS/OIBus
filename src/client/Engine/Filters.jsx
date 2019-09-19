@@ -22,8 +22,9 @@ const Filters = ({ filters }) => {
       <>
         <OIbTitle title="IP Filters">
           <p>
-            This is the list of IP adresses (or hostnames) that will be allowed to access the admin console. By default, it is only the local host. It
-            is possible to use wildcards (such as 192.168.1.*) in the IP adress to authorize a subnet for example.
+            This is the list of IP adresses (or hostnames) that will be allowed to access the admin console.
+            By default, it is only the local host. It is possible to use wildcards (such as 192.168.1.* or just
+            * to allow every IP address) in the IP address to authorize a subnet for example.
           </p>
         </OIbTitle>
         <Row>

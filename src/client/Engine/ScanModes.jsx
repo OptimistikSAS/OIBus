@@ -23,45 +23,53 @@ const ScanModes = ({ scanModes }) => {
         <OIbTitle title="Scan Modes">
           <>
             <p>
-              South protocols can scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in
+              South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in
               this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the
-              millisecond. The table below gives several examples.
+              millisecond.
             </p>
-            <p>A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Time expression</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Every hour</td>
-                  <td>* * * *</td>
-                </tr>
-                <tr>
-                  <td>Every day at noon</td>
-                  <td>* * * 12</td>
-                </tr>
-                <tr>
-                  <td>Every 3th Hour on work days</td>
-                  <td>* * w1-5 /3</td>
-                </tr>
-                <tr>
-                  <td>Once at a specific time</td>
-                  <td>2014 5 13 18 53 7 300 230</td>
-                </tr>
-                <tr>
-                  <td>Every morning at 7:30 but not on weekends</td>
-                  <td>* * !6-7 7 30</td>
-                </tr>
-                <tr>
-                  <td>Every 10 minutes in the day time</td>
-                  <td>* * * 8-18 /10</td>
-                </tr>
-              </tbody>
-            </table>
+            <p>
+              <code>
+                &lt;year&gt; &lt;month&gt; &lt;day&gt; &lt;hour&gt; &lt;minute&gt; &lt;second&gt; &lt;millisecond&gt; &lt;microsecond&gt;
+              </code>
+            </p>
+            <p>The table below gives several examples.</p>
+            <p>(A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)</p>
+            <div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Time expression</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Every hour</td>
+                    <td>* * * *</td>
+                  </tr>
+                  <tr>
+                    <td>Every 10 minutes</td>
+                    <td>* * * * /10</td>
+                  </tr>
+                  <tr>
+                    <td>Every 3th Hour on work days</td>
+                    <td>* * w1-5 /3</td>
+                  </tr>
+                  <tr>
+                    <td>Once at a specific time</td>
+                    <td>2014 5 13 18 53 7 300 230</td>
+                  </tr>
+                  <tr>
+                    <td>Every morning at 7:30 but not on weekends</td>
+                    <td>* * !6-7 7 30</td>
+                  </tr>
+                  <tr>
+                    <td>Every 10 minutes in the day time</td>
+                    <td>* * * 8-18 /10</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </>
         </OIbTitle>
         <Row>

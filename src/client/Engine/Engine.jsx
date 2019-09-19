@@ -22,10 +22,10 @@ const Engine = () => {
           <>
             <p>In this section, you must define:</p>
             <ul>
-              <li>The number of the port to access OIBus. The default value is 2223 can be kept unless it conflicts with an existing value.</li>
+              <li>The number of the port to access OIBus. The default value (2223) can be kept unless it conflicts with an existing value.</li>
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized
-                access.
+                access. The password is encrypted with a local private key.
               </li>
             </ul>
           </>

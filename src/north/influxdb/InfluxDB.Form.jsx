@@ -1,11 +1,21 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbTitle, OIbSelect } from '../../client/components/OIbForm'
 import validation from './InfluxDB.validation'
 
 const InfluxDBForm = ({ application, onChange }) => (
   <>
+    <OIbTitle title="InfluxDB parameters">
+      <>
+        <p>InfluxDB North application is in Beta Mode</p>
+        <p>
+          Please enter here required information to access the database.
+          The precision configuration setting determines how much timestamp precision
+          is retained with points.
+        </p>
+      </>
+    </OIbTitle>
     <Row>
       <Col md="4">
         <OIbText
@@ -49,15 +59,19 @@ const InfluxDBForm = ({ application, onChange }) => (
           help={<div />}
         />
       </Col>
+    </Row>
+    <Row>
       <Col md="4">
-        <OIbText
+        <OIbSelect
           label="Precision"
           onChange={onChange}
-          value={application.InfluxDB.precision}
-          valid={validation.InfluxDB.precision}
+          option={application.InfluxDB.precision}
           name="InfluxDB.precision"
-          help={<div />}
+          defaultOption="s"
+          options={['ns', 'us', 'µs', 'ms', 's']}
+          help={<div>Precision</div>}
         />
+
       </Col>
     </Row>
   </>
