@@ -2,13 +2,12 @@ const cluster = require('cluster')
 
 const VERSION = require('../package.json').version
 
-const Migration = require('./migration/migration.class')
+const migrationService = require('./migration/migration.service')
 const Engine = require('./engine/Engine.class')
 
 if (cluster.isMaster) {
   // Migrate config file, if needed
-  const migration = new Migration(VERSION)
-  migration.migrate()
+  migrationService.migrate(VERSION)
 
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
