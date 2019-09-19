@@ -305,6 +305,10 @@ label {
   margin-bottom: 0px;
 }
 
+.oi-log {
+  padding: .1rem .1rem;
+}
+
 .oi-icon:hover,.oi-help:hover{
   text-decoration: none;
   color: #F5BB51;
