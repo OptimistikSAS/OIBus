@@ -6,6 +6,10 @@ const Migration = require('./migration/migration.class')
 const Engine = require('./engine/Engine.class')
 
 if (cluster.isMaster) {
+  // Migrate config file, if needed
+  const migration = new Migration(VERSION)
+  migration.migrate()
+
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
   console.info(`Starting OIBus version: ${VERSION}`)
@@ -21,10 +25,6 @@ if (cluster.isMaster) {
     cluster.fork()
   })
 } else {
-  // Migrate config file, if needed
-  const migration = new Migration(VERSION)
-  migration.migrate()
-
   // this condition is reached only for a worker (i.e. not master)
   // so this is here where we execute the OIBus Engine
   const engine = new Engine()
