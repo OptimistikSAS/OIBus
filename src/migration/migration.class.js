@@ -23,6 +23,7 @@ class Migration {
       .forEach((version) => {
         if ((version > this.fromVersion) && (version <= this.oibusVersion)) {
           if (migrationRules[version] instanceof Function) {
+            this.config.version = version
             migrationRules[version](this.config, this.fromVersion)
           }
           this.fromVersion = version
@@ -42,6 +43,7 @@ class Migration {
       this.config = ConfigService.tryReadFile(this.configFile)
       this.fromVersion = this.config.version || DEFAULT_VERSION
       if (this.fromVersion < this.oibusVersion) {
+        console.info(`Config file is not up-to-date. Starting migration from version ${this.fromVersion} to ${this.oibusVersion}`)
         this.migrateImpl()
       } else {
         console.info('Config file is up-to-date, no migrating needed.')
