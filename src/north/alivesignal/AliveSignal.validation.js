@@ -9,7 +9,6 @@ const validation = {
     },
     id: type.string,
     frequency: type.number,
-    proxy: type.string,
   },
 }
 

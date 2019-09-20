@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbTitle } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
 import validation from './AmazonS3.validation'
 
 const AmazonS3Form = ({ application, onChange }) => (
@@ -66,12 +66,11 @@ const AmazonS3Form = ({ application, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText
+        <OIbProxy
           label="Proxie"
-          onChange={onChange}
-          value={application.AmazonS3.proxy}
-          valid={validation.AmazonS3.proxy}
           name="AmazonS3.proxy"
+          proxy={application.AmazonS3.proxy}
+          onChange={onChange}
           help={<div />}
         />
       </Col>

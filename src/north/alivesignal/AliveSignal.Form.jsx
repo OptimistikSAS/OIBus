@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbInteger, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbInteger, OIbSelect, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
 import validation from './AliveSignal.validation'
 
 const AliveSignalForm = ({ application, onChange }) => (
@@ -97,12 +97,11 @@ const AliveSignalForm = ({ application, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText
+        <OIbProxy
           label="Proxie"
-          onChange={onChange}
-          value={application.AliveSignal.proxy}
-          valid={validation.AliveSignal.proxy}
           name="AliveSignal.proxy"
+          proxy={application.AliveSignal.proxy}
+          onChange={onChange}
           help={<div />}
         />
       </Col>
