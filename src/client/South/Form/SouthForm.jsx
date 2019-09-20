@@ -1,10 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
-import { OIbTitle, OIbCheckBox } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbText } from '../../components/OIbForm'
 import ProtocolForms from '../Protocols.jsx'
+import validation from './South.validation'
 
-const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
+const SouthForm = ({ otherDataSources, dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -25,6 +26,17 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
       </OIbTitle>
       <Row>
         <Col md={2}>
+          <OIbText
+            label="Data Source ID"
+            onChange={onChange}
+            value={dataSourceId}
+            valid={(val) => validation.dataSourceId(val, otherDataSources)}
+            name="dataSourceId"
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col md={2}>
           <OIbCheckBox
             name="enabled"
             label="Enabled"
@@ -40,6 +52,11 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   )
 }
 
-SouthForm.propTypes = { dataSource: PropTypes.object.isRequired, dataSourceIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
+SouthForm.propTypes = {
+  otherDataSources: PropTypes.arrayOf(PropTypes.string).isRequired,
+  dataSource: PropTypes.object.isRequired,
+  dataSourceIndex: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+}
 
 export default SouthForm
