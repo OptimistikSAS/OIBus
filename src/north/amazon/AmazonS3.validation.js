@@ -8,7 +8,6 @@ const validation = {
       accessKey: type.string,
       secretKey: type.string,
     },
-    proxy: type.string,
   },
 }
 
