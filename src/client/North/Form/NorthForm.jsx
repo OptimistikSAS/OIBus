@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
 // import { AlertContext } from '../context/AlertContext.jsx'
-import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbInteger, OIbText } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
 
@@ -16,7 +16,7 @@ import TimescaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
 
 const ApiForms = { OIConnect, AliveSignal, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB }
 
-const NorthForm = ({ application, applicationIndex, onChange }) => {
+const NorthForm = ({ otherApplications, application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
@@ -36,6 +36,17 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           </ul>
         </>
       </OIbTitle>
+      <Row>
+        <Col md={2}>
+          <OIbText
+            label="Application Id"
+            onChange={onChange}
+            value={applicationId}
+            valid={(val) => validation.applicationId(val, otherApplications)}
+            name="applicationId"
+          />
+        </Col>
+      </Row>
       <Row>
         <Col md={2}>
           <OIbCheckBox
@@ -130,6 +141,11 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   )
 }
 
-NorthForm.propTypes = { application: PropTypes.object.isRequired, applicationIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
+NorthForm.propTypes = {
+  otherApplications: PropTypes.arrayOf(PropTypes.string).isRequired,
+  application: PropTypes.object.isRequired,
+  applicationIndex: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+}
 
 export default NorthForm

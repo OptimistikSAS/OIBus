@@ -28,8 +28,13 @@ const North = ({ history }) => {
    */
   const handleEdit = (index) => {
     const application = applications[index]
-    const link = `/north/${application.applicationId}`
-    history.push({ pathname: link })
+    if (application.applicationId.length) {
+      const link = `/north/${application.applicationId}`
+      history.push({ pathname: link })
+    } else {
+      const link = `/north/applicationIndex/${index}`
+      history.push({ pathname: link })
+    }
   }
 
   /**
