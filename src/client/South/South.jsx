@@ -29,8 +29,13 @@ const South = ({ history }) => {
    */
   const handleEdit = (index) => {
     const dataSource = dataSources[index]
-    const pathname = `/south/${dataSource.dataSourceId}`
-    history.push({ pathname })
+    if (dataSource.dataSourceId.length) {
+      const pathname = `/south/${dataSource.dataSourceId}`
+      history.push({ pathname })
+    } else {
+      const pathname = `/south/dataSourceIndex/${index}`
+      history.push({ pathname })
+    }
   }
 
   /**
