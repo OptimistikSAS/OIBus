@@ -6,7 +6,7 @@ import { Container } from 'reactstrap'
 import './style/main.less'
 
 import TopHeader from './TopHeader.jsx'
-import Welcome from './Welcome.jsx'
+import Activation from './Activation/Activation.jsx'
 import NotFound from './NotFound.jsx'
 import South from './South/South.jsx'
 import North from './North/North.jsx'
@@ -29,7 +29,7 @@ const Main = () => (
           <Container className="oi-container-with-top-nav" fluid>
             <AlertContainer />
             <Switch>
-              <Route exact path="/" component={Welcome} />
+              <Route exact path="/" component={Health} />
               <Route exact path="/engine" component={Engine} />
               <Route exact path="/south" component={South} />
               <Route exact path="/south/:dataSourceId" component={ConfigureProtocol} />
@@ -37,7 +37,7 @@ const Main = () => (
               <Route exact path="/north" component={North} />
               <Route exact path="/north/:applicationId" component={ConfigureApi} />
               <Route exact path="/log" component={Logs} />
-              <Route exact path="/health" component={Health} />
+              <Route exact path="/activation" component={Activation} />
               <Route component={NotFound} />
             </Switch>
           </Container>
