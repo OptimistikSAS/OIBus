@@ -35,7 +35,7 @@ class SQLDbToFile extends ProtocolHandler {
       filename,
       delimiter,
       timeColumn,
-    } = this.dataSource
+    } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
     this.driver = driver
@@ -98,14 +98,21 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      if (this.timeColumn && result[result.length - 1][this.timeColumn]) {
-        this.lastCompletedAt = result[result.length - 1][this.timeColumn].toISOString()
+      const maxDate = result.reduce((a, b) => {
+        if (a && b[this.timeColumn]) {
+          return a > b[this.timeColumn] ? a : b[this.timeColumn]
+        }
+        return a || b[this.timeColumn]
+      })
+
+      if (maxDate) {
+        this.lastCompletedAt = maxDate.toISOString()
         this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
       } else {
         this.logger.debug('lastCompletedAt not used')
       }
-      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
 
+      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', fecha.format(new Date(), 'YYYY_MM_DD_HH_mm_ss'))

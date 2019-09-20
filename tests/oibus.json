@@ -283,10 +283,10 @@
             {
                 "dataSourceId": "SQLDbToFile",
                 "protocol": "SQLDbToFile",
-                "enabled": false,
+                "enabled": true,
                 "SQLDbToFile": {
                     "port": 1433,
-                    "password": "ELMqtmgdbXXIBYOfhIm6GfSy/vYCZgUKRRBTfY+0h6mecX3ZhEE3oOjeI0oXJuIC6Sz/xZ5YxIrSqe92BeYtaKvEBu/7ARfjYVycmyznLLGhAGjLEhgG+1XaGehg1VZo0wpm4uxJIwySIV/Tof7tPhcLyrrj7p83pJZPDA0w+XIAFiSbPk4LkgE1vC8/HC5ZPTHakGYHbKJpcR0VdLQ6N1tOeYn3+TkLqarGhvuC5RRBUL+77wZIcXoNAV9r4AqbMtp3aRjPso8OU/mnb+DLFsNBBVvVnEawSUNu4BUUfZ/7B8EJAH7Mt5MBFNvhEO8fuSIkRr5cFW/OIOBi4g31JtyPbDKd/n/kPlGnClGxrqM+oiP1+3oKIdFVX8f4UI+NxqXNOchvoaeEHsgzlNWeWsHYfA0liErLM+SdXhkhfV37n/MFtc0TaISPD7G0oI6WWpCvFavlQtqsrZWSglQ+odYXDy/n+EEDSh1LxzzSJsIax8lU6wtD3dYyZLNw3YJ4Bya++WugIENt2atcehDT8J1ZpVhB6gq0zSOJG7RwbzVdCQJ89RgV3vKG4GS4Bp06c6P8GUP0ZVx6HPGL5GaKVCCjRBF7pTu/zYWDrH5DNEuho5orRQZ4zKjjhIYQuoQy2m4SaTMGf4WeAIoRJap0Z48jN/zFvaj0wlC2NAWfqvE=",
+                    "password": "M6goUxgBGBOAuRXPPJ48gOZqNnW+ntQrDWYkUhiUjRVTUocFvtNblRRMDEdAFT2VLkMZAxZ6rr1oW7yDe7sRN6i3YLUTcAS/6BsubuN+/RLYJwBRBXScWhVoJxCBdVfd+T8MrD6LPn6GzzO3b8ajor/oPMj3LFm2wRllurOFgCFD9vy8YFzYDrvvt6Mg0B7L2hil+XShnmnAtEc4rZYQcLWlL/QVhrTp0W5GG/WBa1izjnq9qN6wracKEucp67RKs3UupQH+l9RuJJm1XNhA/nIc1rnculUMGk5eOtEQCOKBrJ1eKo3kimW2ZHgK2zimA7JDIgStjQvwx+pkk0430LrYGmhHcd2cgCAMufGUNmPQ1uB5vR9Puphvo6VcmDt5k7QkX6Xbl0peJTOSmVOMEhOQ+ovfr0HfYfqOSmxDYzAtnouPQNjQujbXcbbXgbewjcqXKkGFC52rgo0n66NCb3MQ0bSGW+qwdxIuo3gi/zljycxWRs54kHN8ybxQwSXGXS/4z49wG9HoFZOtNtZHD6sjBarnP9gvK0rWJQzfj+i+LrJPsiUYP+YpzLfKXaI9JmhvCqIKuRwV9w3N/POVqiDNr7HjKrlYaCNIuM9W3TEwbkljvscMTK0syqdhCY66JPU2DV9YIGpOjTaLTpFT1dvT3HiPrgNq+yTGPDIJ05c=",
                     "connectionTimeout": 1000,
                     "requestTimeout": 1000,
                     "host": "192.168.0.11",
@@ -296,8 +296,10 @@
                     "query": "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2",
                     "delimiter": ",",
                     "filename": "sql-@date.csv",
-                    "scanMode": "every5Second"
+                    "scanMode": "everySecond",
+                    "timeColumn": "timestamp"
                 },
+                "scanMode": "every5Second",
                 "points": []
             },
             {
@@ -380,7 +382,7 @@
             },
             {
                 "applicationId": "OIAnalyticsFile",
-                "enabled": true,
+                "enabled": false,
                 "api": "OIAnalyticsFile",
                 "OIAnalyticsFile": {
                     "host": "https://demo.oianalytics.fr",
@@ -458,7 +460,9 @@
                     "maxSendCount": 100
                 },
                 "Console": {},
-                "subscribedTo": []
+                "subscribedTo": [
+                    "SQLDbToFile"
+                ]
             },
             {
                 "applicationId": "OIConnect",

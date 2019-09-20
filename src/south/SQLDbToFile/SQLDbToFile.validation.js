@@ -12,6 +12,7 @@ const validation = {
     requestTimeout: type.number,
     delimiter: type.string,
     filename: type.string,
+    timeColumn: type.string,
   },
 }
 
