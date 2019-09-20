@@ -1,5 +1,11 @@
 /* OI Styles */
 
+button:focus,
+input:focus,
+a:focus {
+   outline:0 !important;
+}
+
 .oi-container {
   margin-top: 35px;
   padding: 0;
@@ -306,6 +312,7 @@ label {
   margin-left: 6px;
   width: 12px;
 }
+
 .oi-icon {
   width: 10px;
   margin-right: 2px;
