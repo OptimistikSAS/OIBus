@@ -147,6 +147,18 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
         />
       </Col>
     </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Time Column"
+          onChange={onChange}
+          value={dataSource.SQLDbToFile.timeColumn}
+          valid={validation.SQLDbToFile.timeColumn}
+          name="SQLDbToFile.timeColumn"
+          defaultValue="sql-@date.csv"
+        />
+      </Col>
+    </Row>
   </>
 )
 
