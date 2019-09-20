@@ -100,7 +100,7 @@ const Welcome = () => {
           <div className="force-row-display">
             <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
               {(confirm) => (
-                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)}>
+                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)} disabled={newConfig.errors !== undefined}>
                   Activate
                 </Button>
               )}

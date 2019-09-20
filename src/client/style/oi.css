@@ -115,6 +115,13 @@
   border-color: #f5bb51;
 }
 
+.btn:disabled {
+  opacity: 0.2;
+  color: #fff;
+  background-color: #8291a7;
+  border-color: #8291a7;
+}
+
 .btn-outline-dark,
 .btn-add {
   color: #fff;
