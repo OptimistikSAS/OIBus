@@ -6,10 +6,8 @@ import { ConfigContext } from '../../context/configContext.jsx'
 const OIbProxy = ({ label, help, proxy, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const { proxies } = newConfig.engine // proxies defined in engine
-  let options = proxies.map((e) => e.name)
-  if (options === null || options.length === 0) {
-    options = [''] // allow an empty string if no proxy on engine
-  }
+  const options = proxies.map((e) => e.name)
+  options.unshift('') // allow the user to select no proxy(empty string)
   const defaultOption = options[0]
 
   React.useEffect(() => {
