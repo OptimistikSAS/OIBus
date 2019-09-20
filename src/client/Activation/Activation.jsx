@@ -2,13 +2,13 @@ import React from 'react'
 import { Label, Button, Spinner } from 'reactstrap'
 import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
-import Modal from './components/Modal.jsx'
-import apis from './services/apis'
-import { AlertContext } from './context/AlertContext.jsx'
-import { ConfigContext } from './context/configContext.jsx'
-import utils from './helpers/utils'
+import Modal from '../components/Modal.jsx'
+import apis from '../services/apis'
+import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
+import utils from '../helpers/utils'
 
-const Welcome = () => {
+const Activation = () => {
   const [loading, setLoading] = React.useState(null)
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, activeConfig, setActiveConfig } = React.useContext(ConfigContext)
@@ -132,4 +132,4 @@ const Welcome = () => {
     </>
   )
 }
-export default Welcome
+export default Activation
