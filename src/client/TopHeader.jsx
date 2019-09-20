@@ -2,12 +2,14 @@ import React from 'react'
 import { Link, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
-import { Collapse, Navbar, NavbarToggler, Nav, NavItem } from 'reactstrap'
+import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
 
+import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
 
 const TopHeader = ({ location }) => {
+  const { newConfig, activeConfig } = React.useContext(ConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
 
@@ -20,6 +22,7 @@ const TopHeader = ({ location }) => {
     setIsOpen(!isOpen)
   }
   const isActive = (name) => (location.pathname === `/${name}`)
+  const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top navbar-fixed-top">
       <NavbarToggler onClick={toggle} />
@@ -40,8 +43,9 @@ const TopHeader = ({ location }) => {
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs
           </NavItem>
-          <NavItem className="oi-navitem" active={isActive('health')} tag={Link} to="/health">
-            Health
+          <NavItem className="oi-navitem" active={isActive('activation')} tag={Link} to="/activation">
+            {'Activation '}
+            {configModified ? <Badge color="primary" pill>New</Badge> : null}
           </NavItem>
         </Nav>
       </Collapse>
