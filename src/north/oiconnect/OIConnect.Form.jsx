@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbSelect, OIbTitle, OIbInteger } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbSelect, OIbTitle, OIbInteger, OIbProxy } from '../../client/components/OIbForm'
 import validation from './OIConnect.validation'
 
 const OIConnectForm = ({ application, onChange }) => {
@@ -85,13 +85,11 @@ const OIConnectForm = ({ application, onChange }) => {
       </Row>
       <Row>
         <Col md="4">
-          <OIbText
+          <OIbProxy
             label="Proxie"
-            onChange={onChange}
-            value={application.OIConnect.proxy}
-            defaultValue=""
-            valid={validation.OIConnect.proxy}
             name="OIConnect.proxy"
+            proxy={application.OIConnect.proxy}
+            onChange={onChange}
             help={<div />}
           />
         </Col>
