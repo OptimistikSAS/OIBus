@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbSelect, OIbTitle } from '../../client/components/OIbForm'
+import { OIbText, OIbPassword, OIbSelect, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
 import validation from './OIAnalyticsFile.validation'
 
 const OIAnalyticsFileForm = ({ application, onChange }) => (
@@ -92,12 +92,11 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText
+        <OIbProxy
           label="Proxie"
-          onChange={onChange}
-          value={application.OIAnalyticsFile.proxy}
-          valid={validation.OIAnalyticsFile.proxy}
           name="OIAnalyticsFile.proxy"
+          proxy={application.OIAnalyticsFile.proxy}
+          onChange={onChange}
           help={<div>Proxy</div>}
         />
       </Col>
