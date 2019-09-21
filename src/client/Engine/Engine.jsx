@@ -70,7 +70,7 @@ const Engine = () => {
         <Logging onChange={onChange} logParameters={newConfig.engine.logParameters} />
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
-        <Proxies onChange={onChange} proxies={newConfig.engine.proxies} />
+        <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
       </Form>
     </>
   ) : (

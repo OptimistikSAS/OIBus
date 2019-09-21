@@ -33,7 +33,8 @@
         "scanMode": "every1Min",
         "cronTime": "* * * * *"
       }
-    ]
+    ],
+    "proxies" : []
   },
   "south": {
     "dataSources": []
