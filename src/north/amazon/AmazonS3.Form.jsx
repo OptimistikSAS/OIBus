@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
+import { OIbText, OIbAuthentication, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
 import validation from './AmazonS3.validation'
 
 const AmazonS3Form = ({ application, onChange }) => (
@@ -28,50 +28,21 @@ const AmazonS3Form = ({ application, onChange }) => (
         />
       </Col>
     </Row>
-    <Row>
-      <Col>
-        <OIbTitle title="Authentication">
-          <div>todo</div>
-        </OIbTitle>
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbText
-          label="Access Key"
-          onChange={onChange}
-          value={application.AmazonS3.authentication.accessKey}
-          valid={validation.AmazonS3.authentication.accessKey}
-          name="AmazonS3.authentication.accessKey"
-          help={<div />}
-        />
-      </Col>
-      <Col md="4">
-        <OIbPassword
-          label="Secret Key"
-          onChange={onChange}
-          value={application.AmazonS3.authentication.secretKey}
-          valid={validation.AmazonS3.authentication.secretKey}
-          name="AmazonS3.authentication.secretKey"
-          help={<div />}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col>
-        <OIbTitle title="Network">
-          <div>todo</div>
-        </OIbTitle>
-      </Col>
-    </Row>
+    <OIbAuthentication authentication={application.AliveSignalauthentication} onChange={onChange} key type={false} />
+    <OIbTitle title="Network">
+      <>
+        <p>Please specify here the proxy name to use</p>
+        <p>(proxy names are defined in the Engine page)</p>
+      </>
+    </OIbTitle>
     <Row>
       <Col md="4">
         <OIbProxy
-          label="Proxie"
+          label="Proxy"
           name="AmazonS3.proxy"
           proxy={application.AmazonS3.proxy}
           onChange={onChange}
-          help={<div />}
+          help={<div>Proxy</div>}
         />
       </Col>
     </Row>
