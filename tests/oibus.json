@@ -136,10 +136,10 @@
             {
                 "dataSourceId": "MQTTServer",
                 "protocol": "MQTT",
-                "enabled": false,
+                "enabled": true,
                 "MQTT": {
                     "port": 8883,
-                    "password": "iv8sns2frgukGTajaJkZO7py/bi6Pq6m6DriczoaAYx9VCl3dcujGtnngmRomAtJYspSlEfFk91b4KAKaKeUsdMijFlwDcn94m0owTnkQ+JCXEF+gBjgU3TQqLRGtWESnI2qwI3uuONiFw9zyVExKhxeaKzmLdmFQQLeaUDkpIOIG9wIiAd3IRjnybROWOCVgKtdNOeAn9zqLOsU8BtpIREoh9P85pjerP+7Wf2jI8VfAYBWpxMwHLnarJDmWIBPd826d12qLrRMok6FVbdFHXNkcbeaunN2fObUAM55a+ipd+KmLyYjfHuE7i9ZBb0ZWCa49MyPYer3yj5h2Y6rrxShL+iE2qjVhzO09TPomS1SLXmJCgOo5haiENOiSQ6mQSuyzQuH3fBDL67sqgzYXLiauuKaPYbxVTHNACtkGS22Z4+HUoL/IgHt9vx5mo6BBmNUmbNIllweYyBf9TkwqVQYufexV+gcjQQDseUoCnENJUFNg8RJxIXJdAajIWfvEKKnY6zOHwUz+/Z4UqkvpV6h6on12aSIpAwIcMDeibb/QcSLNZkGWkyqQ25Cte4RYyFhaLAMBrLwuIWF5EFcB7vKhwdcmg+rcD1CRZXCIBgR93GM/W2ef/c+QW37Uodxpos2tJMajOEG3G3Ed0hNWHYOc9YcpCC4qNHyyTkRF6w=",
+                    "password": "GJlF3zfVRJh9jsudA2IQeX/vL0qzrWn06DUsuTLDCQ9jEsAnEyY72Zl/EjP/jgr9C7WmD6hTgFyQJA+wGdjerZbtIZlSMp2A7U3yD73qXlGEO9Xl3hb+IKiuM+1q2sJrj8nKrZg2KtrL0bJuYndE8RnqIey+KPJ3jay68C7ytDDgt6kwUNhTdOUOtxBt3rGtQJU0my4gDJiirOar7lZjVKnTwfp6Z7IaB+dNJ2chb58nNfNfNDkKeFmFjdBZz9tjA6wBJ7Bhj7Ftf0eTI0Vqb2TNdi6/RfflHNzoObbLnebibcM3PXGwF6UVHjOjasS0S13tpm44chCel4LdeMBK+0DJG49bo1Zhh+GcRiwKvx7GKpFPATDaI91q7aUHWlpUEEA2t7Wb6z/KOYkP9q1pXURw4haW4vvquhaYrm3+p1qGbaq4o4JVWY5xyOVmrQyIvrpDIuC/1W3gk+SX1ZCfktyOvlcziNCSnXQ1qJ5fms1j2Q13EsRts1XxPo4ciMu3cwmSO1sDJT3EEK3Gx57OMBWshBBfoA36xn+yId4euZgK7t0gPDlxYTmQWytCkDXL05eTQPZymLy82StTzLhGMYs4aJTU7SvWlKidPBihz624U7VeQTn8jm0c5hTp3jcaD24tj/cZ+YuQZAq/ykckmmIKaSOCcgnp+cCffs0ICe0=",
                     "server": "simulator.factorythings.com",
                     "mqttProtocol": "mqtts",
                     "username": "bai"
@@ -380,7 +380,7 @@
             },
             {
                 "applicationId": "OIAnalyticsFile",
-                "enabled": true,
+                "enabled": false,
                 "api": "OIAnalyticsFile",
                 "OIAnalyticsFile": {
                     "host": "https://demo.oianalytics.fr",
