@@ -138,10 +138,6 @@ a:focus {
   height: 20px;
 }
 
-.badge {
-  vertical-align: top;
-}
-
 .array-item-remove {
   color: #fff;
   background-color: #dc3545;
