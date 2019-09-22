@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbSelect, OIbTitle, OIbInteger, OIbProxy } from '../../client/components/OIbForm'
+import { OIbText, OIbAuthentication, OIbSelect, OIbTitle, OIbInteger, OIbProxy } from '../../client/components/OIbForm'
 import validation from './OIConnect.validation'
 
 const OIConnectForm = ({ application, onChange }) => {
@@ -30,56 +30,30 @@ const OIConnectForm = ({ application, onChange }) => {
             defaultValue=""
             valid={validation.OIConnect.endpoint}
             name="OIConnect.endpoint"
-            help={<div />}
           />
         </Col>
       </Row>
-      <Row>
-        <Col>
-          <OIbTitle title="Authentication">
-            <div>todo</div>
-          </OIbTitle>
-        </Col>
-      </Row>
-      <Row>
-        <Col md="2">
-          <OIbSelect
-            label="Type"
-            onChange={onChange}
-            option={application.OIConnect.authentication.type}
-            options={['Basic']}
-            defaultOption="Basic"
-            name="OIConnect.authentication.type"
-            help={<div />}
-          />
-        </Col>
-        <Col md="4">
-          <OIbText
-            label="User name"
-            onChange={onChange}
-            value={application.OIConnect.authentication.username}
-            defaultValue=""
-            valid={validation.OIConnect.authentication.username}
-            name="OIConnect.authentication.username"
-            help={<div />}
-          />
-        </Col>
-        <Col md="4">
-          <OIbPassword
-            label="Password"
-            onChange={onChange}
-            value={application.OIConnect.authentication.password}
-            defaultValue=""
-            valid={validation.OIConnect.authentication.password}
-            name="OIConnect.authentication.password"
-            help={<div />}
-          />
-        </Col>
-      </Row>
+      <OIbAuthentication
+        authentication={application.OIConnect.authentication}
+        validation={validation.OIConnect.authentication}
+        onChange={onChange}
+        name="OIConnect.authentication"
+      />
       <Row>
         <Col>
           <OIbTitle title="Network">
-            <div>todo</div>
+            <>
+              <div>Please specify here network specific parameters</div>
+              <ul>
+                <li>Proxy: proxy name to use (proxy parameters are defined in the Engine page)</li>
+                <li>
+                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration
+                  (firewall settings for example), it might be useful to try a different stack. We generally advise to
+                  leave &apos;fetch&apos; as it is the native nodej stack but we also use axios as it reports good
+                  messages to diagnostic network errors.
+                </li>
+              </ul>
+            </>
           </OIbTitle>
         </Col>
       </Row>
@@ -90,7 +64,18 @@ const OIConnectForm = ({ application, onChange }) => {
             name="OIConnect.proxy"
             proxy={application.OIConnect.proxy}
             onChange={onChange}
-            help={<div />}
+            help={<div>Proxy</div>}
+          />
+        </Col>
+        <Col md="3">
+          <OIbSelect
+            label="Stack"
+            onChange={onChange}
+            option={application.OIAnalyticsFile.stack}
+            name="OIAnalyticsFile.stack"
+            options={['axios', 'request', 'fetch']}
+            defaultOption="fetch"
+            help={<div>Stack</div>}
           />
         </Col>
       </Row>
