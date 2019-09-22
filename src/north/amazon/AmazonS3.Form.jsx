@@ -14,7 +14,6 @@ const AmazonS3Form = ({ application, onChange }) => (
           value={application.AmazonS3.bucket}
           valid={validation.AmazonS3.bucket}
           name="AmazonS3.bucket"
-          help={<div />}
         />
       </Col>
       <Col md="4">
@@ -24,11 +23,15 @@ const AmazonS3Form = ({ application, onChange }) => (
           value={application.AmazonS3.folder}
           valid={validation.AmazonS3.folder}
           name="AmazonS3.folder"
-          help={<div />}
         />
       </Col>
     </Row>
-    <OIbAuthentication authentication={application.AliveSignalauthentication} onChange={onChange} key type={false} />
+    <OIbAuthentication
+      authentication={application.AliveSignalauthentication}
+      validation={validation.AmazonS3.authentication}
+      onChange={onChange}
+      mode="accessKey"
+    />
     <OIbTitle title="Network">
       <>
         <p>Please specify here the proxy name to use</p>
@@ -42,7 +45,6 @@ const AmazonS3Form = ({ application, onChange }) => (
           name="AmazonS3.proxy"
           proxy={application.AmazonS3.proxy}
           onChange={onChange}
-          help={<div>Proxy</div>}
         />
       </Col>
     </Row>

@@ -18,7 +18,11 @@ const AliveSignalForm = ({ application, onChange }) => (
         />
       </Col>
     </Row>
-    <OIbAuthentication authentication={application.AliveSignalauthentication} onChange={onChange} />
+    <OIbAuthentication
+      authentication={application.AliveSignal.authentication}
+      validation={validation.AliveSignal.authentication}
+      onChange={onChange}
+    />
     <Row>
       <Col>
         <OIbTitle title="Message">

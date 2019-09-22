@@ -34,7 +34,11 @@ const OIConnectForm = ({ application, onChange }) => {
           />
         </Col>
       </Row>
-      <OIbAuthentication authentication={application.AliveSignalauthentication} onChange={onChange} />
+      <OIbAuthentication
+        authentication={application.AliveSignal.authentication}
+        validation={validation.AliveSignal.authentication}
+        onChange={onChange}
+      />
       <Row>
         <Col>
           <OIbTitle title="Network">
@@ -43,11 +47,10 @@ const OIConnectForm = ({ application, onChange }) => {
               <ul>
                 <li>Proxy: proxy name to use (proxy parameters are defined in the Engine page)</li>
                 <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain
-                  network configuration (firewall settings for example), it might be useful to try
-                  a different stack. We generally advise to leave &apos;fetch&apos; as it is
-                  the native nodej stack but we also use axios as it reports good messages to
-                  diagnostic network errors.
+                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration
+                  (firewall settings for example), it might be useful to try a different stack. We generally advise to
+                  leave &apos;fetch&apos; as it is the native nodej stack but we also use axios as it reports good
+                  messages to diagnostic network errors.
                 </li>
               </ul>
             </>
