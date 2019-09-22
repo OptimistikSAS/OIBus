@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbPassword, OIbInteger, OIbSelect, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
+import { OIbText, OIbAuthentication, OIbInteger, OIbTitle, OIbProxy } from '../../client/components/OIbForm'
 import validation from './AliveSignal.validation'
 
 const AliveSignalForm = ({ application, onChange }) => (
@@ -18,46 +18,12 @@ const AliveSignalForm = ({ application, onChange }) => (
         />
       </Col>
     </Row>
-    <Row>
-      <Col>
-        <OIbTitle title="Authentication">
-          <div>todo</div>
-        </OIbTitle>
-      </Col>
-    </Row>
-    <Row>
-      <Col md="2">
-        <OIbSelect
-          label="Type"
-          onChange={onChange}
-          option={application.AliveSignal.authentication.type}
-          options={['Basic']}
-          defaultOption="Basic"
-          name="AliveSignal.authentication.type"
-          help={<div />}
-        />
-      </Col>
-      <Col md="4">
-        <OIbText
-          label="User name"
-          onChange={onChange}
-          value={application.AliveSignal.authentication.username}
-          valid={validation.AliveSignal.authentication.username}
-          name="AliveSignal.authentication.username"
-          help={<div />}
-        />
-      </Col>
-      <Col md="4">
-        <OIbPassword
-          label="Password"
-          onChange={onChange}
-          value={application.AliveSignal.authentication.password}
-          valid={validation.AliveSignal.authentication.password}
-          name="AliveSignal.authentication.password"
-          help={<div />}
-        />
-      </Col>
-    </Row>
+    <OIbAuthentication
+      authentication={application.AliveSignal.authentication}
+      validation={validation.AliveSignal.authentication}
+      name="AliveSignal.authentication"
+      onChange={onChange}
+    />
     <Row>
       <Col>
         <OIbTitle title="Message">
@@ -88,21 +54,20 @@ const AliveSignalForm = ({ application, onChange }) => (
         />
       </Col>
     </Row>
-    <Row>
-      <Col>
-        <OIbTitle title="Network">
-          <div>todo</div>
-        </OIbTitle>
-      </Col>
-    </Row>
+    <OIbTitle title="Network">
+      <>
+        <p>Please specify here the proxy name to use</p>
+        <p>(proxy names are defined in the Engine page)</p>
+      </>
+    </OIbTitle>
     <Row>
       <Col md="4">
         <OIbProxy
-          label="Proxie"
+          label="Proxy"
           name="AliveSignal.proxy"
           proxy={application.AliveSignal.proxy}
           onChange={onChange}
-          help={<div />}
+          help={<div>Proxy</div>}
         />
       </Col>
     </Row>
