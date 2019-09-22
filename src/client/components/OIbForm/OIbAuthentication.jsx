@@ -11,17 +11,16 @@ import OIbTitle from './OIbTitle.jsx'
   OIBAuthentication is a form reused in several places. Can manage user/password (default)
   or accessKey/secretKey as well as authentication type.
 */
-const OIbAuthentication = ({ authentication, onChange, key, type }) => (
-  <>
-    <Row>
-      <Col>
-        <OIbTitle title="Authentication">
-          <div>todo</div>
-        </OIbTitle>
-      </Col>
-    </Row>
-    {type && (
-      <Row>
+const OIbAuthentication = ({ authentication, validation, onChange, mode }) => [
+  <OIbTitle title="Authentication" key="title">
+    <div>
+      <p>Authentication paramaters</p>
+      <p>Please fill the user and password to connect this application</p>
+    </div>
+  </OIbTitle>,
+  mode === 'user' ? (
+    [
+      <Row key="type">
         <Col md="2">
           <OIbSelect
             label="Type"
@@ -30,45 +29,17 @@ const OIbAuthentication = ({ authentication, onChange, key, type }) => (
             options={['Basic']}
             defaultOption="Basic"
             name="authentication.type"
-            help={<div />}
           />
         </Col>
-      </Row>
-    )}
-    {key && (
-      <Row>
-        <Col md="4">
-          <OIbText
-            label="Access Key"
-            onChange={onChange}
-            value={authentication.accessKey}
-            valid={authentication.accessKey}
-            name="authentication.accessKey"
-            help={<div />}
-          />
-        </Col>
-        <Col md="4">
-          <OIbPassword
-            label="Secret Key"
-            onChange={onChange}
-            value={authentication.secretKey}
-            valid={authentication.secretKey}
-            name="authentication.secretKey"
-            help={<div />}
-          />
-        </Col>
-      </Row>
-    )}
-    {!key && (
-      <Row>
+      </Row>,
+      <Row key="user">
         <Col md="4">
           <OIbText
             label="User name"
             onChange={onChange}
             value={authentication.username}
-            valid={authentication.username}
+            valid={validation.username}
             name="authentication.username"
-            help={<div />}
           />
         </Col>
         <Col md="4">
@@ -76,26 +47,46 @@ const OIbAuthentication = ({ authentication, onChange, key, type }) => (
             label="Password"
             onChange={onChange}
             value={authentication.password}
-            valid={authentication.password}
+            valid={validation.password}
             name="authentication.password"
-            help={<div />}
           />
         </Col>
-      </Row>
-    )}
-  </>
-)
+      </Row>,
+    ]
+  ) : (
+    <Row key="accesKey">
+      <Col md="4">
+        <OIbText
+          label="Access Key"
+          onChange={onChange}
+          value={authentication.accessKey}
+          valid={validation.accessKey}
+          name="authentication.accessKey"
+        />
+      </Col>
+      <Col md="4">
+        <OIbPassword
+          label="Secret Key"
+          onChange={onChange}
+          value={authentication.secretKey}
+          valid={validation.secretKey}
+          name="authentication.secretKey"
+        />
+      </Col>
+    </Row>
+  ),
+]
+
 OIbAuthentication.propTypes = {
   onChange: PropTypes.func.isRequired,
   authentication: PropTypes.object,
-  key: PropTypes.bool,
-  type: PropTypes.bool,
+  validation: PropTypes.object.isRequired,
+  mode: PropTypes.oneOf(['accessKey', 'user']),
 }
 
 OIbAuthentication.defaultProps = {
-  authentication: { type: null, user: null, password: null },
-  key: false,
-  type: true,
+  authentication: { type: 'basic', username: '', password: '', accessKey: '', secretKey: '' },
+  mode: 'user',
 }
 
 export default OIbAuthentication
