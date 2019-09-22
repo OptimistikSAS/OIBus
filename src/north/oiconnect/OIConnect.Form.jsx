@@ -30,14 +30,14 @@ const OIConnectForm = ({ application, onChange }) => {
             defaultValue=""
             valid={validation.OIConnect.endpoint}
             name="OIConnect.endpoint"
-            help={<div />}
           />
         </Col>
       </Row>
       <OIbAuthentication
-        authentication={application.AliveSignal.authentication}
-        validation={validation.AliveSignal.authentication}
+        authentication={application.OIConnect.authentication}
+        validation={validation.OIConnect.authentication}
         onChange={onChange}
+        name="OIConnect.authentication"
       />
       <Row>
         <Col>
