@@ -36,6 +36,10 @@
       {
         "scanMode": "every10Minutes",
         "cronTime": "* * * * /10"
+      },
+      {
+        "scanMode": "listen",
+        "cronTime": "listen"
       }
     ],
     "proxies" : []
