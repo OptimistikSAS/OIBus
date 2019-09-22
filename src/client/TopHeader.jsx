@@ -45,7 +45,7 @@ const TopHeader = ({ location }) => {
           </NavItem>
           <NavItem className="oi-navitem" active={isActive('activation')} tag={Link} to="/activation">
             {'Activation '}
-            {configModified ? <Badge color="primary" pill>New</Badge> : null}
+            {configModified ? <Badge color="warning" pill>new</Badge> : null}
           </NavItem>
         </Nav>
       </Collapse>
