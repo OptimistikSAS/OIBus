@@ -34,6 +34,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
     <OIbAuthentication
       authentication={application.OIAnalyticsFile.authentication}
       validation={validation.OIAnalyticsFile.authentication}
+      name="OIAnalyticsFile.authentication"
       onChange={onChange}
     />
     <Row>

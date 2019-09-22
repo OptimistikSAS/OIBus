@@ -21,6 +21,7 @@ const AliveSignalForm = ({ application, onChange }) => (
     <OIbAuthentication
       authentication={application.AliveSignal.authentication}
       validation={validation.AliveSignal.authentication}
+      name="AliveSignal.authentication"
       onChange={onChange}
     />
     <Row>
