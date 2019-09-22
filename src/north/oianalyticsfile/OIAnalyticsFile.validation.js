@@ -5,8 +5,8 @@ const validation = {
     host: type.string,
     endpoint: type.string,
     authentication: {
-      username: type.string,
-      password: type.string,
+      username: (val) => ((val && val.length > 0) ? null : 'user should not be empty'),
+      password: (val) => ((val && val.length > 0) ? null : 'password should not be empty'),
     },
   },
 }

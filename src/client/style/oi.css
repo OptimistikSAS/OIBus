@@ -321,6 +321,7 @@ label {
   width: 10px;
   margin-right: 2px;
   margin-bottom: 0px;
+  color: #627187;
 }
 
 .oi-log {
@@ -330,6 +331,7 @@ label {
 .oi-icon:hover,.oi-help:hover{
   text-decoration: none;
   color: #F5BB51;
+  cursor: pointer;
 }
 
 .oi-form-input {

@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { FaTrashAlt, FaPencilAlt } from 'react-icons/fa'
-import { Button } from 'reactstrap'
 
 const TableRows = ({ rows, handleEdit, handleDelete }) => (
   <tbody>
@@ -12,26 +11,22 @@ const TableRows = ({ rows, handleEdit, handleDelete }) => (
         ))}
         <td>
           {handleDelete && (
-            <Button close>
-              <FaTrashAlt
-                className="oi-icon"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleDelete(index)
-                }}
-              />
-            </Button>
+            <FaTrashAlt
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleDelete(index)
+              }}
+            />
           )}
           {handleEdit && (
-            <Button close>
-              <FaPencilAlt
-                className="oi-icon"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleEdit(index)
-                }}
-              />
-            </Button>
+            <FaPencilAlt
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleEdit(index)
+              }}
+            />
           )}
         </td>
       </tr>
