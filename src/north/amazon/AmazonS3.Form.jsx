@@ -30,6 +30,7 @@ const AmazonS3Form = ({ application, onChange }) => (
       authentication={application.AliveSignalauthentication}
       validation={validation.AmazonS3.authentication}
       onChange={onChange}
+      name="AmazonS3.authentication"
       mode="accessKey"
     />
     <OIbTitle title="Network">
