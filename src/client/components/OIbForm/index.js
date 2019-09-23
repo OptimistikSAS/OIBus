@@ -7,6 +7,7 @@ import OIbSelect from './OIbSelect.jsx'
 import OIbScanMode from './OIbScanMode.jsx'
 import OIbProxy from './OIbProxy.jsx'
 import OIbTitle from './OIbTitle.jsx'
+import OIbAuthentication from './OIbAuthentication.jsx'
 
 export {
   OIbCheckBox,
@@ -18,4 +19,5 @@ export {
   OIbScanMode,
   OIbProxy,
   OIbTitle,
+  OIbAuthentication,
 }
