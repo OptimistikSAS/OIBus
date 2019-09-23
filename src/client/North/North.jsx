@@ -6,7 +6,7 @@ import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
-import ApplicationIdField from './ApplicationIdField.jsx'
+import EditableIdField from '../components/EditableIdField.jsx'
 
 const North = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -75,11 +75,12 @@ const North = ({ history }) => {
       {
         name: applicationId,
         value: (
-          <ApplicationIdField
-            applicationId={applicationId}
-            applications={applications}
-            applicationIndex={index}
-            applicationIdChanged={handleApplicationIdChanged}
+          <EditableIdField
+            id={applicationId}
+            fromList={applications}
+            index={index}
+            name="applicationId"
+            idChanged={handleApplicationIdChanged}
           />
         ),
       },

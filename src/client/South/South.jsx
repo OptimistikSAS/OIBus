@@ -7,7 +7,7 @@ import NewDataSourceRow from './NewDataSourceRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
-import DataSourceIdField from './DataSourceIdField.jsx'
+import EditableIdField from '../components/EditableIdField.jsx'
 
 const South = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -79,11 +79,12 @@ const South = ({ history }) => {
     {
       name: dataSource.dataSourceId,
       value: (
-        <DataSourceIdField
-          dataSourceId={dataSource.dataSourceId}
-          dataSources={dataSources}
-          dataSourceIndex={index}
-          dataSourceIdChanged={handleDataSourceIdChanged}
+        <EditableIdField
+          id={dataSource.dataSourceId}
+          fromList={dataSources}
+          index={index}
+          name="dataSourceId"
+          idChanged={handleDataSourceIdChanged}
         />
       ),
     },

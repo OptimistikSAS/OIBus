@@ -1,26 +1,26 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
-import { FaPencilAlt, FaCheck } from 'react-icons/fa'
-import { OIbText } from '../components/OIbForm'
+import { FaCog, FaCheck } from 'react-icons/fa'
+import { OIbText } from './OIbForm'
 
-const DataSourceIdField = ({ dataSourceId, dataSources, dataSourceIndex, dataSourceIdChanged }) => {
+const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
   const [editing, setEditing] = React.useState(false)
-  const [editingDataSourceId, setEditingDataSourceId] = React.useState()
-  const [otherDataSources, setOtherDataSources] = React.useState()
+  const [editingId, setEditingId] = React.useState()
+  const [otherIds, setOtherIds] = React.useState()
   const [editingError, setEditingError] = React.useState()
 
   const handleEditName = () => {
     setEditing(true)
-    setEditingDataSourceId(dataSourceId)
-    const dataSourcesList = dataSources.filter((e, i) => i !== dataSourceIndex).map((dataSource) => dataSource.dataSourceId)
-    setOtherDataSources(dataSourcesList)
+    setEditingId(id)
+    const list = fromList.filter((e, i) => i !== index).map((e) => e[name])
+    setOtherIds(list)
   }
 
   const isValidName = (val) => {
     let error = null
-    if (otherDataSources.includes(val)) {
-      error = 'Data source id already exists'
+    if (otherIds.includes(val)) {
+      error = 'Id already exists'
     }
     if (!error) {
       error = (((typeof val === 'string' || val instanceof String) && val !== '') ? null : 'value must not be empty')
@@ -29,13 +29,13 @@ const DataSourceIdField = ({ dataSourceId, dataSources, dataSourceIndex, dataSou
     return error
   }
 
-  const onChange = (name, value) => {
-    setEditingDataSourceId(value)
+  const onChange = (_, value) => {
+    setEditingId(value)
   }
 
   const handleDoneEditName = () => {
     if (!editingError) {
-      dataSourceIdChanged(dataSourceIndex, editingDataSourceId)
+      idChanged(index, editingId)
       setEditing(false)
     }
   }
@@ -46,9 +46,9 @@ const DataSourceIdField = ({ dataSourceId, dataSources, dataSourceIndex, dataSou
       <div style={style}>
         <OIbText
           onChange={onChange}
-          value={editingDataSourceId}
+          value={editingId}
           valid={isValidName}
-          name="dataSourceId"
+          name={name}
           inline
         />
         <Button close>
@@ -60,14 +60,14 @@ const DataSourceIdField = ({ dataSourceId, dataSources, dataSourceIndex, dataSou
       </div>
     ) : (
       <div style={style}>
-        {dataSourceId}
+        {id}
         <Button close>
-          <FaPencilAlt
+          <FaCog
             className="oi-icon oi-icon-inline"
             onClick={() => {
               handleEditName()
             }}
-            style={{ height: 12 }}
+            style={{ height: 16 }}
           />
         </Button>
       </div>
@@ -75,10 +75,11 @@ const DataSourceIdField = ({ dataSourceId, dataSources, dataSourceIndex, dataSou
   )
 }
 
-DataSourceIdField.propTypes = {
-  dataSourceId: PropTypes.string.isRequired,
-  dataSources: PropTypes.arrayOf(Object).isRequired,
-  dataSourceIndex: PropTypes.number.isRequired,
-  dataSourceIdChanged: PropTypes.func.isRequired,
+EditableIdField.propTypes = {
+  id: PropTypes.string.isRequired,
+  fromList: PropTypes.arrayOf(Object).isRequired,
+  index: PropTypes.number.isRequired,
+  name: PropTypes.string.isRequired,
+  idChanged: PropTypes.func.isRequired,
 }
-export default DataSourceIdField
+export default EditableIdField
