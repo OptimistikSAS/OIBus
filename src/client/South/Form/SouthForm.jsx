@@ -32,6 +32,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             value={dataSource.enabled}
             help={<div>Enable this application</div>}
             onChange={onChange}
+            switchButton
           />
         </Col>
       </Row>
