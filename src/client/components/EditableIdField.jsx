@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
-import { FaCog, FaCheck } from 'react-icons/fa'
+import { FaPencilAlt, FaCheck } from 'react-icons/fa'
 import { OIbText } from './OIbForm'
 
 const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
@@ -62,7 +62,7 @@ const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
       <div style={style}>
         {id}
         <Button close>
-          <FaCog
+          <FaPencilAlt
             className="oi-icon oi-icon-inline"
             onClick={() => {
               handleEditName()
