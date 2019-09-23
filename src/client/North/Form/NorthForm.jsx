@@ -130,6 +130,10 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   )
 }
 
-NorthForm.propTypes = { application: PropTypes.object.isRequired, applicationIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
+NorthForm.propTypes = {
+  application: PropTypes.object.isRequired,
+  applicationIndex: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+}
 
 export default NorthForm

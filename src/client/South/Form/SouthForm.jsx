@@ -40,6 +40,10 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   )
 }
 
-SouthForm.propTypes = { dataSource: PropTypes.object.isRequired, dataSourceIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
+SouthForm.propTypes = {
+  dataSource: PropTypes.object.isRequired,
+  dataSourceIndex: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+}
 
 export default SouthForm
