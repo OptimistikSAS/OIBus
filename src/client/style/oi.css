@@ -320,6 +320,11 @@ label {
   color: #627187;
 }
 
+.oi-icon-inline {
+  vertical-align: top;
+  margin-left: 5px;
+}
+
 .oi-log {
   padding: .1rem .1rem;
 }

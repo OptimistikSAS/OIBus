@@ -6,6 +6,7 @@ import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
+import EditableIdField from '../components/EditableIdField.jsx'
 
 const North = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -29,6 +30,16 @@ const North = ({ history }) => {
     const application = applications[index]
     const link = `/north/${application.applicationId}`
     history.push({ pathname: link })
+  }
+
+  /**
+   * Handles the change of one application id (name)
+   * @param {integer} applicationIndex The index that will change
+   * @param {string} newApplicationId The new application id
+   * @return {void}
+   */
+  const handleApplicationIdChanged = (applicationIndex, newApplicationId) => {
+    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.applicationId`, value: newApplicationId })
   }
 
   /**
@@ -59,14 +70,26 @@ const North = ({ history }) => {
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API']
-  const tableRows = applications && applications.map(({ applicationId, enabled, api }) => [
-    { name: applicationId, value: applicationId },
-    {
-      name: 'enabled',
-      value: <Badge color={enabled ? 'success' : 'danger'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>,
-    },
-    { name: 'api', value: api },
-  ])
+  const tableRows = applications
+    && applications.map(({ applicationId, enabled, api }, index) => [
+      {
+        name: applicationId,
+        value: (
+          <EditableIdField
+            id={applicationId}
+            fromList={applications}
+            index={index}
+            name="applicationId"
+            idChanged={handleApplicationIdChanged}
+          />
+        ),
+      },
+      {
+        name: 'enabled',
+        value: <Badge color={enabled ? 'success' : 'danger'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>,
+      },
+      { name: 'api', value: api },
+    ])
 
   return applications !== null && Array.isArray(apiList) ? (
     <Col md="6">

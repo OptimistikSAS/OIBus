@@ -12,12 +12,14 @@ const ConfigureApi = ({ match }) => {
   const applicationIndex = applications && applications.findIndex((application) => application.applicationId === applicationId)
 
   const onChange = (name, value, validity) => {
-    // add the proper index
     dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.${name}`, value, validity })
   }
-
   return applications ? (
-    <NorthForm application={applications[applicationIndex]} applicationIndex={applicationIndex} onChange={onChange} />
+    <NorthForm
+      application={applications[applicationIndex]}
+      applicationIndex={applicationIndex}
+      onChange={onChange}
+    />
   ) : (
     <div className="spinner-container">
       <Spinner color="primary" type="grow" />

@@ -12,12 +12,15 @@ const ConfigureProtocol = ({ match }) => {
   const dataSourceIndex = dataSources && dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   const onChange = (name, value, validity) => {
-    // add the proper index
     dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
   }
 
   return dataSources ? (
-    <SouthForm dataSource={dataSources[dataSourceIndex]} dataSourceIndex={dataSourceIndex} onChange={onChange} />
+    <SouthForm
+      dataSource={dataSources[dataSourceIndex]}
+      dataSourceIndex={dataSourceIndex}
+      onChange={onChange}
+    />
   ) : (
     <div className="spinner-container">
       <Spinner color="primary" type="grow" />
