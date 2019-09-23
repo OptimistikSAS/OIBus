@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbText = ({ label, help, valid, value, name, onChange, defaultValue }) => {
+const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inline }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
@@ -13,6 +13,9 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue }) =>
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
+  if (inline) {
+    style.display = 'inline-block'
+  }
   const validCheck = valid(value)
   // if value is null, no need to render
   if (value === null) return null
@@ -33,6 +36,7 @@ OIbText.propTypes = {
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   defaultValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   valid: PropTypes.func,
+  inline: PropTypes.bool,
 }
 OIbText.defaultProps = {
   valid: () => null,
@@ -40,6 +44,7 @@ OIbText.defaultProps = {
   help: null,
   value: null,
   defaultValue: '',
+  inline: false,
 }
 
 export default OIbText
