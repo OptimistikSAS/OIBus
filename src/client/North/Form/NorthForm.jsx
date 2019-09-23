@@ -89,7 +89,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             defaultValue={10000}
             valid={validation.caching.sendInterval}
             name="caching.sendInterval"
-            help={<div>Send interval (ms)</div>}
+            label="Send interval (ms)"
           />
         </Col>
         <Col md="4">
@@ -99,7 +99,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             defaultValue={5000}
             valid={validation.caching.retryInterval}
             name="caching.retryInterval"
-            help={<div>Retry interval (ms)</div>}
+            label="Retry interval (ms)"
           />
         </Col>
       </Row>
@@ -111,7 +111,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             name="caching.groupCount"
             defaultValue={1000}
             valid={validation.caching.groupCount}
-            help={<div>Group count</div>}
+            label="Group count"
           />
         </Col>
         <Col md="4">
@@ -121,7 +121,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             name="caching.maxSendCount"
             defaultValue={10000}
             valid={validation.caching.maxSendCount}
-            help={<div>Max group count</div>}
+            label="Max group count"
           />
         </Col>
       </Row>

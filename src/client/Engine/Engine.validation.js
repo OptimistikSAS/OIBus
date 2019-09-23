@@ -3,9 +3,9 @@ import type from '../helpers/validation'
 const validation = {
   engine: {
     port: (val) => (val >= 1 && val <= 65535 ? null : 'value should be between 1 and 65535'),
-    user: (val) => ((val.length > 2) ? null : 'Length should be greater than 2'),
-    password: (val) => (/^.{4,}$/.test(val) ? null : 'Length should be greater than 4'),
-    filter: (val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2'),
+    user: (val) => ((val.length > 0) ? null : 'user should not be empty'),
+    password: (val) => ((val.length > 3) ? null : 'Length should be greater than 4'),
+    filter: (val) => ((val.length > 0) ? null : 'filter should bnot be empty'),
     logParameters: {
       filename: type.string,
       maxsize: type.number,
@@ -14,8 +14,8 @@ const validation = {
       sqliteMaxFileSize: type.number,
     },
     scanModes: {
-      scanMode: (val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2'),
-      cronTime: (val) => (/^.{2,}$/.test(val) ? null : 'Length should be greated than 2'),
+      scanMode: (val) => ((val.length > 0) ? null : 'scanMode should not be empty'),
+      cronTime: (val) => ((val.length > 0) ? null : 'cron time should not be empty'),
     },
     caching: {
       cacheFolder: type.string,
