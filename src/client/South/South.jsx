@@ -8,6 +8,7 @@ import Modal from '../components/Modal.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
+import DataSourceIdField from './DataSourceIdField.jsx'
 
 const South = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -29,13 +30,18 @@ const South = ({ history }) => {
    */
   const handleEdit = (index) => {
     const dataSource = dataSources[index]
-    if (dataSource.dataSourceId.length) {
-      const pathname = `/south/${dataSource.dataSourceId}`
-      history.push({ pathname })
-    } else {
-      const pathname = `/south/dataSourceIndex/${index}`
-      history.push({ pathname })
-    }
+    const pathname = `/south/${dataSource.dataSourceId}`
+    history.push({ pathname })
+  }
+
+  /**
+   * Handles the change of one data source id (name)
+   * @param {integer} dataSourceIndex The index that will change
+   * @param {string} newDataSourceId The new data source id
+   * @return {void}
+   */
+  const handleDataSourceIdChanged = (dataSourceIndex, newDataSourceId) => {
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.dataSourceId`, value: newDataSourceId })
   }
 
   /**
@@ -79,7 +85,17 @@ const South = ({ history }) => {
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
   const tableRows = dataSources
     && dataSources.map((dataSource, index) => [
-      { name: dataSource.dataSourceId, value: dataSource.dataSourceId },
+      {
+        name: dataSource.dataSourceId,
+        value: (
+          <DataSourceIdField
+            dataSourceId={dataSource.dataSourceId}
+            dataSources={dataSources}
+            dataSourceIndex={index}
+            dataSourceIdChanged={handleDataSourceIdChanged}
+          />
+        ),
+      },
       {
         name: 'enabled',
         value: (

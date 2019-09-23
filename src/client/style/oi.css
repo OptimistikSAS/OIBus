@@ -323,6 +323,11 @@ label {
   margin-bottom: 0px;
 }
 
+.oi-icon-inline {
+  vertical-align: top;
+  margin-left: 5px;
+}
+
 .oi-log {
   padding: .1rem .1rem;
 }

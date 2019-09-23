@@ -33,11 +33,9 @@ const Main = () => (
               <Route exact path="/engine" component={Engine} />
               <Route exact path="/south" component={South} />
               <Route exact path="/south/:dataSourceId" component={ConfigureProtocol} />
-              <Route exact path="/south/dataSourceIndex/:index" component={ConfigureProtocol} />
               <Route exact path="/south/:dataSourceId/points" component={ConfigurePoints} />
               <Route exact path="/north" component={North} />
               <Route exact path="/north/:applicationId" component={ConfigureApi} />
-              <Route exact path="/north/applicationIndex/:index" component={ConfigureApi} />
               <Route exact path="/log" component={Logs} />
               <Route exact path="/activation" component={Activation} />
               <Route component={NotFound} />

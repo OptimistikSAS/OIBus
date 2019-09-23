@@ -7,6 +7,7 @@ import NewApplicationRow from './NewApplicationRow.jsx'
 import Modal from '../components/Modal.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
+import ApplicationIdField from './ApplicationIdField.jsx'
 
 const North = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -28,13 +29,18 @@ const North = ({ history }) => {
    */
   const handleEdit = (index) => {
     const application = applications[index]
-    if (application.applicationId.length) {
-      const link = `/north/${application.applicationId}`
-      history.push({ pathname: link })
-    } else {
-      const link = `/north/applicationIndex/${index}`
-      history.push({ pathname: link })
-    }
+    const link = `/north/${application.applicationId}`
+    history.push({ pathname: link })
+  }
+
+  /**
+   * Handles the change of one application id (name)
+   * @param {integer} applicationIndex The index that will change
+   * @param {string} newApplicationId The new application id
+   * @return {void}
+   */
+  const handleApplicationIdChanged = (applicationIndex, newApplicationId) => {
+    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.applicationId`, value: newApplicationId })
   }
 
   /**
@@ -78,7 +84,17 @@ const North = ({ history }) => {
   const tableHeaders = ['Application ID', 'Status', 'API']
   const tableRows = applications
     && applications.map(({ applicationId, enabled, api }, index) => [
-      { name: applicationId, value: applicationId },
+      {
+        name: applicationId,
+        value: (
+          <ApplicationIdField
+            applicationId={applicationId}
+            applications={applications}
+            applicationIndex={index}
+            applicationIdChanged={handleApplicationIdChanged}
+          />
+        ),
+      },
       {
         name: 'enabled',
         value: (
