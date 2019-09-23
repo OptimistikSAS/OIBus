@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FaTrashAlt, FaPencilAlt } from 'react-icons/fa'
+import { FaTrashAlt, FaCog } from 'react-icons/fa'
 
 const TableRows = ({ rows, handleEdit, handleDelete }) => (
   <tbody>
@@ -20,7 +20,7 @@ const TableRows = ({ rows, handleEdit, handleDelete }) => (
             />
           )}
           {handleEdit && (
-            <FaPencilAlt
+            <FaCog
               className="oi-icon"
               onClick={(e) => {
                 e.preventDefault()
