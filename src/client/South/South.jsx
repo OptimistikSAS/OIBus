@@ -1,10 +1,9 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button, Col, Spinner } from 'reactstrap'
+import { Badge, Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
-import Modal from '../components/Modal.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
@@ -54,23 +53,16 @@ const South = ({ history }) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) {
       // Adds new dataSource
-      dispatchNewConfig({ type: 'addRow', name: 'south.dataSources', value: { dataSourceId, protocol, enabled: false } })
+      dispatchNewConfig({
+        type: 'addRow',
+        name: 'south.dataSources',
+        value: { dataSourceId, protocol, enabled: false },
+      })
     } else {
       const error = new Error('data source already exists')
       setAlert({ text: error.message, type: 'danger' })
       throw error
     }
-  }
-
-  /**
-   * Handles the toggle of dataSource beetween
-   * enabled and disabled state
-   * @param {integer} index The id to enable/disable
-   * @return {void}
-   */
-  const handleToggleClick = (index) => {
-    const { enabled } = dataSources[index]
-    dispatchNewConfig({ type: 'update', name: `south.dataSources.${index}.enabled`, value: !enabled })
   }
 
   /**
@@ -83,41 +75,32 @@ const South = ({ history }) => {
   }
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
-  const tableRows = dataSources
-    && dataSources.map((dataSource, index) => [
-      {
-        name: dataSource.dataSourceId,
-        value: (
-          <DataSourceIdField
-            dataSourceId={dataSource.dataSourceId}
-            dataSources={dataSources}
-            dataSourceIndex={index}
-            dataSourceIdChanged={handleDataSourceIdChanged}
-          />
-        ),
-      },
-      {
-        name: 'enabled',
-        value: (
-          <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-            {(confirm) => (
-              <div>
-                <Button className="inline-button" color={dataSource.enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
-                  {dataSource.enabled ? 'Enabled' : 'Disabled'}
-                </Button>
-              </div>
-            )}
-          </Modal>
-        ),
-      },
-      { name: 'protocol', value: dataSource.protocol },
-      {
-        name: 'points',
-        value: <PointsButton dataSource={dataSource} />,
-      },
-    ])
+  const tableRows = dataSources && dataSources.map((dataSource, index) => [
+    {
+      name: dataSource.dataSourceId,
+      value: (
+        <DataSourceIdField
+          dataSourceId={dataSource.dataSourceId}
+          dataSources={dataSources}
+          dataSourceIndex={index}
+          dataSourceIdChanged={handleDataSourceIdChanged}
+        />
+      ),
+    },
+    {
+      name: 'enabled',
+      value: (
+        <Badge color={dataSource.enabled ? 'success' : 'danger'}>{dataSource.enabled ? 'Enabled' : 'Disabled'}</Badge>
+      ),
+    },
+    { name: 'protocol', value: dataSource.protocol },
+    {
+      name: 'points',
+      value: <PointsButton dataSource={dataSource} />,
+    },
+  ])
 
-  return (dataSources !== null && Array.isArray(protocolList)) ? (
+  return dataSources !== null && Array.isArray(protocolList) ? (
     <Col md="8">
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />

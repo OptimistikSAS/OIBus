@@ -138,10 +138,6 @@ a:focus {
   height: 20px;
 }
 
-.badge {
-  vertical-align: top;
-}
-
 .array-item-remove {
   color: #fff;
   background-color: #dc3545;
@@ -321,6 +317,7 @@ label {
   width: 10px;
   margin-right: 2px;
   margin-bottom: 0px;
+  color: #627187;
 }
 
 .oi-icon-inline {
@@ -335,6 +332,7 @@ label {
 .oi-icon:hover,.oi-help:hover{
   text-decoration: none;
   color: #F5BB51;
+  cursor: pointer;
 }
 
 .oi-form-input {
