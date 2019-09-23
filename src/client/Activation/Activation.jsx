@@ -29,13 +29,13 @@ const Activation = () => {
         return obj.name
       }
       // allow to diff the north list array correctly
-      // if (typeof obj.applicationId !== 'undefined') {
-      //   return obj.applicationId
-      // }
+      if (typeof obj.applicationId !== 'undefined') {
+        return obj.applicationId
+      }
       // allow to diff the south list array correctly
-      // if (typeof obj.dataSourceId !== 'undefined') {
-      //   return obj.dataSourceId
-      // }
+      if (typeof obj.dataSourceId !== 'undefined') {
+        return obj.dataSourceId
+      }
       return `$$index:${index}`
     },
   })
