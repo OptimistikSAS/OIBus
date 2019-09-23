@@ -1,5 +1,9 @@
 /* OI Styles */
 
+.custom-control-input:checked~.custom-control-label::before {
+  border-color: #f5bb51;
+  background-color: #f5bb51;
+}
 button:focus,
 input:focus,
 a:focus {
