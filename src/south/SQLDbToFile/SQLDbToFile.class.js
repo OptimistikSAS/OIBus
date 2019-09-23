@@ -98,20 +98,16 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      const maxDate = result.reduce((a, b) => {
-        if (a && b[this.timeColumn]) {
-          return a > b[this.timeColumn] ? a : b[this.timeColumn]
+      result.forEach((entry) => {
+        if (entry[this.timeColumn] && (entry[this.timeColumn] instanceof Date) && (entry[this.timeColumn] > new Date(this.lastCompletedAt))) {
+          this.lastCompletedAt = entry[this.timeColumn].toISOString()
         }
-        return a || b[this.timeColumn]
       })
-
-      if (maxDate) {
-        this.lastCompletedAt = maxDate.toISOString()
+      if (this.lastCompletedAt) {
         this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
       } else {
         this.logger.debug('lastCompletedAt not used')
       }
-
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {

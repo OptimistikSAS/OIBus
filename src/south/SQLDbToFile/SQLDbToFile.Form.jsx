@@ -155,7 +155,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           value={dataSource.SQLDbToFile.timeColumn}
           valid={validation.SQLDbToFile.timeColumn}
           name="SQLDbToFile.timeColumn"
-          defaultValue="sql-@date.csv"
+          defaultValue="timestamp"
         />
       </Col>
     </Row>
