@@ -1,12 +1,12 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Button, Col, Spinner } from 'reactstrap'
+import { Badge, Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
-import Modal from '../components/Modal.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
+import EditableIdField from '../components/EditableIdField.jsx'
 
 const North = ({ history }) => {
   const { setAlert } = React.useContext(AlertContext)
@@ -33,6 +33,16 @@ const North = ({ history }) => {
   }
 
   /**
+   * Handles the change of one application id (name)
+   * @param {integer} applicationIndex The index that will change
+   * @param {string} newApplicationId The new application id
+   * @return {void}
+   */
+  const handleApplicationIdChanged = (applicationIndex, newApplicationId) => {
+    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.applicationId`, value: newApplicationId })
+  }
+
+  /**
    * Adds a new application row to the table
    * @param {Object} param0 An application object containing
    * applicationId, enabled and api fields
@@ -51,17 +61,6 @@ const North = ({ history }) => {
   }
 
   /**
-   * Handles the toggle of application beetween
-   * enabled and disabled state
-   * @param {integer} index The id to enable/disable
-   * @return {void}
-   */
-  const handleToggleClick = (index) => {
-    const { enabled } = applications[index]
-    dispatchNewConfig({ type: 'update', name: `north.applications.${index}.enabled`, value: !enabled })
-  }
-
-  /**
    * Deletes the chosen application
    * @param {integer} index The id to delete
    * @returns {void}
@@ -73,25 +72,26 @@ const North = ({ history }) => {
   const tableHeaders = ['Application ID', 'Status', 'API']
   const tableRows = applications
     && applications.map(({ applicationId, enabled, api }, index) => [
-      { name: applicationId, value: applicationId },
+      {
+        name: applicationId,
+        value: (
+          <EditableIdField
+            id={applicationId}
+            fromList={applications}
+            index={index}
+            name="applicationId"
+            idChanged={handleApplicationIdChanged}
+          />
+        ),
+      },
       {
         name: 'enabled',
-        value: (
-          <Modal show={false} title="Change status" body="Are you sure to change this Data Source status ?">
-            {(confirm) => (
-              <div>
-                <Button className="inline-button" color={enabled ? 'success' : 'danger'} onClick={confirm(() => handleToggleClick(index))}>
-                  {enabled ? 'Active' : 'Stopped'}
-                </Button>
-              </div>
-            )}
-          </Modal>
-        ),
+        value: <Badge color={enabled ? 'success' : 'danger'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>,
       },
       { name: 'api', value: api },
     ])
 
-  return (applications !== null && Array.isArray(apiList)) ? (
+  return applications !== null && Array.isArray(apiList) ? (
     <Col md="6">
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
