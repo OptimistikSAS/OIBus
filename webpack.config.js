@@ -8,6 +8,12 @@ module.exports = {
     publicPath: '/',
     filename: 'bundle.js',
   },
+  resolve: {
+    alias: {
+      'react-dom$': 'react-dom/profiling',
+      'scheduler/tracing': 'scheduler/tracing-profiling',
+    },
+  },
   // devServer: { contentBase: './build' },
   devtool: 'source-map',
   performance: {
