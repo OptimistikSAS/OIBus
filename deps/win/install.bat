@@ -11,7 +11,7 @@ if NOT "%~1" == "" (
         START nssm.exe stop OIBus
 
         echo Installing OIBus as Windows service...
-        START nssm.exe install OIBus "%cd%\oibus.exe" "--config %~1"
+        START nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%~1"""
         START nssm.exe set OIBus AppDirectory "%cd%"
 
         echo Starting OIBus service...
