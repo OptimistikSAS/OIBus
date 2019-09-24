@@ -71,7 +71,7 @@ const OIConnectForm = ({ application, onChange }) => {
           <OIbSelect
             label="Stack"
             onChange={onChange}
-            option={application.OIAnalyticsFile.stack}
+            option={application.OIConnect.stack}
             name="OIAnalyticsFile.stack"
             options={['axios', 'request', 'fetch']}
             defaultOption="fetch"
