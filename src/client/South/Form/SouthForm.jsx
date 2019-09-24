@@ -32,6 +32,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             value={dataSource.enabled}
             help={<div>Enable this application</div>}
             onChange={onChange}
+            switchButton
           />
         </Col>
       </Row>
@@ -40,6 +41,10 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   )
 }
 
-SouthForm.propTypes = { dataSource: PropTypes.object.isRequired, dataSourceIndex: PropTypes.number.isRequired, onChange: PropTypes.func.isRequired }
+SouthForm.propTypes = {
+  dataSource: PropTypes.object.isRequired,
+  dataSourceIndex: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+}
 
 export default SouthForm

@@ -1,5 +1,9 @@
 /* OI Styles */
 
+.custom-control-input:checked~.custom-control-label::before {
+  border-color: #f5bb51;
+  background-color: #f5bb51;
+}
 button:focus,
 input:focus,
 a:focus {
@@ -317,6 +321,12 @@ label {
   width: 10px;
   margin-right: 2px;
   margin-bottom: 0px;
+  color: #627187;
+}
+
+.oi-icon-inline {
+  vertical-align: top;
+  margin-left: 5px;
 }
 
 .oi-log {
@@ -326,6 +336,7 @@ label {
 .oi-icon:hover,.oi-help:hover{
   text-decoration: none;
   color: #F5BB51;
+  cursor: pointer;
 }
 
 .oi-form-input {
