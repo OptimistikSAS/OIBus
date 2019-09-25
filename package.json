@@ -48,6 +48,7 @@
     "koa-send": "^5.0.0",
     "micromatch": "^4.0.2",
     "minimist": "^1.2.0",
+    "moment-timezone": "^0.5.26",
     "mqtt": "^3.0.0",
     "mssql": "^5.1.0",
     "node-fetch": "^2.6.0",
