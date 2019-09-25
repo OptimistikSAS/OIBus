@@ -3,7 +3,7 @@ const path = require('path')
 
 const mssql = require('mssql')
 const csv = require('fast-csv')
-const fecha = require('fecha')
+const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -35,6 +35,8 @@ class SQLDbToFile extends ProtocolHandler {
       filename,
       delimiter,
       timeColumn,
+      timezone,
+      dateFormat,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -50,6 +52,9 @@ class SQLDbToFile extends ProtocolHandler {
     this.requestTimeout = requestTimeout
     this.filename = filename
     this.delimiter = delimiter
+    this.timezone = timezone
+    this.dateFormat = dateFormat
+
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
     this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
 
@@ -111,7 +116,7 @@ class SQLDbToFile extends ProtocolHandler {
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
-        const filename = this.filename.replace('@date', fecha.format(new Date(), 'YYYY_MM_DD_HH_mm_ss'))
+        const filename = this.filename.replace('@date', moment().tz(this.timezone).format(this.dateFormat))
         const filePath = path.join(this.tmpFolder, filename)
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
@@ -168,7 +173,7 @@ class SQLDbToFile extends ProtocolHandler {
   generateCSV(result) {
     const transform = (row) => {
       if (row[this.timeColumn] instanceof Date) {
-        row[this.timeColumn] = row[this.timeColumn].toISOString()
+        row[this.timeColumn] = moment.tz(row[this.timeColumn], this.timezone).format(this.dateFormat)
       }
       return (row)
     }

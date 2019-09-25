@@ -159,6 +159,28 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
         />
       </Col>
     </Row>
+    <Row>
+      <Col md="4">
+        <OIbText
+          label="Timezone"
+          onChange={onChange}
+          value={dataSource.SQLDbToFile.timezone}
+          valid={validation.SQLDbToFile.timezone}
+          name="SQLDbToFile.timezone"
+          defaultValue="Europe/Paris"
+        />
+      </Col>
+      <Col md="4">
+        <OIbText
+          label="Date Format"
+          onChange={onChange}
+          value={dataSource.SQLDbToFile.dateFormat}
+          valid={validation.SQLDbToFile.dateFormat}
+          name="SQLDbToFile.dateFormat"
+          defaultValue="YYYY-MM-DD HH:mm:ss.SSS"
+        />
+      </Col>
+    </Row>
   </>
 )
 
