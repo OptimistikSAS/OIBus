@@ -249,7 +249,9 @@
                     "delimiter": ",",
                     "filename": "sql-@date.csv",
                     "scanMode": "everySecond",
-                    "timeColumn": "timestamp"
+                    "timeColumn": "timestamp",
+                    "timezone": "Europe/Paris",
+                    "dateFormat": "YYYY-MM-DD HH:mm:ss.SSS"
                 },
                 "scanMode": "every5Second",
                 "points": []

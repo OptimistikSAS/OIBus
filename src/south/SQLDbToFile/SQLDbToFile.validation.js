@@ -13,6 +13,8 @@ const validation = {
     delimiter: type.string,
     filename: type.string,
     timeColumn: type.string,
+    timezone: type.timezone,
+    dateFormat: type.string,
   },
 }
 
