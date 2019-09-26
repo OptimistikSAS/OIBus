@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
+import moment from 'moment-timezone'
 import { OIbText, OIbTextArea, OIbInteger, OIbSelect, OIbPassword, OIbScanMode } from '../../client/components/OIbForm'
 import validation from './SQLDbToFile.validation'
 
@@ -161,13 +162,13 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
     </Row>
     <Row>
       <Col md="4">
-        <OIbText
+        <OIbSelect
           label="Timezone"
           onChange={onChange}
-          value={dataSource.SQLDbToFile.timezone}
-          valid={validation.SQLDbToFile.timezone}
+          options={moment.tz.names()}
+          option={dataSource.SQLDbToFile.timezone}
+          defaultOption="Europe/Paris"
           name="SQLDbToFile.timezone"
-          defaultValue="Europe/Paris"
         />
       </Col>
       <Col md="4">
