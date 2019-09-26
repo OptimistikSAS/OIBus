@@ -251,7 +251,7 @@
                     "scanMode": "everySecond",
                     "timeColumn": "timestamp",
                     "timezone": "Europe/Paris",
-                    "dateFormat": "YYYY-MM-DD HH:mm:ss.SSS",
+                    "dateFormat": "YYYY-MM-DD HH:mm:ss.SSS"
                 },
                 "scanMode": "every5Second",
                 "points": []
