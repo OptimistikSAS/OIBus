@@ -52,8 +52,13 @@ class SQLDbToFile extends ProtocolHandler {
     this.requestTimeout = requestTimeout
     this.filename = filename
     this.delimiter = delimiter
-    this.timezone = timezone
     this.dateFormat = dateFormat
+
+    if (moment.tz.zone(timezone)) {
+      this.timezone = timezone
+    } else {
+      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+    }
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
     this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
@@ -83,8 +88,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {void}
    */
   async onScan(_scanMode) {
-    if (!moment.tz.zone(this.timezone)) {
-      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+    if (!this.timezone) {
       return
     }
 
