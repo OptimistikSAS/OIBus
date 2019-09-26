@@ -116,7 +116,7 @@ class SQLDbToFile extends ProtocolHandler {
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
-        const filename = this.filename.replace('@date', moment().tz(this.timezone).format(this.dateFormat))
+        const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
         const filePath = path.join(this.tmpFolder, filename)
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
