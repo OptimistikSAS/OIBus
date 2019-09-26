@@ -62,6 +62,11 @@ class SQLDbToFile extends ProtocolHandler {
     if (!fs.existsSync(this.tmpFolder)) {
       fs.mkdirSync(this.tmpFolder, { recursive: true })
     }
+
+    if (!moment.tz.zone(this.timezone)) {
+      this.logger.error(`Invalid timezone supplied (${this.timezone})reverting to UTC`)
+      this.timezone = 'UTC'
+    }
   }
 
   async connect() {
