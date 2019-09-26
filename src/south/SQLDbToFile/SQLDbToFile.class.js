@@ -62,11 +62,6 @@ class SQLDbToFile extends ProtocolHandler {
     if (!fs.existsSync(this.tmpFolder)) {
       fs.mkdirSync(this.tmpFolder, { recursive: true })
     }
-
-    if (!moment.tz.zone(this.timezone)) {
-      this.logger.error(`Invalid timezone supplied (${this.timezone})reverting to UTC`)
-      this.timezone = 'UTC'
-    }
   }
 
   async connect() {
@@ -88,6 +83,11 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {void}
    */
   async onScan(_scanMode) {
+    if (!moment.tz.zone(this.timezone)) {
+      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+      return
+    }
+
     let result = []
     try {
       switch (this.driver) {
