@@ -15,7 +15,7 @@ set "CONFIG_PATH=%~1"
 goto CHECK
 
 :INPUT
-SET /P CONFIG_PATH=Enter the path for the config file:
+SET /P CONFIG_PATH=Enter the path for the config file (Example: C:\OIBus\oibus.json):
 
 :CHECK
 if "%CONFIG_PATH:~-5%" neq ".json" (
