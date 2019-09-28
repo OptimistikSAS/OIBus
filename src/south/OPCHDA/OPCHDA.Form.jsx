@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
-import ScanGroups from '../../client/South/Form/ScanGroups.jsx'
+import ScanGroups from './ScanGroups.jsx'
 import validation from './OPCHDA.validation'
 
 const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
