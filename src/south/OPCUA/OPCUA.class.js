@@ -45,10 +45,11 @@ class OPCUA extends ProtocolHandler {
     // as OPCUA can group multiple points in a single request
     // we group points based on scanMode
     this.optimizedConfig = getOptimizedConfig(dataSource)
+    const { host, opcuaPort, endPoint, maxAge } = dataSource.OPCUA
     // define OPCUA connection parameters
     this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = `opc.tcp://${dataSource.host}:${dataSource.opcuaPort}/${dataSource.endPoint}`
-    this.maxAge = dataSource.maxAge || 10
+    this.url = `opc.tcp://${host}:${opcuaPort}/${endPoint}`
+    this.maxAge = maxAge || 10
   }
 
   /**
