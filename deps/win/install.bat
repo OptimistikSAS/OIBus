@@ -24,13 +24,18 @@ if "%CONFIG_PATH:~-5%" neq ".json" (
 )
 
 echo Stopping OIBus service...
-START nssm.exe stop OIBus
+nssm.exe stop OIBus >nul 2>&1
 
-echo Installing OIBus as Windows service...
-START nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%~1"""
-START nssm.exe set OIBus AppDirectory "%cd%"
+@echo Installing OIBus as Windows service...
+date /T >> install.log
+time /T >> install.log
+nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%CONFIG_PATH%"""
+@echo nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%CONFIG_PATH%""" >> install.log
+nssm.exe set OIBus AppDirectory "%cd%"
+@echo nssm.exe set OIBus AppDirectory "%cd%" >> install.log
+@echo Starting OIBus service...
+nssm.exe start OIBus
+@echo Creating go.bat
+@echo> go.bat "%cd%\oibus.exe" --config "%CONFIG_PATH%"
+type go.bat
 
-echo Starting OIBus service...
-START nssm.exe start OIBus
-
-:EOF
