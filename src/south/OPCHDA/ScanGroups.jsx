@@ -1,17 +1,19 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import Table from '../../components/table/Table.jsx'
-import { OIbTitle, OIbSelect, OIbScanMode } from '../../components/OIbForm'
-import { ConfigContext } from '../../context/configContext.jsx'
+import Table from '../../client/components/table/Table.jsx'
+import { OIbTitle, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
+import { ConfigContext } from '../../client/context/configContext.jsx'
 
 const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
-  const { dispatchNewConfig } = React.useContext(ConfigContext)
+  const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
+  const { scanModes } = newConfig.engine // scan modes defined in engine
+
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.scanGroups.${rowIndex}` })
   }
   const handleAdd = () => {
-    const defaultValue = { scanMode: '', aggregate: '', resampling: '' }
+    const defaultValue = { scanMode: scanModes[0].scanMode, aggregate: 'Raw', resampling: 'None' }
     dispatchNewConfig({ type: 'addRow', name: `south.dataSources.${dataSourceIndex}.scanGroups`, value: defaultValue })
   }
   const onChange = (name, value) => {
@@ -21,7 +23,13 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
     scanGroups && (
       <>
         <OIbTitle title="Scan Groups">
-          <p> </p>
+          <p>
+            OPCHDA application will request all points in the same scanMode.
+            OPCHDA can query raw values but can also aggregate points on a given period.
+            if an aggregate is chosen, the resampling period must also be selected.
+            <b>Important</b>
+            a point with a scanMode without the corresponding scangroup will not be requested
+          </p>
         </OIbTitle>
         <Row>
           <Col md={4}>
