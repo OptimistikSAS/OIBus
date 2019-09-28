@@ -1,11 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import { OIbText, OIbInteger, OIbSelect, OIbScanMode } from '../../client/components/OIbForm'
+import { OIbText, OIbInteger, OIbSelect, OIbScanMode, OIbTitle } from '../../client/components/OIbForm'
 import validation from './Modbus.validation'
 
 const ModbusForm = ({ dataSource, onChange }) => (
   <>
+    <OIbTitle title="Modbus settings">
+      <p>This protocol is in restricted release. Please contact Optimistik</p>
+    </OIbTitle>
     <Row>
       <Col md="4">
         <OIbText

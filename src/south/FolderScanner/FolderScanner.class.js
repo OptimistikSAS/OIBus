@@ -18,7 +18,7 @@ class FolderScanner extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { inputFolder, preserveFiles, minAge, regex } = this.dataSource
+    const { inputFolder, preserveFiles, minAge, regex } = this.dataSource.FolderScanner
 
     this.inputFolder = path.resolve(inputFolder)
     this.preserveFiles = preserveFiles

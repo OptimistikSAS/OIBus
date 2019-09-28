@@ -42,10 +42,10 @@ class Modbus extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    this.optimizedConfig = getOptimizedConfig(this.dataSource)
+    this.optimizedConfig = getOptimizedConfig(this.dataSource.points, this.dataSource.Modbus.addressGap)
     this.socket = new net.Socket()
-    this.host = this.dataSource.host
-    this.port = this.dataSource.port
+    this.host = this.dataSource.Modbus.host
+    this.port = this.dataSource.Modbus.port
     this.connected = false
     this.client = new jsmodbus.client.TCP(this.socket)
   }

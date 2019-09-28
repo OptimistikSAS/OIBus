@@ -7,6 +7,7 @@ import validation from './MQTT.validation'
 const MQTTForm = ({ dataSource, onChange }) => (
   <>
     <OIbTitle title="MQTT settings">
+      <p>This protocol is in restricted release. Please contact Optimistik</p>
       <ul>
         <li>
           <b>Protocol:</b>
