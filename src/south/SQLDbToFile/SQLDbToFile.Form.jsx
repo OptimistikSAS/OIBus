@@ -15,7 +15,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           valid={validation.SQLDbToFile.host}
           name="SQLDbToFile.host"
           defaultValue="localhost"
-          help={<div>IP address of the OPC-UA server</div>}
+          help={<div>IP address of the SQLDbToFile server</div>}
         />
       </Col>
       <Col md="4">
@@ -35,7 +35,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
         <OIbSelect
           label="Driver"
           onChange={onChange}
-          options={['mssql', 'mysql', 'postgresql', 'oracle']}
+          options={['mssql']}
           option={dataSource.SQLDbToFile.driver}
           defaultOption="mssql"
           name="SQLDbToFile.driver"
