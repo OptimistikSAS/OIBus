@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Badge, Col, Spinner } from 'reactstrap'
+import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -86,7 +86,7 @@ const North = ({ history }) => {
       },
       {
         name: 'enabled',
-        value: <Badge color={enabled ? 'success' : 'danger'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>,
+        value: <div className={enabled ? 'text-success' : 'text-danger'}>{enabled ? 'Enabled' : 'Disabled'}</div>,
       },
       { name: 'api', value: api },
     ])
