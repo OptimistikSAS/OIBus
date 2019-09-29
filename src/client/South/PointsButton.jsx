@@ -13,8 +13,10 @@ const PointsButton = ({ history, dataSource }) => {
   return ProtocolForms[protocol].renderPoints !== null ? (
     <Button
       className="inline-button autosize oi-points-button"
-      color={points && points.length ? 'success' : 'primary'}
+      color={points && points.length ? 'success' : 'warning'}
       onClick={() => handleEditPoints(dataSourceId)}
+      size="sm"
+      outline
     >
       {`Points ${points ? `(${points.length})` : '(0)'}`}
     </Button>

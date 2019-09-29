@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Badge, Col, Spinner } from 'reactstrap'
+import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -40,7 +40,11 @@ const South = ({ history }) => {
    * @return {void}
    */
   const handleDataSourceIdChanged = (dataSourceIndex, newDataSourceId) => {
-    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.dataSourceId`, value: newDataSourceId })
+    dispatchNewConfig({
+      type: 'update',
+      name: `south.dataSources.${dataSourceIndex}.dataSourceId`,
+      value: newDataSourceId,
+    })
   }
 
   /**
@@ -90,9 +94,7 @@ const South = ({ history }) => {
     },
     {
       name: 'enabled',
-      value: (
-        <Badge color={dataSource.enabled ? 'success' : 'danger'}>{dataSource.enabled ? 'Enabled' : 'Disabled'}</Badge>
-      ),
+      value: <div className={dataSource.enabled ? 'text-success' : 'text-danger'}>{dataSource.enabled ? 'Enabled' : 'Disabled'}</div>,
     },
     { name: 'protocol', value: dataSource.protocol },
     {
