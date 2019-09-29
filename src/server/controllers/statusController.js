@@ -1,4 +1,5 @@
 const os = require('os')
+const moment = require('moment-timezone')
 
 /**
  * Get status info for the dashboard
@@ -18,7 +19,7 @@ const getStatus = async (ctx) => {
     Executable: process.execPath,
     'Free/Total Memory/%': `${os.freemem()}/${os.totalmem()}/${Number((os.freemem() / os.totalmem()) * 100).toFixed(2)}%`,
     'Process Id': process.pid,
-    'Up time': process.uptime(),
+    'Up time': moment.duration(process.uptime(), 'seconds').humanize(),
     Hostname: os.hostname(),
     'OS release': os.release(),
     'OS type': os.type(),
