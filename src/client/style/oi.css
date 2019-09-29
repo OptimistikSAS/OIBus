@@ -1,5 +1,15 @@
 /* OI Styles */
 
+.custom-control-input:checked~.custom-control-label::before {
+  border-color: #f5bb51;
+  background-color: #f5bb51;
+}
+button:focus,
+input:focus,
+a:focus {
+   outline:0 !important;
+}
+
 .oi-container {
   margin-top: 35px;
   padding: 0;
@@ -115,6 +125,13 @@
   border-color: #f5bb51;
 }
 
+.btn:disabled {
+  opacity: 0.2;
+  color: #fff;
+  background-color: #8291a7;
+  border-color: #8291a7;
+}
+
 .btn-outline-dark,
 .btn-add {
   color: #fff;
@@ -153,16 +170,15 @@ td > div > .autosize {
   width: auto;
 }
 
+tr {
+  vertical-align: middle;
+}
+
 label {
   display: inline-block;
   margin-bottom: 0.2rem;
   font-weight: bold;
   font-size: 0.7rem;
-}
-
-.copyright-label {
-  color: white;
-  padding: 0 20px;
 }
 
 .label-card-title {
@@ -186,15 +202,6 @@ label {
   width: 39px;
   text-align: center;
   padding: 0.5rem 0;
-}
-
-.table thead th {
-  vertical-align: middle;
-}
-
-.table td,
-.table th {
-  vertical-align: middle;
 }
 
 .form-check-input {
@@ -303,3 +310,67 @@ label {
   width: 1rem;
   height: 1rem;
 }
+
+.oi-help {
+  margin-bottom: 5px;
+  margin-left: 6px;
+  width: 12px;
+}
+
+.oi-icon {
+  width: 10px;
+  margin-right: 2px;
+  margin-bottom: 0px;
+  color: #627187;
+}
+
+.oi-icon-inline {
+  vertical-align: top;
+  margin-left: 5px;
+}
+
+.oi-log {
+  padding: .1rem .1rem;
+}
+
+.oi-icon:hover,.oi-help:hover{
+  text-decoration: none;
+  color: #F5BB51;
+  cursor: pointer;
+}
+
+.oi-form-input {
+  font-size: 11px;
+  padding: 0 6px;
+  margin-top: 2px;
+  margin-bottom: 7px;
+  height: 20px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.oi-form-append {
+  padding: 0 5px 0 5px;
+  margin: 2px 0 0px 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #dedede;
+  border: 1px solid lightgray;
+  border-radius: 2px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+.oi-add-button {
+  margin-top: 20px;
+  height: 20px;
+}
+
+.oi-points-button {
+  height: 16px;
+  padding-top: 1px;
+}
+
