@@ -1,11 +1,34 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { FaTrashAlt, FaCog } from 'react-icons/fa'
 
-const TableRows = ({ rows, onRowClick }) => (
+const TableRows = ({ rows, handleEdit, handleDelete }) => (
   <tbody>
-    {rows.map((row) => (
-      <tr key={row[0].value} onClick={() => onRowClick(row)}>
-        {row.map((field) => <td key={field.name}>{field.value}</td>)}
+    {rows.map((row, index) => (
+      <tr key={row[0].name}>
+        {row.map((field) => (
+          <td key={field.name}>{field.value}</td>
+        ))}
+        <td>
+          {handleDelete && (
+            <FaTrashAlt
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleDelete(index)
+              }}
+            />
+          )}
+          {handleEdit && (
+            <FaCog
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleEdit(index)
+              }}
+            />
+          )}
+        </td>
       </tr>
     ))}
   </tbody>
@@ -13,7 +36,10 @@ const TableRows = ({ rows, onRowClick }) => (
 
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
-  onRowClick: PropTypes.func.isRequired,
+  handleEdit: PropTypes.func,
+  handleDelete: PropTypes.func,
 }
+
+TableRows.defaultProps = { handleDelete: null, handleEdit: null }
 
 export default TableRows

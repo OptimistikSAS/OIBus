@@ -229,6 +229,4 @@ class OIAnalyticsFile extends ApiHandler {
   }
 }
 
-OIAnalyticsFile.schema = require('./schema')
-
 module.exports = OIAnalyticsFile

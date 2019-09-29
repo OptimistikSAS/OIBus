@@ -13,7 +13,7 @@ const router = new Router()
 
 router.get('/config', configController.getModifiedConfiguration)
 router.get('/config/active', configController.getActiveConfiguration)
-router.put('/config/engine', configController.updateEngine)
+router.put('/config', configController.updateConfig)
 router.post('/config/north', configController.addNorth)
 router.put('/config/north/:applicationId', configController.updateNorth)
 router.delete('/config/north/:applicationId', configController.deleteNorth)
