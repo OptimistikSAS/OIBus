@@ -137,12 +137,12 @@ const deleteSouth = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const updateEngine = (ctx) => {
+const updateConfig = (ctx) => {
   try {
-    ctx.app.engine.configService.updateEngine(ctx.request.body)
+    ctx.app.engine.configService.updateConfig(ctx.request.body)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to update Engine')
+    ctx.throw(500, 'Unable to update Config')
   }
 }
 
@@ -183,7 +183,7 @@ module.exports = {
   addSouth,
   updateSouth,
   deleteSouth,
-  updateEngine,
+  updateConfig,
   activateConfiguration,
   resetConfiguration,
 }
