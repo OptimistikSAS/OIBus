@@ -36,10 +36,11 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} _scanMode - The scan mode
+   * @param {*} scanMode - The scan mode
    * @return {void}
    */
-  onScan(_scanMode) {
+  onScan(scanMode) {
+    this.logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
       this.logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
@@ -82,10 +83,10 @@ class FolderScanner extends ProtocolHandler {
     if (this.regex.test(filename)) {
       const timestamp = new Date().getTime()
       const stats = fs.statSync(path.join(this.inputFolder, filename))
-
+      this.logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
       matched = (stats.mtimeMs < (timestamp - this.minAge))
     }
-
+    this.logger.silly(`checkFile ${filename} matched ${matched}`)
     return matched
   }
 
