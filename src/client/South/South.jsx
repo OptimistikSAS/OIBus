@@ -1,6 +1,5 @@
 import React from 'react'
-import { withRouter } from 'react-router-dom'
-import PropTypes from 'prop-types'
+import { useHistory } from 'react-router-dom'
 import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
@@ -9,10 +8,11 @@ import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
 
-const South = ({ history }) => {
+const South = () => {
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, protocolList } = React.useContext(ConfigContext)
   const dataSources = newConfig && newConfig.south && newConfig.south.dataSources
+  const history = useHistory()
 
   /**
    * Gets the config json of a south dataSource
@@ -115,6 +115,5 @@ const South = ({ history }) => {
     </div>
   )
 }
-South.propTypes = { history: PropTypes.object.isRequired }
 
-export default withRouter(South)
+export default South

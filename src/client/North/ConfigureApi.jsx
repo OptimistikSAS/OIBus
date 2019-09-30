@@ -1,14 +1,13 @@
 import React from 'react'
-import { withRouter } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { Spinner } from 'reactstrap'
-import PropTypes from 'prop-types'
 import { ConfigContext } from '../context/configContext.jsx'
 import NorthForm from './Form/NorthForm.jsx'
 
-const ConfigureApi = ({ match }) => {
+const ConfigureApi = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const applications = newConfig && newConfig.north.applications // array of all defined applications
-  const { applicationId } = match.params // the applicationId passed in the url
+  const { applicationId } = useParams()
   const applicationIndex = applications && applications.findIndex((application) => application.applicationId === applicationId)
 
   const onChange = (name, value, validity) => {
@@ -28,5 +27,4 @@ const ConfigureApi = ({ match }) => {
   )
 }
 
-ConfigureApi.propTypes = { match: PropTypes.object.isRequired }
-export default withRouter(ConfigureApi)
+export default ConfigureApi
