@@ -77,7 +77,7 @@ const Activation = () => {
    * @returns {String} html delta formatted
    */
   const removeSecretValues = (delta) => {
-    utils.replaceValues(delta, ['password', 'secretKey'], '******')
+    utils.replaceValues(delta, ['password', 'secretKey'], '******', true)
     return formatters.html.format(delta)
   }
 
