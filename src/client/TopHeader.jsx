@@ -1,6 +1,5 @@
 import React from 'react'
-import { Link, withRouter } from 'react-router-dom'
-import PropTypes from 'prop-types'
+import { Link, useLocation } from 'react-router-dom'
 
 import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
 
@@ -8,10 +7,11 @@ import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
 
-const TopHeader = ({ location }) => {
+const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
+  const location = useLocation()
 
   React.useEffect(() => {
     // on location changed, clear alert
@@ -52,5 +52,4 @@ const TopHeader = ({ location }) => {
     </Navbar>
   )
 }
-export default withRouter(TopHeader)
-TopHeader.propTypes = { location: PropTypes.object.isRequired }
+export default TopHeader
