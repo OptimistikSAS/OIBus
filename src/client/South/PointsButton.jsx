@@ -1,10 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
-import { withRouter } from 'react-router-dom'
+import { useHistory } from 'react-router-dom'
 import ProtocolForms from './Protocols.jsx'
 
-const PointsButton = ({ history, dataSource }) => {
+const PointsButton = ({ dataSource }) => {
+  const history = useHistory()
   const handleEditPoints = () => {
     const link = `/south/${dataSource.dataSourceId}/points`
     history.push({ pathname: link })
@@ -23,6 +24,6 @@ const PointsButton = ({ history, dataSource }) => {
   ) : null
 }
 
-PointsButton.propTypes = { dataSource: PropTypes.object.isRequired, history: PropTypes.object.isRequired }
+PointsButton.propTypes = { dataSource: PropTypes.object.isRequired }
 
-export default withRouter(PointsButton)
+export default PointsButton

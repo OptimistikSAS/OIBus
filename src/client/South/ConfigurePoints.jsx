@@ -1,6 +1,5 @@
 import React from 'react'
-import { withRouter } from 'react-router-dom'
-import PropTypes from 'prop-types'
+import { useParams } from 'react-router-dom'
 import { Button, Input } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
@@ -11,7 +10,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import ProtocolForms from './Protocols.jsx'
 
-const ConfigurePoints = ({ match }) => {
+const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
@@ -21,7 +20,7 @@ const ConfigurePoints = ({ match }) => {
   // this value will be used to calculate the amount of max pagination displayed
   const MAX_PAGINATION_DISPLAY = 11
 
-  const { dataSourceId } = match.params
+  const { dataSourceId } = useParams()
   const dataSourceIndex = newConfig.south.dataSources
     .findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
@@ -174,6 +173,4 @@ const ConfigurePoints = ({ match }) => {
   )
 }
 
-ConfigurePoints.propTypes = { match: PropTypes.object.isRequired }
-
-export default withRouter(ConfigurePoints)
+export default ConfigurePoints

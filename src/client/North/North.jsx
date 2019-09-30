@@ -1,6 +1,5 @@
 import React from 'react'
-import { withRouter } from 'react-router-dom'
-import PropTypes from 'prop-types'
+import { useHistory } from 'react-router-dom'
 import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
@@ -8,10 +7,11 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
 
-const North = ({ history }) => {
+const North = () => {
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
   const applications = newConfig && newConfig.north && newConfig.north.applications
+  const history = useHistory()
 
   /**
    * Gets the config json of a north application
@@ -103,6 +103,5 @@ const North = ({ history }) => {
     </div>
   )
 }
-North.propTypes = { history: PropTypes.object.isRequired }
 
-export default withRouter(North)
+export default North
