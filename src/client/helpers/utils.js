@@ -36,16 +36,38 @@ const parseCSV = (csv, delimiter) => {
   return result
 }
 
-const replaceValuesHelper = (obj, keys, value) => {
+const replaceValuesDiffHelper = (obj, keys, value) => {
   if (!obj) return
   if (obj instanceof Array) {
     obj.forEach((i) => {
-      replaceValuesHelper(obj[i], keys, value)
+      replaceValuesDiffHelper(obj[i], keys, value)
     })
     return
   }
   keys.forEach((key) => {
     if (obj[key]) obj[key] = [value, value]
+  })
+
+  if ((typeof obj === 'object') && (obj !== null)) {
+    const children = Object.keys(obj)
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i += 1) {
+        replaceValuesDiffHelper(obj[children[i]], keys, value)
+      }
+    }
+  }
+}
+
+const replaceValuesHelper = (obj, keys, value) => {
+  if (!obj) return
+  if (obj instanceof Array) {
+    obj.forEach((e) => {
+      replaceValuesHelper(e, keys, value)
+    })
+    return
+  }
+  keys.forEach((key) => {
+    if (obj[key]) obj[key] = value
   })
 
   if ((typeof obj === 'object') && (obj !== null)) {
@@ -58,6 +80,12 @@ const replaceValuesHelper = (obj, keys, value) => {
   }
 }
 
-const replaceValues = (obj, keys, value) => replaceValuesHelper(obj, keys, value)
+const replaceValues = (obj, keys, value, isDiff = false) => {
+  if (isDiff) {
+    replaceValuesDiffHelper(obj, keys, value)
+  } else {
+    replaceValuesHelper(obj, keys, value)
+  }
+}
 
 export default { dynamicSort, parseCSV, replaceValues }
