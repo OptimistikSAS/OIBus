@@ -1,25 +1,45 @@
-/*
- * An example entry how to migrate to version 2
- *
- * 2: (config) => {
- *   // Rename logFilename => filename
- *   console.info('config.engine.logParameters.logFilename => config.engine.logParameters.filename')
- *   config.engine.logParameters.filename = config.engine.logParameters.logFilename
- *   delete config.engine.logParameters.logFilename
- *
- *   // Rename FolderScanner => RawFile
- *   console.info('FolderScanner => RawFile')
- *   config.south.dataSources.forEach((dataSource) => {
- *     if (dataSource.protocol === 'FolderScanner') {
- *       dataSource.protocol = 'RawFile'
- *       dataSource.RawFile = dataSource.FolderScanner
- *       delete dataSource.FolderScanner
- *     }
- *   })
- * }
- */
 module.exports = {
   2: (config) => {
+    console.info('Rename RawFile to FolderScanner')
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'RawFile') {
+        dataSource.protocol = 'FolderScanner'
+        if (Object.prototype.hasOwnProperty.call(dataSource, 'RawFile')) {
+          dataSource.FolderScanner = dataSource.RawFile
+          delete dataSource.RawFile
+        }
+      }
+
+      if (dataSource.protocol === 'SQLFile') {
+        console.info('Rename SQLFile to SQLDbToFile')
+        dataSource.protocol = 'SQLDbToFile'
+        if (Object.prototype.hasOwnProperty.call(dataSource, 'SQLFile')) {
+          dataSource.SQLDbToFile = dataSource.SQLFile
+          delete dataSource.SQLFile
+        }
+      }
+    })
+
+    config.north.applications.forEach((application) => {
+      if (application.api === 'Link') {
+        application.info('Rename Link to OIConnect')
+        application.api = 'OIConnect'
+        if (Object.prototype.hasOwnProperty.call(application, 'Link')) {
+          application.OIConnect = application.Link
+          delete application.Link
+        }
+      }
+
+      if (application.api === 'RawFileSender') {
+        console.info('Rename RawFileSender to OIAnalyticsFile')
+        application.api = 'OIAnalyticsFile'
+        if (Object.prototype.hasOwnProperty.call(application, 'RawFileSender')) {
+          application.OIAnalyticsFile = application.RawFileSender
+          delete application.RawFileSender
+        }
+      }
+    })
+
     console.info('Move protocol dependent parameters under a sub object of the protocol')
     const engineRelatedDataSourceFields = ['dataSourceId', 'enabled', 'protocol', 'scanMode', 'points', 'scanGroups']
     config.south.dataSources.forEach((dataSource) => {
