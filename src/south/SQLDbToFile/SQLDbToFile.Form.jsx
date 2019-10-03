@@ -141,8 +141,8 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
       <Col md="4">
         <OIbScanMode
           label="Scan Mode"
-          name="SQLDbToFile.scanMode"
-          scanMode={dataSource.SQLDbToFile.scanMode}
+          name="scanMode"
+          scanMode={dataSource.scanMode}
           onChange={onChange}
         />
       </Col>
