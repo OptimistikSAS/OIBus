@@ -27,7 +27,7 @@ const AmazonS3Form = ({ application, onChange }) => (
       </Col>
     </Row>
     <OIbAuthentication
-      authentication={application.AliveSignalauthentication}
+      authentication={application.AmazonS3.authentication}
       validation={validation.AmazonS3.authentication}
       onChange={onChange}
       name="AmazonS3.authentication"
