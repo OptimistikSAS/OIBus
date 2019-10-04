@@ -26,7 +26,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
         newVal = `${PREFIX}${newVal}`
       }
     }
-    onChange(name, newVal, valid(newVal))
+    onChange(name, newVal, valid(newVal.replace(PREFIX, '')))
   }
   const handleKeyDown = (event) => {
     const { target } = event
@@ -36,11 +36,11 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
         // edit started add prefix for the API to know this is not encrypted
         newVal = PREFIX
         setEdited(true)
-        onChange(name, newVal, valid(newVal))
+        onChange(name, newVal, valid(newVal.replace(PREFIX, '')))
       }
     }
   }
-  const validCheck = valid(value)
+  const validCheck = valid(value.replace(PREFIX, ''))
   // if value is null, no need to render
   if (value === null) return null
 
@@ -66,7 +66,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
           </InputGroupAddon>
         )}
       </InputGroup>
-      <FormFeedback>{validCheck}</FormFeedback>
+      <FormFeedback style={{ display: 'inline' }}>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
