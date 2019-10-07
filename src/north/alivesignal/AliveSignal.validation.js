@@ -2,10 +2,10 @@ import type from '../../client/helpers/validation'
 
 const validation = {
   AliveSignal: {
-    host: type.string,
+    host: (val) => ((val && val.length > 2) ? null : 'Length should be greater than 2'),
     authentication: {
-      username: type.string,
-      password: type.string,
+      username: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
+      password: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
     },
     id: type.string,
     frequency: type.number,
