@@ -31,8 +31,9 @@ class ApiHandler {
     this.application = applicationParameters
     this.engine = engine
     this.logger = this.engine.logger
-    this.config = this.engine.config
     this.scanModes = this.engine.scanModes
+    const { engineConfig } = this.engine.configService.getConfig()
+    this.engineConfig = engineConfig
   }
 
   /**
@@ -85,7 +86,7 @@ class ApiHandler {
     let proxy = null
 
     if (proxyName) {
-      proxy = this.config.engine.proxies.find(({ name }) => name === proxyName)
+      proxy = this.engineConfig.proxies.find(({ name }) => name === proxyName)
     }
 
     return proxy
