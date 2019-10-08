@@ -34,7 +34,7 @@ class SqliteTransport extends TransportStream {
 
     // Perform the writing to the remote service
     if (!this.database) {
-      this.database = await this.createLogsDatabase()
+      await this.createLogsDatabase()
     }
     await this.addLog(payload.timestamp, payload.level, payload.message)
 
@@ -48,10 +48,10 @@ class SqliteTransport extends TransportStream {
 
   /**
    * Initiate SQLite3 database and create the logs table.
-   * @return {BetterSqlite3.Database} - The SQLite3 database
+   * @return {void}
    */
   async createLogsDatabase() {
-    const database = await sqlite.open(this.filename)
+    this.database = await sqlite.open(this.filename)
 
     const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
                     id INTEGER PRIMARY KEY, 
@@ -59,10 +59,8 @@ class SqliteTransport extends TransportStream {
                     level TEXT,
                     message TEXT
                   );`
-    const stmt = await database.prepare(query)
+    const stmt = await this.database.prepare(query)
     await stmt.run()
-
-    return database
   }
 
   /**

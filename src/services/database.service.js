@@ -3,7 +3,7 @@ const Logger = require('../engine/Logger.class')
 
 const CACHE_TABLE_NAME = 'cache'
 
-const logger = new Logger()
+const logger = Logger.getInstance()
 
 /**
  * Initiate SQLite3 database and create the cache table.

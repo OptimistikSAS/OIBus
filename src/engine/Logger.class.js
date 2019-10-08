@@ -5,10 +5,6 @@ const { combine, timestamp, printf, colorize } = format
 
 class Logger {
   constructor() {
-    if (Logger.instance) {
-      return Logger.instance
-    }
-    Logger.instance = this
     const defaultFormat = combine(timestamp(), printf((info) => `${info.timestamp} ${info.level}: ${info.message}`))
     const consoleFormat = combine(timestamp(), printf((msg) => `${colorize().colorize(msg.level, `${msg.timestamp}-${msg.level}:`)} ${msg.message}`))
     this.logger = createLogger({
@@ -18,6 +14,13 @@ class Logger {
         new transports.Console({ format: consoleFormat, handleExceptions: true }),
       ],
     })
+  }
+
+  static getInstance() {
+    if (Logger.instance) {
+      return Logger.instance
+    }
+    Logger.instance = new Logger()
     return Logger.instance
   }
 
