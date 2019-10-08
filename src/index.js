@@ -4,6 +4,9 @@ const VERSION = require('../package.json').version
 
 const migrationService = require('./migration/migration.service')
 const Engine = require('./engine/Engine.class')
+const Logger = require('./engine/Logger.class')
+
+const logger = new Logger()
 
 if (cluster.isMaster) {
   // Migrate config file, if needed
@@ -11,14 +14,14 @@ if (cluster.isMaster) {
 
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
-  console.info(`Starting OIBus version: ${VERSION}`)
+  logger.info(`Starting OIBus version: ${VERSION}`)
   cluster.fork()
 
   cluster.on('exit', (worker, code, signal) => {
     if (signal) {
-      console.info(`Worker ${worker.process.pid} was killed by signal: ${signal}`)
+      logger.info(`Worker ${worker.process.pid} was killed by signal: ${signal}`)
     } else {
-      console.error(`Worker ${worker.process.pid} exited with error code: ${code}`)
+      logger.error(`Worker ${worker.process.pid} exited with error code: ${code}`)
     }
 
     cluster.fork()
@@ -31,7 +34,7 @@ if (cluster.isMaster) {
 
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {
-    engine.logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+    logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
     engine.stop().then(() => {
       process.exit()
     })

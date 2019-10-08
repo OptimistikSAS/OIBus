@@ -10,7 +10,6 @@ const addValues = async (ctx) => {
     await ctx.app.engine.addValues(dataSourceId, values)
     ctx.ok()
   } catch (error) {
-    console.error(error)
     ctx.throw(500, `Unable to add ${values ? values.length : '...'} from ${dataSourceId}`)
   }
 }

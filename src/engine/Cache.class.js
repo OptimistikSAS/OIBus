@@ -150,8 +150,7 @@ class Cache {
         }
       })
     } catch (error) {
-      console.error(error)
-      this.logger(error)
+      this.logger.error(error)
     }
   }
 

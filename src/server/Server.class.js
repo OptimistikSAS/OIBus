@@ -58,7 +58,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          console.error(err)
+          this.logger.error(err)
           ctx.body = JSON.stringify(err)
         } else {
           throw err
