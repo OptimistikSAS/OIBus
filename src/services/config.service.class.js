@@ -15,7 +15,7 @@ const Logger = require('../engine/Logger.class')
 class ConfigService {
   constructor(engine) {
     this.engine = engine
-    this.logger = new Logger()
+    this.logger = Logger.getInstance()
 
     this.configFile = ConfigService.getConfigFile()
 

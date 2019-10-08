@@ -7,7 +7,7 @@ const Logger = require('../engine/Logger.class')
 const REQUIRED_SCHEMA_VERSION = 2
 const DEFAULT_VERSION = 1
 
-const logger = new Logger()
+const logger = Logger.getInstance()
 const configFile = ConfigService.getConfigFile()
 
 /**
