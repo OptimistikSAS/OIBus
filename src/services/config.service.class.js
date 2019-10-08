@@ -4,6 +4,7 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
@@ -14,7 +15,7 @@ const encryptionService = require('./encryption.service')
 class ConfigService {
   constructor(engine) {
     this.engine = engine
-    this.logger = console
+    this.logger = new Logger()
 
     this.configFile = ConfigService.getConfigFile()
 

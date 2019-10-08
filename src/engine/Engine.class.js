@@ -49,8 +49,9 @@ class Engine {
     this.configService = new ConfigService(this)
     const { engineConfig, southConfig } = this.configService.getConfig()
 
-    // Configure and get the logger
-    this.logger = new Logger(engineConfig.logParameters)
+    // Get and configure the logger
+    this.logger = new Logger()
+    this.logger.changeParameters(engineConfig.logParameters)
 
     this.configService.setLogger(this.logger)
 
