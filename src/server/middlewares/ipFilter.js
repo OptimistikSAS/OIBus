@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 const micromatch = require('micromatch')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Return ipFilter middleware:
@@ -15,7 +16,8 @@ const ipFilter = (filter) => async (ctx, next) => {
   if (micromatch.isMatch(ip, filter)) {
     await next()
   } else {
-    ctx.app.logger.error(new Error(`${ip} is not authorized`))
+    const logger = Logger.getInstance()
+    logger.error(new Error(`${ip} is not authorized`))
     ctx.throw(401, 'access denied ', `${ip} is not authorized`)
   }
 }

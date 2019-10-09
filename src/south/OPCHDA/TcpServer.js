@@ -1,11 +1,12 @@
 const net = require('net')
 
 const SocketSession = require('./SocketSession')
+const Logger = require('../../engine/Logger.class')
 
 class TcpServer {
-  constructor(port, logger, handleMessage) {
+  constructor(port, handleMessage) {
     this.port = port
-    this.logger = logger
+    this.logger = Logger.getInstance()
     this.handleMessage = handleMessage
     this.server = null
     this.session = null
@@ -27,7 +28,7 @@ class TcpServer {
       this.logger.info(`New connection attempt from ${name}`)
 
       if (!this.session) {
-        this.session = new SocketSession(socket, this, this.logger, this.handleMessage.bind(this))
+        this.session = new SocketSession(socket, this, this.handleMessage.bind(this))
       } else {
         this.logger.error(`Session already open, closing connection from ${name}`)
         socket.destroy()

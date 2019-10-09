@@ -1,16 +1,16 @@
 const Opcua = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Returns the fields array from the point containing passed pointId.
  * The point is from the optimized config hence the scannedDataSource parameter
  * @param {Object} pointId - The point ID
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
  * @return {*} The fields
  */
-const fieldsFromPointId = (pointId, types, logger) => {
+const fieldsFromPointId = (pointId, types) => {
   const type = types.find(
     (typeCompared) => typeCompared.type
       === pointId
@@ -22,6 +22,7 @@ const fieldsFromPointId = (pointId, types, logger) => {
   if (fields) {
     return fields
   }
+  const logger = Logger.getInstance()
   logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`))
   return {}
 }
@@ -105,7 +106,7 @@ class OPCUA extends ProtocolHandler {
           this.logger.debug(pointId, scanGroup)
 
           const { engineConfig } = this.engine.configService.getConfig()
-          const fields = fieldsFromPointId(pointId, engineConfig.types, this.logger)
+          const fields = fieldsFromPointId(pointId, engineConfig.types)
           this.logger.debug(fields)
           fields.forEach((field) => {
             value.dataId.push(field.name)
