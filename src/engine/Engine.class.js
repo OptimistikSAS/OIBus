@@ -53,8 +53,6 @@ class Engine {
     this.logger = Logger.getInstance()
     this.logger.changeParameters(engineConfig.logParameters)
 
-    this.configService.setLogger(this.logger)
-
     // Configure the Cache
     this.cache = new Cache(this)
     this.logger.info(`

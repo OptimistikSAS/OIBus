@@ -127,15 +127,6 @@ class ConfigService {
   }
 
   /**
-   * Set logger.
-   * @param {object} logger - The logger to use.
-   * @returns {void}
-   */
-  setLogger(logger) {
-    this.logger = logger
-  }
-
-  /**
    * Check if config file exists
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
