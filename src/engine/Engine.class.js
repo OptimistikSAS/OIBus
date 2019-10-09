@@ -64,7 +64,7 @@ class Engine {
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
-    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
+    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder)
 
     // prepare config
     // Associate the scanMode to all corresponding data sources
