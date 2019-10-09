@@ -153,9 +153,9 @@ class ConfigService {
     try {
       const duplicateConfig = JSON.parse(JSON.stringify(config))
       if (decryptSecrets) {
-        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder, this.logger)
+        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder)
+        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder)
+        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder)
       }
       return duplicateConfig
     } catch (error) {
