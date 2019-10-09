@@ -1,4 +1,5 @@
 const path = require('path')
+const Logger = require('../engine/Logger.class')
 
 class ApiHandler {
   /**
@@ -30,7 +31,7 @@ class ApiHandler {
 
     this.application = applicationParameters
     this.engine = engine
-    this.logger = this.engine.logger
+    this.logger = Logger.getInstance()
     this.scanModes = this.engine.scanModes
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
