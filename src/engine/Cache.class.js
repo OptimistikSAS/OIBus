@@ -3,6 +3,7 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -19,7 +20,7 @@ class Cache {
    * @return {void}
    */
   constructor(engine) {
-    this.logger = engine.logger
+    this.logger = Logger.getInstance()
     this.engine = engine
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
@@ -43,7 +44,7 @@ class Cache {
     this.sendInProgress = {}
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue(this.logger)
+    this.queue = new Queue()
     // Cache stats
     this.cacheStats = {}
   }

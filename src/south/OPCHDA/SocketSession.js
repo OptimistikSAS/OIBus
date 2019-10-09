@@ -1,11 +1,13 @@
+const Logger = require('../../engine/Logger.class')
+
 /**
  * Class representing a connected session.
  */
 class SocketSession {
-  constructor(socket, tcpServer, logger, handleMessage) {
+  constructor(socket, tcpServer, handleMessage) {
     this.socket = socket
     this.tcpServer = tcpServer
-    this.logger = logger
+    this.logger = Logger.getInstance()
     this.handleMessage = handleMessage
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''

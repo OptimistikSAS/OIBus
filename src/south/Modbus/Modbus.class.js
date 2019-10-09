@@ -2,15 +2,15 @@ const jsmodbus = require('jsmodbus')
 const net = require('net')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Gives a type to a point based on the config
  * @param {Object} point - The point
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
  * @return {void}
  */
-const giveType = (point, types, logger) => {
+const giveType = (point, types) => {
   types.forEach((typeCompared) => {
     if (
       typeCompared.type
@@ -22,6 +22,7 @@ const giveType = (point, types, logger) => {
       point.type = typeCompared.fields[0].type
       point.dataId = typeCompared.fields[0].name
       if (typeCompared.fields.length > 1) {
+        const logger = Logger.getInstance()
         logger.error('Modbus points cannot contain more than 1 field')
       }
     }
@@ -69,7 +70,7 @@ class Modbus extends ProtocolHandler {
       // Dynamic call of the appropriate function based on type
       const { engineConfig } = this.engine.configService.getConfig()
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach((point) => giveType(point, engineConfig.types, this.logger))
+        points.forEach((point) => giveType(point, engineConfig.types))
         const rangeAddresses = range.split('-')
         const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
         const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group

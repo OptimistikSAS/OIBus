@@ -8,6 +8,7 @@ const json = require('koa-json')
 
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
+const Logger = require('../engine/Logger.class')
 
 const router = require('./routes')
 
@@ -25,12 +26,11 @@ class Server {
     this.app = new Koa()
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
-    this.app.logger = engine.logger
     // Get the config entries
     const { engineConfig } = engine.configService.getConfig()
     const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
-    this.logger = engine.logger
+    this.logger = Logger.getInstance()
     this.debug = debug
     this.port = port
     this.user = user
