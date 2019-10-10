@@ -174,15 +174,6 @@ const resetConfiguration = (ctx) => {
   }
 }
 
-/**
- * Get the location of the config file.
- * @param {Object} ctx - The KOA context
- * @return {void}
- */
-const getConfigurationFileLocation = (ctx) => {
-  ctx.ok({ configFile: ctx.app.engine.configService.getConfigurationFileLocation() })
-}
-
 module.exports = {
   getActiveConfiguration,
   getModifiedConfiguration,
@@ -195,5 +186,4 @@ module.exports = {
   updateConfig,
   activateConfiguration,
   resetConfiguration,
-  getConfigurationFileLocation,
 }
