@@ -17,6 +17,7 @@ const getStatus = async (ctx) => {
     CurrentDirectory: process.cwd(),
     'Node Version': process.version,
     Executable: process.execPath,
+    ConfigFile: ctx.app.engine.configService.getConfigurationFileLocation(),
     'Free/Total Memory/%': `${os.freemem()}/${os.totalmem()}/${Number((os.freemem() / os.totalmem()) * 100).toFixed(2)}%`,
     'Process Id': process.pid,
     'Up time': moment.duration(process.uptime(), 'seconds').humanize(),

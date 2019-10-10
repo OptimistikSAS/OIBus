@@ -421,6 +421,14 @@ class ConfigService {
   resetConfiguration() {
     this.modifiedConfig = this.duplicateConfig(this.config)
   }
+
+  /**
+   * Get the location of the config file.
+   * @returns {string} - The location of the config file
+   */
+  getConfigurationFileLocation() {
+    return this.configFile
+  }
 }
 
 module.exports = ConfigService
