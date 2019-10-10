@@ -29,7 +29,6 @@ router.get('/config/south/:dataSourceId/points/export', pointController.exportPo
 router.post('/config/south/:dataSourceId/points/import', pointController.importPoints)
 router.put('/config/activate', configController.activateConfiguration)
 router.put('/config/reset', configController.resetConfiguration)
-router.get('/config/location', configController.getConfigurationFileLocation)
 
 router.get('/config/schemas/north', schemaController.getNorthSchemaList)
 router.get('/config/schemas/north/:api', schemaController.getNorthSchema)
