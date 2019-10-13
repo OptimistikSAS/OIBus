@@ -5,7 +5,8 @@
         "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
         "filter": [
             "127.0.0.1",
-            "::1"
+            "::1",
+            "::ffff:127.0.0.1"
         ],
         "logParameters": {
             "consoleLevel": "debug",
@@ -35,6 +36,14 @@
             {
                 "scanMode": "every1Min",
                 "cronTime": "* * * * *"
+            },
+            {
+                "scanMode": "every5Second",
+                "cronTime": "* * * * * /5"
+            },
+            {
+                "scanMode": "every20Second",
+                "cronTime": "* * * * * /20"
             }
         ],
         "proxies": [
@@ -259,13 +268,13 @@
             {
                 "dataSourceId": "OPC-HDA",
                 "protocol": "OPCHDA",
-                "enabled": false,
+                "enabled": true,
                 "OPCHDA": {
                     "tcpPort": 3333,
                     "retryInterval": 10000,
-                    "agentFilename": "./deps/win/HdaAgent/HdaAgent.exe",
+                    "agentFilename": "C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\HdaAgent\\HdaAgent.exe",
                     "logLevel": "debug",
-                    "host": "opcserver",
+                    "host": "35.180.172.121",
                     "serverName": "Matrikon.OPC.Simulation"
                 },
                 "points": [
@@ -294,6 +303,21 @@
         ]
     },
     "north": {
-        "applications": []
-    }
+        "applications": [
+            {
+                "applicationId": "myconsole",
+                "api": "Console",
+                "enabled": true,
+                "Console": {},
+                "caching": {
+                    "sendInterval": 10000,
+                    "retryInterval": 5000,
+                    "groupCount": 1,
+                    "maxSendCount": 10000
+                },
+                "subscribedTo": []
+            }
+        ]
+    },
+    "schemaVersion": 2
 }
