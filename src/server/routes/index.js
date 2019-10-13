@@ -1,9 +1,8 @@
-const Router = require('koa-router')
+const Router = require('@koa/router')
 
 const configController = require('../controllers/configController')
 const schemaController = require('../controllers/schemaController')
 const reloadController = require('../controllers/reloadController')
-const clientController = require('../controllers/clientController')
 const pointController = require('../controllers/pointController')
 const logController = require('../controllers/logController')
 const engineController = require('../controllers/engineController')
@@ -42,7 +41,5 @@ router.get('/reload', reloadController.reload)
 router.post('/engine/addValues', engineController.addValues)
 
 router.get('/status', statusController.getStatus)
-
-router.get('/*', clientController.serveClient)
 
 module.exports = router
