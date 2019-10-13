@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { Collapse, Navbar, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
+import { Collapse, Navbar, NavbarBrand, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
 
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
@@ -24,13 +24,13 @@ const TopHeader = () => {
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
   return (
-    <Navbar expand="md" className="oi-navbar oi-navbar-top navbar-fixed-top">
+    <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>
+      <NavbarBrand tag={Link} to="/" className="mr-auto">
+        <img src={logo} alt="OIBus" height="20px" className="oi-navicon" />
+      </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
         <Nav navbar>
-          <NavItem className="oi-navicon" tag={Link} to="/">
-            <img src={logo} alt="OIBus" height="24px" className="oi-navicon" />
-          </NavItem>
           <NavItem className="oi-navitem" active={isActive('engine')} tag={Link} to="/engine">
             Engine
           </NavItem>
