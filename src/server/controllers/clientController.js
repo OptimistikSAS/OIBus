@@ -1,15 +1,16 @@
 const koaSend = require('koa-send')
-const fs = require('fs')
 
-const serveClient = (ctx) => {
+const serveClient = async (ctx) => {
   const root = `${__dirname}/../../../build`
-
-  let { path } = ctx
-  if ((path === '/') || !fs.existsSync(`${root}${path}`)) {
-    path = 'index.html'
+  const { path } = ctx
+  switch (path) {
+    case '/bundle.js':
+    case '/bundle.js.map':
+    case 'favicon.ico':
+      await koaSend(ctx, path, { root, index: '/index.html' })
+      break
+    default: await koaSend(ctx, '/index.html', { root })
   }
-
-  return koaSend(ctx, path, { root })
 }
 
 module.exports = { serveClient }
