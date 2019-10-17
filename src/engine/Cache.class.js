@@ -220,6 +220,7 @@ class Cache {
           this.logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
           fs.copyFile(filePath, cachePath, (copyError) => {
             if (copyError) throw copyError
+            resolve()
           })
         } else {
           this.logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
@@ -234,11 +235,13 @@ class Cache {
                   // log error but does not throw so we try sending the file to S3
                   if (unlinkError) this.logger.error(unlinkError)
                 })
+                resolve()
               })
+            } else {
+              resolve()
             }
           })
         }
-        resolve()
       } catch (error) {
         reject(error)
       }
