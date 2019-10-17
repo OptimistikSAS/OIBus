@@ -1,0 +1,31 @@
+import React from 'react'
+import { useParams } from 'react-router-dom'
+import { Spinner } from 'reactstrap'
+import { ConfigContext } from '../context/configContext.jsx'
+import SouthForm from './Form/SouthForm.jsx'
+
+const ConfigureProtocol = () => {
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const dataSources = newConfig && newConfig.south.dataSources // array of all defined dataSources
+  const { dataSourceId } = useParams() // the dataSourceId passed in the url
+  const dataSourceIndex = dataSources && dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+
+  const onChange = (name, value, validity) => {
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
+  }
+
+  return dataSources ? (
+    <SouthForm
+      dataSource={dataSources[dataSourceIndex]}
+      dataSourceIndex={dataSourceIndex}
+      onChange={onChange}
+    />
+  ) : (
+    <div className="spinner-container">
+      <Spinner color="primary" type="grow" />
+      ...loading configuration from OIBus server...
+    </div>
+  )
+}
+
+export default ConfigureProtocol

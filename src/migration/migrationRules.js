@@ -1,0 +1,73 @@
+module.exports = {
+  2: (config) => {
+    console.info('Rename RawFile to FolderScanner')
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'RawFile') {
+        dataSource.protocol = 'FolderScanner'
+        if (Object.prototype.hasOwnProperty.call(dataSource, 'RawFile')) {
+          dataSource.FolderScanner = dataSource.RawFile
+          delete dataSource.RawFile
+        }
+      }
+
+      if (dataSource.protocol === 'SQLFile') {
+        console.info('Rename SQLFile to SQLDbToFile')
+        dataSource.protocol = 'SQLDbToFile'
+        if (Object.prototype.hasOwnProperty.call(dataSource, 'SQLFile')) {
+          dataSource.SQLDbToFile = dataSource.SQLFile
+          delete dataSource.SQLFile
+        }
+      }
+    })
+
+    config.north.applications.forEach((application) => {
+      if (application.api === 'Link') {
+        application.info('Rename Link to OIConnect')
+        application.api = 'OIConnect'
+        if (Object.prototype.hasOwnProperty.call(application, 'Link')) {
+          application.OIConnect = application.Link
+          delete application.Link
+        }
+      }
+
+      if (application.api === 'RawFileSender') {
+        console.info('Rename RawFileSender to OIAnalyticsFile')
+        application.api = 'OIAnalyticsFile'
+        if (Object.prototype.hasOwnProperty.call(application, 'RawFileSender')) {
+          application.OIAnalyticsFile = application.RawFileSender
+          delete application.RawFileSender
+        }
+      }
+    })
+
+    console.info('Move protocol dependent parameters under a sub object of the protocol')
+    const engineRelatedDataSourceFields = ['dataSourceId', 'enabled', 'protocol', 'scanMode', 'points', 'scanGroups']
+    config.south.dataSources.forEach((dataSource) => {
+      if (!Object.prototype.hasOwnProperty.call(dataSource, dataSource.protocol)) {
+        const dataSourceRelatedFields = {}
+        Object.entries(dataSource).forEach(([key, value]) => {
+          if (!engineRelatedDataSourceFields.includes(key)) {
+            dataSourceRelatedFields[key] = value
+            delete dataSource[key]
+          }
+        })
+        dataSource[dataSource.protocol] = dataSourceRelatedFields
+      }
+    })
+
+    console.info('Move api dependent parameters under a sub object of the api')
+    const engineRelatedApplicationFields = ['applicationId', 'enabled', 'api', 'caching', 'subscribedTo']
+    config.north.applications.forEach((application) => {
+      if (!Object.prototype.hasOwnProperty.call(application, application.api)) {
+        const applicationRelatedFields = {}
+        Object.entries(application).forEach(([key, value]) => {
+          if (!engineRelatedApplicationFields.includes(key)) {
+            applicationRelatedFields[key] = value
+            delete application[key]
+          }
+        })
+        application[application.api] = applicationRelatedFields
+      }
+    })
+  },
+}

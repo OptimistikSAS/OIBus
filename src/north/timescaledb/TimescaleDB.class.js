@@ -127,6 +127,4 @@ class TimescaleDB extends ApiHandler {
   }
 }
 
-TimescaleDB.schema = require('./schema')
-
 module.exports = TimescaleDB

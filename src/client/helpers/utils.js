@@ -20,4 +20,72 @@ const dynamicSort = (property) => {
   }
 }
 
-export default { dynamicSort }
+const parseCSV = (csv, delimiter) => {
+  const lines = csv.split('\n')
+  const result = []
+  const headers = lines[0].split(delimiter)
+
+  for (let i = 1; i < lines.length; i += 1) {
+    const obj = {}
+    const currentline = lines[i].split(delimiter)
+    for (let j = 0; j < headers.length; j += 1) {
+      obj[headers[j]] = currentline[j]
+    }
+    result.push(obj)
+  }
+  return result
+}
+
+const replaceValuesDiffHelper = (obj, keys, value) => {
+  if (!obj) return
+  if (obj instanceof Array) {
+    obj.forEach((i) => {
+      replaceValuesDiffHelper(obj[i], keys, value)
+    })
+    return
+  }
+  keys.forEach((key) => {
+    if (obj[key]) obj[key] = [value, value]
+  })
+
+  if ((typeof obj === 'object') && (obj !== null)) {
+    const children = Object.keys(obj)
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i += 1) {
+        replaceValuesDiffHelper(obj[children[i]], keys, value)
+      }
+    }
+  }
+}
+
+const replaceValuesHelper = (obj, keys, value) => {
+  if (!obj) return
+  if (obj instanceof Array) {
+    obj.forEach((e) => {
+      replaceValuesHelper(e, keys, value)
+    })
+    return
+  }
+  keys.forEach((key) => {
+    if (obj[key]) obj[key] = value
+  })
+
+  if ((typeof obj === 'object') && (obj !== null)) {
+    const children = Object.keys(obj)
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i += 1) {
+        replaceValuesHelper(obj[children[i]], keys, value)
+      }
+    }
+  }
+}
+
+const replaceValues = (obj, keys, value, isDiff = false) => {
+  if (isDiff) {
+    replaceValuesDiffHelper(obj, keys, value)
+  } else {
+    replaceValuesHelper(obj, keys, value)
+  }
+}
+
+export default { dynamicSort, parseCSV, replaceValues }
