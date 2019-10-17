@@ -66,15 +66,16 @@ const groupAddresses = (array, key, groupSize) => {
 
 /**
  * Gets the configuration file
- * @param {Object} dataSource - The data source
+ * @param {Object} points - The data source
+ * @param {Array} addressGap - address Gap
  * @return {Object} The scan modes
  */
-const optimizedConfig = (dataSource) => {
-  const scanModes = groupBy(dataSource.points, 'scanMode' /* , { dataSourceId } */)
+const optimizedConfig = (points, addressGap) => {
+  const scanModes = groupBy(points, 'scanMode' /* , { dataSourceId } */)
   Object.keys(scanModes).forEach((scan) => {
     scanModes[scan] = groupBy(scanModes[scan], 'type')
     Object.keys(scanModes[scan]).forEach((type) => {
-      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'address', dataSource.addressGap[type])
+      scanModes[scan][type] = groupAddresses(scanModes[scan][type], 'address', addressGap[type])
     })
   })
   /*

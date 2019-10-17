@@ -19,14 +19,14 @@ class OIConnect extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.OIConnect
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch', timeout = 60000 } = applicationParameters.OIConnect
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
     this.proxy = this.getProxy(proxy)
     this.stack = stack
 
-    this.timeout = 60000
+    this.timeout = timeout
 
     this.canHandleValues = true
   }
@@ -152,6 +152,7 @@ class OIConnect extends ApiHandler {
       headers,
       body: JSON.stringify(body),
       proxy,
+      timeout: this.timeout,
     }
 
     try {
@@ -191,6 +192,7 @@ class OIConnect extends ApiHandler {
       headers,
       body: JSON.stringify(body),
       agent,
+      timeout: this.timeout,
     }
 
     try {
@@ -205,7 +207,5 @@ class OIConnect extends ApiHandler {
     return true
   }
 }
-
-OIConnect.schema = require('./schema')
 
 module.exports = OIConnect

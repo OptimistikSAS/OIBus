@@ -89,6 +89,4 @@ class AliveSignal extends ApiHandler {
   }
 }
 
-AliveSignal.schema = require('./schema')
-
 module.exports = AliveSignal

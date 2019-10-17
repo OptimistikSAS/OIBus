@@ -72,6 +72,4 @@ class AmazonS3 extends ApiHandler {
   }
 }
 
-AmazonS3.schema = require('./schema')
-
 module.exports = AmazonS3

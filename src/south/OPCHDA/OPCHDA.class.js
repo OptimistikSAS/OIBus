@@ -62,7 +62,7 @@ class OPCHDA extends ProtocolHandler {
       })
 
       // Launch Agent
-      const { agentFilename, tcpPort, logLevel } = this.dataSource
+      const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
       this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
@@ -184,7 +184,7 @@ class OPCHDA extends ProtocolHandler {
 
   sendConnectMessage() {
     this.reconnectTimeout = null
-    const { host, serverName } = this.dataSource
+    const { host, serverName } = this.dataSource.OPCHDA
     const message = {
       Request: 'Connect',
       TransactionId: this.generateTransactionId(),
@@ -258,6 +258,7 @@ class OPCHDA extends ProtocolHandler {
 
       const messageObject = JSON.parse(message)
       let dateString
+      const { host, serverName, retryInterval } = this.dataSource.OPCHDA
 
       switch (messageObject.Reply) {
         case 'Alive':
@@ -270,11 +271,11 @@ class OPCHDA extends ProtocolHandler {
             this.sendInitializeMessage()
           } else {
             this.logger.error(
-              `Unable to connect to ${this.dataSource.serverName} on ${this.dataSource.host}: ${
+              `Unable to connect to ${serverName} on ${host}: ${
                 messageObject.Content.Error
               }`,
             )
-            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.dataSource.retryInterval)
+            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
           }
           break
         case 'Initialize':
@@ -342,7 +343,5 @@ class OPCHDA extends ProtocolHandler {
     }
   }
 }
-
-OPCHDA.schema = require('./schema')
 
 module.exports = OPCHDA
