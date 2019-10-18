@@ -32,6 +32,19 @@ const Engine = () => {
         </OIbTitle>
         <Row>
           <Col md={2}>
+            <OIbText
+              name="engine.engineName"
+              label="Engine name"
+              value={newConfig.engine.engineName}
+              valid={validation.engine.engineName}
+              defaultValue="OIBus"
+              onChange={onChange}
+              help={<div>The name for the OIBus</div>}
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={2}>
             <OIbInteger
               name="engine.port"
               label="Port"
