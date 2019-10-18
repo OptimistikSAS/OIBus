@@ -1,5 +1,6 @@
 const validation = {
   engine: {
+    engineName: (val) => ((val && val.length > 0) ? null : 'Name should not be empty'),
     port: (val) => (val >= 1 && val <= 65535 ? null : 'Value should be between 1 and 65535'),
     user: (val) => ((val && val.length > 0) ? null : 'User should not be empty'),
     password: (val) => ((val && val.length > 3) ? null : 'Length should be greater than 3'),
