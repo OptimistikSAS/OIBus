@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
+import { FaNetworkWired } from 'react-icons/fa'
 
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
@@ -49,7 +50,8 @@ const TopHeader = () => {
             {configModified ? <Badge color="warning" pill>new</Badge> : null}
           </NavItem>
           <NavItem className="oi-navname">
-            {engineName}
+            <FaNetworkWired />
+            {` ${engineName}`}
           </NavItem>
         </Nav>
       </Collapse>
