@@ -15,6 +15,7 @@ const Health = () => {
   const { activeConfig } = React.useContext(ConfigContext)
   const config = JSON.parse(JSON.stringify(activeConfig))
   utils.replaceValues(config, ['password', 'secretKey'], '******')
+  const engineName = activeConfig ? activeConfig.engine.engineName : ''
 
   /**
    * Acquire the status
@@ -60,7 +61,8 @@ const Health = () => {
       <Row>
         <Label>
           <span>
-            Health status&nbsp;
+            {`${engineName} health status`}
+            &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
           </span>
         </Label>
