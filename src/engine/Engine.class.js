@@ -296,7 +296,7 @@ class Engine {
    * @return {String[]} - Available North applications
    */
   /* eslint-disable-next-line class-methods-use-this */
-  getNorthSchemaList() {
+  getNorthList() {
     logger.debug('Getting North applications')
     return Object.keys(apiList)
   }
@@ -306,41 +306,9 @@ class Engine {
    * @return {String[]} - Available South protocols
    */
   /* eslint-disable-next-line class-methods-use-this */
-  getSouthSchemaList() {
+  getSouthList() {
     logger.debug('Getting South protocols')
     return Object.keys(protocolList)
-  }
-
-  /**
-   * Get schema definition for the given api
-   * @param {String} api - The api to get the schema for
-   * @return {Object} - The api schema
-   */
-  /* eslint-disable-next-line class-methods-use-this */
-  getNorthSchema(api) {
-    if (Object.keys(apiList).includes(api)) {
-      logger.debug(`Getting schema for North application ${api}`)
-
-      return apiList[api].schema
-    }
-
-    return null
-  }
-
-  /**
-   * Get schema definition for the given protocol
-   * @param {String} protocol - The protocol to get the schema for
-   * @return {Object} - The protocol schema
-   */
-  /* eslint-disable-next-line class-methods-use-this */
-  getSouthSchema(protocol) {
-    if (Object.keys(protocolList).includes(protocol)) {
-      logger.debug(`Getting schema for South protocol ${protocol}`)
-
-      return protocolList[protocol].schema
-    }
-
-    return null
   }
 
   /**
