@@ -1,13 +1,11 @@
-
 /**
  * Create a Queue with auto
  * @class Queue
  */
 class Queue {
-  constructor(logger) {
+  constructor() {
     this.queue = []
     this.run = false
-    this.logger = logger
   }
 
   clear() {
@@ -28,7 +26,7 @@ class Queue {
     try {
       await fn(...args)
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
     }
     this.run = false
     await this.next()

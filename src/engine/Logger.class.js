@@ -4,19 +4,23 @@ const SqliteTransport = require('./SqliteWinstonTransport.class')
 const { combine, timestamp, printf, colorize } = format
 
 class Logger {
-  constructor(logParameters) {
-    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
+  constructor() {
     const defaultFormat = combine(timestamp(), printf((info) => `${info.timestamp} ${info.level}: ${info.message}`))
     const consoleFormat = combine(timestamp(), printf((msg) => `${colorize().colorize(msg.level, `${msg.timestamp}-${msg.level}:`)} ${msg.message}`))
     this.logger = createLogger({
-      level: consoleLevel,
+      level: 'info',
       format: defaultFormat,
       transports: [
         new transports.Console({ format: consoleFormat, handleExceptions: true }),
-        new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable, handleExceptions: true }),
-        new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize, handleExceptions: true }),
       ],
     })
+  }
+
+  changeParameters(logParameters) {
+    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
+    this.logger.level = consoleLevel
+    this.logger.add(new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable, handleExceptions: true }))
+    this.logger.add(new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize, handleExceptions: true }))
   }
 
   info(message) {
