@@ -4,7 +4,6 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
-const Logger = require('../engine/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
@@ -15,13 +14,12 @@ const Logger = require('../engine/Logger.class')
 class ConfigService {
   constructor(engine) {
     this.engine = engine
-    this.logger = Logger.getInstance()
 
     this.configFile = ConfigService.getConfigFile()
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
-      this.logger.info(`Creating folder ${baseDir}`)
+      logger.info(`Creating folder ${baseDir}`)
       fs.mkdirSync(baseDir, { recursive: true })
     }
     process.chdir(path.parse(this.configFile).dir)
@@ -41,7 +39,7 @@ class ConfigService {
    */
   static isValidArgs({ config }) {
     if (!config) {
-      this.logger.error('No config file specified, example: --config ./config/config.json')
+      logger.error('No config file specified, example: --config ./config/config.json')
       return false
     }
 
@@ -79,14 +77,14 @@ class ConfigService {
    */
   static tryReadFile(filePath) {
     if (!filePath.endsWith('.json')) {
-      this.logger.error('You must provide a json file for the configuration!')
+      logger.error('You must provide a json file for the configuration!')
       throw new Error('You must provide a json file for the configuration!')
     }
 
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
       throw error
     }
   }
@@ -133,12 +131,12 @@ class ConfigService {
    */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
-      this.logger.info('Default config file does not exist. Creating it.')
+      logger.info('Default config file does not exist. Creating it.')
       try {
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
-        this.logger.error(error)
+        logger.error(error)
       }
     }
   }
@@ -159,7 +157,7 @@ class ConfigService {
       }
       return duplicateConfig
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
       throw error
     }
   }

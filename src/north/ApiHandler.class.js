@@ -1,5 +1,4 @@
 const path = require('path')
-const Logger = require('../engine/Logger.class')
 
 class ApiHandler {
   /**
@@ -31,7 +30,6 @@ class ApiHandler {
 
     this.application = applicationParameters
     this.engine = engine
-    this.logger = Logger.getInstance()
     this.scanModes = this.engine.scanModes
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
@@ -44,7 +42,7 @@ class ApiHandler {
    */
   connect() {
     const { applicationId, api } = this.application
-    this.logger.info(`North API ${applicationId} started with protocol ${api}`)
+    logger.info(`North API ${applicationId} started with protocol ${api}`)
   }
 
   /**
@@ -54,7 +52,7 @@ class ApiHandler {
    */
   disconnect() {
     const { applicationId } = this.application
-    this.logger.info(`North API ${applicationId} disconnected`)
+    logger.info(`North API ${applicationId} disconnected`)
   }
 
   /**
@@ -64,7 +62,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.warning('handleValues should be surcharged', values)
+    logger.warn('handleValues should be surcharged', values)
     return true
   }
 
@@ -74,7 +72,7 @@ class ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleFile(filePath) {
-    this.logger.warning('handleFile should be surcharged', filePath)
+    logger.warn('handleFile should be surcharged', filePath)
     return true
   }
 

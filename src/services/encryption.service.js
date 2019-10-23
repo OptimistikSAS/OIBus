@@ -1,9 +1,6 @@
 const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
-const Logger = require('../engine/Logger.class')
-
-const logger = Logger.getInstance()
 
 /**
  * Check if private/public keys exist and create them if not.
