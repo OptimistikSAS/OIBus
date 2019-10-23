@@ -129,6 +129,7 @@ class ConfigService {
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
    */
+  /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
       logger.info('Default config file does not exist. Creating it.')

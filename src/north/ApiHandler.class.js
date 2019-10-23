@@ -61,6 +61,7 @@ class ApiHandler {
    * @param {object[]} values - The values to handle
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
     logger.warn('handleValues should be surcharged', values)
     return true
@@ -71,6 +72,7 @@ class ApiHandler {
    * @param {string} filePath - The path of the raw file
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
     logger.warn('handleFile should be surcharged', filePath)
     return true
