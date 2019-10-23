@@ -1,12 +1,10 @@
-import type from '../../client/helpers/validation'
-
 const validation = {
   AmazonS3: {
-    bucket: type.string,
-    folder: type.string,
+    bucket: (val) => ((val && val.length > 0) ? null : 'Bucket should not be empty'),
+    folder: (val) => ((val && val.length > 0) ? null : 'Folder should not be empty'),
     authentication: {
-      accessKey: type.string,
-      secretKey: type.string,
+      accessKey: (val) => ((val && val.length > 0) ? null : 'Access Key should not be empty'),
+      secretKey: (val) => ((val && val.length > 0) ? null : 'Secret Key should not be empty'),
     },
   },
 }

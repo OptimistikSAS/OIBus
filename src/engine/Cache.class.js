@@ -67,7 +67,11 @@ class Cache {
       logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.applicationId] = api
-    this.resetTimeout(api, api.config.sendInterval)
+    if (api && api.config && api.config.sendInterval) {
+      this.resetTimeout(api, api.config.sendInterval)
+    } else {
+      this.logger.debug(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`)
+    }
   }
 
   /**
@@ -194,28 +198,8 @@ class Cache {
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
     try {
-      if (preserveFiles) {
-        logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
-        fs.copyFile(filePath, cachePath, (copyError) => {
-          if (copyError) throw copyError
-        })
-      } else {
-        logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
-        fs.rename(filePath, cachePath, (renameError) => {
-          if (renameError) {
-            // In case of cross-device link error we copy+delete instead
-            if (renameError.code !== 'EXDEV') throw renameError
-            logger.debug('Cross-device link error during rename, copy+paste instead')
-            fs.copyFile(filePath, cachePath, (copyError) => {
-              if (copyError) throw copyError
-              fs.unlink(filePath, (unlinkError) => {
-                // log error but does not throw so we try sending the file to S3
-                if (unlinkError) logger.error(unlinkError)
-              })
-            })
-          }
-        })
-      }
+      // Move or copy the file into the cache folder
+      await this.transferFile(filePath, cachePath, preserveFiles)
 
       // Cache the file for every subscribed North
       const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, dataSourceId, cachePath, timestamp))
@@ -229,6 +213,41 @@ class Cache {
     } catch (error) {
       logger.error(error)
     }
+  }
+
+  transferFile(filePath, cachePath, preserveFiles) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (preserveFiles) {
+          this.logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
+          fs.copyFile(filePath, cachePath, (copyError) => {
+            if (copyError) throw copyError
+            resolve()
+          })
+        } else {
+          this.logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
+          fs.rename(filePath, cachePath, (renameError) => {
+            if (renameError) {
+              // In case of cross-device link error we copy+delete instead
+              if (renameError.code !== 'EXDEV') throw renameError
+              this.logger.debug('Cross-device link error during rename, copy+paste instead')
+              fs.copyFile(filePath, cachePath, (copyError) => {
+                if (copyError) throw copyError
+                fs.unlink(filePath, (unlinkError) => {
+                  // log error but does not throw so we try sending the file to S3
+                  if (unlinkError) this.logger.error(unlinkError)
+                })
+                resolve()
+              })
+            } else {
+              resolve()
+            }
+          })
+        }
+      } catch (error) {
+        reject(error)
+      }
+    })
   }
 
   /**
