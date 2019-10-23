@@ -21,6 +21,4 @@ const exportPoints = async (ctx) => {
   }
 }
 
-module.exports = {
-  exportPoints,
-}
+module.exports = { exportPoints }
