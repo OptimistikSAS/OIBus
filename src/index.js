@@ -6,7 +6,7 @@ const migrationService = require('./migration/migration.service')
 const Engine = require('./engine/Engine.class')
 const Logger = require('./engine/Logger.class')
 
-const logger = Logger.getInstance()
+global.logger = new Logger()
 
 if (cluster.isMaster) {
   // Migrate config file, if needed

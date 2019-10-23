@@ -16,14 +16,6 @@ class Logger {
     })
   }
 
-  static getInstance() {
-    if (Logger.instance) {
-      return Logger.instance
-    }
-    Logger.instance = new Logger()
-    return Logger.instance
-  }
-
   changeParameters(logParameters) {
     const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
     this.logger.level = consoleLevel

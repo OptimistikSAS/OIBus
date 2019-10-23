@@ -1,5 +1,5 @@
 const Koa = require('koa')
-const logger = require('koa-logger')
+const koaLogger = require('koa-logger')
 const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
@@ -8,7 +8,6 @@ const json = require('koa-json')
 
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
-const Logger = require('../engine/Logger.class')
 
 const router = require('./routes')
 
@@ -30,7 +29,6 @@ class Server {
     const { engineConfig } = engine.configService.getConfig()
     const { debug = false, user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
-    this.logger = Logger.getInstance()
     this.debug = debug
     this.port = port
     this.user = user
@@ -40,7 +38,7 @@ class Server {
     // Recommended that you .use() this middleware near the top
     //  to "wrap" all subsequent middleware.
     if (this.debug === 'debug') {
-      this.app.use(logger())
+      this.app.use(koaLogger())
     }
 
     // koa-helmet is a wrapper for helmet to work with koa.
@@ -58,7 +56,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          this.logger.error(err)
+          logger.error(err)
           ctx.body = JSON.stringify(err)
         } else {
           throw err
@@ -99,7 +97,7 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => this.logger.info(`Server started on ${this.port}`))
+    this.app.listen(this.port, () => logger.info(`Server started on ${this.port}`))
   }
 }
 
