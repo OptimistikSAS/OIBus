@@ -1,7 +1,3 @@
-const Logger = require('../engine/Logger.class')
-
-const logger = Logger.getInstance()
-
 module.exports = {
   2: (config) => {
     config.south.dataSources.forEach((dataSource) => {
