@@ -8,7 +8,7 @@ class Logger {
     const defaultFormat = combine(timestamp(), printf((info) => `${info.timestamp} ${info.level}: ${info.message}`))
     const consoleFormat = combine(timestamp(), printf((msg) => `${colorize().colorize(msg.level, `${msg.timestamp}-${msg.level}:`)} ${msg.message}`))
     this.logger = createLogger({
-      level: 'debug',
+      level: 'info',
       format: defaultFormat,
       transports: [
         new transports.Console({ format: consoleFormat, handleExceptions: true }),
