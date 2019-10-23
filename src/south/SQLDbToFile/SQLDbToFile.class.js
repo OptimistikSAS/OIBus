@@ -57,7 +57,7 @@ class SQLDbToFile extends ProtocolHandler {
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
     } else {
-      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+      logger.error(`Invalid timezone supplied: ${this.timezone}`)
     }
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
@@ -102,14 +102,14 @@ class SQLDbToFile extends ProtocolHandler {
         case 'postgresql':
         case 'oracle':
         default:
-          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
+          logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
           result = []
       }
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
     }
 
-    this.logger.debug(`Found ${result.length} results`)
+    logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
       result.forEach((entry) => {
@@ -118,9 +118,9 @@ class SQLDbToFile extends ProtocolHandler {
         }
       })
       if (this.lastCompletedAt) {
-        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
+        logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
       } else {
-        this.logger.debug('lastCompletedAt not used')
+        logger.debug('lastCompletedAt not used')
       }
       await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
@@ -128,12 +128,12 @@ class SQLDbToFile extends ProtocolHandler {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
         const filePath = path.join(this.tmpFolder, filename)
         try {
-          this.logger.debug(`Writing CSV file at ${filePath}`)
+          logger.debug(`Writing CSV file at ${filePath}`)
           fs.writeFileSync(filePath, csvContent)
-          this.logger.debug(`Sending ${filePath} to Engine.`)
+          logger.debug(`Sending ${filePath} to Engine.`)
           this.addFile(filePath)
         } catch (error) {
-          this.logger.error(error)
+          logger.error(error)
         }
       }
     }
@@ -145,7 +145,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromMSSQL() {
     const adaptedQuery = this.query.replace('@date2', 'GETDATE()')
-    this.logger.debug(`Executing "${adaptedQuery}"`)
+    logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
       user: this.username,
@@ -166,7 +166,7 @@ class SQLDbToFile extends ProtocolHandler {
       const [first] = result.recordsets
       data = first
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
     } finally {
       await mssql.close()
     }

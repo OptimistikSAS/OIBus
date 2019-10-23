@@ -15,7 +15,7 @@ const ipFilter = (filter) => async (ctx, next) => {
   if (micromatch.isMatch(ip, filter)) {
     await next()
   } else {
-    ctx.app.logger.error(new Error(`${ip} is not authorized`))
+    logger.error(new Error(`${ip} is not authorized`))
     ctx.throw(401, 'access denied ', `${ip} is not authorized`)
   }
 }
