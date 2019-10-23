@@ -3,6 +3,8 @@ import Logger from '../../engine/Logger.class'
 const fs = require('fs')
 const FolderScanner = require('./FolderScanner.class')
 
+global.logger = new Logger()
+
 // Mock database service
 jest.mock('../../services/database.service', () => {
 })
@@ -13,7 +15,7 @@ jest.mock('fs')
 // Mock logger
 jest.mock('../../engine/Logger.class', () => jest.fn().mockImplementation(() => ({ silly: jest.fn() })))
 
-const engine = { logger: new Logger() }
+const engine = { }
 
 beforeEach(() => {
   jest.resetAllMocks()

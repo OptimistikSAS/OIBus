@@ -20,7 +20,8 @@
   "globals": {
     "server": false,
     "browser": false,
-    "expect": false
+    "expect": false,
+    "logger": "writable"
   },
   "rules": {
     "valid-jsdoc": "error",

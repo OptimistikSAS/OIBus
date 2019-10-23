@@ -30,7 +30,6 @@ class ApiHandler {
 
     this.application = applicationParameters
     this.engine = engine
-    this.logger = this.engine.logger
     this.scanModes = this.engine.scanModes
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
@@ -43,7 +42,7 @@ class ApiHandler {
    */
   connect() {
     const { applicationId, api } = this.application
-    this.logger.info(`North API ${applicationId} started with protocol ${api}`)
+    logger.info(`North API ${applicationId} started with protocol ${api}`)
   }
 
   /**
@@ -53,7 +52,7 @@ class ApiHandler {
    */
   disconnect() {
     const { applicationId } = this.application
-    this.logger.info(`North API ${applicationId} disconnected`)
+    logger.info(`North API ${applicationId} disconnected`)
   }
 
   /**
@@ -62,8 +61,9 @@ class ApiHandler {
    * @param {object[]} values - The values to handle
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
-    this.logger.warning('handleValues should be surcharged', values)
+    logger.warn('handleValues should be surcharged', values)
     return true
   }
 
@@ -72,8 +72,9 @@ class ApiHandler {
    * @param {string} filePath - The path of the raw file
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
-    this.logger.warning('handleFile should be surcharged', filePath)
+    logger.warn('handleFile should be surcharged', filePath)
     return true
   }
 

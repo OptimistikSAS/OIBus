@@ -7,10 +7,9 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * Gives a type to a point based on the config
  * @param {Object} point - The point
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
  * @return {void}
  */
-const giveType = (point, types, logger) => {
+const giveType = (point, types) => {
   types.forEach((typeCompared) => {
     if (
       typeCompared.type
@@ -69,7 +68,7 @@ class Modbus extends ProtocolHandler {
       // Dynamic call of the appropriate function based on type
       const { engineConfig } = this.engine.configService.getConfig()
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach((point) => giveType(point, engineConfig.types, this.logger))
+        points.forEach((point) => giveType(point, engineConfig.types))
         const rangeAddresses = range.split('-')
         const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
         const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
@@ -100,7 +99,7 @@ class Modbus extends ProtocolHandler {
             case 'number':
               break
             default:
-              this.logger.error(new Error(`This point type was not recognized: ${point.type}`))
+              logger.error(new Error(`This point type was not recognized: ${point.type}`))
           }
           /** @todo: below should send by batch instead of single points */
           this.addValues([
@@ -113,7 +112,7 @@ class Modbus extends ProtocolHandler {
         })
       })
       .catch((error) => {
-        this.logger.error(error)
+        logger.error(error)
       })
   }
 
@@ -132,7 +131,7 @@ class Modbus extends ProtocolHandler {
       },
     )
     this.socket.on('error', (error) => {
-      this.logger.error(error)
+      logger.error(error)
     })
   }
 

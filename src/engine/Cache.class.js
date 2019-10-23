@@ -19,7 +19,6 @@ class Cache {
    * @return {void}
    */
   constructor(engine) {
-    this.logger = engine.logger
     this.engine = engine
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
@@ -28,13 +27,13 @@ class Cache {
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
-      this.logger.info(`creating cache folder in ${this.cacheFolder}`)
+      logger.info(`creating cache folder in ${this.cacheFolder}`)
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
     // Create archive folder if not exists
     this.archiveFolder = path.resolve(archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
-      this.logger.info(`creating archive folder in ${this.archiveFolder}`)
+      logger.info(`creating archive folder in ${this.archiveFolder}`)
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
     // will contains the list of North apis
@@ -43,7 +42,7 @@ class Cache {
     this.sendInProgress = {}
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue(this.logger)
+    this.queue = new Queue()
     // Cache stats
     this.cacheStats = {}
   }
@@ -63,9 +62,9 @@ class Cache {
     }
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
-      this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
+      logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
       api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
-      this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
+      logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.applicationId] = api
     if (api && api.config && api.config.sendInterval) {
@@ -82,9 +81,9 @@ class Cache {
    * @return {void}
    */
   async initialize(activeApis) {
-    this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
+    logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-    this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
+    logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
     // initialize the internal object apis with the list of north apis
     const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
     await Promise.all(actions)
@@ -125,7 +124,7 @@ class Cache {
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
       if (count >= config.groupCount) {
-        this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
+        logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
         return api
       }
     }
@@ -154,8 +153,7 @@ class Cache {
         }
       })
     } catch (error) {
-      console.error(error)
-      this.logger(error)
+      logger.error(error)
     }
   }
 
@@ -174,9 +172,9 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
 
       // Cache file
-      this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
+      logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-      this.logger.debug(`send file for ${api.applicationId}`)
+      logger.debug(`send file for ${api.applicationId}`)
       return api
     }
     return false
@@ -194,7 +192,7 @@ class Cache {
     this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
 
     // Cache files
-    this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
+    logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
@@ -213,7 +211,7 @@ class Cache {
         }
       })
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
     }
   }
 
@@ -260,7 +258,7 @@ class Cache {
   async sendCallback(api) {
     const { applicationId, canHandleValues, canHandleFiles } = api
 
-    this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`)
+    logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`)
 
     if (!this.sendInProgress[applicationId]) {
       this.sendInProgress[applicationId] = true
@@ -286,7 +284,7 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForValues(application) {
-    this.logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
+    logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
     let success = true
     const { applicationId, database, config } = application
 
@@ -294,23 +292,23 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
-        this.logger.silly(
+        logger.silly(
           `Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`,
         )
         success = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(
+        logger.silly(
           `Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`,
         )
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(
+          logger.silly(
             `Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`,
           )
-          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+          if (removed !== values.length) logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
         }
       }
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
       success = false
     }
 
@@ -325,33 +323,33 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForFiles(application) {
-    this.logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
+    logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
 
     const { applicationId, config } = application
     let success = true
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
-      this.logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
+      logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
 
       if (filePath) {
         if (fs.existsSync(filePath)) {
-          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
+          logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
           success = await this.engine.sendFile(applicationId, filePath)
 
           if (success) {
-            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
+            logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
             await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
             await this.handleSentFile(filePath)
           }
         } else {
-          this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
+          logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
 
           await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
         }
       }
     } catch (error) {
-      this.logger.error(error)
+      logger.error(error)
     }
 
     const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
@@ -365,7 +363,7 @@ class Cache {
    * @return {void}
    */
   async handleSentFile(filePath) {
-    this.logger.silly(`Cache handleSentFile() for ${filePath}`)
+    logger.silly(`Cache handleSentFile() for ${filePath}`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       const archivedFilename = path.basename(filePath)
@@ -376,9 +374,9 @@ class Cache {
           // Delete original file
           fs.unlink(filePath, (unlinkError) => {
             if (unlinkError) {
-              this.logger.error(unlinkError)
+              logger.error(unlinkError)
             } else {
-              this.logger.info(`File ${filePath} deleted`)
+              logger.info(`File ${filePath} deleted`)
             }
           })
           break
@@ -391,14 +389,14 @@ class Cache {
           // Move original file into the archive folder
           fs.rename(filePath, archivePath, (renameError) => {
             if (renameError) {
-              this.logger.error(renameError)
+              logger.error(renameError)
             } else {
-              this.logger.info(`File ${filePath} moved to ${archivePath}`)
+              logger.info(`File ${filePath} moved to ${archivePath}`)
             }
           })
           break
         default:
-          this.logger.error(`unknown Archive Mode: ${this.archiveMode}`)
+          logger.error(`unknown Archive Mode: ${this.archiveMode}`)
       }
     }
   }

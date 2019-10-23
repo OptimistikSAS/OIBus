@@ -25,12 +25,10 @@ class Server {
     this.app = new Koa()
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
-    this.app.logger = engine.logger
     // Get the config entries
     const { engineConfig } = engine.configService.getConfig()
     const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
-    this.logger = engine.logger
     this.port = port
     this.user = user
     this.password = password
@@ -50,7 +48,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          console.error(err)
+          logger.error(err)
           ctx.body = JSON.stringify(err)
         } else {
           throw err
@@ -92,7 +90,7 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => this.logger.info(`Server started on ${this.port}`))
+    this.app.listen(this.port, () => logger.info(`Server started on ${this.port}`))
   }
 }
 

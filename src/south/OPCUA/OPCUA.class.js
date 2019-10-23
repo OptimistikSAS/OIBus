@@ -7,10 +7,9 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
  * The point is from the optimized config hence the scannedDataSource parameter
  * @param {Object} pointId - The point ID
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
  * @return {*} The fields
  */
-const fieldsFromPointId = (pointId, types, logger) => {
+const fieldsFromPointId = (pointId, types) => {
   const type = types.find(
     (typeCompared) => typeCompared.type
       === pointId
@@ -61,17 +60,17 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (connectError) => {
         if (!connectError) {
-          this.logger.info('OPCUA Connected')
+          logger.info('OPCUA Connected')
           this.client.createSession((sessionError, session) => {
             if (!sessionError) {
               this.session = session
               this.connected = true
             } else {
-              this.logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
+              logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
             }
           })
         } else {
-          this.logger.error(connectError)
+          logger.error(connectError)
         }
       },
     )
@@ -102,11 +101,11 @@ class OPCUA extends ProtocolHandler {
             data: '',
             dataId: [], // to add after data{} is handled
           }
-          this.logger.debug(pointId, scanGroup)
+          logger.debug(pointId, scanGroup)
 
           const { engineConfig } = this.engine.configService.getConfig()
-          const fields = fieldsFromPointId(pointId, engineConfig.types, this.logger)
-          this.logger.debug(fields)
+          const fields = fieldsFromPointId(pointId, engineConfig.types)
+          logger.debug(fields)
           fields.forEach((field) => {
             value.dataId.push(field.name)
             if (field.name !== 'quality') {
@@ -123,7 +122,7 @@ class OPCUA extends ProtocolHandler {
           this.addValues([value])
         })
       } else {
-        this.logger.error(error)
+        logger.error(error)
       }
     })
   }
