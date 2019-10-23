@@ -40,10 +40,9 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
       }
     }
   }
-  const validCheck = valid(value.replace(PREFIX, ''))
   // if value is null, no need to render
   if (value === null) return null
-
+  const validCheck = valid(value.replace(PREFIX, ''))
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}

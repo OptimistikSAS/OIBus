@@ -1,26 +1,18 @@
-const handleResponse = async (response) => {
-  try {
-    const json = await response.json()
-    return json
-  } catch (error) {
-    console.error('Error parsing JSON', error)
-  }
-  return null
-}
-
 const createErrorMessage = (response) => (
   `${response.status}${response.statusText ? ` - ${response.statusText}` : ''}`
 )
 
 const getRequest = async (uri) => {
+  let text = ''
   try {
     const response = await fetch(uri, { method: 'GET' })
     if (response.status !== 200) {
       throw new Error(createErrorMessage(response))
     }
-    return handleResponse(response)
+    text = await response.text()
+    return JSON.parse(text)
   } catch (error) {
-    console.error('Request error', error)
+    console.error(`Request error for ${uri}:${error}`, text)
     throw new Error(error)
   }
 }
@@ -54,15 +46,15 @@ const putRequest = async (uri, body) => {
 
 const getSouthProtocols = () => getRequest('/config/schemas/south')
 const getNorthApis = () => getRequest('/config/schemas/north')
-const getConfig = () => getRequest('config')
-const updateConfig = (body) => putRequest('config', body)
-const getActiveConfig = () => getRequest('config/active')
+const getConfig = () => getRequest('/config')
+const updateConfig = (body) => putRequest('/config', body)
+const getActiveConfig = () => getRequest('/config/active')
 const updateActiveConfig = () => putRequest('/config/activate')
 const resetModifiedConfig = () => putRequest('/config/reset')
 const exportAllPoints = (dataSourceId) => downloadFileRequest(`/config/south/${dataSourceId}/points/export`)
 
-const getLogs = (fromDate, toDate, verbosity) => getRequest(`logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
-const getStatus = () => getRequest('status')
+const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
+const getStatus = () => getRequest('/status')
 
 export default {
   getSouthProtocols,

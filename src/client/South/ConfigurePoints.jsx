@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
-import { Button, Input } from 'reactstrap'
+import { Button, Input, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
 import { OIbText } from '../components/OIbForm'
@@ -21,8 +21,17 @@ const ConfigurePoints = () => {
   const MAX_PAGINATION_DISPLAY = 11
 
   const { dataSourceId } = useParams()
-  const dataSourceIndex = newConfig.south.dataSources
-    .findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+  if (newConfig === null) {
+    return (
+      <div className="spinner-container">
+        <Spinner color="primary" type="grow" />
+        ...loading points from OIBus server...
+      </div>
+    )
+  }
+  const dataSourceIndex = newConfig.south.dataSources.findIndex(
+    (dataSource) => dataSource.dataSourceId === dataSourceId,
+  )
 
   /**
    * Sets the filter text
@@ -113,8 +122,7 @@ const ConfigurePoints = () => {
         .toString()
         .toLowerCase()
         .includes(filterText.toLowerCase())) >= 0,
-    )
-    : points
+    ) : points
   // paging
   const pagedPoints = filteredPoints.filter(
     (_, index) => index >= selectedPage * MAX_ON_PAGE - MAX_ON_PAGE && index < selectedPage * MAX_ON_PAGE,
@@ -130,12 +138,7 @@ const ConfigurePoints = () => {
         help={<div>Type any points related data</div>}
         onChange={(_name, val) => updateFilterText(val)}
       />
-      <Table
-        headers={tableHeaders}
-        rows={tableRows}
-        handleAdd={handleAdd}
-        handleDelete={handleDelete}
-      />
+      <Table headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
       {filteredPoints.length && (
         <TablePagination
           maxToDisplay={MAX_PAGINATION_DISPLAY}
@@ -159,7 +162,11 @@ const ConfigurePoints = () => {
         <Button className="inline-button" color="primary" onClick={handleExportPoints}>
           Export
         </Button>
-        <Modal show={false} title="Delete All Points" body="Are you sure you want to delete All Points from this Data Source?">
+        <Modal
+          show={false}
+          title="Delete All Points"
+          body="Are you sure you want to delete All Points from this Data Source?"
+        >
           {(confirm) => (
             <div>
               <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
