@@ -150,6 +150,7 @@ class OPCHDA extends ProtocolHandler {
     })
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   logMessage(log) {
     try {
       const parsedLog = JSON.parse(log)
