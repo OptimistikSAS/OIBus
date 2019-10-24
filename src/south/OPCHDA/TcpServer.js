@@ -3,9 +3,10 @@ const net = require('net')
 const SocketSession = require('./SocketSession')
 
 class TcpServer {
-  constructor(port, handleMessage) {
+  constructor(port, handleMessage, logSource) {
     this.port = port
     this.handleMessage = handleMessage
+    this.logSource = logSource
     this.server = null
     this.session = null
   }
@@ -17,30 +18,30 @@ class TcpServer {
   bindServerEvents() {
     // Listener for the 'listening' event
     this.server.on('listening', () => {
-      logger.info(`TCP server listening on port ${this.port}`)
+      logger.info(`TCP server listening on port ${this.port}`, this.logSource)
     })
 
     // Listener for 'connection' event
     this.server.on('connection', (socket) => {
       const name = `${socket.remoteAddress}:${socket.remotePort}`
-      logger.info(`New connection attempt from ${name}`)
+      logger.info(`New connection attempt from ${name}`, this.logSource)
 
       if (!this.session) {
         this.session = new SocketSession(socket, this, this.handleMessage.bind(this))
       } else {
-        logger.error(`Session already open, closing connection from ${name}`)
+        logger.error(`Session already open, closing connection from ${name}`, this.logSource)
         socket.destroy()
       }
     })
 
     // Listener for the 'close' event
     this.server.on('close', () => {
-      logger.info('TCP server closed')
+      logger.info('TCP server closed', this.logSource)
     })
 
     // Listener for the 'error' event
     this.server.on('error', (error) => {
-      logger.error(error)
+      logger.error(error, this.logSource)
     })
   }
 

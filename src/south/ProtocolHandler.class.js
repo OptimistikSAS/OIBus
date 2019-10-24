@@ -34,26 +34,27 @@ class ProtocolHandler {
   constructor(dataSource, engine) {
     this.dataSource = dataSource
     this.engine = engine
+    this.logSource = this.constructor.name
   }
 
   connect() {
     const { dataSourceId, protocol } = this.dataSource
-    logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
+    logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`, this.logSource)
   }
 
   onScan(scanMode) {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
+    logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`, this.logSource)
   }
 
   listen() {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge listen()`)
+    logger.error(`Data source ${dataSourceId} should surcharge listen()`, this.logSource)
   }
 
   disconnect() {
     const { dataSourceId } = this.dataSource
-    logger.info(`Data source ${dataSourceId} disconnected`)
+    logger.info(`Data source ${dataSourceId} disconnected`, this.logSource)
   }
 
   /**

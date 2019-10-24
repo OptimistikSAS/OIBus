@@ -4,6 +4,8 @@ const path = require('path')
 const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
+const LOG_SOURCE = 'engine'
+
 // South classes
 const protocolList = {}
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
@@ -60,7 +62,7 @@ class Engine {
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
-    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
+    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`, LOG_SOURCE)
     // Check for private key
     encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder)
 
@@ -81,7 +83,7 @@ class Engine {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
-            logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
+            logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`, LOG_SOURCE)
           } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
@@ -90,9 +92,8 @@ class Engine {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
               logger.error(
-                ` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${
-                  point.scanMode
-                }`,
+                `point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`,
+                LOG_SOURCE,
               )
             } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
               // add the source for this scan only if not already there
@@ -118,7 +119,7 @@ class Engine {
    * @return {void}
    */
   async addValues(dataSourceId, values) {
-    logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
+    logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`, LOG_SOURCE)
     await this.cache.cacheValues(dataSourceId, values)
   }
 
@@ -131,7 +132,7 @@ class Engine {
    * @return {void}
    */
   addFile(dataSourceId, filePath, preserveFiles) {
-    logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`)
+    logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`, LOG_SOURCE)
     this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
@@ -142,7 +143,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async handleValuesFromCache(applicationId, values) {
-    logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
+    logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`, LOG_SOURCE)
     let success = false
     try {
       success = await this.activeApis[applicationId].handleValues(values)
@@ -159,7 +160,7 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async sendFile(applicationId, filePath) {
-    logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
+    logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`, LOG_SOURCE)
     let success = false
 
     try {
@@ -192,7 +193,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
+          logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`, LOG_SOURCE)
         }
       }
     })
@@ -208,7 +209,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          logger.error(`API for ${applicationId} is not found : ${api}`)
+          logger.error(`API for ${applicationId} is not found : ${api}`, LOG_SOURCE)
         }
       }
     })
@@ -225,12 +226,12 @@ class Engine {
             try {
               this.activeProtocols[dataSourceId].onScan(scanMode)
             } catch (error) {
-              logger.error(`scan for ${dataSourceId} failed: ${error}`)
+              logger.error(`scan for ${dataSourceId} failed: ${error}`, LOG_SOURCE)
             }
           })
         })
         if (job.result !== 'ok') {
-          logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
+          logger.error(`The scan  ${scanMode} could not start : ${job.error}`, LOG_SOURCE)
         } else {
           this.jobs.push(job.id)
         }
@@ -251,22 +252,22 @@ class Engine {
 
     // Stop Protocols
     Object.entries(this.activeProtocols).forEach(([dataSourceId, protocol]) => {
-      logger.info(`Stopping ${dataSourceId}`)
+      logger.info(`Stopping ${dataSourceId}`, LOG_SOURCE)
       protocol.disconnect()
     })
 
     // Stop Applications
     Object.entries(this.activeApis).forEach(([applicationId, application]) => {
-      logger.info(`Stopping ${applicationId}`)
+      logger.info(`Stopping ${applicationId}`, LOG_SOURCE)
       application.disconnect()
     })
 
     // Log cache data
     const apisCacheStats = await this.cache.getCacheStatsForApis()
-    logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
+    logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`, LOG_SOURCE)
 
     const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
-    logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
+    logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`, LOG_SOURCE)
   }
 
   /**
@@ -297,7 +298,7 @@ class Engine {
    */
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
-    logger.debug('Getting North applications')
+    logger.debug('Getting North applications', LOG_SOURCE)
     return Object.keys(apiList)
   }
 
@@ -307,7 +308,7 @@ class Engine {
    */
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
-    logger.debug('Getting South protocols')
+    logger.debug('Getting South protocols', LOG_SOURCE)
     return Object.keys(protocolList)
   }
 

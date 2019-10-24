@@ -40,17 +40,17 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   onScan(scanMode) {
-    logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
+    logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`, this.logSource)
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
-      logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
+      logger.warn(`The input folder ${this.inputFolder} doesn't exist.`, this.logSource)
       return
     }
 
     // List files in the inputFolder and manage them.
     fs.readdir(this.inputFolder, async (error, files) => {
       if (error) {
-        logger.error(error)
+        logger.error(error, this.logSource)
         return
       }
 
@@ -67,7 +67,7 @@ class FolderScanner extends ProtocolHandler {
 
         filesToHandle.forEach(this.sendFile.bind(this))
       } else {
-        logger.debug(`The folder ${this.inputFolder} is empty.`)
+        logger.debug(`The folder ${this.inputFolder} is empty.`, this.logSource)
       }
     })
   }
@@ -83,10 +83,10 @@ class FolderScanner extends ProtocolHandler {
     if (this.regex.test(filename)) {
       const timestamp = new Date().getTime()
       const stats = fs.statSync(path.join(this.inputFolder, filename))
-      logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
+      logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`, this.logSource)
       matched = (stats.mtimeMs < (timestamp - this.minAge))
     }
-    logger.silly(`checkFile ${filename} matched ${matched}`)
+    logger.silly(`checkFile ${filename} matched ${matched}`, this.logSource)
     return matched
   }
 
@@ -121,7 +121,7 @@ class FolderScanner extends ProtocolHandler {
   sendFile(filename) {
     const filePath = path.join(this.inputFolder, filename)
 
-    logger.debug(`Sending ${filePath} to Engine.`)
+    logger.debug(`Sending ${filePath} to Engine.`, this.logSource)
 
     this.addFile(filePath)
 

@@ -21,7 +21,7 @@ const fieldsFromPointId = (pointId, types) => {
   if (fields) {
     return fields
   }
-  logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`))
+  logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`), this.logSource)
   return {}
 }
 
@@ -60,17 +60,17 @@ class OPCUA extends ProtocolHandler {
       this.url,
       (connectError) => {
         if (!connectError) {
-          logger.info('OPCUA Connected')
+          logger.info('OPCUA Connected', this.logSource)
           this.client.createSession((sessionError, session) => {
             if (!sessionError) {
               this.session = session
               this.connected = true
             } else {
-              logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
+              logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`), this.logSource)
             }
           })
         } else {
-          logger.error(connectError)
+          logger.error(connectError, this.logSource)
         }
       },
     )

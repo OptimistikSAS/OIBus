@@ -5,6 +5,8 @@ const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
 
+const LOG_SOURCE = 'config'
+
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
@@ -19,7 +21,7 @@ class ConfigService {
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
-      logger.info(`Creating folder ${baseDir}`)
+      logger.info(`Creating folder ${baseDir}`, LOG_SOURCE)
       fs.mkdirSync(baseDir, { recursive: true })
     }
     process.chdir(path.parse(this.configFile).dir)
@@ -39,7 +41,7 @@ class ConfigService {
    */
   static isValidArgs({ config }) {
     if (!config) {
-      logger.error('No config file specified, example: --config ./config/config.json')
+      logger.error('No config file specified, example: --config ./config/config.json', LOG_SOURCE)
       return false
     }
 
@@ -77,14 +79,14 @@ class ConfigService {
    */
   static tryReadFile(filePath) {
     if (!filePath.endsWith('.json')) {
-      logger.error('You must provide a json file for the configuration!')
+      logger.error('You must provide a json file for the configuration!', LOG_SOURCE)
       throw new Error('You must provide a json file for the configuration!')
     }
 
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
     } catch (error) {
-      logger.error(error)
+      logger.error(error, LOG_SOURCE)
       throw error
     }
   }
@@ -132,12 +134,12 @@ class ConfigService {
   /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
-      logger.info('Default config file does not exist. Creating it.')
+      logger.info('Default config file does not exist. Creating it.', LOG_SOURCE)
       try {
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
-        logger.error(error)
+        logger.error(error, LOG_SOURCE)
       }
     }
   }
@@ -158,7 +160,7 @@ class ConfigService {
       }
       return duplicateConfig
     } catch (error) {
-      logger.error(error)
+      logger.error(error, LOG_SOURCE)
       throw error
     }
   }
