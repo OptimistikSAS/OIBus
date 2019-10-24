@@ -2,14 +2,15 @@
  * Class representing a connected session.
  */
 class SocketSession {
-  constructor(socket, tcpServer, handleMessage) {
+  constructor(socket, tcpServer, handleMessage, logSource) {
     this.socket = socket
     this.tcpServer = tcpServer
     this.handleMessage = handleMessage
+    this.logSource = logSource
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''
 
-    logger.info(`Connection accepted from ${this.name}`)
+    logger.info(`Connection accepted from ${this.name}`, this.logSource)
 
     this.bindSocketEvents()
   }
@@ -49,7 +50,7 @@ class SocketSession {
 
     // Listener for the 'close' event
     this.socket.on('close', () => {
-      logger.info(`Connection with ${this.name} closed`)
+      logger.info(`Connection with ${this.name} closed`, this.logSource)
       this.tcpServer.removeSession()
       const disconnectMessage = {
         Reply: 'Disconnect',
@@ -61,7 +62,7 @@ class SocketSession {
 
     // Listener for the 'error' event
     this.socket.on('error', (error) => {
-      logger.error(error.message, error)
+      logger.error(error, this.logSource)
     })
   }
 

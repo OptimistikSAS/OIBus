@@ -2,6 +2,8 @@ const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
+const LOG_SOURCE = 'encryption'
+
 /**
  * Check if private/public keys exist and create them if not.
  * @param {string} keyFolder - The folder to store the keys
@@ -17,7 +19,7 @@ const checkOrCreatePrivateKey = (keyFolder) => {
 
   try {
     if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
-      logger.warn('Private or Public key file was not found => creating a new pair')
+      logger.warn('Private or Public key file was not found => creating a new pair', LOG_SOURCE)
       const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 4096,
         publicKeyEncoding: {
@@ -36,7 +38,7 @@ const checkOrCreatePrivateKey = (keyFolder) => {
       fs.writeFileSync(publicKeyPath, publicKey)
     }
   } catch (error) {
-    logger.error(`Error creating key files: ${error.message}`)
+    logger.error(`Error creating key files: ${error.message}`, LOG_SOURCE)
   }
 }
 
@@ -74,7 +76,7 @@ const decryptText = (text, keyFolder) => {
     )
     return decrypted.toString('utf8')
   } catch (error) {
-    logger.error(`Error in decryption: ${error.message}`)
+    logger.error(`Error in decryption: ${error.message}`, LOG_SOURCE)
     return ''
   }
 }

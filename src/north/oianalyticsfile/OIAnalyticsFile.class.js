@@ -43,10 +43,10 @@ class OIAnalyticsFile extends ApiHandler {
    * @return {Promise} - The send status
    */
   async handleFile(filePath) {
-    logger.silly(`OIAnalyticsFile handleFile() call with ${filePath}`)
+    logger.silly(`OIAnalyticsFile handleFile() call with ${filePath}`, this.logSource)
     const stats = fs.statSync(filePath)
     const fileSizeInBytes = stats.size
-    logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`)
+    logger.debug(`Sending file ${filePath} (${fileSizeInBytes} bytes) using ${this.stack} stack`, this.logSource)
 
     const headers = {}
 
