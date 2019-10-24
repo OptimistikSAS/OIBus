@@ -119,7 +119,7 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.child.on('error', (error) => {
-      logger.error(`Failed to start HDA agent: ${path}`, this.logSource)
+      logger.error(`Failed to start HDA agent: ${error.message}`, this.logSource)
     })
   }
 

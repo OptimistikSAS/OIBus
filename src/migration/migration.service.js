@@ -3,20 +3,19 @@ const fs = require('fs')
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 
-const REQUIRED_SCHEMA_VERSION = 2
+const REQUIRED_SCHEMA_VERSION = 3
 const DEFAULT_VERSION = 1
 const LOG_SOURCE = 'migration'
-
-const configFile = ConfigService.getConfigFile()
 
 /**
  * Migration implementation.
  * Iterate through versions and migrate until we reach actual OIBus version.
  * @param {string} configVersion - The config file version
  * @param {object} config - The configuration
+ * @param {string} configFile - The config file
  * @returns {void}
  */
-const migrateImpl = (configVersion, config) => {
+const migrateImpl = (configVersion, config, configFile) => {
   let iterateVersion = configVersion
   Object.keys(migrationRules)
     .forEach((version) => {
@@ -43,15 +42,16 @@ const migrateImpl = (configVersion, config) => {
 
 /**
  * Migrate if needed.
+ * @param {string} configFile - The config file
  * @returns {void}
  */
-const migrate = () => {
+const migrate = (configFile) => {
   if (fs.existsSync(configFile)) {
     const config = ConfigService.tryReadFile(configFile)
     const configVersion = config.schemaVersion || DEFAULT_VERSION
     if (configVersion < REQUIRED_SCHEMA_VERSION) {
       logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`, LOG_SOURCE)
-      migrateImpl(configVersion, config)
+      migrateImpl(configVersion, config, configFile)
     } else {
       logger.info('Config file is up-to-date, no migrating needed.', LOG_SOURCE)
     }

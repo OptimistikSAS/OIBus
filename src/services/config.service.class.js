@@ -11,20 +11,20 @@ const LOG_SOURCE = 'config'
  * Class responsible for managing the configuration.
  * @class ConfigService
  * @param {Engine} engine - The Engine
+ * @param {string} configFile - The config file
  * @return {void}
  */
 class ConfigService {
-  constructor(engine) {
+  constructor(engine, configFile) {
     this.engine = engine
 
-    this.configFile = ConfigService.getConfigFile()
+    this.configFile = configFile
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
       logger.info(`Creating folder ${baseDir}`, LOG_SOURCE)
       fs.mkdirSync(baseDir, { recursive: true })
     }
-    process.chdir(path.parse(this.configFile).dir)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
