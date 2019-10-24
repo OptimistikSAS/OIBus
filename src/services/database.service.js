@@ -2,6 +2,8 @@ const sqlite = require('sqlite')
 
 const CACHE_TABLE_NAME = 'cache'
 
+const LOG_SOURCE = 'database'
+
 /**
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
@@ -97,7 +99,7 @@ const saveValues = async (database, dataSourceId, values) => {
     await Promise.all(actions)
     await database.run('COMMIT;')
   } catch (error) {
-    logger.error(error)
+    logger.error(error, LOG_SOURCE)
     throw error
   }
 }
@@ -115,7 +117,7 @@ const getCount = async (database) => {
     const stmt = await database.prepare(query)
     result = await stmt.get()
   } catch (error) {
-    logger.error(error)
+    logger.error(error, LOG_SOURCE)
     throw error
   }
   return result.count
@@ -137,7 +139,7 @@ const getValuesToSend = async (database, count) => {
     const stmt = await database.prepare(query)
     results = await stmt.all()
   } catch (error) {
-    logger.error(error)
+    logger.error(error, LOG_SOURCE)
     throw error
   }
 
@@ -149,7 +151,7 @@ const getValuesToSend = async (database, count) => {
         // data is a JSON object containing value and quality
         value.data = JSON.parse(decodeURI(value.data))
       } catch (error) {
-        logger.error(error)
+        logger.error(error, LOG_SOURCE)
         throw error
       }
       return value
@@ -174,7 +176,7 @@ const removeSentValues = async (database, values) => {
     stmt = await database.prepare(query)
     await stmt.run()
   } catch (error) {
-    logger.error(error)
+    logger.error(error, LOG_SOURCE)
     throw error
   }
   return stmt.changes

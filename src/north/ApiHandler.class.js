@@ -27,6 +27,7 @@ class ApiHandler {
   constructor(applicationParameters, engine) {
     this.canHandleValues = false
     this.canHandleFiles = false
+    this.logSource = this.constructor.name
 
     this.application = applicationParameters
     this.engine = engine
@@ -42,7 +43,7 @@ class ApiHandler {
    */
   connect() {
     const { applicationId, api } = this.application
-    logger.info(`North API ${applicationId} started with protocol ${api}`)
+    logger.info(`North API ${applicationId} started with protocol ${api}`, this.logSource)
   }
 
   /**
@@ -52,7 +53,7 @@ class ApiHandler {
    */
   disconnect() {
     const { applicationId } = this.application
-    logger.info(`North API ${applicationId} disconnected`)
+    logger.info(`North API ${applicationId} disconnected`, this.logSource)
   }
 
   /**
@@ -63,7 +64,7 @@ class ApiHandler {
    */
   /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
-    logger.warn('handleValues should be surcharged', values)
+    logger.warn(`handleValues should be surcharged ${values}`, this.logSource)
     return true
   }
 
@@ -74,7 +75,7 @@ class ApiHandler {
    */
   /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
-    logger.warn('handleFile should be surcharged', filePath)
+    logger.warn(`handleFile should be surcharged ${filePath}`, this.logSource)
     return true
   }
 

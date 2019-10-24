@@ -6,6 +6,7 @@ class Queue {
   constructor() {
     this.queue = []
     this.run = false
+    this.logSource = 'queue'
   }
 
   clear() {
@@ -26,7 +27,7 @@ class Queue {
     try {
       await fn(...args)
     } catch (error) {
-      logger.error(error)
+      logger.error(error, this.logSource)
     }
     this.run = false
     await this.next()

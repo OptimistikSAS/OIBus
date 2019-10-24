@@ -37,7 +37,7 @@ class OIConnect extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    logger.silly(`Link handleValues() call with ${values.length} values`)
+    logger.silly(`Link handleValues() call with ${values.length} values`, this.logSource)
 
     // Generate authentication header
     const headers = { 'Content-Type': 'application/json' }
@@ -73,7 +73,7 @@ class OIConnect extends ApiHandler {
    * @return {AxiosPromise | *} - The send status
    */
   async sendWithAxios(headers, body) {
-    logger.silly(`Link sendWithAxios() call with ${body.values.length} values`)
+    logger.silly(`Link sendWithAxios() call with ${body.values.length} values`, this.logSource)
 
     const source = axios.CancelToken.source()
 
@@ -134,7 +134,7 @@ class OIConnect extends ApiHandler {
    * @return {Promise} - The send status
    */
   async sendWithRequest(headers, body) {
-    logger.silly(`Link sendWithRequest() call with ${body.values.length} values`)
+    logger.silly(`Link sendWithRequest() call with ${body.values.length} values`, this.logSource)
 
     let proxy = false
     if (this.proxy) {
@@ -171,7 +171,7 @@ class OIConnect extends ApiHandler {
    * @return {Promise} - The send status
    */
   async sendWithFetch(headers, body) {
-    logger.silly(`Link sendWithFetch() call with ${body.values.length} values`)
+    logger.silly(`Link sendWithFetch() call with ${body.values.length} values`, this.logSource)
 
     let agent = null
 

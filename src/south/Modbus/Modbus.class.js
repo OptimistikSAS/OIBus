@@ -21,7 +21,7 @@ const giveType = (point, types) => {
       point.type = typeCompared.fields[0].type
       point.dataId = typeCompared.fields[0].name
       if (typeCompared.fields.length > 1) {
-        logger.error('Modbus points cannot contain more than 1 field')
+        logger.error('Modbus points cannot contain more than 1 field', 'Modbus')
       }
     }
   })
@@ -99,7 +99,7 @@ class Modbus extends ProtocolHandler {
             case 'number':
               break
             default:
-              logger.error(new Error(`This point type was not recognized: ${point.type}`))
+              logger.error(new Error(`This point type was not recognized: ${point.type}`), this.logSource)
           }
           /** @todo: below should send by batch instead of single points */
           this.addValues([
@@ -112,7 +112,7 @@ class Modbus extends ProtocolHandler {
         })
       })
       .catch((error) => {
-        logger.error(error)
+        logger.error(error, this.logSource)
       })
   }
 
@@ -131,7 +131,7 @@ class Modbus extends ProtocolHandler {
       },
     )
     this.socket.on('error', (error) => {
-      logger.error(error)
+      logger.error(error, this.logSource)
     })
   }
 
