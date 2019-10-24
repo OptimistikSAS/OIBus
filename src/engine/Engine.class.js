@@ -43,11 +43,12 @@ class Engine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
+   * @param {string} configFile - The config file
    */
-  constructor() {
+  constructor(configFile) {
     this.version = VERSION
 
-    this.configService = new ConfigService(this)
+    this.configService = new ConfigService(this, configFile)
     const { engineConfig, southConfig } = this.configService.getConfig()
 
     // Configure the logger
