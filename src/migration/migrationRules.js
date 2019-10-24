@@ -1,3 +1,5 @@
+const fs = require('fs')
+
 const LOG_SOURCE = 'migration'
 
 module.exports = {
@@ -71,5 +73,12 @@ module.exports = {
         application[application.api] = applicationRelatedFields
       }
     })
+  },
+  3: (config) => {
+    const { sqliteFilename } = config.engine.logParameters
+    if (fs.existsSync(sqliteFilename)) {
+      logger.info('Rename SQLite log file', LOG_SOURCE)
+      fs.renameSync(sqliteFilename, `${sqliteFilename}.old`)
+    }
   },
 }
