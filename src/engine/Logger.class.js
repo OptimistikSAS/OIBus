@@ -1,51 +1,35 @@
-const { createLogger, format, transports } = require('winston')
-const SqliteTransport = require('./SqliteWinstonTransport.class')
-
-const { combine, timestamp, printf, colorize } = format
+const LoggerSingleton = require('./LoggerSingleton.class')
 
 const DEFAULT_LOG_SOURCE = 'general'
 
 class Logger {
-  constructor() {
-    const defaultFormat = combine(timestamp(), printf((info) => `${info.source} - ${info.timestamp} ${info.level}: ${info.message}`))
-    const consoleFormat = combine(timestamp(), printf((msg) => {
-      const logPrefix = `${msg.source} - ${msg.timestamp}-${msg.level}:`
-      return `${colorize().colorize(msg.level, logPrefix)} ${msg.message}`
-    }))
-    this.logger = createLogger({
-      level: 'info',
-      format: defaultFormat,
-      transports: [
-        new transports.Console({ format: consoleFormat, handleExceptions: true }),
-      ],
-    })
+  constructor(source) {
+    this.source = source || DEFAULT_LOG_SOURCE
+    this.loggerSingleton = LoggerSingleton.getInstance()
   }
 
   changeParameters(logParameters) {
-    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
-    this.logger.level = consoleLevel
-    this.logger.add(new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable, handleExceptions: true }))
-    this.logger.add(new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize, handleExceptions: true }))
+    this.loggerSingleton.changeParameters(logParameters)
   }
 
-  info(message, source = DEFAULT_LOG_SOURCE) {
-    this.logger.info(message, { source })
+  info(message) {
+    this.loggerSingleton.info(message, this.source)
   }
 
-  warn(message, source = DEFAULT_LOG_SOURCE) {
-    this.logger.warn(message, { source })
+  warn(message) {
+    this.loggerSingleton.warn(message, this.source)
   }
 
-  error(message, source = DEFAULT_LOG_SOURCE) {
-    this.logger.error(message.stack || message, { source })
+  error(message) {
+    this.loggerSingleton.error(message, this.source)
   }
 
-  debug(message, source = DEFAULT_LOG_SOURCE) {
-    this.logger.debug(message, { source })
+  debug(message) {
+    this.loggerSingleton.debug(message, this.source)
   }
 
-  silly(message, source = DEFAULT_LOG_SOURCE) {
-    this.logger.silly(message, { source })
+  silly(message) {
+    this.loggerSingleton.silly(message, this.source)
   }
 }
 
