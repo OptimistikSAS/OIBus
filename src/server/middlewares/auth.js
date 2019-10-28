@@ -24,7 +24,7 @@ const auth = (opts = {}) => {
     if (user && user.pass && user.name === opts.name) {
       const hash = crypto.createHash('sha256').update(user.pass).digest('hex')
       if (hash === opts.pass) return next()
-      logger.error(new Error(`Bad hash: ${hash}`))
+      ctx.app.logger.error(new Error(`Bad hash: ${hash}`))
     }
     return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
   }

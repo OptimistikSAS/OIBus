@@ -36,7 +36,7 @@ class SqliteTransport extends TransportStream {
     if (!this.database) {
       await this.createLogsDatabase()
     }
-    await this.addLog(payload.timestamp, payload.level, payload.message)
+    await this.addLog(payload.timestamp, payload.level, payload.source, payload.message)
 
     const logFile = fs.statSync(this.filename)
     if (logFile.size > this.maxFileSize) {
@@ -57,6 +57,7 @@ class SqliteTransport extends TransportStream {
                     id INTEGER PRIMARY KEY, 
                     timestamp DATE,
                     level TEXT,
+                    source TEXT,
                     message TEXT
                   );`
     const stmt = await this.database.prepare(query)
@@ -67,14 +68,15 @@ class SqliteTransport extends TransportStream {
    * Add logs
    * @param {string} timestamp - The timestamp
    * @param {string} level - The level
+   * @param {string} source - The source
    * @param {string} message - The message
    * @return {void}
    */
-  async addLog(timestamp, level, message) {
-    const query = `INSERT INTO ${LOGS_TABLE_NAME} (timestamp, level, message) 
-                   VALUES (?, ?, ?)`
+  async addLog(timestamp, level, source, message) {
+    const query = `INSERT INTO ${LOGS_TABLE_NAME} (timestamp, level, source, message) 
+                   VALUES (?, ?, ?, ?)`
     const stmt = await this.database.prepare(query)
-    await stmt.run(timestamp, level, message)
+    await stmt.run(timestamp, level, source, message)
   }
 
   /**
@@ -92,4 +94,5 @@ class SqliteTransport extends TransportStream {
     await stmt.run(NUMBER_OF_RECORDS_TO_DELETE)
   }
 }
+
 module.exports = SqliteTransport

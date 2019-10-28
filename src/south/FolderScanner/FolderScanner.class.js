@@ -40,17 +40,17 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   onScan(scanMode) {
-    logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
+    this.logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
-      logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
+      this.logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
       return
     }
 
     // List files in the inputFolder and manage them.
     fs.readdir(this.inputFolder, async (error, files) => {
       if (error) {
-        logger.error(error)
+        this.logger.error(error)
         return
       }
 
@@ -67,7 +67,7 @@ class FolderScanner extends ProtocolHandler {
 
         filesToHandle.forEach(this.sendFile.bind(this))
       } else {
-        logger.debug(`The folder ${this.inputFolder} is empty.`)
+        this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
     })
   }
@@ -83,10 +83,10 @@ class FolderScanner extends ProtocolHandler {
     if (this.regex.test(filename)) {
       const timestamp = new Date().getTime()
       const stats = fs.statSync(path.join(this.inputFolder, filename))
-      logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
+      this.logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
       matched = (stats.mtimeMs < (timestamp - this.minAge))
     }
-    logger.silly(`checkFile ${filename} matched ${matched}`)
+    this.logger.silly(`checkFile ${filename} matched ${matched}`)
     return matched
   }
 
@@ -121,7 +121,7 @@ class FolderScanner extends ProtocolHandler {
   sendFile(filename) {
     const filePath = path.join(this.inputFolder, filename)
 
-    logger.debug(`Sending ${filePath} to Engine.`)
+    this.logger.debug(`Sending ${filePath} to Engine.`)
 
     this.addFile(filePath)
 
@@ -138,7 +138,7 @@ class FolderScanner extends ProtocolHandler {
   async storeFile(filename) {
     const stats = fs.statSync(path.join(this.inputFolder, filename))
 
-    logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
+    this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
 
     await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
   }

@@ -4,25 +4,27 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
  * @param {Engine} engine - The Engine
+ * @param {string} configFile - The config file
  * @return {void}
  */
 class ConfigService {
-  constructor(engine) {
+  constructor(engine, configFile) {
     this.engine = engine
+    this.logger = new Logger(this.constructor.name)
 
-    this.configFile = ConfigService.getConfigFile()
+    this.configFile = configFile
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
-      logger.info(`Creating folder ${baseDir}`)
+      this.logger.info(`Creating folder ${baseDir}`)
       fs.mkdirSync(baseDir, { recursive: true })
     }
-    process.chdir(path.parse(this.configFile).dir)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
@@ -39,7 +41,7 @@ class ConfigService {
    */
   static isValidArgs({ config }) {
     if (!config) {
-      logger.error('No config file specified, example: --config ./config/config.json')
+      this.logger.error('No config file specified, example: --config ./config/config.json')
       return false
     }
 
@@ -77,14 +79,14 @@ class ConfigService {
    */
   static tryReadFile(filePath) {
     if (!filePath.endsWith('.json')) {
-      logger.error('You must provide a json file for the configuration!')
+      this.logger.error('You must provide a json file for the configuration!')
       throw new Error('You must provide a json file for the configuration!')
     }
 
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
     } catch (error) {
-      logger.error(error)
+      this.logger.error(error)
       throw error
     }
   }
@@ -132,12 +134,12 @@ class ConfigService {
   /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
-      logger.info('Default config file does not exist. Creating it.')
+      this.logger.info('Default config file does not exist. Creating it.')
       try {
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
-        logger.error(error)
+        this.logger.error(error)
       }
     }
   }
@@ -158,7 +160,7 @@ class ConfigService {
       }
       return duplicateConfig
     } catch (error) {
-      logger.error(error)
+      this.logger.error(error)
       throw error
     }
   }

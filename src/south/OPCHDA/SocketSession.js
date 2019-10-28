@@ -6,10 +6,11 @@ class SocketSession {
     this.socket = socket
     this.tcpServer = tcpServer
     this.handleMessage = handleMessage
+    this.logger = tcpServer.logger
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''
 
-    logger.info(`Connection accepted from ${this.name}`)
+    this.logger.info(`Connection accepted from ${this.name}`)
 
     this.bindSocketEvents()
   }
@@ -49,7 +50,7 @@ class SocketSession {
 
     // Listener for the 'close' event
     this.socket.on('close', () => {
-      logger.info(`Connection with ${this.name} closed`)
+      this.logger.info(`Connection with ${this.name} closed`)
       this.tcpServer.removeSession()
       const disconnectMessage = {
         Reply: 'Disconnect',
@@ -61,7 +62,7 @@ class SocketSession {
 
     // Listener for the 'error' event
     this.socket.on('error', (error) => {
-      logger.error(error.message, error)
+      this.logger.error(error)
     })
   }
 
