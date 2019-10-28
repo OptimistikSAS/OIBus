@@ -41,22 +41,22 @@ class ProtocolHandler {
 
   connect() {
     const { dataSourceId, protocol } = this.dataSource
-    logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
+    this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
   onScan(scanMode) {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
+    this.logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
   }
 
   listen() {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge listen()`)
+    this.logger.error(`Data source ${dataSourceId} should surcharge listen()`)
   }
 
   disconnect() {
     const { dataSourceId } = this.dataSource
-    logger.info(`Data source ${dataSourceId} disconnected`)
+    this.logger.info(`Data source ${dataSourceId} disconnected`)
   }
 
   /**

@@ -76,6 +76,8 @@ module.exports = {
     })
   },
   3: (config) => {
+    config.engine.engineName = 'OIBus'
+    logger.info('Add engineName: OIBus')
     const { sqliteFilename } = config.engine.logParameters
     if (fs.existsSync(sqliteFilename)) {
       logger.info('Rename SQLite log file')
