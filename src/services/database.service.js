@@ -1,5 +1,9 @@
 const sqlite = require('sqlite')
 
+const Logger = require('../engine/Logger.class')
+
+const logger = new Logger('database')
+
 const CACHE_TABLE_NAME = 'cache'
 
 /**

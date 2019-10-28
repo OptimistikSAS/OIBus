@@ -1,3 +1,5 @@
+const Logger = require('../engine/Logger.class')
+
 /**
  * Create a Queue with auto
  * @class Queue
@@ -6,6 +8,7 @@ class Queue {
   constructor() {
     this.queue = []
     this.run = false
+    this.logger = new Logger(this.constructor.name)
   }
 
   clear() {
@@ -26,7 +29,7 @@ class Queue {
     try {
       await fn(...args)
     } catch (error) {
-      logger.error(error)
+      this.logger.error(error)
     }
     this.run = false
     await this.next()

@@ -2,6 +2,10 @@ const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
+const Logger = require('../engine/Logger.class')
+
+const logger = new Logger('encryption')
+
 /**
  * Check if private/public keys exist and create them if not.
  * @param {string} keyFolder - The folder to store the keys
