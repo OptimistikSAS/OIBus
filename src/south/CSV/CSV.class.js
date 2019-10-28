@@ -18,10 +18,10 @@ class CSV extends ProtocolHandler {
     // list files in the inputFolder and manage them.
     fs.readdir(inputFolder, (error, files) => {
       if (error) {
-        logger.error(error, this.logSource)
+        this.logger.error(error)
         return
       }
-      if (!files.length) logger.info(`The folder ${inputFolder} is empty.`, this.logSource)
+      if (!files.length) this.logger.info(`The folder ${inputFolder} is empty.`)
       files.forEach((filename) => {
         this.processFile(inputFolder, filename)
       })
@@ -43,13 +43,13 @@ class CSV extends ProtocolHandler {
     const { points, timeColumn, hasFirstLine, archiveFolder, errorFolder } = this.dataSource.CSV
     const readStream = fs.createReadStream(file)
     readStream.on('error', (readError) => {
-      logger.error(readError, this.logSource)
+      this.logger.error(readError)
       fs.rename(`${inputFolder}${filename}`, `${errorFolder}${filename}`, (renameError) => {
         if (renameError) {
-          logger.error(renameError, this.logSource)
+          this.logger.error(renameError)
         }
       })
-      logger.info('File move to ', `${errorFolder}${filename}`, this.logSource)
+      this.logger.info('File move to ', `${errorFolder}${filename}`)
     })
     let timeColumnIndex
     let firstLine = []
@@ -114,13 +114,13 @@ class CSV extends ProtocolHandler {
         }
       })
       .on('end', () => {
-        logger.info('File loading end.', this.logSource)
+        this.logger.info('File loading end.')
         fs.rename(`${inputFolder}${filename}`, `${archiveFolder}fichier.csv`, (error) => {
           if (error) {
-            logger.error(error, this.logSource)
+            this.logger.error(error)
           }
         })
-        logger.info('File move succeeded!', this.logSource)
+        this.logger.info('File move succeeded!')
       })
 
     readStream.pipe(csvFile)

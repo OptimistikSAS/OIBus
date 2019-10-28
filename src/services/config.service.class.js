@@ -4,8 +4,7 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
-
-const LOG_SOURCE = 'config'
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
@@ -17,12 +16,13 @@ const LOG_SOURCE = 'config'
 class ConfigService {
   constructor(engine, configFile) {
     this.engine = engine
+    this.logger = new Logger(this.constructor.name)
 
     this.configFile = configFile
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
-      logger.info(`Creating folder ${baseDir}`, LOG_SOURCE)
+      this.logger.info(`Creating folder ${baseDir}`)
       fs.mkdirSync(baseDir, { recursive: true })
     }
 
@@ -41,7 +41,7 @@ class ConfigService {
    */
   static isValidArgs({ config }) {
     if (!config) {
-      logger.error('No config file specified, example: --config ./config/config.json', LOG_SOURCE)
+      this.logger.error('No config file specified, example: --config ./config/config.json')
       return false
     }
 
@@ -79,14 +79,14 @@ class ConfigService {
    */
   static tryReadFile(filePath) {
     if (!filePath.endsWith('.json')) {
-      logger.error('You must provide a json file for the configuration!', LOG_SOURCE)
+      this.logger.error('You must provide a json file for the configuration!')
       throw new Error('You must provide a json file for the configuration!')
     }
 
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
       throw error
     }
   }
@@ -134,12 +134,12 @@ class ConfigService {
   /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
-      logger.info('Default config file does not exist. Creating it.', LOG_SOURCE)
+      this.logger.info('Default config file does not exist. Creating it.')
       try {
         const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
-        logger.error(error, LOG_SOURCE)
+        this.logger.error(error)
       }
     }
   }
@@ -160,7 +160,7 @@ class ConfigService {
       }
       return duplicateConfig
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
       throw error
     }
   }
