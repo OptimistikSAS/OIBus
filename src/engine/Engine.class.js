@@ -4,8 +4,6 @@ const path = require('path')
 const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
 
-const LOG_SOURCE = 'engine'
-
 // South classes
 const protocolList = {}
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
@@ -30,6 +28,7 @@ apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
+const Logger = require('./Logger.class')
 
 /**
  *
@@ -52,18 +51,19 @@ class Engine {
     const { engineConfig, southConfig } = this.configService.getConfig()
 
     // Configure the logger
-    logger.changeParameters(engineConfig.logParameters)
+    this.logger = new Logger(this.constructor.name)
+    this.logger.changeParameters(engineConfig.logParameters)
 
     // Configure the Cache
     this.cache = new Cache(this)
-    logger.info(`
+    this.logger.info(`
     Starting Engine ${this.version}
     architecture: ${process.arch}
     This platform is ${process.platform}
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
-    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`, LOG_SOURCE)
+    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
     encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder)
 
@@ -84,7 +84,7 @@ class Engine {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
-            logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`, LOG_SOURCE)
+            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
           } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
@@ -92,10 +92,7 @@ class Engine {
         } else if (dataSource.points) {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
-              logger.error(
-                `point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`,
-                LOG_SOURCE,
-              )
+              this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
             } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
               // add the source for this scan only if not already there
               this.scanLists[point.scanMode].push(dataSource.dataSourceId)
@@ -120,7 +117,7 @@ class Engine {
    * @return {void}
    */
   async addValues(dataSourceId, values) {
-    logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`, LOG_SOURCE)
+    this.logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
     await this.cache.cacheValues(dataSourceId, values)
   }
 
@@ -133,7 +130,7 @@ class Engine {
    * @return {void}
    */
   addFile(dataSourceId, filePath, preserveFiles) {
-    logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`, LOG_SOURCE)
+    this.logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`)
     this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
   }
 
@@ -144,12 +141,12 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async handleValuesFromCache(applicationId, values) {
-    logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`, LOG_SOURCE)
+    this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
     let success = false
     try {
       success = await this.activeApis[applicationId].handleValues(values)
     } catch (error) {
-      logger.error(error)
+      this.logger.error(error)
     }
     return success
   }
@@ -161,13 +158,13 @@ class Engine {
    * @return {Promise} - The send promise
    */
   async sendFile(applicationId, filePath) {
-    logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`, LOG_SOURCE)
+    this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
     let success = false
 
     try {
       success = await this.activeApis[applicationId].handleFile(filePath)
     } catch (error) {
-      logger.error(error)
+      this.logger.error(error)
     }
 
     return success
@@ -194,7 +191,7 @@ class Engine {
           this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
           this.activeProtocols[dataSourceId].connect()
         } else {
-          logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`, LOG_SOURCE)
+          this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
         }
       }
     })
@@ -210,7 +207,7 @@ class Engine {
           this.activeApis[applicationId] = new ApiHandler(application, this)
           this.activeApis[applicationId].connect()
         } else {
-          logger.error(`API for ${applicationId} is not found : ${api}`, LOG_SOURCE)
+          this.logger.error(`API for ${applicationId} is not found : ${api}`)
         }
       }
     })
@@ -227,18 +224,18 @@ class Engine {
             try {
               this.activeProtocols[dataSourceId].onScan(scanMode)
             } catch (error) {
-              logger.error(`scan for ${dataSourceId} failed: ${error}`, LOG_SOURCE)
+              this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
             }
           })
         })
         if (job.result !== 'ok') {
-          logger.error(`The scan  ${scanMode} could not start : ${job.error}`, LOG_SOURCE)
+          this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
         } else {
           this.jobs.push(job.id)
         }
       }
     })
-    logger.info('OIBus started')
+    this.logger.info('OIBus started')
   }
 
   /**
@@ -253,22 +250,22 @@ class Engine {
 
     // Stop Protocols
     Object.entries(this.activeProtocols).forEach(([dataSourceId, protocol]) => {
-      logger.info(`Stopping ${dataSourceId}`, LOG_SOURCE)
+      this.logger.info(`Stopping ${dataSourceId}`)
       protocol.disconnect()
     })
 
     // Stop Applications
     Object.entries(this.activeApis).forEach(([applicationId, application]) => {
-      logger.info(`Stopping ${applicationId}`, LOG_SOURCE)
+      this.logger.info(`Stopping ${applicationId}`)
       application.disconnect()
     })
 
     // Log cache data
     const apisCacheStats = await this.cache.getCacheStatsForApis()
-    logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`, LOG_SOURCE)
+    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
 
     const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
-    logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`, LOG_SOURCE)
+    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
   }
 
   /**
@@ -299,7 +296,7 @@ class Engine {
    */
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
-    logger.debug('Getting North applications', LOG_SOURCE)
+    this.logger.debug('Getting North applications')
     return Object.keys(apiList)
   }
 
@@ -309,7 +306,7 @@ class Engine {
    */
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
-    logger.debug('Getting South protocols', LOG_SOURCE)
+    this.logger.debug('Getting South protocols')
     return Object.keys(protocolList)
   }
 

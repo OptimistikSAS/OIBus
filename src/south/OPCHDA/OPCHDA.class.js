@@ -3,6 +3,7 @@ const { spawn } = require('child_process')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
 const databaseService = require('../../services/database.service')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Class OPCHDA.
@@ -18,7 +19,7 @@ class OPCHDA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    this.agentLogSource = 'OIBusOPCHDA'
+    this.agentLogger = new Logger('OIBusOPCHDA')
 
     this.tcpServer = null
     this.transactionId = 0
@@ -59,18 +60,18 @@ class OPCHDA extends ProtocolHandler {
       Object.keys(this.lastCompletedAt).forEach(async (key) => {
         let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
         lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
-        logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`, this.logSource)
+        this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
         this.lastCompletedAt[key] = lastCompletedAt
       })
 
       // Launch Agent
       const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
-      this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logSource)
+      this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logger)
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
       })
     } else {
-      logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`, this.logSource)
+      this.logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`)
     }
   }
 
@@ -103,7 +104,7 @@ class OPCHDA extends ProtocolHandler {
    * @returns {void}
    */
   launchAgent(path, port, logLevel) {
-    logger.info(`Launching ${path} with the arguments: listen -p ${port} -l ${logLevel} -x none`, this.logSource)
+    this.logger.info(`Launching ${path} with the arguments: listen -p ${port} -l ${logLevel} -x none`)
     this.child = spawn(path, ['listen', `-p ${port}`, `-l ${logLevel}`, '-x none'])
 
     this.child.stdout.on('data', (data) => {
@@ -111,15 +112,15 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.child.stderr.on('data', (data) => {
-      logger.error(`HDA stderr: ${data}`, this.agentLogSource)
+      this.agentLogger.error(`HDA stderr: ${data}`)
     })
 
     this.child.on('close', (code) => {
-      logger.info(`HDA agent exited with code ${code}`, this.logSource)
+      this.logger.info(`HDA agent exited with code ${code}`)
     })
 
     this.child.on('error', (error) => {
-      logger.error(`Failed to start HDA agent: ${error.message}`, this.logSource)
+      this.logger.error(`Failed to start HDA agent: ${error.message}`)
     })
   }
 
@@ -159,24 +160,24 @@ class OPCHDA extends ProtocolHandler {
       const message = `Agent stdout: ${parsedLog.Message}`
       switch (parsedLog.Level) {
         case 'error':
-          logger.error(message, this.agentLogSource)
+          this.agentLogger.error(message)
           break
         case 'info':
-          logger.info(message, this.agentLogSource)
+          this.agentLogger.info(message)
           break
         case 'debug':
-          logger.debug(message, this.agentLogSource)
+          this.agentLogger.debug(message)
           break
         case 'silly':
-          logger.silly(message, this.agentLogSource)
+          this.agentLogger.silly(message)
           break
         default:
-          logger.debug(message, this.agentLogSource)
+          this.agentLogger.debug(message)
           break
       }
     } catch (error) {
-      logger.error(error, this.logSource)
-      logger.debug(`Agent stdout error: ${log}`, this.logSource)
+      this.logger.error(error)
+      this.agentLogger.debug(`Agent stdout error: ${log}`)
     }
   }
 
@@ -220,7 +221,7 @@ class OPCHDA extends ProtocolHandler {
       }
       this.sendMessage(message)
     } else {
-      logger.silly(`sendReadMessage not processed, agent ready: ${this.agentReady}`, this.logSource)
+      this.logger.silly(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
     }
   }
 
@@ -239,13 +240,10 @@ class OPCHDA extends ProtocolHandler {
       }
 
       const messageString = JSON.stringify(message)
-      logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`, this.logSource)
+      this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
     } else {
-      logger.debug(
-        `send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`,
-        this.logSource,
-      )
+      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
@@ -258,7 +256,7 @@ class OPCHDA extends ProtocolHandler {
    */
   async handleMessage(message) {
     try {
-      logger.silly(`Received: ${message}`, this.logSource)
+      this.logger.silly(`Received: ${message}`)
 
       const messageObject = JSON.parse(message)
       let dateString
@@ -270,41 +268,38 @@ class OPCHDA extends ProtocolHandler {
           this.sendConnectMessage()
           break
         case 'Connect':
-          logger.debug(`Agent connected to OPC HDA server: ${messageObject.Content.Connected}`, this.logSource)
+          this.logger.debug(`Agent connected to OPC HDA server: ${messageObject.Content.Connected}`)
           if (messageObject.Content.Connected) {
             this.sendInitializeMessage()
           } else {
-            logger.error(
-              `Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}`,
-              this.logSource,
-            )
+            this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}`)
             this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
           }
           break
         case 'Initialize':
           this.agentReady = true
-          logger.debug('received Initialize message', this.logSource)
+          this.logger.debug('received Initialize message')
           break
         case 'Read':
           if (messageObject.Content.Error) {
             this.ongoingReads[messageObject.Content.Group] = false
-            logger.error(messageObject.Content.Error, this.logSource)
+            this.logger.error(messageObject.Content.Error)
             return
           }
 
           if (messageObject.Content.Points === undefined) {
             this.ongoingReads[messageObject.Content.Group] = false
-            logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`, this.logSource)
+            this.logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`)
             return
           }
 
           if (messageObject.Content.Points.length === 0) {
             this.ongoingReads[messageObject.Content.Group] = false
-            logger.debug(`Empty Points response for ${messageObject.Content.Group}`, this.logSource)
+            this.logger.debug(`Empty Points response for ${messageObject.Content.Group}`)
             return
           }
 
-          logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`, this.logSource)
+          this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
 
           // eslint-disable-next-line no-case-declarations
           const values = messageObject.Content.Points.map((point) => {
@@ -315,7 +310,7 @@ class OPCHDA extends ProtocolHandler {
                 data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
               }
             }
-            logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`, this.logSource)
+            this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
             return {}
           })
           this.addValues(values)
@@ -327,7 +322,7 @@ class OPCHDA extends ProtocolHandler {
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group],
           )
-          logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`, this.logSource)
+          this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
           this.ongoingReads[messageObject.Content.Group] = false
           break
@@ -339,10 +334,10 @@ class OPCHDA extends ProtocolHandler {
           this.tcpServer.stop()
           break
         default:
-          logger.warn(`unknown messageObject.Reply ${messageObject.Reply}`, this.logSource)
+          this.logger.warn(`unknown messageObject.Reply ${messageObject.Reply}`)
       }
     } catch (error) {
-      logger.error(error, this.logSource)
+      this.logger.error(error)
     }
   }
 }

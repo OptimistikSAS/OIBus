@@ -77,12 +77,12 @@ class AliveSignal extends ApiHandler {
     try {
       const response = await fetch(this.host, fetchOptions)
       if (response.ok) {
-        logger.info('Alive signal successful', this.logSource)
+        this.logger.info('Alive signal successful')
       } else {
-        logger.error(new Error(`Alive signal error: ${response.statusText}`), this.logSource)
+        this.logger.error(new Error(`Alive signal error: ${response.statusText}`))
       }
     } catch (error) {
-      logger.error(error, this.logSource)
+      this.logger.error(error)
     }
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)

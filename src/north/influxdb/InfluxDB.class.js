@@ -119,7 +119,7 @@ class InfluxDB extends ApiHandler {
           // Append entry to body
           body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
         } catch (error) {
-          logger.error(error, this.logSource)
+          this.logger.error(error)
         }
       })
 

@@ -110,7 +110,7 @@ class TimescaleDB extends ApiHandler {
 
           query += statement
         } catch (error) {
-          logger.error(error, this.logSource)
+          this.logger.error(error)
         }
       })
 

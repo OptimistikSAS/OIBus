@@ -8,21 +8,19 @@ const ConfigService = require('./services/config.service.class')
 const Engine = require('./engine/Engine.class')
 const Logger = require('./engine/Logger.class')
 
-const LOG_SOURCE = 'main'
-
-global.logger = new Logger()
+const logger = new Logger('main')
 
 if (cluster.isMaster) {
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
-  logger.info(`Starting OIBus version: ${VERSION}`, LOG_SOURCE)
+  logger.info(`Starting OIBus version: ${VERSION}`)
   cluster.fork()
 
   cluster.on('exit', (worker, code, signal) => {
     if (signal) {
-      logger.info(`Worker ${worker.process.pid} was killed by signal: ${signal}`, LOG_SOURCE)
+      logger.info(`Worker ${worker.process.pid} was killed by signal: ${signal}`)
     } else {
-      logger.error(`Worker ${worker.process.pid} exited with error code: ${code}`, LOG_SOURCE)
+      logger.error(`Worker ${worker.process.pid} exited with error code: ${code}`)
     }
 
     cluster.fork()
@@ -41,7 +39,7 @@ if (cluster.isMaster) {
 
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {
-    logger.info('SIGINT (Ctrl+C) received. Stopping everything.', LOG_SOURCE)
+    logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
     engine.stop().then(() => {
       process.exit()
     })
