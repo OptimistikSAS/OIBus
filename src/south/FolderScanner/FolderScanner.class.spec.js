@@ -9,7 +9,7 @@ jest.mock('../../services/database.service', () => {
 jest.mock('fs')
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function () {
+jest.mock('../../engine/Logger.class', () => (function logger() {
   return { silly: () => jest.fn() }
 }))
 
