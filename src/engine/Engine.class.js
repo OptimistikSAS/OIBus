@@ -287,7 +287,7 @@ class Engine {
    * @return {string} - The decrypted password
    */
   decryptPassword(password) {
-    return encryptionService.decryptText(password, this.configService.keyFolder, logger)
+    return encryptionService.decryptText(password, this.configService.keyFolder)
   }
 
   /**
