@@ -3,8 +3,7 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
-
-const LOG_SOURCE = 'cache'
+const Logger = require('./Logger.class')
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -22,6 +21,7 @@ class Cache {
    */
   constructor(engine) {
     this.engine = engine
+    this.logger = new Logger(this.constructor.name)
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching
@@ -29,13 +29,13 @@ class Cache {
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
-      logger.info(`creating cache folder in ${this.cacheFolder}`, LOG_SOURCE)
+      this.logger.info(`creating cache folder in ${this.cacheFolder}`)
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
     // Create archive folder if not exists
     this.archiveFolder = path.resolve(archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
-      logger.info(`creating archive folder in ${this.archiveFolder}`, LOG_SOURCE)
+      this.logger.info(`creating archive folder in ${this.archiveFolder}`)
       fs.mkdirSync(this.archiveFolder, { recursive: true })
     }
     // will contains the list of North apis
@@ -64,15 +64,15 @@ class Cache {
     }
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
-      logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`, LOG_SOURCE)
+      this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
       api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
-      logger.debug(`db count: ${await databaseService.getCount(api.database)}`, LOG_SOURCE)
+      this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.applicationId] = api
     if (api && api.config && api.config.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
-      logger.debug(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`, LOG_SOURCE)
+      this.logger.debug(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`)
     }
   }
 
@@ -83,9 +83,9 @@ class Cache {
    * @return {void}
    */
   async initialize(activeApis) {
-    logger.debug(`use db: ${this.cacheFolder}/fileCache.db`, LOG_SOURCE)
+    this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-    logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`, LOG_SOURCE)
+    this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
     // initialize the internal object apis with the list of north apis
     const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
     await Promise.all(actions)
@@ -126,7 +126,7 @@ class Cache {
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
       if (count >= config.groupCount) {
-        logger.silly(`groupCount reached: ${count}>=${config.groupCount}`, LOG_SOURCE)
+        this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
         return api
       }
     }
@@ -155,7 +155,7 @@ class Cache {
         }
       })
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
     }
   }
 
@@ -174,9 +174,9 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
 
       // Cache file
-      logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`, LOG_SOURCE)
+      this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-      logger.debug(`send file for ${api.applicationId}`, LOG_SOURCE)
+      this.logger.debug(`send file for ${api.applicationId}`)
       return api
     }
     return false
@@ -194,7 +194,7 @@ class Cache {
     this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
 
     // Cache files
-    logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`, LOG_SOURCE)
+    this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
@@ -213,7 +213,7 @@ class Cache {
         }
       })
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
     }
   }
 
@@ -230,23 +230,23 @@ class Cache {
     return new Promise((resolve, reject) => {
       try {
         if (preserveFiles) {
-          logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`, LOG_SOURCE)
+          this.logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
           fs.copyFile(filePath, cachePath, (copyError) => {
             if (copyError) throw copyError
             resolve()
           })
         } else {
-          logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`, LOG_SOURCE)
+          this.logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
           fs.rename(filePath, cachePath, (renameError) => {
             if (renameError) {
               // In case of cross-device link error we copy+delete instead
               if (renameError.code !== 'EXDEV') throw renameError
-              logger.debug('Cross-device link error during rename, copy+paste instead', LOG_SOURCE)
+              this.logger.debug('Cross-device link error during rename, copy+paste instead')
               fs.copyFile(filePath, cachePath, (copyError) => {
                 if (copyError) throw copyError
                 fs.unlink(filePath, (unlinkError) => {
                   // log error but does not throw so we try sending the file to S3
-                  if (unlinkError) logger.error(unlinkError, LOG_SOURCE)
+                  if (unlinkError) this.logger.error(unlinkError)
                 })
                 resolve()
               })
@@ -269,7 +269,7 @@ class Cache {
   async sendCallback(api) {
     const { applicationId, canHandleValues, canHandleFiles } = api
 
-    logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`, LOG_SOURCE)
+    this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`)
 
     if (!this.sendInProgress[applicationId]) {
       this.sendInProgress[applicationId] = true
@@ -295,7 +295,7 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForValues(application) {
-    logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`, LOG_SOURCE)
+    this.logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
     let success = true
     const { applicationId, database, config } = application
 
@@ -303,26 +303,17 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
-        logger.silly(
-          `Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`,
-          LOG_SOURCE,
-        )
+        this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
         success = await this.engine.handleValuesFromCache(applicationId, values)
-        logger.silly(
-          `Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`,
-          LOG_SOURCE,
-        )
+        this.logger.silly(`Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`)
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
-          logger.silly(
-            `Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`,
-            LOG_SOURCE,
-          )
-          if (removed !== values.length) logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`, LOG_SOURCE)
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
         }
       }
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
       success = false
     }
 
@@ -337,33 +328,33 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForFiles(application) {
-    logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`, LOG_SOURCE)
+    this.logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
 
     const { applicationId, config } = application
     let success = true
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
-      logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`, LOG_SOURCE)
+      this.logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
 
       if (filePath) {
         if (fs.existsSync(filePath)) {
-          logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`, LOG_SOURCE)
+          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
           success = await this.engine.sendFile(applicationId, filePath)
 
           if (success) {
-            logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`, LOG_SOURCE)
+            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
             await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
             await this.handleSentFile(filePath)
           }
         } else {
-          logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`), LOG_SOURCE)
+          this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
 
           await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
         }
       }
     } catch (error) {
-      logger.error(error, LOG_SOURCE)
+      this.logger.error(error)
     }
 
     const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
@@ -377,7 +368,7 @@ class Cache {
    * @return {void}
    */
   async handleSentFile(filePath) {
-    logger.silly(`Cache handleSentFile() for ${filePath}`, LOG_SOURCE)
+    this.logger.silly(`Cache handleSentFile() for ${filePath}`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       const archivedFilename = path.basename(filePath)
@@ -388,9 +379,9 @@ class Cache {
           // Delete original file
           fs.unlink(filePath, (unlinkError) => {
             if (unlinkError) {
-              logger.error(unlinkError, LOG_SOURCE)
+              this.logger.error(unlinkError)
             } else {
-              logger.info(`File ${filePath} deleted`, LOG_SOURCE)
+              this.logger.info(`File ${filePath} deleted`)
             }
           })
           break
@@ -403,14 +394,14 @@ class Cache {
           // Move original file into the archive folder
           fs.rename(filePath, archivePath, (renameError) => {
             if (renameError) {
-              logger.error(renameError, LOG_SOURCE)
+              this.logger.error(renameError)
             } else {
-              logger.info(`File ${filePath} moved to ${archivePath}`, LOG_SOURCE)
+              this.logger.info(`File ${filePath} moved to ${archivePath}`)
             }
           })
           break
         default:
-          logger.error(`unknown Archive Mode: ${this.archiveMode}`, LOG_SOURCE)
+          this.logger.error(`unknown Archive Mode: ${this.archiveMode}`)
       }
     }
   }

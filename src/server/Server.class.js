@@ -8,6 +8,7 @@ const json = require('koa-json')
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
 const clientController = require('./controllers/clientController')
+const Logger = require('../engine/Logger.class')
 
 const router = require('./routes')
 
@@ -25,7 +26,7 @@ class Server {
     this.app = new Koa()
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
-    this.app.logSource = 'server'
+    this.app.logger = new Logger('server')
 
     // Get the config entries
     const { engineConfig } = engine.configService.getConfig()
@@ -50,7 +51,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          logger.error(err, this.app.logSource)
+          this.app.logger.error(err)
           ctx.body = JSON.stringify(err)
         } else {
           throw err
@@ -92,7 +93,7 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => logger.info(`Server started on ${this.port}`, this.app.logSource))
+    this.app.listen(this.port, () => this.app.logger.info(`Server started on ${this.port}`))
   }
 }
 

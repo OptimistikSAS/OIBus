@@ -1,8 +1,10 @@
 const sqlite = require('sqlite')
 
-const CACHE_TABLE_NAME = 'cache'
+const Logger = require('../engine/Logger.class')
 
-const LOG_SOURCE = 'database'
+const logger = new Logger('database')
+
+const CACHE_TABLE_NAME = 'cache'
 
 /**
  * Initiate SQLite3 database and create the cache table.
@@ -99,7 +101,7 @@ const saveValues = async (database, dataSourceId, values) => {
     await Promise.all(actions)
     await database.run('COMMIT;')
   } catch (error) {
-    logger.error(error, LOG_SOURCE)
+    logger.error(error)
     throw error
   }
 }
@@ -117,7 +119,7 @@ const getCount = async (database) => {
     const stmt = await database.prepare(query)
     result = await stmt.get()
   } catch (error) {
-    logger.error(error, LOG_SOURCE)
+    logger.error(error)
     throw error
   }
   return result.count
@@ -139,7 +141,7 @@ const getValuesToSend = async (database, count) => {
     const stmt = await database.prepare(query)
     results = await stmt.all()
   } catch (error) {
-    logger.error(error, LOG_SOURCE)
+    logger.error(error)
     throw error
   }
 
@@ -151,7 +153,7 @@ const getValuesToSend = async (database, count) => {
         // data is a JSON object containing value and quality
         value.data = JSON.parse(decodeURI(value.data))
       } catch (error) {
-        logger.error(error, LOG_SOURCE)
+        logger.error(error)
         throw error
       }
       return value
@@ -176,7 +178,7 @@ const removeSentValues = async (database, values) => {
     stmt = await database.prepare(query)
     await stmt.run()
   } catch (error) {
-    logger.error(error, LOG_SOURCE)
+    logger.error(error)
     throw error
   }
   return stmt.changes

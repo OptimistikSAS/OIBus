@@ -1,3 +1,5 @@
+const Logger = require('../engine/Logger.class')
+
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  * Building a new South Protocol means to extend this class, and to surcharge
@@ -34,27 +36,27 @@ class ProtocolHandler {
   constructor(dataSource, engine) {
     this.dataSource = dataSource
     this.engine = engine
-    this.logSource = this.constructor.name
+    this.logger = new Logger(this.constructor.name)
   }
 
   connect() {
     const { dataSourceId, protocol } = this.dataSource
-    logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`, this.logSource)
+    logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
   onScan(scanMode) {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`, this.logSource)
+    logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
   }
 
   listen() {
     const { dataSourceId } = this.dataSource
-    logger.error(`Data source ${dataSourceId} should surcharge listen()`, this.logSource)
+    logger.error(`Data source ${dataSourceId} should surcharge listen()`)
   }
 
   disconnect() {
     const { dataSourceId } = this.dataSource
-    logger.info(`Data source ${dataSourceId} disconnected`, this.logSource)
+    logger.info(`Data source ${dataSourceId} disconnected`)
   }
 
   /**

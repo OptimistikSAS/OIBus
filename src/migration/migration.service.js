@@ -2,10 +2,12 @@ const fs = require('fs')
 
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
+const Logger = require('../engine/Logger.class')
+
+const logger = new Logger('migration')
 
 const REQUIRED_SCHEMA_VERSION = 3
 const DEFAULT_VERSION = 1
-const LOG_SOURCE = 'migration'
 
 /**
  * Migration implementation.
@@ -22,18 +24,18 @@ const migrateImpl = (configVersion, config, configFile) => {
       const intVersion = parseInt(version, 10)
       if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
         if (migrationRules[version] instanceof Function) {
-          logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`, LOG_SOURCE)
+          logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
           config.schemaVersion = intVersion
           migrationRules[version](config)
         } else {
-          logger.info(`Invalid rules definition to migrate to version ${version}`, LOG_SOURCE)
+          logger.info(`Invalid rules definition to migrate to version ${version}`)
         }
         iterateVersion = intVersion
       }
     })
 
   if (iterateVersion !== REQUIRED_SCHEMA_VERSION) {
-    logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`, LOG_SOURCE)
+    logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
   }
 
   ConfigService.backupConfigFile(configFile)
@@ -50,13 +52,13 @@ const migrate = (configFile) => {
     const config = ConfigService.tryReadFile(configFile)
     const configVersion = config.schemaVersion || DEFAULT_VERSION
     if (configVersion < REQUIRED_SCHEMA_VERSION) {
-      logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`, LOG_SOURCE)
+      logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
       migrateImpl(configVersion, config, configFile)
     } else {
-      logger.info('Config file is up-to-date, no migrating needed.', LOG_SOURCE)
+      logger.info('Config file is up-to-date, no migrating needed.')
     }
   } else {
-    logger.info(`${configFile} doesn't exists. No migration needed.`, LOG_SOURCE)
+    logger.info(`${configFile} doesn't exists. No migration needed.`)
   }
 }
 
