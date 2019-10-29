@@ -1,7 +1,29 @@
 import React from 'react'
-import { FormGroup, FormText, Label, Button, Input, ListGroup, ListGroupItem, Card, CardBody, Row, Col } from 'reactstrap'
+import {
+  FormGroup,
+  FormText,
+  Label,
+  Button,
+  Input,
+  ListGroup,
+  ListGroupItem,
+  Card,
+  CardBody,
+  Row,
+  Col,
+} from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
+
+const selectStyle = (level) => {
+  switch (level) {
+    case 'debug': return 'text-success'
+    case 'info': return 'text-info'
+    case 'warning': return 'text-warning'
+    case 'error': return 'text-danger'
+    default: return 'text-primary'
+  }
+}
 
 const Log = () => {
   const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
@@ -93,7 +115,7 @@ const Log = () => {
                   const { id, source, level, message, timestamp } = item
                   const date = new Date(timestamp)
                   return (
-                    <ListGroupItem key={id} className="oi-log">
+                    <ListGroupItem key={id} className={`oi-log ${selectStyle(level)}`}>
                       <Label>{`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}</Label>
                       {` | ${source} | ${level} | ${message}`}
                     </ListGroupItem>
@@ -156,7 +178,7 @@ const Log = () => {
             <FormGroup>
               <Label for="verbosity">Verbosity</Label>
               {verbosityOptions.map((item) => (
-                <FormGroup check key={item}>
+                <FormGroup check className={`${selectStyle(item)}`} key={item}>
                   <Label check>
                     <Input
                       className="oi-form-input"
