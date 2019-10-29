@@ -46,14 +46,14 @@ ModbusForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: Prop
  * @returns {array} Headers for each column
  */
 ModbusForm.renderHeaders = () => ['Point Id', 'ScanMode', 'Address', 'Type']
-ModbusForm.renderPoints = (points, onChange) => {
+ModbusForm.renderPoints = (points, onChange, pageOffset) => {
   const rows = points.map((point, index) => [
     {
-      name: `points.${index}.pointId`,
+      name: `points.${index + pageOffset}.pointId`,
       value: (
         <OIbText
           title="Point Id"
-          name={`points.${index}.pointId`}
+          name={`points.${index + pageOffset}.pointId`}
           value={point.pointId}
           valid={validation.Modbus.points.pointId}
           onChange={onChange}
@@ -62,21 +62,21 @@ ModbusForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.scanMode`,
+      name: `points.${index + pageOffset}.scanMode`,
       value: (
         <OIbScanMode
-          name={`points.${index}.scanMode`}
+          name={`points.${index + pageOffset}.scanMode`}
           scanMode={point.scanMode}
           onChange={onChange}
         />
       ),
     },
     {
-      name: `points.${index}.address`,
+      name: `points.${index + pageOffset}.address`,
       value: (
         <OIbText
           title="Address"
-          name={`points.${index}.address`}
+          name={`points.${index + pageOffset}.address`}
           value={point.address}
           valid={validation.Modbus.points.address}
           onChange={onChange}
@@ -85,13 +85,13 @@ ModbusForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.type`,
+      name: `points.${index + pageOffset}.type`,
       value: (
         <OIbSelect
           onChange={onChange}
           options={['boolean', 'number']}
           option={point.type}
-          name={`points.${index}.type`}
+          name={`points.${index + pageOffset}.type`}
           defaultOption="boolean"
         />
       ),

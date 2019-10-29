@@ -108,14 +108,14 @@ MQTTForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTy
  * @returns {array} Headers for each column
  */
 MQTTForm.renderHeaders = () => ['Point Id', 'ScanMode', 'Topic']
-MQTTForm.renderPoints = (points, onChange) => {
+MQTTForm.renderPoints = (points, onChange, pageOffset) => {
   const rows = points.map((point, index) => [
     {
-      name: `points.${index}.pointId`,
+      name: `points.${index + pageOffset}.pointId`,
       value: (
         <OIbText
           title="Point Id"
-          name={`points.${index}.pointId`}
+          name={`points.${index + pageOffset}.pointId`}
           value={point.pointId}
           valid={validation.MQTT.points.pointId}
           onChange={onChange}
@@ -124,21 +124,21 @@ MQTTForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.scanMode`,
+      name: `points.${index + pageOffset}.scanMode`,
       value: (
         <OIbScanMode
-          name={`points.${index}.scanMode`}
+          name={`points.${index + pageOffset}.scanMode`}
           scanMode={point.scanMode}
           onChange={onChange}
         />
       ),
     },
     {
-      name: `points.${index}.topic`,
+      name: `points.${index + pageOffset}.topic`,
       value: (
         <OIbText
           title="Topic"
-          name={`points.${index}.topic`}
+          name={`points.${index + pageOffset}.topic`}
           value={point.topic}
           valid={validation.MQTT.points.topic}
           onChange={onChange}

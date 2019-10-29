@@ -95,14 +95,14 @@ CSVForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTyp
  * @returns {array} Headers for each column
  */
 CSVForm.renderHeaders = () => ['Point Id', 'ScanMode', 'Value', 'Quality']
-CSVForm.renderPoints = (points, onChange) => {
+CSVForm.renderPoints = (points, onChange, pageOffset) => {
   const rows = points.map((point, index) => [
     {
-      name: `points.${index}.pointId`,
+      name: `points.${index + pageOffset}.pointId`,
       value: (
         <OIbText
           title="Point Id"
-          name={`points.${index}.pointId`}
+          name={`points.${index + pageOffset}.pointId`}
           value={point.pointId}
           valid={validation.CSV.points.pointId}
           onChange={onChange}
@@ -111,21 +111,21 @@ CSVForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.scanMode`,
+      name: `points.${index + pageOffset}.scanMode`,
       value: (
         <OIbScanMode
-          name={`points.${index}.scanMode`}
+          name={`points.${index + pageOffset}.scanMode`}
           scanMode={point.scanMode}
           onChange={onChange}
         />
       ),
     },
     {
-      name: `points.${index}.value`,
+      name: `points.${index + pageOffset}.value`,
       value: (
         <OIbText
           title="Value"
-          name={`points.${index}.value`}
+          name={`points.${index + pageOffset}.value`}
           value={point.value}
           valid={validation.CSV.points.value}
           onChange={onChange}
@@ -134,11 +134,11 @@ CSVForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.quality`,
+      name: `points.${index + pageOffset}.quality`,
       value: (
         <OIbText
           title="Quality"
-          name={`points.${index}.quality`}
+          name={`points.${index + pageOffset}.quality`}
           value={point.quality}
           valid={validation.CSV.points.quality}
           onChange={onChange}
