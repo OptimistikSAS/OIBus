@@ -341,8 +341,8 @@ label {
   margin-left: 5px;
 }
 
-.oi-log {
-  padding: .1rem .1rem;
+.oi-log td{
+  padding: 1px;
 }
 
 .oi-icon:hover,.oi-help:hover{

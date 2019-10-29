@@ -1,27 +1,20 @@
 import React from 'react'
-import {
-  FormGroup,
-  FormText,
-  Label,
-  Button,
-  Input,
-  ListGroup,
-  ListGroupItem,
-  Card,
-  CardBody,
-  Row,
-  Col,
-} from 'reactstrap'
+import { FormGroup, FormText, Label, Button, Input, Table, Card, CardBody, Row, Col } from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 
 const selectStyle = (level) => {
   switch (level) {
-    case 'debug': return 'text-success'
-    case 'info': return 'text-info'
-    case 'warning': return 'text-warning'
-    case 'error': return 'text-danger'
-    default: return 'text-primary'
+    case 'debug':
+      return 'text-success'
+    case 'info':
+      return 'text-info'
+    case 'warning':
+      return 'text-warning'
+    case 'error':
+      return 'text-danger'
+    default:
+      return 'text-primary'
   }
 }
 
@@ -79,20 +72,24 @@ const Log = () => {
    * @returns {void}
    */
   const renderFilter = () => (
-    <FormGroup>
-      <Label for="filterText">Filter</Label>
-      <Input
-        className="oi-form-input"
-        type="text"
-        id="filterText"
-        placeholder="message contains..."
-        value={filterText}
-        onEnded={() => null}
-        onChange={(event) => {
-          setMaxLog(defaultMaxLog)
-          setFilterText(event.target.value.toLowerCase())
-        }}
-      />
+    <FormGroup row>
+      <Label sm={1} for="filterText">
+        Filter
+      </Label>
+      <Col sm={11}>
+        <Input
+          className="oi-form-input"
+          type="text"
+          id="filterText"
+          placeholder="message contains..."
+          value={filterText}
+          onEnded={() => null}
+          onChange={(event) => {
+            setMaxLog(defaultMaxLog)
+            setFilterText(event.target.value.toLowerCase())
+          }}
+        />
+      </Col>
     </FormGroup>
   )
 
@@ -107,27 +104,30 @@ const Log = () => {
         <Card>
           <Label className="label-card-title">Logs</Label>
           <CardBody className="card-body">
-            <ListGroup>
-              {renderFilter()}
-              {filteredLogs
-                .filter((_, index) => index < maxLog)
-                .map((item) => {
-                  const { id, source, level, message, timestamp } = item
-                  const date = new Date(timestamp)
-                  return (
-                    <ListGroupItem key={id} className={`oi-log ${selectStyle(level)}`}>
-                      <Label>{`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}</Label>
-                      {` | ${source} | ${level} | ${message}`}
-                    </ListGroupItem>
-                  )
-                })}
-              {filteredLogs.length > maxLog ? (
-                <Button color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
-                  Show more...
-                </Button>
-              ) : null}
-              <br />
-            </ListGroup>
+            {renderFilter()}
+            <Table size="small" bordered hover responsive>
+              <tbody>
+                {filteredLogs
+                  .filter((_, index) => index < maxLog)
+                  .map((item) => {
+                    const { id, source, level, message, timestamp } = item
+                    const date = new Date(timestamp)
+                    return (
+                      <tr key={id} className={`oi-log ${selectStyle(level)}`}>
+                        <td style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
+                        <td>{source}</td>
+                        <td>{level}</td>
+                        <td>{message}</td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </Table>
+            {filteredLogs.length > maxLog && (
+              <Button color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
+                Show more...
+              </Button>
+            )}
           </CardBody>
         </Card>
       </Col>
