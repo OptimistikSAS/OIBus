@@ -32,7 +32,7 @@ const OIbScanMode = ({ label, help, scanMode, name, onChange }) => {
 
   // check if defined scanmode is unknown to the engine
   if (!options.includes(scanMode)) {
-    options.unshift('')
+    options.unshift(scanMode)
     validCheck = 'Invalid scan mode'
   }
 
