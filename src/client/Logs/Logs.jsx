@@ -90,12 +90,12 @@ const Log = () => {
               {filteredLogs
                 .filter((_, index) => index < maxLog)
                 .map((item) => {
-                  const { id, level, message, timestamp } = item
+                  const { id, source, level, message, timestamp } = item
                   const date = new Date(timestamp)
                   return (
                     <ListGroupItem key={id} className="oi-log">
                       <Label>{`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`}</Label>
-                      {` | ${level}| ${message}`}
+                      {` | ${source} | ${level} | ${message}`}
                     </ListGroupItem>
                   )
                 })}
