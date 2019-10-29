@@ -124,10 +124,11 @@ const ConfigurePoints = () => {
         .includes(filterText.toLowerCase())) >= 0,
     ) : points
   // paging
+  const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
   const pagedPoints = filteredPoints.filter(
-    (_, index) => index >= selectedPage * MAX_ON_PAGE - MAX_ON_PAGE && index < selectedPage * MAX_ON_PAGE,
+    (_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE,
   )
-  const tableRows = ProtocolForm.renderPoints(pagedPoints, onChangePoint)
+  const tableRows = ProtocolForm.renderPoints(pagedPoints, onChangePoint, pageOffset)
 
   return (
     <>

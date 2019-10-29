@@ -82,14 +82,14 @@ OPCUAForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropT
  * @returns {array} Headers for each column
  */
 OPCUAForm.renderHeaders = () => ['Point Id', 'ScanMode', 'NS', 'S']
-OPCUAForm.renderPoints = (points, onChange) => {
+OPCUAForm.renderPoints = (points, onChange, pageOffset) => {
   const rows = points.map((point, index) => [
     {
-      name: `points.${index}.pointId`,
+      name: `points.${index + pageOffset}.pointId`,
       value: (
         <OIbText
           title="Point Id"
-          name={`points.${index}.pointId`}
+          name={`points.${index + pageOffset}.pointId`}
           value={point.pointId}
           valid={validation.OPCUA.points.pointId}
           onChange={onChange}
@@ -98,21 +98,21 @@ OPCUAForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.scanMode`,
+      name: `points.${index + pageOffset}.scanMode`,
       value: (
         <OIbScanMode
-          name={`points.${index}.scanMode`}
+          name={`points.${index + pageOffset}.scanMode`}
           scanMode={point.scanMode}
           onChange={onChange}
         />
       ),
     },
     {
-      name: `points.${index}.ns`,
+      name: `points.${index + pageOffset}.ns`,
       value: (
         <OIbInteger
           title="NS"
-          name={`points.${index}.ns`}
+          name={`points.${index + pageOffset}.ns`}
           value={point.ns}
           valid={validation.OPCUA.points.ns}
           onChange={onChange}
@@ -121,11 +121,11 @@ OPCUAForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.s`,
+      name: `points.${index + pageOffset}.s`,
       value: (
         <OIbText
           title="S"
-          name={`points.${index}.s`}
+          name={`points.${index + pageOffset}.s`}
           value={point.s}
           valid={validation.OPCUA.points.s}
           onChange={onChange}

@@ -92,14 +92,14 @@ OPCHDAForm.propTypes = { dataSource: PropTypes.object.isRequired, dataSourceInde
  * @returns {array} Headers for each column
  */
 OPCHDAForm.renderHeaders = () => ['Point Id', 'ScanMode']
-OPCHDAForm.renderPoints = (points, onChange) => {
+OPCHDAForm.renderPoints = (points, onChange, pageOffset) => {
   const rows = points.map((point, index) => [
     {
-      name: `points.${index}.pointId`,
+      name: `points.${index + pageOffset}.pointId`,
       value: (
         <OIbText
           title="Point Id"
-          name={`points.${index}.pointId`}
+          name={`points.${index + pageOffset}.pointId`}
           value={point.pointId}
           valid={validation.OPCHDA.points.pointId}
           onChange={onChange}
@@ -108,10 +108,10 @@ OPCHDAForm.renderPoints = (points, onChange) => {
       ),
     },
     {
-      name: `points.${index}.scanMode`,
+      name: `points.${index + pageOffset}.scanMode`,
       value: (
         <OIbScanMode
-          name={`points.${index}.scanMode`}
+          name={`points.${index + pageOffset}.scanMode`}
           scanMode={point.scanMode}
           onChange={onChange}
         />
