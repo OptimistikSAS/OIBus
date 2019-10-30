@@ -19,6 +19,7 @@ const ConfigurePoints = () => {
   const MAX_ON_PAGE = 10
   // this value will be used to calculate the amount of max pagination displayed
   const MAX_PAGINATION_DISPLAY = 11
+  const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
 
   const { dataSourceId } = useParams()
   if (newConfig === null) {
@@ -103,7 +104,10 @@ const ConfigurePoints = () => {
   }
 
   const onChangePoint = (name, value, validity) => {
-    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
+    // add pageOffet before dispatch the update to update the correct point (pagination)
+    const index = Number(name.match(/[0-9]+/g))
+    const pathWithPageOffset = name.replace(/[0-9]+/g, `${index + pageOffset}`)
+    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`, value, validity })
   }
   /**
    * Gets the config json of a south dataSource
@@ -123,9 +127,10 @@ const ConfigurePoints = () => {
         .toLowerCase()
         .includes(filterText.toLowerCase())) >= 0,
     ) : points
+
   // paging
   const pagedPoints = filteredPoints.filter(
-    (_, index) => index >= selectedPage * MAX_ON_PAGE - MAX_ON_PAGE && index < selectedPage * MAX_ON_PAGE,
+    (_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE,
   )
   const tableRows = ProtocolForm.renderPoints(pagedPoints, onChangePoint)
 
