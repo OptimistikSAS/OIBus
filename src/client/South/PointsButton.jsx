@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
 import { useHistory } from 'react-router-dom'
-import ProtocolForms from './Protocols.jsx'
+import { ProtocolForms } from './Protocols.jsx'
 
 const PointsButton = ({ dataSource }) => {
   const history = useHistory()
@@ -11,7 +11,7 @@ const PointsButton = ({ dataSource }) => {
     history.push({ pathname: link })
   }
   const { points, dataSourceId, protocol } = dataSource
-  return ProtocolForms[protocol].renderPoints !== null ? (
+  return (ProtocolForms[protocol] && ProtocolForms[protocol].renderPoints) !== null ? (
     <Button
       className="inline-button autosize oi-points-button"
       color={points && points.length ? 'success' : 'warning'}

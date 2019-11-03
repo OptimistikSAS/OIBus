@@ -2,7 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox } from '../../components/OIbForm'
-import ProtocolForms from '../Protocols.jsx'
+import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import { ProtocolForms, ProtocolDefs } from '../Protocols.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
@@ -13,6 +14,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   }
   // load the proper form based on the protocol name.
   const ProtocolForm = ProtocolForms[protocol]
+  const def = ProtocolDefs[protocol]
   return (
     <Form>
       <OIbTitle title={`${dataSourceId} parameters (protocol: ${protocol})`}>
@@ -36,7 +38,11 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <ProtocolForm onChange={onChange} dataSource={dataSource} dataSourceIndex={dataSourceIndex} />
+      {def ? (
+        <OIbForm onChange={onChange} def={def} name={`South.${protocol}`} values={dataSource} />
+      ) : (
+        <ProtocolForm onChange={onChange} dataSource={dataSource} dataSourceIndex={dataSourceIndex} />
+      )}
     </Form>
   )
 }

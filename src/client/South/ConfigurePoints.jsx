@@ -8,7 +8,7 @@ import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
-import ProtocolForms from './Protocols.jsx'
+import { ProtocolForms } from './Protocols.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
