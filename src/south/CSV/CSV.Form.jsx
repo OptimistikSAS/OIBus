@@ -1,153 +1,85 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import { Row, Col } from 'reactstrap'
-import { OIbText, OIbInteger, OIbCheckBox, OIbScanMode } from '../../client/components/OIbForm'
-import validation from './CSV.validation'
 
-const CSVForm = ({ dataSource, onChange }) => (
-  <>
-    <Row>
-      <Col md="4">
-        <OIbText
-          label="Input Folder"
-          onChange={onChange}
-          value={dataSource.CSV.inputFolder}
-          valid={validation.CSV.inputFolder}
-          name="CSV.inputFolder"
-          defaultValue="./csv/input"
-          help={<div>Path to the input folder</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbText
-          label="Archive Folder"
-          onChange={onChange}
-          value={dataSource.CSV.archiveFolder}
-          valid={validation.CSV.archiveFolder}
-          name="CSV.archiveFolder"
-          defaultValue="./csv/archive"
-          help={<div>Path to the archive folder</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbText
-          label="Error Folder"
-          onChange={onChange}
-          value={dataSource.CSV.errorFolder}
-          valid={validation.CSV.errorFolder}
-          defaultValue="./csv/error"
-          name="CSV.errorFolder"
-          help={<div>Path to the error folder</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbText
-          label="CSV separator"
-          onChange={onChange}
-          value={dataSource.CSV.separator}
-          valid={validation.CSV.separator}
-          defaultValue=","
-          name="CSV.separator"
-          help={<div>(often , or ;)</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbInteger
-          label="time column"
-          onChange={onChange}
-          value={dataSource.CSV.timeColumn}
-          valid={validation.CSV.timeColumn}
-          defaultValue={0}
-          name="CSV.timeColumn"
-          help={<div>Column with the timestamp</div>}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md="4">
-        <OIbCheckBox
-          label="Has first line"
-          onChange={onChange}
-          value={dataSource.CSV.hasFirstLine}
-          defaultValue
-          name="CSV.hasFirstLine"
-          help={<div>indicates if the file starts with a header line</div>}
-        />
-      </Col>
-    </Row>
-  </>
-)
-CSVForm.propTypes = { dataSource: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired }
+const CSV = {}
+CSV.form = [
+  {
+    inputFolder: {
+      type: 'OIbText',
+      md: 4,
+      label: 'Input Folder',
+      valid: (val) => (val && val.length > 0 ? null : 'Input Folder should not be empty'),
+      defaultValue: './csv/input',
+      help: <div>Path to the input folder</div>,
+    },
+  },
+  {
+    archiveFolder: {
+      type: 'OIbText',
+      md: 4,
+      label: 'Archive Folder',
+      valid: (val) => (val && val.length > 0 ? null : 'Archive Folder should not be empty'),
+      defaultValue: './csv/archive',
+      help: <div>Path to the archive folder</div>,
+    },
+  },
+  {
+    errorFolder: {
+      type: 'OIbText',
+      md: 4,
+      label: 'Archive Folder',
+      valid: (val) => (val && val.length > 0 ? null : 'Error Folder should not be empty'),
+      defaultValue: './csv/error',
+      help: <div>Path to the error folder</div>,
+    },
+  },
+  {
+    separator: {
+      type: 'OIbText',
+      md: 4,
+      label: 'CSV separator',
+      valid: (val) => (val && val.length === 1 ? null : 'Length should be 1'),
+      defaultValue: './csv/error',
+      help: <div>(often , or ;)</div>,
+    },
+  },
+  {
+    timeColumn: {
+      type: 'OIbText',
+      md: 4,
+      label: 'time column',
+      valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+      defaultValue: './csv/error',
+      help: <div>Column with the timestamp</div>,
+    },
+  },
+  {
+    hasFirstLine: {
+      type: 'OIbCheckBox',
+      md: 4,
+      label: 'Has first line',
+      valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+      defaultValue: true,
+      help: <div>indicates if the file starts with a header line</div>,
+    },
+  },
+]
 
-/**
- * The following keys will be used by the **ConfigurePoints** form to display the headers
- * and the rows that are specific for each protocol.
- * Note: alternatively, we can send a "fake" point array to get the headers
- * using: ProtocolForm.renderPoints([{}],()=>null)[0].map(el => el.value.props.title)
- * @returns {array} Headers for each column
- */
-CSVForm.renderHeaders = () => ['Point Id', 'ScanMode', 'Value', 'Quality']
-CSVForm.renderPoints = (points, onChange) => {
-  const rows = points.map((point, index) => [
-    {
-      name: `points.${index}.pointId`,
-      value: (
-        <OIbText
-          title="Point Id"
-          name={`points.${index}.pointId`}
-          value={point.pointId}
-          valid={validation.CSV.points.pointId}
-          onChange={onChange}
-          defaultValue=""
-        />
-      ),
-    },
-    {
-      name: `points.${index}.scanMode`,
-      value: (
-        <OIbScanMode
-          name={`points.${index}.scanMode`}
-          scanMode={point.scanMode}
-          onChange={onChange}
-        />
-      ),
-    },
-    {
-      name: `points.${index}.value`,
-      value: (
-        <OIbText
-          title="Value"
-          name={`points.${index}.value`}
-          value={point.value}
-          valid={validation.CSV.points.value}
-          onChange={onChange}
-          defaultValue=""
-        />
-      ),
-    },
-    {
-      name: `points.${index}.quality`,
-      value: (
-        <OIbText
-          title="Quality"
-          name={`points.${index}.quality`}
-          value={point.quality}
-          valid={validation.CSV.points.quality}
-          onChange={onChange}
-          defaultValue=""
-        />
-      ),
-    },
-  ])
-  return rows
+CSV.points = {
+  pointId: {
+    type: 'OIbText',
+    label: 'Point Id',
+    valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
+    defaultValue: '',
+  },
+  scanMode: { type: 'OIbScanMode' },
+  value: {
+    type: 'OIbText',
+    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+  },
+  quality: {
+    type: 'OIbText',
+    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Quality should not be empty'),
+  },
 }
 
-export default CSVForm
+export default CSV
