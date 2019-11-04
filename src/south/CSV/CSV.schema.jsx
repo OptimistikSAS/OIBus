@@ -1,7 +1,7 @@
 import React from 'react'
 
-const CSV = {}
-CSV.form = {
+const schema = { name: 'CSV' }
+schema.form = {
   inputFolder: {
     type: 'OIbText',
     newRow: true,
@@ -24,7 +24,7 @@ CSV.form = {
     type: 'OIbText',
     newRow: true,
     md: 4,
-    label: 'Archive Folder',
+    label: 'Error Folder',
     valid: (val) => (val && val.length > 0 ? null : 'Error Folder should not be empty'),
     defaultValue: './csv/error',
     help: <div>Path to the error folder</div>,
@@ -35,7 +35,7 @@ CSV.form = {
     md: 4,
     label: 'CSV separator',
     valid: (val) => (val && val.length === 1 ? null : 'Length should be 1'),
-    defaultValue: './csv/error',
+    defaultValue: ',',
     help: <div>(often , or ;)</div>,
   },
   timeColumn: {
@@ -44,7 +44,7 @@ CSV.form = {
     md: 4,
     label: 'time column',
     valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
-    defaultValue: './csv/error',
+    defaultValue: '1',
     help: <div>Column with the timestamp</div>,
   },
   hasFirstLine: {
@@ -58,7 +58,7 @@ CSV.form = {
   },
 }
 
-CSV.points = {
+schema.points = {
   pointId: {
     type: 'OIbText',
     label: 'Point Id',
@@ -76,4 +76,4 @@ CSV.points = {
   },
 }
 
-export default CSV
+export default schema

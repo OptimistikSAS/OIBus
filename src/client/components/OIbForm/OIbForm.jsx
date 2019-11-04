@@ -4,14 +4,14 @@ import { Row, Col } from 'reactstrap'
 
 const Controls = require('./index.js')
 
-const OIbForm = ({ def, onChange, values }) => {
-  const { form } = def
+const OIbForm = ({ schema, onChange, values }) => {
+  const { form } = schema
   /* transform into arrays of line with array of col */
-  const rows = [[]]
-  let rowNum = 0
+  const rows = []
+  let rowNum = -1
   Object.entries(form).forEach(([name, parameters]) => {
     const { newRow, ...rest } = parameters
-    if (rowNum !== 0 && newRow) {
+    if (newRow || rowNum === 0) {
       rows.push([])
       rowNum += 1
     }
@@ -25,7 +25,7 @@ const OIbForm = ({ def, onChange, values }) => {
         return (
           <Col md={md} key={name}>
             {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-            <Control onChange={onChange} value={values[name]} name={name} {...rest} />
+            <Control onChange={onChange} value={values[name]} name={`${schema.name}.${name}`} {...rest} />
           </Col>
         )
       })}
@@ -34,7 +34,7 @@ const OIbForm = ({ def, onChange, values }) => {
 }
 
 OIbForm.propTypes = {
-  def: PropTypes.object.isRequired,
+  schema: PropTypes.object.isRequired,
   values: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
 }
