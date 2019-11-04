@@ -22,10 +22,12 @@ const OIbForm = ({ schema, onChange, values }) => {
       {cols.map((col) => {
         const { type, md, name, ...rest } = col
         const Control = Controls[type]
-        if (type === 'OIbSelect') {
-          rest.option = values[name]
-        } else {
-          rest.value = values[name]
+        switch (type) {
+          case 'OIbSelect':
+            rest.option = values[name]
+            break
+          default:
+            rest.value = values[name]
         }
         return (
           <Col md={md} key={name}>
