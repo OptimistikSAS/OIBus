@@ -22,10 +22,15 @@ const OIbForm = ({ schema, onChange, values }) => {
       {cols.map((col) => {
         const { type, md, name, ...rest } = col
         const Control = Controls[type]
+        if (type === 'OIbSelect') {
+          rest.option = values[name]
+        } else {
+          rest.value = values[name]
+        }
         return (
           <Col md={md} key={name}>
             {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-            <Control onChange={onChange} value={values[name]} name={`${schema.name}.${name}`} {...rest} />
+            <Control onChange={onChange} name={`${schema.name}.${name}`} {...rest} />
           </Col>
         )
       })}

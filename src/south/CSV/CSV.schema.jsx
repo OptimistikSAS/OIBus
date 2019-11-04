@@ -68,10 +68,12 @@ schema.points = {
   scanMode: { type: 'OIbScanMode' },
   value: {
     type: 'OIbText',
+    label: 'Value',
     valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
   },
   quality: {
     type: 'OIbText',
+    label: 'Quality',
     valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Quality should not be empty'),
   },
 }
