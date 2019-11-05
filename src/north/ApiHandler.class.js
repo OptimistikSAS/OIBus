@@ -1,5 +1,7 @@
 const path = require('path')
 
+const Logger = require('../engine/Logger.class')
+
 class ApiHandler {
   /**
    * Constructor for Application
@@ -28,9 +30,10 @@ class ApiHandler {
     this.canHandleValues = false
     this.canHandleFiles = false
 
+    this.logger = new Logger(this.constructor.name)
+
     this.application = applicationParameters
     this.engine = engine
-    this.logger = this.engine.logger
     this.scanModes = this.engine.scanModes
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
@@ -62,8 +65,9 @@ class ApiHandler {
    * @param {object[]} values - The values to handle
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
-    this.logger.warning('handleValues should be surcharged', values)
+    this.logger.warn(`handleValues should be surcharged ${values}`)
     return true
   }
 
@@ -72,8 +76,9 @@ class ApiHandler {
    * @param {string} filePath - The path of the raw file
    * @return {Promise} - The handle status
    */
+  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
-    this.logger.warning('handleFile should be surcharged', filePath)
+    this.logger.warn(`handleFile should be surcharged ${filePath}`)
     return true
   }
 

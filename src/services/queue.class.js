@@ -1,13 +1,14 @@
+const Logger = require('../engine/Logger.class')
 
 /**
  * Create a Queue with auto
  * @class Queue
  */
 class Queue {
-  constructor(logger) {
+  constructor() {
     this.queue = []
     this.run = false
-    this.logger = logger
+    this.logger = new Logger(this.constructor.name)
   }
 
   clear() {

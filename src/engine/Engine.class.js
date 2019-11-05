@@ -26,9 +26,9 @@ apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
-const Logger = require('./Logger.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
+const Logger = require('./Logger.class')
 
 /**
  *
@@ -42,17 +42,17 @@ class Engine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
+   * @param {string} configFile - The config file
    */
-  constructor() {
+  constructor(configFile) {
     this.version = VERSION
 
-    this.configService = new ConfigService(this)
+    this.configService = new ConfigService(this, configFile)
     const { engineConfig, southConfig } = this.configService.getConfig()
 
-    // Configure and get the logger
-    this.logger = new Logger(engineConfig.logParameters)
-
-    this.configService.setLogger(this.logger)
+    // Configure the logger
+    this.logger = new Logger(this.constructor.name)
+    this.logger.changeParameters(engineConfig.logParameters)
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -65,7 +65,7 @@ class Engine {
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
     // Check for private key
-    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder, this.logger)
+    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder)
 
     // prepare config
     // Associate the scanMode to all corresponding data sources
@@ -92,11 +92,7 @@ class Engine {
         } else if (dataSource.points) {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
-              this.logger.error(
-                ` point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${
-                  point.scanMode
-                }`,
-              )
+              this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
             } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
               // add the source for this scan only if not already there
               this.scanLists[point.scanMode].push(dataSource.dataSourceId)
@@ -291,14 +287,15 @@ class Engine {
    * @return {string} - The decrypted password
    */
   decryptPassword(password) {
-    return encryptionService.decryptText(password, this.configService.keyFolder, this.logger)
+    return encryptionService.decryptText(password, this.configService.keyFolder)
   }
 
   /**
    * Return available North applications
    * @return {String[]} - Available North applications
    */
-  getNorthSchemaList() {
+  /* eslint-disable-next-line class-methods-use-this */
+  getNorthList() {
     this.logger.debug('Getting North applications')
     return Object.keys(apiList)
   }
@@ -307,39 +304,10 @@ class Engine {
    * Return available South protocols
    * @return {String[]} - Available South protocols
    */
-  getSouthSchemaList() {
+  /* eslint-disable-next-line class-methods-use-this */
+  getSouthList() {
     this.logger.debug('Getting South protocols')
     return Object.keys(protocolList)
-  }
-
-  /**
-   * Get schema definition for the given api
-   * @param {String} api - The api to get the schema for
-   * @return {Object} - The api schema
-   */
-  getNorthSchema(api) {
-    if (Object.keys(apiList).includes(api)) {
-      this.logger.debug(`Getting schema for North application ${api}`)
-
-      return apiList[api].schema
-    }
-
-    return null
-  }
-
-  /**
-   * Get schema definition for the given protocol
-   * @param {String} protocol - The protocol to get the schema for
-   * @return {Object} - The protocol schema
-   */
-  getSouthSchema(protocol) {
-    if (Object.keys(protocolList).includes(protocol)) {
-      this.logger.debug(`Getting schema for South protocol ${protocol}`)
-
-      return protocolList[protocol].schema
-    }
-
-    return null
   }
 
   /**

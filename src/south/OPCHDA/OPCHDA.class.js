@@ -3,6 +3,7 @@ const { spawn } = require('child_process')
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
 const databaseService = require('../../services/database.service')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Class OPCHDA.
@@ -17,6 +18,8 @@ class OPCHDA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
+
+    this.agentLogger = new Logger('OIBusOPCHDA')
 
     this.tcpServer = null
     this.transactionId = 0
@@ -63,7 +66,7 @@ class OPCHDA extends ProtocolHandler {
 
       // Launch Agent
       const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
-      this.tcpServer = new TcpServer(tcpPort, this.logger, this.handleMessage.bind(this))
+      this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logger)
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
       })
@@ -109,7 +112,7 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.child.stderr.on('data', (data) => {
-      this.logger.error(`HDA stderr: ${data}`)
+      this.agentLogger.error(`HDA stderr: ${data}`)
     })
 
     this.child.on('close', (code) => {
@@ -117,7 +120,7 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.child.on('error', (error) => {
-      this.logger.error(`Failed to start HDA agent: ${path}`, error)
+      this.logger.error(`Failed to start HDA agent: ${error.message}`)
     })
   }
 
@@ -150,30 +153,31 @@ class OPCHDA extends ProtocolHandler {
     })
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   logMessage(log) {
     try {
       const parsedLog = JSON.parse(log)
       const message = `Agent stdout: ${parsedLog.Message}`
       switch (parsedLog.Level) {
         case 'error':
-          this.logger.error(message)
+          this.agentLogger.error(message)
           break
         case 'info':
-          this.logger.info(message)
+          this.agentLogger.info(message)
           break
         case 'debug':
-          this.logger.debug(message)
+          this.agentLogger.debug(message)
           break
         case 'silly':
-          this.logger.silly(message)
+          this.agentLogger.silly(message)
           break
         default:
-          this.logger.debug(message)
+          this.agentLogger.debug(message)
           break
       }
     } catch (error) {
       this.logger.error(error)
-      this.logger.debug(`Agent stdout error: ${log}`)
+      this.agentLogger.debug(`Agent stdout error: ${log}`)
     }
   }
 
@@ -239,9 +243,7 @@ class OPCHDA extends ProtocolHandler {
       this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
     } else {
-      this.logger.debug(
-        `send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`,
-      )
+      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
@@ -270,11 +272,7 @@ class OPCHDA extends ProtocolHandler {
           if (messageObject.Content.Connected) {
             this.sendInitializeMessage()
           } else {
-            this.logger.error(
-              `Unable to connect to ${serverName} on ${host}: ${
-                messageObject.Content.Error
-              }`,
-            )
+            this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}`)
             this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
           }
           break
