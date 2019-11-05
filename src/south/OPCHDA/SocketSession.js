@@ -2,11 +2,11 @@
  * Class representing a connected session.
  */
 class SocketSession {
-  constructor(socket, tcpServer, logger, handleMessage) {
+  constructor(socket, tcpServer, handleMessage) {
     this.socket = socket
     this.tcpServer = tcpServer
-    this.logger = logger
     this.handleMessage = handleMessage
+    this.logger = tcpServer.logger
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''
 
@@ -62,7 +62,7 @@ class SocketSession {
 
     // Listener for the 'error' event
     this.socket.on('error', (error) => {
-      this.logger.error(error.message, error)
+      this.logger.error(error)
     })
   }
 

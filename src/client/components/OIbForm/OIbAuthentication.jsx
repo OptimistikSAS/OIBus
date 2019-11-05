@@ -18,7 +18,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
   return [
     <OIbTitle title="Authentication" key="title">
       <div>
-        <p>Authentication paramaters</p>
+        <p>Authentication parameters</p>
         <p>Please fill the user and password to connect this application</p>
       </div>
     </OIbTitle>,
@@ -58,7 +58,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
         </Row>,
       ]
     ) : (
-      <Row key="accesKey">
+      <Row key="accessKey">
         <Col md="4">
           <OIbText
             label="Access Key"

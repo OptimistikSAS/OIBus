@@ -4,26 +4,27 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const encryptionService = require('./encryption.service')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
  * @param {Engine} engine - The Engine
+ * @param {string} configFile - The config file
  * @return {void}
  */
 class ConfigService {
-  constructor(engine) {
+  constructor(engine, configFile) {
     this.engine = engine
-    this.logger = console
+    this.logger = new Logger(this.constructor.name)
 
-    this.configFile = ConfigService.getConfigFile()
+    this.configFile = configFile
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
       this.logger.info(`Creating folder ${baseDir}`)
       fs.mkdirSync(baseDir, { recursive: true })
     }
-    process.chdir(path.parse(this.configFile).dir)
 
     this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
 
@@ -126,19 +127,11 @@ class ConfigService {
   }
 
   /**
-   * Set logger.
-   * @param {object} logger - The logger to use.
-   * @returns {void}
-   */
-  setLogger(logger) {
-    this.logger = logger
-  }
-
-  /**
    * Check if config file exists
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
    */
+  /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath) {
     if (!fs.existsSync(filePath)) {
       this.logger.info('Default config file does not exist. Creating it.')
@@ -161,9 +154,9 @@ class ConfigService {
     try {
       const duplicateConfig = JSON.parse(JSON.stringify(config))
       if (decryptSecrets) {
-        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder, this.logger)
-        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder, this.logger)
+        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder)
+        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder)
+        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder)
       }
       return duplicateConfig
     } catch (error) {

@@ -1,8 +1,13 @@
+const fs = require('fs')
+const Logger = require('../engine/Logger.class')
+
+const logger = new Logger('migration')
+
 module.exports = {
   2: (config) => {
-    console.info('Rename RawFile to FolderScanner')
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'RawFile') {
+        logger.info('Rename RawFile to FolderScanner')
         dataSource.protocol = 'FolderScanner'
         if (Object.prototype.hasOwnProperty.call(dataSource, 'RawFile')) {
           dataSource.FolderScanner = dataSource.RawFile
@@ -11,7 +16,7 @@ module.exports = {
       }
 
       if (dataSource.protocol === 'SQLFile') {
-        console.info('Rename SQLFile to SQLDbToFile')
+        logger.info('Rename SQLFile to SQLDbToFile')
         dataSource.protocol = 'SQLDbToFile'
         if (Object.prototype.hasOwnProperty.call(dataSource, 'SQLFile')) {
           dataSource.SQLDbToFile = dataSource.SQLFile
@@ -22,7 +27,7 @@ module.exports = {
 
     config.north.applications.forEach((application) => {
       if (application.api === 'Link') {
-        application.info('Rename Link to OIConnect')
+        logger.info('Rename Link to OIConnect')
         application.api = 'OIConnect'
         if (Object.prototype.hasOwnProperty.call(application, 'Link')) {
           application.OIConnect = application.Link
@@ -31,7 +36,7 @@ module.exports = {
       }
 
       if (application.api === 'RawFileSender') {
-        console.info('Rename RawFileSender to OIAnalyticsFile')
+        logger.info('Rename RawFileSender to OIAnalyticsFile')
         application.api = 'OIAnalyticsFile'
         if (Object.prototype.hasOwnProperty.call(application, 'RawFileSender')) {
           application.OIAnalyticsFile = application.RawFileSender
@@ -40,7 +45,7 @@ module.exports = {
       }
     })
 
-    console.info('Move protocol dependent parameters under a sub object of the protocol')
+    logger.info('Move protocol dependent parameters under a sub object of the protocol')
     const engineRelatedDataSourceFields = ['dataSourceId', 'enabled', 'protocol', 'scanMode', 'points', 'scanGroups']
     config.south.dataSources.forEach((dataSource) => {
       if (!Object.prototype.hasOwnProperty.call(dataSource, dataSource.protocol)) {
@@ -55,7 +60,7 @@ module.exports = {
       }
     })
 
-    console.info('Move api dependent parameters under a sub object of the api')
+    logger.info('Move api dependent parameters under a sub object of the api')
     const engineRelatedApplicationFields = ['applicationId', 'enabled', 'api', 'caching', 'subscribedTo']
     config.north.applications.forEach((application) => {
       if (!Object.prototype.hasOwnProperty.call(application, application.api)) {
@@ -69,5 +74,14 @@ module.exports = {
         application[application.api] = applicationRelatedFields
       }
     })
+  },
+  3: (config) => {
+    config.engine.engineName = 'OIBus'
+    logger.info('Add engineName: OIBus')
+    const { sqliteFilename } = config.engine.logParameters
+    if (fs.existsSync(sqliteFilename)) {
+      logger.info('Rename SQLite log file')
+      fs.renameSync(sqliteFilename, `${sqliteFilename}.old`)
+    }
   },
 }

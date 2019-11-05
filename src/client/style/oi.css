@@ -78,6 +78,18 @@ a:focus {
   color: #000000;
 }
 
+.oi-navname {
+  padding-top: 10px;
+  padding-bottom: 5px;
+  padding-left: 8px;
+  padding-right: 8px;
+  line-height: 20px;
+  text-decoration: none;
+  color: #ffffff;
+  position: absolute;
+  right: 0;
+}
+
 .oi-navicon {
   margin-top: 3px;
   margin-right: 10px;
@@ -329,8 +341,8 @@ label {
   margin-left: 5px;
 }
 
-.oi-log {
-  padding: .1rem .1rem;
+.oi-log td{
+  padding: 1px;
 }
 
 .oi-icon:hover,.oi-help:hover{

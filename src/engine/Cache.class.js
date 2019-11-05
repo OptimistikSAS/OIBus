@@ -3,6 +3,7 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
+const Logger = require('./Logger.class')
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -19,8 +20,8 @@ class Cache {
    * @return {void}
    */
   constructor(engine) {
-    this.logger = engine.logger
     this.engine = engine
+    this.logger = new Logger(this.constructor.name)
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching
@@ -43,7 +44,7 @@ class Cache {
     this.sendInProgress = {}
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue(this.logger)
+    this.queue = new Queue()
     // Cache stats
     this.cacheStats = {}
   }
@@ -154,8 +155,7 @@ class Cache {
         }
       })
     } catch (error) {
-      console.error(error)
-      this.logger(error)
+      this.logger.error(error)
     }
   }
 
@@ -217,6 +217,15 @@ class Cache {
     }
   }
 
+  /**
+   * Transfer the file into the cache folder.
+   *
+   * @param {string} filePath - The file path
+   * @param {string} cachePath - The cache path
+   * @param {boolean} preserveFiles - Whether to preserve the file
+   * @returns {Promise<*>} - The result promise
+   */
+  /* eslint-disable-next-line class-methods-use-this */
   transferFile(filePath, cachePath, preserveFiles) {
     return new Promise((resolve, reject) => {
       try {
@@ -294,18 +303,12 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
 
       if (values) {
-        this.logger.silly(
-          `Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`,
-        )
+        this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
         success = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(
-          `Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`,
-        )
+        this.logger.silly(`Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`)
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(
-            `Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`,
-          )
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
           if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
         }
       }

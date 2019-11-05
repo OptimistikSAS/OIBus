@@ -2,38 +2,40 @@ const fs = require('fs')
 
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
+const Logger = require('../engine/Logger.class')
 
-const REQUIRED_SCHEMA_VERSION = 2
+const logger = new Logger('migration')
+
+const REQUIRED_SCHEMA_VERSION = 3
 const DEFAULT_VERSION = 1
-
-const configFile = ConfigService.getConfigFile()
 
 /**
  * Migration implementation.
  * Iterate through versions and migrate until we reach actual OIBus version.
  * @param {string} configVersion - The config file version
  * @param {object} config - The configuration
+ * @param {string} configFile - The config file
  * @returns {void}
  */
-const migrateImpl = (configVersion, config) => {
+const migrateImpl = (configVersion, config, configFile) => {
   let iterateVersion = configVersion
   Object.keys(migrationRules)
     .forEach((version) => {
       const intVersion = parseInt(version, 10)
       if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
         if (migrationRules[version] instanceof Function) {
-          console.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
+          logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
           config.schemaVersion = intVersion
           migrationRules[version](config)
         } else {
-          console.info(`Invalid rules definition to migrate to version ${version}`)
+          logger.info(`Invalid rules definition to migrate to version ${version}`)
         }
         iterateVersion = intVersion
       }
     })
 
   if (iterateVersion !== REQUIRED_SCHEMA_VERSION) {
-    console.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
+    logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
   }
 
   ConfigService.backupConfigFile(configFile)
@@ -42,20 +44,21 @@ const migrateImpl = (configVersion, config) => {
 
 /**
  * Migrate if needed.
+ * @param {string} configFile - The config file
  * @returns {void}
  */
-const migrate = () => {
+const migrate = (configFile) => {
   if (fs.existsSync(configFile)) {
     const config = ConfigService.tryReadFile(configFile)
     const configVersion = config.schemaVersion || DEFAULT_VERSION
     if (configVersion < REQUIRED_SCHEMA_VERSION) {
-      console.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
-      migrateImpl(configVersion, config)
+      logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
+      migrateImpl(configVersion, config, configFile)
     } else {
-      console.info('Config file is up-to-date, no migrating needed.')
+      logger.info('Config file is up-to-date, no migrating needed.')
     }
   } else {
-    console.info(`${configFile} doesn't exists. No migration needed.`)
+    logger.info(`${configFile} doesn't exists. No migration needed.`)
   }
 }
 
