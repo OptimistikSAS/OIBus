@@ -7,7 +7,7 @@ const getOptimizedConfig = require('./config/getOptimizedConfig')
  * The point is from the optimized config hence the scannedDataSource parameter
  * @param {Object} pointId - The point ID
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
+ * @param {Object} logger - The logger
  * @return {*} The fields
  */
 const fieldsFromPointId = (pointId, types, logger) => {

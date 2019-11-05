@@ -7,7 +7,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * Gives a type to a point based on the config
  * @param {Object} point - The point
  * @param {Array} types - The types
- * @param {Logger} logger - The logger
+ * @param {Object} logger - The logger
  * @return {void}
  */
 const giveType = (point, types, logger) => {

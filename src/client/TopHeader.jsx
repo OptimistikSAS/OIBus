@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
+import { FaNetworkWired } from 'react-icons/fa'
 
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
@@ -23,6 +24,7 @@ const TopHeader = () => {
   }
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
+  const engineName = activeConfig ? activeConfig.engine.engineName : ''
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>
       <NavbarBrand tag={Link} to="/" className="mr-auto">
@@ -46,6 +48,10 @@ const TopHeader = () => {
           <NavItem className="oi-navitem" active={isActive('activation')} tag={Link} to="/activation">
             {'Activation '}
             {configModified ? <Badge color="warning" pill>new</Badge> : null}
+          </NavItem>
+          <NavItem className="oi-navname">
+            <FaNetworkWired />
+            {` ${engineName}`}
           </NavItem>
         </Nav>
       </Collapse>

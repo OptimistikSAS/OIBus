@@ -1,4 +1,7 @@
 # OIBus
+| master      | ![master](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg)      |
+| ----------- | ----------- |
+| **release**   | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=release)        |
 
 ## Overall workflow
 

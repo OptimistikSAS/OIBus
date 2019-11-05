@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormText, Label, Input, FormFeedback } from 'reactstrap'
 import { ConfigContext } from '../../context/configContext.jsx'
 
 const OIbScanMode = ({ label, help, scanMode, name, onChange }) => {
@@ -11,10 +11,16 @@ const OIbScanMode = ({ label, help, scanMode, name, onChange }) => {
     options = [''] // allow an empty string if no scan mode on engine
   }
   const defaultOption = options[0]
+  let validCheck = null
 
   React.useEffect(() => {
     if (scanMode === null) onChange(name, defaultOption)
   }, [scanMode])
+
+  React.useEffect(() => {
+    // save error if validCheck has error message
+    onChange(name, scanMode, validCheck)
+  }, [validCheck])
 
   const handleChange = (event) => {
     const { target } = event
@@ -23,16 +29,24 @@ const OIbScanMode = ({ label, help, scanMode, name, onChange }) => {
   }
   // if value is null, no need to render
   if (scanMode === null) return null
+
+  // check if defined scanmode is unknown to the engine
+  if (!options.includes(scanMode)) {
+    options.unshift(scanMode)
+    validCheck = 'Invalid scan mode'
+  }
+
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={scanMode}>
+      <Input className="oi-form-input" type="select" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={scanMode}>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
           </option>
         ))}
       </Input>
+      <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
