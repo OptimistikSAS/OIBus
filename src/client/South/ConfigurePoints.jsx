@@ -3,12 +3,12 @@ import { useParams } from 'react-router-dom'
 import { Button, Input, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
-import { OIbText } from '../components/OIbForm'
 import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
-import { ProtocolForms } from './Protocols.jsx'
+import { ProtocolSchemas } from './Protocols.jsx'
+import * as Controls from '../components/OIbForm'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -103,11 +103,16 @@ const ConfigurePoints = () => {
     })
   }
 
-  const onChangePoint = (name, value, validity) => {
+  const onChange = (name, value, validity) => {
     // add pageOffet before dispatch the update to update the correct point (pagination)
     const index = Number(name.match(/[0-9]+/g))
     const pathWithPageOffset = name.replace(/[0-9]+/g, `${index + pageOffset}`)
-    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`, value, validity })
+    dispatchNewConfig({
+      type: 'update',
+      name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`,
+      value,
+      validity,
+    })
   }
   /**
    * Gets the config json of a south dataSource
@@ -115,10 +120,9 @@ const ConfigurePoints = () => {
    * @returns {object} The selected dataSource's config
    */
   const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
-  const ProtocolForm = ProtocolForms[protocol]
+  const ProtocolSchema = ProtocolSchemas[protocol]
   // configure table header and rows
-  const tableHeaders = ProtocolForm.renderHeaders()
-
+  const tableHeaders = Object.values(ProtocolSchema.points).map((value) => value.label)
   // filter
   const filteredPoints = filterText
     ? points.filter(
@@ -129,14 +133,31 @@ const ConfigurePoints = () => {
     ) : points
 
   // paging
-  const pagedPoints = filteredPoints.filter(
-    (_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE,
-  )
-  const tableRows = ProtocolForm.renderPoints(pagedPoints, onChangePoint)
+  const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
+
+  const tableRows = pagedPoints.map((point) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
+    const { type, ...rest } = value
+    const Control = Controls[type]
+    switch (type) {
+      case 'OIbSelect':
+        rest.option = point[key]
+        break
+      case 'OIbScanMode':
+        rest.scanMode = point[key]
+        break
+      default:
+        rest.value = point[key]
+    }
+    rest.label = null // remove field title in table rows
+    return (
+      /* eslint-disable-next-line react/jsx-props-no-spreading */
+      { name: key, value: <Control onChange={onChange} name={`${key}`} {...rest} /> }
+    )
+  }))
 
   return (
     <>
-      <OIbText
+      <Controls.OIbText
         label="Filter"
         name="filterText"
         value={filterText}
