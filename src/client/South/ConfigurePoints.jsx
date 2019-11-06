@@ -135,7 +135,7 @@ const ConfigurePoints = () => {
   // paging
   const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
 
-  const tableRows = pagedPoints.map((point) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
+  const tableRows = pagedPoints.map((point, index) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
     const { type, ...rest } = value
     const Control = Controls[type]
     switch (type) {
@@ -149,9 +149,10 @@ const ConfigurePoints = () => {
         rest.value = point[key]
     }
     rest.label = null // remove field title in table rows
+    const name = `points.${index}.${key}`
     return (
       /* eslint-disable-next-line react/jsx-props-no-spreading */
-      { name: key, value: <Control onChange={onChange} name={`${key}`} {...rest} /> }
+      { name, value: <Control onChange={onChange} name={name} {...rest} /> }
     )
   }))
 
