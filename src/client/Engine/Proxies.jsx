@@ -50,7 +50,7 @@ const Proxies = ({ proxies }) => {
                 value: <OIbSelect
                   name={`engine.proxies.${i}.protocol`}
                   options={['http', 'https']}
-                  defaultOption="http"
+                  defaultValue="http"
                   value={proxy.protocol}
                   onChange={onChange}
                 />,

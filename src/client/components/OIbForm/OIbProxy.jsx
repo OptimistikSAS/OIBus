@@ -8,10 +8,10 @@ const OIbProxy = ({ label, help, value, name, onChange }) => {
   const { proxies } = newConfig.engine // proxies defined in engine
   const options = proxies.map((e) => e.name)
   options.unshift('') // allow the user to select no proxy(empty string)
-  const defaultOption = options[0]
+  const defaultValue = options[0]
 
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultOption)
+    if (value === null) onChange(name, defaultValue)
   }, [value])
 
   const handleChange = (event) => {

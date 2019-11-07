@@ -31,7 +31,7 @@ const OIbAuthentication = ({ value, name, validation, onChange, mode }) => {
               onChange={handleChange}
               value={value.type}
               options={['Basic']}
-              defaultOption="Basic"
+              defaultValue="Basic"
               name="type"
             />
           </Col>

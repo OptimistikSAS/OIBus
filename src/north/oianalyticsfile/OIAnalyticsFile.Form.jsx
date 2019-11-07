@@ -72,7 +72,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
           value={application.OIAnalyticsFile.stack}
           name="OIAnalyticsFile.stack"
           options={['axios', 'request', 'fetch']}
-          defaultOption="fetch"
+          defaultValue="fetch"
           help={<div>Stack</div>}
         />
       </Col>

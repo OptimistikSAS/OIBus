@@ -58,8 +58,7 @@
                 "username": "uii",
                 "password": "VSLghj1ix8oUWfYF5RipmlBudZWoUcMgQiSEdo30MtzTy5/HOyhO4Yo19XsBmIynfBRMEeqPkBGCqO4BbHtY9JgxUnRqnimgTHjfbCKbgcqEZqVNuzubLhBCJT24D30DW5xGTqKOAD7vtqZp+bh1/PUwzIqP++RwK4daJVcSGZcWei/XqmZUBuCnQf/d1YachmnPXY1/qPNANExWoilVzrepkgpEI0Ve35BCOwVi/ZvJG6a0zL9ehXSHf1BuUF8ThyMLUI+yttYo6wvsq77gkZvEi0zdeJk82ukhMePAEZV804ikL2BrGp+J1F0A2MFP3ruY8Cn9f2DviBsQEO0PyBS4v0Z87od8SNx+wEv41UnMNhO0R7/Su1dBttZrBqq44iWJTPrGfjIVEynkSpfHcA/H6EOObg2azshdX/vhgPwLKlvcxVycetvOguGmsPsUx0nRB3HGnlO/21qidRM4vCfw1ZPI/5BFZkeTj/TwaK9ACEDs3vCEafid3FmGtLM+qk10t/mCE6TJ574zU8UZe/JNeJqVGBnoX5aug+ohCWB6ZHPfucLWsfne0L6zihQE2mEXY2cqpWWXoMDbm5rcBwQLntdvRWR2j64lnYwpLlRZrKjkpiwC2+44hGpfKtJsmTU9XfzMp/9lv3PJ2NQzqcmF+ue2e/yfXOvUA9fMxKI="
             }
-        ],
-        "engineName": "OIBus"
+        ]
     },
     "south": {
         "dataSources": [
@@ -41696,7 +41695,7 @@
                 "caching": {
                     "sendInterval": 10000,
                     "retryInterval": 5000,
-                    "groupCount": 1,
+                    "groupCount": 1000,
                     "maxSendCount": 10000
                 },
                 "subscribedTo": []
@@ -41730,5 +41729,5 @@
             }
         ]
     },
-    "schemaVersion": 3
+    "schemaVersion": 2
 }

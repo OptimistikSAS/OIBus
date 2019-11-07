@@ -38,7 +38,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           onChange={onChange}
           options={['silly', 'debug', 'info', 'warning', 'error']}
           value={dataSource.OPCHDA.logLevel}
-          defaultOption="debug"
+          defaultValue="debug"
           name="OPCHDA.logLevel"
           help={<div>Logging Level</div>}
         />

@@ -67,7 +67,7 @@ const InfluxDBForm = ({ application, onChange }) => (
           onChange={onChange}
           value={application.InfluxDB.precision}
           name="InfluxDB.precision"
-          defaultOption="s"
+          defaultValue="s"
           options={['ns', 'us', 'µs', 'ms', 's']}
           help={<div>Precision</div>}
         />

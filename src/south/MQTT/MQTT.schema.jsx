@@ -59,7 +59,7 @@ schema.form = {
     md: 4,
     label: 'MQTT protocol',
     valid: (val) => (['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'].includes(val) ? null : 'Unknown protocol'),
-    defaultOption: 'mqtts',
+    defaultValue: 'mqtts',
     help: <div>MQTT protocol</div>,
   },
   username: {

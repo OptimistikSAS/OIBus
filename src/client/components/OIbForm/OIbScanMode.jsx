@@ -10,11 +10,11 @@ const OIbScanMode = ({ label, help, value, name, onChange }) => {
   if (options === null || options.length === 0) {
     options = [''] // allow an empty string if no scan mode on engine
   }
-  const defaultOption = options[0]
+  const defaultValue = options[0]
   let validCheck = null
 
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultOption)
+    if (value === null) onChange(name, defaultValue)
   }, [value])
 
   React.useEffect(() => {

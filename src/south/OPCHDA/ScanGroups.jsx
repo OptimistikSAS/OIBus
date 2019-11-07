@@ -53,7 +53,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                       onChange={onChange}
                       options={['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End']}
                       value={dataSource.aggregate}
-                      defaultOption="Raw"
+                      defaultValue="Raw"
                       name={`scanGroups.${i}.aggregate`}
                     />
                   ),
@@ -65,7 +65,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                       onChange={onChange}
                       options={['None', 'Minute', 'Hour', 'Day']}
                       value={dataSource.resampling}
-                      defaultOption="None"
+                      defaultValue="None"
                       name={`scanGroups.${i}.resampling`}
                     />
                   ),

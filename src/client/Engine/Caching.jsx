@@ -53,7 +53,7 @@ const Caching = ({ onChange, caching }) => (
           name="engine.caching.archiveMode"
           options={['archive', 'delete']}
           value={caching.archiveMode}
-          defaultOption="archive"
+          defaultValue="archive"
           help={<div> Move to Archive Folders or Delete files</div>}
           onChange={onChange}
         />

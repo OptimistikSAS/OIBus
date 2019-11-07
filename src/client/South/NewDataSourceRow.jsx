@@ -46,7 +46,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
             value={protocol}
             name="protocol"
             options={protocolList}
-            defaultOption={protocolList[0]}
+            defaultValue={protocolList[0]}
             onChange={handleChange}
           />
         </Col>

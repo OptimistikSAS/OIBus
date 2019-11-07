@@ -77,7 +77,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.consoleLevel"
           value={logParameters.consoleLevel}
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
+          defaultValue="info"
           help={<div>The level for the Console log</div>}
           onChange={onChange}
         />
@@ -87,7 +87,7 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.fileLevel"
           label="File Level"
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
+          defaultValue="info"
           value={logParameters.fileLevel}
           help={<div>The level for the file log</div>}
           onChange={onChange}
@@ -98,7 +98,7 @@ const Logging = ({ logParameters, onChange }) => (
           label="Sqlite Level"
           name="engine.logParameters.sqliteLevel"
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
+          defaultValue="info"
           value={logParameters.sqliteLevel}
           help={<div>The level for the sqlite log</div>}
           onChange={onChange}

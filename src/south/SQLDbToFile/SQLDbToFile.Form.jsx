@@ -37,7 +37,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           options={['mssql']}
           value={dataSource.SQLDbToFile.driver}
-          defaultOption="mssql"
+          defaultValue="mssql"
           name="SQLDbToFile.driver"
           help={<div>Driver SQL</div>}
         />
@@ -176,7 +176,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           value={dataSource.SQLDbToFile.timezone}
           valid={validation.SQLDbToFile.timezone}
-          defaultOption="Europe/Paris"
+          defaultValue="Europe/Paris"
           name="SQLDbToFile.timezone"
           options={[
             'Etc/GMT+12', 'Pacific/Midway', 'Pacific/Honolulu', 'Pacific/Marquesas', 'America/Anchorage', 'Pacific/Pitcairn',

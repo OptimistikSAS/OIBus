@@ -74,7 +74,7 @@ const OIConnectForm = ({ application, onChange }) => {
             value={application.OIConnect.stack}
             name="OIAnalyticsFile.stack"
             options={['axios', 'request', 'fetch']}
-            defaultOption="fetch"
+            defaultValue="fetch"
             help={<div>Stack</div>}
           />
         </Col>
@@ -87,7 +87,7 @@ const OIConnectForm = ({ application, onChange }) => {
             value={application.OIConnect.stack}
             name="OIConnect.stack"
             options={['axios', 'request', 'fetch']}
-            defaultOption="fetch"
+            defaultValue="fetch"
             help={<div />}
           />
         </Col>

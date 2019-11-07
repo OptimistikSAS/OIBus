@@ -63,7 +63,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           onChange={onChange}
           options={['server', 'oibus']}
           value={dataSource.OPCUA.timeOrigin}
-          defaultOption="server"
+          defaultValue="server"
           name="OPCUA.timeOrigin"
           help={<div>Origin of timestamps</div>}
         />
