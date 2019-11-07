@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 
-const Controls = require('./index.js')
+import * as Controls from './index.js'
 
 const OIbForm = ({ schema, onChange, values }) => {
   const { form } = schema
