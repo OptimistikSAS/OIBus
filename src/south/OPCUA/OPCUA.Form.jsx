@@ -6,7 +6,7 @@ import validation from './OPCUA.validation'
 
 const OPCUAForm = ({ dataSource, onChange }) => (
   <>
-    <OIbTitle title="MQTT settings">
+    <OIbTitle label="MQTT settings">
       <p>This protocol is in restricted release. Please contact Optimistik</p>
     </OIbTitle>
     <Row>
@@ -62,7 +62,7 @@ const OPCUAForm = ({ dataSource, onChange }) => (
           label="Time Origin"
           onChange={onChange}
           options={['server', 'oibus']}
-          option={dataSource.OPCUA.timeOrigin}
+          value={dataSource.OPCUA.timeOrigin}
           defaultOption="server"
           name="OPCUA.timeOrigin"
           help={<div>Origin of timestamps</div>}
@@ -102,7 +102,7 @@ OPCUAForm.renderPoints = (points, onChange) => {
       value: (
         <OIbScanMode
           name={`points.${index}.scanMode`}
-          scanMode={point.scanMode}
+          value={point.scanMode}
           onChange={onChange}
         />
       ),

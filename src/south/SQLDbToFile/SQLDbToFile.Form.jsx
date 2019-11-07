@@ -36,7 +36,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
           label="Driver"
           onChange={onChange}
           options={['mssql']}
-          option={dataSource.SQLDbToFile.driver}
+          value={dataSource.SQLDbToFile.driver}
           defaultOption="mssql"
           name="SQLDbToFile.driver"
           help={<div>Driver SQL</div>}
@@ -142,7 +142,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
         <OIbScanMode
           label="Scan Mode"
           name="scanMode"
-          scanMode={dataSource.scanMode}
+          value={dataSource.scanMode}
           onChange={onChange}
         />
       </Col>
@@ -174,7 +174,7 @@ const SQLDbToFileForm = ({ dataSource, onChange }) => (
         <OIbSelect
           label="Timezone"
           onChange={onChange}
-          option={dataSource.SQLDbToFile.timezone}
+          value={dataSource.SQLDbToFile.timezone}
           valid={validation.SQLDbToFile.timezone}
           defaultOption="Europe/Paris"
           name="SQLDbToFile.timezone"

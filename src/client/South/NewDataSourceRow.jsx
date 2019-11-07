@@ -43,7 +43,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
         <Col md="3">
           <OIbSelect
             label="Protocol"
-            option={protocol}
+            value={protocol}
             name="protocol"
             options={protocolList}
             defaultOption={protocolList[0]}

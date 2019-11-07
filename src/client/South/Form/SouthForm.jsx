@@ -17,7 +17,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const schema = ProtocolSchemas[protocol]
   return (
     <Form>
-      <OIbTitle title={`${dataSourceId} parameters (protocol: ${protocol})`}>
+      <OIbTitle label={`${dataSourceId} parameters (protocol: ${protocol})`}>
         <>
           <ul>
             <li>This form allows to configure protocol-specific parameters.</li>

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input } from 'reactstrap'
 import { ConfigContext } from '../../context/configContext.jsx'
 
-const OIbProxy = ({ label, help, proxy, name, onChange }) => {
+const OIbProxy = ({ label, help, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const { proxies } = newConfig.engine // proxies defined in engine
   const options = proxies.map((e) => e.name)
@@ -11,8 +11,8 @@ const OIbProxy = ({ label, help, proxy, name, onChange }) => {
   const defaultOption = options[0]
 
   React.useEffect(() => {
-    if (proxy === null) onChange(name, defaultOption)
-  }, [proxy])
+    if (value === null) onChange(name, defaultOption)
+  }, [value])
 
   const handleChange = (event) => {
     const { target } = event
@@ -20,11 +20,11 @@ const OIbProxy = ({ label, help, proxy, name, onChange }) => {
     onChange(name, newVal, null)
   }
   // if value is null, no need to render
-  if (proxy === null) return null
+  if (value === null) return null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={proxy}>
+      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={value}>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -40,8 +40,8 @@ OIbProxy.propTypes = {
   label: PropTypes.string,
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
-  proxy: PropTypes.string,
+  value: PropTypes.string,
 }
-OIbProxy.defaultProps = { label: null, help: null, proxy: null }
+OIbProxy.defaultProps = { label: null, help: null, value: null }
 
 export default OIbProxy

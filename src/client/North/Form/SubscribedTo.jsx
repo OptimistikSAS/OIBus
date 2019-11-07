@@ -21,7 +21,7 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   return (
     subscribedTo && (
       <>
-        <OIbTitle title="Subscribed To">
+        <OIbTitle label="Subscribed To">
           <p>
             Allow to select what South equipment are connected to this North application.
             The default is to receive from all enabled south equipments of the current OIBus.
@@ -37,7 +37,7 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
                   value: (
                     <OIbSelect
                       name={`subscribedTo.${i}`}
-                      option={subscribedTo[i]}
+                      value={subscribedTo[i]}
                       options={dataSourceIds}
                       defaultOption={dataSourceIds[0]}
                       onChange={onChange}

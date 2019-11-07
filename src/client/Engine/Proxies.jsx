@@ -23,7 +23,7 @@ const Proxies = ({ proxies }) => {
   }
   return (
     <>
-      <OIbTitle title="Proxies">
+      <OIbTitle label="Proxies">
         <p>
           Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by
           other OIBus section. This section can be empty if you dont use proxies on your network.
@@ -51,7 +51,7 @@ const Proxies = ({ proxies }) => {
                   name={`engine.proxies.${i}.protocol`}
                   options={['http', 'https']}
                   defaultOption="http"
-                  option={proxy.protocol}
+                  value={proxy.protocol}
                   onChange={onChange}
                 />,
               },

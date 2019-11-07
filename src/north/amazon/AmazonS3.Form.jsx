@@ -27,13 +27,13 @@ const AmazonS3Form = ({ application, onChange }) => (
       </Col>
     </Row>
     <OIbAuthentication
-      authentication={application.AmazonS3.authentication}
+      value={application.AmazonS3.authentication}
       validation={validation.AmazonS3.authentication}
       onChange={onChange}
       name="AmazonS3.authentication"
       mode="accessKey"
     />
-    <OIbTitle title="Network">
+    <OIbTitle label="Network">
       <>
         <p>Please specify here the proxy name to use</p>
         <p>(proxy names are defined in the Engine page)</p>
@@ -44,7 +44,7 @@ const AmazonS3Form = ({ application, onChange }) => (
         <OIbProxy
           label="Proxy"
           name="AmazonS3.proxy"
-          proxy={application.AmazonS3.proxy}
+          value={application.AmazonS3.proxy}
           onChange={onChange}
         />
       </Col>

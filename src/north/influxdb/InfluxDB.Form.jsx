@@ -6,7 +6,7 @@ import validation from './InfluxDB.validation'
 
 const InfluxDBForm = ({ application, onChange }) => (
   <>
-    <OIbTitle title="InfluxDB parameters">
+    <OIbTitle label="InfluxDB parameters">
       <>
         <p>InfluxDB North application is in Beta Mode</p>
         <p>
@@ -65,7 +65,7 @@ const InfluxDBForm = ({ application, onChange }) => (
         <OIbSelect
           label="Precision"
           onChange={onChange}
-          option={application.InfluxDB.precision}
+          value={application.InfluxDB.precision}
           name="InfluxDB.precision"
           defaultOption="s"
           options={['ns', 'us', 'µs', 'ms', 's']}

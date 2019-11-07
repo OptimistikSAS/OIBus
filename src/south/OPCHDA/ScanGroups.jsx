@@ -22,7 +22,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
   return (
     scanGroups && (
       <>
-        <OIbTitle title="Scan Groups">
+        <OIbTitle label="Scan Groups">
           <p>
             OPCHDA application will request all points in the same scanMode.
             OPCHDA can query raw values but can also aggregate points on a given period.
@@ -41,7 +41,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                   value: (
                     <OIbScanMode
                       name={`scanGroups.${i}.scanMode`}
-                      scanMode={dataSource.scanMode}
+                      value={dataSource.scanMode}
                       onChange={onChange}
                     />
                   ),
@@ -52,7 +52,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                     <OIbSelect
                       onChange={onChange}
                       options={['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End']}
-                      option={dataSource.aggregate}
+                      value={dataSource.aggregate}
                       defaultOption="Raw"
                       name={`scanGroups.${i}.aggregate`}
                     />
@@ -64,7 +64,7 @@ const ScanGroups = ({ scanGroups, dataSourceIndex }) => {
                     <OIbSelect
                       onChange={onChange}
                       options={['None', 'Minute', 'Hour', 'Day']}
-                      option={dataSource.resampling}
+                      value={dataSource.resampling}
                       defaultOption="None"
                       name={`scanGroups.${i}.resampling`}
                     />

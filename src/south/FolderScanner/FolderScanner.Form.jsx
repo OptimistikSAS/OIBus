@@ -21,7 +21,7 @@ const FolderScannerForm = ({ dataSource, onChange }) => (
         <OIbScanMode
           label="Scan Mode"
           name="scanMode"
-          scanMode={dataSource.scanMode}
+          value={dataSource.scanMode}
           onChange={onChange}
         />
       </Col>

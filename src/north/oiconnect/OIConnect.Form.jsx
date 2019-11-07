@@ -34,14 +34,14 @@ const OIConnectForm = ({ application, onChange }) => {
         </Col>
       </Row>
       <OIbAuthentication
-        authentication={application.OIConnect.authentication}
+        value={application.OIConnect.authentication}
         validation={validation.OIConnect.authentication}
         onChange={onChange}
         name="OIConnect.authentication"
       />
       <Row>
         <Col>
-          <OIbTitle title="Network">
+          <OIbTitle label="Network">
             <>
               <div>Please specify here network specific parameters</div>
               <ul>
@@ -62,7 +62,7 @@ const OIConnectForm = ({ application, onChange }) => {
           <OIbProxy
             label="Proxie"
             name="OIConnect.proxy"
-            proxy={application.OIConnect.proxy}
+            value={application.OIConnect.proxy}
             onChange={onChange}
             help={<div>Proxy</div>}
           />
@@ -71,7 +71,7 @@ const OIConnectForm = ({ application, onChange }) => {
           <OIbSelect
             label="Stack"
             onChange={onChange}
-            option={application.OIConnect.stack}
+            value={application.OIConnect.stack}
             name="OIAnalyticsFile.stack"
             options={['axios', 'request', 'fetch']}
             defaultOption="fetch"
@@ -84,7 +84,7 @@ const OIConnectForm = ({ application, onChange }) => {
           <OIbSelect
             label="Stack"
             onChange={onChange}
-            option={application.OIConnect.stack}
+            value={application.OIConnect.stack}
             name="OIConnect.stack"
             options={['axios', 'request', 'fetch']}
             defaultOption="fetch"

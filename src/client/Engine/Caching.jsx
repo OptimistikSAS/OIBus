@@ -6,7 +6,7 @@ import validation from './Engine.validation'
 
 const Caching = ({ onChange, caching }) => (
   <>
-    <OIbTitle title="Cache parameters">
+    <OIbTitle label="Cache parameters">
       <>
         <p>
           In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one
@@ -52,7 +52,7 @@ const Caching = ({ onChange, caching }) => (
           label="Archive Mode"
           name="engine.caching.archiveMode"
           options={['archive', 'delete']}
-          option={caching.archiveMode}
+          value={caching.archiveMode}
           defaultOption="archive"
           help={<div> Move to Archive Folders or Delete files</div>}
           onChange={onChange}

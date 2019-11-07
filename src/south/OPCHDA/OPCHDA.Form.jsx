@@ -37,7 +37,7 @@ const OPCHDAForm = ({ dataSource, dataSourceIndex, onChange }) => (
           label="Agent Logging Level"
           onChange={onChange}
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          option={dataSource.OPCHDA.logLevel}
+          value={dataSource.OPCHDA.logLevel}
           defaultOption="debug"
           name="OPCHDA.logLevel"
           help={<div>Logging Level</div>}
@@ -112,7 +112,7 @@ OPCHDAForm.renderPoints = (points, onChange) => {
       value: (
         <OIbScanMode
           name={`points.${index}.scanMode`}
-          scanMode={point.scanMode}
+          value={point.scanMode}
           onChange={onChange}
         />
       ),

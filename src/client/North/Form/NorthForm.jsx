@@ -28,7 +28,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   const ApiForm = ApiForms[api]
   return (
     <Form>
-      <OIbTitle title={`${applicationId} parameters (api: ${api})`}>
+      <OIbTitle label={`${applicationId} parameters (api: ${api})`}>
         <>
           <ul>
             <li>This form allows to configure north-specific parameters.</li>
@@ -50,7 +50,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Col>
       </Row>
       <ApiForm onChange={onChange} application={application} />
-      <OIbTitle title="Caching">
+      <OIbTitle label="Caching">
         <>
           <p>
             The cache is a local file storage to allow OIBus to store values or files when

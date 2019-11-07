@@ -58,7 +58,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'MQTT protocol',
-    valid: (val) => (val && val.length > 0 ? null : 'Error Folder should not be empty'),
+    valid: (val) => (['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'].includes(val) ? null : 'Unknown protocol'),
     defaultOption: 'mqtts',
     help: <div>MQTT protocol</div>,
   },
@@ -89,7 +89,7 @@ schema.points = {
     valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode' },
+  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   topic: {
     type: 'OIbText',
     label: 'Topic',

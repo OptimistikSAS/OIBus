@@ -6,7 +6,7 @@ import validation from './OIAnalyticsFile.validation'
 
 const OIAnalyticsFileForm = ({ application, onChange }) => (
   <>
-    <OIbTitle title="Endpoint">
+    <OIbTitle label="Endpoint">
       <p>default endpoint for OIAnalytics is /api/optimistik/data/values/upload</p>
     </OIbTitle>
     <Row>
@@ -32,14 +32,14 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
       </Col>
     </Row>
     <OIbAuthentication
-      authentication={application.OIAnalyticsFile.authentication}
+      value={application.OIAnalyticsFile.authentication}
       validation={validation.OIAnalyticsFile.authentication}
       name="OIAnalyticsFile.authentication"
       onChange={onChange}
     />
     <Row>
       <Col>
-        <OIbTitle title="Network">
+        <OIbTitle label="Network">
           <>
             <div>Please specify here network specific parameters</div>
             <ul>
@@ -60,7 +60,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
         <OIbProxy
           label="Proxie"
           name="OIAnalyticsFile.proxy"
-          proxy={application.OIAnalyticsFile.proxy}
+          value={application.OIAnalyticsFile.proxy}
           onChange={onChange}
           help={<div>Proxy</div>}
         />
@@ -69,7 +69,7 @@ const OIAnalyticsFileForm = ({ application, onChange }) => (
         <OIbSelect
           label="Stack"
           onChange={onChange}
-          option={application.OIAnalyticsFile.stack}
+          value={application.OIAnalyticsFile.stack}
           name="OIAnalyticsFile.stack"
           options={['axios', 'request', 'fetch']}
           defaultOption="fetch"

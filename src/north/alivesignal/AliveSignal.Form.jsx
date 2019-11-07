@@ -19,14 +19,14 @@ const AliveSignalForm = ({ application, onChange }) => (
       </Col>
     </Row>
     <OIbAuthentication
-      authentication={application.AliveSignal.authentication}
+      value={application.AliveSignal.authentication}
       validation={validation.AliveSignal.authentication}
       name="AliveSignal.authentication"
       onChange={onChange}
     />
     <Row>
       <Col>
-        <OIbTitle title="Message">
+        <OIbTitle label="Message">
           <div>todo</div>
         </OIbTitle>
       </Col>
@@ -54,7 +54,7 @@ const AliveSignalForm = ({ application, onChange }) => (
         />
       </Col>
     </Row>
-    <OIbTitle title="Network">
+    <OIbTitle label="Network">
       <>
         <p>Please specify here the proxy name to use</p>
         <p>(proxy names are defined in the Engine page)</p>
@@ -65,7 +65,7 @@ const AliveSignalForm = ({ application, onChange }) => (
         <OIbProxy
           label="Proxy"
           name="AliveSignal.proxy"
-          proxy={application.AliveSignal.proxy}
+          value={application.AliveSignal.proxy}
           onChange={onChange}
           help={<div>Proxy</div>}
         />
