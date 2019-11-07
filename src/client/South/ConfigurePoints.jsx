@@ -138,16 +138,7 @@ const ConfigurePoints = () => {
   const tableRows = pagedPoints.map((point, index) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
     const { type, ...rest } = value
     const Control = Controls[type]
-    switch (type) {
-      case 'OIbSelect':
-        rest.option = point[key]
-        break
-      case 'OIbScanMode':
-        rest.scanMode = point[key]
-        break
-      default:
-        rest.value = point[key]
-    }
+    rest.value = point[key]
     rest.label = null // remove field title in table rows
     const name = `points.${index}.${key}`
     return (
