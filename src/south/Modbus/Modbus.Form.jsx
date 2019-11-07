@@ -4,7 +4,7 @@ const schema = { name: 'Modbus' }
 schema.form = {
   ModbusSettings: {
     type: 'OIbTitle',
-    title: 'Modbus settings',
+    label: 'Modbus settings',
     newRow: true,
     children: (
       <p>This protocol is in restricted release. Please contact Optimistik</p>

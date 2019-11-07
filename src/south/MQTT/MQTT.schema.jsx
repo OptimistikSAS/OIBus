@@ -4,7 +4,7 @@ const schema = { name: 'MQTT' }
 schema.form = {
   MQTTsettings: {
     type: 'OIbTitle',
-    title: 'MQTT settings',
+    label: 'MQTT settings',
     newRow: true,
     children: (
       <div>
