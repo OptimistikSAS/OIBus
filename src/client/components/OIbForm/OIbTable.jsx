@@ -7,16 +7,16 @@ import * as Controls from './index.js'
 
 const OIbTable = ({ name, label, help, rows, value }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
-  const defaultValues = {}
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `${name}.${rowIndex}` })
   }
   const handleAdd = () => {
-    const defaultValue = defaultValues
+    const defaultValue = {}
+    Object.keys(rows).forEach((rowKey) => { defaultValue[rowKey] = rows[rowKey].defaultValue })
     dispatchNewConfig({ type: 'addRow', name: `${name}`, value: defaultValue })
   }
   const onChange = (valueName, newVal) => {
-    dispatchNewConfig({ type: 'update', name: `${valueName}`, newVal })
+    dispatchNewConfig({ type: 'update', name: `${valueName}`, value: newVal })
   }
   const tableHeaders = Object.values(rows).map((row) => row.label)
   const tableRows = value.map((point, index) => Object.entries(rows).map(([rowKey, rowValue]) => {
@@ -26,7 +26,7 @@ const OIbTable = ({ name, label, help, rows, value }) => {
     rest.label = null // remove field title in table rows
     return (
       /* eslint-disable-next-line react/jsx-props-no-spreading */
-      { name, value: <Control onChange={onChange} name={`${name}.${index}.${rowKey}`} {...rest} /> }
+      { name: `${name}.${index}.${rowKey}`, value: <Control onChange={onChange} name={`${name}.${index}.${rowKey}`} {...rest} /> }
     )
   }))
   return (

@@ -39,7 +39,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         </Col>
       </Row>
       {schema ? (
-        <OIbForm onChange={onChange} schema={schema} name={`South.${protocol}`} values={dataSource[protocol]} />
+        <OIbForm onChange={onChange} schema={schema} name={`south.dataSources.${dataSourceIndex}.${protocol}`} values={dataSource[protocol]} />
       ) : (
         <ProtocolForm onChange={onChange} dataSource={dataSource} dataSourceIndex={dataSourceIndex} />
       )}

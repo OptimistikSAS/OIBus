@@ -14,7 +14,7 @@ const OIbScanMode = ({ label, help, value, name, onChange }) => {
   let validCheck = null
 
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultValue)
+    if (value === '') onChange(name, defaultValue)
   }, [value])
 
   React.useEffect(() => {
@@ -27,8 +27,6 @@ const OIbScanMode = ({ label, help, value, name, onChange }) => {
     const { value: newVal } = target
     onChange(name, newVal, null)
   }
-  // if value is null, no need to render
-  if (value === null) return null
 
   // check if defined scanmode is unknown to the engine
   if (!options.includes(value)) {
@@ -58,6 +56,6 @@ OIbScanMode.propTypes = {
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string,
 }
-OIbScanMode.defaultProps = { label: null, help: null, value: null }
+OIbScanMode.defaultProps = { label: null, help: null, value: '' }
 
 export default OIbScanMode
