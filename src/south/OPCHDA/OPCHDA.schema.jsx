@@ -67,7 +67,7 @@ schema.form = {
       </p>
     ),
     newRow: true,
-    md: 12,
+    md: 10,
     rows: {
       scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
       Aggregate: {

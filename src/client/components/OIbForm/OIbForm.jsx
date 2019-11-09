@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 
 import * as Controls from './index.js'
+import OIbTable from './OIbTable.jsx'
 
 const OIbForm = ({ schema, onChange, values }) => {
   const { form } = schema
@@ -21,7 +22,7 @@ const OIbForm = ({ schema, onChange, values }) => {
     <Row key={cols[0].name}>
       {cols.map((col) => {
         const { type, md, name, ...rest } = col
-        const Control = Controls[type]
+        const Control = (type === 'OIbTable') ? OIbTable : Controls[type]
         rest.value = values[name]
         return (
           <Col md={md} key={name}>
