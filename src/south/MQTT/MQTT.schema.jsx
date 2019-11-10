@@ -5,6 +5,7 @@ schema.form = {
   MQTTsettings: {
     type: 'OIbTitle',
     label: 'MQTT settings',
+    md: 12,
     newRow: true,
     children: (
       <div>

@@ -6,6 +6,7 @@ schema.form = {
     type: 'OIbTitle',
     label: 'Modbus settings',
     newRow: true,
+    md: 12,
     children: (
       <p>This protocol is in restricted release. Please contact Optimistik</p>
     ),

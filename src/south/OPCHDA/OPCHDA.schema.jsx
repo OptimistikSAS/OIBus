@@ -1,4 +1,6 @@
 import React from 'react'
+import { notEmpty, inRange, minLength } from '../../services/validation.service.js'
+
 
 const schema = { name: 'OPCHDA' }
 schema.form = {
@@ -7,7 +9,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Agent Filename',
-    valid: (val) => (val && val.length > 0 ? null : 'Agent Filename should not be empty'),
+    valid: notEmpty(),
     defaultValue: '/HdaAgent/HdaAgent.exe',
     help: <div>Path to the HDA Agent</div>,
   },
@@ -16,7 +18,7 @@ schema.form = {
     newRow: false,
     md: 4,
     label: 'TCP Port',
-    valid: (val) => (val >= 1 && val <= 65535 ? null : 'Value should be between 1 and 65535'),
+    valid: inRange(1, 65535),
     defaultValue: '2224',
     help: <div>TCP Port of the HDA Agent executable</div>,
   },
@@ -34,7 +36,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Host',
-    valid: (val) => (val && val.length > 2 ? null : 'Length should be greater than 2'),
+    valid: minLength(2),
     defaultValue: '',
     help: <div>IP address or hostname of the HDA server</div>,
   },
@@ -43,7 +45,7 @@ schema.form = {
     newRow: false,
     md: 4,
     label: 'Server Name',
-    valid: (val) => (val && val.length > 0 ? null : 'Server Name should not be empty'),
+    valid: notEmpty(),
     defaultValue: '1',
     help: <div>Name of the HDA server</div>,
   },

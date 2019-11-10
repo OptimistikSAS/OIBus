@@ -1,4 +1,5 @@
 import React from 'react'
+import { notEmpty, length } from '../../services/validation.service'
 
 const schema = { name: 'CSV' }
 schema.form = {
@@ -7,7 +8,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Input Folder',
-    valid: (val) => (val && val.length > 0 ? null : 'Input Folder should not be empty'),
+    valid: notEmpty(),
     defaultValue: './csv/input',
     help: <div>Path to the input folder</div>,
   },
@@ -16,7 +17,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Archive Folder',
-    valid: (val) => (val && val.length > 0 ? null : 'Archive Folder should not be empty'),
+    valid: notEmpty(),
     defaultValue: './csv/archive',
     help: <div>Path to the archive folder</div>,
   },
@@ -25,7 +26,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Error Folder',
-    valid: (val) => (val && val.length > 0 ? null : 'Error Folder should not be empty'),
+    valid: notEmpty(),
     defaultValue: './csv/error',
     help: <div>Path to the error folder</div>,
   },
@@ -34,7 +35,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'CSV separator',
-    valid: (val) => (val && val.length === 1 ? null : 'Length should be 1'),
+    valid: length(1),
     defaultValue: ',',
     help: <div>(often , or ;)</div>,
   },
@@ -43,7 +44,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'time column',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+    valid: notEmpty(),
     defaultValue: '1',
     help: <div>Column with the timestamp</div>,
   },
@@ -52,7 +53,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Has first line',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+    valid: notEmpty(),
     defaultValue: true,
     help: <div>indicates if the file starts with a header line</div>,
   },
@@ -70,13 +71,13 @@ schema.points = {
     type: 'OIbText',
     label: 'Value',
     defaultValue: '',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+    valid: notEmpty(),
   },
   quality: {
     type: 'OIbText',
     label: 'Quality',
     defaultValue: '',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Quality should not be empty'),
+    valid: notEmpty(),
   },
 }
 
