@@ -11,9 +11,15 @@ import OIbTitle from './OIbTitle.jsx'
   OIBAuthentication is a form reused in several places. Can manage user/password (default)
   or accessKey/secretKey as well as authentication type.
 */
-const OIbAuthentication = ({ value, name, validation, onChange, mode }) => {
+const OIbAuthentication = ({ value, name, onChange, mode }) => {
   const handleChange = (attributeName, newValue, valid) => {
     onChange(`${name}.${attributeName}`, newValue, valid)
+  }
+  const validation = {
+    accessKey: (val) => ((val && val.length > 0) ? null : 'Access Key should not be empty'),
+    secretKey: (val) => ((val && val.length > 0) ? null : 'Secret Key should not be empty'),
+    username: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
+    password: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
   }
   return [
     <OIbTitle label="Authentication" key="title">
@@ -86,7 +92,6 @@ OIbAuthentication.propTypes = {
   onChange: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
   value: PropTypes.object,
-  validation: PropTypes.object.isRequired,
   mode: PropTypes.oneOf(['accessKey', 'user']),
 }
 

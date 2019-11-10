@@ -1,4 +1,4 @@
 const schema = require('./FolderScanner.schema.jsx').default
-const testSchema = require('../testSchema.js').default
+const testSchema = require('../../services/testSchema.js').default
 
 testSchema(schema)

@@ -5,16 +5,8 @@ import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
-
-import OIConnect from '../../../north/oiconnect/OIConnect.Form.jsx'
-import AliveSignal from '../../../north/alivesignal/AliveSignal.Form.jsx'
-import AmazonS3 from '../../../north/amazon/AmazonS3.Form.jsx'
-import Console from '../../../north/console/Console.Form.jsx'
-import InfluxDB from '../../../north/influxdb/InfluxDB.Form.jsx'
-import OIAnalyticsFile from '../../../north/oianalyticsfile/OIAnalyticsFile.Form.jsx'
-import TimescaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
-
-const ApiForms = { OIConnect, AliveSignal, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB }
+import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import ApiSchemas from '../Apis.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
@@ -24,8 +16,8 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
     application.caching = {}
   }
   if (!application.subscribedTo) application.subscribedTo = []
-  // load the proper form based on the api name.
-  const ApiForm = ApiForms[api]
+  // load the proper schema based on the api name.
+  const schema = ApiSchemas[api]
   return (
     <Form>
       <OIbTitle label={`${applicationId} parameters (api: ${api})`}>
@@ -49,7 +41,12 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <ApiForm onChange={onChange} application={application} />
+      <OIbForm
+        onChange={onChange}
+        schema={schema}
+        name={`north.applications.${applicationIndex}.${api}`}
+        values={application[api]}
+      />
       <OIbTitle label="Caching">
         <>
           <p>

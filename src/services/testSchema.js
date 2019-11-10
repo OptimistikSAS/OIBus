@@ -9,10 +9,15 @@ const controls = [
   'OIbInteger',
   'OIbPassword',
   'OIbTextArea',
+  'OIbProxy',
+  'OIbAuthentication',
 ]
 
 const testSchema = (schema) => {
-  describe('schema', () => {
+  describe('a valid schema', () => {
+    it('should have a name', () => {
+      expect(typeof schema.name).toBe('string')
+    })
     Object.entries(schema.form).forEach(([field, parameters]) => {
       const keys = Object.keys(parameters)
       it(`${field} should be valid'`, () => {
