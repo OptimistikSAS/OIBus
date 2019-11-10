@@ -1,4 +1,5 @@
 import React from 'react'
+import { notEmpty } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {
@@ -7,7 +8,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'Input Folder',
-    valid: (val) => (val && val.length > 0 ? null : 'Input Folder should not be empty'),
+    valid: notEmpty(),
     defaultValue: './input',
     help: <div>Path to the input folder</div>,
   },
@@ -35,7 +36,7 @@ schema.form = {
     newRow: true,
     md: 4,
     label: 'RegExp',
-    valid: (val) => (val && val.length > 0 ? null : 'RegExp should not be empty'),
+    valid: notEmpty(),
     defaultValue: '.txt',
     help: <div>RegExp to filter the folder</div>,
   },
