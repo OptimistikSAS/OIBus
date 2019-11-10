@@ -7,7 +7,7 @@ import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
-import { ProtocolSchemas } from './Protocols.jsx'
+import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
 
 const ConfigurePoints = () => {
