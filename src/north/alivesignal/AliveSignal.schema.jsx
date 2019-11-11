@@ -5,8 +5,6 @@ const schema = { name: 'CSV' }
 schema.form = {
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
@@ -14,22 +12,16 @@ schema.form = {
   },
   authentication: {
     type: 'OIbAuthentication',
-    newRow: true,
-    md: 12,
     label: 'Authentication',
     help: <div>Path to the archive folder</div>,
   },
   messageSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'Message',
     help: <div>todo</div>,
   },
   id: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Id',
     valid: notEmpty(),
     defaultValue: '',
@@ -37,8 +29,6 @@ schema.form = {
   },
   frequency: {
     type: 'OIbInteger',
-    newRow: true,
-    md: 4,
     label: 'Frequency',
     valid: (val) => (val >= 1000 ? null : 'Frequency should be greater or equal to 1000'),
     defaultValue: 10000,
@@ -46,8 +36,6 @@ schema.form = {
   },
   networkSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'Network',
     help: (
       <>
@@ -58,8 +46,6 @@ schema.form = {
   },
   proxy: {
     type: 'OIbProxy',
-    newRow: true,
-    md: 4,
     label: 'Proxy',
   },
 }

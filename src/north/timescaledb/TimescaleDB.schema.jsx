@@ -5,8 +5,6 @@ const schema = { name: 'TimescaleDB' }
 schema.form = {
   InfluxDBSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'TimeScale parameters',
     help: (
       <>
@@ -19,8 +17,6 @@ schema.form = {
   },
   user: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'User Name',
     valid: notEmpty(),
     defaultValue: '',
@@ -29,7 +25,6 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    md: 4,
     label: 'Password',
     valid: notEmpty(),
     defaultValue: '',
@@ -37,8 +32,6 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
@@ -47,7 +40,6 @@ schema.form = {
   db: {
     type: 'OIbText',
     newRow: false,
-    md: 4,
     label: 'Database',
     valid: notEmpty(),
     defaultValue: '',

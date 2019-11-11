@@ -6,8 +6,6 @@ const schema = { name: 'OPCHDA' }
 schema.form = {
   agentFilename: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Agent Filename',
     valid: notEmpty(),
     defaultValue: '/HdaAgent/HdaAgent.exe',
@@ -16,7 +14,6 @@ schema.form = {
   tcpPort: {
     type: 'OIbInteger',
     newRow: false,
-    md: 4,
     label: 'TCP Port',
     valid: inRange(1, 65535),
     defaultValue: '2224',
@@ -24,8 +21,6 @@ schema.form = {
   },
   logLevel: {
     type: 'OIbSelect',
-    newRow: true,
-    md: 4,
     label: 'Agent Logging Level',
     options: ['silly', 'debug', 'info', 'warning', 'error'],
     defaultValue: 'debug',
@@ -33,8 +28,6 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: minLength(2),
     defaultValue: '',
@@ -43,7 +36,6 @@ schema.form = {
   serverName: {
     type: 'OIbText',
     newRow: false,
-    md: 4,
     label: 'Server Name',
     valid: notEmpty(),
     defaultValue: '1',
@@ -52,7 +44,6 @@ schema.form = {
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
-    md: 4,
     label: 'Retry interval',
     valid: (val) => (val > 0 ? null : 'Retry interval should be greater than 0'),
     defaultValue: 10000,
@@ -68,8 +59,6 @@ schema.form = {
         Important: a point with a scanMode without the corresponding scangroup will not be requested
       </p>
     ),
-    newRow: true,
-    md: 10,
     rows: {
       scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
       Aggregate: {

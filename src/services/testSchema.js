@@ -22,8 +22,6 @@ const testSchema = (schema) => {
       const keys = Object.keys(parameters)
       it(`${field} should be valid'`, () => {
         expect(keys.includes('type')).toBe(true)
-        expect(keys.includes('newRow')).toBe(true)
-        expect(keys.includes('md')).toBe(true)
         expect(controls.includes(parameters.type)).toBe(true)
       })
       it('type key should be known', () => {

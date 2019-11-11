@@ -5,8 +5,6 @@ schema.form = {
   MQTTsettings: {
     type: 'OIbTitle',
     label: 'MQTT settings',
-    md: 12,
-    newRow: true,
     children: (
       <div>
         <p>This protocol is in restricted release. Please contact Optimistik</p>
@@ -37,8 +35,6 @@ schema.form = {
   },
   server: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Server',
     valid: (val) => ((val && val.length > 0) ? null : 'Server should not be empty'),
     defaultValue: '',
@@ -47,7 +43,6 @@ schema.form = {
   port: {
     type: 'OIbText',
     newRow: false,
-    md: 4,
     label: 'Port',
     valid: (val) => (val >= 1 && val <= 65535 ? null : 'Value should be between 1 and 65535'),
     defaultValue: 8883,
@@ -56,8 +51,6 @@ schema.form = {
   mqttProtocol: {
     type: 'OIbSelect',
     options: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
-    newRow: true,
-    md: 4,
     label: 'MQTT protocol',
     valid: (val) => (['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'].includes(val) ? null : 'Unknown protocol'),
     defaultValue: 'mqtts',
@@ -65,8 +58,6 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Username',
     valid: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
     defaultValue: '',
@@ -75,7 +66,6 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    md: 4,
     label: 'Password',
     valid: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
     defaultValue: '',

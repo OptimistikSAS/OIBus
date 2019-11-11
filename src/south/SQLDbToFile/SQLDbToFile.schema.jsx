@@ -4,16 +4,12 @@ import { notEmpty } from '../../services/validation.service.js'
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
   SQLDBtoFileSettings: {
-    newRow: true,
-    md: 12,
     type: 'OIbTitle',
     label: 'SQLDB Settings',
     help: <p>todo</p>,
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: notEmpty(),
     defaultValue: 'localhost',
@@ -22,7 +18,6 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    md: 4,
     label: 'HTTP Port',
     valid: notEmpty(),
     defaultValue: 1433,
@@ -31,23 +26,18 @@ schema.form = {
   driver: {
     type: 'OIbSelect',
     options: ['mssql'],
-    newRow: true,
-    md: 4,
     label: 'SQL Driver',
     valid: notEmpty(),
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
   },
   username: {
-    newRow: true,
-    md: 4,
     type: 'OIbText',
     label: 'User',
     defaultValue: '',
     valid: notEmpty(),
   },
   password: {
-    md: 4,
     newRow: false,
     type: 'OIbPassword',
     label: 'Password',
@@ -55,8 +45,6 @@ schema.form = {
     valid: notEmpty(),
   },
   database: {
-    md: 4,
-    newRow: true,
     type: 'OIbText',
     label: 'Database',
     defaultValue: 'db',
@@ -65,7 +53,6 @@ schema.form = {
   },
   query: {
     md: 12,
-    newRow: true,
     type: 'OIbTextArea',
     label: 'Query',
     defaultValue: '',
@@ -74,23 +61,18 @@ schema.form = {
   },
   connectionTimeout: {
     type: 'OIbInteger',
-    md: 4,
-    newRow: true,
     label: 'Connection timeout',
     valid: notEmpty(),
     defaultValue: 1000,
   },
   requestTimeout: {
     type: 'OIbInteger',
-    md: 4,
     newRow: false,
     label: 'Request Timeout',
     valid: notEmpty(),
     defaultValue: 1000,
   },
   delimiter: {
-    md: 4,
-    newRow: true,
     type: 'OIbText',
     label: 'Delimiter',
     defaultValue: ',',
@@ -98,8 +80,6 @@ schema.form = {
     help: <div>delimiter</div>,
   },
   filename: {
-    md: 4,
-    newRow: true,
     type: 'OIbText',
     label: 'Filename',
     defaultValue: 'sql-@date.csv',
@@ -109,12 +89,8 @@ schema.form = {
   scanMode: {
     type: 'OIbScanMode',
     label: 'Scan Mode',
-    md: 4,
-    newRow: true,
   },
   timeColumn: {
-    md: 4,
-    newRow: true,
     type: 'OIbText',
     label: 'Time Column',
     defaultValue: 'timestamp',
@@ -122,7 +98,6 @@ schema.form = {
     help: <div>Time Column</div>,
   },
   timeFormat: {
-    md: 4,
     newRow: false,
     type: 'OIbText',
     label: 'Time Column',
@@ -131,7 +106,6 @@ schema.form = {
     help: <div>Time Format</div>,
   },
   timeZone: {
-    md: 4,
     newRow: false,
     type: 'OIbText',
     label: 'Time Zone',

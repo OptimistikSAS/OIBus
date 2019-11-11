@@ -5,16 +5,12 @@ schema.form = {
   ModbusSettings: {
     type: 'OIbTitle',
     label: 'Modbus settings',
-    newRow: true,
-    md: 12,
     children: (
       <p>This protocol is in restricted release. Please contact Optimistik</p>
     ),
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: (val) => ((val && val.length > 2) ? null : 'Length should be greater than 2'),
     defaultValue: '',
@@ -23,7 +19,6 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    md: 4,
     label: 'Port',
     valid: (val) => (val >= 1 && val <= 65535 ? null : 'Port should be between 1 and 65535'),
     defaultValue: 502,

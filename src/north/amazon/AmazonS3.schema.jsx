@@ -5,8 +5,6 @@ const schema = { name: 'CSV' }
 schema.form = {
   bucket: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
@@ -14,8 +12,6 @@ schema.form = {
   },
   folder: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Folder',
     valid: notEmpty(),
     defaultValue: '',
@@ -23,15 +19,11 @@ schema.form = {
   },
   authentication: {
     type: 'OIbAuthentication',
-    newRow: true,
-    md: 12,
     mode: 'accessKey',
     label: 'Authentication',
   },
   networkSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'Network',
     help: (
       <>
@@ -42,8 +34,6 @@ schema.form = {
   },
   proxy: {
     type: 'OIbProxy',
-    newRow: true,
-    md: 4,
     label: 'Proxy',
   },
 }

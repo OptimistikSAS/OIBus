@@ -11,7 +11,7 @@ const OIbForm = ({ schema, onChange, values, name: configName }) => {
   const rows = []
   let rowNum = -1
   Object.entries(form).forEach(([controlName, parameters]) => {
-    const { newRow, ...rest } = parameters
+    const { newRow = true, ...rest } = parameters
     if (newRow || rowNum === 0) {
       rows.push([])
       rowNum += 1
@@ -21,7 +21,7 @@ const OIbForm = ({ schema, onChange, values, name: configName }) => {
   return rows.map((cols) => (
     <Row key={cols[0].name}>
       {cols.map((col) => {
-        const { type, md, name, ...rest } = col
+        const { type, md = 4, name, ...rest } = col
         const Control = (type === 'OIbTable') ? OIbTable : Controls[type]
         rest.value = values[name]
         return (

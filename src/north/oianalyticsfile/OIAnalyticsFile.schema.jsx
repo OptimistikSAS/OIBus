@@ -5,15 +5,11 @@ const schema = { name: 'OIAnalyticsFile' }
 schema.form = {
   endPointSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'End Point',
     help: <p>default endpoint for OIAnalytics is /api/optimistik/data/values/upload</p>,
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
@@ -21,8 +17,6 @@ schema.form = {
   },
   endpoint: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'End Point',
     valid: notEmpty(),
     defaultValue: '',
@@ -30,14 +24,10 @@ schema.form = {
   },
   authentication: {
     type: 'OIbAuthentication',
-    newRow: true,
-    md: 12,
     label: 'Authentication',
   },
   networkSection: {
     type: 'OIbTitle',
-    newRow: true,
-    md: 12,
     label: 'Network',
     help: (
       <>
@@ -56,14 +46,10 @@ schema.form = {
   },
   proxy: {
     type: 'OIbProxy',
-    newRow: true,
-    md: 4,
     label: 'Proxy',
   },
   stack: {
     type: 'OIbSelect',
-    newRow: true,
-    md: 4,
     label: 'stack',
     options: ['axios', 'request', 'fetch'],
     defaultValue: 'fetch',

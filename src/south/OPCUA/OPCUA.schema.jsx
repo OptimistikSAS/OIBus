@@ -4,16 +4,12 @@ import { notEmpty, inRange, minLength } from '../../services/validation.service.
 const schema = { name: 'OPCUA' }
 schema.form = {
   opcuaSettings: {
-    newRow: true,
-    md: 12,
     type: 'OIbTitle',
     label: 'OPCUA Settings',
     children: <p>This protocol is in restricted release. Please contact Optimistik</p>,
   },
   host: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Host',
     valid: minLength(2),
     defaultValue: '',
@@ -39,8 +35,6 @@ schema.form = {
   },
   endPoint: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'End point',
     valid: notEmpty(),
     defaultValue: '',
@@ -49,8 +43,6 @@ schema.form = {
   timeOrigin: {
     type: 'OIbSelect',
     options: ['server', 'oibus'],
-    newRow: true,
-    md: 4,
     label: 'Time Origin',
     defaultValue: 'server',
   },

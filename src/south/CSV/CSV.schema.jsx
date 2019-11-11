@@ -5,8 +5,6 @@ const schema = { name: 'CSV' }
 schema.form = {
   inputFolder: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Input Folder',
     valid: notEmpty(),
     defaultValue: './csv/input',
@@ -14,8 +12,6 @@ schema.form = {
   },
   archiveFolder: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Archive Folder',
     valid: notEmpty(),
     defaultValue: './csv/archive',
@@ -23,8 +19,6 @@ schema.form = {
   },
   errorFolder: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'Error Folder',
     valid: notEmpty(),
     defaultValue: './csv/error',
@@ -32,8 +26,6 @@ schema.form = {
   },
   separator: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'CSV separator',
     valid: length(1),
     defaultValue: ',',
@@ -41,8 +33,6 @@ schema.form = {
   },
   timeColumn: {
     type: 'OIbText',
-    newRow: true,
-    md: 4,
     label: 'time column',
     valid: notEmpty(),
     defaultValue: '1',
@@ -50,8 +40,6 @@ schema.form = {
   },
   hasFirstLine: {
     type: 'OIbCheckBox',
-    newRow: true,
-    md: 4,
     label: 'Has first line',
     valid: notEmpty(),
     defaultValue: true,
