@@ -10,26 +10,20 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>Path to the input folder</div>,
   },
   endpoint: {
     type: 'OIbText',
     label: 'End Point',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>End Point</div>,
   },
-  authentication: {
-    type: 'OIbAuthentication',
-    label: 'Authentication',
-  },
+  authentication: { type: 'OIbAuthentication' },
   networkSection: {
     type: 'OIbTitle',
     label: 'Network',
-    help: (
+    children: (
       <>
         <div>Please specify here network specific parameters</div>
         <ul>
@@ -44,16 +38,12 @@ schema.form = {
       </>
     ),
   },
-  proxy: {
-    type: 'OIbProxy',
-    label: 'Proxy',
-  },
+  proxy: { type: 'OIbProxy' },
   stack: {
     type: 'OIbSelect',
-    label: 'stack',
+    newRow: false,
     options: ['axios', 'request', 'fetch'],
     defaultValue: 'fetch',
-    help: <div>Stack</div>,
   },
 }
 export default schema

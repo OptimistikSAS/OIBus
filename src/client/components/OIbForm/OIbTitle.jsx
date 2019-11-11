@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { UncontrolledCollapse, Button, Row, Col, Container } from 'reactstrap'
 import { FaRegQuestionCircle } from 'react-icons/fa'
 
-const Help = ({ label, children }) => {
+const OIbTitle = ({ label, children }) => {
   const id = `id${Math.random()
     .toString(36)
     .substr(2, 9)}` // generate a unique id
@@ -25,7 +25,7 @@ const Help = ({ label, children }) => {
       <Container fluid>
         {children && (
           <UncontrolledCollapse toggler={id}>
-            <Row>
+            <Row style={{ marginBottom: '15px' }}>
               <Col>
                 {children}
               </Col>
@@ -36,7 +36,7 @@ const Help = ({ label, children }) => {
     </>
   )
 }
-Help.propTypes = { children: PropTypes.element, label: PropTypes.string.isRequired }
-Help.defaultProps = { children: null }
+OIbTitle.propTypes = { children: PropTypes.element, label: PropTypes.string.isRequired }
+OIbTitle.defaultProps = { children: null }
 
-export default Help
+export default OIbTitle

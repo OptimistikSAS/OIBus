@@ -4,7 +4,6 @@ const schema = { name: 'MQTT' }
 schema.form = {
   MQTTsettings: {
     type: 'OIbTitle',
-    label: 'MQTT settings',
     children: (
       <div>
         <p>This protocol is in restricted release. Please contact Optimistik</p>
@@ -35,7 +34,6 @@ schema.form = {
   },
   server: {
     type: 'OIbText',
-    label: 'Server',
     valid: (val) => ((val && val.length > 0) ? null : 'Server should not be empty'),
     defaultValue: '',
     help: <div>MQTT server address</div>,
@@ -43,7 +41,6 @@ schema.form = {
   port: {
     type: 'OIbText',
     newRow: false,
-    label: 'Port',
     valid: (val) => (val >= 1 && val <= 65535 ? null : 'Value should be between 1 and 65535'),
     defaultValue: 8883,
     help: <div>MQTT server port</div>,
@@ -58,7 +55,6 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    label: 'Username',
     valid: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
     defaultValue: '',
     help: <div>authorized user</div>,
@@ -66,7 +62,6 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    label: 'Password',
     valid: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
     defaultValue: '',
     help: <div>password</div>,
@@ -76,14 +71,12 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   topic: {
     type: 'OIbText',
-    label: 'Topic',
     defaultValue: '',
     valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Topic should not be empty'),
   },

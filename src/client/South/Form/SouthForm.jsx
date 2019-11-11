@@ -14,6 +14,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   }
   // load the proper schema based on the protocol name.
   const schema = ProtocolSchemas[protocol]
+  const handleChange = (name, ...rest) => onChange(`south.dataSources.${dataSourceIndex}.${name}`, ...rest)
   return (
     <Form>
       <OIbTitle label={`${dataSourceId} parameters (protocol: ${protocol})`}>
@@ -32,16 +33,16 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             defaultValue={false}
             value={dataSource.enabled}
             help={<div>Enable this application</div>}
-            onChange={onChange}
+            onChange={handleChange}
             switchButton
           />
         </Col>
       </Row>
 
       <OIbForm
-        onChange={onChange}
+        onChange={handleChange}
         schema={schema}
-        name={`south.dataSources.${dataSourceIndex}.${protocol}`}
+        name={protocol}
         values={dataSource[protocol]}
       />
     </Form>

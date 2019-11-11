@@ -12,12 +12,12 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
-  if (!application.caching) {
-    application.caching = {}
-  }
+  if (!application.caching) application.caching = {}
   if (!application.subscribedTo) application.subscribedTo = []
+
   // load the proper schema based on the api name.
   const schema = ApiSchemas[api]
+  const handleChange = (name, ...rest) => onChange(`north.applications.${applicationIndex}.${name}`, ...rest)
   return (
     <Form>
       <OIbTitle label={`${applicationId} parameters (api: ${api})`}>
@@ -36,15 +36,15 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             defaultValue={false}
             value={application.enabled}
             help={<div>Enable this application</div>}
-            onChange={onChange}
+            onChange={handleChange}
             switchButton
           />
         </Col>
       </Row>
       <OIbForm
-        onChange={onChange}
+        onChange={handleChange}
         schema={schema}
-        name={`north.applications.${applicationIndex}.${api}`}
+        name={api}
         values={application[api]}
       />
       <OIbTitle label="Caching">
@@ -82,7 +82,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
       <Row>
         <Col md="4">
           <OIbInteger
-            onChange={onChange}
+            onChange={handleChange}
             value={application.caching.sendInterval}
             defaultValue={10000}
             valid={validation.caching.sendInterval}
@@ -92,7 +92,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Col>
         <Col md="4">
           <OIbInteger
-            onChange={onChange}
+            onChange={handleChange}
             value={application.caching.retryInterval}
             defaultValue={5000}
             valid={validation.caching.retryInterval}
@@ -104,7 +104,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
       <Row>
         <Col md="4">
           <OIbInteger
-            onChange={onChange}
+            onChange={handleChange}
             value={application.caching.groupCount}
             name="caching.groupCount"
             defaultValue={1000}
@@ -114,7 +114,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Col>
         <Col md="4">
           <OIbInteger
-            onChange={onChange}
+            onChange={handleChange}
             value={application.caching.maxSendCount}
             name="caching.maxSendCount"
             defaultValue={10000}
@@ -123,7 +123,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo} applicationIndex={applicationIndex} />
+      <SubscribedTo onChange={handleChange} subscribedTo={application.subscribedTo} applicationIndex={applicationIndex} />
     </Form>
   )
 }

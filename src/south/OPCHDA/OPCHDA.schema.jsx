@@ -6,7 +6,6 @@ const schema = { name: 'OPCHDA' }
 schema.form = {
   agentFilename: {
     type: 'OIbText',
-    label: 'Agent Filename',
     valid: notEmpty(),
     defaultValue: '/HdaAgent/HdaAgent.exe',
     help: <div>Path to the HDA Agent</div>,
@@ -28,7 +27,6 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: minLength(2),
     defaultValue: '',
     help: <div>IP address or hostname of the HDA server</div>,
@@ -36,7 +34,6 @@ schema.form = {
   serverName: {
     type: 'OIbText',
     newRow: false,
-    label: 'Server Name',
     valid: notEmpty(),
     defaultValue: '1',
     help: <div>Name of the HDA server</div>,
@@ -44,15 +41,13 @@ schema.form = {
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'Retry interval',
     valid: (val) => (val > 0 ? null : 'Retry interval should be greater than 0'),
     defaultValue: 10000,
     help: <div>Retry Interval</div>,
   },
   scanGroups: {
     type: 'OIbTable',
-    label: 'Scan Groups',
-    help: (
+    children: (
       <p>
         OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
         aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected.
@@ -63,13 +58,11 @@ schema.form = {
       scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
       Aggregate: {
         type: 'OIbSelect',
-        label: 'Aggregate',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
         defaultValue: 'Raw',
       },
       resampling: {
         type: 'OIbSelect',
-        label: 'Resampling',
         options: ['None', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
       },
@@ -80,11 +73,10 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+  scanMode: { type: 'OIbScanMode' },
 }
 
 export default schema

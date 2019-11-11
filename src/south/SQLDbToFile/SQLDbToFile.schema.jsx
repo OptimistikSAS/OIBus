@@ -5,12 +5,10 @@ const schema = { name: 'SQLDbToFile' }
 schema.form = {
   SQLDBtoFileSettings: {
     type: 'OIbTitle',
-    label: 'SQLDB Settings',
     help: <p>todo</p>,
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: notEmpty(),
     defaultValue: 'localhost',
     help: <div>IP address of the SQLDbToFile server</div>,
@@ -18,7 +16,6 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'HTTP Port',
     valid: notEmpty(),
     defaultValue: 1433,
     help: <div>Port number of the SQLDbToFile server</div>,
@@ -33,20 +30,17 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    label: 'User',
     defaultValue: '',
     valid: notEmpty(),
   },
   password: {
     newRow: false,
     type: 'OIbPassword',
-    label: 'Password',
     defaultValue: '',
     valid: notEmpty(),
   },
   database: {
     type: 'OIbText',
-    label: 'Database',
     defaultValue: 'db',
     valid: notEmpty(),
     help: <div>Name of the SQL database</div>,
@@ -54,45 +48,36 @@ schema.form = {
   query: {
     md: 12,
     type: 'OIbTextArea',
-    label: 'Query',
     defaultValue: '',
     valid: notEmpty(),
     help: <div>SQL query</div>,
   },
   connectionTimeout: {
     type: 'OIbInteger',
-    label: 'Connection timeout',
     valid: notEmpty(),
     defaultValue: 1000,
   },
   requestTimeout: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'Request Timeout',
     valid: notEmpty(),
     defaultValue: 1000,
   },
   delimiter: {
     type: 'OIbText',
-    label: 'Delimiter',
     defaultValue: ',',
     valid: notEmpty(),
     help: <div>delimiter</div>,
   },
   filename: {
     type: 'OIbText',
-    label: 'Filename',
     defaultValue: 'sql-@date.csv',
     valid: notEmpty(),
     help: <div>delimiter</div>,
   },
-  scanMode: {
-    type: 'OIbScanMode',
-    label: 'Scan Mode',
-  },
+  scanMode: { type: 'OIbScanMode' },
   timeColumn: {
     type: 'OIbText',
-    label: 'Time Column',
     defaultValue: 'timestamp',
     valid: notEmpty(),
     help: <div>Time Column</div>,
@@ -100,7 +85,6 @@ schema.form = {
   timeFormat: {
     newRow: false,
     type: 'OIbText',
-    label: 'Time Column',
     defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
     valid: notEmpty(),
     help: <div>Time Format</div>,
@@ -108,7 +92,6 @@ schema.form = {
   timeZone: {
     newRow: false,
     type: 'OIbText',
-    label: 'Time Zone',
     valid: notEmpty(),
     defaultValue: 'Europe/Paris',
     help: <div>Time Zone</div>,
@@ -130,5 +113,6 @@ schema.form = {
     ],
   },
 }
+schema.points = null
 
 export default schema

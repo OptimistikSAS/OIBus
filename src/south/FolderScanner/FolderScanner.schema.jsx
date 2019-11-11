@@ -5,7 +5,6 @@ const schema = { name: 'FolderScanner' }
 schema.form = {
   inputFolder: {
     type: 'OIbText',
-    label: 'Input Folder',
     valid: notEmpty(),
     defaultValue: './input',
     help: <div>Path to the input folder</div>,

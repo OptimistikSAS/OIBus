@@ -5,12 +5,10 @@ const schema = { name: 'OPCUA' }
 schema.form = {
   opcuaSettings: {
     type: 'OIbTitle',
-    label: 'OPCUA Settings',
     children: <p>This protocol is in restricted release. Please contact Optimistik</p>,
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: minLength(2),
     defaultValue: '',
     help: <div>IP address of the OPC-UA server</div>,
@@ -35,7 +33,6 @@ schema.form = {
   },
   endPoint: {
     type: 'OIbText',
-    label: 'End point',
     valid: notEmpty(),
     defaultValue: '',
     help: <div>OPCUA end point</div>,
@@ -43,7 +40,6 @@ schema.form = {
   timeOrigin: {
     type: 'OIbSelect',
     options: ['server', 'oibus'],
-    label: 'Time Origin',
     defaultValue: 'server',
   },
 }
@@ -51,20 +47,17 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: notEmpty,
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   ns: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: notEmpty,
     defaultValue: '',
   },
   s: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: notEmpty,
     defaultValue: '',
   },

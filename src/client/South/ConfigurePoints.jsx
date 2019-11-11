@@ -1,6 +1,8 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Button, Input, Spinner } from 'reactstrap'
+import humanizeString from 'humanize-string'
+
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
 import Modal from '../components/Modal.jsx'
@@ -9,6 +11,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
+
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -122,7 +125,7 @@ const ConfigurePoints = () => {
   const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
   const ProtocolSchema = ProtocolSchemas[protocol]
   // configure table header and rows
-  const tableHeaders = Object.values(ProtocolSchema.points).map((value) => value.label)
+  const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
   // filter
   const filteredPoints = filterText
     ? points.filter(

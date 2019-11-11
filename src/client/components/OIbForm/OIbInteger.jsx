@@ -17,8 +17,6 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
   // if no label, we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
   const validCheck = valid(value)
-  // if value is null, no need to render
-  if (value === null) return null
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
@@ -41,7 +39,7 @@ OIbInteger.defaultProps = {
   valid: () => null,
   label: null,
   help: null,
-  value: null,
+  value: '',
 }
 
 export default OIbInteger

@@ -36,6 +36,7 @@
     "bootstrap-less-port": "^2.2.1",
     "fast-csv": "^3.4.0",
     "form-data": "^3.0.0",
+    "humanize-string": "^2.1.0",
     "jsmodbus": "^4.0.0",
     "jsondiffpatch": "^0.3.11",
     "koa": "^2.11.0",

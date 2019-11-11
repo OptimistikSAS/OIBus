@@ -6,7 +6,7 @@ schema.form = {
   InfluxDBSection: {
     type: 'OIbTitle',
     label: 'TimeScale parameters',
-    help: (
+    children: (
       <>
         <p>TimeScaleDB North application is in Beta Mode</p>
         <p>
@@ -17,25 +17,19 @@ schema.form = {
   },
   user: {
     type: 'OIbText',
-    label: 'User Name',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>User Name</div>,
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    label: 'Password',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>Password</div>,
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>Host</div>,
   },
   db: {
     type: 'OIbText',
@@ -43,7 +37,6 @@ schema.form = {
     label: 'Database',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>Database</div>,
   },
 }
 

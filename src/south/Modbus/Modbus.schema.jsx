@@ -11,7 +11,6 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    label: 'Host',
     valid: (val) => ((val && val.length > 2) ? null : 'Length should be greater than 2'),
     defaultValue: '',
     help: <div>IP address of the Modbus source</div>,
@@ -19,7 +18,6 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'Port',
     valid: (val) => (val >= 1 && val <= 65535 ? null : 'Port should be between 1 and 65535'),
     defaultValue: 502,
     help: <div>Port number of the Modbus source</div>,
@@ -29,20 +27,17 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    label: 'Point Id',
     valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   address: {
     type: 'OIbText',
-    label: 'Address',
     defaultValue: '',
     valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
   },
   type: {
     type: 'OIbSelect',
-    label: 'Type',
     options: ['boolean', 'number'],
     defaultValue: 'boolean',
     valid: (val) => (['boolean', 'number'].includes(val) ? null : 'Unknown type'),
