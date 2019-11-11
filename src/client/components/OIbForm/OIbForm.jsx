@@ -23,11 +23,12 @@ const OIbForm = ({ schema, onChange, values, name: configName }) => {
   return rows.map((cols) => (
     <Row key={cols[0].name}>
       {cols.map((col) => {
-        const { type, md = (['OItype', 'OIbAuthentication'].includes(type)) ? 12 : 4, name, ...rest } = col
+        const { type, name, ...rest } = col
+        if (!rest.md) rest.md = (['OItype', 'OIbAuthentication'].includes(type)) ? 12 : 4
         const Control = (type === 'OIbTable') ? OIbTable : Controls[type]
         rest.value = values[name]
         return (
-          <Col md={md} key={name}>
+          <Col md={rest.md} key={name}>
             {/* eslint-disable-next-line react/jsx-props-no-spreading */}
             <Control onChange={onChange} name={`${configName}.${name}`} {...rest} />
           </Col>
