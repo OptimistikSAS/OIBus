@@ -5,7 +5,7 @@ import Table from '../table/Table.jsx'
 import { ConfigContext } from '../../context/configContext.jsx'
 import * as Controls from './index.js'
 
-const OIbTable = ({ name, label, help, rows, value }) => {
+const OIbTable = ({ name, rows, value }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `${name}.${rowIndex}` })
@@ -13,12 +13,12 @@ const OIbTable = ({ name, label, help, rows, value }) => {
   const handleAdd = () => {
     const defaultValue = {}
     Object.keys(rows).forEach((rowKey) => { defaultValue[rowKey] = rows[rowKey].defaultValue })
-    dispatchNewConfig({ type: 'addRow', name: `${name}`, value: defaultValue })
+    dispatchNewConfig({ type: 'addRow', name, value: defaultValue })
   }
   const onChange = (valueName, newVal) => {
     dispatchNewConfig({ type: 'update', name: `${valueName}`, value: newVal })
   }
-  const tableHeaders = Object.values(rows).map((row) => row.label)
+  const tableHeaders = Object.entries(rows).map(([rowKey, row]) => row.label || rowKey)
   const tableRows = value.map((point, index) => Object.entries(rows).map(([rowKey, rowValue]) => {
     const { type, ...rest } = rowValue
     const Control = Controls[type]
@@ -31,7 +31,6 @@ const OIbTable = ({ name, label, help, rows, value }) => {
   }))
   return (
     <>
-      <Controls.OIbTitle label={label}>{help}</Controls.OIbTitle>
       <Table headers={tableHeaders} rows={tableRows} onChange={onChange} handleDelete={handleDelete} handleAdd={handleAdd} />
     </>
   )
@@ -40,11 +39,11 @@ const OIbTable = ({ name, label, help, rows, value }) => {
 OIbTable.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  help: PropTypes.element.isRequired,
+  help: PropTypes.element,
   rows: PropTypes.object.isRequired,
   value: PropTypes.arrayOf(Object),
 }
 
-OIbTable.defaultProps = { value: [] }
+OIbTable.defaultProps = { value: [], help: null }
 
 export default OIbTable

@@ -45,8 +45,10 @@ schema.form = {
     defaultValue: 10000,
     help: <div>Retry Interval</div>,
   },
-  scanGroups: {
-    type: 'OIbTable',
+  scanGroupsSection: {
+    type: 'OIbTitle',
+    label: 'ScanGroups',
+    md: 12,
     children: (
       <p>
         OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
@@ -54,6 +56,9 @@ schema.form = {
         Important: a point with a scanMode without the corresponding scangroup will not be requested
       </p>
     ),
+  },
+  scanGroups: {
+    type: 'OIbTable',
     rows: {
       scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
       Aggregate: {
