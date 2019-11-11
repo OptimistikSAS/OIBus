@@ -41,7 +41,6 @@ schema.form = {
     type: 'OIbCheckBox',
     md: 2,
     newRow: false,
-    valid: notEmpty(),
     defaultValue: true,
   },
 }

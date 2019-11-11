@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minLength } from '../../services/validation.service.js'
+import { notEmpty, inRange, minLength, minValue } from '../../services/validation.service.js'
 
 
 const schema = { name: 'OPCHDA' }
@@ -41,7 +41,7 @@ schema.form = {
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
-    valid: (val) => (val > 0 ? null : 'Retry interval should be greater than 0'),
+    valid: minValue(0),
     defaultValue: 10000,
     help: <div>Retry Interval</div>,
   },

@@ -19,7 +19,7 @@ schema.form = {
     md: 2,
     label: 'HTTP Port',
     defaultValue: 8888,
-    valid: notEmpty(),
+    valid: inRange(0, 65535),
     help: <div>Port number of the OPCUA server</div>,
   },
   httpsPort: {

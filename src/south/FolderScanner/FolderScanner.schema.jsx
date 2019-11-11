@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, minValue } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {
@@ -20,7 +20,7 @@ schema.form = {
   minAge: {
     type: 'OIbInteger',
     label: 'Minimum Age',
-    valid: (val) => (val > 0 ? null : 'Minimum Age should be greater than 0'),
+    valid: minValue(0),
     defaultValue: 1000,
     help: <div>Path to the error folder</div>,
   },

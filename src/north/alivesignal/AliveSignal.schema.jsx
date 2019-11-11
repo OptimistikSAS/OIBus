@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, minValue } from '../../services/validation.service'
 
 const schema = { name: 'CSV' }
 schema.form = {
@@ -25,7 +25,7 @@ schema.form = {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
-    valid: (val) => (val >= 1000 ? null : 'Frequency should be greater or equal to 1000'),
+    valid: minValue(1000),
     defaultValue: 10000,
   },
   authentication: { type: 'OIbAuthentication' },

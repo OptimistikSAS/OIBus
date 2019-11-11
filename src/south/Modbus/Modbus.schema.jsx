@@ -1,4 +1,5 @@
 import React from 'react'
+import { inRange } from '../../services/validation.service'
 
 const schema = { name: 'Modbus' }
 schema.form = {
@@ -17,7 +18,7 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    valid: (val) => (val >= 1 && val <= 65535 ? null : 'Port should be between 1 and 65535'),
+    valid: inRange(1, 65535),
     defaultValue: 502,
     help: <div>Port number of the Modbus source</div>,
   },

@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service.js'
+import { notEmpty, inRange, minValue } from '../../services/validation.service.js'
 
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
@@ -16,7 +16,7 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    valid: notEmpty(),
+    valid: inRange(0, 65535),
     defaultValue: 1433,
     help: <div>Port number of the SQLDbToFile server</div>,
   },
@@ -54,13 +54,13 @@ schema.form = {
   },
   connectionTimeout: {
     type: 'OIbInteger',
-    valid: notEmpty(),
+    valid: minValue(0),
     defaultValue: 1000,
   },
   requestTimeout: {
     type: 'OIbInteger',
     newRow: false,
-    valid: notEmpty(),
+    valid: minValue(0),
     defaultValue: 1000,
   },
   delimiter: {
