@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue } from '../../services/validation.service'
+import { notEmpty, minValue, isBoolean } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {
@@ -13,7 +13,7 @@ schema.form = {
   preserve: {
     type: 'OIbCheckBox',
     label: 'Preserve File?',
-    valid: (val) => (val === true || val === false ? null : 'Preserve must be a boolean'),
+    valid: isBoolean(),
     defaultValue: true,
     help: <div>Preserve the file</div>,
   },

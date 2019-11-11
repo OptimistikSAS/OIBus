@@ -13,6 +13,7 @@ schema.form = {
   tcpPort: {
     type: 'OIbInteger',
     newRow: false,
+    md: 2,
     label: 'TCP Port',
     valid: inRange(1, 65535),
     defaultValue: '2224',
@@ -20,6 +21,8 @@ schema.form = {
   },
   logLevel: {
     type: 'OIbSelect',
+    newRow: false,
+    md: 2,
     label: 'Agent Logging Level',
     options: ['silly', 'debug', 'info', 'warning', 'error'],
     defaultValue: 'debug',
@@ -28,19 +31,19 @@ schema.form = {
   host: {
     type: 'OIbText',
     valid: minLength(2),
-    defaultValue: '',
+    defaultValue: 'localhost',
     help: <div>IP address or hostname of the HDA server</div>,
   },
   serverName: {
     type: 'OIbText',
     newRow: false,
     valid: notEmpty(),
-    defaultValue: '1',
     help: <div>Name of the HDA server</div>,
   },
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
+    md: 2,
     valid: minValue(0),
     defaultValue: 10000,
     help: <div>Retry Interval</div>,

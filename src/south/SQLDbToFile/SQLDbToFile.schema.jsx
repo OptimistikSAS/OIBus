@@ -5,7 +5,8 @@ const schema = { name: 'SQLDbToFile' }
 schema.form = {
   SQLDBtoFileSettings: {
     type: 'OIbTitle',
-    help: <p>todo</p>,
+    label: 'SQLDBtoFileSettings',
+    children: <p>todo</p>,
   },
   host: {
     type: 'OIbText',
@@ -16,15 +17,23 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
+    md: 2,
     valid: inRange(0, 65535),
     defaultValue: 1433,
     help: <div>Port number of the SQLDbToFile server</div>,
   },
+  database: {
+    type: 'OIbText',
+    defaultValue: 'db',
+    valid: notEmpty(),
+    help: <div>Name of the SQL database</div>,
+  },
   driver: {
     type: 'OIbSelect',
+    newRow: false,
+    md: 2,
     options: ['mssql'],
     label: 'SQL Driver',
-    valid: notEmpty(),
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
   },
@@ -39,14 +48,8 @@ schema.form = {
     defaultValue: '',
     valid: notEmpty(),
   },
-  database: {
-    type: 'OIbText',
-    defaultValue: 'db',
-    valid: notEmpty(),
-    help: <div>Name of the SQL database</div>,
-  },
   query: {
-    md: 12,
+    md: 8,
     type: 'OIbTextArea',
     defaultValue: '',
     valid: notEmpty(),
@@ -71,6 +74,7 @@ schema.form = {
   },
   filename: {
     type: 'OIbText',
+    newRow: false,
     defaultValue: 'sql-@date.csv',
     valid: notEmpty(),
     help: <div>delimiter</div>,
@@ -78,6 +82,7 @@ schema.form = {
   scanMode: { type: 'OIbScanMode' },
   timeColumn: {
     type: 'OIbText',
+    md: 2,
     defaultValue: 'timestamp',
     valid: notEmpty(),
     help: <div>Time Column</div>,
@@ -90,9 +95,9 @@ schema.form = {
     help: <div>Time Format</div>,
   },
   timeZone: {
+    type: 'OIbSelect',
     newRow: false,
-    type: 'OIbText',
-    valid: notEmpty(),
+    md: 2,
     defaultValue: 'Europe/Paris',
     help: <div>Time Zone</div>,
     options: [

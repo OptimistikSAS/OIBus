@@ -20,7 +20,15 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="integer" id={name} name={name} invalid={validCheck !== null} value={value} onChange={handleChange} />
+      <Input
+        className="oi-form-input"
+        type="integer"
+        id={name}
+        name={name}
+        invalid={validCheck !== null}
+        value={value || ''}
+        onChange={handleChange}
+      />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
@@ -39,7 +47,7 @@ OIbInteger.defaultProps = {
   valid: () => null,
   label: null,
   help: null,
-  value: '',
+  value: null,
 }
 
 export default OIbInteger
