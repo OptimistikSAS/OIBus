@@ -20,7 +20,7 @@ const ScanModes = ({ scanModes }) => {
   return (
     scanModes && (
       <>
-        <OIbTitle title="Scan Modes">
+        <OIbTitle label="Scan Modes">
           <>
             <p>
               South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in
