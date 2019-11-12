@@ -47,18 +47,18 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty,
+    valid: notEmpty(),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   ns: {
     type: 'OIbText',
-    valid: notEmpty,
+    valid: notEmpty(),
     defaultValue: '',
   },
   s: {
     type: 'OIbText',
-    valid: notEmpty,
+    valid: notEmpty(),
     defaultValue: '',
   },
 }

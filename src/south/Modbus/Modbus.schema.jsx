@@ -30,7 +30,7 @@ schema.points = {
     valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+  scanMode: { type: 'OIbScanMode' },
   address: {
     type: 'OIbText',
     defaultValue: '',
