@@ -1,11 +1,11 @@
-import CSV from '../../south/CSV/CSV.Form.jsx'
-import Modbus from '../../south/Modbus/Modbus.Form.jsx'
-import MQTT from '../../south/MQTT/MQTT.Form.jsx'
-import OPCHDA from '../../south/OPCHDA/OPCHDA.Form.jsx'
-import OPCUA from '../../south/OPCUA/OPCUA.Form.jsx'
-import FolderScanner from '../../south/FolderScanner/FolderScanner.Form.jsx'
-import SQLDbToFile from '../../south/SQLDbToFile/SQLDbToFile.Form.jsx'
+import CSV from '../../south/CSV/CSV.schema.jsx'
+import Modbus from '../../south/Modbus/Modbus.schema.jsx'
+import MQTT from '../../south/MQTT/MQTT.schema.jsx'
+import OPCHDA from '../../south/OPCHDA/OPCHDA.schema.jsx'
+import OPCUA from '../../south/OPCUA/OPCUA.schema.jsx'
+import FolderScanner from '../../south/FolderScanner/FolderScanner.schema.jsx'
+import SQLDbToFile from '../../south/SQLDbToFile/SQLDbToFile.schema.jsx'
 
-const ProtocolForms = { CSV, Modbus, MQTT, OPCHDA, OPCUA, FolderScanner, SQLDbToFile }
+const ProtocolSchemas = { OPCUA, OPCHDA, CSV, MQTT, Modbus, FolderScanner, SQLDbToFile }
 
-export default ProtocolForms
+export default ProtocolSchemas

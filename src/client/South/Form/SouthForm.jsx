@@ -2,7 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox } from '../../components/OIbForm'
-import ProtocolForms from '../Protocols.jsx'
+import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import ProtocolSchemas from '../Protocols.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
@@ -11,11 +12,12 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   if (!dataSource.points) {
     dataSource.points = []
   }
-  // load the proper form based on the protocol name.
-  const ProtocolForm = ProtocolForms[protocol]
+  // load the proper schema based on the protocol name.
+  const schema = ProtocolSchemas[protocol]
+  const prefix = `south.dataSources.${dataSourceIndex}`
   return (
     <Form>
-      <OIbTitle title={`${dataSourceId} parameters (protocol: ${protocol})`}>
+      <OIbTitle label={`${dataSourceId} parameters (protocol: ${protocol})`}>
         <>
           <ul>
             <li>This form allows to configure protocol-specific parameters.</li>
@@ -26,7 +28,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
       <Row>
         <Col md={2}>
           <OIbCheckBox
-            name="enabled"
+            name={`${prefix}.enabled`}
             label="Enabled"
             defaultValue={false}
             value={dataSource.enabled}
@@ -36,7 +38,13 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <ProtocolForm onChange={onChange} dataSource={dataSource} dataSourceIndex={dataSourceIndex} />
+
+      <OIbForm
+        onChange={onChange}
+        schema={schema}
+        name={`${prefix}.${protocol}`}
+        values={dataSource[protocol]}
+      />
     </Form>
   )
 }
