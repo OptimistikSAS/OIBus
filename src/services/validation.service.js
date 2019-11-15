@@ -5,5 +5,4 @@ const maxValue = (max, name = 'Value') => (val) => (val >= max ? null : `${name}
 const inRange = (min, max, name = 'Value') => (val) => (val >= min && val <= max ? null : `${name} should be between ${min} and ${max}`)
 const minLength = (min, name = 'Value') => (val) => (val && val.length > min ? null : `${name} length should be at least ${min}`)
 const length = (_length, name = 'Value') => (val) => (val && val.length === _length ? null : `${name} length should be ${_length}`)
-const isBoolean = (name = 'Value') => (val) => (val === true || val === false ? null : `${name} must be a boolean`)
-export { notEmpty, inRange, minLength, length, minValue, maxValue, isBoolean }
+export { notEmpty, inRange, minLength, length, minValue, maxValue }
