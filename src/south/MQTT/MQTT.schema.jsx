@@ -1,4 +1,5 @@
 import React from 'react'
+import { notEmpty, inRange } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -34,14 +35,14 @@ schema.form = {
   },
   server: {
     type: 'OIbText',
-    valid: (val) => ((val && val.length > 0) ? null : 'Server should not be empty'),
+    valid: notEmpty(),
     defaultValue: '',
     help: <div>MQTT server address</div>,
   },
   port: {
     type: 'OIbText',
     newRow: false,
-    valid: (val) => (val >= 1 && val <= 65535 ? null : 'Value should be between 1 and 65535'),
+    valid: inRange(1, 65535),
     defaultValue: 8883,
     help: <div>MQTT server port</div>,
   },
@@ -49,20 +50,19 @@ schema.form = {
     type: 'OIbSelect',
     options: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     label: 'MQTT protocol',
-    valid: (val) => (['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'].includes(val) ? null : 'Unknown protocol'),
     defaultValue: 'mqtts',
     help: <div>MQTT protocol</div>,
   },
   username: {
     type: 'OIbText',
-    valid: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
+    valid: notEmpty(),
     defaultValue: '',
     help: <div>authorized user</div>,
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
+    valid: notEmpty(),
     defaultValue: '',
     help: <div>password</div>,
   },
@@ -71,14 +71,14 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
+    valid: notEmpty(),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
   topic: {
     type: 'OIbText',
     defaultValue: '',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Topic should not be empty'),
+    valid: notEmpty(),
   },
 }
 
