@@ -18,7 +18,7 @@ const Engine = () => {
   return newConfig ? (
     <>
       <Form>
-        <OIbTitle title="Engine Parameters">
+        <OIbTitle label="Engine Parameters">
           <>
             <p>In this section, you must define:</p>
             <ul>

@@ -36,28 +36,6 @@ const parseCSV = (csv, delimiter) => {
   return result
 }
 
-const replaceValuesDiffHelper = (obj, keys, value) => {
-  if (!obj) return
-  if (obj instanceof Array) {
-    obj.forEach((i) => {
-      replaceValuesDiffHelper(obj[i], keys, value)
-    })
-    return
-  }
-  keys.forEach((key) => {
-    if (obj[key]) obj[key] = [value, value]
-  })
-
-  if ((typeof obj === 'object') && (obj !== null)) {
-    const children = Object.keys(obj)
-    if (children.length > 0) {
-      for (let i = 0; i < children.length; i += 1) {
-        replaceValuesDiffHelper(obj[children[i]], keys, value)
-      }
-    }
-  }
-}
-
 const replaceValuesHelper = (obj, keys, value) => {
   if (!obj) return
   if (obj instanceof Array) {
@@ -75,6 +53,33 @@ const replaceValuesHelper = (obj, keys, value) => {
     if (children.length > 0) {
       for (let i = 0; i < children.length; i += 1) {
         replaceValuesHelper(obj[children[i]], keys, value)
+      }
+    }
+  }
+}
+
+const replaceValuesDiffHelper = (obj, keys, value) => {
+  if (!obj) return
+  if (obj instanceof Array) {
+    obj.forEach((i) => {
+      if (typeof obj[i] === 'string' || obj[i] instanceof String) {
+        replaceValuesDiffHelper(obj[i], keys, value)
+      } else {
+        replaceValuesHelper(i, keys, value)
+      }
+      // replaceValuesDiffHelper(obj[i], keys, value)
+    })
+    return
+  }
+  keys.forEach((key) => {
+    if (obj[key]) obj[key] = [value, value]
+  })
+
+  if ((typeof obj === 'object') && (obj !== null)) {
+    const children = Object.keys(obj)
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i += 1) {
+        replaceValuesDiffHelper(obj[children[i]], keys, value)
       }
     }
   }

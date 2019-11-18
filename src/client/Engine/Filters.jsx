@@ -20,7 +20,7 @@ const Filters = ({ filters }) => {
   return (
     filters && (
       <>
-        <OIbTitle title="IP Filters">
+        <OIbTitle label="IP Filters">
           <p>
             This is the list of IP adresses (or hostnames) that will be allowed to access the admin console.
             By default, it is only the local host. It is possible to use wildcards (such as 192.168.1.* or just

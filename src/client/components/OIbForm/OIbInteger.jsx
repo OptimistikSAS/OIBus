@@ -17,12 +17,18 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
   // if no label, we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
   const validCheck = valid(value)
-  // if value is null, no need to render
-  if (value === null) return null
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="integer" id={name} name={name} invalid={validCheck !== null} value={value} onChange={handleChange} />
+      <Input
+        className="oi-form-input"
+        type="integer"
+        id={name}
+        name={name}
+        invalid={validCheck !== null}
+        value={value || ''}
+        onChange={handleChange}
+      />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
