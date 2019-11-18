@@ -11,12 +11,18 @@ import OIbTitle from './OIbTitle.jsx'
   OIBAuthentication is a form reused in several places. Can manage user/password (default)
   or accessKey/secretKey as well as authentication type.
 */
-const OIbAuthentication = ({ authentication, name, validation, onChange, mode }) => {
-  const handleChange = (attributeName, value, valid) => {
-    onChange(`${name}.${attributeName}`, value, valid)
+const OIbAuthentication = ({ value, name, onChange, mode }) => {
+  const handleChange = (attributeName, newValue, valid) => {
+    onChange(`${name}.${attributeName}`, newValue, valid)
+  }
+  const validation = {
+    accessKey: (val) => ((val && val.length > 0) ? null : 'Access Key should not be empty'),
+    secretKey: (val) => ((val && val.length > 0) ? null : 'Secret Key should not be empty'),
+    username: (val) => ((val && val.length > 0) ? null : 'Username should not be empty'),
+    password: (val) => ((val && val.length > 0) ? null : 'Password should not be empty'),
   }
   return [
-    <OIbTitle title="Authentication" key="title">
+    <OIbTitle label="Authentication" key="title">
       <div>
         <p>Authentication parameters</p>
         <p>Please fill the user and password to connect this application</p>
@@ -29,9 +35,9 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
             <OIbSelect
               label="Type"
               onChange={handleChange}
-              option={authentication.type}
+              value={value.type}
               options={['Basic']}
-              defaultOption="Basic"
+              defaultValue="Basic"
               name="type"
             />
           </Col>
@@ -41,7 +47,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
             <OIbText
               label="User name"
               onChange={handleChange}
-              value={authentication.username}
+              value={value.username}
               valid={validation.username}
               name="username"
             />
@@ -50,7 +56,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
             <OIbPassword
               label="Password"
               onChange={handleChange}
-              value={authentication.password}
+              value={value.password}
               valid={validation.password}
               name="password"
             />
@@ -63,7 +69,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
           <OIbText
             label="Access Key"
             onChange={handleChange}
-            value={authentication.accessKey}
+            value={value.accessKey}
             valid={validation.accessKey}
             name="accessKey"
           />
@@ -72,7 +78,7 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
           <OIbPassword
             label="Secret Key"
             onChange={handleChange}
-            value={authentication.secretKey}
+            value={value.secretKey}
             valid={validation.secretKey}
             name="secretKey"
           />
@@ -85,13 +91,12 @@ const OIbAuthentication = ({ authentication, name, validation, onChange, mode })
 OIbAuthentication.propTypes = {
   onChange: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
-  authentication: PropTypes.object,
-  validation: PropTypes.object.isRequired,
+  value: PropTypes.object,
   mode: PropTypes.oneOf(['accessKey', 'user']),
 }
 
 OIbAuthentication.defaultProps = {
-  authentication: { type: 'basic', username: '', password: '', accessKey: '', secretKey: '' },
+  value: { type: 'basic', username: '', password: '', accessKey: '', secretKey: '' },
   mode: 'user',
 }
 

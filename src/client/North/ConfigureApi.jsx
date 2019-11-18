@@ -11,7 +11,7 @@ const ConfigureApi = () => {
   const applicationIndex = applications && applications.findIndex((application) => application.applicationId === applicationId)
 
   const onChange = (name, value, validity) => {
-    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.${name}`, value, validity })
+    dispatchNewConfig({ type: 'update', name, value, validity })
   }
   return applications ? (
     <NorthForm

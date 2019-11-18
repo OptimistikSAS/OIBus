@@ -5,30 +5,22 @@ import { Form, Row, Col } from 'reactstrap'
 import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
-
-import OIConnect from '../../../north/oiconnect/OIConnect.Form.jsx'
-import AliveSignal from '../../../north/alivesignal/AliveSignal.Form.jsx'
-import AmazonS3 from '../../../north/amazon/AmazonS3.Form.jsx'
-import Console from '../../../north/console/Console.Form.jsx'
-import InfluxDB from '../../../north/influxdb/InfluxDB.Form.jsx'
-import OIAnalyticsFile from '../../../north/oianalyticsfile/OIAnalyticsFile.Form.jsx'
-import TimescaleDB from '../../../north/timescaledb/TimescaleDB.Form.jsx'
-
-const ApiForms = { OIConnect, AliveSignal, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB }
+import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import ApiSchemas from '../Apis.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { api, applicationId } = application
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
-  if (!application.caching) {
-    application.caching = {}
-  }
+  if (!application.caching) application.caching = {}
   if (!application.subscribedTo) application.subscribedTo = []
-  // load the proper form based on the api name.
-  const ApiForm = ApiForms[api]
+
+  // load the proper schema based on the api name.
+  const schema = ApiSchemas[api]
+  const prefix = `north.applications.${applicationIndex}`
   return (
     <Form>
-      <OIbTitle title={`${applicationId} parameters (api: ${api})`}>
+      <OIbTitle label={`${applicationId} parameters (api: ${api})`}>
         <>
           <ul>
             <li>This form allows to configure north-specific parameters.</li>
@@ -39,7 +31,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
       <Row>
         <Col md={2}>
           <OIbCheckBox
-            name="enabled"
+            name={`${prefix}.enabled`}
             label="Enabled"
             defaultValue={false}
             value={application.enabled}
@@ -49,8 +41,13 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <ApiForm onChange={onChange} application={application} />
-      <OIbTitle title="Caching">
+      <OIbForm
+        onChange={onChange}
+        schema={schema}
+        name={`${prefix}.${api}`}
+        values={application[api]}
+      />
+      <OIbTitle label="Caching">
         <>
           <p>
             The cache is a local file storage to allow OIBus to store values or files when
@@ -89,7 +86,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             value={application.caching.sendInterval}
             defaultValue={10000}
             valid={validation.caching.sendInterval}
-            name="caching.sendInterval"
+            name={`${prefix}.caching.sendInterval`}
             label="Send interval (ms)"
           />
         </Col>
@@ -99,7 +96,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             value={application.caching.retryInterval}
             defaultValue={5000}
             valid={validation.caching.retryInterval}
-            name="caching.retryInterval"
+            name={`${prefix}.caching.retryInterval`}
             label="Retry interval (ms)"
           />
         </Col>
@@ -109,7 +106,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           <OIbInteger
             onChange={onChange}
             value={application.caching.groupCount}
-            name="caching.groupCount"
+            name={`${prefix}.caching.groupCount`}
             defaultValue={1000}
             valid={validation.caching.groupCount}
             label="Group count"
@@ -119,7 +116,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           <OIbInteger
             onChange={onChange}
             value={application.caching.maxSendCount}
-            name="caching.maxSendCount"
+            name={`${prefix}.caching.maxSendCount`}
             defaultValue={10000}
             valid={validation.caching.maxSendCount}
             label="Max group count"
