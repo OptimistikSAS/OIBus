@@ -3,7 +3,7 @@ import { notEmpty, inRange } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
-  MQTTsettings: {
+  MqttSettings: {
     type: 'OIbTitle',
     children: (
       <div>
