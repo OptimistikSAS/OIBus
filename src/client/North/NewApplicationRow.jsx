@@ -41,7 +41,7 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
           />
         </Col>
         <Col md="3">
-          <OIbSelect label="API" option={api} name="api" options={apiList} defaultOption={apiList[0]} onChange={handleChange} />
+          <OIbSelect label="API" value={api} name="api" options={apiList} defaultValue={apiList[0]} onChange={handleChange} />
         </Col>
         <Col md="3">
           <Button size="sm" className="oi-add-button" color="primary" onClick={() => handleAddApplication()}>

@@ -6,7 +6,7 @@ import validation from './Engine.validation'
 
 const Logging = ({ logParameters, onChange }) => (
   <>
-    <OIbTitle title="Log Parameters">
+    <OIbTitle label="Log Parameters">
       <>
         <p>OIBus can send logs to 3 different supports:</p>
 
@@ -75,9 +75,9 @@ const Logging = ({ logParameters, onChange }) => (
         <OIbSelect
           label="Console Level"
           name="engine.logParameters.consoleLevel"
-          option={logParameters.consoleLevel}
+          value={logParameters.consoleLevel}
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
+          defaultValue="info"
           help={<div>The level for the Console log</div>}
           onChange={onChange}
         />
@@ -87,8 +87,8 @@ const Logging = ({ logParameters, onChange }) => (
           name="engine.logParameters.fileLevel"
           label="File Level"
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
-          option={logParameters.fileLevel}
+          defaultValue="info"
+          value={logParameters.fileLevel}
           help={<div>The level for the file log</div>}
           onChange={onChange}
         />
@@ -98,8 +98,8 @@ const Logging = ({ logParameters, onChange }) => (
           label="Sqlite Level"
           name="engine.logParameters.sqliteLevel"
           options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultOption="info"
-          option={logParameters.sqliteLevel}
+          defaultValue="info"
+          value={logParameters.sqliteLevel}
           help={<div>The level for the sqlite log</div>}
           onChange={onChange}
         />

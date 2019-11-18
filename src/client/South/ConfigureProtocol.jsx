@@ -11,7 +11,7 @@ const ConfigureProtocol = () => {
   const dataSourceIndex = dataSources && dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   const onChange = (name, value, validity) => {
-    dispatchNewConfig({ type: 'update', name: `south.dataSources.${dataSourceIndex}.${name}`, value, validity })
+    dispatchNewConfig({ type: 'update', name, value, validity })
   }
 
   return dataSources ? (
