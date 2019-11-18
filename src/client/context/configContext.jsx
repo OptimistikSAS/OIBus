@@ -27,9 +27,11 @@ const reducer = (state, action) => {
     case 'deleteRow':
     {
       // clean the error object
-      const keys = Object.keys(newState.errors).filter((key) => key.startsWith(name))
-      keys.forEach((key) => delete newState.errors[key])
-      if (Object.keys(newState.errors).length === 0) delete newState.errors
+      if (newState.errors) {
+        const keys = Object.keys(newState.errors).filter((key) => key.startsWith(name))
+        keys.forEach((key) => delete newState.errors[key])
+        if (Object.keys(newState.errors).length === 0) delete newState.errors
+      }
       objectPath.del(newState, name)
       return newState
     }
