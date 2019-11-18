@@ -20,6 +20,10 @@ const dynamicSort = (property) => {
   }
 }
 
+function jsonCopy(src) {
+  return JSON.parse(JSON.stringify(src))
+}
+
 const parseCSV = (csv, delimiter) => {
   const lines = csv.split('\n')
   const result = []
@@ -93,4 +97,4 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { dynamicSort, parseCSV, replaceValues }
+export default { dynamicSort, jsonCopy, parseCSV, replaceValues }
