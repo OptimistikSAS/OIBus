@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, notEndsWith, startsWith, combinedValidations } from '../../services/validation.service'
 
 const schema = { name: 'OIAnalyticsFile' }
 schema.form = {
@@ -10,14 +10,14 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: combinedValidations([notEmpty('Host'), notEndsWith('/', 'Host')]),
     defaultValue: '',
   },
   endpoint: {
     type: 'OIbText',
     label: 'End Point',
-    valid: notEmpty(),
-    defaultValue: '',
+    valid: combinedValidations([notEmpty('End Point'), startsWith('/', 'End Point')]),
+    defaultValue: '/api/optimistik/data/values/upload',
   },
   authentication: { type: 'OIbAuthentication' },
   networkSection: {
