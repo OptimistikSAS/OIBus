@@ -79,7 +79,6 @@ schema.form = {
     valid: notEmpty(),
     help: <div>delimiter</div>,
   },
-  scanMode: { type: 'OIbScanMode' },
   timeColumn: {
     type: 'OIbText',
     md: 2,
