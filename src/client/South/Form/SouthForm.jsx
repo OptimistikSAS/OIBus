@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col } from 'reactstrap'
-import { OIbTitle, OIbCheckBox } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbScanMode } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 
@@ -38,13 +38,14 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           />
         </Col>
       </Row>
-
-      <OIbForm
-        onChange={onChange}
-        schema={schema}
-        name={`${prefix}.${protocol}`}
-        values={dataSource[protocol]}
-      />
+      {!schema.points && (
+        <Row>
+          <Col md={2}>
+            <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
+          </Col>
+        </Row>
+      )}
+      <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
     </Form>
   )
 }

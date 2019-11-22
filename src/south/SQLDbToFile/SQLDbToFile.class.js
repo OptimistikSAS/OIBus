@@ -70,9 +70,9 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   async connect() {
+    super.connect()
     const { dataSourceId, startTime } = this.dataSource
     const { engineConfig } = this.engine.configService.getConfig()
-
     const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
