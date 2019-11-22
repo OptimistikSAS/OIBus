@@ -50,6 +50,7 @@ class OPCHDA extends ProtocolHandler {
    */
   async connect() {
     if (process.platform === 'win32') {
+      super.connect()
       // Initialize lastCompletedAt for every scanGroup
       const { dataSourceId, startTime } = this.dataSource
       const { engineConfig } = this.engine.configService.getConfig()
