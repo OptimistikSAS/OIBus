@@ -26,7 +26,7 @@ if (cluster.isMaster) {
     cluster.fork()
   })
 } else {
-  const configFile = ConfigService.getConfigFile()
+  const configFile = ConfigService.getConfigFile(logger)
   process.chdir(path.parse(configFile).dir)
 
   // Migrate config file, if needed
