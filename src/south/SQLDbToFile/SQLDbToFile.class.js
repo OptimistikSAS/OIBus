@@ -89,6 +89,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async onScan(_scanMode) {
     if (!this.timezone) {
+      this.logger.error('Invalid timezone')
       return
     }
 
