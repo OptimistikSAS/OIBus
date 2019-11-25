@@ -34,7 +34,7 @@ class Server {
 
     this.port = port
     this.user = user
-    this.password = password
+    this.password = password ? engine.decryptPassword(password) : null
 
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
