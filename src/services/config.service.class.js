@@ -255,7 +255,7 @@ class ConfigService {
    * @returns {void}
    */
   updateConfig(config) {
-    encryptionService.encryptSecrets(config.engine.proxies, this.keyFolder)
+    encryptionService.encryptSecrets(config.engine, this.keyFolder)
     config.north.applications.forEach((application) => {
       encryptionService.encryptSecrets(application, this.keyFolder)
     })
