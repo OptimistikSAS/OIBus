@@ -21,7 +21,7 @@ class Cache {
    */
   constructor(engine) {
     this.engine = engine
-    this.logger = new Logger(this.constructor.name)
+    this.logger = new Logger('Cache')
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching
@@ -72,7 +72,7 @@ class Cache {
     if (api && api.config && api.config.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
-      this.logger.debug(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`)
+      this.logger.warning(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`)
     }
   }
 
@@ -174,9 +174,8 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
 
       // Cache file
-      this.logger.silly(`Cache cacheFile() - North handling file: ${applicationId}`)
+      this.logger.debug(`cacheFileForApi() ${cachePath} for api: ${applicationId}`)
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
-      this.logger.debug(`send file for ${api.applicationId}`)
       return api
     }
     return false
@@ -194,7 +193,7 @@ class Cache {
     this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
 
     // Cache files
-    this.logger.silly(`Cache cacheFile() from ${dataSourceId} with ${filePath}`)
+    this.logger.debug(`cacheFile() from ${dataSourceId} with ${filePath}, preserveFiles:${preserveFiles}`)
     const timestamp = new Date().getTime()
     const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
@@ -225,18 +224,17 @@ class Cache {
    * @param {boolean} preserveFiles - Whether to preserve the file
    * @returns {Promise<*>} - The result promise
    */
-  /* eslint-disable-next-line class-methods-use-this */
   transferFile(filePath, cachePath, preserveFiles) {
     return new Promise((resolve, reject) => {
       try {
         if (preserveFiles) {
-          this.logger.silly(`Cache cacheFile() - preserveFiles set so copy to ${cachePath}`)
+          this.logger.silly(`transferFile() - preserveFiles true so copy to ${cachePath}`)
           fs.copyFile(filePath, cachePath, (copyError) => {
             if (copyError) throw copyError
             resolve()
           })
         } else {
-          this.logger.silly(`Cache cacheFile() - preserveFiles not set so rename to ${cachePath}`)
+          this.logger.silly(`transferFile() -  preserveFiles false so rename to ${cachePath}`)
           fs.rename(filePath, cachePath, (renameError) => {
             if (renameError) {
               // In case of cross-device link error we copy+delete instead
@@ -269,7 +267,7 @@ class Cache {
   async sendCallback(api) {
     const { applicationId, canHandleValues, canHandleFiles } = api
 
-    this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${this.sendInProgress[applicationId]}`)
+    this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${!!this.sendInProgress[applicationId]}`)
 
     if (!this.sendInProgress[applicationId]) {
       this.sendInProgress[applicationId] = true
@@ -368,7 +366,7 @@ class Cache {
    * @return {void}
    */
   async handleSentFile(filePath) {
-    this.logger.silly(`Cache handleSentFile() for ${filePath}`)
+    this.logger.silly(`handleSentFile() for ${filePath}`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       const archivedFilename = path.basename(filePath)
