@@ -84,4 +84,13 @@ module.exports = {
       fs.renameSync(sqliteFilename, `${sqliteFilename}.old`)
     }
   },
+  4: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCHDA') {
+        logger.info('Add maxReturnValues and maxReadInterval to OPCHDA')
+        dataSource.OPCHDA.maxReturnValues = 10000
+        dataSource.OPCHDA.maxReadInterval = 3600
+      }
+    })
+  },
 }
