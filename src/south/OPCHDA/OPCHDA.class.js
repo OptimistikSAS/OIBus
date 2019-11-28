@@ -202,10 +202,15 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendInitializeMessage() {
+    const { maxReturnValues, maxReadInterval } = this.dataSource.OPCHDA
     const message = {
       Request: 'Initialize',
       TransactionId: this.generateTransactionId(),
-      Content: { Groups: this.scanGroups },
+      Content: {
+        Groups: this.scanGroups,
+        MaxReturnValues: maxReturnValues,
+        MaxReadInterval: maxReadInterval,
+      },
     }
     this.sendMessage(message)
   }

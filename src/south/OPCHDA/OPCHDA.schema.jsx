@@ -48,6 +48,22 @@ schema.form = {
     defaultValue: 10000,
     help: <div>Retry Interval</div>,
   },
+  maxReturnValues: {
+    type: 'OIbInteger',
+    newRow: true,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 1000,
+    help: <div>Max return values</div>,
+  },
+  maxReadInterval: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 3600,
+    help: <div>Max read interval</div>,
+  },
   scanGroupsSection: {
     type: 'OIbTitle',
     label: 'ScanGroups',
