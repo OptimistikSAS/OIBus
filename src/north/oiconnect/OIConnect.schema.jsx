@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { minValue, notEmpty } from '../../services/validation.service'
 
 const schema = { name: 'OIConnect' }
 schema.form = {
@@ -46,6 +46,13 @@ schema.form = {
     md: 2,
     options: ['axios', 'request', 'fetch'],
     defaultValue: 'fetch',
+  },
+  timeout: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(1000),
+    defaultValue: 60000,
   },
 }
 
