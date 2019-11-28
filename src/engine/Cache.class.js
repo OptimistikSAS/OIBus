@@ -110,7 +110,7 @@ class Cache {
    * @param {Object} api - The North to cache the Value for
    * @param {string} dataSourceId - The South generating the value
    * @param {object} values - values
-   * @return {void}
+   * @return {object} the api object or null if api should do nothing.
    */
   async cacheValuesForApi(api, dataSourceId, values) {
     const { applicationId, database, config, canHandleValues, subscribedTo } = api
@@ -130,7 +130,7 @@ class Cache {
         return api
       }
     }
-    return false
+    return null
   }
 
   /**
@@ -165,7 +165,7 @@ class Cache {
    * @param {string} dataSourceId - The South generating the file
    * @param {String} cachePath - The path of the raw file
    * @param {number} timestamp - The timestamp the file was received
-   * @return {void}
+   * @return {object} the api object or null if api should do nothing.
    */
   async cacheFileForApi(api, dataSourceId, cachePath, timestamp) {
     const { applicationId, canHandleFiles, subscribedTo } = api
@@ -178,7 +178,7 @@ class Cache {
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
-    return false
+    return null
   }
 
   /**
@@ -265,7 +265,8 @@ class Cache {
    * @return {void}
    */
   async sendCallback(api) {
-    const { applicationId, canHandleValues, canHandleFiles } = api
+    const { applicationId, canHandleValues, canHandleFiles, config } = api
+    let success = true
 
     this.logger.silly(`sendCallback ${applicationId} with sendInProgress ${!!this.sendInProgress[applicationId]}`)
 
@@ -274,12 +275,16 @@ class Cache {
       this.resendImmediately[applicationId] = false
 
       if (canHandleValues) {
-        await this.sendCallbackForValues(api)
+        success = await this.sendCallbackForValues(api)
       }
 
       if (canHandleFiles) {
-        await this.sendCallbackForFiles(api)
+        success = await this.sendCallbackForFiles(api)
       }
+
+      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+      const timeout = success ? successTimeout : config.retryInterval
+      this.resetTimeout(api, timeout)
 
       this.sendInProgress[applicationId] = false
     } else {
@@ -294,7 +299,6 @@ class Cache {
    */
   async sendCallbackForValues(application) {
     this.logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
-    let success = true
     const { applicationId, database, config } = application
 
     try {
@@ -302,7 +306,7 @@ class Cache {
 
       if (values) {
         this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
-        success = await this.engine.handleValuesFromCache(applicationId, values)
+        const success = await this.engine.handleValuesFromCache(applicationId, values)
         this.logger.silly(`Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`)
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
@@ -312,12 +316,9 @@ class Cache {
       }
     } catch (error) {
       this.logger.error(error)
-      success = false
+      return false
     }
-
-    const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
-    const timeout = success ? successTimeout : config.retryInterval
-    this.resetTimeout(application, timeout)
+    return true
   }
 
   /**
@@ -326,38 +327,31 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForFiles(application) {
-    this.logger.silly(`Cache sendCallbackForFiles() for ${application.applicationId}`)
-
-    const { applicationId, config } = application
-    let success = true
+    const { applicationId } = application
+    this.logger.silly(`Cache sendCallbackForFiles() for ${applicationId}`)
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
-      this.logger.silly(`Cache sendCallbackForFiles() fileToSend ${filePath}`)
+      this.logger.silly(`sendCallbackForFiles() fileToSend ${filePath}`)
 
-      if (filePath) {
-        if (fs.existsSync(filePath)) {
-          this.logger.silly(`Cache sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
-          success = await this.engine.sendFile(applicationId, filePath)
+      if (filePath && fs.existsSync(filePath)) {
+        this.logger.silly(`sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
+        const success = await this.engine.sendFile(applicationId, filePath)
 
-          if (success) {
-            this.logger.silly(`Cache sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
-            await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
-            await this.handleSentFile(filePath)
-          }
-        } else {
-          this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
-
+        if (success) {
+          this.logger.silly(`sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
           await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
+          await this.handleSentFile(filePath)
         }
+      } else {
+        this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
+        if (filePath) await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
       }
     } catch (error) {
       this.logger.error(error)
+      return false
     }
-
-    const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
-    const timeout = success ? successTimeout : config.retryInterval
-    this.resetTimeout(application, timeout)
+    return true
   }
 
   /**
