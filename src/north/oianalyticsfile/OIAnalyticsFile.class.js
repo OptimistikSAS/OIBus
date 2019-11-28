@@ -25,14 +25,14 @@ class OIAnalyticsFile extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, endpoint, authentication, proxy = null, stack = 'fetch' } = applicationParameters.OIAnalyticsFile
+    const { host, endpoint, authentication, proxy = null, stack = 'fetch', timeout = 60000 } = applicationParameters.OIAnalyticsFile
 
     this.url = `${host}${endpoint}`
     this.authentication = authentication
     this.proxy = this.getProxy(proxy)
     this.stack = stack
 
-    this.timeout = 60000
+    this.timeout = timeout
 
     this.canHandleFiles = true
   }
@@ -172,6 +172,7 @@ class OIAnalyticsFile extends ApiHandler {
         },
       },
       proxy,
+      timeout: this.timeout,
     }
 
     try {
@@ -214,6 +215,7 @@ class OIAnalyticsFile extends ApiHandler {
       headers,
       body: formData,
       agent,
+      timeout: this.timeout,
     }
 
     try {

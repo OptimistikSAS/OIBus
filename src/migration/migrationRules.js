@@ -93,4 +93,16 @@ module.exports = {
       }
     })
   },
+  5: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'OIConnect') {
+        logger.info('Set timeout for OIConnect')
+        application.OIConnect.timeout = 180000
+      }
+      if (application.protocol === 'OIAnalyticsFile') {
+        logger.info('Set timeout for OIAnalyticsFile')
+        application.OIAnalyticsFile.timeout = 180000
+      }
+    })
+  },
 }

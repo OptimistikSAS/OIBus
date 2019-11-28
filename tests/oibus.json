@@ -41713,7 +41713,7 @@
                         "type": "Basic",
                         "username": ""
                     },
-                    "timeout": "",
+                    "timeout": 180000,
                     "host": "",
                     "endpoint": "",
                     "proxy": "",
@@ -41732,5 +41732,5 @@
             }
         ]
     },
-    "schemaVersion": 4
+    "schemaVersion": 5
 }
