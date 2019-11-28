@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, notEndsWith, startsWith, combinedValidations } from '../../services/validation.service'
+import { notEmpty, notEndsWith, startsWith, combinedValidations, minValue } from '../../services/validation.service'
 
 const schema = { name: 'OIAnalyticsFile' }
 schema.form = {
@@ -44,6 +44,13 @@ schema.form = {
     newRow: false,
     options: ['axios', 'request', 'fetch'],
     defaultValue: 'fetch',
+  },
+  timeout: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(1000),
+    defaultValue: 60000,
   },
 }
 export default schema
