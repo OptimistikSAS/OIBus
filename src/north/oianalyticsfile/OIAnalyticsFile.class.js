@@ -172,6 +172,7 @@ class OIAnalyticsFile extends ApiHandler {
         },
       },
       proxy,
+      timeout: this.timeout,
     }
 
     try {
@@ -214,6 +215,7 @@ class OIAnalyticsFile extends ApiHandler {
       headers,
       body: formData,
       agent,
+      timeout: this.timeout,
     }
 
     try {
