@@ -57,7 +57,7 @@ class SQLDbToFile extends ProtocolHandler {
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
     } else {
-      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+      this.logger.error(`Invalid timezone supplied: ${timezone}`)
     }
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()

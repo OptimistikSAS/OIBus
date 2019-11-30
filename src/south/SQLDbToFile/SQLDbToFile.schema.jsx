@@ -93,7 +93,7 @@ schema.form = {
     valid: notEmpty(),
     help: <div>Time Format</div>,
   },
-  timeZone: {
+  timezone: {
     type: 'OIbSelect',
     newRow: false,
     md: 2,
