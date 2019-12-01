@@ -311,7 +311,9 @@ class Cache {
         if (success) {
           const removed = await databaseService.removeSentValues(database, values)
           this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
-          if (removed !== values.length) this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+          if (removed !== values.length) {
+            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+          }
         }
       }
     } catch (error) {
@@ -332,26 +334,31 @@ class Cache {
 
     try {
       const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
-      this.logger.silly(`sendCallbackForFiles() fileToSend ${filePath}`)
+      this.logger.silly(`sendCallbackForFiles() filePath:${filePath}`)
 
-      if (filePath && fs.existsSync(filePath)) {
-        this.logger.silly(`sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
-        const success = await this.engine.sendFile(applicationId, filePath)
-
-        if (success) {
-          this.logger.silly(`sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
-          await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
-          await this.handleSentFile(filePath)
-        }
-      } else {
-        this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
-        if (filePath) await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
+      if (filePath === null) {
+        this.logger.silly('sendCallbackForFiles(): no file to send')
+        return true
       }
+
+      if (!fs.existsSync(filePath)) {
+        // file in cache does not exist on filesystem
+        await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
+        this.logger.error(new Error(`File ${filePath} doesn't exist. Removing it from database.`))
+        return false
+      }
+      this.logger.silly(`sendCallbackForFiles() call Engine sendFile() ${applicationId} and ${filePath}`)
+      const success = await this.engine.sendFile(applicationId, filePath)
+      if (success) {
+        this.logger.silly(`sendCallbackForFiles() deleteSentFile for ${applicationId} and ${filePath}`)
+        await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
+        await this.handleSentFile(filePath)
+      }
+      return success
     } catch (error) {
       this.logger.error(error)
       return false
     }
-    return true
   }
 
   /**
