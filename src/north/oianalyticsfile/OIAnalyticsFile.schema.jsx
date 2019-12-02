@@ -3,6 +3,18 @@ import { notEmpty, notEndsWith, startsWith, combinedValidations, minValue } from
 
 const schema = { name: 'OIAnalyticsFile' }
 schema.form = {
+  OIAnalyticsFileSettings: {
+    type: 'OIbTitle',
+    label: 'OIAnalyticsFile settings',
+    md: 12,
+    children: (
+      <>
+        <p>
+          OIAnalyticsFile sends the received file to OIAnalytics where they will be further analyzed.
+        </p>
+      </>
+    ),
+  },
   endPointSection: {
     type: 'OIbTitle',
     label: 'End Point',
