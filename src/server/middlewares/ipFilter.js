@@ -16,7 +16,7 @@ const ipFilter = (filter) => async (ctx, next) => {
     await next()
   } else {
     ctx.app.logger.error(new Error(`${ip} is not authorized`))
-    ctx.throw(401, 'access denied ', `${ip} is not authorized`)
+    ctx.throw(401, 'access denied ', `IP ADDRESS UNAUTHORIZED. Please add '${ip}' in the IP Filter section of the OIBus Engine configuration`)
   }
 }
 

@@ -9,7 +9,6 @@ schema.form = {
     defaultValue: './input',
     help: <div>Path to the input folder</div>,
   },
-  scanMode: { newRow: false, type: 'OIbScanMode', label: 'Scan Mode' },
   preserve: {
     type: 'OIbCheckBox',
     label: 'Preserve File?',

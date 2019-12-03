@@ -57,7 +57,7 @@ class SQLDbToFile extends ProtocolHandler {
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
     } else {
-      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+      this.logger.error(`Invalid timezone supplied: ${timezone}`)
     }
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
@@ -70,9 +70,9 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   async connect() {
+    super.connect()
     const { dataSourceId, startTime } = this.dataSource
     const { engineConfig } = this.engine.configService.getConfig()
-
     const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
@@ -89,6 +89,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async onScan(_scanMode) {
     if (!this.timezone) {
+      this.logger.error('Invalid timezone')
       return
     }
 

@@ -6,7 +6,7 @@ const Logger = require('../engine/Logger.class')
 
 const logger = new Logger('migration')
 
-const REQUIRED_SCHEMA_VERSION = 3
+const REQUIRED_SCHEMA_VERSION = 5
 const DEFAULT_VERSION = 1
 
 /**
@@ -49,7 +49,7 @@ const migrateImpl = (configVersion, config, configFile) => {
  */
 const migrate = (configFile) => {
   if (fs.existsSync(configFile)) {
-    const config = ConfigService.tryReadFile(configFile)
+    const config = ConfigService.tryReadFile(configFile, logger)
     const configVersion = config.schemaVersion || DEFAULT_VERSION
     if (configVersion < REQUIRED_SCHEMA_VERSION) {
       logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)

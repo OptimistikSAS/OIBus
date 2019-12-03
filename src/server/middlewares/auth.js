@@ -1,8 +1,9 @@
 /**
  * Module dependencies.
  */
-const crypto = require('crypto')
 const basicAuth = require('basic-auth')
+
+const DEFAULT_PASSWORD = 'pass'
 
 /**
  * Return basic auth middleware with
@@ -19,12 +20,15 @@ const basicAuth = require('basic-auth')
 const auth = (opts = {}) => {
   if (!opts.realm) opts.realm = 'Secure Area'
 
+  if (!opts.pass) {
+    opts.pass = DEFAULT_PASSWORD
+  }
+
   return (ctx, next) => {
     const user = basicAuth(ctx)
     if (user && user.pass && user.name === opts.name) {
-      const hash = crypto.createHash('sha256').update(user.pass).digest('hex')
-      if (hash === opts.pass) return next()
-      ctx.app.logger.error(new Error(`Bad hash: ${hash}`))
+      if (user.pass === opts.pass) return next()
+      ctx.app.logger.error(new Error(`Bad password: ${user.pass}`))
     }
     return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
   }
