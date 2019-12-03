@@ -57,6 +57,7 @@ class OPCUA extends ProtocolHandler {
    * @return {Promise<void>} The connection promise
    */
   async connect() {
+    super.connect()
     await this.client.connect(
       this.url,
       (connectError) => {

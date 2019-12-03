@@ -84,4 +84,25 @@ module.exports = {
       fs.renameSync(sqliteFilename, `${sqliteFilename}.old`)
     }
   },
+  4: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCHDA') {
+        logger.info('Add maxReturnValues and maxReadInterval to OPCHDA')
+        dataSource.OPCHDA.maxReturnValues = 10000
+        dataSource.OPCHDA.maxReadInterval = 3600
+      }
+    })
+  },
+  5: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'OIConnect') {
+        logger.info('Set timeout for OIConnect')
+        application.OIConnect.timeout = 180000
+      }
+      if (application.protocol === 'OIAnalyticsFile') {
+        logger.info('Set timeout for OIAnalyticsFile')
+        application.OIAnalyticsFile.timeout = 180000
+      }
+    })
+  },
 }
