@@ -6,7 +6,7 @@ const validation = {
     port: inRange(1, 65535),
     user: notEmpty('User'),
     password: minLength(3),
-    filter: isIp('Filter'),
+    filter: (val) => isIp('Filter')(val === '*' ? '0.0.0.0' : val.replace(/\*/g, '0')), // replace * with a valid ip before testing
     logParameters: {
       filename: notEmpty('Filename'),
       maxsize: minValue(10000),
