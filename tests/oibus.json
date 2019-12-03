@@ -2,7 +2,7 @@
     "engine": {
         "port": 2223,
         "user": "admin",
-        "password": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1",
+        "password": "",
         "filter": [
             "127.0.0.1",
             "::1"
@@ -271,7 +271,9 @@
                     "agentFilename": "./deps/win/HdaAgent/HdaAgent.exe",
                     "logLevel": "debug",
                     "host": "opcserver",
-                    "serverName": "Matrikon.OPC.Simulation"
+                    "serverName": "Matrikon.OPC.Simulation",
+                    "maxReturnValues": 10000,
+                    "maxReadInterval": 3600
                 },
                 "points": [
                     {
@@ -41711,7 +41713,7 @@
                         "type": "Basic",
                         "username": ""
                     },
-                    "timeout": "",
+                    "timeout": 180000,
                     "host": "",
                     "endpoint": "",
                     "proxy": "",
@@ -41730,5 +41732,5 @@
             }
         ]
     },
-    "schemaVersion": 3
+    "schemaVersion": 5
 }

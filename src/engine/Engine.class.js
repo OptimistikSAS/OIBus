@@ -89,7 +89,7 @@ class Engine {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
           }
-        } else if (dataSource.points) {
+        } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
           dataSource.points.forEach((point) => {
             if (!this.scanLists[point.scanMode]) {
               this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
@@ -98,6 +98,8 @@ class Engine {
               this.scanLists[point.scanMode].push(dataSource.dataSourceId)
             }
           })
+        } else {
+          this.logger.error(` dataSource: ${dataSource.dataSourceId} has no scan mode defined`)
         }
       }
     })
