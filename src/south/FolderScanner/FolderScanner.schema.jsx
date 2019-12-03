@@ -41,14 +41,12 @@ schema.form = {
     type: 'OIbCheckBox',
     label: 'Preserve File?',
     defaultValue: true,
-    help: <div>Preserve the file</div>,
   },
   minAge: {
     type: 'OIbInteger',
     label: 'Minimum Age',
     valid: minValue(0),
     defaultValue: 1000,
-    help: <div>Path to the error folder</div>,
   },
   regex: {
     type: 'OIbText',

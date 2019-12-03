@@ -10,7 +10,7 @@ schema.form = {
     children: (
       <>
         <p>
-          OIAnalyticsFile sends the received file to OIAnalytics where they will be further analyzed.
+          OIAnalyticsFile sends the received file to OIAnalytics.
         </p>
       </>
     ),
