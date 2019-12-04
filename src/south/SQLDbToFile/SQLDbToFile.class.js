@@ -39,7 +39,7 @@ class SQLDbToFile extends ProtocolHandler {
       dateFormat,
     } = this.dataSource.SQLDbToFile
 
-    this.preserveFiles = false
+    this.preserveFiles = true
     this.driver = driver
     this.host = host
     this.port = port
@@ -184,7 +184,7 @@ class SQLDbToFile extends ProtocolHandler {
     const transform = (row) => {
       Object.entries(row).forEach(([column, value]) => {
         if (value instanceof Date) {
-          row[column] = moment.tz(value, this.timezone).format(this.dateFormat)
+          row[column] = this.formatDateWithTimezone(value)
         }
       })
       return (row)
@@ -195,6 +195,19 @@ class SQLDbToFile extends ProtocolHandler {
       transform,
     }
     return csv.writeToString(result, options)
+  }
+
+  /**
+   * Format date taking into account the timezone configuration.
+   * Since we don't know how the date is actually stored in the database, we read it as UTC time
+   * and format it as it would be in the configured timezone.
+   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
+   * @param {Date} date - The date to format
+   * @returns {string} - The formatted date with timezone
+   */
+  formatDateWithTimezone(date) {
+    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment(timestampWithoutTZAsString).tz(this.timezone).format(this.dateFormat)
   }
 }
 
