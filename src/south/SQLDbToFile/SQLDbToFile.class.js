@@ -39,7 +39,7 @@ class SQLDbToFile extends ProtocolHandler {
       dateFormat,
     } = this.dataSource.SQLDbToFile
 
-    this.preserveFiles = true
+    this.preserveFiles = false
     this.driver = driver
     this.host = host
     this.port = port
