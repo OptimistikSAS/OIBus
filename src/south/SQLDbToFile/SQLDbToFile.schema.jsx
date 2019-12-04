@@ -29,6 +29,11 @@ schema.form = {
           <li>
             Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
           </li>
+          <li>
+            All date fields are read as UTC time and converted to the specified timezone.
+            Ex: With timezone &apos;Europe/Paris&apos; the date &apos;2019-01-01 00:00:00&apos;
+            will be converted to &apos;Tue Jan 01 2019 00:00:00 GMT+0100&apos;
+          </li>
         </ul>
       </>
     ),
