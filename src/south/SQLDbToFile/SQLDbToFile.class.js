@@ -182,9 +182,11 @@ class SQLDbToFile extends ProtocolHandler {
    */
   generateCSV(result) {
     const transform = (row) => {
-      if (row[this.timeColumn] instanceof Date) {
-        row[this.timeColumn] = moment.tz(row[this.timeColumn], this.timezone).format(this.dateFormat)
-      }
+      Object.entries(row).forEach(([column, value]) => {
+        if (value instanceof Date) {
+          row[column] = moment.tz(value, this.timezone).format(this.dateFormat)
+        }
+      })
       return (row)
     }
     const options = {
