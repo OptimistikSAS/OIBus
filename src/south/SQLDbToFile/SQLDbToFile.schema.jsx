@@ -5,8 +5,38 @@ const schema = { name: 'SQLDbToFile' }
 schema.form = {
   SQLDBtoFileSettings: {
     type: 'OIbTitle',
-    label: 'SQLDBtoFileSettings',
-    children: <p>todo</p>,
+    label: 'SQLDBtoFile Settings',
+    md: 12,
+    children: (
+      <>
+        <p>
+          SQLDbToFile periodically connects to the specified SQL server at an interval specified by scan mode.
+          It gets values from the database based on the &apos;query&apos; parameter, saves the result in a CSV file
+          and sends to any North capable of handling files and configured to accept files from this South.
+        </p>
+        <ul>
+          <li>
+            The query must have a specific format and contain a WHERE clause for the date range of the time column with @date1 and @date2.
+          </li>
+          <li>
+            To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
+            separate connection timeout and request timeout.
+          </li>
+          <li>
+            It is possible to specify the delimiter used in the CSV file, how to format the timestamp field
+            and also the name of the file with a template (currently only &apos;@date&apos; is accepted).
+          </li>
+          <li>
+            Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
+          </li>
+          <li>
+            All date fields are read as UTC time and converted to the specified timezone.
+            Ex: With timezone &apos;Europe/Paris&apos; the date &apos;2019-01-01 00:00:00&apos;
+            will be converted to &apos;Tue Jan 01 2019 00:00:00 GMT+0100&apos;
+          </li>
+        </ul>
+      </>
+    ),
   },
   host: {
     type: 'OIbText',
@@ -70,14 +100,21 @@ schema.form = {
     type: 'OIbText',
     defaultValue: ',',
     valid: notEmpty(),
-    help: <div>delimiter</div>,
+    help: <div>Delimiter in the CSV file</div>,
+  },
+  dateFormat: {
+    newRow: false,
+    type: 'OIbText',
+    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
+    valid: notEmpty(),
+    help: <div>Date Format</div>,
   },
   filename: {
     type: 'OIbText',
     newRow: false,
     defaultValue: 'sql-@date.csv',
     valid: notEmpty(),
-    help: <div>delimiter</div>,
+    help: <div>The name of the CSV file</div>,
   },
   timeColumn: {
     type: 'OIbText',
@@ -86,13 +123,6 @@ schema.form = {
     valid: notEmpty(),
     help: <div>Time Column</div>,
   },
-  timeFormat: {
-    newRow: false,
-    type: 'OIbText',
-    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
-    valid: notEmpty(),
-    help: <div>Time Format</div>,
-  },
   timezone: {
     type: 'OIbSelect',
     newRow: false,
@@ -100,7 +130,7 @@ schema.form = {
     defaultValue: 'Europe/Paris',
     help: <div>Time Zone</div>,
     options: [
-      'Etc/GMT+12', 'Pacific/Midway', 'Pacific/Honolulu', 'Pacific/Marquesas', 'America/Anchorage', 'Pacific/Pitcairn',
+      'Etc/UTC', 'Etc/GMT+12', 'Pacific/Midway', 'Pacific/Honolulu', 'Pacific/Marquesas', 'America/Anchorage', 'Pacific/Pitcairn',
       'America/Los_Angeles', 'America/Tijuana', 'America/Chihuahua', 'America/Denver', 'America/Phoenix', 'America/Chicago',
       'America/Guatemala', 'America/Mexico_City', 'America/Regina', 'America/Bogota', 'America/Indiana/Indianapolis', 'America/New_York',
       'America/Caracas', 'America/Guyana', 'America/Halifax', 'America/La_Paz', 'America/Manaus', 'America/Santiago', 'America/St_Johns',
