@@ -176,6 +176,21 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   /**
+   * Format date taking into account the timezone configuration.
+   * Since we don't know how the date is actually stored in the database, we read it as UTC time
+   * and format it as it would be in the configured timezone.
+   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
+   * @param {Date} date - The date to format
+   * @param {String} timezone - The timezone to use to replace the timezone of the date
+   * @param {String} dateFormat - The format of the date to use for the return result
+   * @returns {string} - The formatted date with timezone
+   */
+  static formatDateWithTimezone(date, timezone, dateFormat) {
+    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone).format(dateFormat)
+  }
+
+  /**
    * Generate CSV file from the values.
    * @param {object[]} result - The query result
    * @returns {Promise<string>} - The CSV content
@@ -184,7 +199,7 @@ class SQLDbToFile extends ProtocolHandler {
     const transform = (row) => {
       Object.entries(row).forEach(([column, value]) => {
         if (value instanceof Date) {
-          row[column] = this.formatDateWithTimezone(value)
+          row[column] = SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
         }
       })
       return (row)
@@ -195,19 +210,6 @@ class SQLDbToFile extends ProtocolHandler {
       transform,
     }
     return csv.writeToString(result, options)
-  }
-
-  /**
-   * Format date taking into account the timezone configuration.
-   * Since we don't know how the date is actually stored in the database, we read it as UTC time
-   * and format it as it would be in the configured timezone.
-   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
-   * @param {Date} date - The date to format
-   * @returns {string} - The formatted date with timezone
-   */
-  formatDateWithTimezone(date) {
-    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment(timestampWithoutTZAsString).tz(this.timezone).format(this.dateFormat)
   }
 }
 
