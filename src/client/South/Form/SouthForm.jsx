@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col } from 'reactstrap'
+import { Link } from 'react-router-dom'
+import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import { OIbTitle, OIbCheckBox, OIbScanMode } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
@@ -17,7 +18,17 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const prefix = `south.dataSources.${dataSourceIndex}`
   return (
     <Form>
-      <OIbTitle label={`${dataSourceId} parameters (protocol: ${protocol})`}>
+      <Row>
+        <Breadcrumb tag="h5">
+          <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
+            South
+          </BreadcrumbItem>
+          <BreadcrumbItem active tag="span">
+            {dataSourceId}
+          </BreadcrumbItem>
+        </Breadcrumb>
+      </Row>
+      <OIbTitle label="General settings">
         <>
           <ul>
             <li>This form allows to configure protocol-specific parameters.</li>
