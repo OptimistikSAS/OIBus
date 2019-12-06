@@ -386,3 +386,18 @@ h3 {
   padding-top: 1px;
 }
 
+.breadcrumb {
+  background-color: inherit;
+  color: #F5BB51;
+  margin: 0px;
+  padding: 0px;
+}
+
+.breadcrumb > a {
+  color:inherit;
+}
+
+.breadcrumb:hover > a {
+  color: #f5bb51;
+}
+
