@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 
 const Overview = () => {
-  const { newConfig } = React.useContext(ConfigContext)
-  const applications = newConfig && newConfig.north && newConfig.north.applications
-  const dataSources = newConfig && newConfig.south && newConfig.south.dataSources
+  const { activeConfig } = React.useContext(ConfigContext)
+  const applications = activeConfig && activeConfig.north && activeConfig.north.applications
+  const dataSources = activeConfig && activeConfig.south && activeConfig.south.dataSources
   return (
     <Container style={{ marginBottom: '5px' }}>
       <Row>
