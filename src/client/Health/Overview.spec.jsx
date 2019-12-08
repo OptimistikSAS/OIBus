@@ -7,11 +7,11 @@ import { BrowserRouter } from 'react-router-dom'
 
 import Overview from './Overview.jsx'
 
-import newConfig from '../../../tests/testConfig.js'
+import activeConfig from '../../../tests/testConfig.js'
 
 Enzyme.configure({ adapter: new Adapter() })
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+React.useContext = jest.fn().mockReturnValue({ activeConfig })
 
 describe('Overview', () => {
   test('display overview based on config', () => {
