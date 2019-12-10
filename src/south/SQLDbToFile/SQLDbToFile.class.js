@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const mssql = require('mssql')
+const mysql = require('mysql2/promise')
 const csv = require('fast-csv')
 const moment = require('moment-timezone')
 
@@ -100,6 +101,8 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromMSSQL()
           break
         case 'mysql':
+          result = await this.getDataFromMySQL()
+          break
         case 'postgresql':
         case 'oracle':
         default:
@@ -170,6 +173,44 @@ class SQLDbToFile extends ProtocolHandler {
       this.logger.error(error)
     } finally {
       await mssql.close()
+    }
+
+    return data
+  }
+
+  /**
+   * Get new entries from MySQL database.
+   * @returns {void}
+   */
+  async getDataFromMySQL() {
+    const adaptedQuery = this.query.replace('@date2', 'NOW()').replace('@date1', '?')
+    this.logger.debug(`Executing "${adaptedQuery}"`)
+
+    const config = {
+      host: this.host,
+      port: this.port,
+      user: this.username,
+      password: this.decryptPassword(this.password),
+      database: this.database,
+      connectTimeout: this.connectionTimeout,
+      timezone: 'Z',
+    }
+
+    let connection = null
+    let data = []
+    try {
+      connection = await mysql.createConnection(config)
+      const [rows] = await connection.execute(
+        { sql: adaptedQuery, timeout: this.requestTimeout },
+        [new Date(this.lastCompletedAt)],
+      )
+      data = rows
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      if (connection) {
+        await connection.end()
+      }
     }
 
     return data
