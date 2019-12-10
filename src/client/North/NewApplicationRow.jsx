@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Col, Row } from 'reactstrap'
-import { OIbText, OIbSelect } from '../components/OIbForm/index.js'
+import { OIbText, OIbSelect } from '../components/OIbForm/index'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
   const [applicationId, setApplicationId] = React.useState('')

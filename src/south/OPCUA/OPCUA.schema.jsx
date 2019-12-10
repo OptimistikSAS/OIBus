@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minLength } from '../../services/validation.service.js'
+import { notEmpty, inRange, minLength } from '../../services/validation.service'
 
 const schema = { name: 'OPCUA' }
 schema.form = {

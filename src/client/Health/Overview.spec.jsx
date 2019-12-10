@@ -7,7 +7,7 @@ import { BrowserRouter } from 'react-router-dom'
 
 import Overview from './Overview.jsx'
 
-import activeConfig from '../../../tests/testConfig.js'
+import activeConfig from '../../../tests/testConfig'
 
 Enzyme.configure({ adapter: new Adapter() })
 
