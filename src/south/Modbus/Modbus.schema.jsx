@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange } from '../../services/validation.service'
+import { inRange, notEmpty } from '../../services/validation.service'
 
 const schema = { name: 'Modbus' }
 schema.form = {
@@ -11,7 +11,7 @@ schema.form = {
   },
   host: {
     type: 'OIbText',
-    valid: (val) => ((val && val.length > 2) ? null : 'Length should be greater than 2'),
+    valid: notEmpty(),
     defaultValue: '',
     help: <div>IP address of the Modbus source</div>,
   },
@@ -34,13 +34,12 @@ schema.points = {
   address: {
     type: 'OIbText',
     defaultValue: '',
-    valid: (val) => ((val && val.length > 0) || val === 0 || val >= 1 ? null : 'Value should not be empty'),
+    valid: notEmpty(),
   },
   type: {
     type: 'OIbSelect',
     options: ['boolean', 'number'],
     defaultValue: 'boolean',
-    valid: (val) => (['boolean', 'number'].includes(val) ? null : 'Unknown type'),
   },
 }
 
