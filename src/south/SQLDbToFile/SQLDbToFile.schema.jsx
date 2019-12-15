@@ -62,7 +62,7 @@ schema.form = {
     type: 'OIbSelect',
     newRow: false,
     md: 2,
-    options: ['mssql', 'mysql'],
+    options: ['mssql', 'mysql', 'postgresql'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
