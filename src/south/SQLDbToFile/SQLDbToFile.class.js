@@ -3,6 +3,7 @@ const path = require('path')
 
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
+const { Client, types } = require('pg')
 const csv = require('fast-csv')
 const moment = require('moment-timezone')
 
@@ -104,6 +105,8 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromMySQL()
           break
         case 'postgresql':
+          result = await this.getDataFromPostgreSQL()
+          break
         case 'oracle':
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
@@ -210,6 +213,41 @@ class SQLDbToFile extends ProtocolHandler {
     } finally {
       if (connection) {
         await connection.end()
+      }
+    }
+
+    return data
+  }
+
+  /**
+   * Get new entries from PostgreSQL database.
+   * @returns {void}
+   */
+  async getDataFromPostgreSQL() {
+    const adaptedQuery = this.query.replace('@date2', 'NOW()').replace('@date1', '$1')
+    this.logger.debug(`Executing "${adaptedQuery}"`)
+
+    const config = {
+      host: this.host,
+      port: this.port,
+      user: this.username,
+      password: this.decryptPassword(this.password),
+      database: this.database,
+      query_timeout: this.requestTimeout,
+    }
+
+    types.setTypeParser(1114, (str) => new Date(`${str}Z`))
+    const client = new Client(config)
+    let data = []
+    try {
+      await client.connect()
+      const { rows } = await client.query(adaptedQuery, [new Date(this.lastCompletedAt)])
+      data = rows
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      if (client) {
+        await client.end()
       }
     }
 
