@@ -27,7 +27,7 @@
   ],
   "browserslist": [
     "defaults",
-    "edge 15-40"
+    "edge >= 14"
   ],
   "dependencies": {
     "@babel/runtime": "7.7.5",
