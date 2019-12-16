@@ -25,6 +25,10 @@
   "keywords": [
     "Optimistik"
   ],
+  "browserslist": [
+    "defaults",
+    "edge 15-40"
+  ],
   "dependencies": {
     "@babel/runtime": "7.7.5",
     "@fortawesome/fontawesome-free": "5.11.2",
