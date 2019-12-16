@@ -33,6 +33,8 @@ nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%CONFIG_PATH%"""
 @echo nssm.exe install OIBus "%cd%\oibus.exe" "--config ""%CONFIG_PATH%""" >> install.log
 nssm.exe set OIBus AppDirectory "%cd%"
 @echo nssm.exe set OIBus AppDirectory "%cd%" >> install.log
+nssm set OIBus AppNoConsole 1 >> install.log
+@echo nssm set OIBus AppNoConsole 1
 @echo Starting OIBus service...
 nssm.exe start OIBus
 @echo Creating go.bat
