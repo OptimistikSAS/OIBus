@@ -21,6 +21,10 @@ schema.form = {
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
             separate connection timeout and request timeout.
+            <br />
+            Note for Oracle:
+            Connection timeout can be specified in the &apos;sqlnet.ora&apos; file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora)
+            like this: &apos;SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms&apos;
           </li>
           <li>
             It is possible to specify the delimiter used in the CSV file, how to format the timestamp field
@@ -35,6 +39,10 @@ schema.form = {
             will be converted to &apos;Tue Jan 01 2019 00:00:00 GMT+0100&apos;
           </li>
         </ul>
+        <p>
+          Note for Oracle:
+          Oracle Client libraries must be installed and configured separated. For more info: https://oracle.github.io/node-oracledb/INSTALL.html
+        </p>
       </>
     ),
   },
@@ -62,7 +70,7 @@ schema.form = {
     type: 'OIbSelect',
     newRow: false,
     md: 2,
-    options: ['mssql', 'mysql', 'postgresql'],
+    options: ['mssql', 'mysql', 'postgresql', 'oracle'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,

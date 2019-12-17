@@ -4,6 +4,7 @@ const path = require('path')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
+const oracledb = require('oracledb')
 const csv = require('fast-csv')
 const moment = require('moment-timezone')
 
@@ -82,6 +83,7 @@ class SQLDbToFile extends ProtocolHandler {
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = startTime ? new Date(startTime).toISOString() : new Date().toISOString()
     }
+    this.lastCompletedAt = new Date('2019-12-12 16:16:16').toISOString()
   }
 
   /**
@@ -108,6 +110,8 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromPostgreSQL()
           break
         case 'oracle':
+          result = await this.getDataFromOracle()
+          break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
           result = []
@@ -248,6 +252,49 @@ class SQLDbToFile extends ProtocolHandler {
     } finally {
       if (client) {
         await client.end()
+      }
+    }
+
+    return data
+  }
+
+  /**
+   * Get new entries from Oracle database.
+   * @returns {void}
+   */
+  async getDataFromOracle() {
+    const adaptedQuery = this.query
+      .replace('@date2', 'SYSTIMESTAMP')
+      .replace('@date1', ':date1')
+    this.logger.debug(`Executing "${adaptedQuery}"`)
+
+    const config = {
+      user: this.username,
+      password: this.decryptPassword(this.password),
+      connectString: `${this.host}:${this.port}/${this.database}`,
+    }
+
+    let connection
+    let data = []
+    try {
+      process.env.ORA_SDTZ = 'UTC'
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
+//      oracledb.fetchAsString = [oracledb.DATE]
+      connection = await oracledb.getConnection(config)
+      connection.callTimeout = this.requestTimeout
+//      await connection.execute(`ALTER SESSION SET TIME_ZONE='UTC'`)
+      const { rows } = await connection.execute(adaptedQuery, [new Date(this.lastCompletedAt)])
+      console.log(rows)
+//      data = rows
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      if (connection) {
+        try {
+          await connection.close()
+        } catch (error) {
+          this.logger.error(error)
+        }
       }
     }
 
