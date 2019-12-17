@@ -64,7 +64,7 @@ schema.form = {
     type: 'OIbText',
     defaultValue: 'db',
     valid: notEmpty(),
-    help: <div>Name of the SQL database</div>,
+    help: <div>Name of the SQL database (SID or Service Name for Oracle)</div>,
   },
   driver: {
     type: 'OIbSelect',
