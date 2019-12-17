@@ -41,7 +41,8 @@ schema.form = {
         </ul>
         <p>
           Note for Oracle:
-          Oracle Client libraries must be installed and configured separated. For more info: https://oracle.github.io/node-oracledb/INSTALL.html
+          Oracle Client libraries must be installed and configured separated. 
+          <a href="https://oracle.github.io/node-oracledb/INSTALL.html" target="_blank" rel="noopener noreferrer">More info</a>
         </p>
       </>
     ),
@@ -64,7 +65,7 @@ schema.form = {
     type: 'OIbText',
     defaultValue: 'db',
     valid: notEmpty(),
-    help: <div>Name of the SQL database</div>,
+    help: <div>Name of the SQL database (SID or Service Name for Oracle)</div>,
   },
   driver: {
     type: 'OIbSelect',
