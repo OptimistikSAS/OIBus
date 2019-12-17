@@ -16,7 +16,7 @@ schema.form = {
         </p>
         <ul>
           <li>
-            The query must have a specific format and contain a WHERE clause for the date range of the time column with @date1 and @date2.
+            The query must have a specific format and contain a WHERE clause with the date constraint of the time column using @date1.
           </li>
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
@@ -41,8 +41,8 @@ schema.form = {
         </ul>
         <p>
           Note for Oracle:
-          Oracle Client libraries must be installed and configured separated. 
-          <a href="https://oracle.github.io/node-oracledb/INSTALL.html" target="_blank" rel="noopener noreferrer">More info</a>
+          Oracle Client libraries must be installed and configured separated.
+          <a href="https://oracle.github.io/node-oracledb/INSTALL.html" target="_blank" rel="noopener noreferrer"> More info</a>
         </p>
       </>
     ),
