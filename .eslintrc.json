@@ -7,9 +7,7 @@
       "jsx": true
     }
   },
-  "plugins": [
-    "react-hooks"
-  ],
+  "plugins": ["react-hooks"],
   "extends": "airbnb",
   "env": {
     "es6": true,
@@ -49,7 +47,13 @@
     "max-len": ["error", { "code": 150 }],
     "semi": ["error", "never"],
     "jsx-a11y/anchor-is-valid": 1,
-    "import/extensions": ["error", "ignorePackages"],
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "never"
+      }
+    ],
     "arrow-parens": ["error", "always"],
     "react/forbid-prop-types": [
       "error",

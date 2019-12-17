@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `"<div class=\\"form-group\\"><label class=\\"\\">label</label><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" style=\\"position:relative;left:1.5rem\\" class=\\"oi-form-input form-check-input\\"/></div>"`;
+
+exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `"<div class=\\"form-group\\"><label class=\\"\\">label</label><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" checked=\\"\\" style=\\"position:relative;left:1.5rem\\" class=\\"oi-form-input form-check-input\\"/></div>"`;
+
+exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `"<div class=\\"form-group\\"><div class=\\"custom-switch custom-control\\"><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" checked=\\"\\" color=\\"secondary\\" class=\\"custom-control-input\\"/><label class=\\"custom-control-label\\" for=\\"name\\">label</label></div></div>"`;
