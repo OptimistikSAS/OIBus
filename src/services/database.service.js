@@ -153,7 +153,7 @@ const getValuesToSend = async (database, count) => {
         // data is a JSON object containing value and quality
         value.data = JSON.parse(decodeURI(value.data))
       } catch (error) {
-        // log error but try to continue with value unchanged 
+        // log error but try to continue with value unchanged
         logger.error(new Error(` ${error.message} detected for value.data ${JSON.stringify(value)}`))
       }
       return value
