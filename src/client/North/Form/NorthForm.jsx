@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col } from 'reactstrap'
+import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { Link } from 'react-router-dom'
 // import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
@@ -20,7 +21,18 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   const prefix = `north.applications.${applicationIndex}`
   return (
     <Form>
-      <OIbTitle label={`${applicationId} parameters (api: ${api})`}>
+      <Row>
+        <Breadcrumb tag="h5">
+          <BreadcrumbItem tag={Link} to="/north" className="oi-breadcrumb">
+            North
+          </BreadcrumbItem>
+          <BreadcrumbItem active tag="span">
+            {applicationId}
+          </BreadcrumbItem>
+        </Breadcrumb>
+      </Row>
+
+      <OIbTitle label="General settings">
         <>
           <ul>
             <li>This form allows to configure north-specific parameters.</li>
@@ -41,40 +53,32 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           />
         </Col>
       </Row>
-      <OIbForm
-        onChange={onChange}
-        schema={schema}
-        name={`${prefix}.${api}`}
-        values={application[api]}
-      />
+      <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${api}`} values={application[api]} />
       <OIbTitle label="Caching">
         <>
           <p>
-            The cache is a local file storage to allow OIBus to store values or files when
-            the communication with the north application is interrupted. The more space is
-            allocated to the cache, the longer the interruption can be. The parameters below
-            are important to understand.
+            The cache is a local file storage to allow OIBus to store values or files when the communication with the
+            north application is interrupted. The more space is allocated to the cache, the longer the interruption can
+            be. The parameters below are important to understand.
           </p>
           <ul>
             <li>
-              sendInterval: the cache will try to group a maximum of values in a buffer and to send them
-              in a single transaction. However, if the sendInterval (in ms) is reached, the transaction
-              will be sent even if the buffer is not full.
+              sendInterval: the cache will try to group a maximum of values in a buffer and to send them in a single
+              transaction. However, if the sendInterval (in ms) is reached, the transaction will be sent even if the
+              buffer is not full.
             </li>
             <li>
-              Retry Interval: If the communication is broken, OIBus will try to resend the buffer after
-              this interval of time  (in ms) until the communication is restored.
+              Retry Interval: If the communication is broken, OIBus will try to resend the buffer after this interval of
+              time (in ms) until the communication is restored.
             </li>
             <li>
-              Group Count: OIBus will try to group the number of values specified here when the
-              communication is normal. Please note that one value is an JSON object with a size
-              that can be between 10 to 100 bytes.
+              Group Count: OIBus will try to group the number of values specified here when the communication is normal.
+              Please note that one value is an JSON object with a size that can be between 10 to 100 bytes.
             </li>
             <li>
-              Max Group Count: In normal operations, the group count above is used but if
-              the cache has grown because of a communication issue, it will try to group the
-              largest possible transaction but limited to this count. This is to avoid a too
-              large transaction.
+              Max Group Count: In normal operations, the group count above is used but if the cache has grown because of
+              a communication issue, it will try to group the largest possible transaction but limited to this count.
+              This is to avoid a too large transaction.
             </li>
           </ul>
         </>
