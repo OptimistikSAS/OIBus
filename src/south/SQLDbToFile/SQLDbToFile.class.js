@@ -4,6 +4,7 @@ const path = require('path')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
+const oracledb = require('oracledb')
 const csv = require('fast-csv')
 const moment = require('moment-timezone')
 
@@ -108,6 +109,8 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromPostgreSQL()
           break
         case 'oracle':
+          result = await this.getDataFromOracle()
+          break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
           result = []
@@ -151,7 +154,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromMSSQL() {
-    const adaptedQuery = this.query.replace('@date2', 'GETDATE()')
+    const adaptedQuery = this.query
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -186,7 +189,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromMySQL() {
-    const adaptedQuery = this.query.replace('@date2', 'NOW()').replace('@date1', '?')
+    const adaptedQuery = this.query.replace('@date1', '?')
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -224,7 +227,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromPostgreSQL() {
-    const adaptedQuery = this.query.replace('@date2', 'NOW()').replace('@date1', '$1')
+    const adaptedQuery = this.query.replace('@date1', '$1')
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -248,6 +251,44 @@ class SQLDbToFile extends ProtocolHandler {
     } finally {
       if (client) {
         await client.end()
+      }
+    }
+
+    return data
+  }
+
+  /**
+   * Get new entries from Oracle database.
+   * @returns {void}
+   */
+  async getDataFromOracle() {
+    const adaptedQuery = this.query.replace('@date1', ':date1')
+    this.logger.debug(`Executing "${adaptedQuery}"`)
+
+    const config = {
+      user: this.username,
+      password: this.decryptPassword(this.password),
+      connectString: `${this.host}:${this.port}/${this.database}`,
+    }
+
+    let connection
+    let data = []
+    try {
+      process.env.ORA_SDTZ = 'UTC'
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
+      connection = await oracledb.getConnection(config)
+      connection.callTimeout = this.requestTimeout
+      const { rows } = await connection.execute(adaptedQuery, [new Date(this.lastCompletedAt)])
+      data = rows
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      if (connection) {
+        try {
+          await connection.close()
+        } catch (error) {
+          this.logger.error(error)
+        }
       }
     }
 
