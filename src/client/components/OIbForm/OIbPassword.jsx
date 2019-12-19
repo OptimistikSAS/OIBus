@@ -42,7 +42,8 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
   }
   // if value is null, no need to render
   if (value === null) return null
-  const validCheck = valid(value.replace(PREFIX, ''))
+  // if the password has not be edited, it contains the encrypted version that should not be checked
+  const validCheck = edited ? valid(value.replace(PREFIX, '')) : null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}

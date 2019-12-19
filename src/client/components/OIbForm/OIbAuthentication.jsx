@@ -6,7 +6,7 @@ import OIbText from './OIbText.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
 import OIbTitle from './OIbTitle.jsx'
-import { notEmpty } from '../../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../../services/validation.service'
 
 /*
   OIBAuthentication is a form reused in several places. Can manage user/password (default)
@@ -18,9 +18,9 @@ const OIbAuthentication = ({ value, name, onChange, mode }) => {
   }
   const validation = {
     accessKey: notEmpty(),
-    secretKey: notEmpty(),
+    secretKey: hasLengthBetween(0, 256),
     username: notEmpty(),
-    password: notEmpty(),
+    password: hasLengthBetween(0, 256),
   }
   return [
     <OIbTitle label="Authentication" key="title">
