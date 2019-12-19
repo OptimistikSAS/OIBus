@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minValue } from '../../services/validation.service'
+import { notEmpty, inRange, minValue, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
@@ -85,7 +85,7 @@ schema.form = {
     newRow: false,
     type: 'OIbPassword',
     defaultValue: '',
-    valid: notEmpty(),
+    valid: hasLengthBetween(0, 256),
   },
   query: {
     md: 8,
