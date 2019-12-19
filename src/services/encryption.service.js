@@ -62,7 +62,7 @@ const encryptText = (text, keyFolder) => {
  * Decrypt text.
  * @param {string} text - The text to decrypt
  * @param {string} keyFolder - The folder where the keys are stored
- * @return {string} - The decrypted text
+ * @return {string|null} - The decrypted text
  */
 const decryptText = (text, keyFolder) => {
   try {
@@ -79,7 +79,7 @@ const decryptText = (text, keyFolder) => {
     return decrypted.toString('utf8')
   } catch (error) {
     logger.error(`Error in decryption: ${error.message}`)
-    return ''
+    return null
   }
 }
 
