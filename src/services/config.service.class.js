@@ -125,18 +125,11 @@ class ConfigService {
   /**
    * Make a deep copy to prevent overwriting the actual config when working on modifiedConfig
    * @param {Object} config - The config to duplicate
-   * @param {boolean} decryptSecrets - Whether to decrypt secret or not
    * @returns {Object} - The duplicated config
    */
-  duplicateConfig(config, decryptSecrets = false) {
+  duplicateConfig(config) {
     try {
-      const duplicateConfig = JSON.parse(JSON.stringify(config))
-      if (decryptSecrets) {
-        encryptionService.decryptSecrets(duplicateConfig.engine.proxies, this.keyFolder)
-        encryptionService.decryptSecrets(duplicateConfig.north.applications, this.keyFolder)
-        encryptionService.decryptSecrets(duplicateConfig.south.dataSources, this.keyFolder)
-      }
-      return duplicateConfig
+      return JSON.parse(JSON.stringify(config))
     } catch (error) {
       this.logger.error(error)
       throw error
