@@ -109,6 +109,8 @@ class Engine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.jobs = []
+
+    this.memoryStats = {}
   }
 
   /**
@@ -326,6 +328,35 @@ class Engine {
    */
   getActiveProtocols() {
     return Object.keys(this.activeProtocols)
+  }
+
+  /**
+   * Get memory usage information.
+   * @returns {object} - The memory usage information
+   */
+  getMemoryUsage() {
+    const memoryUsage = process.memoryUsage()
+    Object.entries(memoryUsage).forEach(([key, value]) => {
+      if (!Object.keys(this.memoryStats).includes(key)) {
+        this.memoryStats[key] = {
+          min: value,
+          current: value,
+          max: value,
+        }
+      } else {
+        this.memoryStats[key].min = (value < this.memoryStats[key].min) ? value : this.memoryStats[key].min
+        this.memoryStats[key].current = value
+        this.memoryStats[key].max = (value > this.memoryStats[key].max) ? value : this.memoryStats[key].max
+      }
+    })
+
+    return Object.keys(this.memoryStats).reduce((result, key) => {
+      const min = Number(this.memoryStats[key].min / 1024 / 1024).toFixed(2)
+      const current = Number(this.memoryStats[key].current / 1024 / 1024).toFixed(2)
+      const max = Number(this.memoryStats[key].max / 1024 / 1024).toFixed(2)
+      result[key] = `${min}/${current}/${max} MB`
+      return result
+    }, {})
   }
 }
 
