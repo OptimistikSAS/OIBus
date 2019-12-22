@@ -10,20 +10,38 @@ const Logger = require('./engine/Logger.class')
 
 const logger = new Logger('main')
 
+// used to pretty print memusage output
+const memStringify = ({ rss, heapTotal, heapUsed, external }) => (`
+  rss: ${Number(rss / 1024 / 1024).toFixed(2)}
+  heapTotal: ${Number(heapTotal / 1024 / 1024).toFixed(2)}
+  heapUsed: ${Number(heapUsed / 1024 / 1024).toFixed(2)}
+  external: ${Number(external / 1024 / 1024).toFixed(2)}
+`)
+
+
 if (cluster.isMaster) {
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
   logger.info(`Starting OIBus version: ${VERSION}`)
-  cluster.fork()
+  const worker = cluster.fork()
 
-  cluster.on('exit', (worker, code, signal) => {
+  cluster.on('exit', (sourceWorker, code, signal) => {
     if (signal) {
-      logger.info(`Worker ${worker.process.pid} was killed by signal: ${signal}`)
+      logger.info(`Worker ${sourceWorker.process.pid} was killed by signal: ${signal}`)
     } else {
-      logger.error(`Worker ${worker.process.pid} exited with error code: ${code}`)
+      logger.error(`Worker ${sourceWorker.process.pid} exited with error code: ${code}`)
     }
 
     cluster.fork()
+  })
+  // Handle messages from the worker
+  worker.on('message', (msg) => {
+    if (msg.type === 'logMemoryUsage') {
+      logger.info(`memoryUsage worker: ${memStringify(msg.memoryUsage)}`)
+      logger.info(`memoryUsage master:', ${memStringify(process.memoryUsage())}`)
+    } else {
+      logger.warning(`Unknown message type received from Worker: ${msg.type}`)
+    }
   })
 } else {
   const configFile = ConfigService.getConfigFile(logger)
