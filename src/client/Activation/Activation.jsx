@@ -1,5 +1,6 @@
 import React from 'react'
 import { Label, Button, Spinner } from 'reactstrap'
+import ReactJson from 'react-json-view'
 import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from '../components/Modal.jsx'
@@ -7,6 +8,7 @@ import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import utils from '../helpers/utils'
+import { OIbTitle } from '../components/OIbForm'
 
 const Activation = () => {
   const [loading, setLoading] = React.useState(null)
@@ -91,17 +93,30 @@ const Activation = () => {
     diffError = 'Diff cannot be done'
   }
 
-  const isModified = (delta !== undefined) || (diffError !== undefined)
+  const isModified = delta !== undefined || diffError !== undefined
   const deltaHTML = isModified && removeSecretValues(delta)
   return (
     <>
+      <OIbTitle label="Modifications">
+        <div>
+          <p>Modifications requested on the OIBus configuration are listed below</p>
+          <p>The ACTIVE configuration is the one currently used by the OIBus server</p>
+          <p>It will be replaced with the new configuration if you use the activate button</p>
+          <p>The NEW configuration is the one that will be used OIBus server AFTER the activation</p>
+        </div>
+      </OIbTitle>
       <pre>{newConfig && JSON.stringify(newConfig.errors)}</pre>
       {isModified ? (
         <>
           <div className="force-row-display">
             <Modal show={false} title="Server restart" body="The server will restart to activate the new configuration">
               {(confirm) => (
-                <Button className="inline-button" color="primary" onClick={confirm(handleActivate)} disabled={newConfig.errors !== undefined}>
+                <Button
+                  className="inline-button"
+                  color="primary"
+                  onClick={confirm(handleActivate)}
+                  disabled={newConfig.errors !== undefined}
+                >
                   Activate
                 </Button>
               )}
@@ -111,9 +126,7 @@ const Activation = () => {
             </Button>
           </div>
           <div className="oi-full-width">
-            {diffError ? (
-              <Label>{diffError}</Label>
-            ) : null}
+            {diffError ? <Label>{diffError}</Label> : null}
             {deltaHTML.length > MAX_DIFF_LENGTH ? (
               <Label>The configuration difference is too large to display</Label>
             ) : (
@@ -130,6 +143,28 @@ const Activation = () => {
           <Spinner color="primary" />
         </div>
       ) : null}
+      {activeConfig && (
+        <ReactJson
+          src={activeConfig}
+          name="Active configuration"
+          collapsed
+          displayObjectSize={false}
+          displayDataTypes={false}
+          enableClipboard
+          collapseStringsAfterLength={100}
+        />
+      )}
+      {newConfig && isModified && (
+        <ReactJson
+          src={newConfig}
+          name="New configuration"
+          collapsed
+          displayObjectSize={false}
+          displayDataTypes={false}
+          enableClipboard
+          collapseStringsAfterLength={100}
+        />
+      )}
     </>
   )
 }
