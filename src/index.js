@@ -23,7 +23,7 @@ if (cluster.isMaster) {
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
   logger.info(`Starting OIBus version: ${VERSION}`)
-  const worker = cluster.fork()
+  cluster.fork()
 
   cluster.on('exit', (sourceWorker, code, signal) => {
     if (signal) {
@@ -35,12 +35,12 @@ if (cluster.isMaster) {
     cluster.fork()
   })
   // Handle messages from the worker
-  worker.on('message', (msg) => {
+  cluster.on('message', (_worker, msg) => {
     if (msg.type === 'logMemoryUsage') {
       logger.info(`memoryUsage worker: ${memStringify(msg.memoryUsage)}`)
       logger.info(`memoryUsage master:', ${memStringify(process.memoryUsage())}`)
     } else {
-      logger.warning(`Unknown message type received from Worker: ${msg.type}`)
+      logger.warn(`Unknown message type received from Worker: ${msg.type}`)
     }
   })
 } else {

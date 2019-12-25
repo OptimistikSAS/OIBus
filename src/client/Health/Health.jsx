@@ -1,7 +1,6 @@
 import React from 'react'
 import { Label, Row } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
-import ReactJson from 'react-json-view'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -73,18 +72,6 @@ const Health = () => {
         </Label>
       </Row>
       <Row>{tableRows && <Table headers={[]} rows={tableRows} />}</Row>
-      <Row>
-        {config && (
-          <ReactJson
-            src={config}
-            name={null}
-            collapsed
-            displayObjectSize={false}
-            displayDataTypes={false}
-            enableClipboard={false}
-          />
-        )}
-      </Row>
     </>
   )
 }
