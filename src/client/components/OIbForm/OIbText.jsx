@@ -13,7 +13,7 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
   }
   // if no label, we are in a table so we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
-  if (inline) {
+  if (inline && style) {
     style.display = 'inline-block'
   }
   const validCheck = valid(value)

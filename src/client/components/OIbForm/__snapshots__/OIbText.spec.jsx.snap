@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbText check Texte with inline 1`] = `"<div class=\\"form-group\\"><label for=\\"name\\" class=\\"\\">label</label><input type=\\"text\\" id=\\"name\\" name=\\"name\\" value=\\"a text\\" class=\\"oi-form-input form-control\\"/><div class=\\"invalid-feedback\\"></div></div>"`;
+
+exports[`OIbText check Texte with too short value 1`] = `"<div class=\\"form-group\\"><label for=\\"name\\" class=\\"\\">label</label><input type=\\"text\\" id=\\"name\\" name=\\"name\\" value=\\"a text\\" class=\\"oi-form-input is-invalid form-control\\"/><div class=\\"invalid-feedback\\">Value length should be at least 10</div></div>"`;
+
+exports[`OIbText check Texte with value="a text" 1`] = `"<div class=\\"form-group\\"><label for=\\"name\\" class=\\"\\">label</label><input type=\\"text\\" id=\\"name\\" name=\\"name\\" value=\\"a text\\" class=\\"oi-form-input form-control\\"/><div class=\\"invalid-feedback\\"></div></div>"`;
