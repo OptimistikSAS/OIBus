@@ -42,7 +42,7 @@
     "form-data": "3.0.0",
     "humanize-string": "2.1.0",
     "jsmodbus": "4.0.0",
-    "jsondiffpatch": "0.3.11",
+    "jsondiffpatch": "0.4.1",
     "koa": "2.11.0",
     "koa-bodyparser": "4.2.1",
     "koa-helmet": "5.2.0",
