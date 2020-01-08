@@ -1,5 +1,4 @@
 const fs = require('fs')
-
 const ApiHandler = require('../ApiHandler.class')
 
 class Console extends ApiHandler {
@@ -14,6 +13,7 @@ class Console extends ApiHandler {
     super(applicationParameters, engine)
     this.canHandleValues = true
     this.canHandleFiles = true
+    this.verbose = applicationParameters.Console.verbose || false
   }
 
   /**
@@ -23,7 +23,11 @@ class Console extends ApiHandler {
    */
   /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
-    console.table(values, ['pointId', 'timestamp', 'data'])
+    if (this.verbose) {
+      console.table(values, ['pointId', 'timestamp', 'data'])
+    } else {
+      console.info(`(${values.length})`)
+    }
     return true
   }
 
