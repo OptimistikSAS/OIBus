@@ -21,7 +21,6 @@ class Console extends ApiHandler {
    * @param {object[]} values - The values
    * @return {Promise} - The handle status
    */
-  /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
     if (this.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data'])
