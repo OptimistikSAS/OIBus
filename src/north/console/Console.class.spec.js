@@ -5,8 +5,9 @@ const config = require('../../config/defaultConfig.json')
 // Mock nodejs fs api
 jest.mock('fs')
 
-// Spy on console table
+// Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})
+jest.spyOn(global.console, 'info').mockImplementation(() => {})
 
 // Mock database service
 jest.mock('../../services/database.service', () => {})
@@ -25,15 +26,33 @@ beforeEach(() => {
 })
 
 describe('Console north', () => {
-  const consoleNorth = new Console({}, engine)
   const timestamp = new Date().toISOString()
 
   it('should be properly initialized', () => {
+    const consoleNorth = new Console({ Console: {} }, engine)
+
     expect(consoleNorth.canHandleFiles).toBeTruthy()
     expect(consoleNorth.canHandleFiles).toBeTruthy()
+    expect(consoleNorth.verbose).toBeFalsy()
   })
 
-  it('should properly handle values', () => {
+  it('should properly handle values in non verbose mode', () => {
+    const consoleNorth = new Console({ Console: { verbose: false } }, engine)
+    const values = [
+      {
+        pointId: 'pointId',
+        timestamp,
+        data: { value: 666, quality: 'good' },
+      },
+    ]
+    consoleNorth.handleValues(values)
+
+    expect(console.info).toBeCalledWith('(1)')
+    expect(console.table).not.toHaveBeenCalled()
+  })
+
+  it('should properly handle values in verbose mode', () => {
+    const consoleNorth = new Console({ Console: { verbose: true } }, engine)
     const values = [
       {
         pointId: 'pointId',
@@ -44,9 +63,11 @@ describe('Console north', () => {
     consoleNorth.handleValues(values)
 
     expect(console.table).toBeCalledWith(values, ['pointId', 'timestamp', 'data'])
+    expect(console.info).not.toHaveBeenCalled()
   })
 
   it('should properly handle file', () => {
+    const consoleNorth = new Console({ Console: {} }, engine)
     const filePath = '/path/to/file/example.file'
 
     fs.statSync.mockReturnValue({ size: 666 })
