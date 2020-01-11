@@ -7,7 +7,7 @@ jest.mock('fs')
 
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})
-jest.spyOn(global.console, 'info').mockImplementation(() => {})
+jest.spyOn(process.stdout, 'write').mockImplementation(() => {})
 
 // Mock database service
 jest.mock('../../services/database.service', () => {})
@@ -47,7 +47,7 @@ describe('Console north', () => {
     ]
     consoleNorth.handleValues(values)
 
-    expect(console.info).toBeCalledWith('(1)')
+    expect(process.stdout.write).toBeCalledWith('(1)')
     expect(console.table).not.toHaveBeenCalled()
   })
 
@@ -63,7 +63,7 @@ describe('Console north', () => {
     consoleNorth.handleValues(values)
 
     expect(console.table).toBeCalledWith(values, ['pointId', 'timestamp', 'data'])
-    expect(console.info).not.toHaveBeenCalled()
+    expect(process.stdout.write).not.toHaveBeenCalled()
   })
 
   it('should properly handle file', () => {
