@@ -25,7 +25,7 @@ class Console extends ApiHandler {
     if (this.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data'])
     } else {
-      console.info(`(${values.length})`)
+      process.stdout.write(`(${values.length})`)
     }
     return true
   }
