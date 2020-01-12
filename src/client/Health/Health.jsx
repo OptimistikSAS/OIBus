@@ -14,7 +14,7 @@ const Health = () => {
   const { activeConfig } = React.useContext(ConfigContext)
   const config = JSON.parse(JSON.stringify(activeConfig))
   utils.replaceValues(config, ['password', 'secretKey'], '******')
-  const engineName = activeConfig ? activeConfig.engine.engineName : ''
+  const engineName = activeConfig?.engine.engineName ?? ''
 
   /**
    * Acquire the status
