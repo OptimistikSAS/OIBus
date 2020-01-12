@@ -7,16 +7,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [10.x]
-
     steps:
     - uses: actions/checkout@v1
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 12
+        registry-url: https://npm.pkg.github.com/
+        scope: '@optimistiksas'
     - name: npm install, build, and test
       run: |
         npm ci
@@ -25,4 +23,4 @@ jobs:
         npm run build-client
         npm run build-win
       env:
-        CI: true
+        NODE_AUTH_TOKEN: ${{secrets.OICONVERT_TOKEN}}`
