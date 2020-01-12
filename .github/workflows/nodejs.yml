@@ -9,12 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 12
-        registry-url: https://npm.pkg.github.com/
-        scope: '@optimistiksas'
+        node-version: 12.x
     - name: Authenticate with GitHub package registry
       run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.OICONVERT_TOKEN }}" > ~/.npmrc
     - name: npm install, build, and test
