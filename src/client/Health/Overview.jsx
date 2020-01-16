@@ -5,12 +5,12 @@ import { ConfigContext } from '../context/configContext.jsx'
 
 const Overview = () => {
   const { activeConfig } = React.useContext(ConfigContext)
-  const applications = activeConfig && activeConfig.north && activeConfig.north.applications
-  const dataSources = activeConfig && activeConfig.south && activeConfig.south.dataSources
+  const applications = activeConfig?.north?.applications
+  const dataSources = activeConfig?.south?.dataSources
   return (
     <Container style={{ marginBottom: '5px' }}>
       <Row>
-        {applications && applications.map((application) => (
+        {applications?.map((application) => (
           <Col key={application.applicationId} className={`tight text-${application.enabled ? 'success' : 'muted'}`}>
             <div className="oi-box">
               <Link to={`/north/${application.applicationId}`}>
@@ -29,7 +29,7 @@ const Overview = () => {
         </Col>
       </Row>
       <Row>
-        {dataSources && dataSources.map((dataSource) => (
+        {dataSources?.map((dataSource) => (
           <Col key={dataSource.dataSourceId} className={`tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
             <div className="oi-box">
               <Link to={`/south/${dataSource.dataSourceId}`}>
