@@ -9,6 +9,11 @@ const moment = require('moment-timezone')
 const getStatus = async (ctx) => {
   const apisCacheStats = await ctx.app.engine.cache.getCacheStatsForApis()
   const protocolsCacheStats = await ctx.app.engine.cache.getCacheStatsForProtocols()
+  const memoryUsage = ctx.app.engine.getMemoryUsage()
+
+  const freeMemory = Number(os.freemem() / 1024 / 1024).toFixed(2)
+  const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
+  const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
   const status = {
     Version: ctx.app.engine.getVersion(),
@@ -18,7 +23,8 @@ const getStatus = async (ctx) => {
     'Node Version': process.version,
     Executable: process.execPath,
     ConfigFile: ctx.app.engine.configService.getConfigurationFileLocation(),
-    'Free/Total Memory/%': `${os.freemem()}/${os.totalmem()}/${Number((os.freemem() / os.totalmem()) * 100).toFixed(2)}%`,
+    'Free/Total Memory/%': `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
+    ...memoryUsage,
     'Process Id': process.pid,
     'Up time': moment.duration(process.uptime(), 'seconds').humanize(),
     Hostname: os.hostname(),

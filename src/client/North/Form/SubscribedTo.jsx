@@ -55,6 +55,9 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   )
 }
 
-SubscribedTo.propTypes = { subscribedTo: PropTypes.arrayOf(String).isRequired }
+SubscribedTo.propTypes = {
+  subscribedTo: PropTypes.arrayOf(String).isRequired,
+  applicationIndex: PropTypes.number.isRequired,
+}
 
 export default SubscribedTo

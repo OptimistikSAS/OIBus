@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
-import OIbCheckBox from './OIbCheckBox.jsx'
+import OIbText from './OIbText.jsx'
+import { minLength } from '../../../services/validation.service'
 
 let container
 beforeEach(() => {
@@ -15,40 +16,41 @@ afterEach(() => {
   container = null
 })
 
-describe('OIbCheckBox', () => {
-  test('check CheckBox with value(=true)', () => {
+describe('OIbText', () => {
+  test('check Texte with value="a text"', () => {
     act(() => {
-      ReactDOM.render(<OIbCheckBox
+      ReactDOM.render(<OIbText
         label="label"
-        value
+        value="a text"
         name="name"
         onChange={() => (1)}
-        defaultValue={false}
+        defaultValue="default text"
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check CheckBox with value(=true) and switch mode', () => {
+  test('check Texte with too short value', () => {
     act(() => {
-      ReactDOM.render(<OIbCheckBox
+      ReactDOM.render(<OIbText
         label="label"
-        value
         name="name"
         onChange={() => (1)}
-        defaultValue={false}
-        switchButton
+        value="a text"
+        valid={minLength(10)}
+        defaultValue="default text"
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check CheckBox with value(=false)', () => {
+  test('check Texte with inline', () => {
     act(() => {
-      ReactDOM.render(<OIbCheckBox
+      ReactDOM.render(<OIbText
         label="label"
-        value={false}
         name="name"
         onChange={() => (1)}
-        defaultValue={false}
+        value="a text"
+        defaultValue="default text"
+        inline
       />, container)
     })
     expect(container).toMatchSnapshot()
