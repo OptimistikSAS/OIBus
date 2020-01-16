@@ -6,17 +6,14 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [12.x]
-
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 12.x
+    - name: Authenticate with GitHub package registry
+      run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.OICONVERT_TOKEN }}" > ~/.npmrc
     - name: npm install, build, and test
       run: |
         npm ci
@@ -24,5 +21,4 @@ jobs:
         npm run lint
         npm run build-client
         npm run build-win
-      env:
-        CI: true
+

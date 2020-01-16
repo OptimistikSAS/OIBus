@@ -1,7 +1,71 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `"<div class=\\"form-group\\"><label class=\\"\\">label</label><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" style=\\"position:relative;left:1.5rem\\" class=\\"oi-form-input form-check-input\\"/></div>"`;
+exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+    >
+      label
+    </label>
+    <input
+      class="oi-form-input form-check-input"
+      id="name"
+      name="name"
+      style="position: relative; left: 1.5rem;"
+      type="checkbox"
+    />
+  </div>
+</div>
+`;
 
-exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `"<div class=\\"form-group\\"><label class=\\"\\">label</label><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" checked=\\"\\" style=\\"position:relative;left:1.5rem\\" class=\\"oi-form-input form-check-input\\"/></div>"`;
+exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+    >
+      label
+    </label>
+    <input
+      checked=""
+      class="oi-form-input form-check-input"
+      id="name"
+      name="name"
+      style="position: relative; left: 1.5rem;"
+      type="checkbox"
+    />
+  </div>
+</div>
+`;
 
-exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `"<div class=\\"form-group\\"><div class=\\"custom-switch custom-control\\"><input type=\\"checkbox\\" id=\\"name\\" name=\\"name\\" checked=\\"\\" color=\\"secondary\\" class=\\"custom-control-input\\"/><label class=\\"custom-control-label\\" for=\\"name\\">label</label></div></div>"`;
+exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <div
+      class="custom-switch custom-control"
+    >
+      <input
+        checked=""
+        class="custom-control-input"
+        color="secondary"
+        id="name"
+        name="name"
+        type="checkbox"
+      />
+      <label
+        class="custom-control-label"
+        for="name"
+      >
+        label
+      </label>
+    </div>
+  </div>
+</div>
+`;

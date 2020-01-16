@@ -1,6 +1,6 @@
 import React from 'react'
-import Enzyme, { shallow } from 'enzyme'
-import Adapter from 'enzyme-adapter-react-16'
+import ReactDOM from 'react-dom'
+import { act } from 'react-dom/test-utils'
 
 // need BrowserRouter so Link component is not complaining
 import { BrowserRouter } from 'react-router-dom'
@@ -9,13 +9,24 @@ import Overview from './Overview.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
-Enzyme.configure({ adapter: new Adapter() })
+let container
+beforeEach(() => {
+  container = document.createElement('div')
+  document.body.appendChild(container)
+})
+
+afterEach(() => {
+  document.body.removeChild(container)
+  container = null
+})
 
 React.useContext = jest.fn().mockReturnValue({ activeConfig })
 
 describe('Overview', () => {
   test('display overview based on config', () => {
-    const wrapper = shallow(<BrowserRouter><Overview /></BrowserRouter>)
-    expect(wrapper.html()).toMatchSnapshot()
+    act(() => {
+      ReactDOM.render(<BrowserRouter><Overview /></BrowserRouter>, container)
+    })
+    expect(container).toMatchSnapshot()
   })
 })
