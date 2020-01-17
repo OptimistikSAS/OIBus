@@ -22,4 +22,6 @@ jobs:
         npm run lint
         npm run build-client
         npm run build-win
+    - name: Jest Code Coverage Report
+      uses: ziishaned/jest-reporter-action@0.1.1
 
