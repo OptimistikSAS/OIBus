@@ -24,7 +24,8 @@ jobs:
         npm run build-win
     - name: Jest Code Coverage Report
       uses: ziishaned/jest-reporter-action@0.1.1
-      with:
-        github-token: ${{ secrets.OICONVERT_TOKEN }}
+      env:
+          NODE_AUTH_TOKEN: ${{secrets.OICONVERT_TOKEN}}
+
 
 
