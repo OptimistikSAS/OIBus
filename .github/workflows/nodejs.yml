@@ -25,7 +25,5 @@ jobs:
     - name: Jest Code Coverage Report
       uses: ziishaned/jest-reporter-action@0.1.1
       with:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
-
-
+        # Github token
+        github-token: ${{ secrets.GITHUB_TOKEN }}
