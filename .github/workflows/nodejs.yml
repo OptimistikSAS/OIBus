@@ -27,3 +27,4 @@ jobs:
       with:
         # Github token
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        test-command: "npm jest --coverage"
