@@ -17,5 +17,5 @@ jobs:
       uses: ziishaned/jest-reporter-action@0.1.1
       with:
         # Github token
-        github-token: 
+        github-token: ${{ secrets.GITHUB_TOKEN }}
   
