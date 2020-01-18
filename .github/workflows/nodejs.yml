@@ -27,4 +27,4 @@ jobs:
       with:
         # Github token
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        test-command: "npx jest --coverage"
+        test-command: "npx jest"
