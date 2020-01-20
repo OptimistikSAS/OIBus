@@ -29,6 +29,11 @@ const validation = {
       username: notEmpty(),
       password: hasLengthBetween(0, 256),
     },
+    aliveSignal: {
+      host: notEmpty('Host'),
+      id: notEmpty('Id'),
+      frequency: inRange(60, 3600),
+    },
   },
 }
 

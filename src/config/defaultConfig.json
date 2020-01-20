@@ -43,7 +43,19 @@
         "cronTime": "listen"
       }
     ],
-    "proxies" : []
+    "proxies" : [],
+    "aliveSignal": {
+      "enabled": false,
+      "host": "",
+      "authentication": {
+        "type": "Basic",
+        "username": "",
+        "password": ""
+      },
+      "id": "OIBus",
+      "frequency": 600,
+      "proxy": ""
+    }
   },
   "south": {
     "dataSources": []

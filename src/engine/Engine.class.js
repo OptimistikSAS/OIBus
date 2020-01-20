@@ -1,5 +1,8 @@
 const timexe = require('timexe')
 const path = require('path')
+const os = require('os')
+
+const moment = require('moment-timezone')
 
 const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
@@ -21,7 +24,6 @@ apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
-apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 
 // Engine classes
@@ -29,6 +31,7 @@ const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
+const AliveSignal = require('./AliveSignal.class')
 
 /**
  *
@@ -111,6 +114,9 @@ class Engine {
     this.jobs = []
 
     this.memoryStats = {}
+
+    // AliveSignal
+    this.aliveSignal = new AliveSignal(this)
   }
 
   /**
@@ -239,6 +245,10 @@ class Engine {
         }
       }
     })
+
+    // 6. Start AliveSignal
+    this.aliveSignal.start()
+
     this.logger.info('OIBus started')
   }
 
@@ -247,6 +257,9 @@ class Engine {
    * @return {void}
    */
   async stop() {
+    // Stop AliveSignal
+    this.aliveSignal.stop()
+
     // Stop timers
     this.jobs.forEach((id) => {
       timexe.remove(id)
@@ -359,6 +372,39 @@ class Engine {
       result[key] = `${min}/${current}/${max} MB`
       return result
     }, {})
+  }
+
+  /**
+   * Get status information.
+   * @returns {object} - The status information
+   */
+  async getStatus() {
+    const apisCacheStats = await this.cache.getCacheStatsForApis()
+    const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
+    const memoryUsage = this.getMemoryUsage()
+
+    const freeMemory = Number(os.freemem() / 1024 / 1024).toFixed(2)
+    const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
+    const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
+
+    return {
+      Version: this.getVersion(),
+      Architecture: process.arch,
+      CurrentDirectory: process.cwd(),
+      'Node Version': process.version,
+      Executable: process.execPath,
+      'Configuration File': this.configService.getConfigurationFileLocation(),
+      'Free/Total Memory/%': `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
+      ...memoryUsage,
+      'Process Id': process.pid,
+      'Up time': moment.duration(process.uptime(), 'seconds').humanize(),
+      Hostname: os.hostname(),
+      'OS release': os.release(),
+      'OS type': os.type(),
+      Copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+      ...apisCacheStats,
+      ...protocolsCacheStats,
+    }
   }
 }
 

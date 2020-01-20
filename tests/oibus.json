@@ -44,7 +44,7 @@
         "proxies": [
             {
                 "name": "sss",
-                "protocol": "",
+                "protocol": "http",
                 "host": "hhh",
                 "port": 123,
                 "username": "uuu",
@@ -59,7 +59,19 @@
                 "password": "VSLghj1ix8oUWfYF5RipmlBudZWoUcMgQiSEdo30MtzTy5/HOyhO4Yo19XsBmIynfBRMEeqPkBGCqO4BbHtY9JgxUnRqnimgTHjfbCKbgcqEZqVNuzubLhBCJT24D30DW5xGTqKOAD7vtqZp+bh1/PUwzIqP++RwK4daJVcSGZcWei/XqmZUBuCnQf/d1YachmnPXY1/qPNANExWoilVzrepkgpEI0Ve35BCOwVi/ZvJG6a0zL9ehXSHf1BuUF8ThyMLUI+yttYo6wvsq77gkZvEi0zdeJk82ukhMePAEZV804ikL2BrGp+J1F0A2MFP3ruY8Cn9f2DviBsQEO0PyBS4v0Z87od8SNx+wEv41UnMNhO0R7/Su1dBttZrBqq44iWJTPrGfjIVEynkSpfHcA/H6EOObg2azshdX/vhgPwLKlvcxVycetvOguGmsPsUx0nRB3HGnlO/21qidRM4vCfw1ZPI/5BFZkeTj/TwaK9ACEDs3vCEafid3FmGtLM+qk10t/mCE6TJ574zU8UZe/JNeJqVGBnoX5aug+ohCWB6ZHPfucLWsfne0L6zihQE2mEXY2cqpWWXoMDbm5rcBwQLntdvRWR2j64lnYwpLlRZrKjkpiwC2+44hGpfKtJsmTU9XfzMp/9lv3PJ2NQzqcmF+ue2e/yfXOvUA9fMxKI="
             }
         ],
-        "engineName": "OIBus"
+        "engineName": "OIBus",
+        "aliveSignal": {
+            "enabled": true,
+            "host": "https://demo.oianalytics.fr/api/optimistik/oibus",
+            "authentication": {
+                "type": "Basic",
+                "username": "QFPELALDNSUO6BUV8SJ",
+                "password": "GIkIodKLVSr36vhQEaZqo/fRYIpfjcbDgJeGPgPz3SV+zUFuDACKn1CYdtsI6OZXo/NMgJu6gA5qpLW91c4TmKOBkmTSRmQTCpfYTERkaxfTyUmCP34OqardyLlthuM/DemsjzXTyfbgbUrT6OaaM4VtUk2WAImvoPBrZrZHNfBNPmzJLoRUXAh2tEAsZvLMI7IV0yV+xizqgaAfmmR7NSVYQarC7H42olsYSQotQCHw72vtmnYZOcd+dcPV0vw36Rs83hhOFVZB4HNdWrGfoukkon9q+FvL/GBwjm1g7DQN3DXX3Ym32Hu4UP9EbrPCYnVkD88WUSzIHmRiZqiTYktGiUMYbRN0SoZ98d0aqqHrdc3II78Xxz9g7ll3BVAtHMnJ5akBict4WyWNdwnXa5quUimOtOIUilULtKmzwwTujwu6WOaMmCBR+JoNR9+S4YrmeKP7Cyz7RtJcysIt2USRPIUqPZDHJ1iu5Bc0rVkU5qQsHeBtyWpUPRGYNiQSZXbM3jT4yTDfdjNDltyto773k4JQ0oahdmYnXU9hpqzgWWkoIZ1OAHlKFWtgT/lOgcholkyYKsaOMRTxkC7w5UUsiCHun6BOdFfKujbs+wHYDo2O9vfWM9O60UkHkaWwKM0J9gP1QAgvkdFfPck5yuGUp8yYL0GbSbrp6SKpbaA="
+            },
+            "id": "OIBus-kukukk",
+            "frequency": 10,
+            "proxy": ""
+        }
     },
     "south": {
         "dataSources": [
@@ -93,7 +105,7 @@
             {
                 "dataSourceId": "MQTTServer",
                 "protocol": "MQTT",
-                "enabled": true,
+                "enabled": false,
                 "MQTT": {
                     "port": 8883,
                     "password": "BHeNoaflR+Ytjumprg/W3puiHKyQHsuOse0jII3QQCsEM9pw2h/5UQu/+4vrJabeCzKBpaX/k4veZbmrYEf8+XtzUHlm+uvMBj/r33HGhTAyqFJMrj6QIVvhW8jw+1aGR2jDgVOeCEEIV1jsfvhsNSdpE6lVJilkrWvOoLi1j0DuY8OuJm20x+pvFCj0EuQ2Dzyl+C6p7XhOGsJRZ5SCVnGLVqJvp7JTbNzhqbso1AF0Vtkznl14pxHCKxR2k+tfcSQAHE8wCgaAsgtt9auxn0im3pn0PdCzTGWZ+QiTC4cYtPb7YFgFj9MX25ZJpveneYfnABBKyVqq/Ubi/TjCbB5p7OymJUrtUDWm0mxSrU5Wb16Pw0fZbd+dQJFbd7HI8pSXzgHwXtaKwxDr528zSRdMofJKaXSJaEdetpeYvmZU5tywkirLTJYDfxXXzHvO5QZQb5gu6s4yo8RXv6R3kbfaDX7JkvKjzPyjXu2mZQ846CX9reNAXn7Itis/iT57hnrDNkIHVLsoblO4y8ZU9YJTDFWCzajsbysaq0dDcdGyvYuKqieaRGKF6M3uwG8o+vcdiZHuAhAn83EOxUQiglTehoGivUEkNExNQMfQlqK8ileOA+L2rZOggbiI6IgeP1szEmDFo7NfURIs7uP5IuJoKf0us3YnfiORNG/mTds=",
