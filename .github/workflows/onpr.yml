@@ -1,6 +1,6 @@
 name: Node CI
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
@@ -27,4 +27,4 @@ jobs:
       with:
         # Github token
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        test-command: "npx jest --coverage"
+        test-command: "npx jest"
