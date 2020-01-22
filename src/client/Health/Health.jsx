@@ -31,6 +31,7 @@ const Health = () => {
         setAlert({ text: error.message, type: 'danger' })
       })
   }
+
   /**
    * Fetch status after render
    * @returns {void}
@@ -39,16 +40,48 @@ const Health = () => {
     fetchStatus()
   }, [])
 
-  const tableRows = Object.keys(status).map((key) => [
+  /**
+   * Generate string value from on object.
+   * @param {Object[]} data - The object
+   * @return {string} - The string value
+   */
+  const generateStringValueFromObject = (data) => {
+    let stringValue = ''
+    Object.entries(data).forEach(([key, value]) => {
+      if (key !== 'name') {
+        stringValue += stringValue ? ` / ${key}: ${value}` : `${key}: ${value}`
+      }
+    })
+    return stringValue
+  }
+
+  /**
+   * Generate row entry for the status table.
+   * @param {string} key - The key
+   * @param {string} value - The value
+   * @return {[{name: *, value: *}, {name: string, value: *}]} - The table row
+   */
+  const generateRowEntry = (key, value) => [
     {
       name: key,
       value: key,
     },
     {
       name: 'value',
-      value: status[key],
+      value,
     },
-  ])
+  ]
+
+  const tableRows = []
+  Object.keys(status).forEach((key) => {
+    if (Array.isArray(status[key])) {
+      status[key].forEach((entry) => {
+        tableRows.push(generateRowEntry(entry.name, generateStringValueFromObject(entry)))
+      })
+    } else {
+      tableRows.push(generateRowEntry(key, status[key]))
+    }
+  })
 
   return (
     <>

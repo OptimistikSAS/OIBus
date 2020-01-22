@@ -84,7 +84,6 @@ class AliveSignal {
 
     const body = await this.engine.getStatus()
     body.id = this.id
-    console.log(body)
     const fetchOptions = {
       method: 'POST',
       body: JSON.stringify(body),

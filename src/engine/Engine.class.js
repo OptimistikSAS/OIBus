@@ -388,22 +388,22 @@ class Engine {
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
     return {
-      Version: this.getVersion(),
-      Architecture: process.arch,
-      CurrentDirectory: process.cwd(),
-      'Node Version': process.version,
-      Executable: process.execPath,
-      'Configuration File': this.configService.getConfigurationFileLocation(),
-      'Free/Total Memory/%': `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
+      version: this.getVersion(),
+      architecture: process.arch,
+      currentDirectory: process.cwd(),
+      nodeVersion: process.version,
+      executable: process.execPath,
+      configurationFile: this.configService.getConfigurationFileLocation(),
+      memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
-      'Process Id': process.pid,
-      'Up time': moment.duration(process.uptime(), 'seconds').humanize(),
-      Hostname: os.hostname(),
-      'OS release': os.release(),
-      'OS type': os.type(),
-      Copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
-      ...apisCacheStats,
-      ...protocolsCacheStats,
+      processId: process.pid,
+      uptime: moment.duration(process.uptime(), 'seconds').humanize(),
+      hostname: os.hostname(),
+      osRelease: os.release(),
+      osType: os.type(),
+      apisCacheStats,
+      protocolsCacheStats,
+      copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
     }
   }
 }
