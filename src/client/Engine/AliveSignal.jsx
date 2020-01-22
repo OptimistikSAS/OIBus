@@ -25,14 +25,25 @@ const AliveSignal = ({ onChange, aliveSignal }) => (
       </Col>
     </Row>
     <Row>
-      <Col md={4}>
+      <Col md={2}>
         <OIbText
           label="Host"
           name="engine.aliveSignal.host"
           value={aliveSignal.host}
           defaultValue=""
           valid={validation.engine.aliveSignal.host}
-          help={<div>Where to send the alive signal</div>}
+          help={<div>The host to send the alive signal</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={2}>
+        <OIbText
+          label="Endpoint"
+          name="engine.aliveSignal.endpoint"
+          value={aliveSignal.endpoint}
+          defaultValue=""
+          valid={validation.engine.aliveSignal.endpoint}
+          help={<div>The endpoint send the alive signal</div>}
           onChange={onChange}
         />
       </Col>

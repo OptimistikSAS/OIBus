@@ -31,6 +31,7 @@ const validation = {
     },
     aliveSignal: {
       host: notEmpty('Host'),
+      endpoint: notEmpty('Endpoint'),
       id: notEmpty('Id'),
       frequency: inRange(60, 3600),
     },

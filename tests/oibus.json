@@ -64,8 +64,11 @@
             "enabled": false,
             "host": "",
             "endpoint": "/api/optimistik/oibus/info",
-            "username": "",
-            "password": "",
+            "authentication": {
+                "type": "Basic",
+                "username": "",
+                "password": ""
+            },
             "id": "",
             "frequency": 300,
             "proxy": ""

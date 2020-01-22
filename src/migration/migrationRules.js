@@ -106,16 +106,9 @@ module.exports = {
     })
   },
   6: (config) => {
-    const aliveSignalConfig = {
-      enabled: false,
-      host: '',
-      endpoint: '/api/optimistik/oibus/info',
-      username: '',
-      password: '',
-      id: '',
-      frequency: 300,
-      proxy: '',
-    }
+    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+    const aliveSignalConfig = defaultConfig.engine.aliveSignal
+
     const aliveSignalIds = []
     config.north.applications.forEach((application) => {
       if (application.api === 'AliveSignal') {
@@ -125,8 +118,9 @@ module.exports = {
           aliveSignalConfig.enabled = application.enabled
           aliveSignalConfig.host = host.origin
           aliveSignalConfig.endpoint = host.pathname
-          aliveSignalConfig.username = application.AliveSignal.authentication.username
-          aliveSignalConfig.password = application.AliveSignal.authentication.password
+          aliveSignalConfig.authentication.type = application.AliveSignal.authentication.type
+          aliveSignalConfig.authentication.username = application.AliveSignal.authentication.username
+          aliveSignalConfig.authentication.password = application.AliveSignal.authentication.password
           aliveSignalConfig.id = application.AliveSignal.id
           aliveSignalConfig.frequency = application.AliveSignal.frequency
           aliveSignalConfig.proxy = application.AliveSignal.proxy
