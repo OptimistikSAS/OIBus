@@ -26,8 +26,9 @@ class AliveSignal {
     this.host = `${host}${endpoint}`
     this.authentication = authentication
     this.id = id
-    this.frequency = frequency
+    this.frequency = 1000 * frequency
     this.proxy = engineConfig.proxies.find(({ name }) => name === proxy)
+    this.timer = null
   }
 
   /**
@@ -37,7 +38,7 @@ class AliveSignal {
   start() {
     if (this.enabled) {
       this.logger.info('Initializing')
-      this.timer = setTimeout(this.pingCallback.bind(this), 1000 * this.frequency)
+      this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
     }
   }
 
@@ -51,22 +52,36 @@ class AliveSignal {
     }
   }
 
-  async pingCallback() {
+  /**
+   * Generate request headers
+   * @param {object} authentication - Authentication parameters
+   * @return {{'Content-Type': string}} - The headers
+   */
+  generateHeaders(authentication) {
     const headers = { 'Content-Type': 'application/json' }
-    let agent = null
 
-    // Generate authentication header
-    if (this.authentication.type === 'Basic') {
-      const decryptedPassword = this.engine.decryptPassword(this.authentication.password)
+    if (authentication.type === 'Basic') {
+      const decryptedPassword = this.engine.decryptPassword(authentication.password)
       if (decryptedPassword == null) {
         this.logger.error(`Error decrypting auth password for ${this.constructor.name}`)
       }
-      const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
+      const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
       headers.Authorization = `Basic ${basic}`
     }
 
-    if (this.proxy) {
-      const { protocol, host, port, username = null, password = null } = this.proxy
+    return headers
+  }
+
+  /**
+   * Construct proxy agent
+   * @param {object} proxy - The proxy parameters
+   * @return {null} - The proxy agent
+   */
+  configureProxyAgent(proxy) {
+    let agent = null
+
+    if (proxy) {
+      const { protocol, host, port, username = null, password = null } = proxy
 
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
@@ -82,11 +97,24 @@ class AliveSignal {
       agent = new ProxyAgent(proxyOptions)
     }
 
-    const body = await this.engine.getStatus()
-    body.id = this.id
+    return agent
+  }
+
+  /**
+   * Callback to send the alive signal.
+   * @return {Promise<void>} - The response
+   */
+  async pingCallback() {
+    const headers = this.generateHeaders(this.authentication)
+    const agent = this.configureProxyAgent(this.proxy)
+
+    const status = await this.engine.getStatus()
+    status.id = this.id
+    const body = JSON.stringify(status)
+
     const fetchOptions = {
       method: 'POST',
-      body: JSON.stringify(body),
+      body,
       headers,
       agent,
     }
@@ -102,7 +130,7 @@ class AliveSignal {
       this.logger.error(error)
     }
 
-    this.timer = setTimeout(this.pingCallback.bind(this), 1000 * this.frequency)
+    this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
   }
 }
 
