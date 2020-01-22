@@ -20,11 +20,15 @@ class AliveSignal {
     this.logger = new Logger(this.constructor.name)
     const { engineConfig } = this.engine.configService.getConfig()
 
-    const { enabled, host, authentication, id, frequency, proxy = null } = engineConfig.aliveSignal
+    const { enabled, host, endpoint, username, password, id, frequency, proxy = null } = engineConfig.aliveSignal
 
     this.enabled = enabled
-    this.host = host
-    this.authentication = authentication
+    this.host = `${host}${endpoint}`
+    this.authentication = {
+      type: 'Basic',
+      username,
+      password,
+    }
     this.id = id
     this.frequency = frequency
     this.proxy = engineConfig.proxies.find(({ name }) => name === proxy)

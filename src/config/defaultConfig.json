@@ -47,13 +47,11 @@
     "aliveSignal": {
       "enabled": false,
       "host": "",
-      "authentication": {
-        "type": "Basic",
-        "username": "",
-        "password": ""
-      },
-      "id": "OIBus",
-      "frequency": 600,
+      "endpoint": "/api/optimistik/oibus/info",
+      "username": "",
+      "password": "",
+      "id": "",
+      "frequency": 300,
       "proxy": ""
     }
   },
