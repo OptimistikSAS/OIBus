@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbSelect check Select with short value="text" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="option1"
+      >
+        option1
+      </option>
+      <option
+        value="option2"
+      >
+        option2
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Value length should be at least 10
+    </div>
+  </div>
+</div>
+`;
+
+exports[`OIbSelect check Select with value="some text" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="option1"
+      >
+        option1
+      </option>
+      <option
+        value="option2"
+      >
+        option2
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbSelect check Select with value="some text" and help 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="option1"
+      >
+        option1
+      </option>
+      <option
+        value="option2"
+      >
+        option2
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    />
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        helpt text
+      </div>
+    </small>
+  </div>
+</div>
+`;
+
+exports[`OIbSelect check Select with value="some text" and no label 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <select
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="option1"
+      >
+        option1
+      </option>
+      <option
+        value="option2"
+      >
+        option2
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;

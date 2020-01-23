@@ -49,7 +49,7 @@ const reducer = (state, action) => {
       throw new Error(`unknown action type: ${type}`)
   }
 }
-const configInitialState = null
+const configInitialState = {}
 const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
