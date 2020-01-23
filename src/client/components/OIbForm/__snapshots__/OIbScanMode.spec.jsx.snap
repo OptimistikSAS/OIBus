@@ -1,0 +1,104 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbScanMode check ScanMode with no label 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <select
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="value"
+      >
+        value
+      </option>
+      <option
+        value=""
+      />
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Invalid scan mode
+    </div>
+  </div>
+</div>
+`;
+
+exports[`OIbScanMode check ScanMode with value="value" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="value"
+      >
+        value
+      </option>
+      <option
+        value=""
+      />
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Invalid scan mode
+    </div>
+  </div>
+</div>
+`;
+
+exports[`OIbScanMode check ScanMode with value="value" and help 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="value"
+      >
+        value
+      </option>
+      <option
+        value=""
+      />
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Invalid scan mode
+    </div>
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        help text
+      </div>
+    </small>
+  </div>
+</div>
+`;
