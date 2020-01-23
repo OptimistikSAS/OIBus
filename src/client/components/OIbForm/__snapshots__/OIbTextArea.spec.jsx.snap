@@ -106,7 +106,6 @@ exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
   </div>
 </div>
 `;
-
 exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
 <div>
   <div
