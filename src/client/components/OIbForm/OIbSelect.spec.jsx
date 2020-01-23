@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
-import OIbTextArea from './OIbTextArea.jsx'
+import OIbSelect from './OIbSelect.jsx'
 import { minLength } from '../../../services/validation.service'
 
 let container
@@ -16,65 +16,56 @@ afterEach(() => {
   container = null
 })
 
-describe('OIbTextArea', () => {
-  test('check TexteArea with value="some text in the area"', () => {
+describe('OIbSelect', () => {
+  test('check Select with value="some text"', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
-        label="label"
-        value="some text in the area"
+      ReactDOM.render(<OIbSelect
         name="name"
+        label="label"
         onChange={() => (1)}
-        defaultValue="default text"
-      />, container)
-    })
-    expect(container).toMatchSnapshot()
-  })
-  test('check TexteArea with value="some text" and no label', () => {
-    act(() => {
-      ReactDOM.render(<OIbTextArea
+        options={['option1', 'option2']}
         value="some text"
-        name="name"
-        onChange={() => (1)}
         defaultValue="default text"
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check TexteArea with value and help text', () => {
+  test('check Select with value="some text" and no label', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
-        label="label"
-        value="some text in the area"
-        help={<div>some help text</div>}
+      ReactDOM.render(<OIbSelect
         name="name"
         onChange={() => (1)}
+        options={['option1', 'option2']}
+        value="some text"
         defaultValue="default text"
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check TexteArea with too short value', () => {
+  test('check Select with value="some text" and help', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
-        label="label"
+      ReactDOM.render(<OIbSelect
         name="name"
+        label="label"
+        help={<div>helpt text</div>}
         onChange={() => (1)}
-        value="short text"
+        options={['option1', 'option2']}
+        value="some text"
+        defaultValue="default text"
+      />, container)
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check Select with short value="text"', () => {
+    act(() => {
+      ReactDOM.render(<OIbSelect
+        name="name"
+        label="label"
+        onChange={() => (1)}
+        options={['option1', 'option2']}
+        value="some text"
+        defaultValue="default text"
         valid={minLength(10)}
-        defaultValue="default text"
-      />, container)
-    })
-    expect(container).toMatchSnapshot()
-  })
-  test('check Texte with inline', () => {
-    act(() => {
-      ReactDOM.render(<OIbTextArea
-        label="label"
-        name="name"
-        onChange={() => (1)}
-        value="a text"
-        defaultValue="default text"
-        inline
       />, container)
     })
     expect(container).toMatchSnapshot()
