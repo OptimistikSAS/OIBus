@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbTable check Table with help 1`] = `
+<div>
+  <table
+    class="table table-sm table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+            />
+          </svg>
+          <span>
+            value
+          </span>
+        </th>
+        <th
+          scope="col"
+        />
+      </tr>
+    </thead>
+    <tbody />
+  </table>
+</div>
+`;
+
+exports[`OIbTable check Table with name, label and rows 1`] = `
+<div>
+  <table
+    class="table table-sm table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+            />
+          </svg>
+          <span>
+            value
+          </span>
+        </th>
+        <th
+          scope="col"
+        />
+      </tr>
+    </thead>
+    <tbody />
+  </table>
+</div>
+`;

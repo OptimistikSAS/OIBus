@@ -33,7 +33,6 @@ exports[`OIbAuthentication check Authentication with  mode accessKey 1`] = `
     class="container-fluid"
   >
     <div
-      aria-expanded="false"
       class="collapse"
       toggler="toggler"
     >
@@ -149,7 +148,6 @@ exports[`OIbAuthentication check Authentication with default mode (user/password
     class="container-fluid"
   >
     <div
-      aria-expanded="false"
       class="collapse"
       toggler="toggler"
     >
