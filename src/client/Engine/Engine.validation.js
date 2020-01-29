@@ -29,6 +29,7 @@ const validation = {
       username: notEmpty(),
       password: hasLengthBetween(0, 256),
     },
+    httpRequest: { timeout: minValue(1000) },
   },
 }
 
