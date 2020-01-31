@@ -1,6 +1,6 @@
 name: Node CI
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
@@ -21,4 +21,4 @@ jobs:
         npm run lint
         npm run build-client
         npm run build-win
-
+   
