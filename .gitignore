@@ -6,4 +6,5 @@ docs/
 logs/
 cache/
 build/
+coverage/
 oibus-*.json
