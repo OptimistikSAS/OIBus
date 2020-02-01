@@ -62,14 +62,14 @@
         "engineName": "OIBus",
         "aliveSignal": {
             "enabled": false,
-            "host": "",
+            "host": "https://demo.oianalytics.fr",
             "endpoint": "/api/optimistik/oibus/info",
             "authentication": {
                 "type": "Basic",
-                "username": "",
-                "password": ""
+                "username": "NFKET5UPQCFYL7OWLDB",
+                "password": "fCytnTp9P9vNPZAL8+GxQfdE++sGUZdfzk3pou9bKRkPaaEWUSbo32Xv3Kv0pQItkrpB9JYkb0UKgA17lMyTuqoazf/KjbZwrec5divxSdMIfsD312WX++QlEk/0nC7PH6SiPawEkW8mIOO2Yl11Q2K8bWQr+r/RgLi9WA8NwUKjdtZW0Dmi8TKBWma2kmMGTJdW6UR3zy3oALplXfK9GhqV6klaCa9FL10p/48vzfOiQ4td3nrglD5wxCKReuprtlXWarILaMnt+7eJMr4ZUbTllzOY7jTX1BKfm+GrE557RMtsTrqi8MUh4pJ8Er7ebLqATxEbczW7bCd7gnUcdbzwLeTAatksm/xyrxCk5TbeO/tD1pDaicet6yB/myv/Bjdmi6ubDOhQOv8MBA6hxh4jvATnPL5YlL3xsD2R0BCeE7P46HnLaq/UDYk+bTXm2GXSD0mxZwVI4Y9YmGyizzq8eZ/JGy6bWVgO3Z/Yt3rRz+MYMA8Al5FGxwN0Xd5o6/8rU1M0nDWeWwiQYfuQH2q4q6pFg9DRKjC3+R0SOfhikNv5ZloNFPlQQbG6LJAYAYzoHAI6hA1L+OD1qAoebfWiM/r1D/EWG/kYHkmPC4vAJCBhms3CCFaFuu3tV+gSYjrGcYtMtrzXhM5imMhYeqFGku/O9xcPu2JevWJmsTU="
             },
-            "id": "",
+            "id": "OIBus-test",
             "frequency": 300,
             "proxy": ""
         }
