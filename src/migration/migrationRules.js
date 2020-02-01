@@ -105,4 +105,33 @@ module.exports = {
       }
     })
   },
+  6: (config) => {
+    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+    const aliveSignalConfig = defaultConfig.engine.aliveSignal
+
+    const aliveSignalIds = []
+    config.north.applications.forEach((application) => {
+      if (application.api === 'AliveSignal') {
+        if (aliveSignalIds.length === 0) {
+          logger.info('There is an AliveSignal api configured. Saving its config')
+          const host = new URL(application.AliveSignal.host)
+          aliveSignalConfig.enabled = application.enabled
+          aliveSignalConfig.host = host.origin
+          aliveSignalConfig.endpoint = host.pathname
+          aliveSignalConfig.authentication.type = application.AliveSignal.authentication.type
+          aliveSignalConfig.authentication.username = application.AliveSignal.authentication.username
+          aliveSignalConfig.authentication.password = application.AliveSignal.authentication.password
+          aliveSignalConfig.id = application.AliveSignal.id
+          aliveSignalConfig.frequency = application.AliveSignal.frequency
+          aliveSignalConfig.proxy = application.AliveSignal.proxy
+        }
+        aliveSignalIds.push(application.applicationId)
+      }
+    })
+    logger.info(`Remove AliveSignal apis: ${aliveSignalIds.toString()}`)
+    config.north.applications = config.north.applications.filter((application) => !aliveSignalIds.includes(application.applicationId))
+
+    logger.info('Add aliveSignal to engine config')
+    config.engine.aliveSignal = aliveSignalConfig
+  },
 }
