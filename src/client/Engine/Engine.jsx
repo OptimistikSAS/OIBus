@@ -16,7 +16,7 @@ const Engine = () => {
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
   }
-  return newConfig ? (
+  return newConfig?.engine ? (
     <>
       <Form>
         <OIbTitle label="Engine Parameters">
