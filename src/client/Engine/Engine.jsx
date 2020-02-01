@@ -7,6 +7,7 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
+import AliveSignal from './AliveSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
 import validation from './Engine.validation'
 
@@ -89,6 +90,7 @@ const Engine = () => {
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
+        <AliveSignal onChange={onChange} aliveSignal={newConfig.engine.aliveSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />
       </Form>
     </>
