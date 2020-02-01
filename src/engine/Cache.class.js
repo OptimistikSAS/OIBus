@@ -427,13 +427,11 @@ class Cache {
    */
   /* eslint-disable-next-line class-methods-use-this */
   generateApiCacheStat(apiNames, totalCounts, cacheSizes) {
-    return apiNames.map((api, i) => {
-      return {
-        name: api.applicationId,
-        count: totalCounts[i] || 0,
-        cache: cacheSizes[i] || 0,
-      }
-    })
+    return apiNames.map((api, i) => ({
+      name: api.applicationId,
+      count: totalCounts[i] || 0,
+      cache: cacheSizes[i] || 0,
+    }))
   }
 
   /**
@@ -465,12 +463,10 @@ class Cache {
    */
   async getCacheStatsForProtocols() {
     const protocols = this.engine.getActiveProtocols()
-    return protocols.map((protocol) => {
-      return {
-        name: protocol,
-        count: this.cacheStats[protocol] || 0,
-      }
-    })
+    return protocols.map((protocol) => ({
+      name: protocol,
+      count: this.cacheStats[protocol] || 0,
+    }))
   }
 }
 
