@@ -79,7 +79,7 @@ const South = () => {
   }
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
-  const tableRows = dataSources && dataSources.map((dataSource, index) => [
+  const tableRows = dataSources?.map((dataSource, index) => [
     {
       name: dataSource.dataSourceId,
       value: (
@@ -103,7 +103,7 @@ const South = () => {
     },
   ])
 
-  return dataSources !== null && Array.isArray(protocolList) ? (
+  return tableRows && Array.isArray(protocolList) ? (
     <Col md="8">
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
