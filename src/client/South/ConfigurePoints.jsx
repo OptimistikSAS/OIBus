@@ -25,7 +25,7 @@ const ConfigurePoints = () => {
   const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
 
   const { dataSourceId } = useParams()
-  if (newConfig === null) {
+  if (!newConfig?.south) {
     return (
       <div className="spinner-container">
         <Spinner color="primary" type="grow" />
