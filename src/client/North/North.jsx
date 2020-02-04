@@ -94,7 +94,7 @@ const North = () => {
     { name: 'api', value: api },
   ])
 
-  return applications !== null && Array.isArray(apiList) ? (
+  return tableRows && Array.isArray(apiList) ? (
     <Col md="6">
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
