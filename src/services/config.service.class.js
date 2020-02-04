@@ -266,7 +266,7 @@ class ConfigService {
   getPointsForSouth(dataSourceId) {
     const dataSource = this.modifiedConfig.south.dataSources.find((elem) => elem.dataSourceId === dataSourceId)
 
-    if (dataSource && dataSource.points) {
+    if (dataSource?.points) {
       return dataSource.points
     }
 
@@ -282,7 +282,7 @@ class ConfigService {
   hasSouthPoint(dataSourceId, pointId) {
     const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
 
-    if (dataSource && dataSource.points) {
+    if (dataSource?.points) {
       return dataSource.points.find((elem) => elem.pointId === pointId)
     }
 
@@ -314,7 +314,7 @@ class ConfigService {
    */
   updateSouthPoint(dataSourceId, pointId, point) {
     const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
+    if (dataSource?.points) {
       const index = dataSource.points.findIndex((element) => element.pointId === pointId)
       if (index > -1) {
         dataSource.points[index] = point
@@ -330,7 +330,7 @@ class ConfigService {
    */
   deleteSouthPoint(dataSourceId, pointId) {
     const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
+    if (dataSource?.points) {
       dataSource.points = dataSource.points.filter((point) => point.pointId !== pointId)
     }
   }
@@ -342,7 +342,7 @@ class ConfigService {
    */
   deleteSouthPoints(dataSourceId) {
     const dataSource = this.modifiedConfig.south.dataSources.find((element) => element.dataSourceId === dataSourceId)
-    if (dataSource && dataSource.points) {
+    if (dataSource?.points) {
       dataSource.points = []
     }
   }
