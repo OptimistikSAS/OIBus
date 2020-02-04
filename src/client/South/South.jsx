@@ -11,7 +11,7 @@ import EditableIdField from '../components/EditableIdField.jsx'
 const South = () => {
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, protocolList } = React.useContext(ConfigContext)
-  const dataSources = newConfig && newConfig.south && newConfig.south.dataSources
+  const dataSources = newConfig?.south?.dataSources
   const history = useHistory()
 
   /**
