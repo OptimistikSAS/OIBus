@@ -12,7 +12,6 @@ import validation from './Engine.validation'
 
 const Engine = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  console.info('newConfig', newConfig)
   // const { setAlert } = React.useContext(AlertContext)
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
