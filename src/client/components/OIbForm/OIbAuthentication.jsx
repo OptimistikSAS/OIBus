@@ -100,7 +100,7 @@ OIbAuthentication.propTypes = {
 OIbAuthentication.defaultProps = {
   value: { type: 'basic', username: '', password: '', accessKey: '', secretKey: '' },
   mode: 'user',
-  label: 'Authentication'
+  label: 'Authentication',
 }
 
 export default OIbAuthentication
