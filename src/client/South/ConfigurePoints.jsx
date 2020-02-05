@@ -37,6 +37,7 @@ const ConfigurePoints = () => {
   const dataSourceIndex = newConfig.south.dataSources.findIndex(
     (dataSource) => dataSource.dataSourceId === dataSourceId,
   )
+  const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
 
   /**
    * Sets the filter text
@@ -94,11 +95,11 @@ const ConfigurePoints = () => {
   const handleImportPoints = async (file) => {
     const text = await readFileContent(file)
     utils.parseCSV(text)
-      .then((points) => {
+      .then((newPoints) => {
         dispatchNewConfig({
           type: 'importPoints',
           name: `south.dataSources.${dataSourceIndex}.points`,
-          value: points,
+          value: newPoints,
         })
       })
       .catch((error) => {
@@ -112,10 +113,20 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleExportPoints = () => {
-    apis.exportAllPoints(dataSourceId).catch((error) => {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    })
+    utils.createCSV(points)
+      .then((csvString) => {
+        const element = document.createElement('a')
+        const file = new Blob([csvString], { type: 'text/csv' })
+        element.href = URL.createObjectURL(file)
+        element.download = `${dataSourceId}.csv`
+        document.body.appendChild(element)
+        element.click()
+        document.body.removeChild(element)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }
 
   const onChange = (name, value, validity) => {
@@ -129,12 +140,7 @@ const ConfigurePoints = () => {
       validity,
     })
   }
-  /**
-   * Gets the config json of a south dataSource
-   * @param {string} id ID of an dataSource
-   * @returns {object} The selected dataSource's config
-   */
-  const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
+
   const ProtocolSchema = ProtocolSchemas[protocol]
   // configure table header and rows
   const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
