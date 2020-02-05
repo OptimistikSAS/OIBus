@@ -9,10 +9,10 @@ import utils from '../helpers/utils'
 
 const reducer = (state, action) => {
   const { name, value, config, type, validity } = action
-  const newState = JSON.parse(JSON.stringify(state))
+  const newState = utils.jsonCopy(state)
   switch (type) {
     case 'reset':
-      return JSON.parse(JSON.stringify(config))
+      return utils.jsonCopy(config)
     case 'update':
       if (!newState.errors) newState.errors = {}
       if (validity) {
@@ -96,7 +96,7 @@ const ConfigProvider = ({ children }) => {
         if (mounted && resp) {
           dispatchNewConfig({ type: 'reset', config: resp.config })
           // parse/stringify to create deep copy:
-          setActiveConfig(JSON.parse(JSON.stringify(resp.config)))
+          setActiveConfig(utils.jsonCopy(resp.config))
         }
       } catch (error) {
         console.error(error)
