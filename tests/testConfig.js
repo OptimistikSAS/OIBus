@@ -41,6 +41,19 @@ const testConfig = {
       },
     ],
     engineName: 'OIBus',
+    aliveSignal: {
+      enabled: false,
+      host: 'https://demo.host',
+      endpoint: '/api/optimistik/oibus/info',
+      authentication: {
+        type: 'Basic',
+        username: 'username',
+        password: 'password',
+      },
+      id: 'OIBus-test',
+      frequency: 300,
+      proxy: '',
+    },
   },
   south: {
     dataSources: [

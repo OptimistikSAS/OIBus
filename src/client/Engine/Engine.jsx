@@ -7,15 +7,17 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
+import AliveSignal from './AliveSignal.jsx'
 import validation from './Engine.validation'
 
 const Engine = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  console.info('newConfig', newConfig)
   // const { setAlert } = React.useContext(AlertContext)
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
   }
-  return newConfig ? (
+  return newConfig?.engine ? (
     <>
       <Form>
         <OIbTitle label="Engine Parameters">
@@ -88,6 +90,7 @@ const Engine = () => {
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
+        <AliveSignal onChange={onChange} aliveSignal={newConfig.engine.aliveSignal} />
       </Form>
     </>
   ) : (

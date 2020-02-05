@@ -42,4 +42,5 @@ module.exports = {
     ],
   },
   plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') })],
+  node: { fs: 'empty' },
 }
