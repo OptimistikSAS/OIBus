@@ -6,24 +6,24 @@ import OIbText from './OIbText.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
 import OIbTitle from './OIbTitle.jsx'
-import { notEmpty } from '../../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../../services/validation.service'
 
 /*
   OIBAuthentication is a form reused in several places. Can manage user/password (default)
   or accessKey/secretKey as well as authentication type.
 */
-const OIbAuthentication = ({ value, name, onChange, mode }) => {
+const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
   const handleChange = (attributeName, newValue, valid) => {
     onChange(`${name}.${attributeName}`, newValue, valid)
   }
   const validation = {
     accessKey: notEmpty(),
-    secretKey: notEmpty(),
+    secretKey: hasLengthBetween(0, 256),
     username: notEmpty(),
-    password: notEmpty(),
+    password: hasLengthBetween(0, 256),
   }
   return [
-    <OIbTitle label="Authentication" key="title">
+    <OIbTitle label={label} key="title">
       <div>
         <p>Authentication parameters</p>
         <p>Please fill the user and password to connect this application</p>
@@ -94,11 +94,13 @@ OIbAuthentication.propTypes = {
   name: PropTypes.string.isRequired,
   value: PropTypes.object,
   mode: PropTypes.oneOf(['accessKey', 'user']),
+  label: PropTypes.string,
 }
 
 OIbAuthentication.defaultProps = {
   value: { type: 'basic', username: '', password: '', accessKey: '', secretKey: '' },
   mode: 'user',
+  label: 'Authentication',
 }
 
 export default OIbAuthentication

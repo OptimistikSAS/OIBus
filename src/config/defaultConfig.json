@@ -43,7 +43,20 @@
         "cronTime": "listen"
       }
     ],
-    "proxies" : []
+    "proxies" : [],
+    "aliveSignal": {
+      "enabled": false,
+      "host": "",
+      "endpoint": "/api/optimistik/oibus/info",
+      "authentication": {
+        "type": "Basic",
+        "username": "",
+        "password": ""
+      },
+      "id": "",
+      "frequency": 300,
+      "proxy": ""
+    }
   },
   "south": {
     "dataSources": []
