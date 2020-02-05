@@ -43,7 +43,7 @@ const reducer = (state, action) => {
       // copy into the new state
       return newState
     case 'importPoints':
-      objectPath.set(newState, name, utils.parseCSV(value, ','))
+      objectPath.set(newState, name, value)
       return newState
     default:
       throw new Error(`unknown action type: ${type}`)

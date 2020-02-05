@@ -1,22 +1,25 @@
+import * as csv from 'fast-csv'
+
 function jsonCopy(src) {
   return JSON.parse(JSON.stringify(src))
 }
 
-const parseCSV = (csv, delimiter) => {
-  const lines = csv.split('\n')
-  const result = []
-  const headers = lines[0].split(delimiter)
-
-  for (let i = 1; i < lines.length; i += 1) {
-    const obj = {}
-    const currentline = lines[i].split(delimiter)
-    for (let j = 0; j < headers.length; j += 1) {
-      obj[headers[j]] = currentline[j]
-    }
-    result.push(obj)
+const parseCSV = async (csvContent) => new Promise((resolve, reject) => {
+  const points = []
+  const options = {
+    headers: true,
+    strictColumnHandling: true,
   }
-  return result
-}
+  csv
+    .parseString(csvContent, options)
+    .on('error', (error) => reject(error))
+    .on('data', (csvObjects) => {
+      points.push(csvObjects)
+    })
+    .on('end', () => {
+      resolve(points)
+    })
+})
 
 const replaceValuesHelper = (obj, keys, value) => {
   if (!obj) return
