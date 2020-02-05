@@ -11,11 +11,11 @@ const PointsButton = ({ dataSource }) => {
     history.push({ pathname: link })
   }
   const { points, dataSourceId, protocol } = dataSource
-  const hasButton = (ProtocolSchemas[protocol] && ProtocolSchemas[protocol].points !== null)
+  const hasButton = (ProtocolSchemas[protocol]?.points !== null)
   return hasButton ? (
     <Button
       className="inline-button autosize oi-points-button"
-      color={points && points.length ? 'success' : 'warning'}
+      color={points?.length ? 'success' : 'warning'}
       onClick={() => handleEditPoints(dataSourceId)}
       size="sm"
       outline
