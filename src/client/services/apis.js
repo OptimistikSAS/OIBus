@@ -51,7 +51,6 @@ const updateConfig = (body) => putRequest('/config', body)
 const getActiveConfig = () => getRequest('/config/active')
 const updateActiveConfig = () => putRequest('/config/activate')
 const resetModifiedConfig = () => putRequest('/config/reset')
-const exportAllPoints = (dataSourceId) => downloadFileRequest(`/config/south/${dataSourceId}/points/export`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')
@@ -64,7 +63,6 @@ export default {
   updateActiveConfig,
   resetModifiedConfig,
   updateConfig,
-  exportAllPoints,
   getLogs,
   getStatus,
 }
