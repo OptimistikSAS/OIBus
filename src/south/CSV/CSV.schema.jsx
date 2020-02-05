@@ -48,7 +48,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: (val) => (val && val.length > 0 ? null : 'Point Id should not be empty'),
+    valid: (val) => (val?.length > 0 ? null : 'Point Id should not be empty'),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },

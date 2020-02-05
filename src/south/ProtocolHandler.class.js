@@ -83,7 +83,11 @@ class ProtocolHandler {
    * @returns {string} - The decrypted password
    */
   decryptPassword(password) {
-    return this.engine.decryptPassword(password)
+    const decryptedPassword = this.engine.decryptPassword(password)
+    if (decryptedPassword == null) {
+      this.logger.error(`Error decrypting password for ${this.constructor.name}`)
+    }
+    return decryptedPassword || ''
   }
 }
 

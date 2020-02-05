@@ -1,7 +1,6 @@
 const Router = require('@koa/router')
 
 const configController = require('../controllers/configController')
-const pointController = require('../controllers/pointController')
 const logController = require('../controllers/logController')
 const engineController = require('../controllers/engineController')
 
@@ -10,7 +9,6 @@ const router = new Router()
 router.get('/config', configController.getModifiedConfiguration)
 router.get('/config/active', configController.getActiveConfiguration)
 router.put('/config', configController.updateConfig)
-router.get('/config/south/:dataSourceId/points/export', pointController.exportPoints)
 router.put('/config/activate', configController.activateConfiguration)
 router.put('/config/reset', configController.resetConfiguration)
 

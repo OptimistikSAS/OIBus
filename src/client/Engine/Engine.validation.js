@@ -1,11 +1,11 @@
-import { isIp, notEmpty, inRange, minLength, isHost, minValue } from '../../services/validation.service'
+import { isIp, notEmpty, inRange, minLength, isHost, minValue, hasLengthBetween } from '../../services/validation.service'
 
 const validation = {
   engine: {
     engineName: notEmpty(),
     port: inRange(1, 65535),
     user: notEmpty('User'),
-    password: minLength(3),
+    password: hasLengthBetween(4, 256),
     filter: (val) => isIp('Filter')(val === '*' ? '0.0.0.0' : val.replace(/\*/g, '0')), // replace * with a valid ip before testing
     logParameters: {
       filename: notEmpty('Filename'),
@@ -27,7 +27,13 @@ const validation = {
       host: isHost(),
       port: inRange(1, 65535),
       username: notEmpty(),
-      password: notEmpty(),
+      password: hasLengthBetween(0, 256),
+    },
+    aliveSignal: {
+      host: notEmpty('Host'),
+      endpoint: notEmpty('Endpoint'),
+      id: notEmpty('Id'),
+      frequency: inRange(60, 3600),
     },
   },
 }

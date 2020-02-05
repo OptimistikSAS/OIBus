@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbTextArea check Texte with inline 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      a text
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbTextArea check TexteArea with too short value 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      short text
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbTextArea check TexteArea with value and help text 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      some text in the area
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        some help text
+      </div>
+    </small>
+  </div>
+</div>
+`;
+
+exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      some text in the area
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
+<div>
+  <div
+    class="form-group"
+    style="margin-bottom: 0px;"
+  >
+    <textarea
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      some text
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
