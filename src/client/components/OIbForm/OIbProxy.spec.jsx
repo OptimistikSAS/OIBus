@@ -1,8 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
-
+import activeConfig from '../../../../tests/testConfig'
 import OIbProxy from './OIbProxy.jsx'
+
+React.useContext = jest.fn().mockReturnValue({ activeConfig })
 
 let container
 beforeEach(() => {

@@ -17,14 +17,6 @@ const getRequest = async (uri) => {
   }
 }
 
-const downloadFileRequest = async (uri) => {
-  const link = document.createElement('a')
-  link.href = uri
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
-
 const putRequest = async (uri, body) => {
   try {
     const response = await fetch(uri, {
@@ -51,7 +43,6 @@ const updateConfig = (body) => putRequest('/config', body)
 const getActiveConfig = () => getRequest('/config/active')
 const updateActiveConfig = () => putRequest('/config/activate')
 const resetModifiedConfig = () => putRequest('/config/reset')
-const exportAllPoints = (dataSourceId) => downloadFileRequest(`/config/south/${dataSourceId}/points/export`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')
@@ -64,7 +55,6 @@ export default {
   updateActiveConfig,
   resetModifiedConfig,
   updateConfig,
-  exportAllPoints,
   getLogs,
   getStatus,
 }

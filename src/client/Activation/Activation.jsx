@@ -66,7 +66,7 @@ const Activation = () => {
   const handleDecline = async () => {
     try {
       await apis.resetModifiedConfig()
-      dispatchNewConfig({ type: 'reset', config: JSON.parse(JSON.stringify(activeConfig)) })
+      dispatchNewConfig({ type: 'reset', config: utils.jsonCopy(activeConfig) })
     } catch (error) {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
