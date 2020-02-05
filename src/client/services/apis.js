@@ -17,14 +17,6 @@ const getRequest = async (uri) => {
   }
 }
 
-const downloadFileRequest = async (uri) => {
-  const link = document.createElement('a')
-  link.href = uri
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
-
 const putRequest = async (uri, body) => {
   try {
     const response = await fetch(uri, {
