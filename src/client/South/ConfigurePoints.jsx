@@ -11,6 +11,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
+import utils from '../helpers/utils'
 
 
 const ConfigurePoints = () => {
@@ -92,7 +93,18 @@ const ConfigurePoints = () => {
    */
   const handleImportPoints = async (file) => {
     const text = await readFileContent(file)
-    dispatchNewConfig({ type: 'importPoints', name: `south.dataSources.${dataSourceIndex}.points`, value: text })
+    utils.parseCSV(text)
+      .then((points) => {
+        dispatchNewConfig({
+          type: 'importPoints',
+          name: `south.dataSources.${dataSourceIndex}.points`,
+          value: points,
+        })
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
   }
 
   /**
