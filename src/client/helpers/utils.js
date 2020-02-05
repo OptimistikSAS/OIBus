@@ -21,6 +21,11 @@ const parseCSV = async (csvContent) => new Promise((resolve, reject) => {
     })
 })
 
+const createCSV = (array) => {
+  const options = { headers: true }
+  return csv.writeToString(array, options)
+}
+
 const replaceValuesHelper = (obj, keys, value) => {
   if (!obj) return
   if (obj instanceof Array) {
@@ -78,4 +83,4 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { jsonCopy, parseCSV, replaceValues }
+export default { jsonCopy, parseCSV, createCSV, replaceValues }
