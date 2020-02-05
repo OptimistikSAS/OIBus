@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange } from '../../services/validation.service'
+import { notEmpty, inRange, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -62,7 +62,7 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: notEmpty(),
+    valid: hasLengthBetween(0, 256),
     defaultValue: '',
     help: <div>password</div>,
   },

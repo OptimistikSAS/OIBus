@@ -1,5 +1,8 @@
 const timexe = require('timexe')
 const path = require('path')
+const os = require('os')
+
+const moment = require('moment-timezone')
 
 const encryptionService = require('../services/encryption.service')
 const VERSION = require('../../package.json').version
@@ -21,7 +24,6 @@ apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
-apiList.AliveSignal = require('../north/alivesignal/AliveSignal.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 
 // Engine classes
@@ -29,6 +31,7 @@ const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
+const AliveSignal = require('./AliveSignal.class')
 
 /**
  *
@@ -109,6 +112,11 @@ class Engine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.jobs = []
+
+    this.memoryStats = {}
+
+    // AliveSignal
+    this.aliveSignal = new AliveSignal(this)
   }
 
   /**
@@ -237,6 +245,10 @@ class Engine {
         }
       }
     })
+
+    // 6. Start AliveSignal
+    this.aliveSignal.start()
+
     this.logger.info('OIBus started')
   }
 
@@ -245,6 +257,9 @@ class Engine {
    * @return {void}
    */
   async stop() {
+    // Stop AliveSignal
+    this.aliveSignal.stop()
+
     // Stop timers
     this.jobs.forEach((id) => {
       timexe.remove(id)
@@ -286,7 +301,7 @@ class Engine {
   /**
    * Decrypt password.
    * @param {string} password - The password to decrypt
-   * @return {string} - The decrypted password
+   * @return {string|null} - The decrypted password
    */
   decryptPassword(password) {
     return encryptionService.decryptText(password, this.configService.keyFolder)
@@ -326,6 +341,70 @@ class Engine {
    */
   getActiveProtocols() {
     return Object.keys(this.activeProtocols)
+  }
+
+  /**
+   * Get memory usage information.
+   * @returns {object} - The memory usage information
+   */
+  getMemoryUsage() {
+    const memoryUsage = process.memoryUsage()
+    // ask the Master Cluster to also log memory usage
+    process.send({ type: 'logMemoryUsage', memoryUsage })
+    Object.entries(memoryUsage).forEach(([key, value]) => {
+      if (!Object.keys(this.memoryStats).includes(key)) {
+        this.memoryStats[key] = {
+          min: value,
+          current: value,
+          max: value,
+        }
+      } else {
+        this.memoryStats[key].min = (value < this.memoryStats[key].min) ? value : this.memoryStats[key].min
+        this.memoryStats[key].current = value
+        this.memoryStats[key].max = (value > this.memoryStats[key].max) ? value : this.memoryStats[key].max
+      }
+    })
+
+    return Object.keys(this.memoryStats).reduce((result, key) => {
+      const min = Number(this.memoryStats[key].min / 1024 / 1024).toFixed(2)
+      const current = Number(this.memoryStats[key].current / 1024 / 1024).toFixed(2)
+      const max = Number(this.memoryStats[key].max / 1024 / 1024).toFixed(2)
+      result[key] = `${min}/${current}/${max} MB`
+      return result
+    }, {})
+  }
+
+  /**
+   * Get status information.
+   * @returns {object} - The status information
+   */
+  async getStatus() {
+    const apisCacheStats = await this.cache.getCacheStatsForApis()
+    const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
+    const memoryUsage = this.getMemoryUsage()
+
+    const freeMemory = Number(os.freemem() / 1024 / 1024).toFixed(2)
+    const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
+    const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
+
+    return {
+      version: this.getVersion(),
+      architecture: process.arch,
+      currentDirectory: process.cwd(),
+      nodeVersion: process.version,
+      executable: process.execPath,
+      configurationFile: this.configService.getConfigurationFileLocation(),
+      memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
+      ...memoryUsage,
+      processId: process.pid,
+      uptime: moment.duration(process.uptime(), 'seconds').humanize(),
+      hostname: os.hostname(),
+      osRelease: os.release(),
+      osType: os.type(),
+      apisCacheStats,
+      protocolsCacheStats,
+      copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+    }
   }
 }
 

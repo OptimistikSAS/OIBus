@@ -10,7 +10,7 @@ import EditableIdField from '../components/EditableIdField.jsx'
 const North = () => {
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
-  const applications = newConfig && newConfig.north && newConfig.north.applications
+  const applications = newConfig?.north?.applications
   const history = useHistory()
 
   /**
@@ -39,7 +39,11 @@ const North = () => {
    * @return {void}
    */
   const handleApplicationIdChanged = (applicationIndex, newApplicationId) => {
-    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.applicationId`, value: newApplicationId })
+    dispatchNewConfig({
+      type: 'update',
+      name: `north.applications.${applicationIndex}.applicationId`,
+      value: newApplicationId,
+    })
   }
 
   /**
@@ -70,28 +74,27 @@ const North = () => {
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API']
-  const tableRows = applications
-    && applications.map(({ applicationId, enabled, api }, index) => [
-      {
-        name: applicationId,
-        value: (
-          <EditableIdField
-            id={applicationId}
-            fromList={applications}
-            index={index}
-            name="applicationId"
-            idChanged={handleApplicationIdChanged}
-          />
-        ),
-      },
-      {
-        name: 'enabled',
-        value: <div className={enabled ? 'text-success' : 'text-danger'}>{enabled ? 'Enabled' : 'Disabled'}</div>,
-      },
-      { name: 'api', value: api },
-    ])
+  const tableRows = applications?.map(({ applicationId, enabled, api }, index) => [
+    {
+      name: applicationId,
+      value: (
+        <EditableIdField
+          id={applicationId}
+          fromList={applications}
+          index={index}
+          name="applicationId"
+          idChanged={handleApplicationIdChanged}
+        />
+      ),
+    },
+    {
+      name: 'enabled',
+      value: <div className={enabled ? 'text-success' : 'text-danger'}>{enabled ? 'Enabled' : 'Disabled'}</div>,
+    },
+    { name: 'api', value: api },
+  ])
 
-  return applications !== null && Array.isArray(apiList) ? (
+  return tableRows && Array.isArray(apiList) ? (
     <Col md="6">
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />

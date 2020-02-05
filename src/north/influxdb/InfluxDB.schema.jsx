@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'InfluxDB' }
 schema.form = {
@@ -24,7 +24,7 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: notEmpty(),
+    valid: hasLengthBetween(0, 256),
     defaultValue: '',
   },
   host: {

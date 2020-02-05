@@ -30,7 +30,7 @@ class OPCHDA extends ProtocolHandler {
     this.receivedLog = ''
     this.reconnectTimeout = null
 
-    this.scanGroups = this.dataSource.scanGroups.map((scanGroup) => {
+    this.scanGroups = this.dataSource.OPCHDA.scanGroups.map((scanGroup) => {
       const points = this.dataSource.points
         .filter((point) => point.scanMode === scanGroup.scanMode)
         .map((point) => point.pointId)

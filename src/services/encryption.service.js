@@ -62,7 +62,7 @@ const encryptText = (text, keyFolder) => {
  * Decrypt text.
  * @param {string} text - The text to decrypt
  * @param {string} keyFolder - The folder where the keys are stored
- * @return {string} - The decrypted text
+ * @return {string|null} - The decrypted text
  */
 const decryptText = (text, keyFolder) => {
   try {
@@ -79,7 +79,7 @@ const decryptText = (text, keyFolder) => {
     return decrypted.toString('utf8')
   } catch (error) {
     logger.error(`Error in decryption: ${error.message}`)
-    return ''
+    return null
   }
 }
 
@@ -90,14 +90,19 @@ const decryptText = (text, keyFolder) => {
  * @returns {void}
  */
 const encryptSecrets = (configEntry, keyFolder) => {
-  if (configEntry) {
-    Object.entries(configEntry).forEach(([key, value]) => {
-      if (typeof value === 'object') {
-        encryptSecrets(value, keyFolder)
-      } else if (['password', 'secretKey'].includes(key) && value.startsWith('{{notEncrypted}}')) {
-        configEntry[key] = encryptText(value.replace('{{notEncrypted}}', ''), keyFolder)
-      }
-    })
+  try {
+    if (configEntry) {
+      Object.entries(configEntry).forEach(([key, value]) => {
+        if (typeof value === 'object') {
+          encryptSecrets(value, keyFolder)
+        } else if (['password', 'secretKey'].includes(key) && value.startsWith('{{notEncrypted}}')) {
+          configEntry[key] = encryptText(value.replace('{{notEncrypted}}', ''), keyFolder)
+        }
+      })
+    }
+  } catch (error) {
+    logger.error(new Error(`Error in encryption: ${error.message}`))
+    throw (error)
   }
 }
 

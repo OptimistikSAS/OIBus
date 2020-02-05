@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minValue } from '../../services/validation.service'
+import { notEmpty, inRange, minValue, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
@@ -16,11 +16,15 @@ schema.form = {
         </p>
         <ul>
           <li>
-            The query must have a specific format and contain a WHERE clause for the date range of the time column with @date1 and @date2.
+            The query must have a specific format and contain a WHERE clause with the date constraint of the time column using @date1.
           </li>
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
             separate connection timeout and request timeout.
+            <br />
+            Note for Oracle:
+            Connection timeout can be specified in the &apos;sqlnet.ora&apos; file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora)
+            like this: &apos;SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms&apos;
           </li>
           <li>
             It is possible to specify the delimiter used in the CSV file, how to format the timestamp field
@@ -35,6 +39,11 @@ schema.form = {
             will be converted to &apos;Tue Jan 01 2019 00:00:00 GMT+0100&apos;
           </li>
         </ul>
+        <p>
+          Note for Oracle:
+          Oracle Client libraries must be installed and configured separated.
+          <a href="https://oracle.github.io/node-oracledb/INSTALL.html" target="_blank" rel="noopener noreferrer"> More info</a>
+        </p>
       </>
     ),
   },
@@ -56,13 +65,13 @@ schema.form = {
     type: 'OIbText',
     defaultValue: 'db',
     valid: notEmpty(),
-    help: <div>Name of the SQL database</div>,
+    help: <div>Name of the SQL database (SID or Service Name for Oracle)</div>,
   },
   driver: {
     type: 'OIbSelect',
     newRow: false,
     md: 2,
-    options: ['mssql', 'mysql', 'postgresql'],
+    options: ['mssql', 'mysql', 'postgresql', 'oracle'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
@@ -76,7 +85,7 @@ schema.form = {
     newRow: false,
     type: 'OIbPassword',
     defaultValue: '',
-    valid: notEmpty(),
+    valid: hasLengthBetween(0, 256),
   },
   query: {
     md: 8,
