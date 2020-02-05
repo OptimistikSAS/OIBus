@@ -16,7 +16,7 @@ const combinedValidations = (array) => (val) => {
 }
 // check if it is a number or a string not empty
 const notEmpty = (name = 'Value') => (val) => (
-  !Number.isNaN(parseFloat(val)) || (val?.length > 0) ? null : `${name} should not be empty`
+  !Number.isNaN(parseFloat(val)) || (val && val.length > 0) ? null : `${name} should not be empty`
 )
 const isPath = (name = 'Value') => (val) => (path.basename(val) === val ? null : `${name} should be a valid path`)
 const isHost = (name = 'Value') => (val) => (
@@ -31,21 +31,21 @@ const inRange = (min, max, name = 'Value') => (val) => (
   val >= min && val <= max ? null : `${name} should be between ${min} and ${max}`
 )
 const minLength = (min, name = 'Value') => (val) => (
-  val?.length >= min ? null : `${name} length should be at least ${min}`
+  val && val.length >= min ? null : `${name} length should be at least ${min}`
 )
 const maxLength = (max, name = 'Value') => (val) => (
-  val?.length <= max ? null : `${name} length should be below ${max}`
+  val && val.length <= max ? null : `${name} length should be below ${max}`
 )
 const hasLengthBetween = (min, max, name = 'Value') => (val) => combinedValidations([minLength(min, name), maxLength(max, name)])(val)
 
 const length = (_length, name = 'Value') => (val) => (
-  val?.length === _length ? null : `${name} length should be ${_length}`
+  val && val.length === _length ? null : `${name} length should be ${_length}`
 )
 const notEndsWith = (test, name = 'Value') => (val) => (
   !val || !val.endsWith(test) ? null : `${name} should not end with ${test}`
 )
 const startsWith = (test, name = 'Value') => (val) => (
-  val?.startsWith(test) ? null : `${name} should start with ${test}`
+  val && startsWith(test) ? null : `${name} should start with ${test}`
 )
 
 

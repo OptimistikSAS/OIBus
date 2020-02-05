@@ -26,7 +26,7 @@ const auth = (opts = {}) => {
 
   return (ctx, next) => {
     const user = basicAuth(ctx)
-    if (user?.pass && user.name === opts.name) {
+    if (user && user.pass && user.name === opts.name) {
       if (user.pass === opts.pass) return next()
       ctx.app.logger.error(new Error(`Bad password: ${user.pass}`))
     }
