@@ -72,7 +72,7 @@ class Cache {
     if (api && api.config && api.config.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
-      this.logger.warning(`api: ${api.applicationId} has no sendInterval - OK if AliveSignal`)
+      this.logger.warning(`api: ${api.applicationId} has no sendInterval`)
     }
   }
 
@@ -106,7 +106,7 @@ class Cache {
   /**
    * Cache a new Value from the South for a given North
    * It will store the value in every database.
-   * to every North application (used for alarm values for example)
+   * to every North application
    * @param {Object} api - The North to cache the Value for
    * @param {string} dataSourceId - The South generating the value
    * @param {object} values - values
