@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils'
 import Logs from './Logs.jsx'
 
 // fixing date to match snapshot
-const dateToTest = new Date('2020')
+const dateToTest = new Date('2020-01-01T00:00:00.000Z')
 const testDate = Date
 global.Date = jest.fn(() => dateToTest)
 global.Date.UTC = testDate.UTC
@@ -15,35 +15,35 @@ global.Date.now = testDate.now
 // sample test logs
 const testLogs = [{
   id: 1,
-  timestamp: '2020-02-06T09:00:00.0Z',
+  timestamp: '2020-01-01T00:00:00.000Z',
   level: 'debug',
   source: 'Source',
   message: 'Testing debug logs',
 },
 {
   id: 2,
-  timestamp: '2020-02-06T09:00:00.0Z',
+  timestamp: '2020-01-01T00:00:00.000Z',
   level: 'info',
   source: 'Source',
   message: 'Testing info logs',
 },
 {
   id: 3,
-  timestamp: '2020-02-06T09:00:00.0Z',
+  timestamp: '2020-01-01T00:00:00.000Z',
   level: 'warning',
   source: 'Source',
   message: 'Testing warning logs',
 },
 {
   id: 4,
-  timestamp: '2020-02-06T09:00:00.0Z',
+  timestamp: '2020-01-01T00:00:00.000Z',
   level: 'error',
   source: 'Source',
   message: 'Testing error logs',
 },
 {
   id: 5,
-  timestamp: '2020-02-06T09:00:00.0Z',
+  timestamp: '2020-01-01T00:00:00.000Z',
   level: 'silly',
   source: 'Source',
   message: 'Testing silly logs',
