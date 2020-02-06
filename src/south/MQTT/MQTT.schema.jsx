@@ -66,6 +66,36 @@ schema.form = {
     defaultValue: '',
     help: <div>password</div>,
   },
+  timeStampSettings: {
+    type: 'OIbTitle',
+    children: (
+      <div>
+        <p>These paramaters describe how to determine the timeStamp</p>
+        <ul>
+          <li>
+            <b>Time Origin:</b>
+            If the value is &quot;oisbus&quot; the timestamp will be the timestamp for the reception of the value by oibus.
+            If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using the key specified below.
+          </li>
+          <li>
+            <b>TimeStamp Key:</b>
+            The string indicates which key in the payload contains the value timestamp.
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  timeStampOrigin: {
+    type: 'OIbSelect',
+    options: ['payload', 'oibus'],
+    defaultValue: 'oibus',
+  },
+  timeStampKey: {
+    type: 'OIbText',
+    newRow: false,
+    valid: notEmpty(),
+    defaultValue: 'timestamp',
+  },
 }
 
 schema.points = {
