@@ -12,6 +12,7 @@ global.Date = jest.fn(() => dateToTest)
 global.Date.UTC = testDate.UTC
 global.Date.parse = testDate.parse
 global.Date.now = testDate.now
+global.Date.toLocaleDateString = () => '1/19/1970-06:17:16'
 
 // sample test logs
 const testLogs = [{
