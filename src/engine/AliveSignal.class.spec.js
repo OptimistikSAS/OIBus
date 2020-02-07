@@ -119,6 +119,7 @@ describe('AliveSignal', () => {
   it('should call the callback function after the scheduled interval', () => {
     const aliveSignal = new AliveSignal(engine)
     const callback = jest.spyOn(aliveSignal, 'pingCallback').mockImplementation(() => ({ }))
+    engine.getStatus.mockReturnValue({ status: 'status' })
     aliveSignal.start()
 
     jest.advanceTimersByTime(1000 * aliveSignalConfig.frequency)
