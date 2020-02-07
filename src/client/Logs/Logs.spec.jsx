@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
+import { BrowserRouter } from 'react-router-dom'
 
 import Logs from './Logs.jsx'
 
@@ -69,7 +70,7 @@ afterEach(() => {
 describe('Logs', () => {
   test('check Logs', () => {
     act(() => {
-      ReactDOM.render(<Logs />, container)
+      ReactDOM.render(<BrowserRouter><Logs /></BrowserRouter>, container)
     })
     expect(container).toMatchSnapshot()
   })
