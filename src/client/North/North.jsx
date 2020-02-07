@@ -1,6 +1,6 @@
 import React from 'react'
-import { useHistory } from 'react-router-dom'
-import { Col, Spinner } from 'reactstrap'
+import { useHistory, Link } from 'react-router-dom'
+import { Col, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewApplicationRow from './NewApplicationRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -96,6 +96,14 @@ const North = () => {
 
   return tableRows && Array.isArray(apiList) ? (
     <Col md="6">
+      <Breadcrumb tag="h5">
+        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+          Home
+        </BreadcrumbItem>
+        <BreadcrumbItem active tag="span">
+          North
+        </BreadcrumbItem>
+      </Breadcrumb>
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
     </Col>
