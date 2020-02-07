@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import Logs from './Logs.jsx'
 
 // fixing date to match snapshot
-const dateToTest = new Date('2020-01-01T00:00:00.000Z')
+const dateToTest = new Date(1577836800) // 2020-01-01T00:00:00.000Z
 const testDate = Date
 global.Date = jest.fn(() => dateToTest)
 global.Date.UTC = testDate.UTC
