@@ -2,6 +2,21 @@
 
 exports[`Health display Health page based on config and status 1`] = `
 <div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Home
+      </span>
+    </ol>
+  </h5>
   <div
     class="row"
   >
@@ -299,6 +314,21 @@ exports[`Health display Health page based on config and status 1`] = `
 
 exports[`Health display Health page based on config and status 2`] = `
 <div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Home
+      </span>
+    </ol>
+  </h5>
   <div
     class="row"
   >

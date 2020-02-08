@@ -20,6 +20,9 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
     <Form>
       <Row>
         <Breadcrumb tag="h5">
+          <BreadcrumbItem tag={Link} to="/north" className="oi-breadcrumb">
+            Home
+          </BreadcrumbItem>
           <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
             South
           </BreadcrumbItem>
