@@ -308,7 +308,13 @@ h3 {
 .oi-points-button {
   height: 16px;
   padding-top: 1px;
+  margin-top: 1px;
 }
+
+.oi-points-button:disabled {
+ opacity: 0.5;
+}
+
 
 .breadcrumb {
   background-color: inherit;

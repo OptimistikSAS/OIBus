@@ -82,6 +82,12 @@ exports[`Overview display overview based on config 1`] = `
               (CSV)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -100,6 +106,12 @@ exports[`Overview display overview based on config 1`] = `
               (MQTT)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -118,6 +130,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -136,6 +154,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
         </div>
       </div>
       <div
@@ -154,6 +178,12 @@ exports[`Overview display overview based on config 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (5)
+          </button>
         </div>
       </div>
       <div
@@ -172,6 +202,12 @@ exports[`Overview display overview based on config 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -190,6 +226,12 @@ exports[`Overview display overview based on config 1`] = `
               (FolderScanner)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -208,6 +250,12 @@ exports[`Overview display overview based on config 1`] = `
               (SQLDbToFile)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -226,6 +274,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCHDA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (3)
+          </button>
         </div>
       </div>
     </div>
