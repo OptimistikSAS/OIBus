@@ -6,11 +6,9 @@ const engineController = require('../controllers/engineController')
 
 const router = new Router()
 
-router.get('/config', configController.getModifiedConfiguration)
 router.get('/config/active', configController.getActiveConfiguration)
 router.put('/config', configController.updateConfig)
 router.put('/config/activate', configController.activateConfiguration)
-router.put('/config/reset', configController.resetConfiguration)
 
 router.get('/config/schemas/north', engineController.getNorthList)
 router.get('/config/schemas/south', engineController.getSouthList)
