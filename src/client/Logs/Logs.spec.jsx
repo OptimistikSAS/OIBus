@@ -6,12 +6,26 @@ import { BrowserRouter } from 'react-router-dom'
 import Logs from './Logs.jsx'
 
 // fixing date to match snapshot
-// mock the date
-const constantDate = new Date('2020-01-01T00:00:00.000Z')
-/* eslint no-global-assign:off */
-Date = class extends Date {
+const RealDate = Date
+const realToLocaleString = global.Date.prototype.toLocaleString
+const realToLocaleTimeString = global.Date.prototype.toLocaleTimeString
+const realToLocaleDateString = global.Date.prototype.toLocaleDateString
+const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
+// Ensure test output is consistent across machine locale and time zone config.
+const mockToLocaleString = () => constantDate.toUTCString()
+
+global.Date.prototype.toLocaleString = mockToLocaleString
+global.Date.prototype.toLocaleTimeString = mockToLocaleString
+global.Date.prototype.toLocaleDateString = mockToLocaleString
+
+// Prevent random and time elements from failing repeated tests.
+global.Date = class {
+  static now() {
+    return new RealDate(constantDate)
+  }
+
   constructor() {
-    return constantDate
+    return new RealDate(constantDate)
   }
 }
 
@@ -80,5 +94,9 @@ describe('Logs', () => {
       )
     })
     expect(container).toMatchSnapshot()
+    global.Date = RealDate
+    global.Date.prototype.toLocaleString = realToLocaleString
+    global.Date.prototype.toLocaleTimeString = realToLocaleTimeString
+    global.Date.prototype.toLocaleDateString = realToLocaleDateString
   })
 })

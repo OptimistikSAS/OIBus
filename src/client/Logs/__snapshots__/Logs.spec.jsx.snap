@@ -52,7 +52,7 @@ exports[`Logs check Logs 1`] = `
             <input
               class="oi-form-input form-control"
               id="fromDatee"
-              max="2020-01-01T00:00"
+              max="2020-02-01T00:00"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
@@ -75,7 +75,7 @@ exports[`Logs check Logs 1`] = `
             <input
               class="oi-form-input form-control"
               id="toDate"
-              max="2020-01-01T00:00"
+              max="2020-02-01T00:00"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
@@ -228,7 +228,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-00:00:00
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
@@ -246,7 +246,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-00:00:00
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
@@ -264,7 +264,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-00:00:00
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
@@ -282,7 +282,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-00:00:00
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
@@ -300,7 +300,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-00:00:00
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
