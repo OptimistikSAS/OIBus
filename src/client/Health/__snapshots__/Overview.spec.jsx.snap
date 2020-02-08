@@ -83,7 +83,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -107,7 +107,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -131,7 +131,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -155,7 +155,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (1)
@@ -179,7 +179,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (5)
@@ -203,7 +203,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -275,7 +275,7 @@ exports[`Overview display overview based on config 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (3)

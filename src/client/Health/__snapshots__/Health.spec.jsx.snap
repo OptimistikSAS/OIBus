@@ -124,7 +124,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -148,7 +148,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -172,7 +172,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -196,7 +196,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (1)
@@ -220,7 +220,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (5)
@@ -244,7 +244,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -316,7 +316,7 @@ exports[`Health display Health page based on config and status 1`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (3)
@@ -490,7 +490,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -514,7 +514,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -538,7 +538,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -562,7 +562,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (1)
@@ -586,7 +586,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (5)
@@ -610,7 +610,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (2)
@@ -682,7 +682,7 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
           </a>
           <button
-            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
             type="button"
           >
             Points (3)
