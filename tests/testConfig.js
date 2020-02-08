@@ -42,7 +42,7 @@ const testConfig = {
     ],
     engineName: 'OIBus',
     aliveSignal: {
-      enabled: false,
+      enabled: true,
       host: 'https://demo.host',
       endpoint: '/api/optimistik/oibus/info',
       authentication: {
