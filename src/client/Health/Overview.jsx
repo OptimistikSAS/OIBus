@@ -2,6 +2,7 @@ import React from 'react'
 import { Row, Col, Container } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
+import PointsButton from '../South/PointsButton.jsx'
 
 const Overview = () => {
   const { activeConfig } = React.useContext(ConfigContext)
@@ -36,6 +37,7 @@ const Overview = () => {
                 <div>{dataSource.dataSourceId}</div>
                 <div>{`(${dataSource.protocol})`}</div>
               </Link>
+              <PointsButton dataSource={dataSource} />
             </div>
           </Col>
         ))}
