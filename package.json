@@ -1,7 +1,7 @@
 {
   "name": "oibus",
   "private": true,
-  "version": "0.5.5-beta.1",
+  "version": "0.5.6-dev",
   "main": "index.js",
   "author": "Optimistik",
   "license": "SEE LICENSE in LICENSE",
@@ -12,9 +12,9 @@
     "start-linux": "./dist/linux/oibus --config ./tests/oibus.json",
     "build": "npm ci && npm run build-client && npm run build-win && npm run build-macos && npm run build-linux",
     "build-client": "webpack --mode production",
-    "build-win": "rimraf ./dist/win && pkg ./src/index.js --config .pkg.json --output ./dist/win/oibus --target node10-win-x64 && ncp ./deps/win ./dist/win",
-    "build-macos": "rimraf ./dist/macos && pkg ./src/index.js --config .pkg.json --output ./dist/macos/oibus --target node10-macos-x64 && ncp ./deps/macos ./dist/macos",
-    "build-linux": "rimraf ./dist/linux && pkg ./src/index.js --config .pkg.json --output ./dist/linux/oibus --target node10-linux-x64 && ncp ./deps/linux ./dist/linux",
+    "build-win": "rimraf ./dist/win && pkg ./src/index.js --config .pkg.json --output ./dist/win/oibus --target node12-win-x64 && ncp ./deps/win ./dist/win",
+    "build-macos": "rimraf ./dist/macos && pkg ./src/index.js --config .pkg.json --output ./dist/macos/oibus --target node12-macos-x64 && ncp ./deps/macos ./dist/macos",
+    "build-linux": "rimraf ./dist/linux && pkg ./src/index.js --config .pkg.json --output ./dist/linux/oibus --target node12-linux-x64 && ncp ./deps/linux ./dist/linux",
     "start-client": "webpack --mode development --watch",
     "build-doc": "esdoc",
     "test": "jest",
@@ -31,10 +31,10 @@
   ],
   "dependencies": {
     "@babel/runtime": "7.8.4",
-    "@fortawesome/fontawesome-free": "5.12.0",
+    "@fortawesome/fontawesome-free": "5.12.1",
     "@koa/cors": "3.0.0",
-    "@koa/router": "8.0.6",
-    "aws-sdk": "2.611.0",
+    "@koa/router": "8.0.8",
+    "aws-sdk": "2.614.0",
     "axios": "0.19.2",
     "basic-auth": "2.0.1",
     "bootstrap-less-port": "2.2.1",
@@ -49,7 +49,7 @@
     "koa-json": "2.0.2",
     "koa-logger": "3.2.1",
     "koa-respond": "2.1.0",
-    "koa-router": "8.0.6",
+    "koa-router": "8.0.7",
     "koa-send": "5.0.0",
     "micromatch": "4.0.2",
     "minimist": "1.2.0",
@@ -73,6 +73,7 @@
     "reactstrap": "8.4.1",
     "request-promise-native": "1.0.8",
     "sqlite": "3.0.3",
+    "sqlite3": "4.1.1",
     "timexe": "0.9.19",
     "tunnel": "0.0.6",
     "winston": "3.2.1",
@@ -114,10 +115,13 @@
     "ncp": "2.0.0",
     "pkg": "4.4.2",
     "react-test-renderer": "16.12.0",
-    "rimraf": "3.0.1",
+    "rimraf": "3.0.2",
     "style-loader": "1.1.3",
     "url-loader": "3.0.0",
     "webpack": "4.41.5",
     "webpack-cli": "3.3.10"
+  },
+  "jest": {
+    "globalSetup": "./jest-config.js"
   }
 }

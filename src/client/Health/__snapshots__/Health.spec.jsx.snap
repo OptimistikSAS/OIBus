@@ -2,6 +2,21 @@
 
 exports[`Health display Health page based on config and status 1`] = `
 <div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Home
+      </span>
+    </ol>
+  </h5>
   <div
     class="row"
   >
@@ -108,6 +123,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (CSV)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -126,6 +147,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (MQTT)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -144,6 +171,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -162,6 +195,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
         </div>
       </div>
       <div
@@ -180,6 +219,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (5)
+          </button>
         </div>
       </div>
       <div
@@ -198,6 +243,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -216,6 +267,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (FolderScanner)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -234,6 +291,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (SQLDbToFile)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -252,6 +315,12 @@ exports[`Health display Health page based on config and status 1`] = `
               (OPCHDA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (3)
+          </button>
         </div>
       </div>
     </div>
@@ -299,6 +368,21 @@ exports[`Health display Health page based on config and status 1`] = `
 
 exports[`Health display Health page based on config and status 2`] = `
 <div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Home
+      </span>
+    </ol>
+  </h5>
   <div
     class="row"
   >
@@ -405,6 +489,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (CSV)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -423,6 +513,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (MQTT)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -441,6 +537,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -459,6 +561,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
         </div>
       </div>
       <div
@@ -477,6 +585,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (5)
+          </button>
         </div>
       </div>
       <div
@@ -495,6 +609,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -513,6 +633,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (FolderScanner)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -531,6 +657,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (SQLDbToFile)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -549,6 +681,12 @@ exports[`Health display Health page based on config and status 2`] = `
               (OPCHDA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (3)
+          </button>
         </div>
       </div>
     </div>
