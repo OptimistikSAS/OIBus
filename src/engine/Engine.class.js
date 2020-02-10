@@ -5,6 +5,7 @@ const os = require('os')
 const moment = require('moment-timezone')
 
 const encryptionService = require('../services/encryption.service')
+const requestService = require('../services/request.service')
 const VERSION = require('../../package.json').version
 
 // South classes
@@ -405,6 +406,19 @@ class Engine {
       protocolsCacheStats,
       copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
     }
+  }
+
+  /**
+   * Send HTTP request.
+   * @param {string} requestUrl - The URL to send the request to
+   * @param {string} method - The request type
+   * @param {object} authentication - Authentication info
+   * @param {object} proxy - Proxy to use
+   * @param {object} body - The body to send
+   * @returns {Promise} - The send status
+   */
+  async sendRequest(requestUrl, method, authentication, proxy, body) {
+    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, body)
   }
 }
 
