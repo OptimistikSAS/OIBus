@@ -9,11 +9,11 @@ const Overview = () => {
   const applications = activeConfig?.north?.applications
   const dataSources = activeConfig?.south?.dataSources
   return (
-    <Container style={{ marginBottom: '5px' }}>
+    <Container>
       <Row>
         {applications?.map((application) => (
           <Col key={application.applicationId} className={`tight text-${application.enabled ? 'success' : 'muted'}`}>
-            <div className="oi-box">
+            <div className="oi-box d-flex align-items-center">
               <Link to={`/north/${application.applicationId}`}>
                 <div>{application.applicationId}</div>
                 <div>{`(${application.api})`}</div>
@@ -25,7 +25,7 @@ const Overview = () => {
       <Row>
         <Col className="tight">
           <Link to="/engine">
-            <div className="oi-box text-success">Engine</div>
+            <div className="oi-box text-success d-flex align-items-center">Engine</div>
           </Link>
         </Col>
       </Row>
