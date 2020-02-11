@@ -4,7 +4,6 @@ exports[`Overview display overview based on config 1`] = `
 <div>
   <div
     class="container"
-    style="margin-bottom: 5px;"
   >
     <div
       class="row"
@@ -13,7 +12,7 @@ exports[`Overview display overview based on config 1`] = `
         class="tight text-success col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/c"
@@ -31,7 +30,7 @@ exports[`Overview display overview based on config 1`] = `
         class="tight text-muted col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/monoiconnect"
@@ -56,7 +55,7 @@ exports[`Overview display overview based on config 1`] = `
           href="/engine"
         >
           <div
-            class="oi-box text-success"
+            class="oi-box text-success d-flex align-items-center"
           >
             Engine
           </div>
