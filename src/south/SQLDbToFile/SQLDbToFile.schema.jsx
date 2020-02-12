@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minValue, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, inRange, minValue, hasLengthBetween, minLength } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
@@ -90,6 +90,7 @@ schema.form = {
   domain: {
     newRow: false,
     type: 'OIbText',
+    valid: minLength(0),
     defaultValue: '',
     help: <div>(optional) used for ntlm authentication for mssql</div>,
   },
