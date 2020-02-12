@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 const url = require('url')
 
 const fetch = require('node-fetch')
@@ -11,17 +13,41 @@ const Logger = require('../engine/Logger.class')
 const logger = new Logger('request')
 
 /**
+ * Get filename without timestamp from file path.
+ * @param {string} filePath - The file path
+ * @returns {string} - The filename
+ */
+const getFilenameWithoutTimestamp = (filePath) => {
+  const { name, ext } = path.parse(filePath)
+  const filename = name.substr(0, name.lastIndexOf('-'))
+  return `${filename}${ext}`
+}
+
+/**
+ * Generate body as FormData to send file.
+ * @param {string} filePath - The file path
+ * @returns {FormData} - The body
+ */
+const generateFormDataBody = (filePath) => {
+  const body = new FormData()
+  const readStream = fs.createReadStream(filePath)
+  const bodyOptions = { filename: getFilenameWithoutTimestamp(filePath) }
+  body.append('file', readStream, bodyOptions)
+  return body
+}
+
+/**
  * Send the values using axios
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object} body - The body to send
+ * @param {object | string} data - The data to send
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
-const sendWithAxios = async (requestUrl, method, headers, proxy, body, timeout) => {
-  logger.silly(`Link sendWithAxios() call with ${body.values.length} values`)
+const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) => {
+  logger.silly('sendWithAxios() called')
 
   const source = axios.CancelToken.source()
 
@@ -59,6 +85,19 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, body, timeout) 
     source.cancel('Request cancelled by force to prevent axios hanging')
   }, timeout)
 
+  let body
+  if (typeof data === 'string') {
+    body = generateFormDataBody(data)
+
+    const formHeaders = body.getHeaders()
+    Object.keys(formHeaders).forEach((key) => {
+      headers[key] = formHeaders[key]
+    })
+
+  } else {
+    body = data
+  }
+
   const axiosOptions = {
     method,
     url: requestUrl,
@@ -76,16 +115,17 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, body, timeout) 
 }
 
 /**
- * Send the values using request
+ * Send the request using request
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object} body - The body to send
+ * @param {object | string} data - The body or file to send
  * @param {number} timeout - The request timeout
+ * @return {Promise} - The send status
  */
-const sendWithRequest = async (requestUrl, method, headers, proxy, body, timeout) => {
-  logger.silly(`Link sendWithRequest() call with ${body.values.length} values`)
+const sendWithRequest = async (requestUrl, method, headers, proxy, data, timeout) => {
+  logger.silly('sendWithRequest() called')
 
   let requestProxy = false
   if (proxy) {
@@ -101,9 +141,19 @@ const sendWithRequest = async (requestUrl, method, headers, proxy, body, timeout
     method,
     url: requestUrl,
     headers,
-    body: JSON.stringify(body),
     proxy: requestProxy,
     timeout,
+  }
+
+  if (typeof data === 'string') {
+    requestOptions.formData = {
+      file: {
+        value: fs.createReadStream(data),
+        options: { filename: getFilenameWithoutTimestamp(data) },
+      },
+    }
+  } else {
+    requestOptions.body = JSON.stringify(data)
   }
 
   try {
@@ -116,17 +166,17 @@ const sendWithRequest = async (requestUrl, method, headers, proxy, body, timeout
 }
 
 /**
- * Send the values using node-fetch
+ * Send the request using node-fetch
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object} body - The body to send
+ * @param {object | string} data - The body or file to send
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
-const sendWithFetch = async (requestUrl, method, headers, proxy, body, timeout) => {
-  this.logger.silly(`Link sendWithFetch() call with ${body.values.length} values`)
+const sendWithFetch = async (requestUrl, method, headers, proxy, data, timeout) => {
+  this.logger.silly('sendWithFetch() called')
 
   let agent = null
 
@@ -142,10 +192,17 @@ const sendWithFetch = async (requestUrl, method, headers, proxy, body, timeout) 
     agent = new ProxyAgent(proxyOptions)
   }
 
+  let body
+  if (typeof data === 'string') {
+    body = generateFormDataBody(data)
+  } else {
+    body = JSON.stringify(data)
+  }
+
   const fetchOptions = {
     method: 'POST',
     headers,
-    body: JSON.stringify(body),
+    body,
     agent,
     timeout,
   }
@@ -169,7 +226,7 @@ const sendWithFetch = async (requestUrl, method, headers, proxy, body, timeout) 
  * @param {string} method - The request type
  * @param {object} authentication - Authentication info
  * @param {object} proxy - Proxy to use
- * @param {object} body - The body to send
+ * @param {object | string} body - The body or file to send
  * @returns {Promise} - The send status
  */
 const sendRequest = async (engine, requestUrl, method, authentication, proxy, body) => {

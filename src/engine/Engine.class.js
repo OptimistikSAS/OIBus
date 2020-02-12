@@ -414,7 +414,7 @@ class Engine {
    * @param {string} method - The request type
    * @param {object} authentication - Authentication info
    * @param {object} proxy - Proxy to use
-   * @param {object} body - The body to send
+   * @param {object | string} body - The body to send
    * @returns {Promise} - The send status
    */
   async sendRequest(requestUrl, method, authentication, proxy, body) {
