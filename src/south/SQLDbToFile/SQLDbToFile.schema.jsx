@@ -87,6 +87,12 @@ schema.form = {
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
   },
+  domain: {
+    newRow: false,
+    type: 'OIbText',
+    defaultValue: '',
+    help: <div>(optional) used for ntlm authentication for mssql</div>,
+  },
   query: {
     md: 8,
     type: 'OIbTextArea',
