@@ -93,7 +93,6 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) 
     Object.keys(formHeaders).forEach((key) => {
       headers[key] = formHeaders[key]
     })
-
   } else {
     body = data
   }
