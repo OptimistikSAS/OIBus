@@ -1,6 +1,6 @@
 import React from 'react'
-import { useParams } from 'react-router-dom'
-import { Button, Input, Spinner } from 'reactstrap'
+import { useParams, Link } from 'react-router-dom'
+import { Button, Input, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import humanizeString from 'humanize-string'
 
 import Table from '../components/table/Table.jsx'
@@ -11,7 +11,6 @@ import { ConfigContext } from '../context/configContext.jsx'
 import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
 import utils from '../helpers/utils'
-
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -93,7 +92,8 @@ const ConfigurePoints = () => {
    */
   const handleImportPoints = async (file) => {
     const text = await readFileContent(file)
-    utils.parseCSV(text)
+    utils
+      .parseCSV(text)
       .then((newPoints) => {
         dispatchNewConfig({
           type: 'importPoints',
@@ -112,7 +112,8 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleExportPoints = () => {
-    utils.createCSV(points)
+    utils
+      .createCSV(points)
       .then((csvString) => {
         const element = document.createElement('a')
         const file = new Blob([csvString], { type: 'text/csv' })
@@ -169,6 +170,20 @@ const ConfigurePoints = () => {
 
   return (
     <>
+      <Breadcrumb tag="h5">
+        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+          Home
+        </BreadcrumbItem>
+        <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
+          South
+        </BreadcrumbItem>
+        <BreadcrumbItem tag={Link} to={`/south/${dataSourceId}`} className="oi-breadcrumb">
+          {dataSourceId}
+        </BreadcrumbItem>
+        <BreadcrumbItem active tag="span">
+          Points
+        </BreadcrumbItem>
+      </Breadcrumb>
       <Controls.OIbText
         label="Filter"
         name="filterText"

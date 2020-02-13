@@ -4,7 +4,6 @@ exports[`Overview display overview based on config 1`] = `
 <div>
   <div
     class="container"
-    style="margin-bottom: 5px;"
   >
     <div
       class="row"
@@ -13,7 +12,7 @@ exports[`Overview display overview based on config 1`] = `
         class="tight text-success col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/c"
@@ -31,7 +30,7 @@ exports[`Overview display overview based on config 1`] = `
         class="tight text-muted col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/monoiconnect"
@@ -56,7 +55,7 @@ exports[`Overview display overview based on config 1`] = `
           href="/engine"
         >
           <div
-            class="oi-box text-success"
+            class="oi-box text-success d-flex align-items-center"
           >
             Engine
           </div>
@@ -82,6 +81,12 @@ exports[`Overview display overview based on config 1`] = `
               (CSV)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -100,6 +105,12 @@ exports[`Overview display overview based on config 1`] = `
               (MQTT)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -118,6 +129,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -136,6 +153,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCUA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
         </div>
       </div>
       <div
@@ -154,6 +177,12 @@ exports[`Overview display overview based on config 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (5)
+          </button>
         </div>
       </div>
       <div
@@ -172,6 +201,12 @@ exports[`Overview display overview based on config 1`] = `
               (Modbus)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (2)
+          </button>
         </div>
       </div>
       <div
@@ -190,6 +225,12 @@ exports[`Overview display overview based on config 1`] = `
               (FolderScanner)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -208,6 +249,12 @@ exports[`Overview display overview based on config 1`] = `
               (SQLDbToFile)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+            disabled=""
+          >
+            File
+          </button>
         </div>
       </div>
       <div
@@ -226,6 +273,12 @@ exports[`Overview display overview based on config 1`] = `
               (OPCHDA)
             </div>
           </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (3)
+          </button>
         </div>
       </div>
     </div>

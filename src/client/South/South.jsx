@@ -1,6 +1,6 @@
 import React from 'react'
-import { useHistory } from 'react-router-dom'
-import { Col, Spinner } from 'reactstrap'
+import { useHistory, Link } from 'react-router-dom'
+import { Col, Breadcrumb, BreadcrumbItem, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -94,7 +94,11 @@ const South = () => {
     },
     {
       name: 'enabled',
-      value: <div className={dataSource.enabled ? 'text-success' : 'text-danger'}>{dataSource.enabled ? 'Enabled' : 'Disabled'}</div>,
+      value: (
+        <div className={dataSource.enabled ? 'text-success' : 'text-danger'}>
+          {dataSource.enabled ? 'Enabled' : 'Disabled'}
+        </div>
+      ),
     },
     { name: 'protocol', value: dataSource.protocol },
     {
@@ -105,6 +109,14 @@ const South = () => {
 
   return tableRows && Array.isArray(protocolList) ? (
     <Col md="8">
+      <Breadcrumb tag="h5">
+        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+          Home
+        </BreadcrumbItem>
+        <BreadcrumbItem active tag="span">
+          South
+        </BreadcrumbItem>
+      </Breadcrumb>
       <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>

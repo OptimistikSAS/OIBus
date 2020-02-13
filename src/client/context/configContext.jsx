@@ -92,7 +92,7 @@ const ConfigProvider = ({ children }) => {
     let mounted = true
     const fetchActiveConfig = async () => {
       try {
-        const resp = await apis.getActiveConfig()
+        const resp = await apis.getConfig()
         if (mounted && resp) {
           dispatchNewConfig({ type: 'reset', config: resp.config })
           // parse/stringify to create deep copy:
