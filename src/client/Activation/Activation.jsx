@@ -54,7 +54,7 @@ const Activation = () => {
   const handleActivate = async () => {
     try {
       await apis.updateConfig(newConfig)
-      await apis.updateActiveConfig()
+      await apis.activateConfig()
       setActiveConfig(newConfig)
       setLoading(true)
       stopLoadingWhenReachable()
@@ -66,7 +66,6 @@ const Activation = () => {
   // button to remove modification to the config
   const handleDecline = async () => {
     try {
-      await apis.resetModifiedConfig()
       dispatchNewConfig({ type: 'reset', config: utils.jsonCopy(activeConfig) })
     } catch (error) {
       console.error(error)
