@@ -57,7 +57,11 @@ class AliveSignal {
     const status = await this.engine.getStatus()
     status.id = this.id
 
-    await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, status)
+    try {
+      await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, status)
+    } catch (error) {
+      this.logger.error(error)
+    }
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
   }

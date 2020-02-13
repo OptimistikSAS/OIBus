@@ -38,6 +38,7 @@ const generateFormDataBody = (filePath) => {
 
 /**
  * Send the values using axios
+ * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
@@ -46,7 +47,7 @@ const generateFormDataBody = (filePath) => {
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
-const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) => {
+const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, timeout) => {
   logger.silly('sendWithAxios() called')
 
   const source = axios.CancelToken.source()
@@ -65,7 +66,7 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) 
     }
 
     if (username && password) {
-      axiosProxy.proxyAuth = `${username}:${this.decryptPassword(password)}`
+      axiosProxy.proxyAuth = `${username}:${engine.decryptPassword(password)}`
     }
 
     let tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
@@ -115,6 +116,7 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) 
 
 /**
  * Send the request using request
+ * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
@@ -123,14 +125,14 @@ const sendWithAxios = async (requestUrl, method, headers, proxy, data, timeout) 
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
-const sendWithRequest = async (requestUrl, method, headers, proxy, data, timeout) => {
+const sendWithRequest = async (engine, requestUrl, method, headers, proxy, data, timeout) => {
   logger.silly('sendWithRequest() called')
 
   let requestProxy = false
   if (proxy) {
-    const { protocol, host, port, username = null, password = null } = this.proxy
+    const { protocol, host, port, username = null, password = null } = proxy
     if (username && password) {
-      requestProxy = `${protocol}://${username}:${this.decryptPassword(password)}@${host}:${port}`
+      requestProxy = `${protocol}://${username}:${engine.decryptPassword(password)}@${host}:${port}`
     } else {
       requestProxy = `${protocol}://${host}:${port}`
     }
@@ -166,6 +168,7 @@ const sendWithRequest = async (requestUrl, method, headers, proxy, data, timeout
 
 /**
  * Send the request using node-fetch
+ * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
@@ -174,8 +177,8 @@ const sendWithRequest = async (requestUrl, method, headers, proxy, data, timeout
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
-const sendWithFetch = async (requestUrl, method, headers, proxy, data, timeout) => {
-  this.logger.silly('sendWithFetch() called')
+const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, timeout) => {
+  logger.silly('sendWithFetch() called')
 
   let agent = null
 
@@ -185,7 +188,7 @@ const sendWithFetch = async (requestUrl, method, headers, proxy, data, timeout) 
     const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
     if (username && password) {
-      proxyOptions.auth = `${username}:${this.decryptPassword(password)}`
+      proxyOptions.auth = `${username}:${engine.decryptPassword(password)}`
     }
 
     agent = new ProxyAgent(proxyOptions)
@@ -207,7 +210,7 @@ const sendWithFetch = async (requestUrl, method, headers, proxy, data, timeout) 
   }
 
   try {
-    const response = await fetch(this.url, fetchOptions)
+    const response = await fetch(requestUrl, fetchOptions)
     if (!response.ok) {
       return Promise.reject(new Error(response.statusText))
     }
@@ -235,7 +238,6 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
 
   // Generate authentication header
   const headers = { 'Content-Type': 'application/json' }
-
   if (authentication.type === 'Basic') {
     const decryptedPassword = engine.decryptPassword(authentication.password)
     const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
@@ -246,17 +248,19 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
     const timeout = 1000 * httpRequest.timeout
     switch (httpRequest.stack) {
       case 'axios':
-        await sendWithAxios(requestUrl, method, headers, proxy, body, timeout)
+        await sendWithAxios(engine, requestUrl, method, headers, proxy, body, timeout)
         break
       case 'request':
-        await sendWithRequest(requestUrl, method, headers, proxy, body, timeout)
+        await sendWithRequest(engine, requestUrl, method, headers, proxy, body, timeout)
         break
       default:
-        await sendWithFetch(requestUrl, method, headers, proxy, body, timeout)
+        await sendWithFetch(engine, requestUrl, method, headers, proxy, body, timeout)
     }
   } catch (error) {
     return Promise.reject(error)
   }
+
+  logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
   return true
 }
