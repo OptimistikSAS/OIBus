@@ -229,9 +229,9 @@ const sendWithFetch = async (requestUrl, method, headers, proxy, data, timeout) 
  * @returns {Promise} - The send status
  */
 const sendRequest = async (engine, requestUrl, method, authentication, proxy, body) => {
-  const { engineConfig } = engine.configService.getConfig()
+  const { engineConfig: { httpRequest } } = engine.configService.getConfig()
 
-  logger.silly(`sendRequest() to ${method} ${requestUrl} using ${engineConfig.httpRequest.stack} stack`)
+  logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
 
   // Generate authentication header
   const headers = { 'Content-Type': 'application/json' }
@@ -243,15 +243,16 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
   }
 
   try {
-    switch (engineConfig.httpRequest.stack) {
+    const timeout = 1000 * httpRequest.timeout
+    switch (httpRequest.stack) {
       case 'axios':
-        await sendWithAxios(requestUrl, method, headers, proxy, body, engineConfig.httpRequest.timeout)
+        await sendWithAxios(requestUrl, method, headers, proxy, body, timeout)
         break
       case 'request':
-        await sendWithRequest(requestUrl, method, headers, proxy, body, engineConfig.httpRequest.timeout)
+        await sendWithRequest(requestUrl, method, headers, proxy, body, timeout)
         break
       default:
-        await sendWithFetch(requestUrl, method, headers, proxy, body, engineConfig.httpRequest.timeout)
+        await sendWithFetch(requestUrl, method, headers, proxy, body, timeout)
     }
   } catch (error) {
     return Promise.reject(error)
