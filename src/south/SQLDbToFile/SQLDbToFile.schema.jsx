@@ -80,12 +80,14 @@ schema.form = {
     type: 'OIbText',
     defaultValue: '',
     valid: notEmpty(),
+    md: 3,
   },
   password: {
     newRow: false,
     type: 'OIbPassword',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
+    md: 3,
   },
   domain: {
     newRow: false,
@@ -93,6 +95,7 @@ schema.form = {
     valid: optional(),
     defaultValue: '',
     help: <div>(optional) used for ntlm authentication for mssql</div>,
+    md: 3,
   },
   query: {
     md: 8,
@@ -105,18 +108,21 @@ schema.form = {
     type: 'OIbInteger',
     valid: minValue(0),
     defaultValue: 1000,
+    md: 3,
   },
   requestTimeout: {
     type: 'OIbInteger',
     newRow: false,
     valid: minValue(0),
     defaultValue: 1000,
+    md: 3,
   },
   delimiter: {
     type: 'OIbText',
     defaultValue: ',',
     valid: notEmpty(),
     help: <div>Delimiter in the CSV file</div>,
+    md: 1,
   },
   dateFormat: {
     newRow: false,
@@ -124,6 +130,7 @@ schema.form = {
     defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
     valid: notEmpty(),
     help: <div>Date Format</div>,
+    md: 2,
   },
   filename: {
     type: 'OIbText',
@@ -131,6 +138,7 @@ schema.form = {
     defaultValue: 'sql-@date.csv',
     valid: notEmpty(),
     help: <div>The name of the CSV file</div>,
+    md: 3,
   },
   timeColumn: {
     type: 'OIbText',
