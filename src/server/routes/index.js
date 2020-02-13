@@ -6,7 +6,7 @@ const engineController = require('../controllers/engineController')
 
 const router = new Router()
 
-router.get('/config/active', configController.getActiveConfiguration)
+router.get('/config', configController.getActiveConfiguration)
 router.put('/config', configController.updateConfig)
 router.put('/config/activate', configController.activateConfiguration)
 
