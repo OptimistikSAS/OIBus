@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label, Row } from 'reactstrap'
+import { Label, Row, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
@@ -85,6 +85,11 @@ const Health = () => {
 
   return (
     <>
+      <Breadcrumb tag="h5">
+        <BreadcrumbItem active tag="span">
+          Home
+        </BreadcrumbItem>
+      </Breadcrumb>
       <Row>
         <Label>
           <span>

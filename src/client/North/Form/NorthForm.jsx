@@ -23,6 +23,9 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
     <Form>
       <Row>
         <Breadcrumb tag="h5">
+          <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+            Home
+          </BreadcrumbItem>
           <BreadcrumbItem tag={Link} to="/north" className="oi-breadcrumb">
             North
           </BreadcrumbItem>

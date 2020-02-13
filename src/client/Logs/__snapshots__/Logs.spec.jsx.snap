@@ -2,6 +2,27 @@
 
 exports[`Logs check Logs 1`] = `
 <div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <a
+        class="oi-breadcrumb breadcrumb-item"
+        href="/"
+      >
+        Home
+      </a>
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Logs
+      </span>
+    </ol>
+  </h5>
   <div
     class="row"
   >
@@ -31,7 +52,7 @@ exports[`Logs check Logs 1`] = `
             <input
               class="oi-form-input form-control"
               id="fromDatee"
-              max="2020-01-01T00:00"
+              max="2020-02-01T00:00"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
@@ -54,7 +75,7 @@ exports[`Logs check Logs 1`] = `
             <input
               class="oi-form-input form-control"
               id="toDate"
-              max="2020-01-01T00:00"
+              max="2020-02-01T00:00"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
@@ -207,7 +228,11 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
+<<<<<<< HEAD
                     1/1/2020-12:00:00 AM
+=======
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+>>>>>>> master
                   </td>
                   <td>
                     Source
@@ -225,7 +250,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-12:00:00 AM
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source
@@ -243,7 +268,11 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
+<<<<<<< HEAD
                     1/1/2020-12:00:00 AM
+=======
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+>>>>>>> master
                   </td>
                   <td>
                     Source
@@ -261,7 +290,11 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
+<<<<<<< HEAD
                     1/1/2020-12:00:00 AM
+=======
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+>>>>>>> master
                   </td>
                   <td>
                     Source
@@ -279,7 +312,7 @@ exports[`Logs check Logs 1`] = `
                   <td
                     style="width: 120px;"
                   >
-                    1/1/2020-12:00:00 AM
+                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
                   </td>
                   <td>
                     Source

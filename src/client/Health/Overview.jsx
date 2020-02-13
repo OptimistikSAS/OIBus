@@ -2,17 +2,18 @@ import React from 'react'
 import { Row, Col, Container } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
+import PointsButton from '../South/PointsButton.jsx'
 
 const Overview = () => {
   const { activeConfig } = React.useContext(ConfigContext)
   const applications = activeConfig?.north?.applications
   const dataSources = activeConfig?.south?.dataSources
   return (
-    <Container style={{ marginBottom: '5px' }}>
+    <Container>
       <Row>
         {applications?.map((application) => (
           <Col key={application.applicationId} className={`tight text-${application.enabled ? 'success' : 'muted'}`}>
-            <div className="oi-box">
+            <div className="oi-box d-flex align-items-center">
               <Link to={`/north/${application.applicationId}`}>
                 <div>{application.applicationId}</div>
                 <div>{`(${application.api})`}</div>
@@ -24,7 +25,7 @@ const Overview = () => {
       <Row>
         <Col className="tight">
           <Link to="/engine">
-            <div className="oi-box text-success">Engine</div>
+            <div className="oi-box text-success d-flex align-items-center">Engine</div>
           </Link>
         </Col>
       </Row>
@@ -36,6 +37,7 @@ const Overview = () => {
                 <div>{dataSource.dataSourceId}</div>
                 <div>{`(${dataSource.protocol})`}</div>
               </Link>
+              <PointsButton dataSource={dataSource} />
             </div>
           </Col>
         ))}
