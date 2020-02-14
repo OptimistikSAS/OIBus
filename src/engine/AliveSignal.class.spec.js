@@ -65,7 +65,7 @@ describe('AliveSignal', () => {
   })
 
   it('should also initialize if proxy is not configured', () => {
-    engineConfig.proxies = undefined
+    delete engineConfig.proxies
     const aliveSignal = new AliveSignal(engine)
     expect(aliveSignal.enabled).toBe(aliveSignalConfig.enabled)
     expect(aliveSignal.host).toBe(`${aliveSignalConfig.host}${aliveSignalConfig.endpoint}`)
