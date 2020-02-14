@@ -27,7 +27,7 @@ class AliveSignal {
     this.authentication = authentication
     this.id = id
     this.frequency = 1000 * frequency
-    this.proxy = engineConfig.proxies.find(({ name }) => name === proxy)
+    this.proxy = Array.isArray(engineConfig.proxies) && engineConfig.proxies.find(({ name }) => name === proxy)
     this.timer = null
   }
 
@@ -106,8 +106,6 @@ class AliveSignal {
    */
   async pingCallback() {
     const headers = this.generateHeaders(this.authentication)
-    const agent = this.configureProxyAgent(this.proxy)
-
     const status = await this.engine.getStatus()
     status.id = this.id
     const body = JSON.stringify(status)
@@ -116,8 +114,9 @@ class AliveSignal {
       method: 'POST',
       body,
       headers,
-      agent,
     }
+
+    if (this.proxy) fetchOptions.agent = this.configureProxyAgent(this.proxy)
 
     try {
       const response = await fetch(this.host, fetchOptions)
