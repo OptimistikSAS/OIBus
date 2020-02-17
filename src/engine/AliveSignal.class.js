@@ -59,6 +59,7 @@ class AliveSignal {
 
     try {
       await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, status)
+      this.logger.info('Alive signal successful')
     } catch (error) {
       this.logger.error(error)
     }
