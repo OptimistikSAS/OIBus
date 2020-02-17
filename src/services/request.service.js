@@ -6,6 +6,7 @@ const fetch = require('node-fetch')
 const axios = require('axios').default
 const request = require('request-promise-native')
 const tunnel = require('tunnel')
+const FormData = require('form-data')
 const ProxyAgent = require('proxy-agent')
 
 const Logger = require('../engine/Logger.class')
@@ -96,6 +97,7 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
     })
   } else {
     body = data
+    headers['Content-Type'] = 'application/json'
   }
 
   const axiosOptions = {
@@ -155,6 +157,7 @@ const sendWithRequest = async (engine, requestUrl, method, headers, proxy, data,
     }
   } else {
     requestOptions.body = JSON.stringify(data)
+    requestOptions.headers['Content-Type'] = 'application/json'
   }
 
   try {
@@ -197,8 +200,14 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
   let body
   if (typeof data === 'string') {
     body = generateFormDataBody(data)
+
+    const formHeaders = body.getHeaders()
+    Object.keys(formHeaders).forEach((key) => {
+      headers[key] = formHeaders[key]
+    })
   } else {
     body = JSON.stringify(data)
+    headers['Content-Type'] = 'application/json'
   }
 
   const fetchOptions = {
@@ -237,7 +246,7 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
 
   // Generate authentication header
-  const headers = { 'Content-Type': 'application/json' }
+  const headers = { }
   if (authentication.type === 'Basic') {
     const decryptedPassword = engine.decryptPassword(authentication.password)
     const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
