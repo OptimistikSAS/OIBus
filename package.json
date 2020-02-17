@@ -49,7 +49,7 @@
     "koa-json": "2.0.2",
     "koa-logger": "3.2.1",
     "koa-respond": "2.1.0",
-    "koa-router": "8.0.7",
+    "koa-router": "8.0.8",
     "koa-send": "5.0.0",
     "micromatch": "4.0.2",
     "minimist": "1.2.0",
