@@ -54,6 +54,10 @@ const testConfig = {
       frequency: 300,
       proxy: '',
     },
+    httpRequest: {
+      stack: 'fetch',
+      timeout: 30,
+    },
   },
   south: {
     dataSources: [
