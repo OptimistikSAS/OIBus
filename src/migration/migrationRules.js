@@ -135,17 +135,25 @@ module.exports = {
     config.engine.aliveSignal = aliveSignalConfig
   },
   7: (config) => {
-    logger.info('Add settings for the HTTP request (stack, timeout)')
-    config.engine.httpRequest = {
-      stack: 'fetch',
-      timeout: 30,
-    }
+    let stack = 'fetch'
+    let timeout = 30
+
     config.north.applications.forEach((application) => {
       if (['OIConnect', 'OIAnalyticsFile'].includes(application.api)) {
         logger.info(`Remove HTTP stack related settings from ${application.applicationId}`)
+
+        stack = application[application.api].stack ? application[application.api].stack : stack
+        timeout = application[application.api].timeout ? application[application.api].timeout / 1000 : timeout
+
         delete application[application.api].stack
         delete application[application.api].timeout
       }
     })
+
+    logger.info('Add settings for the HTTP request (stack, timeout)')
+    config.engine.httpRequest = {
+      stack,
+      timeout,
+    }
   },
 }
