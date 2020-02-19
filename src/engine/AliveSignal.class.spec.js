@@ -5,6 +5,7 @@ jest.mock('./Logger.class', () => (function logger() {
   return {
     info: jest.fn(),
     error: jest.fn(),
+    debug: jest.fn(),
     silly: jest.fn(),
   }
 }))
@@ -118,7 +119,7 @@ describe('AliveSignal', () => {
       id: aliveSignal.id,
     }
     expect(engine.sendRequest).toBeCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus)
-    expect(aliveSignal.logger.info).toBeCalledWith('Alive signal successful')
+    expect(aliveSignal.logger.debug).toBeCalledWith('Alive signal successful')
     expect(setTimeout).toHaveBeenCalledTimes(1)
   })
 
