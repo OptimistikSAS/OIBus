@@ -22,7 +22,7 @@ class AliveSignal {
     this.authentication = authentication
     this.id = id
     this.frequency = 1000 * frequency
-    this.proxy = engineConfig.proxies.find(({ name }) => name === proxy)
+    this.proxy = Array.isArray(engineConfig.proxies) && engineConfig.proxies.find(({ name }) => name === proxy)
     this.timer = null
   }
 

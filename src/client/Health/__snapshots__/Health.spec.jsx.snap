@@ -45,7 +45,6 @@ exports[`Health display Health page based on config and status 1`] = `
   </div>
   <div
     class="container"
-    style="margin-bottom: 5px;"
   >
     <div
       class="row"
@@ -54,7 +53,7 @@ exports[`Health display Health page based on config and status 1`] = `
         class="tight text-success col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/c"
@@ -72,7 +71,7 @@ exports[`Health display Health page based on config and status 1`] = `
         class="tight text-muted col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/monoiconnect"
@@ -97,7 +96,7 @@ exports[`Health display Health page based on config and status 1`] = `
           href="/engine"
         >
           <div
-            class="oi-box text-success"
+            class="oi-box text-success d-flex align-items-center"
           >
             Engine
           </div>
@@ -411,7 +410,6 @@ exports[`Health display Health page based on config and status 2`] = `
   </div>
   <div
     class="container"
-    style="margin-bottom: 5px;"
   >
     <div
       class="row"
@@ -420,7 +418,7 @@ exports[`Health display Health page based on config and status 2`] = `
         class="tight text-success col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/c"
@@ -438,7 +436,7 @@ exports[`Health display Health page based on config and status 2`] = `
         class="tight text-muted col"
       >
         <div
-          class="oi-box"
+          class="oi-box d-flex align-items-center"
         >
           <a
             href="/north/monoiconnect"
@@ -463,7 +461,7 @@ exports[`Health display Health page based on config and status 2`] = `
           href="/engine"
         >
           <div
-            class="oi-box text-success"
+            class="oi-box text-success d-flex align-items-center"
           >
             Engine
           </div>

@@ -60,6 +60,20 @@ describe('AliveSignal', () => {
     expect(aliveSignal.timer).toBeNull()
   })
 
+  it('should also initialize if proxy is not configured', () => {
+    delete engineConfig.proxies
+    const aliveSignal = new AliveSignal(engine)
+    expect(aliveSignal.enabled).toBe(aliveSignalConfig.enabled)
+    expect(aliveSignal.host).toBe(`${aliveSignalConfig.host}${aliveSignalConfig.endpoint}`)
+    expect(aliveSignal.authentication).toBe(aliveSignalConfig.authentication)
+    expect(aliveSignal.id).toBe(aliveSignalConfig.id)
+    expect(aliveSignal.frequency).toBe(1000 * aliveSignalConfig.frequency)
+    expect(aliveSignal.proxy).toBe(false)
+    expect(aliveSignal.timer).toBeNull()
+    // restore
+    engineConfig.proxies = [proxy]
+  })
+
   it('should properly start when enabled', () => {
     const aliveSignal = new AliveSignal(engine)
     aliveSignal.enabled = true

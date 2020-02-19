@@ -31,6 +31,7 @@ class SQLDbToFile extends ProtocolHandler {
       port,
       username,
       password,
+      domain,
       database,
       query,
       connectionTimeout,
@@ -48,6 +49,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.port = port
     this.username = username
     this.password = password
+    this.domain = domain
     this.database = database
     this.query = query
     this.connectionTimeout = connectionTimeout
@@ -166,6 +168,8 @@ class SQLDbToFile extends ProtocolHandler {
       connectionTimeout: this.connectionTimeout,
       requestTimeout: this.requestTimeout,
     }
+    // domain is optional and allow to activate the ntlm authentication on windows.
+    if (this.domain) config.domain = this.domain
 
     let data = []
     try {
