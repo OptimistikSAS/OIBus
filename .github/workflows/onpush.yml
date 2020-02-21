@@ -15,7 +15,7 @@ jobs:
         node-version: 12.x
     - name: Authenticate with GitHub package registry
       run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.OICONVERT_TOKEN }}" > ~/.npmrc
-    - name: npm install, build, and test
+    - name: npm install, test and lint
       run: |
         npm ci
         npm test

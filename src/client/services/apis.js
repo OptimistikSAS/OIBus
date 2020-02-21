@@ -40,9 +40,7 @@ const getSouthProtocols = () => getRequest('/config/schemas/south')
 const getNorthApis = () => getRequest('/config/schemas/north')
 const getConfig = () => getRequest('/config')
 const updateConfig = (body) => putRequest('/config', body)
-const getActiveConfig = () => getRequest('/config/active')
-const updateActiveConfig = () => putRequest('/config/activate')
-const resetModifiedConfig = () => putRequest('/config/reset')
+const activateConfig = () => putRequest('/config/activate')
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')
@@ -51,9 +49,7 @@ export default {
   getSouthProtocols,
   getNorthApis,
   getConfig,
-  getActiveConfig,
-  updateActiveConfig,
-  resetModifiedConfig,
+  activateConfig,
   updateConfig,
   getLogs,
   getStatus,

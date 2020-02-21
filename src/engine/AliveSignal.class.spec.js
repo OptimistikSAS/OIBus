@@ -1,16 +1,12 @@
-const fetch = require('node-fetch')
-
 const AliveSignal = require('./AliveSignal.class')
-
-// Mock fetch
-jest.mock('node-fetch')
-const { Response } = jest.requireActual('node-fetch')
 
 // Mock logger
 jest.mock('./Logger.class', () => (function logger() {
   return {
     info: jest.fn(),
     error: jest.fn(),
+    debug: jest.fn(),
+    silly: jest.fn(),
   }
 }))
 
@@ -51,6 +47,7 @@ describe('AliveSignal', () => {
   engine.configService = { getConfig: () => ({ engineConfig }) }
   engine.decryptPassword = (password) => password
   engine.getStatus = jest.fn()
+  engine.sendRequest = jest.fn()
 
   it('should be properly initialized', () => {
     const aliveSignal = new AliveSignal(engine)
@@ -62,6 +59,20 @@ describe('AliveSignal', () => {
     expect(aliveSignal.frequency).toBe(1000 * aliveSignalConfig.frequency)
     expect(aliveSignal.proxy).toBe(proxy)
     expect(aliveSignal.timer).toBeNull()
+  })
+
+  it('should also initialize if proxy is not configured', () => {
+    delete engineConfig.proxies
+    const aliveSignal = new AliveSignal(engine)
+    expect(aliveSignal.enabled).toBe(aliveSignalConfig.enabled)
+    expect(aliveSignal.host).toBe(`${aliveSignalConfig.host}${aliveSignalConfig.endpoint}`)
+    expect(aliveSignal.authentication).toBe(aliveSignalConfig.authentication)
+    expect(aliveSignal.id).toBe(aliveSignalConfig.id)
+    expect(aliveSignal.frequency).toBe(1000 * aliveSignalConfig.frequency)
+    expect(aliveSignal.proxy).toBe(false)
+    expect(aliveSignal.timer).toBeNull()
+    // restore
+    engineConfig.proxies = [proxy]
   })
 
   it('should properly start when enabled', () => {
@@ -81,41 +92,6 @@ describe('AliveSignal', () => {
     expect(setTimeout).not.toBeCalled()
   })
 
-  it('should properly generate headers when authentication is Basic', () => {
-    const aliveSignal = new AliveSignal(engine)
-    const headers = aliveSignal.generateHeaders(aliveSignalConfig.authentication)
-
-    expect(headers).toMatchObject({
-      'Content-Type': 'application/json',
-      Authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
-    })
-  })
-
-  it('should properly generate headers when authentication is not Basic', () => {
-    const aliveSignal = new AliveSignal(engine)
-    const headers = aliveSignal.generateHeaders({
-      type: 'NonBasic',
-      username: 'username',
-      password: 'password',
-    })
-
-    expect(headers).toMatchObject({ 'Content-Type': 'application/json' })
-  })
-
-  it('should properly configure proxy agent when proxy is enabled', () => {
-    const aliveSignal = new AliveSignal(engine)
-    const agent = aliveSignal.configureProxyAgent(null)
-
-    expect(agent).toBeNull()
-  })
-
-  it('should properly configure proxy agent when proxy is disabled', () => {
-    const aliveSignal = new AliveSignal(engine)
-    const agent = aliveSignal.configureProxyAgent(proxy)
-
-    expect(typeof agent).toBe('object')
-  })
-
   it('should call the callback function after the scheduled interval', () => {
     const aliveSignal = new AliveSignal(engine)
     const callback = jest.spyOn(aliveSignal, 'pingCallback').mockImplementation(() => ({ }))
@@ -127,37 +103,23 @@ describe('AliveSignal', () => {
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
-  it('should send the proper request', async () => {
+  it('should call Engine sendRequest()', async () => {
     const status = { status: 'status' }
-    const headers = { 'Content-Type': 'application/json' }
-    const agent = {}
-
-    const host = `${aliveSignalConfig.host}${aliveSignalConfig.endpoint}`
-    const fetchOptions = {
-      method: 'POST',
-      body: JSON.stringify({
-        status: 'status',
-        id: aliveSignalConfig.id,
-      }),
-      headers,
-      agent,
-    }
 
     const aliveSignal = new AliveSignal(engine)
 
-    const generateHeaders = jest.spyOn(aliveSignal, 'generateHeaders').mockReturnValue(headers)
-    const configureProxyAgent = jest.spyOn(aliveSignal, 'configureProxyAgent').mockReturnValue(agent)
     engine.getStatus.mockReturnValue(status)
-    fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
     await aliveSignal.pingCallback()
 
-    expect(generateHeaders).toBeCalledWith(aliveSignalConfig.authentication)
-    expect(configureProxyAgent).toBeCalledWith(proxy)
+    expect(aliveSignal.logger.silly).toBeCalledWith('pingCallback')
     expect(engine.getStatus).toBeCalled()
-    expect(fetch).toHaveBeenCalledTimes(1)
-    expect(fetch).toBeCalledWith(host, fetchOptions)
-    expect(aliveSignal.logger.info).toBeCalledWith('Alive signal successful')
+    const calledStatus = {
+      ...status,
+      id: aliveSignal.id,
+    }
+    expect(engine.sendRequest).toBeCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus)
+    expect(aliveSignal.logger.debug).toBeCalledWith('Alive signal successful')
     expect(setTimeout).toHaveBeenCalledTimes(1)
   })
 
