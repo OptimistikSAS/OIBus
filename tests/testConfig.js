@@ -295,6 +295,15 @@ const testConfig = {
     'Console',
     'OIConnect',
   ],
+  protocolList: [
+    'CSV',
+    'OPCHDA',
+    'SQLDbToFile',
+    'FolderScanner',
+    'Modbus',
+    'OPCUA',
+    'MQTT',
+  ],
 }
 
 export default testConfig
