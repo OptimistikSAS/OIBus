@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils'
 import newConfig from '../../../tests/testConfig'
 import North from './North.jsx'
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig, apiList: newConfig.apiList })
 
 jest.mock('react-router-dom', () => (
   { useHistory: jest.fn().mockReturnValue([]) }
