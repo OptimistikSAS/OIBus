@@ -48,6 +48,8 @@ const startsWith = (test, name = 'Value') => (val) => (
   val && val.startsWith(test) ? null : `${name} should start with ${test}`
 )
 
+// always return null (ie. no validation)
+const optional = () => () => null
 
 export {
   notEmpty,
@@ -64,4 +66,5 @@ export {
   notEndsWith,
   startsWith,
   combinedValidations,
+  optional,
 }

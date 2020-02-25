@@ -53,8 +53,15 @@ class InfluxDB extends ApiHandler {
    * @param {object[]} values - The values
    * @return {Promise} - The handle status
    */
-  handleValues(values) {
-    return this.makeRequest(values)
+  async handleValues(values) {
+    this.logger.silly(`Link handleValues() call with ${values.length} values`)
+    try {
+      await this.makeRequest(values)
+    } catch (error) {
+      this.logger.error(error)
+      throw error
+    }
+    return true
   }
 
   /**
@@ -62,84 +69,70 @@ class InfluxDB extends ApiHandler {
    * @param {Object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
-  makeRequest(entries) {
-    return new Promise((resolve, reject) => {
-      const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
-      const url = `http://${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
+  async makeRequest(entries) {
+    const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
+    const url = `http://${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
 
-      let body = ''
+    let body = ''
 
-      entries.forEach((entry) => {
-        try {
-          const { pointId, data, timestamp } = entry
-          const Nodes = Object.entries(pointIdToNodes(pointId))
-          const measurement = Nodes[Nodes.length - 1][0]
+    entries.forEach((entry) => {
+      const { pointId, data, timestamp } = entry
+      const Nodes = Object.entries(pointIdToNodes(pointId))
+      const measurement = Nodes[Nodes.length - 1][0]
 
-          // Convert nodes into tags for CLI
-          let tags = null
-          Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-            if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-            else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-          })
-
-          // Converts data into fields for CLI
-          let fields = null
-          // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
-          // The data received from MQTT is type of string, so we need to transform it to Json
-          const dataJson = JSON.parse(decodeURI(data))
-          Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-            if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-            else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-          })
-
-          // Convert timestamp to the configured precision
-          let preciseTimestamp = new Date(timestamp).getTime()
-          switch (precision) {
-            case 'ns':
-              preciseTimestamp = 1000 * 1000 * timestamp
-              break
-            case 'u':
-              preciseTimestamp = 1000 * timestamp
-              break
-            case 'ms':
-              break
-            case 's':
-              preciseTimestamp = Math.floor(timestamp / 1000)
-              break
-            case 'm':
-              preciseTimestamp = Math.floor(timestamp / 1000 / 60)
-              break
-            case 'h':
-              preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
-              break
-            default:
-              preciseTimestamp = timestamp
-          }
-
-          // Append entry to body
-          body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
-        } catch (error) {
-          this.logger.error(error)
-        }
+      // Convert nodes into tags for CLI
+      let tags = null
+      Nodes.slice(1).forEach(([tagKey, tagValue]) => {
+        if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+        else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
       })
 
-      // Send data to InfluxDB
-      fetch(url, {
-        body,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
+      // Converts data into fields for CLI
+      let fields = null
+      // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
+      // The data received from MQTT is type of string, so we need to transform it to Json
+      const dataJson = JSON.parse(decodeURI(data))
+      Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
+        if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+        else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
       })
-        .then((response) => {
-          if (response.ok) {
-            resolve()
-          } else {
-            reject(response.statusText)
-          }
-        })
-        .catch((error) => {
-          reject(error)
-        })
+
+      // Convert timestamp to the configured precision
+      let preciseTimestamp = new Date(timestamp).getTime()
+      switch (precision) {
+        case 'ns':
+          preciseTimestamp = 1000 * 1000 * timestamp
+          break
+        case 'u':
+          preciseTimestamp = 1000 * timestamp
+          break
+        case 'ms':
+          break
+        case 's':
+          preciseTimestamp = Math.floor(timestamp / 1000)
+          break
+        case 'm':
+          preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+          break
+        case 'h':
+          preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+          break
+        default:
+          preciseTimestamp = timestamp
+      }
+      // Append entry to body
+      body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
     })
+
+    const response = await fetch(url, {
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      method: 'POST',
+    })
+    if (!response.ok) {
+      throw new Error(response.statusText)
+    }
+    return true
   }
 }
 

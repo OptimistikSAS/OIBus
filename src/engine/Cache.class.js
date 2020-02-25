@@ -426,9 +426,9 @@ class Cache {
    * @returns {*} - The stats
    */
   /* eslint-disable-next-line class-methods-use-this */
-  generateApiCacheStat(apiNames, totalCounts, cacheSizes) {
+  generateApiCacheStat(apiNames, totalCounts, cacheSizes, mode) {
     return apiNames.map((api, i) => ({
-      name: api.applicationId,
+      name: `${api.applicationId} (${mode})`,
       count: totalCounts[i] || 0,
       cache: cacheSizes[i] || 0,
     }))
@@ -444,14 +444,14 @@ class Cache {
     const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.applicationId])
     const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
     const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)
-    const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes)
+    const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes, 'points')
 
     // Get file APIs stats
     const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
     const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.applicationId])
     const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.applicationId))
     const filesCacheSizes = await Promise.all(filesCacheSizeActions)
-    const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes)
+    const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes, 'files')
 
     // Merge results
     return [...pointApisStats, ...fileApisStats]

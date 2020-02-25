@@ -10,19 +10,29 @@ const PointsButton = ({ dataSource }) => {
     const link = `/south/${dataSource.dataSourceId}/points`
     history.push({ pathname: link })
   }
-  const { points, dataSourceId, protocol } = dataSource
-  const hasButton = (ProtocolSchemas[protocol]?.points !== null)
+  const { points, dataSourceId, protocol, enabled } = dataSource
+  const hasButton = ProtocolSchemas[protocol]?.points !== null
   return hasButton ? (
     <Button
       className="inline-button autosize oi-points-button"
-      color={points?.length ? 'success' : 'warning'}
+      // eslint-disable-next-line no-nested-ternary
+      color={enabled ? (points?.length ? 'success' : 'warning') : 'secondary'}
       onClick={() => handleEditPoints(dataSourceId)}
       size="sm"
       outline
     >
       {`Points ${points ? `(${points.length})` : '(0)'}`}
     </Button>
-  ) : null
+  ) : (
+    <Button
+      className="inline-button autosize oi-points-button"
+      size="sm"
+      color="secondary"
+      disabled
+    >
+      File
+    </Button>
+  )
 }
 
 PointsButton.propTypes = { dataSource: PropTypes.object.isRequired }
