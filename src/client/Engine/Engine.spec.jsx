@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
+// need BrowserRouter so Link component is not complaining
+import { BrowserRouter } from 'react-router-dom'
 
 import newConfig from '../../../tests/testConfig'
 import Engine from './Engine.jsx'
@@ -25,7 +27,7 @@ afterEach(() => {
 describe('Engine', () => {
   test('check Engine', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      ReactDOM.render(<BrowserRouter><Engine /></BrowserRouter>, container)
     })
     expect(container).toMatchSnapshot()
   })

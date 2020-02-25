@@ -1,5 +1,6 @@
 import React from 'react'
-import { Label, Button, Spinner } from 'reactstrap'
+import { Label, Button, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { Link } from 'react-router-dom'
 import ReactJson from 'react-json-view'
 import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
@@ -53,7 +54,7 @@ const Activation = () => {
   const handleActivate = async () => {
     try {
       await apis.updateConfig(newConfig)
-      await apis.updateActiveConfig()
+      await apis.activateConfig()
       setActiveConfig(newConfig)
       setLoading(true)
       stopLoadingWhenReachable()
@@ -65,7 +66,6 @@ const Activation = () => {
   // button to remove modification to the config
   const handleDecline = async () => {
     try {
-      await apis.resetModifiedConfig()
       dispatchNewConfig({ type: 'reset', config: utils.jsonCopy(activeConfig) })
     } catch (error) {
       console.error(error)
@@ -97,6 +97,14 @@ const Activation = () => {
   const deltaHTML = isModified && removeSecretValues(delta)
   return (
     <>
+      <Breadcrumb tag="h5">
+        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+          Home
+        </BreadcrumbItem>
+        <BreadcrumbItem active tag="span">
+          Activation
+        </BreadcrumbItem>
+      </Breadcrumb>
       <OIbTitle label="Modifications">
         <div>
           <p>Modifications requested on the OIBus configuration are listed below</p>
