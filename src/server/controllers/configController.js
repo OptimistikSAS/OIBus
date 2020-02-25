@@ -8,15 +8,6 @@ const getActiveConfiguration = (ctx) => {
 }
 
 /**
- * Get the modified configuration.
- * @param {Object} ctx - The KOA context
- * @return {void}
- */
-const getModifiedConfiguration = (ctx) => {
-  ctx.ok({ config: ctx.app.engine.configService.getModifiedConfiguration() })
-}
-
-/**
  * Update Engine.
  * @param {Object} ctx - The KOA context
  * @return {void}
@@ -44,24 +35,8 @@ const activateConfiguration = (ctx) => {
   }
 }
 
-/**
- * Reset the configuration.
- * @param {Object} ctx - The KOA context
- * @return {void}
- */
-const resetConfiguration = (ctx) => {
-  try {
-    ctx.app.engine.configService.resetConfiguration()
-    ctx.ok()
-  } catch (error) {
-    ctx.throw(500, 'Unable to reset configuration')
-  }
-}
-
 module.exports = {
   getActiveConfiguration,
-  getModifiedConfiguration,
   updateConfig,
   activateConfiguration,
-  resetConfiguration,
 }

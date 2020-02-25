@@ -227,7 +227,7 @@ class OPCHDA extends ProtocolHandler {
       }
       this.sendMessage(message)
     } else {
-      this.logger.silly(`sendReadMessage not processed, agent ready: ${this.agentReady}`)
+      this.logger.silly(`sendReadMessage(${scanMode}) skipped, agent ready: ${this.agentReady}/ongoing ${this.ongoingReads[scanMode]}`)
     }
   }
 
@@ -249,7 +249,7 @@ class OPCHDA extends ProtocolHandler {
       this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
     } else {
-      this.logger.debug(`send message not processed, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
+      this.logger.debug(`sendMessage ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
@@ -274,17 +274,17 @@ class OPCHDA extends ProtocolHandler {
           this.sendConnectMessage()
           break
         case 'Connect':
-          this.logger.debug(`Agent connected to OPC HDA server: ${messageObject.Content.Connected}`)
+          this.logger.info(`HDAAgent connected: ${messageObject.Content.Connected}`)
           if (messageObject.Content.Connected) {
             this.sendInitializeMessage()
           } else {
-            this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}`)
+            this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}, retrying in ${retryInterval}ms`)
             this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
           }
           break
         case 'Initialize':
           this.agentReady = true
-          this.logger.debug('received Initialize message')
+          this.logger.info(`HDAAgent initialized: ${this.agentReady}`)
           break
         case 'Read':
           if (messageObject.Content.Error) {
