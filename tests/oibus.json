@@ -72,6 +72,10 @@
             "id": "OIBus-test",
             "frequency": 300,
             "proxy": ""
+        },
+        "httpRequest": {
+            "stack": "fetch",
+            "timeout": 30
         }
     },
     "south": {
@@ -41726,11 +41730,9 @@
                         "type": "Basic",
                         "username": ""
                     },
-                    "timeout": 180000,
                     "host": "",
                     "endpoint": "",
-                    "proxy": "",
-                    "stack": "fetch"
+                    "proxy": ""
                 },
                 "caching": {
                     "sendInterval": 10000,
@@ -41745,5 +41747,5 @@
             }
         ]
     },
-    "schemaVersion": 6
+    "schemaVersion": 7
 }

@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PointsButton check PointsButton 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+    type="button"
+  >
+    Points (2)
+  </button>
+</div>
+`;

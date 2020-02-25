@@ -54,6 +54,10 @@ const testConfig = {
       frequency: 300,
       proxy: '',
     },
+    httpRequest: {
+      stack: 'fetch',
+      timeout: 30,
+    },
   },
   south: {
     dataSources: [
@@ -263,7 +267,10 @@ const testConfig = {
         enabled: true,
         Console: {},
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
-        subscribedTo: [],
+        subscribedTo: [
+          'CSVServer',
+          'MQTTServer',
+        ],
       },
       {
         applicationId: 'monoiconnect',
@@ -284,6 +291,19 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
+  apiList: [
+    'Console',
+    'OIConnect',
+  ],
+  protocolList: [
+    'CSV',
+    'OPCHDA',
+    'SQLDbToFile',
+    'FolderScanner',
+    'Modbus',
+    'OPCUA',
+    'MQTT',
+  ],
 }
 
 export default testConfig
