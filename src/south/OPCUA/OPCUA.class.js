@@ -1,30 +1,5 @@
 const Opcua = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const getOptimizedConfig = require('./config/getOptimizedConfig')
-
-/**
- * Returns the fields array from the point containing passed pointId.
- * The point is from the optimized config hence the scannedDataSource parameter
- * @param {Object} pointId - The point ID
- * @param {Array} types - The types
- * @param {Object} logger - The logger
- * @return {*} The fields
- */
-const fieldsFromPointId = (pointId, types, logger) => {
-  const type = types.find(
-    (typeCompared) => typeCompared.type
-      === pointId
-        .split('.')
-        .slice(-1)
-        .pop(),
-  )
-  const { fields = [] } = type
-  if (fields) {
-    return fields
-  }
-  logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`))
-  return {}
-}
 
 /**
  *
@@ -42,13 +17,8 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    // as OPCUA can group multiple points in a single request
-    // we group points based on scanMode
-    this.optimizedConfig = getOptimizedConfig(dataSource)
-    const { host, opcuaPort, endPoint, maxAge } = dataSource.OPCUA
-    // define OPCUA connection parameters
-    this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = `opc.tcp://${host}:${opcuaPort}/${endPoint}`
+    const { url, maxAge } = dataSource.OPCUA
+    this.url = url
     this.maxAge = maxAge || 10
   }
 
@@ -58,24 +28,27 @@ class OPCUA extends ProtocolHandler {
    */
   async connect() {
     super.connect()
-    await this.client.connect(
-      this.url,
-      (connectError) => {
-        if (!connectError) {
-          this.logger.info('OPCUA Connected')
-          this.client.createSession((sessionError, session) => {
-            if (!sessionError) {
-              this.session = session
-              this.connected = true
-            } else {
-              this.logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
-            }
-          })
-        } else {
-          this.logger.error(connectError)
-        }
-      },
-    )
+    try {
+      // define OPCUA connection parameters
+      const connectionStrategy = {
+        initialDelay: 1000,
+        maxRetry: 1,
+      }
+      const options = {
+        applicationName: 'MyClient',
+        connectionStrategy,
+        securityMode: Opcua.MessageSecurityMode.None,
+        securityPolicy: Opcua.SecurityPolicy.None,
+        endpoint_must_exist: false,
+      }
+      this.client = Opcua.OPCUAClient.create(options)
+      await this.client.connect(this.url)
+      this.session = await this.client.createSession()
+      this.connected = true
+      this.logger.info('OPCUA Connected')
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   /**
@@ -86,47 +59,27 @@ class OPCUA extends ProtocolHandler {
    * @todo on the very first Scan dataSource.session might not be created yet, find out why
    */
   async onScan(scanMode) {
-    const scanGroup = this.optimizedConfig[scanMode]
-    if (!this.connected || !scanGroup) return
-    const nodesToRead = {}
-    scanGroup.forEach((point) => {
-      nodesToRead[point.pointId] = { nodeId: `ns=${point.ns};s=${point.s}` }
-    })
-    this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {
-      if (!error && Object.keys(nodesToRead).length === dataValues.length) {
-        Object.keys(nodesToRead).forEach((pointId) => {
-          const dataValue = dataValues.shift()
-          const data = []
-          const value = {
-            pointId,
-            timestamp: dataValue.sourceTimestamp.toISOString(),
-            data: '',
-            dataId: [], // to add after data{} is handled
-          }
-          this.logger.debug(pointId, scanGroup)
-
-          const { engineConfig } = this.engine.configService.getConfig()
-          const fields = fieldsFromPointId(pointId, engineConfig.types, this.logger)
-          this.logger.debug(fields)
-          fields.forEach((field) => {
-            value.dataId.push(field.name)
-            if (field.name !== 'quality') {
-              data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
-            } else {
-              data.push(dataValue.statusCode.value)
-            }
-          })
-          value.data = JSON.stringify(data)
-          /**
-           *  @todo below should send by batch instead of single points
-           *  @todo should extract the value but need to know the signature of data
-           */
-          this.addValues([value])
-        })
-      } else {
-        this.logger.error(error)
+    /* @todo: ScanGroup should be calculated on startup and not on each scan */
+    const scanGroup = this.dataSource.points.filter((point) => point.scanMode === scanMode)
+    if (!this.connected || !scanGroup.length) return
+    const nodesToRead = scanGroup.map((point) => ({ nodeId: point.nodeId, attributeId: Opcua.AttributeIds.Value }))
+    try {
+      const dataValues = await this.session.read(nodesToRead, this.maxAge)
+      if (dataValues.length !== nodesToRead.length) {
+        this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
       }
-    })
+      const values = dataValues.map((dataValue, i) => (
+        {
+          pointId: nodesToRead[i].nodeId.toString(),
+          data: dataValue.value.value,
+          // todo: use parameter to select the right time stamp
+          timeStamp: dataValue.serverTimestamp.toUTCString(),
+        }
+      ))
+      this.addValues(values)
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   /**
@@ -135,6 +88,7 @@ class OPCUA extends ProtocolHandler {
    */
   async disconnect() {
     if (this.connected) {
+      await this.session.close()
       await this.client.disconnect()
       this.connected = false
     }

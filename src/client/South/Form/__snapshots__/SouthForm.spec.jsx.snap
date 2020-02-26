@@ -3564,97 +3564,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
     >
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.host"
-          >
-            Host
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.host"
-            name="south.dataSources.0.OPCUA.host"
-            type="text"
-            value="35.180.179.217"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              IP address of the OPC-UA server
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.opcuaPort"
-          >
-            HTTP Port
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.opcuaPort"
-            name="south.dataSources.0.OPCUA.opcuaPort"
-            type="integer"
-            value="53530"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Port number of the OPCUA server
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.httpsPort"
-          >
-            HTTPS Port
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.httpsPort"
-            name="south.dataSources.0.OPCUA.httpsPort"
-            type="integer"
-            value="53443"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              HTTPS port number
-            </div>
-          </small>
-        </div>
-      </div>
+      />
     </div>
     <div
       class="row"
@@ -3667,16 +3577,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.endPoint"
+            for="south.dataSources.0.OPCUA.maxAge"
           >
-            End point
+            Max age
           </label>
           <input
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.endPoint"
-            name="south.dataSources.0.OPCUA.endPoint"
-            type="text"
-            value="Server/Simulation"
+            id="south.dataSources.0.OPCUA.maxAge"
+            name="south.dataSources.0.OPCUA.maxAge"
+            type="integer"
+            value=""
           />
           <div
             class="invalid-feedback"
@@ -3685,7 +3595,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             class="form-text text-muted"
           >
             <div>
-              OPCUA end point
+              IP address of the OPC-UA server
             </div>
           </small>
         </div>
@@ -3717,9 +3627,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               server
             </option>
             <option
-              value="oibus"
+              value="source"
             >
-              oibus
+              source
             </option>
           </select>
           <div
@@ -3911,97 +3821,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
     >
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.host"
-          >
-            Host
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.host"
-            name="south.dataSources.0.OPCUA.host"
-            type="text"
-            value="35.180.179.217"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              IP address of the OPC-UA server
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.opcuaPort"
-          >
-            HTTP Port
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.opcuaPort"
-            name="south.dataSources.0.OPCUA.opcuaPort"
-            type="integer"
-            value="53530"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Port number of the OPCUA server
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.httpsPort"
-          >
-            HTTPS Port
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.httpsPort"
-            name="south.dataSources.0.OPCUA.httpsPort"
-            type="integer"
-            value="53443"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              HTTPS port number
-            </div>
-          </small>
-        </div>
-      </div>
+      />
     </div>
     <div
       class="row"
@@ -4014,16 +3834,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.endPoint"
+            for="south.dataSources.0.OPCUA.maxAge"
           >
-            End point
+            Max age
           </label>
           <input
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.endPoint"
-            name="south.dataSources.0.OPCUA.endPoint"
-            type="text"
-            value="Server/Simulation"
+            id="south.dataSources.0.OPCUA.maxAge"
+            name="south.dataSources.0.OPCUA.maxAge"
+            type="integer"
+            value=""
           />
           <div
             class="invalid-feedback"
@@ -4032,7 +3852,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             class="form-text text-muted"
           >
             <div>
-              OPCUA end point
+              IP address of the OPC-UA server
             </div>
           </small>
         </div>
@@ -4064,9 +3884,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               server
             </option>
             <option
-              value="oibus"
+              value="source"
             >
-              oibus
+              source
             </option>
           </select>
           <div
