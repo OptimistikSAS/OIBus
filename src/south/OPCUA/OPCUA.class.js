@@ -73,7 +73,7 @@ class OPCUA extends ProtocolHandler {
           pointId: nodesToRead[i].nodeId.toString(),
           data: dataValue.value.value,
           // todo: use parameter to select the right time stamp
-          timeStamp: dataValue.serverTimestamp.toUTCString(),
+          timestamp: dataValue.serverTimestamp.toUTCString(),
         }
       ))
       this.addValues(values)
