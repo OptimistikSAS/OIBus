@@ -41702,6 +41702,31 @@
                         "resampling": "Minute"
                     }
                 ]
+            },
+            {
+                "dataSourceId": "OPC-UA",
+                "protocol": "OPCUA",
+                "enabled": true,
+                "OPCUA": {
+                    "maxAge": 10,
+                    "url": "opc.tcp://138.68.80.236:53530/OPCUA/SimulationServer",
+                    "timeOrigin": "server",
+                    "maxReturnValues": 10,
+                    "maxReadInterval": 3600,
+                    "scanGroups": [
+                        {
+                            "Aggregate": "Raw",
+                            "resampling": "None",
+                            "scanMode": "every10Second"
+                        }
+                    ]
+                },
+                "points": [
+                    {
+                        "nodeId": "ns=3;s=Random",
+                        "scanMode": "every10Second"
+                    }
+                ]
             }
         ]
     },
