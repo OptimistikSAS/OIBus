@@ -954,7 +954,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-12"
       >
         <div
           class="row"
