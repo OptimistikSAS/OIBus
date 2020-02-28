@@ -50,9 +50,13 @@ class MQTT extends ProtocolHandler {
         this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
         try {
           let timestamp = new Date().toISOString()
-          if ((timeStampOrigin === 'payload') && timezone && message[timeStampKey]) {
-            const timestampDate = MQTT.generateDateWithTimezone(message[timeStampKey], timeStampFormat, timezone)
-            timestamp = timestampDate.toISOString()
+          if (timeStampOrigin === 'payload') {
+            if (timezone && message[timeStampKey]) {
+              const timestampDate = MQTT.generateDateWithTimezone(message[timeStampKey], timeStampFormat, timezone)
+              timestamp = timestampDate.toISOString()
+            } else {
+              this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
+            }
           }
           /** @todo: below should send by batch instead of single points */
           this.addValues([
