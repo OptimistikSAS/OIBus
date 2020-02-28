@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, minLength } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -33,25 +33,11 @@ schema.form = {
       </div>
     ),
   },
-  server: {
+  url: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: minLength(5),
     defaultValue: '',
-    help: <div>MQTT server address</div>,
-  },
-  port: {
-    type: 'OIbText',
-    newRow: false,
-    valid: inRange(1, 65535),
-    defaultValue: 8883,
-    help: <div>MQTT server port</div>,
-  },
-  mqttProtocol: {
-    type: 'OIbSelect',
-    options: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
-    label: 'MQTT protocol',
-    defaultValue: 'mqtts',
-    help: <div>MQTT protocol</div>,
+    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
   username: {
     type: 'OIbText',
@@ -70,11 +56,11 @@ schema.form = {
     type: 'OIbTitle',
     children: (
       <div>
-        <p>These paramaters describe how to determine the timeStamp</p>
+        <p>These parameters describe how to determine the timeStamp</p>
         <ul>
           <li>
             <b>Time Origin:</b>
-            If the value is &quot;oisbus&quot; the timestamp will be the timestamp for the reception of the value by oibus.
+            If the value is &quot;oibus&quot; the timestamp will be the timestamp for the reception of the value by oibus.
             If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using the key specified below.
           </li>
           <li>
