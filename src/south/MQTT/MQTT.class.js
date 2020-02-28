@@ -80,8 +80,8 @@ class MQTT extends ProtocolHandler {
    * Generate date based on the configured format taking into account the timezone configuration.
    * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
    * @param {string} date - The date to parse and format
-   * @param {string} dateFormat - The format of the date
    * @param {string} timezone - The timezone to use to replace the timezone of the date
+   * @param {string} dateFormat - The format of the date
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
