@@ -1,4 +1,5 @@
 const mqtt = require('mqtt')
+const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
@@ -18,14 +19,23 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   listen() {
+    let timezone
     const { points } = this.dataSource
-    const { mqttProtocol, server, port, username, password } = this.dataSource.MQTT
-    this.client = mqtt.connect(`${mqttProtocol}://${server}`, { port, username, password: Buffer.from(this.decryptPassword(password)) })
+    const { url, username, password, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
+    if (moment.tz.zone(timeStampTimezone)) {
+      timezone = timeStampTimezone
+    } else {
+      this.logger.error(`Invalid timezone supplied: ${timeStampTimezone}`)
+    }
+
+    this.logger.info(`Connecting to ${url}...`)
+    this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
 
     this.client.on('connect', () => {
+      this.logger.info(`Connected to ${url}`)
       points.forEach((point) => {
         const { topic, pointId } = point
         this.topics[topic] = { pointId }
@@ -39,11 +49,20 @@ class MQTT extends ProtocolHandler {
       this.client.on('message', (topic, message, packet) => {
         this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
         try {
+          let timestamp = new Date().toISOString()
+          if (timeStampOrigin === 'payload') {
+            if (timezone && message[timeStampKey]) {
+              const timestampDate = MQTT.generateDateWithTimezone(message[timeStampKey], timeStampFormat, timezone)
+              timestamp = timestampDate.toISOString()
+            } else {
+              this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
+            }
+          }
           /** @todo: below should send by batch instead of single points */
           this.addValues([
             {
               pointId: this.topics[topic].pointId,
-              timestamp: new Date().toISOString(),
+              timestamp,
               data: message.toString(),
             },
           ])
@@ -60,6 +79,19 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
+  }
+
+  /**
+   * Generate date based on the configured format taking into account the timezone configuration.
+   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
+   * @param {string} date - The date to parse and format
+   * @param {string} timezone - The timezone to use to replace the timezone of the date
+   * @param {string} dateFormat - The format of the date
+   * @returns {string} - The formatted date with timezone
+   */
+  static generateDateWithTimezone(date, timezone, dateFormat) {
+    const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone)
   }
 }
 
