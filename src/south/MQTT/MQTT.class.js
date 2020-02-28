@@ -29,7 +29,7 @@ class MQTT extends ProtocolHandler {
     }
 
     this.logger.info(`Connecting to ${url}...`)
-    this.client = mqtt.connect(url, { username, password:Buffer.from(this.decryptPassword(password)) })
+    this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
