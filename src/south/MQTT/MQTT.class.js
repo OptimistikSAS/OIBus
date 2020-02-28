@@ -21,20 +21,21 @@ class MQTT extends ProtocolHandler {
   listen() {
     let timezone
     const { points } = this.dataSource
-    const { url, username, encryptedPassword, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
-    const password = Buffer.from(this.decryptPassword(encryptedPassword))
+    const { url, username, password, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
     if (moment.tz.zone(timeStampTimezone)) {
       timezone = timeStampTimezone
     } else {
       this.logger.error(`Invalid timezone supplied: ${timeStampTimezone}`)
     }
 
-    this.client = mqtt.connect(url, { username, password })
+    this.logger.info(`Connecting to ${url}...`)
+    this.client = mqtt.connect(url, { username, password:Buffer.from(this.decryptPassword(password)) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
 
     this.client.on('connect', () => {
+      this.logger.info(`Connected to ${url}`)
       points.forEach((point) => {
         const { topic, pointId } = point
         this.topics[topic] = { pointId }
