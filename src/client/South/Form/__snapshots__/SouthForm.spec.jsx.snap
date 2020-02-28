@@ -877,130 +877,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
     >
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.MQTT.server"
-          >
-            Server
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.server"
-            name="south.dataSources.0.MQTT.server"
-            type="text"
-            value="simulator.factorythings.com"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              MQTT server address
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.MQTT.port"
-          >
-            Port
-          </label>
-          <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.port"
-            name="south.dataSources.0.MQTT.port"
-            type="text"
-            value="8883"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              MQTT server port
-            </div>
-          </small>
-        </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.MQTT.mqttProtocol"
-          >
-            MQTT protocol
-          </label>
-          <select
-            class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.mqttProtocol"
-            name="south.dataSources.0.MQTT.mqttProtocol"
-          >
-            <option
-              value="mqtt"
-            >
-              mqtt
-            </option>
-            <option
-              value="mqtts"
-            >
-              mqtts
-            </option>
-            <option
-              value="tcp"
-            >
-              tcp
-            </option>
-            <option
-              value="tls"
-            >
-              tls
-            </option>
-            <option
-              value="ws"
-            >
-              ws
-            </option>
-            <option
-              value="wss"
-            >
-              wss
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              MQTT protocol
-            </div>
-          </small>
-        </div>
-      </div>
+      />
     </div>
     <div
       class="row"
@@ -1122,14 +999,14 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               >
                 <div>
                   <p>
-                    These paramaters describe how to determine the timeStamp
+                    These parameters describe how to determine the timeStamp
                   </p>
                   <ul>
                     <li>
                       <b>
                         Time Origin:
                       </b>
-                      If the value is "oisbus" the timestamp will be the timestamp for the reception of the value by oibus. If the value is "payload" the timestamp will be retrieved from the MQTT payload using the key specified below.
+                      If the value is "oibus" the timestamp will be the timestamp for the reception of the value by oibus. If the value is "payload" the timestamp will be retrieved from the MQTT payload using the key specified below.
                     </li>
                     <li>
                       <b>
