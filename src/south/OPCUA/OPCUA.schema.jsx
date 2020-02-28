@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minLength } from '../../services/validation.service'
+import { notEmpty, minValue, minLength } from '../../services/validation.service'
 
 const schema = { name: 'OPCUA' }
 schema.form = {
@@ -7,60 +7,32 @@ schema.form = {
     type: 'OIbTitle',
     children: <p>This protocol is in restricted release. Please contact Optimistik</p>,
   },
-  host: {
+  url: {
     type: 'OIbText',
     valid: minLength(2),
     defaultValue: '',
     help: <div>IP address of the OPC-UA server</div>,
   },
-  opcuaPort: {
+  maxAge: {
     type: 'OIbInteger',
-    newRow: false,
-    md: 2,
-    label: 'HTTP Port',
-    defaultValue: 8888,
-    valid: inRange(0, 65535),
-    help: <div>Port number of the OPCUA server</div>,
-  },
-  httpsPort: {
-    type: 'OIbInteger',
-    newRow: false,
-    md: 2,
-    label: 'HTTPS Port',
-    defaultValue: 8889,
-    help: <div>HTTPS port number</div>,
-    valid: inRange(0, 65535),
-  },
-  endPoint: {
-    type: 'OIbText',
-    valid: notEmpty(),
+    valid: minValue(0),
     defaultValue: '',
-    help: <div>OPCUA end point</div>,
+    help: <div>IP address of the OPC-UA server</div>,
   },
   timeOrigin: {
     type: 'OIbSelect',
-    options: ['server', 'oibus'],
+    options: ['server', 'source'],
     defaultValue: 'server',
   },
 }
 
 schema.points = {
-  pointId: {
+  nodeId: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
-  ns: {
-    type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: '',
-  },
-  s: {
-    type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: '',
-  },
 }
 
 export default schema

@@ -990,7 +990,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-12"
       >
         <div
           class="row"
