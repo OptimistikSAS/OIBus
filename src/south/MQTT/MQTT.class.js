@@ -48,9 +48,9 @@ class MQTT extends ProtocolHandler {
 
       this.client.on('message', (topic, message, packet) => {
         this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
-        const messageObject = JSON.parse(message.toString())
 
         try {
+          const messageObject = JSON.parse(message.toString())
           let timestamp = new Date().toISOString()
           if (timeStampOrigin === 'payload') {
             if (timezone && messageObject[timeStampKey]) {
