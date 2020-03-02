@@ -75,7 +75,7 @@ describe('InfluxDB north', () => {
     await influxDbNorth.handleValues(values)
 
     expect(fetch).toHaveBeenCalledTimes(1)
-    const expectedUrl = `http://localhost:8086/write?u=user&p=password&db=database&precision=s`
+    const expectedUrl = 'http://localhost:8086/write?u=user&p=password&db=database&precision=s'
     const expectedOptions = {
       body: 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality=good 1582978332\n',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
