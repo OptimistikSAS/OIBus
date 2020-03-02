@@ -61,38 +61,33 @@ class InfluxDB extends ApiHandler {
     entries.forEach((entry) => {
       const { pointId, data, timestamp } = entry
 
-      // The returned array has the matched text as the first item,
-      // and then one item for each parenthetical capture group of the matched text.
       const mainRegExp = new RegExp(regExp)
       const groups = mainRegExp.exec(pointId)
 
       let measurementValue = measurement
       let tagsValue = tags
       let match
-      const replaceRegExp = new RegExp('(%[0-9]+)')
 
       // Find all '%X' template we have to replace for measurement
       const measurementGroupIndexesToReplace = []
-      do {
-        match = replaceRegExp.exec(measurement)
-        if (match) {
-          measurementGroupIndexesToReplace.push(match[0].replace('%', ''));
-        }
-      } while (match)
+      const replaceMeasurementRegExp = new RegExp('(%[0-9]+)', 'g')
+      // eslint-disable-next-line no-cond-assign
+      while ((match = replaceMeasurementRegExp.exec(measurement)) !== null) {
+        measurementGroupIndexesToReplace.push(match[0].replace('%', ''))
+      }
 
       // Find all '%X' template we have to replace for tags
       const tagsGroupIndexesToReplace = []
-      do {
-        match = replaceRegExp.exec(tags)
-        if (match) {
-          tagsGroupIndexesToReplace.push(match[0].replace('%', ''));
-        }
-      } while (match)
+      const replaceTagsRegExp = new RegExp('(%[0-9]+)', 'g')
+      // eslint-disable-next-line no-cond-assign
+      while ((match = replaceTagsRegExp.exec(tags)) !== null) {
+        tagsGroupIndexesToReplace.push(match[0].replace('%', ''))
+      }
 
       // Replace '%X' for measurement if the given group index exists
       let hasMissingGroup = false
       measurementGroupIndexesToReplace.forEach((index) => {
-        if (groups.length >= index) {
+        if (groups.length > index) {
           measurementValue = measurementValue.replace(`%${index}`, groups[index])
         } else {
           hasMissingGroup = true
@@ -102,7 +97,7 @@ class InfluxDB extends ApiHandler {
 
       // Replace '%X' for tags if the given group index exists
       tagsGroupIndexesToReplace.forEach((index) => {
-        if (groups.length >= index) {
+        if (groups.length > index) {
           tagsValue = tagsValue.replace(`%${index}`, groups[index])
         } else {
           hasMissingGroup = true
@@ -126,27 +121,28 @@ class InfluxDB extends ApiHandler {
       })
 
       // Convert timestamp to the configured precision
-      let preciseTimestamp = new Date(timestamp).getTime()
+      const timestampTime = (new Date(timestamp)).getTime()
+      let preciseTimestamp
       switch (precision) {
         case 'ns':
-          preciseTimestamp = 1000 * 1000 * timestamp
+          preciseTimestamp = 1000 * 1000 * timestampTime
           break
         case 'u':
-          preciseTimestamp = 1000 * timestamp
+          preciseTimestamp = 1000 * timestampTime
           break
         case 'ms':
           break
         case 's':
-          preciseTimestamp = Math.floor(timestamp / 1000)
+          preciseTimestamp = Math.floor(timestampTime / 1000)
           break
         case 'm':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+          preciseTimestamp = Math.floor(timestampTime / 1000 / 60)
           break
         case 'h':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+          preciseTimestamp = Math.floor(timestampTime / 1000 / 60 / 60)
           break
         default:
-          preciseTimestamp = timestamp
+          preciseTimestamp = timestampTime
       }
       // Append entry to body
       body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
