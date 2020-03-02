@@ -48,11 +48,13 @@ class MQTT extends ProtocolHandler {
 
       this.client.on('message', (topic, message, packet) => {
         this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
+        const messageObject = JSON.parse(message.toString())
+
         try {
           let timestamp = new Date().toISOString()
           if (timeStampOrigin === 'payload') {
-            if (timezone && message[timeStampKey]) {
-              const timestampDate = MQTT.generateDateWithTimezone(message[timeStampKey], timeStampFormat, timezone)
+            if (timezone && messageObject[timeStampKey]) {
+              const timestampDate = MQTT.generateDateWithTimezone(messageObject[timeStampKey], timeStampFormat, timezone)
               timestamp = timestampDate.toISOString()
             } else {
               this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
@@ -63,7 +65,7 @@ class MQTT extends ProtocolHandler {
             {
               pointId: this.topics[topic].pointId,
               timestamp,
-              data: message.toString(),
+              data: messageObject,
             },
           ])
         } catch (error) {
