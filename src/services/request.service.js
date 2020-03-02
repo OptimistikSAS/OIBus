@@ -238,16 +238,17 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
  * @param {object} authentication - Authentication info
  * @param {object} proxy - Proxy to use
  * @param {object | string} body - The body or file to send
+ * @param {object} baseHeaders - Headers to send
  * @returns {Promise} - The send status
  */
-const sendRequest = async (engine, requestUrl, method, authentication, proxy, body) => {
+const sendRequest = async (engine, requestUrl, method, authentication, proxy, body, baseHeaders = {}) => {
   const { engineConfig: { httpRequest } } = engine.configService.getConfig()
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
 
   // Generate authentication header
-  const headers = { }
-  if (authentication.type === 'Basic') {
+  const headers = baseHeaders
+  if (authentication && (authentication.type === 'Basic')) {
     const decryptedPassword = engine.decryptPassword(authentication.password)
     const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
     headers.Authorization = `Basic ${basic}`
