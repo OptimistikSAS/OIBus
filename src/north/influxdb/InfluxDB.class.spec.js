@@ -30,7 +30,7 @@ describe('InfluxDB north', () => {
   const influxDbConfig = {
     password: 'password',
     user: 'user',
-    host: 'localhost:8086',
+    host: 'http://localhost:8086',
     db: 'database',
     precision: 's',
     regExp: '(.*)/(.{2})(.)(.*)',
