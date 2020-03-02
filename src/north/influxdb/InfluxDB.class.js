@@ -3,23 +3,6 @@ const fetch = require('node-fetch')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
- * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId - String with this form : value1.name1/value2.name2#value
- * @return {Object} Values indexed by name
- */
-const pointIdToNodes = (pointId) => {
-  const attributes = {}
-  pointId
-    .slice(1)
-    .split('/')
-    .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-    })
-  return attributes
-}
-
-/**
  * Escape spaces.
  * @param {*} chars - The content to escape
  * @return {*} The escaped or the original content
@@ -70,22 +53,67 @@ class InfluxDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
+    const { host, user, password, db, precision = 'ms', regExp, measurement, tags } = this.application.InfluxDB
     const url = `http://${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
 
     let body = ''
 
     entries.forEach((entry) => {
       const { pointId, data, timestamp } = entry
-      const Nodes = Object.entries(pointIdToNodes(pointId))
-      const measurement = Nodes[Nodes.length - 1][0]
 
-      // Convert nodes into tags for CLI
-      let tags = null
-      Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-        if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-        else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
+      // The returned array has the matched text as the first item,
+      // and then one item for each parenthetical capture group of the matched text.
+      const mainRegExp = new RegExp(regExp)
+      const groups = mainRegExp.exec(pointId)
+
+      let measurementValue = measurement
+      let tagsValue = tags
+      let match
+      const replaceRegExp = new RegExp('(%[0-9]+)')
+
+      // Find all '%X' template we have to replace for measurement
+      const measurementGroupIndexesToReplace = []
+      do {
+        match = replaceRegExp.exec(measurement)
+        if (match) {
+          measurementGroupIndexesToReplace.push(match[0].replace('%', ''));
+        }
+      } while (match)
+
+      // Find all '%X' template we have to replace for tags
+      const tagsGroupIndexesToReplace = []
+      do {
+        match = replaceRegExp.exec(tags)
+        if (match) {
+          tagsGroupIndexesToReplace.push(match[0].replace('%', ''));
+        }
+      } while (match)
+
+      // Replace '%X' for measurement if the given group index exists
+      let hasMissingGroup = false
+      measurementGroupIndexesToReplace.forEach((index) => {
+        if (groups.length >= index) {
+          measurementValue = measurementValue.replace(`%${index}`, groups[index])
+        } else {
+          hasMissingGroup = true
+          this.logger.error(`RegExp return by ${regExp} for ${pointId} doesn't have group %${index}`)
+        }
       })
+
+      // Replace '%X' for tags if the given group index exists
+      tagsGroupIndexesToReplace.forEach((index) => {
+        if (groups.length >= index) {
+          tagsValue = tagsValue.replace(`%${index}`, groups[index])
+        } else {
+          hasMissingGroup = true
+          this.logger.error(`RegExp return by ${regExp} for ${pointId} doesn't have group %${index}`)
+        }
+      })
+
+      // If there is any missing group index return
+      if (hasMissingGroup) {
+        return
+      }
 
       // Converts data into fields for CLI
       let fields = null
@@ -121,7 +149,7 @@ class InfluxDB extends ApiHandler {
           preciseTimestamp = timestamp
       }
       // Append entry to body
-      body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
+      body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
     })
 
     const response = await fetch(url, {
