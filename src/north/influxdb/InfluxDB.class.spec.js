@@ -1,10 +1,5 @@
-const fetch = require('node-fetch')
 const InfluxDB = require('./InfluxDB.class')
 const config = require('../../config/defaultConfig.json')
-
-// Mock node-fetch
-jest.mock('node-fetch')
-const { Response } = jest.requireActual('node-fetch')
 
 // Mock logger
 jest.mock('../../engine/Logger.class', () => (function logger() {
@@ -20,6 +15,7 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => config.engine }
 engine.decryptPassword = (password) => password
+engine.sendRequest = jest.fn()
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -63,7 +59,6 @@ describe('InfluxDB north', () => {
 
   it('should call fetch from makeRequest with the proper parameters', async () => {
     const influxDbNorth = new InfluxDB({ InfluxDB: influxDbConfig }, engine)
-    fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
     const values = [
       {
@@ -74,13 +69,11 @@ describe('InfluxDB north', () => {
     ]
     await influxDbNorth.handleValues(values)
 
-    expect(fetch).toHaveBeenCalledTimes(1)
     const expectedUrl = 'http://localhost:8086/write?u=user&p=password&db=database&precision=s'
-    const expectedOptions = {
-      body: 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality=good 1582978332\n',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
-    }
-    expect(fetch).toHaveBeenCalledWith(expectedUrl, expectedOptions)
+    const expectedHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    const expectedBody = 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality=good 1582978332\n'
+    const expectedMethod = 'POST'
+    expect(engine.sendRequest).toHaveBeenCalledTimes(1)
+    expect(engine.sendRequest).toHaveBeenCalledWith(expectedUrl, expectedMethod, null, null, expectedBody, expectedHeaders)
   })
 })

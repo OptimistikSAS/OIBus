@@ -1,5 +1,3 @@
-const fetch = require('node-fetch')
-
 const ApiHandler = require('../ApiHandler.class')
 
 /**
@@ -145,15 +143,8 @@ class InfluxDB extends ApiHandler {
       body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
     })
 
-    const response = await fetch(url, {
-      body,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
-    })
-    if (!response.ok) {
-      throw new Error(response.statusText)
-    }
-    return true
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    return this.engine.sendRequest(url, 'POST', null, null, body, headers)
   }
 }
 
