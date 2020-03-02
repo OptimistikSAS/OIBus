@@ -1,3 +1,4 @@
+const { vsprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
@@ -61,50 +62,20 @@ class InfluxDB extends ApiHandler {
 
       const mainRegExp = new RegExp(regExp)
       const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
 
-      let measurementValue = measurement
-      let tagsValue = tags
-      let match
+      const measurementValue = vsprintf(measurement, groups)
+      const tagsValue = vsprintf(tags, groups)
 
-      // Find all '%X' template we have to replace for measurement
-      const measurementGroupIndexesToReplace = []
-      const replaceMeasurementRegExp = new RegExp('(%[0-9]+)', 'g')
-      // eslint-disable-next-line no-cond-assign
-      while ((match = replaceMeasurementRegExp.exec(measurement)) !== null) {
-        measurementGroupIndexesToReplace.push(match[0].replace('%', ''))
+      // If there are less groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      if ((measurementValue.match(/undefined/g) || []).length > (measurement.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for measurement`)
+        return
       }
-
-      // Find all '%X' template we have to replace for tags
-      const tagsGroupIndexesToReplace = []
-      const replaceTagsRegExp = new RegExp('(%[0-9]+)', 'g')
-      // eslint-disable-next-line no-cond-assign
-      while ((match = replaceTagsRegExp.exec(tags)) !== null) {
-        tagsGroupIndexesToReplace.push(match[0].replace('%', ''))
-      }
-
-      // Replace '%X' for measurement if the given group index exists
-      let hasMissingGroup = false
-      measurementGroupIndexesToReplace.forEach((index) => {
-        if (groups.length > index) {
-          measurementValue = measurementValue.replace(`%${index}`, groups[index])
-        } else {
-          hasMissingGroup = true
-          this.logger.error(`RegExp return by ${regExp} for ${pointId} doesn't have group %${index}`)
-        }
-      })
-
-      // Replace '%X' for tags if the given group index exists
-      tagsGroupIndexesToReplace.forEach((index) => {
-        if (groups.length > index) {
-          tagsValue = tagsValue.replace(`%${index}`, groups[index])
-        } else {
-          hasMissingGroup = true
-          this.logger.error(`RegExp return by ${regExp} for ${pointId} doesn't have group %${index}`)
-        }
-      })
-
-      // If there is any missing group index return
-      if (hasMissingGroup) {
+      if ((tagsValue.match(/undefined/g) || []).length > (tags.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for tags`)
         return
       }
 
