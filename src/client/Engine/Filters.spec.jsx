@@ -33,6 +33,16 @@ describe('Filters', () => {
     })
     expect(container).toMatchSnapshot()
   })
+  test('check change line', () => {
+    act(() => {
+      ReactDOM.render(<Filters
+        filters={testConfig.engine.filter}
+      />, container)
+    })
+    Simulate.change(document.querySelector('td input'), { target: { value: '2.2.2.2' } })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.filter.0', value: '2.2.2.2', validity: null })
+    expect(container).toMatchSnapshot()
+  })
   test('check delete Filter', () => {
     act(() => {
       ReactDOM.render(<Filters
@@ -50,16 +60,6 @@ describe('Filters', () => {
       />, container)
     })
     Simulate.click(document.querySelector('th path'))
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.filter', value: '' })
-    expect(container).toMatchSnapshot()
-  })
-  test('check change line', () => {
-    act(() => {
-      ReactDOM.render(<Filters
-        filters={testConfig.engine.filter}
-      />, container)
-    })
-    Simulate.change(document.querySelector('td input'), { target: { value: '2.2.2.2' } })
     expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.filter', value: '' })
     expect(container).toMatchSnapshot()
   })
