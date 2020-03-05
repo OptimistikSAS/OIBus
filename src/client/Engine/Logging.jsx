@@ -1,12 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Row, Col } from 'reactstrap'
-import { OIbInteger, OIbSelect, OIbText, OIbCheckBox, OIbTitle } from '../components/OIbForm'
-import validation from './Engine.validation'
+import OIbForm from '../components/OIbForm/OIbForm.jsx'
 
-const Logging = ({ logParameters, onChange }) => (
-  <>
-    <OIbTitle label="Log Parameters">
+import { notEmpty } from '../../services/validation.service'
+
+const schema = { name: 'Logging' }
+schema.form = {
+  LoggingParameters: {
+    type: 'OIbTitle',
+    children: (
       <>
         <p>OIBus can send logs to 3 different supports:</p>
 
@@ -16,20 +18,20 @@ const Logging = ({ logParameters, onChange }) => (
           <ul>
             <li>filename: The filename of the logfile to write output to.</li>
             <li>
-              maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created,
-              a counter will become a suffix of the log file.
+              maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter
+              will become a suffix of the log file.
             </li>
             <li>maxFiles: Limit the number of files created when the size of the logfile is exceeded.</li>
             <li>
-              tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the
-              most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be
-              ignored.
+              tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The
+              filename will always have the most recent log lines. The larger the appended number, the older the log
+              file. This option requires maxFiles to be set, or it will be ignored.
             </li>
           </ul>
           <li>
-            The sqlite logs will be used to store logs on the chosen database of the server.
-            This allows to see logs remotely using the Logs menu. The
-            maximum size can be defined so older message will be deleted automatically.
+            The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs
+            remotely using the Logs menu. The maximum size can be defined so older message will be deleted
+            automatically.
           </li>
         </ul>
 
@@ -65,107 +67,90 @@ const Logging = ({ logParameters, onChange }) => (
         </table>
         <br />
         <p>
-          We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an
-          issue.
+          We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode
+          only to identify the origin of an issue.
         </p>
       </>
-    </OIbTitle>
-    <Row>
-      <Col md={3}>
-        <OIbSelect
-          label="Console Level"
-          name="engine.logParameters.consoleLevel"
-          value={logParameters.consoleLevel}
-          options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultValue="info"
-          help={<div>The level for the Console log</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={3}>
-        <OIbSelect
-          name="engine.logParameters.fileLevel"
-          label="File Level"
-          options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultValue="info"
-          value={logParameters.fileLevel}
-          help={<div>The level for the file log</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={3}>
-        <OIbSelect
-          label="Sqlite Level"
-          name="engine.logParameters.sqliteLevel"
-          options={['silly', 'debug', 'info', 'warning', 'error']}
-          defaultValue="info"
-          value={logParameters.sqliteLevel}
-          help={<div>The level for the sqlite log</div>}
-          onChange={onChange}
-        />
-      </Col>
-    </Row>
-    <Row>
-      <Col md={4}>
-        <OIbText
-          name="engine.logParameters.filename"
-          label="Filename for the log file"
-          value={logParameters.filename}
-          valid={validation.engine.logParameters.filename}
-          help={<div>The filename of the log file</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={2}>
-        <OIbInteger
-          name="engine.logParameters.maxsize"
-          label="File Max size"
-          value={logParameters.maxsize}
-          defaultValue={100000}
-          valid={validation.engine.logParameters.maxsize}
-          help={<div>Maximum size of file logs (Bytes)</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={2}>
-        <OIbInteger
-          name="engine.logParameters.maxFiles"
-          label="number of files"
-          value={logParameters.maxFiles}
-          defaultValue={5}
-          valid={validation.engine.logParameters.maxFiles}
-          help={<div>The number of journal files (rotating)</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={3}>
-        <OIbCheckBox label="Tailable" name="engine.logParameters.tailable" value={logParameters.tailable} defaultValue onChange={onChange} />
-      </Col>
-    </Row>
-    <Row>
-      <Col md={4}>
-        <OIbText
-          name="engine.logParameters.sqliteFilename"
-          label="Filename of sqlite db"
-          value={logParameters.sqliteFilename}
-          valid={validation.engine.logParameters.sqliteFilename}
-          help={<div>The filename of the db file</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={2}>
-        <OIbInteger
-          name="engine.logParameters.sqliteMaxFileSize"
-          label="Db Max size"
-          value={logParameters.sqliteMaxFileSize}
-          defaultValue={1000000}
-          valid={validation.engine.logParameters.sqliteMaxFileSize}
-          help={<div>Max File Size of the sqlite database (Byte)</div>}
-          onChange={onChange}
-        />
-      </Col>
-    </Row>
-  </>
+    ),
+  },
+  consoleLevel: {
+    type: 'OIbSelect',
+    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    md: 3,
+    defaultValue: 'info',
+    help: <div>The level for the Console log</div>,
+  },
+  fileLevel: {
+    type: 'OIbSelect',
+    newRow: false,
+    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    md: 3,
+    defaultValue: 'info',
+    help: <div>The level for the file log</div>,
+  },
+  sqliteLevel: {
+    newRow: false,
+    type: 'OIbSelect',
+    md: 3,
+    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    defaultValue: 'info',
+    help: <div>The level for the sqlite log</div>,
+  },
+  filename: {
+    type: 'OIbText',
+    label: 'Filename for the log file',
+    valid: notEmpty(),
+    defaultValue: '',
+    md: 4,
+    help: <div>The filename of the log file</div>,
+  },
+  maxsize: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'File Max size',
+    md: 2,
+    valid: notEmpty(),
+    defaultValue: 100000,
+    help: <div>Maximum size of file logs (Bytes)</div>,
+  },
+  maxFiles: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'number of files',
+    md: 2,
+    valid: notEmpty(),
+    defaultValue: 5,
+    help: <div>The number of journal files (rotating)</div>,
+  },
+  tailable: {
+    type: 'OIbCheckBox',
+    newRow: false,
+    md: 3,
+    label: 'Tailable',
+    defaultValue: true,
+    help: <div>The number of journal files (rotating)</div>,
+  },
+  sqliteFilename: {
+    type: 'OIbText',
+    label: 'Filename of sqlite db',
+    md: 4,
+    valid: notEmpty(),
+    defaultValue: '',
+    help: <div>The filename of the db file</div>,
+  },
+  sqliteMaxFileSize: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    label: 'Db Max size',
+    valid: notEmpty(),
+    defaultValue: 1000000,
+    help: <div>Max File Size of the sqlite database (Byte)</div>,
+  },
+}
+
+const Logging = ({ logParameters, onChange }) => (
+  <OIbForm onChange={onChange} schema={schema} name="engine.logParameters" values={logParameters} />
 )
 
 Logging.propTypes = {
