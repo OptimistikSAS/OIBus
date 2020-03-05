@@ -41725,6 +41725,10 @@
                     {
                         "nodeId": "ns=3;s=Random",
                         "scanMode": "every10Second"
+                    },
+                    {
+                        "nodeId": "ns=3;s=Counter",
+                        "scanMode": "every10Second"
                     }
                 ]
             }
@@ -41736,7 +41740,9 @@
                 "applicationId": "c",
                 "api": "Console",
                 "enabled": true,
-                "Console": {},
+                "Console": {
+                    "verbose": true
+                },
                 "caching": {
                     "sendInterval": 10000,
                     "retryInterval": 5000,

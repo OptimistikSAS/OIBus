@@ -98,44 +98,44 @@ class OPCUA extends ProtocolHandler {
    */
   async onScan(scanMode) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
-    console.info(scanGroup)
 
     if (!this.connected || this.ongoingReads[scanMode] || !scanGroup.points.length) return
 
-    try {
-      const nodesToRead = scanGroup.points.map((point) => ({ nodeId: point }))
-      console.info(nodesToRead)
-      const dataValues = await this.session.readHistoryValue(nodesToRead, this.lastCompletedAt[scanMode], new Date())
-      if (dataValues.length !== nodesToRead.length) {
-        this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
-      }
-      console.info(dataValues)
-    } catch (error) {
-      console.error(error)
-      this.logger.error(error)
-    }
+    this.ongoingReads[scanMode] = true
 
-    /*
-    if (!this.connected || !scanGroup.length) return
-    const nodesToRead = scanGroup.map((point) => ({ nodeId: point.nodeId, attributeId: Opcua.AttributeIds.Value }))
     try {
-      const dataValues = await this.session.read(nodesToRead, this.maxAge)
+      const nodesToRead = scanGroup.points.map((point) => point)
+      const start = new Date(this.lastCompletedAt[scanMode])
+      const end = new Date()
+      this.logger.info(`Read from ${start} to ${end} the nodes ${nodesToRead}`)
+      const dataValues = await this.session.readHistoryValue(nodesToRead, start, end)
       if (dataValues.length !== nodesToRead.length) {
         this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
       }
-      const values = dataValues.map((dataValue, i) => (
-        {
-          pointId: nodesToRead[i].nodeId.toString(),
-          data: dataValue.value.value,
-          // todo: use parameter to select the right time stamp
+      // The response doesn't seem to contain any information regarding the nodeId,
+      // so we iterate with a for loop and use the index to get the proper nodeId
+      let values = []
+      for (let i = 0; i < dataValues.length; i += 1) {
+        values = values.concat(dataValues[i].historyData.dataValues.map((dataValue) => ({
+          pointId: nodesToRead[i],
           timestamp: dataValue.serverTimestamp.toUTCString(),
-        }
-      ))
+          data: {
+            value: dataValue.value.value,
+            quality: JSON.stringify(dataValue.statusCode),
+          },
+        })))
+      }
+
       this.addValues(values)
+
+      this.lastCompletedAt[scanMode] = end.getTime() + 1
+      await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+      this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${end}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}: ${error}`)
     }
-     */
+
+    this.ongoingReads[scanMode] = false
   }
 
   /**
