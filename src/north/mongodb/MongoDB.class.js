@@ -134,10 +134,12 @@ class MongoDB extends ApiHandler {
     let collection = ''
 
     entries.forEach((entry) => {
-      const { pointId, data, timestamp } = entry
+      const { pointId, data } = entry
       const Nodes = Object.entries(pointIdToNodes(pointId))
-      // Modif Yves
+      /** @todo check logic again - Modif Yves */
       // const measurement = Nodes[Nodes.length - 1][0]
+
+      // eslint-disable-next-line prefer-destructuring
       collection = Nodes[0][1]
 
       // Convert nodes into tags for CLI
@@ -152,7 +154,7 @@ class MongoDB extends ApiHandler {
 
       if ((!this.collectionChecked) && (!this.gettagFields)) {
         // getting fields which compose the tags
-        const taglist = tags.replace(/"/g,'').split(/[\s,:]+/)
+        const taglist = tags.replace(/"/g, '').split(/[\s,:]+/)
         for (let i = 0; i < taglist.length; i += 2) {
           this.tagFields.push(taglist[i])
         }
