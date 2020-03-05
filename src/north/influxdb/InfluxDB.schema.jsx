@@ -67,14 +67,14 @@ schema.form = {
   measurement: {
     type: 'OIbText',
     valid: notEmpty(),
-    defaultValue: '%1',
+    defaultValue: '%1$s',
   },
   tags: {
     type: 'OIbText',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
-    help: 'for example, site=%2,unit=%3,sensor=%4',
+    help: 'for example, site=%2$s,unit=%3$s,sensor=%4$s',
   },
 }
 

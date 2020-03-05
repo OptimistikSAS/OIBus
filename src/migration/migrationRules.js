@@ -156,4 +156,15 @@ module.exports = {
       timeout,
     }
   },
+  8: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'FolderScanner') {
+        if (Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'preserveFiles')) {
+          logger.info('Rename preserveFiles to preserve for FolderScanner')
+          dataSource.FolderScanner.preserve = dataSource.FolderScanner.preserveFiles
+          delete dataSource.FolderScanner.preserveFiles
+        }
+      }
+    })
+  },
 }
