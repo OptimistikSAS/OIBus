@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, minLength } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -33,25 +33,11 @@ schema.form = {
       </div>
     ),
   },
-  server: {
+  url: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: minLength(5),
     defaultValue: '',
-    help: <div>MQTT server address</div>,
-  },
-  port: {
-    type: 'OIbText',
-    newRow: false,
-    valid: inRange(1, 65535),
-    defaultValue: 8883,
-    help: <div>MQTT server port</div>,
-  },
-  mqttProtocol: {
-    type: 'OIbSelect',
-    options: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
-    label: 'MQTT protocol',
-    defaultValue: 'mqtts',
-    help: <div>MQTT protocol</div>,
+    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
   username: {
     type: 'OIbText',
@@ -65,6 +51,65 @@ schema.form = {
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
     help: <div>password</div>,
+  },
+  timeStampSettings: {
+    type: 'OIbTitle',
+    children: (
+      <div>
+        <p>These parameters describe how to determine the timeStamp</p>
+        <ul>
+          <li>
+            <b>Time Origin:</b>
+            If the value is &quot;oibus&quot; the timestamp will be the timestamp for the reception of the value by oibus.
+            If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using the key specified below.
+          </li>
+          <li>
+            <b>TimeStamp Key:</b>
+            The string indicates which key in the payload contains the value timestamp.
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  timeStampOrigin: {
+    type: 'OIbSelect',
+    options: ['payload', 'oibus'],
+    defaultValue: 'oibus',
+  },
+  timeStampKey: {
+    type: 'OIbText',
+    newRow: false,
+    valid: notEmpty(),
+    defaultValue: 'timestamp',
+  },
+  timeStampFormat: {
+    type: 'OIbText',
+    newRow: false,
+    valid: notEmpty(),
+    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
+  },
+  timeStampTimezone: {
+    type: 'OIbSelect',
+    newRow: false,
+    md: 2,
+    defaultValue: 'Europe/Paris',
+    help: <div>Time Zone</div>,
+    options: [
+      'Etc/UTC', 'Etc/GMT+12', 'Pacific/Midway', 'Pacific/Honolulu', 'Pacific/Marquesas', 'America/Anchorage', 'Pacific/Pitcairn',
+      'America/Los_Angeles', 'America/Tijuana', 'America/Chihuahua', 'America/Denver', 'America/Phoenix', 'America/Chicago',
+      'America/Guatemala', 'America/Mexico_City', 'America/Regina', 'America/Bogota', 'America/Indiana/Indianapolis', 'America/New_York',
+      'America/Caracas', 'America/Guyana', 'America/Halifax', 'America/La_Paz', 'America/Manaus', 'America/Santiago', 'America/St_Johns',
+      'America/Argentina/Buenos_Aires', 'America/Godthab', 'America/Montevideo', 'America/Sao_Paulo',
+      'Atlantic/South_Georgia', 'Atlantic/Azores', 'Atlantic/Cape_Verde', 'Africa/Casablanca', 'Africa/Monrovia', 'Europe/London',
+      'Africa/Algiers', 'Africa/Windhoek', 'Europe/Belgrade', 'Europe/Berlin', 'Europe/Brussels', 'Europe/Warsaw', 'Africa/Cairo',
+      'Africa/Harare', 'Asia/Amman', 'Asia/Beirut', 'Asia/Jerusalem', 'Europe/Athens', 'Europe/Helsinki', 'Europe/Minsk', 'Europe/Paris',
+      'Africa/Nairobi', 'Asia/Baghdad', 'Asia/Kuwait', 'Europe/Moscow', 'Asia/Tehran', 'Asia/Baku', 'Asia/Muscat', 'Asia/Tbilisi',
+      'Asia/Yerevan', 'Asia/Kabul', 'Asia/Karachi', 'Asia/Tashkent', 'Asia/Yekaterinburg', 'Asia/Colombo', 'Asia/Kolkata',
+      'Asia/Kathmandu', 'Asia/Dhaka', 'Asia/Novosibirsk', 'Asia/Rangoon', 'Asia/Bangkok', 'Asia/Krasnoyarsk', 'Asia/Hong_Kong',
+      'Asia/Irkutsk', 'Asia/Kuala_Lumpur', 'Asia/Taipei', 'Australia/Perth', 'Asia/Seoul', 'Asia/Tokyo', 'Asia/Yakutsk',
+      'Australia/Adelaide', 'Australia/Darwin', 'Asia/Vladivostok', 'Australia/Brisbane', 'Australia/Hobart', 'Australia/Sydney',
+      'Pacific/Guam', 'Australia/Lord_Howe', 'Asia/Magadan', 'Pacific/Norfolk', 'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Tongatapu',
+    ],
   },
 }
 

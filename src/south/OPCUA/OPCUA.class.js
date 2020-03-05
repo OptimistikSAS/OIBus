@@ -75,7 +75,7 @@ class OPCUA extends ProtocolHandler {
         maxRetry: 1,
       }
       const options = {
-        applicationName: 'MyClient',
+        applicationName: 'OIBus',
         connectionStrategy,
         securityMode: Opcua.MessageSecurityMode.None,
         securityPolicy: Opcua.SecurityPolicy.None,
@@ -95,8 +95,6 @@ class OPCUA extends ProtocolHandler {
    * On scan.
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
-   * @todo check if every async and await is useful
-   * @todo on the very first Scan dataSource.session might not be created yet, find out why
    */
   async onScan(scanMode) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
@@ -135,7 +133,7 @@ class OPCUA extends ProtocolHandler {
       ))
       this.addValues(values)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(`on Scan ${scanMode}: ${error}`)
     }
      */
   }

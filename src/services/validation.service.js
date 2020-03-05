@@ -45,7 +45,7 @@ const notEndsWith = (test, name = 'Value') => (val) => (
   !val || !val.endsWith(test) ? null : `${name} should not end with ${test}`
 )
 const startsWith = (test, name = 'Value') => (val) => (
-  val && startsWith(test) ? null : `${name} should start with ${test}`
+  val && val.startsWith(test) ? null : `${name} should start with ${test}`
 )
 
 // always return null (ie. no validation)

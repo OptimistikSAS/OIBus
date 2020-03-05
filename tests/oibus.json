@@ -246,11 +246,11 @@
                 "protocol": "FolderScanner",
                 "enabled": false,
                 "FolderScanner": {
-                    "preserve": false,
                     "minAge": 1000,
                     "inputFolder": "./tests/FolderScanner/input/",
                     "scanMode": "every5Second",
-                    "regex": ".txt"
+                    "regex": ".txt",
+                    "preserve": false
                 },
                 "points": []
             },
@@ -41772,5 +41772,5 @@
             }
         ]
     },
-    "schemaVersion": 7
+    "schemaVersion": 8
 }
