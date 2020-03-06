@@ -97,6 +97,7 @@ class InfluxDB extends ApiHandler {
           preciseTimestamp = 1000 * timestampTime
           break
         case 'ms':
+          preciseTimestamp = timestampTime
           break
         case 's':
           preciseTimestamp = Math.floor(timestampTime / 1000)
