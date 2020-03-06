@@ -64,7 +64,7 @@ describe('InfluxDB north', () => {
 
     const expectedUrl = 'http://localhost:8086/write?u=user&p=password&db=database&precision=s'
     const expectedHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    const expectedBody = 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality=good 1582978332\n'
+    const expectedBody = 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality="good" 1582978332\n'
     const expectedMethod = 'POST'
     expect(engine.sendRequest).toHaveBeenCalledTimes(1)
     expect(engine.sendRequest).toHaveBeenCalledWith(expectedUrl, expectedMethod, null, null, expectedBody, expectedHeaders)
