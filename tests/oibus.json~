@@ -323,29 +323,7 @@
                         "resampling": "Minute"
                     }
                 ]
-            },
-            {
-                "dataSourceId": "MQTTSimuServer",
-                "protocol": "MQTT",
-                "enabled": true,
-                "MQTT": {
-                    "password": "eYl2hXZxaFX+sETCVuQmoLJ7SK/1sTE81z+Xu55FYediF6ADBUlARcKIA5BgJMy6Cbsz9PmqVZOORkOPdl+Euuttw7aUfIrAjjezpzsePwP4mL1oyjlWoL2OoRwrhkwVWzwDeGTjb2DDh35EaXlrYYNHIhzbDtAzal9F+y3yeJnIwV29B6G8hk33WfkiiftOL0hMqcDQbGgUIvZdWzlV/WXky15gGAFbYMLOW2f0MNUOx/nVI6SnqfHV217whzlIrQVVsTgxsCDhphiR5xEpL1DzpIlKzk/I1knYrHF5RhGVqZHzPCtHL6gfmqDX465ALQX83j5EkocsirUATc9HyXAmHiI9nSVkVcEohHG+dlTUicvqx18kPFc2BZqaNvb2r3ufDp2BsItlwqIUfQJV/rlhGMy0oZKoi02uO7d3ycnNJ/9Pp7kjUNKl5vARsjXAG+0Ap62rGwdmwt0GdrhreR1giN1jcEgFNMlq5KqqLruhywOeYyki0x3df+SKF8ylskZROHtWGUMA53bgBkuY5yKUh+Yeay16BRC3P/DRIl6sgIhCRjsFe3MqfM7EVaZgD2YPBDTgGkI5DXPXwrwaKTf+XXKd2NV+RZkaBD2u5MK4HcLc3ihvyDm3rOVBn0syrAk4Ag/yh8vym/4FWjOmwy53PoSs1HkULjA4HBMYiqo=",
-                    "url": "mqtt://localhost:1883",
-                    "username": ".",
-                    "timeStampOrigin": "payload",
-                    "timeStampKey": "timestamp",
-                    "timeStampFormat": "YYYY-MM-DDTHH:mm:ss.SSSZ",
-                    "timeStampTimezone": "Europe/Paris"
-                },
-                "points": [
-                    {
-                        "pointId": "ANA/#",
-                        "scanMode": "listen",
-                        "topic": "_ANA/#"
-                    }
-                ]
             }
-
         ]
     },
     "north": {
@@ -387,32 +365,7 @@
                 "OIAnalyticsFile": {
                     "stack": "fetch"
                 }
-            },
-            {
-                "applicationId": "simuidb",
-                "api": "InfluxDB",
-                "enabled": true,
-                "InfluxDB": {
-                    "password": "kFfMdmUFwJvP44aXaGxSPq1bu6quagnw1SEDHzI3q1FI30MATaW0PIpGEzF+R8uyByix7Egns5MPWkdQJSvWtILgfSSWFNMhSI5XvbLdxdH6KFEoK0NawH5rLwgFNx8hLUcjUYLZc42/Fmud7rd0ID8E4iuIisvFuA6EhSQ4IMKTR0rMXA8Vw3qb8JBaoUv19OOcMl0Fz+0apjNslHUNUJNLzM+905jVOnr3iiHVpkPvvhlfggGlyQhv6+Et4e/88+025y6v6PqAxqQJAWtmQwkP0/PDP1PM0arWyCS8Io6knfinPr3qZBavtAIWtGdlctocQQQjnCKEihVRE+mcsNiC/8Ts8fb0McGhcqXykKskNFRNhHMFojnoNVXDV7dnA43qXhKuwqXevgQCR/QffQgYXCTRfLqBcYmIGYKwdox+PQyhkAldkkM1oTXAqhfPthAhr0C6sfU9LD84oC+Eoelxxhk9OS6BuDmQ7HcuuBvUwDMpQr/1zyrx0I3+M+e79SnEbdY3xPxxsmgidOXkdJ3n04lXjl7+m3SbhT+3FzwsGbTosazt4PbHSm0waUIpfByRw1wasRsJjAdJR3fpunZYjVyIRq3zFe0+ZnW2xpzRfXvAOlkIbOJkUCUiH3drYl6lG6QY7xSUMbfQuvQhibqgn23KnB8yfqs0hZ2AYZ8=",
-                    "user": ".",
-                    "host": "http://localhost:8086",
-                    "db": "simudata",
-                    "precision": "ms",
-                    "regExp": "(.*)\\/(.{2})(.)(.*)",
-                    "measurement": "%1$s",
-                    "tags": "Site=%2$s,Tranche=%3$s,Repere=%2$s%3$s%4$s"
-                },
-                "caching": {
-                    "sendInterval": 10000,
-                    "retryInterval": 5000,
-                    "groupCount": 1000,
-                    "maxSendCount": 5000
-                },
-                "subscribedTo": [
-                    "MQTTSimuServer"
-                ]
             }
-
         ]
     },
     "schemaVersion": 8

@@ -82,7 +82,13 @@ class InfluxDB extends ApiHandler {
       // Converts data into fields for CLI
       let fields = null
       Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+        // Modif Yves
+        // Anomalie constatée : le field timestamp n'est pas entouré de "
+        // En attendant une correction, test si fieldKey vaut timestamp auquel cas fieldValue est entouré de ""
+        if (fieldKey === 'timestamp') {
+          if (!fields) fields = `${escapeSpace(fieldKey)}="${escapeSpace(fieldValue)}"`
+          else fields = `${fields},${escapeSpace(fieldKey)}="${escapeSpace(fieldValue)}"`
+        } else if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
         else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
       })
 
@@ -97,6 +103,9 @@ class InfluxDB extends ApiHandler {
           preciseTimestamp = 1000 * timestampTime
           break
         case 'ms':
+          // Modif Yves
+          // Ajout car dans le cas de ms preciseTimestamp est undefined
+          preciseTimestamp = timestampTime
           break
         case 's':
           preciseTimestamp = Math.floor(timestampTime / 1000)

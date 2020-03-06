@@ -199,12 +199,19 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
 
   let body
   if (typeof data === 'string') {
-    body = generateFormDataBody(data)
+    // Modif Yves
+    // si headers est déjà valorisé (donc pas vide) on affecte data à body tel quel
+    // sinon on va rechercher les headers dans le body
+    if (Object.keys(headers).length > 0) {
+      body = data
+    } else {
+      body = generateFormDataBody(data)
 
-    const formHeaders = body.getHeaders()
-    Object.keys(formHeaders).forEach((key) => {
-      headers[key] = formHeaders[key]
-    })
+      const formHeaders = body.getHeaders()
+      Object.keys(formHeaders).forEach((key) => {
+        headers[key] = formHeaders[key]
+      })
+    }
   } else {
     body = JSON.stringify(data)
     headers['Content-Type'] = 'application/json'
@@ -267,6 +274,7 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
         await sendWithFetch(engine, requestUrl, method, headers, proxy, body, timeout)
     }
   } catch (error) {
+    logger.silly(`sendRequest(): Error ${error}`)
     return Promise.reject(error)
   }
 
