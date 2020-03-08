@@ -72,6 +72,28 @@ schema.form = {
     newRow: false,
     help: 'for example, site:%2$s,unit:%3$s,sensor:%4$s',
   },
+  createcollection: {
+    type: 'OIbCheckBox',
+    label: 'Create collection when collection does not exist',
+    defaultValue: false,
+  },
+  createcollectionindex: {
+    type: 'OIbCheckBox',
+    label: 'Create collection index when collection is created',
+    defaultValue: false,
+  },
+  addtimestamptoindex: {
+    type: 'OIbCheckBox',
+    label: 'Add timestamp field to index fields',
+    defaultValue: false,
+  },
+  timeStampKey: {
+    type: 'OIbText',
+    valid: notEmpty(),
+    newRow: false,
+    defaultValue: 'timestamp',
+    help: <div>field in engine data which contain timestamp value</div>,
+  },
 }
 
 export default schema
