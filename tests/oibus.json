@@ -6,7 +6,7 @@
         "filter": [
             "127.0.0.1",
             "::1",
-	    "::ffff:127.0.0.1"
+            "::ffff:127.0.0.1"
         ],
         "logParameters": {
             "consoleLevel": "debug",
@@ -306,7 +306,7 @@
                         "pointId": "_FC42404/PID1/PV.CV",
                         "scanMode": "10000\r"
                     },
-                   {
+                    {
                         "pointId": "ZY53182/DI1/OUT_D.CV",
                         "scanMode": "10000"
                     }
@@ -345,7 +345,6 @@
                     }
                 ]
             }
-
         ]
     },
     "north": {
@@ -391,7 +390,7 @@
             {
                 "applicationId": "simuidb",
                 "api": "InfluxDB",
-                "enabled": true,
+                "enabled": false,
                 "InfluxDB": {
                     "password": "kFfMdmUFwJvP44aXaGxSPq1bu6quagnw1SEDHzI3q1FI30MATaW0PIpGEzF+R8uyByix7Egns5MPWkdQJSvWtILgfSSWFNMhSI5XvbLdxdH6KFEoK0NawH5rLwgFNx8hLUcjUYLZc42/Fmud7rd0ID8E4iuIisvFuA6EhSQ4IMKTR0rMXA8Vw3qb8JBaoUv19OOcMl0Fz+0apjNslHUNUJNLzM+905jVOnr3iiHVpkPvvhlfggGlyQhv6+Et4e/88+025y6v6PqAxqQJAWtmQwkP0/PDP1PM0arWyCS8Io6knfinPr3qZBavtAIWtGdlctocQQQjnCKEihVRE+mcsNiC/8Ts8fb0McGhcqXykKskNFRNhHMFojnoNVXDV7dnA43qXhKuwqXevgQCR/QffQgYXCTRfLqBcYmIGYKwdox+PQyhkAldkkM1oTXAqhfPthAhr0C6sfU9LD84oC+Eoelxxhk9OS6BuDmQ7HcuuBvUwDMpQr/1zyrx0I3+M+e79SnEbdY3xPxxsmgidOXkdJ3n04lXjl7+m3SbhT+3FzwsGbTosazt4PbHSm0waUIpfByRw1wasRsJjAdJR3fpunZYjVyIRq3zFe0+ZnW2xpzRfXvAOlkIbOJkUCUiH3drYl6lG6QY7xSUMbfQuvQhibqgn23KnB8yfqs0hZ2AYZ8=",
                     "user": ".",
@@ -411,8 +410,30 @@
                 "subscribedTo": [
                     "MQTTSimuServer"
                 ]
+            },
+            {
+                "applicationId": "simumdb",
+                "api": "MongoDB",
+                "enabled": true,
+                "MongoDB": {
+                    "password": "nFvRnCV0JI2EEfpdIP42DvMq6Uk8fZEwpuobUwDK78MuvNeSWr96ejGQ03WYr+3vzYS6X27+uU9CSXZttAWzstuk/YNAF8PLCrikNMzYLtdZ5UQk4EVQJASx2l1iX/pHY5y+pDx5CYuPLXIeu0fw8tFme3RD7+vblnffuLhOvMVHAsb1wnUHdlsS6NM3ARMRcXrP+Ovdc7JgBxUtMaDfMQYGEv9olaqnZP0Zwisb3hDgnrzh6DVKPwKjqUYXZLnoSw4sytdCmMW0JqgaVa8LW9i9S5lAkkwZh3zkvMnv9RI/SsX90cPfgWbKvVGjmtaMvya5uHe2D/NBiomKNt7fsy2iGGzQmH690Jm09EPoNNLLx/byy5JiJ+QfaSxtggVKORyQ0mtPDLEG2eoF03pX3ABFpKYfcOrw/eHO3Iggrpaqf9Wdlw2KlybzuR4Flc8Pb2ikZSop7dIGXhAMjodAhUdcarePJdwraw2HnWhzSDSPJE1iab5G2+/DAmji6KamKbgRoD6DkbL+Tv1e+TwO/gf4mkD1b9yOv5K1Y1TbkNcKqDkQyzDWYVmk+LehDYp7nr4ync6D/32r1Baeavqe6uvvkCE94mrioYnKfmwAaZOy3P1tpwuj5PVL8fUQxpA5aVuF1UyxTL6n/51PHDfDpz6ezuEl3G2Ehjaehu9afR8=",
+                    "user": "admin",
+                    "host": "localhost:27017",
+                    "db": "simudata",
+                    "regExp": "(.*)\\/(.{2})(.)(.*)",
+                    "collection": "%1$s",
+                    "indexfields": "Site:%2$s,Tranche:%3$s,Repere:%2$s%3$s%4$s"
+                },
+                "caching": {
+                    "sendInterval": 10000,
+                    "retryInterval": 5000,
+                    "groupCount": 1000,
+                    "maxSendCount": 10000
+                },
+                "subscribedTo": [
+                    "MQTTSimuServer"
+                ]
             }
-
         ]
     },
     "schemaVersion": 8
