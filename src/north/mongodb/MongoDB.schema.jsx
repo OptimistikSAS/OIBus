@@ -39,10 +39,38 @@ schema.form = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  precision: {
-    type: 'OIbSelect',
-    defaultValue: 's',
-    options: ['ns', 'us', 'µs', 'ms', 's'],
+  pointIdParameters: {
+    type: 'OIbTitle',
+    children: (
+      <>
+        <p>Regexp will be used to identify token in the pointId that will be used to build the MongoDB query.</p>
+        <ul>
+          <li>
+            {'(.*)\\/(.{2})(.)(.*)'}
+            This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
+          </li>
+          <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
+        </ul>
+      </>
+    ),
+  },
+  regExp: {
+    type: 'OIbText',
+    valid: notEmpty(),
+    defaultValue: '(.*)',
+    help: 'for example (.*)\\/(.{2})(.)(.*) to split in 4 groups',
+  },
+  collection: {
+    type: 'OIbText',
+    valid: notEmpty(),
+    defaultValue: '%1$s',
+  },
+  indexfields: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: hasLengthBetween(0, 256),
+    newRow: false,
+    help: 'for example, site:%2$s,unit:%3$s,sensor:%4$s',
   },
 }
 

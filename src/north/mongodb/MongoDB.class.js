@@ -1,35 +1,6 @@
 const mongo = require('mongodb')
-
+const { vsprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId - String with this form : value1.name1/value2.name2#value
- * @return {Object} Values indexed by name
- */
-const pointIdToNodes = (pointId) => {
-  const attributes = {}
-  pointId
-    .slice(1)
-    .split('/')
-    .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-    })
-  return attributes
-}
-
-/**
- * Escape spaces.
- * @param {*} chars - The content to escape
- * @return {*} The escaped or the original content
- */
-const escapeSpace = (chars) => {
-  if (typeof chars === 'string') {
-    return chars.replace(/ /g, '\\ ')
-  }
-  return chars
-}
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
@@ -80,7 +51,10 @@ class MongoDB extends ApiHandler {
     const { host, user, password, db } = this.application.MongoDB
 
     // creating url connection string
-    const url = `mongodb://${user}:${this.decryptPassword(password)}@${host}`
+    // Modif Yves : 
+    //   Only for testing
+    const url = `mongodb://${host}`
+    // const url = `mongodb://${user}:${this.decryptPassword(password)}@${host}`
 
     this.client = new mongo.MongoClient(url)
     this.client.connect((error) => {
@@ -105,10 +79,6 @@ class MongoDB extends ApiHandler {
 
         // indication that collection existence is not checked
         this.collectionChecked = false
-        // indication that tagFields aren't already got
-        this.gettagFields = false
-        // array used to store fields tags (this array is populate only with the tags of the first value)
-        this.tagFields = []
       }
     })
   }
@@ -128,81 +98,59 @@ class MongoDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    // const { host, user, password, db, precision = 'ms' } = this.application.MongoDB
+    const { regExp, collection, indexfields } = this.application.MongoDB
 
     let body = ''
-    let collection = ''
+    let collectionValue = ''
+    let indexfieldsValue = ''
 
     entries.forEach((entry) => {
       const { pointId, data } = entry
-      const Nodes = Object.entries(pointIdToNodes(pointId))
-      /** @todo check logic again - Modif Yves */
-      // const measurement = Nodes[Nodes.length - 1][0]
 
-      // eslint-disable-next-line prefer-destructuring
-      collection = Nodes[0][1]
+      const mainRegExp = new RegExp(regExp)
+      const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
 
-      // Convert nodes into tags for CLI
-      // For InfluxDB the tags is use to identify the tags (indexes)
-      // To be in the same usage than InfluxDB, we add timestamp in tags
-      let tags = null
-      Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-        if (!tags) tags = `"${escapeSpace(tagKey)}":"${escapeSpace(tagValue)}"`
-        else tags = `${tags},"${escapeSpace(tagKey)}":"${escapeSpace(tagValue)}"`
-      })
-      tags = `${tags},"timestamp":"xxxxxxx"` // "xx...xx" part will not be used.
+      collectionValue = vsprintf(collection, groups)
+      indexfieldsValue = vsprintf(indexfields, groups)
 
-      if ((!this.collectionChecked) && (!this.gettagFields)) {
-        // getting fields which compose the tags
-        const taglist = tags.replace(/"/g, '').split(/[\s,:]+/)
-        for (let i = 0; i < taglist.length; i += 2) {
-          this.tagFields.push(taglist[i])
-        }
-        this.gettagFields = true
+      // If there are less groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      if ((collectionValue.match(/undefined/g) || []).length > (collection.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for collection`)
+        return
+      }
+      if ((indexfieldsValue.match(/undefined/g) || []).length > (indexfields.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for indexes`)
+        return
       }
 
-      // Converts data into fields for CLI
-      let fields = null
-      // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
-      // The data received from MQTT is type of string, so we need to transform it to Json
-      const dataJson = JSON.parse(decodeURI(data))
-      Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-        if (!fields) fields = `"${escapeSpace(fieldKey)}":${escapeSpace(fieldValue)}`
-        else fields = `${fields},"${escapeSpace(fieldKey)}":${escapeSpace(fieldValue)}`
-      })
+      // convert indexfieldsValue into mongoindexfields for inserting by insertMany function
+      // example : "Site:XXX,Tranche:1,Repere:XXXXXXXXX"
+      const mongoindexfields = `"${indexfieldsValue}"`.replace(/:/g, '":"').replace(/,/g, '","')
 
-      /*
-      // Convert timestamp to the configured precision
-      let preciseTimestamp = new Date(timestamp).getTime()
-      switch (precision) {
-        case 'ns':
-          preciseTimestamp = 1000 * 1000 * timestamp
-          break
-        case 'u':
-          preciseTimestamp = 1000 * timestamp
-          break
-        case 'ms':
-          break
-        case 's':
-          preciseTimestamp = Math.floor(timestamp / 1000)
-          break
-        case 'm':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60)
-          break
-        case 'h':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
-          break
-        default:
-          preciseTimestamp = timestamp
-      }
-      */
+      // Converts data into fields for inserting by insertMany function
+      let mongofields = null
+      // ymp : I don't know why but data is a JSON object ... so we use it without any transformation
+      // const dataJson = JSON.parse(decodeURI(data))
+      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+        // Modif Yves
+        // Anomalie constatée : le field timestamp n'est pas entouré de "
+        // En attendant une correction, test si fieldKey vaut timestamp auquel cas fieldValue est entouré de ""
+        if (fieldKey === 'timestamp') {
+          if (!mongofields) mongofields = `"${fieldKey}":"${fieldValue}"`
+          else mongofields = `${mongofields},"${fieldKey}":"${fieldValue}"`
+        } else if (!mongofields) mongofields = `"${fieldKey}":${fieldValue}`
+        else mongofields = `${mongofields},"${fieldKey}":${fieldValue}`
+      })
 
       // Append entry to body
       // body += `${collection},${tags} ${fields} ${preciseTimestamp}\n`
       if (body === '') {
-        body = `{${tags},${fields}}`
+        body = `{${mongoindexfields},${mongofields}}`
       } else {
-        body += `,\n{${tags},${fields}}`
+        body += `,\n{${mongofields},${mongofields}}`
       }
     })
 
@@ -210,8 +158,8 @@ class MongoDB extends ApiHandler {
 
     if (!this.collectionChecked) {
       // before inserting data in MongoDB, ensuring, for the first time, that
-      // collection exists with indexes which are based on tags tagKeys
-      await this.ensureCollectionExists(collection, this.tagFields)
+      // collection exists with indexes which are based on tags indexfields
+      await this.ensureCollectionExists(collectionValue, indexfieldsValue)
 
       this.logger.info('Want to write datas in MongoDB Database')
 
@@ -219,13 +167,13 @@ class MongoDB extends ApiHandler {
       bodyjson = JSON.parse(`[${body}]`)
 
       // Inserting JSON Array in MongoDB
-      this.client_db.collection(collection).insertMany(bodyjson)
+      this.client_db.collection(collectionValue).insertMany(bodyjson)
     } else {
       // converting body in JSON Array
       bodyjson = JSON.parse(`[${body}]`)
 
       // Inserting JSON Array in MongoDB
-      this.client_db.collection(collection).insertMany(bodyjson)
+      this.client_db.collection(collectionValue).insertMany(bodyjson)
     }
     return true
   }
@@ -234,11 +182,13 @@ class MongoDB extends ApiHandler {
   /**
    * Ensure Collection exists and create it with indexes if not exists
    * @param {string}   collection  - The collection name
-   * @param {string[]} fields      - array of fields which compose the index
+   * @param {string[]} indexfields - array of fields which compose the index
    * @return {void}
    */
-  async ensureCollectionExists(collection, fields) {
-    if (!this.listCollections.includes(collection)) {
+  async ensureCollectionExists(collection, indexfields) {
+    const icollection = this.listCollections.findIndex((file) => file.name === collection)
+
+    if (icollection < 0) {
       // the collection doesn't exists, we create it with indexes
       await this.client_db.createCollection(collection, ((error1) => {
         if (error1) {
@@ -246,13 +196,24 @@ class MongoDB extends ApiHandler {
         } else {
           this.logger.info(`Collection (${collection}) Creation : Success`)
           // the collection was created
-          // now we will crate index based on tagkeys array
-          let indexfields = null
-          for (let i = 0; i < fields.length; i += 1) {
-            if (!indexfields) indexfields = `"${fields[i]}":1`
-            else indexfields = `${indexfields},"${fields[i]}":1`
+          // now we will create indexes based on indexfields
+
+          // 1rst step : retrieve list of index fields
+          // Remember : indexfields is a string formatted like this : "site:%2$s,unit:%3$s,sensor:%4$s"
+          // for index creation we add string "timestamp:xx" just for having timestamp in list of indexes
+          const listindexfields = []
+          const arraytmp = `${indexfields},timestamp:xx`.replace(/"/g, '').split(/[\s,:]+/)
+          for (let i = 0; i < arraytmp.length; i += 2) {
+            listindexfields.push(arraytmp[i])
           }
-          this.client_db.collection(collection).createIndex(JSON.parse(`{${indexfields}}`), ((error2) => {
+
+          // 2nd step : create a Json object which contain list of index fields and order (0/1)
+          let listindex = null
+          for (let i = 0; i < listindexfields.length; i += 1) {
+            if (!listindex) listindex = `"${listindexfields[i]}":1`
+            else listindex = `${listindex},"${listindexfields[i]}":1`
+          }
+          this.client_db.collection(collection).createIndex(JSON.parse(`{${listindex}}`), ((error2) => {
             if (error2) {
               this.logger.info(`Error during Collection (${collection}) Indexes Creation : ${error2}`)
             } else {
