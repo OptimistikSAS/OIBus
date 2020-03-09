@@ -72,7 +72,7 @@
     "react-router-dom": "5.1.2",
     "reactstrap": "8.4.1",
     "request-promise-native": "1.0.8",
-    "sprintf-js": "^1.1.2",
+    "sprintf-js": "1.1.2",
     "sqlite": "3.0.3",
     "sqlite3": "4.1.1",
     "timexe": "0.9.19",
