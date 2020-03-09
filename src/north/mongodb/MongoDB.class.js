@@ -163,14 +163,6 @@ class MongoDB extends ApiHandler {
         // collection exists with indexes which are based on tags indexfields
         await this.ensureCollectionExists(collectionValue, indexfieldsValue, createcollectionindex, addtimestamptoindex, timeStampKey)
       }
-
-      this.logger.info('Want to write datas in MongoDB Database')
-
-      // converting body in JSON Array
-      bodyjson = JSON.parse(`[${body}]`)
-
-      // Inserting JSON Array in MongoDB
-      this.client_db.collection(collectionValue).insertMany(bodyjson)
     } else {
       // converting body in JSON Array
       bodyjson = JSON.parse(`[${body}]`)
@@ -233,12 +225,12 @@ class MongoDB extends ApiHandler {
               } else {
                 this.logger.info(`Collection (${collection}) Indexes Creation : Success`)
               }
-              // disable this part of code for the next time
             }))
           }
         }
       }))
     }
+    // disable this part of code for the next time
     this.collectionChecked = true
   }
 }
