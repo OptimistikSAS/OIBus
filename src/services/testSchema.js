@@ -11,6 +11,7 @@ const controls = [
   'OIbTextArea',
   'OIbProxy',
   'OIbAuthentication',
+  'OIbTimezone',
 ]
 
 const testSchema = (schema) => {
