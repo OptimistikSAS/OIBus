@@ -422,7 +422,11 @@
                     "db": "simudata",
                     "regExp": "(.*)\\/(.{2})(.)(.*)",
                     "collection": "%1$s",
-                    "indexfields": "Site:%2$s,Tranche:%3$s,Repere:%2$s%3$s%4$s"
+                    "indexfields": "Site:%2$s,Tranche:%3$s,Repere:%2$s%3$s%4$s",
+                    "createcollection": true,
+                    "createcollectionindex": true,
+                    "addtimestamptoindex": true,
+                    "timeStampKey": "timestamp"
                 },
                 "caching": {
                     "sendInterval": 10000,
