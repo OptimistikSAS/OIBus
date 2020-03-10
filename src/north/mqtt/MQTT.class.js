@@ -41,14 +41,15 @@ class MQTT extends ApiHandler {
    */
   connect() {
     super.connect()
-    const { mqttProtocol, host, port, username, password } = this.application.MQTT
-    this.client = mqtt.connect(`${mqttProtocol}://${host}`, { port, username, password: Buffer.from(this.decryptPassword(password)) })
+    const { url, username, password } = this.application.MQTT
+    this.logger.info(`Connecting North MQTT Connector to ${url}...`)
+    this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
 
     this.client.on('connect', () => {
-      this.logger.info('Connection to MQTT Broker')
+      this.logger.info(`Connection North MQTT Connector to ${url}`)
     })
   }
 
@@ -57,7 +58,8 @@ class MQTT extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.logger.info('Disconnection from MQTT Broker')
+    const { url } = this.application.MQTT
+    this.logger.info(`Disconnecting North MQTT Connector from ${url}`)
     this.client.end(true)
   }
 
@@ -71,12 +73,12 @@ class MQTT extends ApiHandler {
       const { pointId, data } = entry
 
       // The pointId string is normally stuctured like that
-      //   /xxx..xxx/yyy...yyy/.../zzz.zzz
+      //   xxx..xxx/yyy...yyy/.../zzz.zzz
       // In North MQTT usage we consider that the topic, to use, is given by yyy...yyy/.../zzz.zzz
-      // We have to retrieve the end of the string after subtract "/xxx.xxx/" string
+      // We have to retrieve the end of the string after subtract "xxx.xxx/" string
       const topic = pointId.split('/').slice(1).join('/')
 
-      this.client.publish(topic, data, (error) => {
+      this.client.publish(topic, JSON.stringify(data), (error) => {
         if (error) {
           this.logger.error('Publish Error :', topic, data, error)
         }

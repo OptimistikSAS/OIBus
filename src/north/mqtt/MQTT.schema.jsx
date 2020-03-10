@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, minLength } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -33,25 +33,11 @@ schema.form = {
       </div>
     ),
   },
-  host: {
+  url: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: minLength(5),
     defaultValue: '',
-    help: <div>MQTT server address</div>,
-  },
-  port: {
-    type: 'OIbText',
-    newRow: false,
-    valid: inRange(1, 65535),
-    defaultValue: 8883,
-    help: <div>MQTT server port</div>,
-  },
-  mqttProtocol: {
-    type: 'OIbSelect',
-    options: ['mqtt', 'mqtts'],
-    label: 'MQTT protocol',
-    defaultValue: 'mqtt',
-    help: <div>MQTT protocol</div>,
+    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
   username: {
     type: 'OIbText',
