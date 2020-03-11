@@ -8,6 +8,7 @@ import OIbScanMode from './OIbScanMode.jsx'
 import OIbProxy from './OIbProxy.jsx'
 import OIbTitle from './OIbTitle.jsx'
 import OIbAuthentication from './OIbAuthentication.jsx'
+import OIbTimezone from './OIbTimezone.jsx'
 
 export {
   OIbCheckBox,
@@ -20,4 +21,5 @@ export {
   OIbProxy,
   OIbTitle,
   OIbAuthentication,
+  OIbTimezone,
 }

@@ -82,8 +82,15 @@ class InfluxDB extends ApiHandler {
       // Converts data into fields for CLI
       let fields = null
       Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-        else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+        const escapedFieldKey = escapeSpace(fieldKey)
+        let escapedFieldValue = escapeSpace(fieldValue)
+
+        if (typeof escapedFieldValue === 'string') {
+          escapedFieldValue = `"${escapedFieldValue}"`
+        }
+
+        if (!fields) fields = `${escapedFieldKey}=${escapedFieldValue}`
+        else fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
       })
 
       // Convert timestamp to the configured precision
@@ -97,6 +104,7 @@ class InfluxDB extends ApiHandler {
           preciseTimestamp = 1000 * timestampTime
           break
         case 'ms':
+          preciseTimestamp = timestampTime
           break
         case 's':
           preciseTimestamp = Math.floor(timestampTime / 1000)
