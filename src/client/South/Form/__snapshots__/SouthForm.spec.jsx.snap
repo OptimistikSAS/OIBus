@@ -3535,71 +3535,36 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-2"
       >
         <div
           class="form-group"
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxAge"
+            for="south.dataSources.0.OPCUA.retryInterval"
           >
-            Max age
+            Retry interval
           </label>
           <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxAge"
-            name="south.dataSources.0.OPCUA.maxAge"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.OPCUA.retryInterval"
+            name="south.dataSources.0.OPCUA.retryInterval"
             type="integer"
             value=""
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should not greater than 1000
+          </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              IP address of the OPC-UA server
+              Retry Interval (ms)
             </div>
           </small>
-        </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.timeOrigin"
-          >
-            Time origin
-          </label>
-          <select
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.timeOrigin"
-            name="south.dataSources.0.OPCUA.timeOrigin"
-          >
-            <option
-              value="server"
-            >
-              server
-            </option>
-            <option
-              value="source"
-            >
-              source
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
         </div>
       </div>
       <div
@@ -3646,7 +3611,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             Max read interval
           </label>
           <input
-            class="oi-form-input form-control"
+            class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.maxReadInterval"
             name="south.dataSources.0.OPCUA.maxReadInterval"
             type="integer"
@@ -3654,7 +3619,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should not greater than 60
+          </div>
           <small
             class="form-text text-muted"
           >
@@ -3961,71 +3928,36 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-2"
       >
         <div
           class="form-group"
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxAge"
+            for="south.dataSources.0.OPCUA.retryInterval"
           >
-            Max age
+            Retry interval
           </label>
           <input
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxAge"
-            name="south.dataSources.0.OPCUA.maxAge"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.OPCUA.retryInterval"
+            name="south.dataSources.0.OPCUA.retryInterval"
             type="integer"
             value=""
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should not greater than 1000
+          </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              IP address of the OPC-UA server
+              Retry Interval (ms)
             </div>
           </small>
-        </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.timeOrigin"
-          >
-            Time origin
-          </label>
-          <select
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.timeOrigin"
-            name="south.dataSources.0.OPCUA.timeOrigin"
-          >
-            <option
-              value="server"
-            >
-              server
-            </option>
-            <option
-              value="source"
-            >
-              source
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
         </div>
       </div>
       <div
@@ -4072,7 +4004,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             Max read interval
           </label>
           <input
-            class="oi-form-input form-control"
+            class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.maxReadInterval"
             name="south.dataSources.0.OPCUA.maxReadInterval"
             type="integer"
@@ -4080,7 +4012,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should not greater than 60
+          </div>
           <small
             class="form-text text-muted"
           >
