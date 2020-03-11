@@ -18,9 +18,9 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    const { url, maxAge, maxReturnValues, maxReadInterval } = dataSource.OPCUA
+    const { url, retryInterval, maxReturnValues, maxReadInterval } = dataSource.OPCUA
     this.url = url
-    this.maxAge = maxAge || 10
+    this.retryInterval = retryInterval
     this.maxReturnValues = maxReturnValues
     this.maxReadInterval = maxReadInterval
 
@@ -39,6 +39,8 @@ class OPCUA extends ProtocolHandler {
         points,
       }
     })
+
+    this.reconnectTimeout = null
   }
 
   /**
@@ -66,27 +68,7 @@ class OPCUA extends ProtocolHandler {
       this.lastCompletedAt[scanGroup] = lastCompletedAt
     }
 
-    try {
-      // define OPCUA connection parameters
-      const connectionStrategy = {
-        initialDelay: 1000,
-        maxRetry: 1,
-      }
-      const options = {
-        applicationName: 'OIBus',
-        connectionStrategy,
-        securityMode: Opcua.MessageSecurityMode.None,
-        securityPolicy: Opcua.SecurityPolicy.None,
-        endpoint_must_exist: false,
-      }
-      this.client = Opcua.OPCUAClient.create(options)
-      await this.client.connect(this.url)
-      this.session = await this.client.createSession()
-      this.connected = true
-      this.logger.info('OPCUA Connected')
-    } catch (error) {
-      this.logger.error(error)
-    }
+    await this.connectToOpcuaServer()
   }
 
   /**
@@ -154,10 +136,45 @@ class OPCUA extends ProtocolHandler {
    * @return {void}
    */
   async disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+    }
+
     if (this.connected) {
       await this.session.close()
       await this.client.disconnect()
       this.connected = false
+    }
+  }
+
+  /**
+   * Connect to OPCUA server with retry.
+   * @returns {Promise<void>} - The connect promise
+   */
+  async connectToOpcuaServer() {
+    this.reconnectTimeout = null
+
+    try {
+      // define OPCUA connection parameters
+      const connectionStrategy = {
+        initialDelay: 1000,
+        maxRetry: 1,
+      }
+      const options = {
+        applicationName: 'OIBus',
+        connectionStrategy,
+        securityMode: Opcua.MessageSecurityMode.None,
+        securityPolicy: Opcua.SecurityPolicy.None,
+        endpoint_must_exist: false,
+      }
+      this.client = Opcua.OPCUAClient.create(options)
+      await this.client.connect(this.url)
+      this.session = await this.client.createSession()
+      this.connected = true
+      this.logger.info('OPCUA Connected')
+    } catch (error) {
+      this.logger.error(error)
+      this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }
 }
