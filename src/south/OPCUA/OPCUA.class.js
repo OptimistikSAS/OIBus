@@ -131,7 +131,6 @@ class OPCUA extends ProtocolHandler {
         }
 
         opcStartTime = intervalOpcEndTime
-        this.logger.debug(`Values length: ${values.length}`)
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
 
