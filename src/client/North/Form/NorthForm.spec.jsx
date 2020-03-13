@@ -31,7 +31,7 @@ describe('NorthForm', () => {
           <BrowserRouter>
             <NorthForm application={application} applicationIndex={0} onChange={() => 1} />
           </BrowserRouter>,
-          container
+          container,
         )
       })
       expect(container).toMatchSnapshot()
