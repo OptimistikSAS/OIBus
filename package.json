@@ -52,7 +52,7 @@
     "koa-router": "8.0.8",
     "koa-send": "5.0.0",
     "micromatch": "4.0.2",
-    "minimist": "1.2.4",
+    "minimist": "1.2.5",
     "moment-timezone": "0.5.28",
     "mqtt": "3.0.0",
     "mssql": "6.0.1",
