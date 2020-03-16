@@ -64,4 +64,18 @@ describe('Engine', () => {
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.password', value: '{{notEncrypted}}new_password', validity: null })
     expect(container).toMatchSnapshot()
   })
+  test('check Engine when config has no proxies', () => {
+    newConfig.engine.proxies = null
+    act(() => {
+      ReactDOM.render(<BrowserRouter><Engine /></BrowserRouter>, container)
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check Engine when no engine', () => {
+    newConfig.engine = null
+    act(() => {
+      ReactDOM.render(<BrowserRouter><Engine /></BrowserRouter>, container)
+    })
+    expect(container).toMatchSnapshot()
+  })
 })
