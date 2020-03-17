@@ -5,6 +5,18 @@ const validation = {
     groupCount: (val) => (val > 0 ? null : 'Group count should be greater than 0'),
     maxSendCount: (val) => (val > 0 ? null : 'Max group count should be greater than 0'),
   },
+  application: {
+    isValidName: (val, excludedList) => {
+      let error = null
+      if (excludedList.includes(val)) {
+        error = 'Id already exists'
+      }
+      if (!error) {
+        error = (((typeof val === 'string' || val instanceof String) && val !== '') ? null : 'value must not be empty')
+      }
+      return error
+    },
+  },
 }
 
 export default validation
