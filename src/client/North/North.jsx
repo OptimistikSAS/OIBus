@@ -6,6 +6,7 @@ import NewApplicationRow from './NewApplicationRow.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
+import validation from './Form/North.validation'
 
 const North = () => {
   const { setAlert } = React.useContext(AlertContext)
@@ -83,6 +84,7 @@ const North = () => {
           fromList={applications}
           index={index}
           name="applicationId"
+          valid={validation.application.isValidName}
           idChanged={handleApplicationIdChanged}
         />
       ),
