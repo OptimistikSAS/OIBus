@@ -23,6 +23,7 @@ describe('EditableIdField', () => {
         fromList={[{ test: 'test' }]}
         index={1}
         name="name"
+        valid={() => null}
         idChanged={() => (1)}
       />, container)
     })
