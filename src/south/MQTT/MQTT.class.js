@@ -54,7 +54,7 @@ class MQTT extends ProtocolHandler {
           let timestamp = new Date().toISOString()
           if (timeStampOrigin === 'payload') {
             if (timezone && messageObject[timeStampKey]) {
-              const timestampDate = MQTT.generateDateWithTimezone(messageObject[timeStampKey], timeStampFormat, timezone)
+              const timestampDate = MQTT.generateDateWithTimezone(messageObject[timeStampKey], timezone, timeStampFormat)
               timestamp = timestampDate.toISOString()
             } else {
               this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
