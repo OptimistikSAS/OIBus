@@ -136,10 +136,7 @@ class MongoDB extends ApiHandler {
       // ymp : I don't know why but data is a JSON object ... so we use it without any transformation
       // const dataJson = JSON.parse(decodeURI(data))
       Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        // Modif Yves
-        // Anomalie constatée : le field timestamp n'est pas entouré de "
-        // En attendant une correction, test si fieldKey vaut timestamp auquel cas fieldValue est entouré de ""
-        if (fieldKey === 'timestamp') {
+        if (typeof fieldValue === 'string') {
           if (!mongofields) mongofields = `"${fieldKey}":"${fieldValue}"`
           else mongofields = `${mongofields},"${fieldKey}":"${fieldValue}"`
         } else if (!mongofields) mongofields = `"${fieldKey}":${fieldValue}`
@@ -151,7 +148,7 @@ class MongoDB extends ApiHandler {
       if (body === '') {
         body = `{${mongoindexfields},${mongofields}}`
       } else {
-        body += `,\n{${mongofields},${mongofields}}`
+        body += `,\n{${mongoindexfields},${mongofields}}`
       }
     })
 

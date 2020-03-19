@@ -2,7 +2,7 @@
     "engine": {
         "port": 2223,
         "user": "admin",
-        "password": "",
+        "password": "Gkw+iS4ymc2gvhUnJ5ma3RDGyq0kpVLQZy0njV38b133SE90mRmeulp2ylnjtXg6hVGtKchbhAjLoLLbUud6M0CeyvFsh4v/u8p6OIAzs0T5Z68LvX1+jGyd/1jb5FtYL4KOgmfIU5ot8sAQKlpzUMUsEmRLBi8A3KaVC5vg5SRuLin86F4n4oEkaHlP05/XwXiLfXl4Z/guk8aukr64CmW64g3RUAciJc1S8hjiK1uyIfiCFAkKh8AqHenJ78pV2MUv3gLSU5LWF0L+vD2MoPjpwcFbAVcSUDqo1VemE3SN0t9OD0q47N9TqDfYOEUDxCB0/O9xSMUz45NpnTLF2wxw5qEi3NnjKt9QRB/E1eLn995g1D7OcQQQnFlY3z83CyPkwp47HZxy7IM/a7nWDS3+5tA/+9sQl/7m6bM9w9jqCbYzS0bG3UabklgdXhRRW2GZqLTuJksSeMvV08qc4Uz/n/bu4r2QXUJ3L51xkFJl8HM2ee2UYXHgtg4worhiDKSQTqPCME7pY19hnJ/6aif9NiSTQARDCbe1Oz8hmJ2jcmY+yw6rggE4xO3pG40wpoyj6Pta1KVFg2tPpdspG/NIHp95hVzuneEkz77GjsbXIBcqzaTwVhPumsXpkpecEPwrLOykKj94q22DEYrEc7GbMA6WJKuz2HuGqVT5lsA=",
         "filter": [
             "127.0.0.1",
             "::1",
@@ -360,9 +360,9 @@
                 },
                 "points": [
                     {
-                        "pointId": "application/#",
+                        "pointId": "applicationsimulation/#",
                         "scanMode": "listen",
-                        "topic": "_KURA/application/#"
+                        "topic": "_KURA/applicationsimulation/#"
                     }
                 ]
             }
@@ -374,7 +374,9 @@
                 "applicationId": "c",
                 "api": "Console",
                 "enabled": true,
-                "Console": {},
+                "Console": {
+                    "verbose": false
+                },
                 "caching": {
                     "sendInterval": 10000,
                     "retryInterval": 5000,
@@ -435,11 +437,10 @@
             {
                 "applicationId": "simumdb",
                 "api": "MongoDB",
-                "enabled": true,
+                "enabled": false,
                 "MongoDB": {
                     "password": "nFvRnCV0JI2EEfpdIP42DvMq6Uk8fZEwpuobUwDK78MuvNeSWr96ejGQ03WYr+3vzYS6X27+uU9CSXZttAWzstuk/YNAF8PLCrikNMzYLtdZ5UQk4EVQJASx2l1iX/pHY5y+pDx5CYuPLXIeu0fw8tFme3RD7+vblnffuLhOvMVHAsb1wnUHdlsS6NM3ARMRcXrP+Ovdc7JgBxUtMaDfMQYGEv9olaqnZP0Zwisb3hDgnrzh6DVKPwKjqUYXZLnoSw4sytdCmMW0JqgaVa8LW9i9S5lAkkwZh3zkvMnv9RI/SsX90cPfgWbKvVGjmtaMvya5uHe2D/NBiomKNt7fsy2iGGzQmH690Jm09EPoNNLLx/byy5JiJ+QfaSxtggVKORyQ0mtPDLEG2eoF03pX3ABFpKYfcOrw/eHO3Iggrpaqf9Wdlw2KlybzuR4Flc8Pb2ikZSop7dIGXhAMjodAhUdcarePJdwraw2HnWhzSDSPJE1iab5G2+/DAmji6KamKbgRoD6DkbL+Tv1e+TwO/gf4mkD1b9yOv5K1Y1TbkNcKqDkQyzDWYVmk+LehDYp7nr4ync6D/32r1Baeavqe6uvvkCE94mrioYnKfmwAaZOy3P1tpwuj5PVL8fUQxpA5aVuF1UyxTL6n/51PHDfDpz6ezuEl3G2Ehjaehu9afR8=",
-                    "user2": "admin",
-                    "user": "",
+                    "user": "admin",
                     "host": "localhost:27017",
                     "db": "simudata",
                     "regExp": "(.*)\\/(.{2})(.)(.*)",
@@ -465,15 +466,15 @@
                 "api": "MQTT",
                 "enabled": true,
                 "MQTT": {
-                    "password": "tld/tCWHDOAH8YPOBo3Lk+dcMW2AGWOCZYP6gP1u67WpMkd3NmMuVreV+rL1EuOd00wgOKlF2G1HIrJFF4r90elG1RTaNJERjAlSdDw5WFtT0t73q7ZgkbTfFpYRbQ2/KzVKqOy7s09C5boiBzsBxU1bIYMsX8WFtA6HlSn4Ol6NNBJrlveeC+/lGo/OlnuG/QTPiZW5NqTtkXBQW7HnNGeNcdfkDDNaA5RDfrUj4KjACYBcDlwdlh55OHUZ5oG5BbWOpQErEB9WQQ6GhfNWHuVbRWwRtuIb+SKFTNwbc8Sy5TrR2S0HWhDsSzgf6ykgLJWXhKwD6FQxNUU79zHJ4zWNoUbl/wYdriKMmf43XCULh7u29059Rp5D332Y4G2nbxHk2xQEKp/8qRe1iOzUU7AkCsQuzCpS6oFygjtIKey44JH4H7R0xvNqg6ZY++dIGBt6SrBZEe5eXqnc7BSLHI19gW8mYOvf8+RA3AOpY6ERs054rWWE+fuFjWs/YtLIaRBMnuQc/3EcH29dcczWSUgO1i7zWMIkensHod0SUCa0Sx89KUn6rKPle4nMJ97kiNJTpFNDIT4z84Xst0jV6UIj0OG1ap8qeLMh9g1cNjn5gEORJbyXukkdqURqazwVXnhkYch38m/Mj8e0n/J79llsZZCBvpCqqS01GjeKe3U=",
-                    "url": "mqtt://localhost:1883",
-                    "username": "."
+                    "password": "Jrne/XGkO8LeqemlJCyK9j1GKadSpK5H/+suDzEfcXteB/IYC4TS60sW/Rwi3JDBx9KYXGjTBA+V6VqE+9vwNqL08RXCDfYOClmXYdRVc8BHgIAJt/OsKl5mp1U05PQnciGYeiFIuZje09iq3eIy4HJ6uBiJV3xSVO9Gxkt9+uWceGAjGAUL9Ml6AKrqI4c5cXBJD+Y5PPCXZx1qS8mmwtmVtwfZZTYVLTnd4RvptvvMwNileKqHV4GZntlMyhm7M96MoMWLfpk40zXYiLFdKcHJUEn9Z40G4dH0beGad5BT3d4qpPCdSyAM77YjsaubttBIDky/10WjyiLumtEFZV+AEXDGafd3blN7SDqzJ3ltswd/Vyx5XAvQ5t+FxH9Z7zfRAwvse4k0mr/GB4GN+XP1sabl/M3wio8WHQwrY0mfPz2tsrOa5yrmgdLbPxuOPulCqe1ftk8CB9WT8iFJRQ5OfLiMs2K8uTEbGcJiFTwt2GzPmCYgfRaphtO1lw/moCSuzrB4AfatVzkjySd7iJXAq2yAizWvytOICnP7+lPfe/KyNlNYLU3fTMk0lzEBGhnS3jfdfLR/JiNip814QPj17dCnoGwetXjP7RSZ8sRbiNSDLnO8jmI/FmcjcXzC+Hy18xVzrcZV2qeTcTPs7ernmxCTqpL+Z+fLP2nzwIc=",
+                    "url": "mqtt://10.122.33.18:1885",
+                    "username": "kura-mosquitto-user"
                 },
                 "caching": {
                     "sendInterval": 1000,
                     "retryInterval": 2000,
-                    "groupCount": 2,
-                    "maxSendCount": 5
+                    "groupCount": 1,
+                    "maxSendCount": 1000
                 },
                 "subscribedTo": [
                     "MQTTSimuIOT"
