@@ -727,16 +727,16 @@ exports[`Health display Health page based on config and status 2`] = `
       <tbody>
         <tr>
           <td>
-            Version
+            version
           </td>
           <td>
-            x.x.x
+            0.5.7-dev
           </td>
           <td />
         </tr>
         <tr>
           <td>
-            Architecture
+            architecture
           </td>
           <td>
             x64
@@ -745,43 +745,178 @@ exports[`Health display Health page based on config and status 2`] = `
         </tr>
         <tr>
           <td>
-            CurrentDirectory
+            currentDirectory
           </td>
           <td>
-            /Users/jfh/Work/OIBus/tests
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            Node Version
-          </td>
-          <td>
-            v12.14.0
+            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests
           </td>
           <td />
         </tr>
         <tr>
           <td>
-            Executable
+            nodeVersion
           </td>
           <td>
-            /usr/local/bin/node
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            ConfigFile
-          </td>
-          <td>
-            /Users/jfh/Work/OIBus/tests/oibus.json
+            v12.13.1
           </td>
           <td />
         </tr>
         <tr>
           <td>
-            Copyright
+            executable
+          </td>
+          <td>
+            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\oibus.exe
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            configurationFile
+          </td>
+          <td>
+            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            memory
+          </td>
+          <td>
+            564.89/2047.61/27.59 MB/%
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            rss
+          </td>
+          <td>
+            127.80/128.79/354.32 MB
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            heapTotal
+          </td>
+          <td>
+            79.55/81.54/281.62 MB
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            heapUsed
+          </td>
+          <td>
+            60.54/60.54/261.28 MB
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            external
+          </td>
+          <td>
+            1.99/2.16/3.16 MB
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            processId
+          </td>
+          <td>
+            4916
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            uptime
+          </td>
+          <td>
+            3 minutes
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            hostname
+          </td>
+          <td>
+            EC2AMAZ-OBJ8M6C
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            osRelease
+          </td>
+          <td>
+            10.0.14393
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            osType
+          </td>
+          <td>
+            Windows_NT
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            Console (points)
+          </td>
+          <td>
+            count: 195410 / cache: 614
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            Console (files)
+          </td>
+          <td>
+            count: 195410 / cache: 0
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            MQTTServer
+          </td>
+          <td>
+            count: 62
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            SimulationServer
+          </td>
+          <td>
+            count: 422
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            OPC-HDA
+          </td>
+          <td>
+            count: 194926
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td>
+            copyright
           </td>
           <td>
             (c) Copyright 2019 Optimistik, all rights reserved.
