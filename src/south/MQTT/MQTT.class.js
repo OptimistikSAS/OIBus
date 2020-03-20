@@ -95,7 +95,13 @@ class MQTT extends ProtocolHandler {
    * @param {string} dateFormat - The format of the date
    * @returns {string} - The formatted date with timezone
    */
+<<<<<<< HEAD
   static generateDateWithTimezone(date, timezone, dateFormat) {
+=======
+  // Modif Yves : inversion de timezone et dateFormat pour respecter l'ordre de "l'appel"
+  static generateDateWithTimezone(date, dateFormat, timezone) {
+  // static generateDateWithTimezone(date, timezone, dateFormat) {
+>>>>>>> c898e26a5f5d0ad6a998f616357087d10b8c26f6
     const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
     return moment.tz(timestampWithoutTZAsString, timezone)
   }
