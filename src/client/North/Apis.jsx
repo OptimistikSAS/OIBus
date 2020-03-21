@@ -5,8 +5,8 @@ import InfluxDB from '../../north/influxdb/InfluxDB.schema.jsx'
 import OIAnalyticsFile from '../../north/oianalyticsfile/OIAnalyticsFile.schema.jsx'
 import TimescaleDB from '../../north/timescaledb/TimescaleDB.schema.jsx'
 import MongoDB from '../../north/mongodb/MongoDB.schema.jsx'
-import MQTT from '../../north/mqtt/MQTT.schema.jsx'
+import MQTTNorth from '../../north/mqtt/MQTT.schema.jsx'
 
-const ApiSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB, MongoDB, MQTT }
+const ApiSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalyticsFile, TimescaleDB, MongoDB, MQTTNorth }
 
 export default ApiSchemas
