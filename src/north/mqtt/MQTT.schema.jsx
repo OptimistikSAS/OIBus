@@ -1,7 +1,7 @@
 import React from 'react'
 import { notEmpty, hasLengthBetween, minLength } from '../../services/validation.service'
 
-const schema = { name: 'MQTT' }
+const schema = { name: 'MQTTNorth' }
 schema.form = {
   MQTTParameters: {
     type: 'OIbTitle',

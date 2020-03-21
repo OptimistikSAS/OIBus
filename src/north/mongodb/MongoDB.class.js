@@ -51,30 +51,26 @@ class MongoDB extends ApiHandler {
     const { host, user, password, db } = this.application.MongoDB
 
     // creating url connection string
-    // Modif Yves :
-    //   Only for testing
-    let url = ''
-    if (user === '') url = `mongodb://${host}`
-    else url = `mongodb://${user}:${this.decryptPassword(password)}@${host}`
+    const url = (user === '') ? `mongodb://${host}` : `mongodb://${user}:${this.decryptPassword(password)}@${host}`
 
     this.client = new mongo.MongoClient(url)
     this.client.connect((error) => {
       if (error) {
-        this.logger.info(`Error during Connection To MongoDB : ${error}`)
-        this.client_db = null
+        this.logger.error(`Error during Connection To MongoDB : ${error}`)
+        this.clientDB = null
       } else {
         this.logger.info('Connection To MongoDB : OK')
 
         // open database db
-        this.client_db = this.client.db(db)
+        this.clientDB = this.client.db(db)
 
         // variables used to work with Collection and indexes creation if DB Collection doesn't exists
 
         // getting database list Collections
         this.listCollections = []
-        this.client_db.listCollections({}).toArray((err, collNames) => {
+        this.clientDB.listCollections({ nameonly: true }).toArray((err, collectionNames) => {
           if (!err) {
-            this.listCollections = collNames.slice()
+            this.listCollections = collectionNames.slice()
           }
         })
 
@@ -99,11 +95,11 @@ class MongoDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { regExp, collection, indexfields, createcollection, createcollectionindex, addtimestamptoindex, timeStampKey } = this.application.MongoDB
+    const { regExp, collection, indexFields, createCollection, createCollectionIndex, addTimestampToIndex, timeStampKey } = this.application.MongoDB
 
     let body = ''
     let collectionValue = ''
-    let indexfieldsValue = ''
+    let indexFieldsValue = ''
 
     entries.forEach((entry) => {
       const { pointId, data } = entry
@@ -114,7 +110,7 @@ class MongoDB extends ApiHandler {
       groups.shift()
 
       collectionValue = vsprintf(collection, groups)
-      indexfieldsValue = vsprintf(indexfields, groups)
+      indexFieldsValue = vsprintf(indexFields, groups)
 
       // If there are less groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replace to see if this is the case
@@ -122,50 +118,48 @@ class MongoDB extends ApiHandler {
         this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for collection`)
         return
       }
-      if ((indexfieldsValue.match(/undefined/g) || []).length > (indexfields.match(/undefined/g) || []).length) {
+      if ((indexFieldsValue.match(/undefined/g) || []).length > (indexFields.match(/undefined/g) || []).length) {
         this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for indexes`)
         return
       }
 
-      // convert indexfieldsValue into mongoindexfields for inserting by insertMany function
+      // convert indexFieldsValue into mongoIndexFields for inserting by insertMany function
       // example : "Site:XXX,Tranche:1,Repere:XXXXXXXXX"
-      const mongoindexfields = `"${indexfieldsValue}"`.replace(/:/g, '":"').replace(/,/g, '","')
+      const mongoIndexFields = `"${indexFieldsValue}"`.replace(/:/g, '":"').replace(/,/g, '","')
 
       // Converts data into fields for inserting by insertMany function
-      let mongofields = null
+      let mongoFields = null
       // ymp : I don't know why but data is a JSON object ... so we use it without any transformation
       // const dataJson = JSON.parse(decodeURI(data))
       Object.entries(data).forEach(([fieldKey, fieldValue]) => {
         if (typeof fieldValue === 'string') {
-          if (!mongofields) mongofields = `"${fieldKey}":"${fieldValue}"`
-          else mongofields = `${mongofields},"${fieldKey}":"${fieldValue}"`
-        } else if (!mongofields) mongofields = `"${fieldKey}":${fieldValue}`
-        else mongofields = `${mongofields},"${fieldKey}":${fieldValue}`
+          if (!mongoFields) mongoFields = `"${fieldKey}":"${fieldValue}"`
+          else mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
+        } else if (!mongoFields) mongoFields = `"${fieldKey}":${fieldValue}`
+        else mongoFields = `${mongoFields},"${fieldKey}":${fieldValue}`
       })
 
       // Append entry to body
       // body += `${collection},${tags} ${fields} ${preciseTimestamp}\n`
       if (body === '') {
-        body = `{${mongoindexfields},${mongofields}}`
+        body = `{${mongoIndexFields},${mongoFields}}`
       } else {
-        body += `,\n{${mongoindexfields},${mongofields}}`
+        body += `,\n{${mongoIndexFields},${mongoFields}}`
       }
     })
 
-    let bodyjson = {}
-
     if (!this.collectionChecked) {
-      if (createcollection) {
+      if (createCollection) {
         // before inserting data in MongoDB, ensuring, for the first time, that
-        // collection exists with indexes which are based on tags indexfields
-        await this.ensureCollectionExists(collectionValue, indexfieldsValue, createcollectionindex, addtimestamptoindex, timeStampKey)
+        // collection exists with indexes which are based on tags indexFields
+        await this.ensureCollectionExists(collectionValue, indexFieldsValue, createCollectionIndex, addTimestampToIndex, timeStampKey)
       }
     } else {
       // converting body in JSON Array
-      bodyjson = JSON.parse(`[${body}]`)
+      const bodyJson = JSON.parse(`[${body}]`)
 
       // Inserting JSON Array in MongoDB
-      this.client_db.collection(collectionValue).insertMany(bodyjson)
+      this.clientDB.collection(collectionValue).insertMany(bodyJson)
     }
     return true
   }
@@ -174,51 +168,46 @@ class MongoDB extends ApiHandler {
   /**
    * Ensure Collection exists and create it with indexes if not exists
    * @param {string}   collection  - The collection name
-   * @param {string[]} indexfields - array of fields which compose the index
-   * @param {boolean}  createcollectionindex - indicate if we have to create index collection after collection creation when collection doesn't exist
-   * @param {boolean}  addtimestamptoindex - indicate that we have to add timestamp field to index fields
+   * @param {string[]} indexFields - array of fields which compose the index
+   * @param {boolean}  createCollectionIndex - indicate if we have to create index collection after collection creation when collection doesn't exist
+   * @param {boolean}  addTimestampToIndex - indicate that we have to add timestamp field to index fields
    * @param {string}   timeStampKey - indicate the timestamp field name to add in index
    * @return {void}
    */
-  async ensureCollectionExists(collection, indexfields, createcollectionindex, addtimestamptoindex, timeStampKey) {
+  async ensureCollectionExists(collection, indexFields, createCollectionIndex, addTimestampToIndex, timeStampKey) {
     const icollection = this.listCollections.findIndex((file) => file.name === collection)
 
     if (icollection < 0) {
       // the collection doesn't exists, we create it with indexes
-      await this.client_db.createCollection(collection, ((error1) => {
+      await this.clientDB.createCollection(collection, ((error1) => {
         if (error1) {
-          this.logger.info(`Error during Collection (${collection}) creation : ${error1}`)
+          this.logger.error(`Error during Collection (${collection}) creation : ${error1}`)
         } else {
           this.logger.info(`Collection (${collection}) Creation : Success`)
           // the collection was created
 
-          if (createcollectionindex) {
-            // now we will create indexes based on indexfields
+          if (createCollectionIndex) {
+            // now we will create indexes based on indexFields
 
             // 1rst step : retrieve list of index fields
-            // Remember : indexfields is a string formatted like this : "site:%2$s,unit:%3$s,sensor:%4$s"
-            const listindexfields = []
-            let arraytmp = []
-            if (addtimestamptoindex) {
-              // for index creation we add string "${timeStampkey}:xx" just for having timestamp field in list of indexes
-              arraytmp = `${indexfields},${timeStampKey}:xx`.replace(/"/g, '').split(/[\s,:]+/)
-            } else {
-              arraytmp = `${indexfields}`.replace(/"/g, '').split(/[\s,:]+/)
-            }
+            // Remember : indexFields is a string formatted like this : "site:%2$s,unit:%3$s,sensor:%4$s"
+            const listIndexFields = []
+            const arrayTmp = (addTimestampToIndex ? `${indexFields},${timeStampKey}:xx`.replace(/"/g, '').split(/[\s,:]+/)
+              : `${indexFields}`.replace(/"/g, '').split(/[\s,:]+/))
 
-            for (let i = 0; i < arraytmp.length; i += 2) {
-              listindexfields.push(arraytmp[i])
+            for (let i = 0; i < arrayTmp.length; i += 2) {
+              listIndexFields.push(arrayTmp[i])
             }
 
             // 2nd step : create a Json object which contain list of index fields and order (0/1)
-            let listindex = null
-            for (let i = 0; i < listindexfields.length; i += 1) {
-              if (!listindex) listindex = `"${listindexfields[i]}":1`
-              else listindex = `${listindex},"${listindexfields[i]}":1`
+            let listIndex = null
+            for (let i = 0; i < listIndexFields.length; i += 1) {
+              if (!listIndex) listIndex = `"${listIndexFields[i]}":1`
+              else listIndex = `${listIndex},"${listIndexFields[i]}":1`
             }
-            this.client_db.collection(collection).createIndex(JSON.parse(`{${listindex}}`), ((error2) => {
+            this.clientDB.collection(collection).createIndex(JSON.parse(`{${listIndex}}`), ((error2) => {
               if (error2) {
-                this.logger.info(`Error during Collection (${collection}) Indexes Creation : ${error2}`)
+                this.logger.error(`Error during Collection (${collection}) Indexes Creation : ${error2}`)
               } else {
                 this.logger.info(`Collection (${collection}) Indexes Creation : Success`)
               }

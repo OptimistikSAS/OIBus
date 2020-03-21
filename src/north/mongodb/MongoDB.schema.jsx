@@ -8,11 +8,23 @@ schema.form = {
     children: (
       <>
         <p>MongoDB North application is in Beta Mode</p>
-        <p>
-          Please enter here required information to access the database.
-          The precision configuration setting determines how much timestamp precision
-          is retained with points.
-        </p>
+        <ul>
+          <li>
+            <b>Host and Port:</b>
+            MongoDB host to connect. Make sure you specify right host and port number depending on MongoDB connection protocol
+            you selected.
+          </li>
+          <li>
+            <b>Username:</b>
+            Username required by MongoDB server, if any. MongoDB allows to send username for authenticating and authorization of
+            client.
+          </li>
+          <li>
+            <b>Password:</b>
+            Password required by MongoDB Server, if any. MongoDB allows to send password for authenticating and authorization of
+            client.
+          </li>
+        </ul>
       </>
     ),
   },
@@ -31,6 +43,7 @@ schema.form = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
+    help: <div>The host is only the mongoDB server (it not includes mongodb:// protocol)</div>,
   },
   db: {
     type: 'OIbText',
@@ -65,24 +78,24 @@ schema.form = {
     valid: notEmpty(),
     defaultValue: '%1$s',
   },
-  indexfields: {
+  indexFields: {
     type: 'OIbText',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
     help: 'for example, site:%2$s,unit:%3$s,sensor:%4$s',
   },
-  createcollection: {
+  createCollection: {
     type: 'OIbCheckBox',
     label: 'Create collection when collection does not exist',
     defaultValue: false,
   },
-  createcollectionindex: {
+  createCollectionIndex: {
     type: 'OIbCheckBox',
     label: 'Create collection index when collection is created',
     defaultValue: false,
   },
-  addtimestamptoindex: {
+  addTimestampToIndex: {
     type: 'OIbCheckBox',
     label: 'Add timestamp field to index fields',
     defaultValue: false,
