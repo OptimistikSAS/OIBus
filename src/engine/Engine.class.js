@@ -27,7 +27,7 @@ apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.clas
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
-apiList.MQTT = require('../north/mqtt/MQTT.class')
+apiList.MQTTNorth = require('../north/mqtt/MQTT.class')
 
 // Engine classes
 const Server = require('../server/Server.class')

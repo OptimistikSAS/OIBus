@@ -5,7 +5,7 @@ const ApiHandler = require('../ApiHandler.class')
 /**
  * Class MQTT - generates and sends MQTT messages
  */
-class MQTT extends ApiHandler {
+class MQTTNorth extends ApiHandler {
   /**
    * Constructor for MQTT
    * @constructor
@@ -41,7 +41,7 @@ class MQTT extends ApiHandler {
    */
   connect() {
     super.connect()
-    const { url, username, password } = this.application.MQTT
+    const { url, username, password } = this.application.MQTTNorth
     this.logger.info(`Connecting North MQTT Connector to ${url}...`)
     this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
     this.client.on('error', (error) => {
@@ -58,7 +58,7 @@ class MQTT extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    const { url } = this.application.MQTT
+    const { url } = this.application.MQTTNorth
     this.logger.info(`Disconnecting North MQTT Connector from ${url}`)
     this.client.end(true)
   }
@@ -88,4 +88,4 @@ class MQTT extends ApiHandler {
   }
 }
 
-module.exports = MQTT
+module.exports = MQTTNorth

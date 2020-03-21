@@ -411,7 +411,7 @@
             {
                 "applicationId": "simuidb",
                 "api": "InfluxDB",
-                "enabled": false,
+                "enabled": true,
                 "InfluxDB": {
                     "password": "kFfMdmUFwJvP44aXaGxSPq1bu6quagnw1SEDHzI3q1FI30MATaW0PIpGEzF+R8uyByix7Egns5MPWkdQJSvWtILgfSSWFNMhSI5XvbLdxdH6KFEoK0NawH5rLwgFNx8hLUcjUYLZc42/Fmud7rd0ID8E4iuIisvFuA6EhSQ4IMKTR0rMXA8Vw3qb8JBaoUv19OOcMl0Fz+0apjNslHUNUJNLzM+905jVOnr3iiHVpkPvvhlfggGlyQhv6+Et4e/88+025y6v6PqAxqQJAWtmQwkP0/PDP1PM0arWyCS8Io6knfinPr3qZBavtAIWtGdlctocQQQjnCKEihVRE+mcsNiC/8Ts8fb0McGhcqXykKskNFRNhHMFojnoNVXDV7dnA43qXhKuwqXevgQCR/QffQgYXCTRfLqBcYmIGYKwdox+PQyhkAldkkM1oTXAqhfPthAhr0C6sfU9LD84oC+Eoelxxhk9OS6BuDmQ7HcuuBvUwDMpQr/1zyrx0I3+M+e79SnEbdY3xPxxsmgidOXkdJ3n04lXjl7+m3SbhT+3FzwsGbTosazt4PbHSm0waUIpfByRw1wasRsJjAdJR3fpunZYjVyIRq3zFe0+ZnW2xpzRfXvAOlkIbOJkUCUiH3drYl6lG6QY7xSUMbfQuvQhibqgn23KnB8yfqs0hZ2AYZ8=",
                     "user": ".",
@@ -444,10 +444,10 @@
                     "db": "simudata",
                     "regExp": "(.*)\\/(.{2})(.)(.*)",
                     "collection": "%1$s",
-                    "indexfields": "Site:%2$s,Tranche:%3$s,Repere:%2$s%3$s%4$s",
-                    "createcollection": true,
-                    "createcollectionindex": true,
-                    "addtimestamptoindex": true,
+                    "indexFields": "Site:%2$s,Tranche:%3$s,Repere:%2$s%3$s%4$s",
+                    "createCollection": true,
+                    "createCollectionIndex": true,
+                    "addTimestampToIndex": true,
                     "timeStampKey": "timestamp"
                 },
                 "caching": {
@@ -462,9 +462,9 @@
             },
             {
                 "applicationId": "simumqttkura",
-                "api": "MQTT",
+                "api": "MQTTNorth",
                 "enabled": true,
-                "MQTT": {
+                "MQTTNorth": {
                     "password": "tld/tCWHDOAH8YPOBo3Lk+dcMW2AGWOCZYP6gP1u67WpMkd3NmMuVreV+rL1EuOd00wgOKlF2G1HIrJFF4r90elG1RTaNJERjAlSdDw5WFtT0t73q7ZgkbTfFpYRbQ2/KzVKqOy7s09C5boiBzsBxU1bIYMsX8WFtA6HlSn4Ol6NNBJrlveeC+/lGo/OlnuG/QTPiZW5NqTtkXBQW7HnNGeNcdfkDDNaA5RDfrUj4KjACYBcDlwdlh55OHUZ5oG5BbWOpQErEB9WQQ6GhfNWHuVbRWwRtuIb+SKFTNwbc8Sy5TrR2S0HWhDsSzgf6ykgLJWXhKwD6FQxNUU79zHJ4zWNoUbl/wYdriKMmf43XCULh7u29059Rp5D332Y4G2nbxHk2xQEKp/8qRe1iOzUU7AkCsQuzCpS6oFygjtIKey44JH4H7R0xvNqg6ZY++dIGBt6SrBZEe5eXqnc7BSLHI19gW8mYOvf8+RA3AOpY6ERs054rWWE+fuFjWs/YtLIaRBMnuQc/3EcH29dcczWSUgO1i7zWMIkensHod0SUCa0Sx89KUn6rKPle4nMJ97kiNJTpFNDIT4z84Xst0jV6UIj0OG1ap8qeLMh9g1cNjn5gEORJbyXukkdqURqazwVXnhkYch38m/Mj8e0n/J79llsZZCBvpCqqS01GjeKe3U=",
                     "url": "mqtt://localhost:1883",
                     "username": "."
