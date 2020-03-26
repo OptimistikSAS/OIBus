@@ -95,7 +95,7 @@ describe('North', () => {
     expect(container).toMatchSnapshot()
   })
   test('check add pressed with already existing id', () => {
-    const originalError = console.error;
+    const originalError = console.error
     console.error = jest.fn()
     act(() => {
       ReactDOM.render(
