@@ -1,7 +1,7 @@
 {
   "name": "oibus",
   "private": true,
-  "version": "0.5.7-dev-ymp-8.0",
+  "version": "0.5.7-dev",
   "main": "index.js",
   "author": "Optimistik",
   "license": "SEE LICENSE in LICENSE",
