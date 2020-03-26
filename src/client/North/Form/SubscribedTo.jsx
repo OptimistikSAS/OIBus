@@ -39,7 +39,7 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
                       name={`subscribedTo.${i}`}
                       value={subscribedTo[i]}
                       options={dataSourceIds}
-                      defaultValue={dataSourceIds[0]}
+                      defaultValue={dataSourceIds[0] || ''}
                       onChange={onChange}
                     />
                   ),
