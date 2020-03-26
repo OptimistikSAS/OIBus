@@ -3,7 +3,7 @@ const testConfig = {
     port: 2223,
     user: 'admin',
     password: '23423423',
-    filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1'],
+    filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
     logParameters: {
       consoleLevel: 'debug',
       fileLevel: 'debug',
