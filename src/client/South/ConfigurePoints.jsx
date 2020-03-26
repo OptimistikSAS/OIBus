@@ -91,20 +91,25 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleImportPoints = async (file) => {
-    const text = await readFileContent(file)
-    utils
-      .parseCSV(text)
-      .then((newPoints) => {
-        dispatchNewConfig({
-          type: 'importPoints',
-          name: `south.dataSources.${dataSourceIndex}.points`,
-          value: newPoints,
+    try {
+      const text = await readFileContent(file)
+      utils
+        .parseCSV(text)
+        .then((newPoints) => {
+          dispatchNewConfig({
+            type: 'importPoints',
+            name: `south.dataSources.${dataSourceIndex}.points`,
+            value: newPoints,
+          })
         })
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
+        .catch((error) => {
+          console.error(error)
+          setAlert({ text: error.message, type: 'danger' })
+        })
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
   }
 
   /**
