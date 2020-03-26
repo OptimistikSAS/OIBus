@@ -1098,7 +1098,7 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
 </div>
 `;
 
-exports[`SubscribedTo no dataSources check SubscribedTo with no dataSource 1`] = `
+exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] = `
 <div>
   <div
     class="row"
