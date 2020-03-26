@@ -1,9 +1,64 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PointsButton check PointsButton 1`] = `
+exports[`PointsButton check PointsButton disabled 1`] = `
 <div>
   <button
     class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+    type="button"
+  >
+    Points (2)
+  </button>
+</div>
+`;
+
+exports[`PointsButton check PointsButton enabled 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+    type="button"
+  >
+    Points (2)
+  </button>
+</div>
+`;
+
+exports[`PointsButton check if enabled with no points 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-warning btn-sm"
+    type="button"
+  >
+    Points (0)
+  </button>
+</div>
+`;
+
+exports[`PointsButton check if points array is empty 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+    type="button"
+  >
+    Points (0)
+  </button>
+</div>
+`;
+
+exports[`PointsButton check no points 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+    type="button"
+  >
+    Points (0)
+  </button>
+</div>
+`;
+
+exports[`PointsButton check points button click 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
     type="button"
   >
     Points (2)
