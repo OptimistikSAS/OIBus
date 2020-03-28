@@ -107,7 +107,7 @@
     "gulp": "4.0.2",
     "gulp-awspublish": "4.1.1",
     "gulp-zip": "5.0.1",
-    "html-webpack-plugin": "4.0.2",
+    "html-webpack-plugin": "4.0.3",
     "ignore-loader": "0.1.2",
     "jest": "25.2.3",
     "less": "3.11.1",
