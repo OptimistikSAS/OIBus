@@ -20,5 +20,5 @@ jobs:
         npm test
         npm run lint
         npm run build-client
-        npm run build-win
+        npm run build-linux
    
