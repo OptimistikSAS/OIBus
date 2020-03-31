@@ -1,8 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { act } from 'react-dom/test-utils'
+import { act, Simulate } from 'react-dom/test-utils'
 
 import OIbTable from './OIbTable.jsx'
+
+const dispatchNewConfig = jest.fn()
+React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
 
 let container
 beforeEach(() => {
@@ -35,6 +38,33 @@ describe('OIbTable', () => {
         rows={{ value: 'value' }}
       />, container)
     })
+    expect(container).toMatchSnapshot()
+  })
+  test('check add to table', () => {
+    act(() => {
+      ReactDOM.render(<OIbTable
+        name="name"
+        label="a title"
+        help={<div>help</div>}
+        rows={{ value: 'value' }}
+      />, container)
+    })
+    Simulate.click(document.querySelector('th path'))
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'name', value: {} })
+    expect(container).toMatchSnapshot()
+  })
+  test('check delete from table', () => {
+    act(() => {
+      ReactDOM.render(<OIbTable
+        name="name"
+        label="a title"
+        help={<div>help</div>}
+        rows={{ scanMode: { type: 'OIbScanMode', label: 'Scan Mode' } }}
+        value={[{ type: 'test', label: 'test' }]}
+      />, container)
+    })
+    Simulate.click(document.querySelector('td path'))
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'deleteRow', name: 'name.0' })
     expect(container).toMatchSnapshot()
   })
 })
