@@ -15,7 +15,7 @@ afterEach(() => {
   container = null
 })
 
-describe('Logs', () => {
+describe('AlertProvider', () => {
   test('check AlertProvider', () => {
     act(() => {
       ReactDOM.render(
