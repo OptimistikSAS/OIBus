@@ -19,7 +19,9 @@ describe('AlertProvider', () => {
   test('check AlertProvider', () => {
     act(() => {
       ReactDOM.render(
-        <AlertProvider />,
+        <AlertProvider>
+          <div />
+        </AlertProvider>,
         container,
       )
     })
