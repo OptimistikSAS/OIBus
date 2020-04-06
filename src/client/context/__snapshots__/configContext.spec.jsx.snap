@@ -5,3 +5,9 @@ exports[`ConfigProvider check ConfigProvider 1`] = `
   <div />
 </div>
 `;
+
+exports[`ConfigProvider check initial data setup 1`] = `
+<div>
+  <div />
+</div>
+`;
