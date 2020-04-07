@@ -34,7 +34,7 @@
     "@fortawesome/fontawesome-free": "5.13.0",
     "@koa/cors": "3.0.0",
     "@koa/router": "8.0.8",
-    "aws-sdk": "2.649.0",
+    "aws-sdk": "2.655.0",
     "axios": "0.19.2",
     "basic-auth": "2.0.1",
     "bootstrap-less-port": "2.2.2",
