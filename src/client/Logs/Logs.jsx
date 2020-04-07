@@ -97,7 +97,6 @@ const Log = () => {
           id="filterText"
           placeholder="message contains..."
           value={filterText}
-          onEnded={() => null}
           onChange={(event) => {
             setMaxLog(defaultMaxLog)
             setFilterText(event.target.value.toLowerCase())
