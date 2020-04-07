@@ -95,6 +95,8 @@ describe('Health', () => {
     expect(container).toMatchSnapshot()
   })
   test('Health: manage error in status call', async () => {
+    const originalError = console.error
+    console.error = jest.fn()
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
@@ -108,5 +110,19 @@ describe('Health', () => {
       reject('error')
     })
     expect(setAlert).toHaveBeenCalled()
+    console.error = originalError
+  })
+  test('display Health with config null', () => {
+    React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
+    act(() => {
+      ReactDOM.render(
+        <BrowserRouter>
+          <Health />
+        </BrowserRouter>,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+    React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
   })
 })
