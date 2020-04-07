@@ -30,6 +30,9 @@ global.Date = class {
   }
 }
 
+// verbosity options
+const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
+
 // sample test logs
 const testLogs = [
   {
@@ -55,21 +58,21 @@ const testLogs = [
   },
   {
     id: 4,
-    timestamp: '2020-01-01T00:00:00.000Z',
+    timestamp: '2019-12-31T23:00:00.000Z',
     level: 'error',
     source: 'Source',
     message: 'Testing error logs',
   },
   {
     id: 5,
-    timestamp: '2020-01-01T00:00:00.000Z',
+    timestamp: '2020-01-01T02:00:00.000Z',
     level: 'silly',
     source: 'Source',
     message: 'Testing silly logs',
   },
   {
     id: 6,
-    timestamp: '2020-01-01T00:00:00.000Z',
+    timestamp: '2020-01-01T03:00:00.000Z',
     level: 'silly',
     source: 'Source',
     message: 'Testing silly logs on page 2',
@@ -78,10 +81,15 @@ const testLogs = [
 
 // setting initial test logs to be displayed
 // setting max log to 5 to have more pages
+const setVerbosity = jest.fn()
 const setState = jest.fn()
 const defaultMaxLog = 300
 const tempDefaultMaxLog = 5
 React.useState = jest.fn().mockImplementation((init) => {
+  if (JSON.stringify(init) === JSON.stringify(verbosityOptions)) {
+    // init test with 'silly' option unchecked
+    return [verbosityOptions.filter((item) => item !== 'silly'), setVerbosity]
+  }
   if (init === undefined) {
     return [testLogs, setState]
   }
@@ -163,7 +171,7 @@ describe('Logs', () => {
     expect(setState).toBeCalledWith('debug')
     expect(container).toMatchSnapshot()
   })
-  test('check change verbosity', () => {
+  test('check change verbosity, uncheck debug', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
@@ -173,7 +181,20 @@ describe('Logs', () => {
       )
     })
     Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
-    expect(setState).toBeCalledWith(['info', 'warning', 'error', 'silly'])
+    expect(setVerbosity).toBeCalledWith(['info', 'warning', 'error'])
+    expect(container).toMatchSnapshot()
+  })
+  test('check change verbosity, check silly', () => {
+    act(() => {
+      ReactDOM.render(
+        <BrowserRouter>
+          <Logs />
+        </BrowserRouter>,
+        container,
+      )
+    })
+    Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
+    expect(setVerbosity).toBeCalledWith(['debug', 'info', 'warning', 'error', 'silly'])
     expect(container).toMatchSnapshot()
   })
   test('check press Show Logs, success in logs call', async () => {
@@ -194,6 +215,8 @@ describe('Logs', () => {
     expect(container).toMatchSnapshot()
   })
   test('check press Show Logs, error in logs call', async () => {
+    const originalError = console.error
+    console.error = jest.fn()
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
@@ -208,6 +231,7 @@ describe('Logs', () => {
       reject('Logs: testing error on getLogs request')
     })
     expect(setAlert).toHaveBeenCalled()
+    console.error = originalError
   })
   test('check press showMore', () => {
     act(() => {
