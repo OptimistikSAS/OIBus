@@ -7,7 +7,7 @@ import ConfigureProtocol from './ConfigureProtocol.jsx'
 
 React.useContext = jest.fn().mockReturnValue({ newConfig })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'CSVServer' }) }
+  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
 ))
 
 const mockMath = Object.create(global.Math)
