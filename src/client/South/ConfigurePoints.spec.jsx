@@ -4,7 +4,9 @@ import { act, Simulate } from 'react-dom/test-utils'
 
 import newConfig from '../../../tests/testConfig'
 import ConfigurePoints from './ConfigurePoints.jsx'
+import utils from '../helpers/utils'
 
+// mock context
 const dispatchNewConfig = jest.fn()
 const setAlert = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
@@ -12,17 +14,27 @@ jest.mock('react-router-dom', () => (
   { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
 ))
 
+// mock states
+let filterText = ''
 const setFilterText = jest.fn()
 const setSelectedPage = jest.fn()
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === '') {
-    return [init, setFilterText]
+    return [filterText, setFilterText]
   }
   if (init === 1) {
     return [init, setSelectedPage]
   }
   return [init, setState]
+})
+
+// mock createCSV
+let resolve
+let reject
+utils.createCSV = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
 })
 
 const mockMath = Object.create(global.Math)
@@ -58,6 +70,16 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('filterText'), { target: { value: 'A13518/AI1/PV.CV' } })
     expect(setFilterText).toBeCalledWith('A13518/AI1/PV.CV')
     expect(container).toMatchSnapshot()
+  })
+  test('check render with filterText', () => {
+    filterText = 'filter'
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+    filterText = ''
   })
   test('check add new point', () => {
     act(() => {
@@ -175,6 +197,32 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
     expect(container).toMatchSnapshot()
   })
+  test('check export points success', async () => {
+    console.error = jest.fn()
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
+    expect(container).toMatchSnapshot()
+    await act(async () => {
+      resolve('test,csv')
+    })
+  })
+  test('check export points fail', async () => {
+    console.error = jest.fn()
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
+    expect(container).toMatchSnapshot()
+    await act(async () => {
+      reject('error')
+    })
+  })
   test('check pagination', () => {
     act(() => {
       ReactDOM.render(
@@ -197,12 +245,13 @@ describe('ConfigurePoints', () => {
     expect(container).toMatchSnapshot()
   })
   test('check no config', () => {
-    React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig, setAlert })
+    React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
     act(() => {
       ReactDOM.render(
         <ConfigurePoints />, container,
       )
     })
     expect(container).toMatchSnapshot()
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
   })
 })
