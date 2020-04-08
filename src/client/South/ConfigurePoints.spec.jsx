@@ -9,7 +9,7 @@ const dispatchNewConfig = jest.fn()
 const setAlert = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'CSVServer' }) }
+  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
 ))
 
 const setFilterText = jest.fn()
@@ -55,8 +55,8 @@ describe('ConfigurePoints', () => {
         <ConfigurePoints />, container,
       )
     })
-    Simulate.change(document.getElementById('filterText'), { target: { value: '/fttest.base/Tank 5' } })
-    expect(setFilterText).toBeCalledWith('/fttest.base/Tank 5')
+    Simulate.change(document.getElementById('filterText'), { target: { value: 'A13518/AI1/PV.CV' } })
+    expect(setFilterText).toBeCalledWith('A13518/AI1/PV.CV')
     expect(container).toMatchSnapshot()
   })
   test('check add new point', () => {
@@ -68,7 +68,7 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.querySelector('th path'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources.0.points',
+      name: 'south.dataSources.7.points',
       value: {},
     })
     expect(container).toMatchSnapshot()
@@ -82,7 +82,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_point_id' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.0.pointId',
+      name: 'south.dataSources.7.points.0.pointId',
       value: 'new_point_id',
       validity: null,
     })
@@ -97,38 +97,38 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'everySecond' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.0.scanMode',
+      name: 'south.dataSources.7.points.0.scanMode',
       value: 'everySecond',
       validity: null,
     })
     expect(container).toMatchSnapshot()
   })
-  test('check edit first value', () => {
+  test('check edit first pointId', () => {
     act(() => {
       ReactDOM.render(
         <ConfigurePoints />, container,
       )
     })
-    Simulate.change(document.getElementById('points.0.value'), { target: { value: 'new_value' } })
+    Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_value' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.0.value',
+      name: 'south.dataSources.7.points.0.pointId',
       value: 'new_value',
       validity: null,
     })
     expect(container).toMatchSnapshot()
   })
-  test('check edit first quality', () => {
+  test('check edit first scanMode', () => {
     act(() => {
       ReactDOM.render(
         <ConfigurePoints />, container,
       )
     })
-    Simulate.change(document.getElementById('points.0.quality'), { target: { value: 'new_quality' } })
+    Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'every1Min' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.0.quality',
-      value: 'new_quality',
+      name: 'south.dataSources.7.points.0.scanMode',
+      value: 'every1Min',
       validity: null,
     })
     expect(container).toMatchSnapshot()
@@ -139,10 +139,10 @@ describe('ConfigurePoints', () => {
         <ConfigurePoints />, container,
       )
     })
-    Simulate.click(document.querySelector('td path'))
+    Simulate.click(document.querySelector('td path')) // click on delete icon
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.0.points.0',
+      name: 'south.dataSources.7.points.0',
     })
     expect(container).toMatchSnapshot()
   })
