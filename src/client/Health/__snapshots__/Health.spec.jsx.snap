@@ -113,30 +113,6 @@ exports[`Health display Health page based on config and status 1`] = `
           class="oi-box"
         >
           <a
-            href="/south/CSVServer"
-          >
-            <div>
-              CSVServer
-            </div>
-            <div>
-              (CSV)
-            </div>
-          </a>
-          <button
-            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-            type="button"
-          >
-            Points (2)
-          </button>
-        </div>
-      </div>
-      <div
-        class="tight text-muted col"
-      >
-        <div
-          class="oi-box"
-        >
-          <a
             href="/south/MQTTServer"
           >
             <div>
@@ -471,30 +447,6 @@ exports[`Health display Health page based on config and status 2`] = `
     <div
       class="row"
     >
-      <div
-        class="tight text-muted col"
-      >
-        <div
-          class="oi-box"
-        >
-          <a
-            href="/south/CSVServer"
-          >
-            <div>
-              CSVServer
-            </div>
-            <div>
-              (CSV)
-            </div>
-          </a>
-          <button
-            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-            type="button"
-          >
-            Points (2)
-          </button>
-        </div>
-      </div>
       <div
         class="tight text-muted col"
       >
