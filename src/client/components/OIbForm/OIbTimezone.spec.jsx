@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { act } from 'react-dom/test-utils'
+import { act, Simulate } from 'react-dom/test-utils'
 
 import OIbTimezone from './OIbTimezone.jsx'
 import { notEmpty } from '../../../services/validation.service'
@@ -62,6 +62,21 @@ describe('OIbTimezone', () => {
         valid={notEmpty()}
       />, container)
     })
+    expect(container).toMatchSnapshot()
+  })
+  test('check change', () => {
+    const onChange = jest.fn()
+    act(() => {
+      ReactDOM.render(<OIbTimezone
+        name="name"
+        label="label"
+        onChange={onChange}
+        value=""
+        valid={notEmpty()}
+      />, container)
+    })
+    Simulate.change(document.querySelector('select'), { target: { value: 'new_value' } })
+    expect(onChange).toBeCalled()
     expect(container).toMatchSnapshot()
   })
 })
