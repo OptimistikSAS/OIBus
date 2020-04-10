@@ -1,5 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`OIbInteger check OIbInteger with too small value 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <input
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+      type="integer"
+      value="12"
+    />
+    <div
+      class="invalid-feedback"
+    >
+      Value should not greater than 100
+    </div>
+  </div>
+</div>
+`;
+
 exports[`OIbInteger check OIbInteger with value="a text" 1`] = `
 <div>
   <div
@@ -25,7 +52,7 @@ exports[`OIbInteger check OIbInteger with value="a text" 1`] = `
 </div>
 `;
 
-exports[`OIbInteger check Texte with too small value 1`] = `
+exports[`OIbInteger check change 1`] = `
 <div>
   <div
     class="form-group"
