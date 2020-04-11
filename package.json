@@ -33,7 +33,7 @@
     "@babel/runtime": "7.9.2",
     "@fortawesome/fontawesome-free": "5.13.0",
     "@koa/cors": "3.0.0",
-    "@koa/router": "8.0.8",
+    "@koa/router": "9.0.0",
     "aws-sdk": "2.655.0",
     "axios": "0.19.2",
     "basic-auth": "2.0.1",
