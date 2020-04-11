@@ -73,7 +73,7 @@
     "reactstrap": "8.4.1",
     "request-promise-native": "1.0.8",
     "sprintf-js": "1.1.2",
-    "sqlite": "4.0.5",
+    "sqlite": "4.0.6",
     "sqlite3": "4.1.1",
     "timexe": "0.9.19",
     "tunnel": "0.0.6",
