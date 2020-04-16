@@ -11,7 +11,7 @@ const TablePagination = ({ maxToDisplay, selected, total, onPagePressed }) => {
   }
   if (from - to < maxToDisplay && from !== 1) {
     const newFrom = to - maxToDisplay + 1
-    from = newFrom >= 1 ? newFrom : 1
+    from = newFrom
   }
 
   const createItems = () => {
@@ -34,11 +34,11 @@ const TablePagination = ({ maxToDisplay, selected, total, onPagePressed }) => {
         <PaginationLink className="pagination-cell" first onClick={() => onPagePressed(1)} />
       </PaginationItem>
       <PaginationItem>
-        <PaginationLink className="pagination-cell" previous onClick={() => onPagePressed(selected - 1 > 1 ? selected - 1 : 1)} />
+        <PaginationLink className="pagination-cell" previous onClick={() => onPagePressed(selected - 1 >= 1 ? selected - 1 : 1)} />
       </PaginationItem>
       {createItems()}
       <PaginationItem>
-        <PaginationLink className="pagination-cell" next onClick={() => onPagePressed(selected + 1 < total ? selected + 1 : total)} />
+        <PaginationLink className="pagination-cell" next onClick={() => onPagePressed(selected + 1 <= total ? selected + 1 : total)} />
       </PaginationItem>
       <PaginationItem>
         <PaginationLink className="pagination-cell" last onClick={() => onPagePressed(total)} />

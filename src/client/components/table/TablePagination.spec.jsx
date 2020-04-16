@@ -66,11 +66,37 @@ describe('TablePagination', () => {
     expect(onPagePressed).toBeCalledWith(1)
     expect(container).toMatchSnapshot()
   })
+  test('check press prev page incorect selected', () => {
+    act(() => {
+      ReactDOM.render(<TablePagination
+        maxToDisplay={10}
+        selected={-1}
+        total={30}
+        onPagePressed={onPagePressed}
+      />, container)
+    })
+    Simulate.click(document.getElementsByClassName('pagination-cell')[1])
+    expect(onPagePressed).toBeCalledWith(1)
+    expect(container).toMatchSnapshot()
+  })
   test('check press next page', () => {
     act(() => {
       ReactDOM.render(<TablePagination
         maxToDisplay={10}
         selected={2}
+        total={3}
+        onPagePressed={onPagePressed}
+      />, container)
+    })
+    Simulate.click(document.getElementsByClassName('pagination-cell')[5])
+    expect(onPagePressed).toBeCalledWith(3)
+    expect(container).toMatchSnapshot()
+  })
+  test('check press next page incorect selected', () => {
+    act(() => {
+      ReactDOM.render(<TablePagination
+        maxToDisplay={10}
+        selected={3}
         total={3}
         onPagePressed={onPagePressed}
       />, container)
@@ -103,6 +129,17 @@ describe('TablePagination', () => {
     })
     Simulate.click(document.getElementsByClassName('pagination-cell')[3])
     expect(onPagePressed).toBeCalledWith(2)
+    expect(container).toMatchSnapshot()
+  })
+  test('check maxToDisplay > total', () => {
+    act(() => {
+      ReactDOM.render(<TablePagination
+        maxToDisplay={10}
+        selected={1}
+        total={9}
+        onPagePressed={onPagePressed}
+      />, container)
+    })
     expect(container).toMatchSnapshot()
   })
 })
