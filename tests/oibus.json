@@ -81,33 +81,6 @@
     "south": {
         "dataSources": [
             {
-                "dataSourceId": "CSVServer",
-                "protocol": "CSV",
-                "enabled": false,
-                "CSV": {
-                    "timeColumn": 0,
-                    "hasFirstLine": true,
-                    "inputFolder": "./tests/csv/input/",
-                    "archiveFolder": "./tests/csv/archived/",
-                    "errorFolder": "./tests/csv/error/",
-                    "separator": ","
-                },
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "every20Second",
-                        "value": "sensor1-value",
-                        "quality": "sensor1-quality"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 6.tank/333333.temperature",
-                        "scanMode": "every20Second",
-                        "value": "3",
-                        "quality": "4"
-                    }
-                ]
-            },
-            {
                 "dataSourceId": "MQTTServer",
                 "protocol": "MQTT",
                 "enabled": false,
