@@ -114,11 +114,12 @@ describe('AliveSignal', () => {
 
     expect(aliveSignal.logger.silly).toBeCalledWith('pingCallback')
     expect(engine.getStatus).toBeCalled()
-    const calledStatus = {
+    const calledStatus = JSON.stringify({
       ...status,
       id: aliveSignal.id,
-    }
-    expect(engine.sendRequest).toBeCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus)
+    })
+    const headers = { 'Content-Type': 'application/json' }
+    expect(engine.sendRequest).toBeCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus, headers)
     expect(aliveSignal.logger.debug).toBeCalledWith('Alive signal successful')
     expect(setTimeout).toHaveBeenCalledTimes(1)
   })
