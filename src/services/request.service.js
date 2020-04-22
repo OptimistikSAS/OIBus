@@ -39,12 +39,14 @@ const generateFormDataBody = (filePath) => {
 
 /**
  * Send the values using axios
+ * If "headers" contains Content-Type "data" is sent as string in the body.
+ * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
  * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object | string} data - The data to send
+ * @param {string} data - The data to send
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
@@ -88,16 +90,15 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
   }, timeout)
 
   let body
-  if (typeof data === 'string') {
+  if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
+    body = data
+  } else {
     body = generateFormDataBody(data)
 
     const formHeaders = body.getHeaders()
     Object.keys(formHeaders).forEach((key) => {
       headers[key] = formHeaders[key]
     })
-  } else {
-    body = data
-    headers['Content-Type'] = 'application/json'
   }
 
   const axiosOptions = {
@@ -118,12 +119,14 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
 
 /**
  * Send the request using request
+ * If "headers" contains Content-Type "data" is sent as string in the body.
+ * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
  * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object | string} data - The body or file to send
+ * @param {string} data - The body or file to send
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
@@ -148,16 +151,15 @@ const sendWithRequest = async (engine, requestUrl, method, headers, proxy, data,
     timeout,
   }
 
-  if (typeof data === 'string') {
+  if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
+    requestOptions.body = data
+  } else {
     requestOptions.formData = {
       file: {
         value: fs.createReadStream(data),
         options: { filename: getFilenameWithoutTimestamp(data) },
       },
     }
-  } else {
-    requestOptions.body = JSON.stringify(data)
-    requestOptions.headers['Content-Type'] = 'application/json'
   }
 
   try {
@@ -171,12 +173,14 @@ const sendWithRequest = async (engine, requestUrl, method, headers, proxy, data,
 
 /**
  * Send the request using node-fetch
+ * If "headers" contains Content-Type "data" is sent as string in the body.
+ * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
  * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} headers - The headers
  * @param {object} proxy - Proxy to use
- * @param {object | string} data - The body or file to send
+ * @param {string} data - The body or file to send
  * @param {number} timeout - The request timeout
  * @return {Promise} - The send status
  */
@@ -198,23 +202,15 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
   }
 
   let body
-  if (typeof data === 'string') {
-    // Modif Yves
-    // si headers est déjà valorisé (donc pas vide) on affecte data à body tel quel
-    // sinon on va rechercher les headers dans le body
-    if (Object.keys(headers).length > 0) {
-      body = data
-    } else {
-      body = generateFormDataBody(data)
-
-      const formHeaders = body.getHeaders()
-      Object.keys(formHeaders).forEach((key) => {
-        headers[key] = formHeaders[key]
-      })
-    }
+  if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
+    body = data
   } else {
-    body = JSON.stringify(data)
-    headers['Content-Type'] = 'application/json'
+    body = generateFormDataBody(data)
+
+    const formHeaders = body.getHeaders()
+    Object.keys(formHeaders).forEach((key) => {
+      headers[key] = formHeaders[key]
+    })
   }
 
   const fetchOptions = {
@@ -239,16 +235,18 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
 
 /**
  * Send HTTP request.
+ * If "baseHeader" contains Content-Type "data" is sent as string in the body.
+ * If "baseHeader" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
  * @param {Engine} engine - The engine
  * @param {string} requestUrl - The URL to send the request to
  * @param {string} method - The request type
  * @param {object} authentication - Authentication info
  * @param {object} proxy - Proxy to use
- * @param {object | string} body - The body or file to send
+ * @param {string} data - The body or file to send
  * @param {object} baseHeaders - Headers to send
  * @returns {Promise} - The send status
  */
-const sendRequest = async (engine, requestUrl, method, authentication, proxy, body, baseHeaders = {}) => {
+const sendRequest = async (engine, requestUrl, method, authentication, proxy, data, baseHeaders = {}) => {
   const { engineConfig: { httpRequest } } = engine.configService.getConfig()
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
@@ -265,13 +263,13 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, bo
     const timeout = 1000 * httpRequest.timeout
     switch (httpRequest.stack) {
       case 'axios':
-        await sendWithAxios(engine, requestUrl, method, headers, proxy, body, timeout)
+        await sendWithAxios(engine, requestUrl, method, headers, proxy, data, timeout)
         break
       case 'request':
-        await sendWithRequest(engine, requestUrl, method, headers, proxy, body, timeout)
+        await sendWithRequest(engine, requestUrl, method, headers, proxy, data, timeout)
         break
       default:
-        await sendWithFetch(engine, requestUrl, method, headers, proxy, body, timeout)
+        await sendWithFetch(engine, requestUrl, method, headers, proxy, data, timeout)
     }
   } catch (error) {
     logger.silly(`sendRequest(): Error ${error}`)
