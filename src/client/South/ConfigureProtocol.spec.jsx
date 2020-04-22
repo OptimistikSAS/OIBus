@@ -1,13 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { act } from 'react-dom/test-utils'
+import { act, Simulate } from 'react-dom/test-utils'
 
 import newConfig from '../../../tests/testConfig'
 import ConfigureProtocol from './ConfigureProtocol.jsx'
+import utils from '../helpers/utils'
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+const dispatchNewConfig = jest.fn()
+React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'CSVServer' }) }
+  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
 ))
 
 const mockMath = Object.create(global.Math)
@@ -33,5 +35,34 @@ describe('ConfigureProtocol', () => {
       )
     })
     expect(container).toMatchSnapshot()
+  })
+  test('check update', () => {
+    act(() => {
+      ReactDOM.render(
+        <ConfigureProtocol />, container,
+      )
+    })
+    Simulate.change(document.getElementById('south.dataSources.7.OPCHDA.host'), { target: { value: 'new_host' } })
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'update',
+      name: 'south.dataSources.7.OPCHDA.host',
+      value: 'new_host',
+      validity: null,
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check datasource not found', () => {
+    const reactUseContextMock = React.useContext
+    // temporary empty applicartions array
+    const config = utils.jsonCopy(newConfig)
+    config.south.dataSources = []
+    React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
+    act(() => {
+      ReactDOM.render(
+        <ConfigureProtocol />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+    React.useContext = reactUseContextMock
   })
 })

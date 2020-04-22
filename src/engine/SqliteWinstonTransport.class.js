@@ -1,6 +1,7 @@
 const fs = require('fs')
 const TransportStream = require('winston-transport')
 const sqlite = require('sqlite')
+const sqlite3 = require('sqlite3')
 
 const LOGS_TABLE_NAME = 'logs'
 const NUMBER_OF_RECORDS_TO_DELETE = 1
@@ -51,7 +52,7 @@ class SqliteTransport extends TransportStream {
    * @return {void}
    */
   async createLogsDatabase() {
-    this.database = await sqlite.open(this.filename)
+    this.database = await sqlite.open({ filename: this.filename, driver: sqlite3.cached.Database })
 
     const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
                     id INTEGER PRIMARY KEY, 
