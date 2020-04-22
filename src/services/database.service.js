@@ -1,4 +1,5 @@
 const sqlite = require('sqlite')
+const sqlite3 = require('sqlite3')
 
 const Logger = require('../engine/Logger.class')
 
@@ -12,7 +13,7 @@ const CACHE_TABLE_NAME = 'cache'
  * @return {Sqlite.Database} - The SQLite3 database
  */
 const createValuesDatabase = async (databasePath) => {
-  const database = await sqlite.open(databasePath)
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
                    timestamp TEXT,
@@ -32,7 +33,7 @@ const createValuesDatabase = async (databasePath) => {
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
 const createFilesDatabase = async (databasePath) => {
-  const database = await sqlite.open(databasePath)
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -52,7 +53,7 @@ const createFilesDatabase = async (databasePath) => {
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
 const createFolderScannerDatabase = async (databasePath) => {
-  const database = await sqlite.open(databasePath)
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -71,7 +72,7 @@ const createFolderScannerDatabase = async (databasePath) => {
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
 const createConfigDatabase = async (databasePath) => {
-  const database = await sqlite.open(databasePath)
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -339,7 +340,7 @@ const getConfig = async (database, name) => {
  * @return {object[]} - The logs
  */
 const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
-  const database = await sqlite.open(databasePath)
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?

@@ -1,5 +1,48 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`OIbProxy check Proxy change 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <select
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value=""
+      />
+      <option
+        value="sss"
+      >
+        sss
+      </option>
+      <option
+        value="ff"
+      >
+        ff
+      </option>
+    </select>
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        some help text
+      </div>
+    </small>
+  </div>
+</div>
+`;
+
+exports[`OIbProxy check Proxy with no value 1`] = `<div />`;
+
 exports[`OIbProxy check Proxy with value and help text 1`] = `
 <div>
   <div
