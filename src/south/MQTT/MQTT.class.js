@@ -63,7 +63,11 @@ class MQTT extends ProtocolHandler {
           /** @todo: below should send by batch instead of single points */
           this.addValues([
             {
-              pointId: this.topics[topic].pointId,
+              // Modif Yves
+              // Contournement l'absence de la prise en compte du "wildcard" # dans les topics MQTT
+              // Suppression du 1er caractère du topic pour créer le pointId
+              pointId: topic.slice(1),
+              // pointId: this.topics[topic].pointId,
               timestamp,
               data: messageObject,
             },
