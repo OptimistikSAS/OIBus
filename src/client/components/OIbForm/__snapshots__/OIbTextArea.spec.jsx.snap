@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`OIbTextArea check Text no value 1`] = `<div />`;
+
 exports[`OIbTextArea check Texte with inline 1`] = `
 <div>
   <div
@@ -106,6 +108,7 @@ exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
   </div>
 </div>
 `;
+
 exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
 <div>
   <div
@@ -118,6 +121,31 @@ exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
       name="name"
     >
       some text
+    </textarea>
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbTextArea check change text 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      a text
     </textarea>
     <div
       class="invalid-feedback"

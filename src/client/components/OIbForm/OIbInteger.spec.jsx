@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { act } from 'react-dom/test-utils'
+import { act, Simulate } from 'react-dom/test-utils'
 
 import OIbInteger from './OIbInteger.jsx'
 import { minValue } from '../../../services/validation.service'
@@ -29,7 +29,7 @@ describe('OIbInteger', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check Texte with too small value', () => {
+  test('check OIbInteger with too small value', () => {
     act(() => {
       ReactDOM.render(<OIbInteger
         label="label"
@@ -40,6 +40,22 @@ describe('OIbInteger', () => {
         defaultValue="0"
       />, container)
     })
+    expect(container).toMatchSnapshot()
+  })
+  test('check change', () => {
+    const onChange = jest.fn()
+    act(() => {
+      ReactDOM.render(<OIbInteger
+        label="label"
+        name="name"
+        onChange={onChange}
+        value="12"
+        valid={minValue(100)}
+        defaultValue="0"
+      />, container)
+    })
+    Simulate.change(document.querySelector('input'), { target: { value: 'new_value' } })
+    expect(onChange).toBeCalled()
     expect(container).toMatchSnapshot()
   })
 })

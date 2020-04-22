@@ -12,7 +12,6 @@ const VERSION = require('../../package.json').version
 const protocolList = {}
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
-protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
