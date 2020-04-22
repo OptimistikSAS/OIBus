@@ -58,7 +58,9 @@ class AliveSignal {
     status.id = this.id
 
     try {
-      await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, status)
+      const data = JSON.stringify(status)
+      const headers = { 'Content-Type': 'application/json' }
+      await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, data, headers)
       this.logger.debug('Alive signal successful')
     } catch (error) {
       this.logger.error(error)

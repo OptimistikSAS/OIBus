@@ -415,12 +415,12 @@ class Engine {
    * @param {string} method - The request type
    * @param {object} authentication - Authentication info
    * @param {object} proxy - Proxy to use
-   * @param {object | string} body - The body to send
+   * @param {string} data - The body to send
    * @param {object} baseHeaders - Headers to send
    * @returns {Promise} - The send status
    */
-  async sendRequest(requestUrl, method, authentication, proxy, body, baseHeaders = {}) {
-    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, body, baseHeaders)
+  async sendRequest(requestUrl, method, authentication, proxy, data, baseHeaders = {}) {
+    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, data, baseHeaders)
   }
 }
 
