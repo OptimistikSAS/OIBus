@@ -171,18 +171,18 @@ const getValuesToSend = async (database, count) => {
  * @return {number} number of deleted values
  */
 const removeSentValues = async (database, values) => {
-  let stmt = {}
+  let result
   try {
     const ids = values.map((value) => value.id).join()
     const query = `DELETE FROM ${CACHE_TABLE_NAME}
                    WHERE id IN (${ids})`
-    stmt = await database.prepare(query)
-    await stmt.run()
+    const stmt = await database.prepare(query)
+    result = await stmt.run()
   } catch (error) {
     logger.error(error)
     throw error
   }
-  return stmt.changes
+  return result.changes
 }
 
 /**
