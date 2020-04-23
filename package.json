@@ -55,7 +55,7 @@
     "moment-timezone": "0.5.28",
     "mongodb": "^3.5.5",
     "mqtt": "3.0.0",
-    "mssql": "6.2.0",
+    "mssql": "^6.2.0",
     "mysql2": "2.1.0",
     "node-fetch": "2.6.0",
     "node-opcua": "2.5.8",

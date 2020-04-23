@@ -82,33 +82,6 @@
     "south": {
         "dataSources": [
             {
-                "dataSourceId": "CSVServer",
-                "protocol": "CSV",
-                "enabled": false,
-                "CSV": {
-                    "timeColumn": 0,
-                    "hasFirstLine": true,
-                    "inputFolder": "./tests/csv/input/",
-                    "archiveFolder": "./tests/csv/archived/",
-                    "errorFolder": "./tests/csv/error/",
-                    "separator": ","
-                },
-                "points": [
-                    {
-                        "pointId": "/fttest.base/Tank 5.tank/333333.temperature",
-                        "scanMode": "every20Second",
-                        "value": "sensor1-value",
-                        "quality": "sensor1-quality"
-                    },
-                    {
-                        "pointId": "/fttest.base/Tank 6.tank/333333.temperature",
-                        "scanMode": "every20Second",
-                        "value": "3",
-                        "quality": "4"
-                    }
-                ]
-            },
-            {
                 "dataSourceId": "MQTTServer",
                 "protocol": "MQTT",
                 "enabled": false,
@@ -437,7 +410,7 @@
                 "api": "MongoDB",
                 "enabled": true,
                 "MongoDB": {
-                    "password": "E8ayt4xWS2U2PcagsyckvO75ZDbSRk3duvnHDzD/geioXvrY+1cxrpg0KJQiRxY8VsItC1AL/BZRpDnBuKpGr3rffj4T4DfN25OmgasjEAc02WmC4Cd0XNFxsjwO2BgdRncFAu+Rb++RSmMI4qDYcOMmu0K2+UsqKSnSjITZ04OFBJYhFcxowLg0lowktO/wL5yFOkzlrJp8jVzhMedizemOXObFvehgtHmqEmGmNYzjXnrfCfnw/R4l94OHcZGtUYBJ2zRpir4mYEvp28l2ytGMGrPta73Eb0WbbJs7AmuEIb1p08gAq7LHua3wG6P1MwnY6k4Q8xXg2cklfvn7vaJ1M6gNiZy4S8ffdWwShjEK5wAjdh9YAS6rAXiVznz2zvzX4ovV4iVWEcTTqsrOZK37FWaXjZUC9Z8XRsvT1z9wieQLI1iMtJnelw/ZhHDFuwIkG9J5sY3sbFgaOpNqYphv8pNXYYZPgeXY1j8gyCr0MFSBwk+YYUVmLk+NrjZ4Si4irGbB+X81smdlROI0JWySfdEH/fOkAcsaEWRiGm6zD1YFZScWRXNJGUlnbmYqEDYliq3oc5u7k0frSAeigzgarGowZBVG/jus+xHaAiUAnvZQKUem30ly0xdRxarhoynkUIadfaN2Y1Q2cIqSVLe83rfJMzoFJMSeXEI2dZk=",
+                    "password": "nFvRnCV0JI2EEfpdIP42DvMq6Uk8fZEwpuobUwDK78MuvNeSWr96ejGQ03WYr+3vzYS6X27+uU9CSXZttAWzstuk/YNAF8PLCrikNMzYLtdZ5UQk4EVQJASx2l1iX/pHY5y+pDx5CYuPLXIeu0fw8tFme3RD7+vblnffuLhOvMVHAsb1wnUHdlsS6NM3ARMRcXrP+Ovdc7JgBxUtMaDfMQYGEv9olaqnZP0Zwisb3hDgnrzh6DVKPwKjqUYXZLnoSw4sytdCmMW0JqgaVa8LW9i9S5lAkkwZh3zkvMnv9RI/SsX90cPfgWbKvVGjmtaMvya5uHe2D/NBiomKNt7fsy2iGGzQmH690Jm09EPoNNLLx/byy5JiJ+QfaSxtggVKORyQ0mtPDLEG2eoF03pX3ABFpKYfcOrw/eHO3Iggrpaqf9Wdlw2KlybzuR4Flc8Pb2ikZSop7dIGXhAMjodAhUdcarePJdwraw2HnWhzSDSPJE1iab5G2+/DAmji6KamKbgRoD6DkbL+Tv1e+TwO/gf4mkD1b9yOv5K1Y1TbkNcKqDkQyzDWYVmk+LehDYp7nr4ync6D/32r1Baeavqe6uvvkCE94mrioYnKfmwAaZOy3P1tpwuj5PVL8fUQxpA5aVuF1UyxTL6n/51PHDfDpz6ezuEl3G2Ehjaehu9afR8=",
                     "user2": "admin",
                     "user": "",
                     "host": "localhost:27017",
