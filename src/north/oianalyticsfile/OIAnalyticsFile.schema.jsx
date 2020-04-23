@@ -1,5 +1,7 @@
 import React from 'react'
 import { notEmpty, notEndsWith, startsWith, combinedValidations } from '../../services/validation.service'
+import screenshot from './screenshot.png'
+import userpass from './userpass.png'
 
 const schema = { name: 'OIAnalyticsFile' }
 schema.form = {
@@ -12,6 +14,18 @@ schema.form = {
         <p>
           OIAnalyticsFile sends the received file to OIAnalytics.
         </p>
+        <p>To fill the user and password :</p>
+        <ul>
+          <li>Connect to OIAnalytics using your account</li>
+          <li>Go to &apos;User Management&apos;</li>
+          <li>Select the user &apos;Api&apos;</li>
+          <li>Click on the key icon in the top left corner</li>
+          <img src={screenshot} alt="OIanalytics screenshot" style={{ width: '600px' }} />
+          <li>This will download a text file containing an encoded string</li>
+          <li>The string contain the user name and the password like this : username:password</li>
+          <img src={userpass} alt="user password" style={{ width: '300px' }} />
+          <li>Fill the encoded user and password in OIBus</li>
+        </ul>
       </>
     ),
   },

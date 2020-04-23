@@ -12,7 +12,6 @@ const VERSION = require('../../package.json').version
 const protocolList = {}
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
-protocolList.CSV = require('../south/CSV/CSV.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
@@ -26,6 +25,8 @@ apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
+apiList.MongoDB = require('../north/mongodb/MongoDB.class')
+apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -414,12 +415,12 @@ class Engine {
    * @param {string} method - The request type
    * @param {object} authentication - Authentication info
    * @param {object} proxy - Proxy to use
-   * @param {object | string} body - The body to send
+   * @param {string} data - The body to send
    * @param {object} baseHeaders - Headers to send
    * @returns {Promise} - The send status
    */
-  async sendRequest(requestUrl, method, authentication, proxy, body, baseHeaders = {}) {
-    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, body, baseHeaders)
+  async sendRequest(requestUrl, method, authentication, proxy, data, baseHeaders = {}) {
+    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, data, baseHeaders)
   }
 }
 

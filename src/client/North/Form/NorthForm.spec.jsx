@@ -23,21 +23,30 @@ afterEach(() => {
   container = null
 })
 
-newConfig.north.applications.forEach((application) => {
-  describe('NorthForm', () => {
+describe('NorthForm', () => {
+  newConfig.north.applications.forEach((application) => {
     test(`check NorthForm with application: ${application.applicationId}`, () => {
       act(() => {
         ReactDOM.render(
           <BrowserRouter>
-            <NorthForm
-              application={application}
-              applicationIndex={0}
-              onChange={() => (1)}
-            />
-          </BrowserRouter>, container,
+            <NorthForm application={application} applicationIndex={0} onChange={() => 1} />
+          </BrowserRouter>,
+          container,
         )
       })
       expect(container).toMatchSnapshot()
     })
+  })
+
+  test('check NorthForm with empty application', () => {
+    act(() => {
+      ReactDOM.render(
+        <BrowserRouter>
+          <NorthForm application={{ api: 'Console' }} applicationIndex={0} onChange={() => 1} />
+        </BrowserRouter>,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
   })
 })

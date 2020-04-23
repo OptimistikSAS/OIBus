@@ -26,14 +26,14 @@ jest.mock('../engine/Logger.class', () => (function logger() {
 }))
 
 // Mock engine
-const engine = jest.genMockFromModule('../engine/Engine.class')
+const engine = jest.fn()
 engine.decryptPassword = (password) => password
 
 beforeEach(() => {
   jest.resetAllMocks()
 })
 
-describe('AliveSignal', () => {
+describe('Request service', () => {
   const requestUrl = 'https://example.com'
   const postMethod = 'POST'
   const proxy = {
@@ -51,7 +51,8 @@ describe('AliveSignal', () => {
   }
 
   it('should call axios when stack is axios', async () => {
-    const body = { status: 'status' }
+    const body = JSON.stringify({ status: 'status' })
+    const headers = { 'Content-Type': 'application/json' }
     const stack = 'axios'
     const timeout = 30
     const engineConfig = {
@@ -64,7 +65,7 @@ describe('AliveSignal', () => {
     engine.configService = { getConfig: () => ({ engineConfig }) }
     axios.create.mockReturnValue(() => jest.fn())
 
-    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body)
+    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
 
     expect(axios.create).toHaveBeenCalled()
     expect(request).not.toBeCalled()
@@ -72,7 +73,8 @@ describe('AliveSignal', () => {
   })
 
   it('should call request when stack is request', async () => {
-    const body = { status: 'status' }
+    const body = JSON.stringify({ status: 'status' })
+    const headers = { 'Content-Type': 'application/json' }
     const stack = 'request'
     const timeout = 30
     const engineConfig = {
@@ -84,7 +86,7 @@ describe('AliveSignal', () => {
     }
     engine.configService = { getConfig: () => ({ engineConfig }) }
 
-    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body)
+    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
 
     expect(axios.create).not.toBeCalled()
     expect(request).toHaveBeenCalledTimes(1)
@@ -92,7 +94,8 @@ describe('AliveSignal', () => {
   })
 
   it('should call node-fetch when stack is fetch', async () => {
-    const body = { status: 'status' }
+    const body = JSON.stringify({ status: 'status' })
+    const headers = { 'Content-Type': 'application/json' }
     const stack = 'fetch'
     const timeout = 30
     const engineConfig = {
@@ -105,7 +108,7 @@ describe('AliveSignal', () => {
     engine.configService = { getConfig: () => ({ engineConfig }) }
     fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
-    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body)
+    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
 
     expect(axios.create).not.toBeCalled()
     expect(request).not.toBeCalled()

@@ -3,7 +3,7 @@ const testConfig = {
     port: 2223,
     user: 'admin',
     password: '23423423',
-    filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1'],
+    filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
     logParameters: {
       consoleLevel: 'debug',
       fileLevel: 'debug',
@@ -61,33 +61,6 @@ const testConfig = {
   },
   south: {
     dataSources: [
-      {
-        dataSourceId: 'CSVServer',
-        protocol: 'CSV',
-        enabled: false,
-        CSV: {
-          timeColumn: 0,
-          hasFirstLine: true,
-          inputFolder: './tests/csv/input/',
-          archiveFolder: './tests/csv/archived/',
-          errorFolder: './tests/csv/error/',
-          separator: ',',
-        },
-        points: [
-          {
-            pointId: '/fttest.base/Tank 5.tank/333333.temperature',
-            scanMode: 'every20Second',
-            value: 'sensor1-value',
-            quality: 'sensor1-quality',
-          },
-          {
-            pointId: '/fttest.base/Tank 6.tank/333333.temperature',
-            scanMode: 'every20Second',
-            value: '3',
-            quality: '4',
-          },
-        ],
-      },
       {
         dataSourceId: 'MQTTServer',
         protocol: 'MQTT',
@@ -248,13 +221,13 @@ const testConfig = {
           maxReadInterval: 3600,
         },
         points: [
-          { pointId: 'A13518/AI1/PV.CV', scanMode: '1000\r' },
-          { pointId: '_FC42404/PID1/OUT.CV', scanMode: '10000\r' },
-          { pointId: '_FC42404/PID1/PV.CV', scanMode: '10000\r' },
+          { pointId: 'A13518/AI1/PV.CV', scanMode: 'everySecond' },
+          { pointId: '_FC42404/PID1/OUT.CV', scanMode: 'everySecond' },
+          { pointId: '_FC42404/PID1/PV.CV', scanMode: 'every10Second' },
         ],
         scanGroups: [
-          { scanMode: 'every5Second', aggregate: '', resampling: 'Minute' },
-          { scanMode: 'every20Second', aggregate: '', resampling: 'Minute' },
+          { scanMode: 'everySecond', aggregate: '', resampling: 'Minute' },
+          { scanMode: 'every10Second', aggregate: '', resampling: 'Minute' },
         ],
       },
     ],
@@ -268,7 +241,6 @@ const testConfig = {
         Console: {},
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
         subscribedTo: [
-          'CSVServer',
           'MQTTServer',
         ],
       },

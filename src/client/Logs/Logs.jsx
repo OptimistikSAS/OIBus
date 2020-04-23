@@ -97,7 +97,6 @@ const Log = () => {
           id="filterText"
           placeholder="message contains..."
           value={filterText}
-          onEnded={() => null}
           onChange={(event) => {
             setMaxLog(defaultMaxLog)
             setFilterText(event.target.value.toLowerCase())
@@ -138,7 +137,7 @@ const Log = () => {
               </tbody>
             </Table>
             {filteredLogs.length > maxLog && (
-              <Button color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
+              <Button id="showMore" color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
                 Show more...
               </Button>
             )}
@@ -169,7 +168,7 @@ const Log = () => {
                 <Input
                   className="oi-form-input"
                   type="datetime-local"
-                  id="fromDatee"
+                  id="fromDate"
                   max={maxDateString}
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required
@@ -215,7 +214,7 @@ const Log = () => {
                   </FormGroup>
                 ))}
               </FormGroup>
-              <Button color="primary" onClick={handleSubmit}>
+              <Button id="showLog" color="primary" onClick={handleSubmit}>
                 Show log
               </Button>
             </CardBody>

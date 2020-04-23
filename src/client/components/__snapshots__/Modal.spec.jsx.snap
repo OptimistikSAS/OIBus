@@ -5,3 +5,15 @@ exports[`Modal check Modal 1`] = `
   1
 </div>
 `;
+
+exports[`Modal check cancel press 1`] = `
+<div>
+  1
+</div>
+`;
+
+exports[`Modal check confirm press 1`] = `
+<div>
+  1
+</div>
+`;

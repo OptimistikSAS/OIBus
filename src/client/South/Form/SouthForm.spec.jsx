@@ -23,21 +23,29 @@ afterEach(() => {
   container = null
 })
 
-newConfig.south.dataSources.forEach((dataSource) => {
-  describe('SouthForm', () => {
+describe('SouthForm', () => {
+  newConfig.south.dataSources.forEach((dataSource) => {
     test(`check SouthForm with dataSource: ${dataSource.dataSourceId}`, () => {
       act(() => {
         ReactDOM.render(
           <BrowserRouter>
-            <SouthForm
-              dataSource={dataSource}
-              dataSourceIndex={0}
-              onChange={() => (1)}
-            />
-          </BrowserRouter>, container,
+            <SouthForm dataSource={dataSource} dataSourceIndex={0} onChange={() => 1} />
+          </BrowserRouter>,
+          container,
         )
       })
       expect(container).toMatchSnapshot()
     })
+  })
+  test('check SouthForm with empty dataSource', () => {
+    act(() => {
+      ReactDOM.render(
+        <BrowserRouter>
+          <SouthForm dataSource={{ protocol: 'MQTT' }} dataSourceIndex={0} onChange={() => 1} />
+        </BrowserRouter>,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
   })
 })
