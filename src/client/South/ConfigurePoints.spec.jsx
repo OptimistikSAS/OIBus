@@ -15,6 +15,7 @@ jest.mock('react-router-dom', () => (
 ))
 
 // mock states
+const originalUseState = React.useState
 let filterText = ''
 const setFilterText = jest.fn()
 const setSelectedPage = jest.fn()
@@ -33,6 +34,16 @@ React.useState = jest.fn().mockImplementation((init) => {
 let resolve
 let reject
 utils.createCSV = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
+// mock parseCSV
+utils.parseCSV = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
+
+utils.readFileContent = () => new Promise((_resolve, _reject) => {
   resolve = _resolve
   reject = _reject
 })
@@ -187,6 +198,66 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
   })
+  test('check import points readFileContent fail', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      reject('error')
+    })
+  })
+  test('check import points parseCSV fail', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      resolve('')
+    })
+    // await utils.parseCSV to fail
+    await act(async () => {
+      reject('error')
+    })
+  })
+  test('check import points success', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      resolve('')
+    })
+
+    const newPoints = newConfig.south.dataSources[0].points
+    // await utils.parseCSV to success
+    await act(async () => {
+      resolve(newPoints)
+    })
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'importPoints',
+      name: 'south.dataSources.7.points',
+      value: newPoints,
+    })
+  })
   test('check export points', () => {
     console.error = jest.fn()
     act(() => {
@@ -199,6 +270,8 @@ describe('ConfigurePoints', () => {
   })
   test('check export points success', async () => {
     console.error = jest.fn()
+    const originalUrlCreateObjectURL = URL.createObjectURL
+    URL.createObjectURL = jest.fn()
     act(() => {
       ReactDOM.render(
         <ConfigurePoints />, container,
@@ -209,6 +282,7 @@ describe('ConfigurePoints', () => {
     await act(async () => {
       resolve('test,csv')
     })
+    URL.createObjectURL = originalUrlCreateObjectURL
   })
   test('check export points fail', async () => {
     console.error = jest.fn()
@@ -244,36 +318,6 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
     expect(container).toMatchSnapshot()
   })
-  test('check confirm on delete all points', () => {
-    const originalMock = React.useState
-
-    const setOpen = jest.fn()
-    const confirm = jest.fn()
-    const callback = jest.fn()
-    callback.func = jest.fn().mockImplementation(() => confirm())
-    React.useState = jest.fn().mockImplementation((init) => {
-      if (init === false) {
-        // set delete modal to be open
-        return [true, setOpen]
-      }
-      if (init === null) {
-        // set callback mock
-        return [callback, setState]
-      }
-      return [init, setState]
-    })
-
-    act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
-    })
-    Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
-    expect(callback.func).toBeCalled()
-    expect(confirm).toBeCalled()
-    expect(container).toMatchSnapshot()
-    React.useState = originalMock
-  })
   test('check no config', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
     act(() => {
@@ -283,5 +327,32 @@ describe('ConfigurePoints', () => {
     })
     expect(container).toMatchSnapshot()
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+  })
+  test('check no points', () => {
+    const configNoPoints = utils.jsonCopy(newConfig)
+    configNoPoints.south.dataSources[7].points = undefined
+    React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+  })
+  test('check confirm on delete all points', () => {
+    React.useState = originalUseState
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'deleteAllRows',
+      name: 'south.dataSources.7.points',
+    })
+    expect(container).toMatchSnapshot()
   })
 })
