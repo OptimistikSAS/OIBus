@@ -6146,7 +6146,1324 @@ exports[`ConfigurePoints check import points file input 1`] = `
 </div>
 `;
 
+exports[`ConfigurePoints check import points parseCSV fail 1`] = `
+<div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/"
+      >
+        Home
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south"
+      >
+        South
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south/OPC-HDA"
+      >
+        OPC-HDA
+      </li>
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Points
+      </span>
+    </ol>
+  </h5>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="filterText"
+    >
+      Filter
+    </label>
+    <input
+      class="oi-form-input form-control"
+      id="filterText"
+      name="filterText"
+      type="text"
+      value=""
+    />
+    <div
+      class="invalid-feedback"
+    />
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        Type any points related data
+      </div>
+    </small>
+  </div>
+  <table
+    class="table table-sm table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+            />
+          </svg>
+          <span>
+            Point id
+          </span>
+        </th>
+        <th
+          scope="col"
+        >
+          Scan mode
+        </th>
+        <th
+          scope="col"
+        />
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.0.pointId"
+              name="points.0.pointId"
+              type="text"
+              value="A13518/AI1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.0.scanMode"
+              name="points.0.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.1.pointId"
+              name="points.1.pointId"
+              type="text"
+              value="_FC42404/PID1/OUT.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.1.scanMode"
+              name="points.1.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.2.pointId"
+              name="points.2.pointId"
+              type="text"
+              value="_FC42404/PID1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.2.scanMode"
+              name="points.2.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <nav
+    aria-label="pagination"
+    class=""
+  >
+    <ul
+      class="pagination"
+    >
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="First"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            «
+          </span>
+          <span
+            class="sr-only"
+          >
+            First
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Previous"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ‹
+          </span>
+          <span
+            class="sr-only"
+          >
+            Previous
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item disabled"
+      >
+        <button
+          class="pagination-cell page-link"
+        >
+          1
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Next"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ›
+          </span>
+          <span
+            class="sr-only"
+          >
+            Next
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Last"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            »
+          </span>
+          <span
+            class="sr-only"
+          >
+            Last
+          </span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <div
+    class="force-row-display"
+  >
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Import
+    </button>
+    <input
+      accept=".csv, text/plain"
+      class="oi-form-input form-control-file"
+      hidden=""
+      id="importFile"
+      type="file"
+    />
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Export
+    </button>
+    <div>
+      <button
+        class="inline-button btn btn-danger"
+        type="button"
+      >
+        Delete All Points
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`ConfigurePoints check import points press 1`] = `
+<div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/"
+      >
+        Home
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south"
+      >
+        South
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south/OPC-HDA"
+      >
+        OPC-HDA
+      </li>
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Points
+      </span>
+    </ol>
+  </h5>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="filterText"
+    >
+      Filter
+    </label>
+    <input
+      class="oi-form-input form-control"
+      id="filterText"
+      name="filterText"
+      type="text"
+      value=""
+    />
+    <div
+      class="invalid-feedback"
+    />
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        Type any points related data
+      </div>
+    </small>
+  </div>
+  <table
+    class="table table-sm table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+            />
+          </svg>
+          <span>
+            Point id
+          </span>
+        </th>
+        <th
+          scope="col"
+        >
+          Scan mode
+        </th>
+        <th
+          scope="col"
+        />
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.0.pointId"
+              name="points.0.pointId"
+              type="text"
+              value="A13518/AI1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.0.scanMode"
+              name="points.0.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.1.pointId"
+              name="points.1.pointId"
+              type="text"
+              value="_FC42404/PID1/OUT.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.1.scanMode"
+              name="points.1.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.2.pointId"
+              name="points.2.pointId"
+              type="text"
+              value="_FC42404/PID1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.2.scanMode"
+              name="points.2.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <nav
+    aria-label="pagination"
+    class=""
+  >
+    <ul
+      class="pagination"
+    >
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="First"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            «
+          </span>
+          <span
+            class="sr-only"
+          >
+            First
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Previous"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ‹
+          </span>
+          <span
+            class="sr-only"
+          >
+            Previous
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item disabled"
+      >
+        <button
+          class="pagination-cell page-link"
+        >
+          1
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Next"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ›
+          </span>
+          <span
+            class="sr-only"
+          >
+            Next
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Last"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            »
+          </span>
+          <span
+            class="sr-only"
+          >
+            Last
+          </span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <div
+    class="force-row-display"
+  >
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Import
+    </button>
+    <input
+      accept=".csv, text/plain"
+      class="oi-form-input form-control-file"
+      hidden=""
+      id="importFile"
+      type="file"
+    />
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Export
+    </button>
+    <div>
+      <button
+        class="inline-button btn btn-danger"
+        type="button"
+      >
+        Delete All Points
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ConfigurePoints check import points readFileContent fail 1`] = `
+<div>
+  <h5
+    aria-label="breadcrumb"
+    class=""
+  >
+    <ol
+      class="breadcrumb"
+    >
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/"
+      >
+        Home
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south"
+      >
+        South
+      </li>
+      <li
+        class="oi-breadcrumb breadcrumb-item"
+        to="/south/OPC-HDA"
+      >
+        OPC-HDA
+      </li>
+      <span
+        aria-current="page"
+        class="active breadcrumb-item"
+      >
+        Points
+      </span>
+    </ol>
+  </h5>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="filterText"
+    >
+      Filter
+    </label>
+    <input
+      class="oi-form-input form-control"
+      id="filterText"
+      name="filterText"
+      type="text"
+      value=""
+    />
+    <div
+      class="invalid-feedback"
+    />
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        Type any points related data
+      </div>
+    </small>
+  </div>
+  <table
+    class="table table-sm table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+            />
+          </svg>
+          <span>
+            Point id
+          </span>
+        </th>
+        <th
+          scope="col"
+        >
+          Scan mode
+        </th>
+        <th
+          scope="col"
+        />
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.0.pointId"
+              name="points.0.pointId"
+              type="text"
+              value="A13518/AI1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.0.scanMode"
+              name="points.0.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.1.pointId"
+              name="points.1.pointId"
+              type="text"
+              value="_FC42404/PID1/OUT.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.1.scanMode"
+              name="points.1.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div
+            class="form-group"
+            style="margin-bottom: 0px;"
+          >
+            <input
+              class="oi-form-input form-control"
+              id="points.2.pointId"
+              name="points.2.pointId"
+              type="text"
+              value="_FC42404/PID1/PV.CV"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <div
+            class="form-group"
+          >
+            <select
+              class="oi-form-input form-control"
+              id="points.2.scanMode"
+              name="points.2.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </td>
+        <td>
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+            />
+          </svg>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <nav
+    aria-label="pagination"
+    class=""
+  >
+    <ul
+      class="pagination"
+    >
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="First"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            «
+          </span>
+          <span
+            class="sr-only"
+          >
+            First
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Previous"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ‹
+          </span>
+          <span
+            class="sr-only"
+          >
+            Previous
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item disabled"
+      >
+        <button
+          class="pagination-cell page-link"
+        >
+          1
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Next"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ›
+          </span>
+          <span
+            class="sr-only"
+          >
+            Next
+          </span>
+        </button>
+      </li>
+      <li
+        class="page-item"
+      >
+        <button
+          aria-label="Last"
+          class="pagination-cell page-link"
+        >
+          <span
+            aria-hidden="true"
+          >
+            »
+          </span>
+          <span
+            class="sr-only"
+          >
+            Last
+          </span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <div
+    class="force-row-display"
+  >
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Import
+    </button>
+    <input
+      accept=".csv, text/plain"
+      class="oi-form-input form-control-file"
+      hidden=""
+      id="importFile"
+      type="file"
+    />
+    <button
+      class="inline-button btn btn-primary"
+      type="button"
+    >
+      Export
+    </button>
+    <div>
+      <button
+        class="inline-button btn btn-danger"
+        type="button"
+      >
+        Delete All Points
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ConfigurePoints check import points success 1`] = `
 <div>
   <h5
     aria-label="breadcrumb"
