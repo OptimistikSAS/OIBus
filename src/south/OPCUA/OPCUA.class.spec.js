@@ -237,7 +237,7 @@ describe('OPCUA south', () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
-    opcuaSouth.maxReadInterval = 24 * 60 * 60 * 1000
+    opcuaSouth.maxReadInterval = 24 * 60 * 60
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
     opcuaSouth.session = { readHistoryValue: jest.fn() }
@@ -273,6 +273,26 @@ describe('OPCUA south', () => {
       sampleDate.getTime() + 1,
     )
     expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode]).toBeFalsy()
+  })
+
+  it('should in onScan call readHistoryValue multiple times if maxReadInterval is smaller than the read interval', async () => {
+    const startDate = new Date()
+    startDate.setTime(startDate.getTime() - (8000 * 1000))
+
+    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
+
+    opcuaSouth.maxReadInterval = 3600
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve([]))
+    opcuaSouth.addValues = jest.fn()
+
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(3)
   })
 
   it('should in onScan call check if readHistoryValue returns the requested number of node IDs', async () => {
