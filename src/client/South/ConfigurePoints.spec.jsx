@@ -36,6 +36,16 @@ utils.createCSV = () => new Promise((_resolve, _reject) => {
   resolve = _resolve
   reject = _reject
 })
+// mock parseCSV
+utils.parseCSV = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
+
+utils.readFileContent = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -187,6 +197,66 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
   })
+  test('check import points readFileContent fail', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      reject('error')
+    })
+  })
+  test('check import points parseCSV fail', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      resolve('')
+    })
+    // await utils.parseCSV to fail
+    await act(async () => {
+      reject('error')
+    })
+  })
+  test('check import points success', async () => {
+    console.error = jest.fn()
+
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
+    expect(container).toMatchSnapshot()
+    // await utils.readFileContent
+    await act(async () => {
+      resolve('')
+    })
+
+    const newPoints = newConfig.south.dataSources[0].points
+    // await utils.parseCSV to success
+    await act(async () => {
+      resolve(newPoints)
+    })
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'importPoints',
+      name: 'south.dataSources.7.points',
+      value: newPoints,
+    })
+  })
   test('check export points', () => {
     console.error = jest.fn()
     act(() => {
@@ -199,6 +269,8 @@ describe('ConfigurePoints', () => {
   })
   test('check export points success', async () => {
     console.error = jest.fn()
+    const originalUrlCreateObjectURL = URL.createObjectURL
+    URL.createObjectURL = jest.fn()
     act(() => {
       ReactDOM.render(
         <ConfigurePoints />, container,
@@ -209,6 +281,7 @@ describe('ConfigurePoints', () => {
     await act(async () => {
       resolve('test,csv')
     })
+    URL.createObjectURL = originalUrlCreateObjectURL
   })
   test('check export points fail', async () => {
     console.error = jest.fn()
