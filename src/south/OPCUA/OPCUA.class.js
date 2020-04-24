@@ -26,19 +26,23 @@ class OPCUA extends ProtocolHandler {
 
     this.lastCompletedAt = {}
     this.ongoingReads = {}
-
-    this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
-      const points = this.dataSource.points
-        .filter((point) => point.scanMode === scanGroup.scanMode)
-        .map((point) => point.nodeId)
-      this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
-      this.ongoingReads[scanGroup.scanMode] = false
-      return {
-        name: scanGroup.scanMode,
-        ...scanGroup,
-        points,
-      }
-    })
+    if (this.dataSource.OPCUA.scanGroups) {
+      this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
+        const points = this.dataSource.points
+          .filter((point) => point.scanMode === scanGroup.scanMode)
+          .map((point) => point.nodeId)
+        this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
+        this.ongoingReads[scanGroup.scanMode] = false
+        return {
+          name: scanGroup.scanMode,
+          ...scanGroup,
+          points,
+        }
+      })
+    } else {
+      this.logger.error('OPCUA scanGroups is not defined. This South driver will not work')
+      this.scanGroups = []
+    }
 
     this.reconnectTimeout = null
   }
@@ -79,7 +83,20 @@ class OPCUA extends ProtocolHandler {
   async onScan(scanMode) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
 
-    if (!this.connected || this.ongoingReads[scanMode] || !scanGroup.points.length) return
+    if ( !scanGroup) {
+      this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
+      return
+    }
+
+    if (!this.connected || this.ongoingReads[scanMode]) {
+     this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+     return
+    }
+    
+    if ( !scanGroup.points || !scanGroup.points.length){
+      this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
+      return
+    }
 
     this.ongoingReads[scanMode] = true
 
@@ -98,7 +115,7 @@ class OPCUA extends ProtocolHandler {
           intervalOpcEndTime = opcEndTime
         }
 
-        this.logger.info(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
+        this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
         // eslint-disable-next-line no-await-in-loop
         const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
         if (dataValues.length !== nodesToRead.length) {
