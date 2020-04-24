@@ -41,6 +41,7 @@ describe('OPCUA south', () => {
     dataSourceId: 'OPC-UA',
     protocol: 'OPCUA',
     enabled: true,
+    startTime: '2020-02-02 02:02:02',
     OPCUA: {
       maxAge: 10,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
@@ -81,7 +82,7 @@ describe('OPCUA south', () => {
     expect(opcuaSouth.reconnectTimeout).toBeNull()
   })
 
-  it('should properly connect', async () => {
+  it('should properly connect and set lastCompletedAt from database', async () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
 
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
@@ -91,6 +92,34 @@ describe('OPCUA south', () => {
     expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(1587640141001)
+    expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
+  })
+
+  it('should properly connect and set lastCompletedAt from config file', async () => {
+    databaseService.getConfig.mockReturnValue(null)
+
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    opcuaSouth.connectToOpcuaServer = jest.fn()
+    await opcuaSouth.connect()
+
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+    expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(new Date(opcuaConfig.startTime).getTime())
+    expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
+  })
+
+  it('should properly connect and set lastCompletedAt now', async () => {
+    databaseService.getConfig.mockReturnValue(null)
+    opcuaConfig.originalStartTime = opcuaConfig.startTime
+    delete opcuaConfig.startTime
+
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    opcuaSouth.connectToOpcuaServer = jest.fn()
+    await opcuaSouth.connect()
+
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+    expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.lastCompletedAt.every10Second).not.toEqual(new Date(opcuaConfig.originalStartTime).getTime())
     expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
   })
 
@@ -150,7 +179,7 @@ describe('OPCUA south', () => {
 
   })
 
-  it('should properly disconnect', async () => {
+  it('should properly disconnect when trying to connect', async () => {
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
       createSession: jest.fn(),
@@ -160,11 +189,30 @@ describe('OPCUA south', () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
     await opcuaSouth.connect()
     opcuaSouth.reconnectTimeout = true
-    opcuaSouth.connected = true
+    opcuaSouth.connected = false
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
     expect(clearTimeout).toBeCalled()
+    expect(opcuaSouth.session.close).not.toBeCalled()
+    expect(opcuaSouth.client.disconnect).not.toBeCalled()
+  })
+
+  it('should properly disconnect when connected', async () => {
+    Opcua.OPCUAClient.create.mockReturnValue({
+      connect: jest.fn(),
+      createSession: jest.fn(),
+      disconnect: jest.fn(),
+    })
+
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
+    opcuaSouth.reconnectTimeout = false
+    opcuaSouth.connected = true
+    opcuaSouth.session = { close: jest.fn() }
+    await opcuaSouth.disconnect()
+
+    expect(clearTimeout).not.toBeCalled()
     expect(opcuaSouth.session.close).toBeCalled()
     expect(opcuaSouth.client.disconnect).toBeCalled()
   })
