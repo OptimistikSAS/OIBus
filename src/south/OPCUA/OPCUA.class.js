@@ -83,17 +83,17 @@ class OPCUA extends ProtocolHandler {
   async onScan(scanMode) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
 
-    if ( !scanGroup) {
+    if (!scanGroup) {
       this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
       return
     }
 
     if (!this.connected || this.ongoingReads[scanMode]) {
-     this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
-     return
+      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      return
     }
-    
-    if ( !scanGroup.points || !scanGroup.points.length){
+
+    if (!scanGroup.points || !scanGroup.points.length) {
       this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
       return
     }
