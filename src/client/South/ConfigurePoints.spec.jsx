@@ -15,6 +15,7 @@ jest.mock('react-router-dom', () => (
 ))
 
 // mock states
+const originalUseState = React.useState
 let filterText = ''
 const setFilterText = jest.fn()
 const setSelectedPage = jest.fn()
@@ -317,36 +318,6 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
     expect(container).toMatchSnapshot()
   })
-  test('check confirm on delete all points', () => {
-    const originalMock = React.useState
-
-    const setOpen = jest.fn()
-    const confirm = jest.fn()
-    const callback = jest.fn()
-    callback.func = jest.fn().mockImplementation(() => confirm())
-    React.useState = jest.fn().mockImplementation((init) => {
-      if (init === false) {
-        // set delete modal to be open
-        return [true, setOpen]
-      }
-      if (init === null) {
-        // set callback mock
-        return [callback, setState]
-      }
-      return [init, setState]
-    })
-
-    act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
-    })
-    Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
-    expect(callback.func).toBeCalled()
-    expect(confirm).toBeCalled()
-    expect(container).toMatchSnapshot()
-    React.useState = originalMock
-  })
   test('check no config', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
     act(() => {
@@ -356,5 +327,32 @@ describe('ConfigurePoints', () => {
     })
     expect(container).toMatchSnapshot()
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+  })
+  test('check no points', () => {
+    const configNoPoints = utils.jsonCopy(newConfig)
+    configNoPoints.south.dataSources[7].points = undefined
+    React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+  })
+  test('check confirm on delete all points', () => {
+    React.useState = originalUseState
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'deleteAllRows',
+      name: 'south.dataSources.7.points',
+    })
+    expect(container).toMatchSnapshot()
   })
 })
