@@ -28,9 +28,9 @@ class OIConnect extends ApiHandler {
   async handleValues(values) {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
 
-    const body = { dataSourceId: this.application.applicationId, values }
-
-    return this.engine.sendRequest(this.url, 'POST', this.authentication, this.proxy, body)
+    const data = JSON.stringify({ dataSourceId: this.application.applicationId, values })
+    const headers = { 'Content-Type': 'application/json' }
+    return this.engine.sendRequest(this.url, 'POST', this.authentication, this.proxy, data, headers)
   }
 }
 
