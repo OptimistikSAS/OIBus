@@ -15,6 +15,7 @@ jest.mock('node-opcua', () => ({
 jest.mock('../../services/database.service', () => ({
   createConfigDatabase: jest.fn(() => 'configDatabase'),
   getConfig: jest.fn((_database, _key) => '1587640141001.0'),
+  upsertConfig: jest.fn(),
 }))
 
 // Mock logger
@@ -175,8 +176,135 @@ describe('OPCUA south', () => {
     expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), opcuaConfig.OPCUA.retryInterval)
   })
 
-  it('should properly handle onScan', async () => {
+  it('should quit onScan if not connected', async () => {
+    databaseService.getConfig.mockReturnValue('1587640141001.0')
 
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    opcuaSouth.connected = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+  })
+
+  it('should quit onScan if previous read did not complete', async () => {
+    databaseService.getConfig.mockReturnValue('1587640141001.0')
+
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = true
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+  })
+
+  it('should quit onScan if scan group has no points to read', async () => {
+    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    const testOpcuaConfig = {
+      ...opcuaConfig,
+      points: [{
+        nodeId: 'ns=3;s=Random',
+        scanMode: 'every1minute',
+      }],
+    }
+    const opcuaSouth = new OPCUA(testOpcuaConfig, engine)
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+  })
+
+  it('should in onScan call readHistoryValue once if maxReadInterval is bigger than the read interval', async () => {
+    const startDate = new Date('2020-02-02T02:02:02.222Z')
+    const nowDate = new Date('2020-02-03T02:02:02.222Z')
+    const sampleDate = new Date('2020-02-12T02:02:02.222Z')
+    const sampleValue = 666.666
+    const historicalValue = [{
+      historyData: {
+        dataValues: [{
+          serverTimestamp: sampleDate,
+          value: { value: sampleValue },
+          statusCode: { value: 0 },
+        }],
+      },
+    }]
+
+    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    databaseService.createConfigDatabase.mockReturnValue('configDatabase')
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
+
+    opcuaSouth.maxReadInterval = 24 * 60 * 60 * 1000
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve(historicalValue))
+    opcuaSouth.addValues = jest.fn()
+
+    const RealDate = Date
+    global.Date = jest.fn((dateParam) => {
+      if (dateParam) {
+        return new RealDate(dateParam)
+      }
+      return nowDate
+    })
+    global.Date.getTime = jest.fn(() => RealDate.getTime)
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+    global.Date = RealDate
+
+    const expectedValue = {
+      pointId: opcuaConfig.points[0].nodeId,
+      timestamp: sampleDate.toUTCString(),
+      data: {
+        value: sampleValue,
+        quality: '{"value":0}',
+      },
+    }
+    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(1)
+    expect(opcuaSouth.session.readHistoryValue).toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate)
+    expect(opcuaSouth.addValues).toBeCalledTimes(1)
+    expect(opcuaSouth.addValues).toBeCalledWith([expectedValue])
+    expect(databaseService.upsertConfig).toBeCalledWith(
+      'configDatabase',
+      `lastCompletedAt-${opcuaConfig.OPCUA.scanGroups[0].scanMode}`,
+      sampleDate.getTime() + 1,
+    )
+    expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode]).toBeFalsy()
+  })
+
+  it('should in onScan call check if readHistoryValue returns the requested number of node IDs', async () => {
+    const startDate = new Date('2020-02-02T02:02:02.222Z')
+
+    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    databaseService.createConfigDatabase.mockReturnValue('configDatabase')
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
+
+    opcuaSouth.maxReadInterval = 24 * 60 * 60 * 1000
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve([]))
+    opcuaSouth.addValues = jest.fn()
+
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(1)
+    expect(opcuaSouth.logger.error).toHaveBeenCalledWith('received 0, requested 1')
+  })
+
+  it('should onScan catch errors', async () => {
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject()) }
+    await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
+
+    expect(opcuaSouth.session.readHistoryValue).toBeCalled()
+    expect(opcuaSouth.logger.error).toHaveBeenCalled()
   })
 
   it('should properly disconnect when trying to connect', async () => {
