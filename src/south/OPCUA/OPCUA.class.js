@@ -40,7 +40,7 @@ class OPCUA extends ProtocolHandler {
         }
       })
     } else {
-      this.logger.error('OPCUA scanGroups is not defined. This South driver will not work')
+      this.logger.error('OPCUA scanGroups are not defined. This South driver will not work')
       this.scanGroups = []
     }
 
@@ -155,7 +155,7 @@ class OPCUA extends ProtocolHandler {
 
       this.lastCompletedAt[scanMode] = maxTimestamp + 1
       await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
-      this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
+      this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}: ${error}`)
     }
