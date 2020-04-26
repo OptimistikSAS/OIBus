@@ -246,7 +246,7 @@ class OPCHDA extends ProtocolHandler {
       }
 
       const messageString = JSON.stringify(message)
-      this.logger.debug(`Sent at ${new Date().toISOString()}: ${messageString}`)
+      this.logger.silly(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
     } else {
       this.logger.debug(`sendMessage ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
@@ -305,7 +305,7 @@ class OPCHDA extends ProtocolHandler {
             return
           }
 
-          this.logger.debug(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
+          this.logger.silly(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
 
           // eslint-disable-next-line no-case-declarations
           const values = messageObject.Content.Points.map((point) => {
@@ -328,7 +328,7 @@ class OPCHDA extends ProtocolHandler {
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group],
           )
-          this.logger.debug(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+          this.logger.silly(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
           this.ongoingReads[messageObject.Content.Group] = false
           break
