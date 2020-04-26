@@ -5,7 +5,18 @@ const schema = { name: 'OPCUA' }
 schema.form = {
   opcuaSettings: {
     type: 'OIbTitle',
-    children: <p>This protocol is in restricted release. Please contact Optimistik</p>,
+    children: (
+      <>
+        <p>This protocol is in restricted release. Please contact Optimistik</p>
+        <p>
+          By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group)
+          so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first
+          startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
+          accessible by editing manually the oibus configuration time) indicates a different start time. This feature
+          has been added to be allow recovering of values from the past when needed.
+        </p>
+      </>
+    ),
   },
   url: {
     type: 'OIbText',
