@@ -1,6 +1,6 @@
 const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
-const vsprintf = require('sprintf-js').vsprintf
+const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
