@@ -1,5 +1,13 @@
 import * as csv from 'fast-csv'
 
+const readFileContent = async (file) => new Promise((resolve) => {
+  const reader = new FileReader()
+  reader.readAsText(file)
+  reader.onload = () => {
+    resolve(reader.result)
+  }
+})
+
 function jsonCopy(src) {
   return JSON.parse(JSON.stringify(src))
 }
@@ -83,4 +91,4 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { jsonCopy, parseCSV, createCSV, replaceValues }
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues }
