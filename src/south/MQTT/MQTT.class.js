@@ -1,4 +1,6 @@
 const mqtt = require('mqtt')
+const mqttWildcard = require('mqtt-wildcard')
+const vsprintf = require('sprintf-js').vsprintf
 const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -79,23 +81,14 @@ class MQTT extends ProtocolHandler {
     console.info(`mqtt ${topic}:${message}, dup:${packet.dup}`)
 
     try {
-      const messageObject = JSON.parse(message.toString())
-      let timestamp = new Date().toISOString()
-      if (this.timeStampOrigin === 'payload') {
-        if (this.timezone && messageObject[this.timeStampKey]) {
-          const timestampDate = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
-          timestamp = timestampDate.toISOString()
-        } else {
-          this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
-        }
+      const data = JSON.parse(message.toString())
+      const timestamp = this.getTimestamp(data)
+      const pointId = this.getPointId(topic)
+      if (pointId) {
+        this.addValues([{ pointId, timestamp, data }])
+      } else {
+        this.logger.error('PointId can\'t be determined. The value is not saved. Configuration needs to be changed')
       }
-      this.addValues([
-        {
-          pointId: this.topics[topic].pointId,
-          timestamp,
-          data: messageObject,
-        },
-      ])
     } catch (error) {
       this.logger.error(error)
     }
@@ -107,6 +100,61 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
+  }
+
+  /**
+   * Get timestamp.
+   * @param {object} messageObject - The message object received
+   * @return {string} - The timestamp
+   */
+  getTimestamp(messageObject) {
+    let timestamp = new Date().toISOString()
+
+    if (this.timeStampOrigin === 'payload') {
+      if (this.timezone && messageObject[this.timeStampKey]) {
+        const timestampDate = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
+        timestamp = timestampDate.toISOString()
+      } else {
+        this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
+      }
+    }
+
+    return timestamp
+  }
+
+  /**
+   * Get pointId.
+   * @param {string} topic - The topic
+   * @return {string | null} - The pointId
+   */
+  getPointId(topic) {
+    let pointId = null
+    const matchedPoints = []
+
+    this.dataSource.points.forEach((point) => {
+      const matchList = mqttWildcard(topic, point.topic)
+      if (Array.isArray(matchList)) {
+        if (!pointId) {
+          const nrWildcards = (point.pointId.match(/[+#]/g) || []).length
+          if (nrWildcards === matchList.length) {
+            const normalizedPointId = point.pointId.replace(/[+#]/g, '%s')
+            pointId = vsprintf(normalizedPointId, matchList)
+            matchedPoints.push(point)
+          } else {
+            this.logger.error(`Invalid point configuration: ${JSON.stringify(point)}`)
+          }
+        } else {
+          matchedPoints.push(point)
+        }
+      }
+    })
+
+    if (matchedPoints.length > 1) {
+      this.logger.error(`${topic} should be subscribed only once but it has the following subscriptions: ${JSON.stringify(matchedPoints)}`)
+      pointId = null
+    }
+
+    return pointId
   }
 
   /**
