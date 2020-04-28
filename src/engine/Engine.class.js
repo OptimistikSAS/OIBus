@@ -108,7 +108,7 @@ class Engine {
         }
       }
     })
-
+    this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
