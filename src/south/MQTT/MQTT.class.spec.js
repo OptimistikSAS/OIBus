@@ -124,8 +124,8 @@ describe('MQTT south', () => {
 
     expect(mqttSouth.logger.info).toBeCalledWith(`Connected to ${mqttConfig.MQTT.url}`)
     expect(mqttSouth.client.subscribe).toHaveBeenCalledTimes(2)
-    expect(mqttSouth.client.subscribe).toHaveBeenCalledWith(mqttConfig.points[0].topic, { qos: mqttConfig.MQTT.qos}, expect.any(Function))
-    expect(mqttSouth.client.subscribe).toHaveBeenCalledWith(mqttConfig.points[1].topic, { qos: mqttConfig.MQTT.qos}, expect.any(Function))
+    expect(mqttSouth.client.subscribe).toHaveBeenCalledWith(mqttConfig.points[0].topic, { qos: mqttConfig.MQTT.qos }, expect.any(Function))
+    expect(mqttSouth.client.subscribe).toHaveBeenCalledWith(mqttConfig.points[1].topic, { qos: mqttConfig.MQTT.qos }, expect.any(Function))
     expect(mqttSouth.client.on).toHaveBeenCalledTimes(1)
     expect(mqttSouth.client.on).toHaveBeenCalledWith('message', expect.any(Function))
   })
