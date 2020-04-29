@@ -5,10 +5,6 @@ import { act, Simulate } from 'react-dom/test-utils'
 import testConfig from '../../../tests/testConfig'
 import PointsButton from './PointsButton.jsx'
 
-jest.mock('react-router-dom', () => (
-  { useHistory: jest.fn().mockReturnValue([]) }
-))
-
 const mockHistoryPush = jest.fn()
 jest.mock('react-router-dom', () => (
   { useHistory: () => ({ push: mockHistoryPush }) }
@@ -62,7 +58,7 @@ describe('PointsButton', () => {
         />, container,
       )
     })
-    Simulate.click(document.querySelector('button'))
+    Simulate.click(document.querySelector('button.oi-points-button'))
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${dataSource.dataSourceId}/points` })
     expect(container).toMatchSnapshot()
   })
