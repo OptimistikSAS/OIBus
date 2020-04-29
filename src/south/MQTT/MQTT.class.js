@@ -15,7 +15,7 @@ class MQTT extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
+    const { url, username, password, qos, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
     if (moment.tz.zone(timeStampTimezone)) {
       this.timezone = timeStampTimezone
     } else {
@@ -25,6 +25,7 @@ class MQTT extends ProtocolHandler {
     this.url = url
     this.username = username
     this.password = Buffer.from(this.decryptPassword(password))
+    this.qos = qos
     this.timeStampOrigin = timeStampOrigin
     this.timeStampKey = timeStampKey
     this.timeStampFormat = timeStampFormat
@@ -65,7 +66,7 @@ class MQTT extends ProtocolHandler {
     this.dataSource.points.forEach((point) => {
       const { topic, pointId } = point
       this.topics[topic] = { pointId }
-      this.client.subscribe(topic, { qos: 2 }, (error) => {
+      this.client.subscribe(topic, { qos: this.qos }, (error) => {
         if (error) {
           this.logger.error(error)
         }
@@ -77,8 +78,6 @@ class MQTT extends ProtocolHandler {
 
   handleMessageEvent(topic, message, packet) {
     this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
-
-    console.info(`mqtt ${topic}:${message}, dup:${packet.dup}`)
 
     try {
       const data = JSON.parse(message.toString())
