@@ -29,8 +29,6 @@ class MQTT extends ProtocolHandler {
     this.timeStampOrigin = timeStampOrigin
     this.timeStampKey = timeStampKey
     this.timeStampFormat = timeStampFormat
-
-    this.topics = {}
   }
 
   /**
@@ -64,9 +62,7 @@ class MQTT extends ProtocolHandler {
     this.logger.info(`Connected to ${this.url}`)
 
     this.dataSource.points.forEach((point) => {
-      const { topic, pointId } = point
-      this.topics[topic] = { pointId }
-      this.client.subscribe(topic, { qos: this.qos }, (error) => {
+      this.client.subscribe(point.topic, { qos: this.qos }, (error) => {
         if (error) {
           this.logger.error(error)
         }
