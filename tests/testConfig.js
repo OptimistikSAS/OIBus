@@ -66,11 +66,15 @@ const testConfig = {
         protocol: 'MQTT',
         enabled: false,
         MQTT: {
-          port: 8883,
-          password: 'pppppppppppppppppppppp',
           server: 'simulator.factorythings.com',
-          mqttProtocol: 'mqtts',
+          mqttProtocol: 'mqtt',
           username: 'bai',
+          password: 'pppppppppppppppppppppp',
+          url: 'mqtt://simulator.factorythings.com:1883',
+          timeStampOrigin: 'oibus',
+          timeStampKey: 'timestamp',
+          timeStampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+          timeStampTimezone: 'Europe/Paris',
         },
         points: [
           { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'listen', topic: 'temperatureTank1' },
@@ -240,9 +244,7 @@ const testConfig = {
         enabled: true,
         Console: {},
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
-        subscribedTo: [
-          'MQTTServer',
-        ],
+        subscribedTo: ['MQTTServer'],
       },
       {
         applicationId: 'monoiconnect',
@@ -263,19 +265,8 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
-  apiList: [
-    'Console',
-    'OIConnect',
-  ],
-  protocolList: [
-    'CSV',
-    'OPCHDA',
-    'SQLDbToFile',
-    'FolderScanner',
-    'Modbus',
-    'OPCUA',
-    'MQTT',
-  ],
+  apiList: ['Console', 'OIConnect'],
+  protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
 }
 
 export default testConfig

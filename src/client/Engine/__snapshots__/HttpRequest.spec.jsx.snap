@@ -79,11 +79,6 @@ exports[`HttpRequest check HttpRequest 1`] = `
             axios
           </option>
           <option
-            value="request"
-          >
-            request
-          </option>
-          <option
             value="fetch"
           >
             fetch
@@ -215,11 +210,6 @@ exports[`HttpRequest check change stack to "request" 1`] = `
             axios
           </option>
           <option
-            value="request"
-          >
-            request
-          </option>
-          <option
             value="fetch"
           >
             fetch
@@ -349,11 +339,6 @@ exports[`HttpRequest check change timeout 1`] = `
             value="axios"
           >
             axios
-          </option>
-          <option
-            value="request"
-          >
-            request
           </option>
           <option
             value="fetch"
