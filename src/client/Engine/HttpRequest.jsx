@@ -24,7 +24,7 @@ const HttpRequest = ({ onChange, httpRequest }) => (
         <OIbSelect
           label="Stack"
           name="engine.httpRequest.stack"
-          options={['axios', 'request', 'fetch']}
+          options={['axios', 'fetch']}
           value={httpRequest.stack}
           defaultValue="fetch"
           help={<div>The stack used to send the request</div>}

@@ -4,7 +4,6 @@ const url = require('url')
 
 const fetch = require('node-fetch')
 const axios = require('axios').default
-const request = require('request-promise-native')
 const tunnel = require('tunnel')
 const FormData = require('form-data')
 const ProxyAgent = require('proxy-agent')
@@ -118,60 +117,6 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
 }
 
 /**
- * Send the request using request
- * If "headers" contains Content-Type "data" is sent as string in the body.
- * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
- * @param {Engine} engine - The engine
- * @param {string} requestUrl - The URL to send the request to
- * @param {string} method - The request type
- * @param {object} headers - The headers
- * @param {object} proxy - Proxy to use
- * @param {string} data - The body or file to send
- * @param {number} timeout - The request timeout
- * @return {Promise} - The send status
- */
-const sendWithRequest = async (engine, requestUrl, method, headers, proxy, data, timeout) => {
-  logger.silly('sendWithRequest() called')
-
-  let requestProxy = false
-  if (proxy) {
-    const { protocol, host, port, username = null, password = null } = proxy
-    if (username && password) {
-      requestProxy = `${protocol}://${username}:${engine.decryptPassword(password)}@${host}:${port}`
-    } else {
-      requestProxy = `${protocol}://${host}:${port}`
-    }
-  }
-
-  const requestOptions = {
-    method,
-    url: requestUrl,
-    headers,
-    proxy: requestProxy,
-    timeout,
-  }
-
-  if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
-    requestOptions.body = data
-  } else {
-    requestOptions.formData = {
-      file: {
-        value: fs.createReadStream(data),
-        options: { filename: getFilenameWithoutTimestamp(data) },
-      },
-    }
-  }
-
-  try {
-    await request(requestOptions)
-  } catch (error) {
-    return Promise.reject(error)
-  }
-
-  return true
-}
-
-/**
  * Send the request using node-fetch
  * If "headers" contains Content-Type "data" is sent as string in the body.
  * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
@@ -264,9 +209,6 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
     switch (httpRequest.stack) {
       case 'axios':
         await sendWithAxios(engine, requestUrl, method, headers, proxy, data, timeout)
-        break
-      case 'request':
-        await sendWithRequest(engine, requestUrl, method, headers, proxy, data, timeout)
         break
       default:
         await sendWithFetch(engine, requestUrl, method, headers, proxy, data, timeout)
