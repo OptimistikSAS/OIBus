@@ -62,14 +62,21 @@ class MQTT extends ProtocolHandler {
     this.logger.info(`Connected to ${this.url}`)
 
     this.dataSource.points.forEach((point) => {
-      this.client.subscribe(point.topic, { qos: this.qos }, (error) => {
-        if (error) {
-          this.logger.error(error)
-        }
-      })
+      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this))
     })
 
     this.client.on('message', this.handleMessageEvent.bind(this))
+  }
+
+  /**
+   * Callback to handle subscription.
+   * @param {object} error - The error
+   * @return {void}
+   */
+  subscribeCallback(error) {
+    if (error) {
+      this.logger.error(error)
+    }
   }
 
   handleMessageEvent(topic, message, packet) {
@@ -107,8 +114,7 @@ class MQTT extends ProtocolHandler {
 
     if (this.timeStampOrigin === 'payload') {
       if (this.timezone && messageObject[this.timeStampKey]) {
-        const timestampDate = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
-        timestamp = timestampDate.toISOString()
+        timestamp = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
       } else {
         this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
       }
@@ -162,7 +168,7 @@ class MQTT extends ProtocolHandler {
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
     const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone)
+    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
   }
 }
 
