@@ -53,7 +53,7 @@ class MongoDB extends ApiHandler {
     // creating url connection string
     const url = (user === '') ? `mongodb://${host}` : `mongodb://${user}:${this.decryptPassword(password)}@${host}`
 
-    this.client = new mongo.MongoClient(url)
+    this.client = new mongo.MongoClient(url, { useUnifiedTopology: true })
     this.client.connect((error) => {
       if (error) {
         this.logger.error(`Error during Connection To MongoDB : ${error}`)
