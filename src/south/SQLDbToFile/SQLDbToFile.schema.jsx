@@ -48,9 +48,8 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: 'localhost',
+    type: 'OIbLink',
+    defaultValue: 'http://localhost',
     help: <div>IP address of the SQLDbToFile server</div>,
   },
   port: {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, notEndsWith, startsWith, combinedValidations } from '../../services/validation.service'
+import { notEmpty, startsWith, combinedValidations } from '../../services/validation.service'
 import screenshot from './screenshot.png'
 import userpass from './userpass.png'
 
@@ -35,8 +35,7 @@ schema.form = {
     help: <p>default endpoint for OIAnalytics is /api/optimistik/data/values/upload</p>,
   },
   host: {
-    type: 'OIbText',
-    valid: combinedValidations([notEmpty('Host'), notEndsWith('/', 'Host')]),
+    type: 'OIbLink',
     defaultValue: '',
   },
   endpoint: {

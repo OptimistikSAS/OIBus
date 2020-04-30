@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween, startsWith } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'InfluxDB' }
 schema.form = {
@@ -27,8 +27,8 @@ schema.form = {
     defaultValue: '',
   },
   host: {
-    type: 'OIbText',
-    valid: startsWith('http'),
+    type: 'OIbLink',
+    protocols: ['http'],
     defaultValue: 'http://localhost:8086',
   },
   db: {
