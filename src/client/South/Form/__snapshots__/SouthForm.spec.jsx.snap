@@ -1713,7 +1713,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             id="south.dataSources.0.OPCHDA.host"
             name="south.dataSources.0.OPCHDA.host"
             type="text"
-            value="opcserver"
+            value="http://opcserver"
           />
           <div
             class="invalid-feedback"
@@ -2161,7 +2161,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
-            value="35.180.153.134"
+            value="http://35.180.153.134"
           />
           <div
             class="invalid-feedback"
@@ -2405,7 +2405,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
-            value="35.180.153.134"
+            value="http://35.180.153.134"
           />
           <div
             class="invalid-feedback"
@@ -2719,7 +2719,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.host"
             name="south.dataSources.0.SQLDbToFile.host"
             type="text"
-            value="192.168.0.11"
+            value="http://192.168.0.11"
           />
           <div
             class="invalid-feedback"

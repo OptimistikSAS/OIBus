@@ -116,7 +116,7 @@ const testConfig = {
         dataSourceId: 'PLC-35',
         protocol: 'Modbus',
         enabled: false,
-        Modbus: { port: 502, host: '35.180.153.134' },
+        Modbus: { port: 502, host: 'http://35.180.153.134' },
         points: [
           {
             pointId: '/fttest.base/Tank 3.tank/333333.fill_level',
@@ -154,7 +154,7 @@ const testConfig = {
         dataSourceId: 'PLC-42',
         protocol: 'Modbus',
         enabled: false,
-        Modbus: { port: 502, host: '35.180.153.134' },
+        Modbus: { port: 502, host: 'http://35.180.153.134' },
         points: [
           {
             pointId: '/fttest.base/Tank4.tank/111111.fill_level',
@@ -193,7 +193,7 @@ const testConfig = {
           password: 'popopopopopopopopo',
           connectionTimeout: 1000,
           requestTimeout: 1000,
-          host: '192.168.0.11',
+          host: 'http://192.168.0.11',
           driver: 'mssql',
           username: 'oibus_user',
           database: 'oibus',
@@ -219,7 +219,7 @@ const testConfig = {
           retryInterval: 10000,
           agentFilename: '.\\deps\\win\\HdaAgent\\HdaAgent.exe',
           logLevel: 'debug',
-          host: 'opcserver',
+          host: 'http://opcserver',
           serverName: 'Matrikon.OPC.Simulation',
           maxReturnValues: 10000,
           maxReadInterval: 3600,

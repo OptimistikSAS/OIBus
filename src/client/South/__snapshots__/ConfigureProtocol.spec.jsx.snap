@@ -393,7 +393,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             id="south.dataSources.7.OPCHDA.host"
             name="south.dataSources.7.OPCHDA.host"
             type="text"
-            value="opcserver"
+            value="http://opcserver"
           />
           <div
             class="invalid-feedback"
@@ -1060,7 +1060,7 @@ exports[`ConfigureProtocol check update 1`] = `
             id="south.dataSources.7.OPCHDA.host"
             name="south.dataSources.7.OPCHDA.host"
             type="text"
-            value="opcserver"
+            value="http://opcserver"
           />
           <div
             class="invalid-feedback"
