@@ -39,8 +39,8 @@ describe('HttpRequest', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.httpRequest.stack'), { target: { value: 'request' } })
-    expect(onChange).toBeCalledWith('engine.httpRequest.stack', 'request', null, null)
+    Simulate.change(document.getElementById('engine.httpRequest.stack'), { target: { value: 'axios', selectedIndex: 0 } })
+    expect(onChange).toBeCalledWith('engine.httpRequest.stack', 'axios', null, null)
     expect(container).toMatchSnapshot()
   })
   test('check change timeout', () => {

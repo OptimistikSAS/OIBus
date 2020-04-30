@@ -48,7 +48,7 @@ describe('Proxies', () => {
         proxies={testConfig.engine.proxies}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.proxies.0.protocol'), { target: { value: 'https' } })
+    Simulate.change(document.getElementById('engine.proxies.0.protocol'), { target: { value: 'https', selectedIndex: 1 } })
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.proxies.0.protocol', value: 'https', validity: null })
     expect(container).toMatchSnapshot()
   })

@@ -84,7 +84,7 @@ describe('NewDataSourceRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('protocol'), { target: { value: 'Modbus' } })
+    Simulate.change(document.getElementById('protocol'), { target: { value: 'Modbus', selectedIndex: 4 } })
     expect(setProtocol).toBeCalledWith('Modbus')
     expect(container).toMatchSnapshot()
   })
