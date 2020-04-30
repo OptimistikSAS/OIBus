@@ -47,6 +47,19 @@ const notEndsWith = (test, name = 'Value') => (val) => (
 const startsWith = (test, name = 'Value') => (val) => (
   val && val.startsWith(test) ? null : `${name} should start with ${test}`
 )
+const startsWithAnyOf = (tests, common = '', name = 'Value') => (val) => {
+  switch (tests.length) {
+    case 0:
+      return null
+    case 1:
+      return startsWith(`${tests[0]}${common}`)(val)
+    default:
+      return (
+        val && tests.some((test) => val.startsWith(`${test}${common}`))
+          ? null : `${name} should start with any of: ${tests.map((t) => `${t}${common}`).join(', ')}`
+      )
+  }
+}
 
 // always return null (ie. no validation)
 const optional = () => () => null
@@ -65,6 +78,7 @@ export {
   maxValue,
   notEndsWith,
   startsWith,
+  startsWithAnyOf,
   combinedValidations,
   optional,
 }
