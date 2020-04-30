@@ -84,7 +84,7 @@ describe('NewApplicationRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('api'), { target: { value: 'OIConnect' } })
+    Simulate.change(document.getElementById('api'), { target: { value: 'OIConnect', selectedIndex: 1 } })
     expect(setApi).toBeCalledWith('OIConnect')
     expect(container).toMatchSnapshot()
   })

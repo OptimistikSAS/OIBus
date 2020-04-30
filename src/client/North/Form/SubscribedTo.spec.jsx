@@ -67,7 +67,7 @@ describe('SubscribedTo click changes', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('subscribedTo.0'), { target: { value: 'MQTTServer' } })
+    Simulate.change(document.getElementById('subscribedTo.0'), { target: { value: 'MQTTServer', selectedIndex: 0 } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'north.applications.0.subscribedTo.0',
