@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbLink check OIbLink inline 1`] = `
+<div>
+  <div
+    class="form-group"
+    style="margin-bottom: 0px; display: inline-block;"
+  >
+    <input
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+      type="text"
+      value="http://localhost"
+    />
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbLink check OIbLink with invalide value 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <input
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+      type="text"
+      value="no http prefix"
+    />
+    <div
+      class="invalid-feedback"
+    >
+      Value should start with any of: http://, https://
+    </div>
+  </div>
+</div>
+`;
+
+exports[`OIbLink check OIbLink with value="http://localhost" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="name"
+    >
+      label
+    </label>
+    <input
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+      type="text"
+      value="http://localhost"
+    />
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
