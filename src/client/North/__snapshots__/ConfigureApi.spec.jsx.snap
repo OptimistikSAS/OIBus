@@ -205,7 +205,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not be empty
+            Value should start with any of: http://, https://
           </div>
         </div>
       </div>
@@ -970,7 +970,7 @@ exports[`ConfigureApi check update 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not be empty
+            Value should start with any of: http://, https://
           </div>
         </div>
       </div>
