@@ -59,6 +59,7 @@ const Overview = ({ status }) => {
   )
 }
 
-Overview.propTypes = { status: PropTypes.object.isRequired }
+Overview.propTypes = { status: PropTypes.object }
+Overview.defaultProps = { status: {} }
 
 export default Overview

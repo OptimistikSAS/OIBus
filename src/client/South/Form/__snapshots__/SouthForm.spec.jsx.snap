@@ -478,6 +478,20 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -1456,6 +1470,20 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -2103,6 +2131,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (5)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -2341,6 +2383,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             </label>
           </div>
         </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
       </div>
     </div>
     <div
@@ -3764,6 +3820,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -4160,6 +4230,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (1)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -4527,6 +4611,20 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
       <div
         class="col-md-2"
       />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (0)
+        </button>
+      </div>
     </div>
     <div
       class="row"
