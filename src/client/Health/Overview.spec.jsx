@@ -25,7 +25,7 @@ React.useContext = jest.fn().mockReturnValue({ activeConfig })
 describe('Overview', () => {
   test('display overview based on config', () => {
     act(() => {
-      ReactDOM.render(<BrowserRouter><Overview /></BrowserRouter>, container)
+      ReactDOM.render(<BrowserRouter><Overview status={{ version: 'xxx' }} /></BrowserRouter>, container)
     })
     expect(container).toMatchSnapshot()
   })

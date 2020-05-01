@@ -98,7 +98,20 @@ exports[`Health display Health page based on config and status 1`] = `
           <div
             class="oi-box text-success d-flex align-items-center"
           >
-            Engine
+            Engine undefined
+          </div>
+        </a>
+      </div>
+      <div
+        class="tight col-1"
+      >
+        <a
+          href="/engine"
+        >
+          <div
+            class="oi-box d-flex align-items-center text-success"
+          >
+            Alive
           </div>
         </a>
       </div>
@@ -439,7 +452,20 @@ exports[`Health display Health page based on config and status 2`] = `
           <div
             class="oi-box text-success d-flex align-items-center"
           >
-            Engine
+            Engine 0.5.7-dev
+          </div>
+        </a>
+      </div>
+      <div
+        class="tight col-1"
+      >
+        <a
+          href="/engine"
+        >
+          <div
+            class="oi-box d-flex align-items-center text-success"
+          >
+            Alive
           </div>
         </a>
       </div>
@@ -942,7 +968,20 @@ exports[`Health display Health with config null 1`] = `
           <div
             class="oi-box text-success d-flex align-items-center"
           >
-            Engine
+            Engine undefined
+          </div>
+        </a>
+      </div>
+      <div
+        class="tight col-1"
+      >
+        <a
+          href="/engine"
+        >
+          <div
+            class="oi-box d-flex align-items-center text-muted"
+          >
+            Alive
           </div>
         </a>
       </div>

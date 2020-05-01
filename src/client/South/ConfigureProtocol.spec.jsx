@@ -1,15 +1,18 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
-
 import newConfig from '../../../tests/testConfig'
 import ConfigureProtocol from './ConfigureProtocol.jsx'
 import utils from '../helpers/utils'
 
+
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
+  {
+    useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }),
+    useHistory: jest.fn(),
+  }
 ))
 
 const mockMath = Object.create(global.Math)
@@ -30,17 +33,13 @@ afterEach(() => {
 describe('ConfigureProtocol', () => {
   test('check ConfigureProtocol', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigureProtocol />, container,
-      )
+      ReactDOM.render(<ConfigureProtocol />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check update', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigureProtocol />, container,
-      )
+      ReactDOM.render(<ConfigureProtocol />, container)
     })
     Simulate.change(document.getElementById('south.dataSources.7.OPCHDA.host'), { target: { value: 'http://new_host' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -58,9 +57,7 @@ describe('ConfigureProtocol', () => {
     config.south.dataSources = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
-      ReactDOM.render(
-        <ConfigureProtocol />, container,
-      )
+      ReactDOM.render(<ConfigureProtocol />, container)
     })
     expect(container).toMatchSnapshot()
     React.useContext = reactUseContextMock

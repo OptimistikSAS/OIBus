@@ -478,6 +478,20 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -528,15 +542,26 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                   <ul>
                     <li>
                       <b>
-                        Protocol:
+                        Url:
                       </b>
-                      Network protocol used by MQTT client to connect with MQTT broker. OIBus supports MQTT, and MQTTS.
+                      MQTT host to connect. Make sure you specify right protocol, host and port number. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
                     </li>
                     <li>
                       <b>
-                        Host and Port:
+                        QoS:
                       </b>
-                      MQTT host to connect. Make sure you specify right host and port number depending on MQTT connection protocol you selected. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+                      The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message that defines the guarantee of delivery for a specific message. There are 3 QoS levels in MQTT:
+                      <ul>
+                        <li>
+                          At most once (0)
+                        </li>
+                        <li>
+                          At least once (1)
+                        </li>
+                        <li>
+                          Exactly once (2)
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <b>
@@ -592,6 +617,9 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-1"
+      />
     </div>
     <div
       class="row"
@@ -1442,6 +1470,20 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -2089,6 +2131,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (5)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -2327,6 +2383,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             </label>
           </div>
         </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
       </div>
     </div>
     <div
@@ -3750,6 +3820,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -4146,6 +4230,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (1)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -4518,6 +4616,20 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (0)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -4568,15 +4680,26 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                   <ul>
                     <li>
                       <b>
-                        Protocol:
+                        Url:
                       </b>
-                      Network protocol used by MQTT client to connect with MQTT broker. OIBus supports MQTT, and MQTTS.
+                      MQTT host to connect. Make sure you specify right protocol, host and port number. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
                     </li>
                     <li>
                       <b>
-                        Host and Port:
+                        QoS:
                       </b>
-                      MQTT host to connect. Make sure you specify right host and port number depending on MQTT connection protocol you selected. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+                      The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message that defines the guarantee of delivery for a specific message. There are 3 QoS levels in MQTT:
+                      <ul>
+                        <li>
+                          At most once (0)
+                        </li>
+                        <li>
+                          At least once (1)
+                        </li>
+                        <li>
+                          Exactly once (2)
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <b>
@@ -4603,6 +4726,9 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     >
       <div
         class="col-md-4"
+      />
+      <div
+        class="col-md-1"
       />
     </div>
     <div
