@@ -1,82 +1,99 @@
 const mqtt = require('mqtt')
+const mqttWildcard = require('mqtt-wildcard')
+const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
   /**
-   * Initiate connection and start listening.
-   * @todo: Warning: this protocol needs rework to be production ready
+   * Constructor for MQTT
+   * @constructor
+   * @param {Object} dataSource - The data source
+   * @param {Engine} engine - The engine
    * @return {void}
    */
-  connect() {
-    super.connect()
-    this.topics = {}
-    this.listen()
-  }
+  constructor(dataSource, engine) {
+    super(dataSource, engine)
 
-  /**
-   * Listen for messages.
-   * @return {void}
-   */
-  listen() {
-    let timezone
-    const { points } = this.dataSource
-    const { url, username, password, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
+    const { url, username, password, qos, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
     if (moment.tz.zone(timeStampTimezone)) {
-      timezone = timeStampTimezone
+      this.timezone = timeStampTimezone
     } else {
       this.logger.error(`Invalid timezone supplied: ${timeStampTimezone}`)
     }
 
-    this.logger.info(`Connecting to ${url}...`)
-    this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
-    this.client.on('error', (error) => {
+    this.url = url
+    this.username = username
+    this.password = Buffer.from(this.decryptPassword(password))
+    this.qos = qos
+    this.timeStampOrigin = timeStampOrigin
+    this.timeStampKey = timeStampKey
+    this.timeStampFormat = timeStampFormat
+  }
+
+  /**
+   * Initiate connection and start listening.
+   * @return {void}
+   */
+  connect() {
+    super.connect()
+
+    this.logger.info(`Connecting to ${this.url}...`)
+    const options = { username: this.username, password: this.password }
+    this.client = mqtt.connect(this.url, options)
+    this.client.on('error', this.handleConnectError.bind(this))
+    this.client.on('connect', this.handleConnectEvent.bind(this))
+  }
+
+  /**
+   * Handle connection error event.
+   * @param {object} error - The error
+   * @return {void}
+   */
+  handleConnectError(error) {
+    this.logger.error(error)
+  }
+
+  /**
+   * Handle successful connection event.
+   * @return {void}
+   */
+  handleConnectEvent() {
+    this.logger.info(`Connected to ${this.url}`)
+
+    this.dataSource.points.forEach((point) => {
+      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this))
+    })
+
+    this.client.on('message', this.handleMessageEvent.bind(this))
+  }
+
+  /**
+   * Callback to handle subscription.
+   * @param {object} error - The error
+   * @return {void}
+   */
+  subscribeCallback(error) {
+    if (error) {
       this.logger.error(error)
-    })
+    }
+  }
 
-    this.client.on('connect', () => {
-      this.logger.info(`Connected to ${url}`)
-      points.forEach((point) => {
-        const { topic, pointId } = point
-        this.topics[topic] = { pointId }
-        this.client.subscribe(topic, { qos: 2 }, (error) => {
-          if (error) {
-            this.logger.error(error)
-          }
-        })
-      })
+  handleMessageEvent(topic, message, packet) {
+    this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
 
-      this.client.on('message', (topic, message, packet) => {
-        this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
-
-        try {
-          const messageObject = JSON.parse(message.toString())
-          let timestamp = new Date().toISOString()
-          if (timeStampOrigin === 'payload') {
-            if (timezone && messageObject[timeStampKey]) {
-              const timestampDate = MQTT.generateDateWithTimezone(messageObject[timeStampKey], timezone, timeStampFormat)
-              timestamp = timestampDate.toISOString()
-            } else {
-              this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
-            }
-          }
-          /** @todo: below should send by batch instead of single points */
-          this.addValues([
-            {
-              // Modif Yves
-              // Contournement l'absence de la prise en compte du "wildcard" # dans les topics MQTT
-              // Suppression du 1er caractère du topic pour créer le pointId
-              pointId: topic.slice(1),
-              // pointId: this.topics[topic].pointId,
-              timestamp,
-              data: messageObject,
-            },
-          ])
-        } catch (error) {
-          this.logger.error(error)
-        }
-      })
-    })
+    try {
+      const data = JSON.parse(message.toString())
+      const timestamp = this.getTimestamp(data)
+      const pointId = this.getPointId(topic)
+      if (pointId) {
+        this.addValues([{ pointId, timestamp, data }])
+      } else {
+        this.logger.error('PointId can\'t be determined. The value is not saved. Configuration needs to be changed')
+      }
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   /**
@@ -85,6 +102,60 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
+  }
+
+  /**
+   * Get timestamp.
+   * @param {object} messageObject - The message object received
+   * @return {string} - The timestamp
+   */
+  getTimestamp(messageObject) {
+    let timestamp = new Date().toISOString()
+
+    if (this.timeStampOrigin === 'payload') {
+      if (this.timezone && messageObject[this.timeStampKey]) {
+        timestamp = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
+      } else {
+        this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
+      }
+    }
+
+    return timestamp
+  }
+
+  /**
+   * Get pointId.
+   * @param {string} topic - The topic
+   * @return {string | null} - The pointId
+   */
+  getPointId(topic) {
+    let pointId = null
+    const matchedPoints = []
+
+    this.dataSource.points.forEach((point) => {
+      const matchList = mqttWildcard(topic, point.topic)
+      if (Array.isArray(matchList)) {
+        if (!pointId) {
+          const nrWildcards = (point.pointId.match(/[+#]/g) || []).length
+          if (nrWildcards === matchList.length) {
+            const normalizedPointId = point.pointId.replace(/[+#]/g, '%s')
+            pointId = vsprintf(normalizedPointId, matchList)
+            matchedPoints.push(point)
+          } else {
+            this.logger.error(`Invalid point configuration: ${JSON.stringify(point)}`)
+          }
+        } else {
+          matchedPoints.push(point)
+        }
+      }
+    })
+
+    if (matchedPoints.length > 1) {
+      this.logger.error(`${topic} should be subscribed only once but it has the following subscriptions: ${JSON.stringify(matchedPoints)}`)
+      pointId = null
+    }
+
+    return pointId
   }
 
   /**
@@ -97,7 +168,7 @@ class MQTT extends ProtocolHandler {
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
     const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone)
+    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
   }
 }
 

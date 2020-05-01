@@ -9,7 +9,7 @@ import Overview from './Overview.jsx'
 import utils from '../helpers/utils'
 
 const Health = () => {
-  const [status, setStatus] = React.useState([])
+  const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
   const config = utils.jsonCopy(activeConfig)
@@ -99,7 +99,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview />
+      <Overview status={status} />
       <Row>
         <Label>
           <span>

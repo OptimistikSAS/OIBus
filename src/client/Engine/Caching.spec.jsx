@@ -61,7 +61,7 @@ describe('Caching', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.caching.archiveMode'), { target: { value: 'archive' } })
+    Simulate.change(document.getElementById('engine.caching.archiveMode'), { target: { value: 'archive', selectedIndex: 0 } })
     expect(onChange).toBeCalledWith('engine.caching.archiveMode', 'archive', null, null)
     expect(container).toMatchSnapshot()
   })
