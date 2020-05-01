@@ -99,7 +99,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview />
+      <Overview status={status} />
       <Row>
         <Label>
           <span>
