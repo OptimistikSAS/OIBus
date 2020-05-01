@@ -39,7 +39,7 @@ describe('Logging', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.consoleLevel'), { target: { value: 'warning' } })
+    Simulate.change(document.getElementById('engine.logParameters.consoleLevel'), { target: { value: 'warning', selectedIndex: 3 } })
     expect(onChange).toBeCalledWith('engine.logParameters.consoleLevel', 'warning', null, null)
     expect(container).toMatchSnapshot()
   })
@@ -50,7 +50,7 @@ describe('Logging', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.fileLevel'), { target: { value: 'warning' } })
+    Simulate.change(document.getElementById('engine.logParameters.fileLevel'), { target: { value: 'warning', selectedIndex: 3 } })
     expect(onChange).toBeCalledWith('engine.logParameters.fileLevel', 'warning', null, null)
     expect(container).toMatchSnapshot()
   })
@@ -61,7 +61,7 @@ describe('Logging', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.sqliteLevel'), { target: { value: 'warning' } })
+    Simulate.change(document.getElementById('engine.logParameters.sqliteLevel'), { target: { value: 'warning', selectedIndex: 3 } })
     expect(onChange).toBeCalledWith('engine.logParameters.sqliteLevel', 'warning', null, null)
     expect(container).toMatchSnapshot()
   })
