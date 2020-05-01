@@ -286,6 +286,164 @@ describe('MQTT south', () => {
     mockGenerateDateWithTimezone.mockRestore()
   })
 
+  it('should properly get pointId without wildcards', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/t2/t3',
+      pointId: 'p1/p2/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBe('p1/p2/p3')
+  })
+
+  it('should properly get pointId with +', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/+/t3',
+      pointId: 'p1/+/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBe('p1/t2/p3')
+  })
+
+  it('should properly get pointId with #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/#',
+      pointId: 'p1/#',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBe('p1/t2/t3')
+  })
+
+  it('should properly get pointId with + and #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/+/#',
+      pointId: 'p1/+/#',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3/t4')
+    expect(pointId).toBe('p1/t2/t3/t4')
+  })
+
+  it('should properly get null as pointId without wildcards', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/t2/t3',
+      pointId: 'p1/p2/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3/')
+
+    expect(pointId).toBeNull()
+  })
+
+  it('should properly get null as pointId with +', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/t2/t3',
+      pointId: 'p1/+/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId with +', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/+/t3',
+      pointId: 'p1/p2/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId with #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/#',
+      pointId: 'p1/p2/p3',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId with #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/t2/t3',
+      pointId: 'p1/#',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId with + and #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/+/+/#',
+      pointId: 'p1/+/#',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3/t4')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId with + and #', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [{
+      topic: 't1/+/#',
+      pointId: 'p1/+/+/#',
+    }]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3/t4')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(`Invalid point configuration: ${JSON.stringify(mqttSouth.dataSource.points[0])}`)
+  })
+
+  it('should properly get null as pointId and detect duplicate point matching', () => {
+    const mqttSouth = new MQTT(mqttConfig, engine)
+    mqttSouth.dataSource.points = [
+      {
+        topic: 't1/+/t3',
+        pointId: 'p1/+/p3',
+      },
+      {
+        topic: 't1/#',
+        pointId: 'p1/#',
+      },
+    ]
+
+    const pointId = mqttSouth.getPointId('t1/t2/t3')
+
+    expect(pointId).toBeNull()
+    expect(mqttSouth.logger.error).toBeCalledWith(
+      `t1/t2/t3 should be subscribed only once but it has the following subscriptions: ${JSON.stringify(mqttSouth.dataSource.points)}`
+    )
+  })
+
   it('should format date properly', () => {
     const actual = MQTT.generateDateWithTimezone(
       '2020-02-22 22:22:22.666',
