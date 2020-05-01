@@ -42,11 +42,11 @@ describe('ConfigureApi', () => {
         <ConfigureApi />, container,
       )
     })
-    Simulate.change(document.getElementById('north.applications.1.OIConnect.host'), { target: { value: 'new_host' } })
+    Simulate.change(document.getElementById('north.applications.1.OIConnect.host'), { target: { value: 'http://new_host' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'north.applications.1.OIConnect.host',
-      value: 'new_host',
+      value: 'http://new_host',
       validity: null,
     })
     expect(container).toMatchSnapshot()

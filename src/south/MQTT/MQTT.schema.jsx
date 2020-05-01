@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween, minLength } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -39,8 +39,8 @@ schema.form = {
     ),
   },
   url: {
-    type: 'OIbText',
-    valid: minLength(5),
+    type: 'OIbLink',
+    protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     defaultValue: '',
     help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },

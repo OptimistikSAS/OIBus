@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue, minLength } from '../../services/validation.service'
+import { notEmpty, minValue } from '../../services/validation.service'
 
 const schema = { name: 'OPCUA' }
 schema.form = {
@@ -19,8 +19,7 @@ schema.form = {
     ),
   },
   url: {
-    type: 'OIbText',
-    valid: minLength(2),
+    type: 'OIbLink',
     defaultValue: '',
     help: <div>The URL of OPC-UA server</div>,
   },
