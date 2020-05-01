@@ -8,6 +8,7 @@ const Overview = () => {
   const { activeConfig } = React.useContext(ConfigContext)
   const applications = activeConfig?.north?.applications
   const dataSources = activeConfig?.south?.dataSources
+  const engine = activeConfig?.engine
   return (
     <Container>
       <Row>
@@ -26,6 +27,11 @@ const Overview = () => {
         <Col className="tight">
           <Link to="/engine">
             <div className="oi-box text-success d-flex align-items-center">Engine</div>
+          </Link>
+        </Col>
+        <Col xs={1} className="tight">
+          <Link to="/engine">
+            <div className={`oi-box d-flex align-items-center text-${engine?.aliveSignal?.enabled ? 'success' : 'muted'}`}>Alive</div>
           </Link>
         </Col>
       </Row>
