@@ -27,8 +27,7 @@ schema.form = {
     defaultValue: '',
   },
   host: {
-    type: 'OIbText',
-    valid: notEmpty(),
+    type: 'OIbLink',
     defaultValue: '',
   },
   db: {
