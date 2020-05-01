@@ -122,6 +122,20 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-12"
       >
         <div
@@ -783,6 +797,20 @@ exports[`ConfigureProtocol check update 1`] = `
             </label>
           </div>
         </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
       </div>
     </div>
     <div
