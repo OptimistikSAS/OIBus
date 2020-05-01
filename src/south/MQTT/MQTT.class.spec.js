@@ -440,7 +440,7 @@ describe('MQTT south', () => {
 
     expect(pointId).toBeNull()
     expect(mqttSouth.logger.error).toBeCalledWith(
-      `t1/t2/t3 should be subscribed only once but it has the following subscriptions: ${JSON.stringify(mqttSouth.dataSource.points)}`
+      `t1/t2/t3 should be subscribed only once but it has the following subscriptions: ${JSON.stringify(mqttSouth.dataSource.points)}`,
     )
   })
 
