@@ -55,7 +55,7 @@
     "moment-timezone": "0.5.28",
     "mongodb": "3.5.7",
     "mqtt": "4.0.0",
-    "mqtt-wildcard": "^3.0.9",
+    "mqtt-wildcard": "3.0.9",
     "mssql": "6.2.0",
     "mysql2": "2.1.0",
     "node-fetch": "2.6.0",
