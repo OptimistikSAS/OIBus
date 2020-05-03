@@ -118,8 +118,8 @@ describe('Proxies', () => {
       type: 'addRow',
       name: 'engine.proxies',
       value: {
-        name: '',
-        protocol: '',
+        name: 'name',
+        protocol: 'http',
         host: '',
         port: '',
         username: '',
