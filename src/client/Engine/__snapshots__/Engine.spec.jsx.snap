@@ -860,21 +860,20 @@ exports[`Engine check Engine 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -3251,21 +3250,20 @@ exports[`Engine check Engine when config has no proxies 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -5387,21 +5385,20 @@ exports[`Engine check change engineName 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -7778,21 +7775,20 @@ exports[`Engine check change password 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -10169,21 +10165,20 @@ exports[`Engine check change port 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -12560,21 +12555,20 @@ exports[`Engine check change user 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              checked=""
+              class="oi-form-input form-check-input"
+              id="engine.logParameters.tailable"
+              name="engine.logParameters.tailable"
+              type="checkbox"
+            />
             Tailable
           </label>
-          <input
-            checked=""
-            class="oi-form-input form-check-input"
-            id="engine.logParameters.tailable"
-            name="engine.logParameters.tailable"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>

@@ -342,14 +342,18 @@ exports[`Health display Health page based on config and status 1`] = `
   <div
     class="row"
   >
-    <table
-      class="table table-sm table-striped table-hover"
+    <div
+      class="container"
     >
-      <thead>
-        <tr />
-      </thead>
-      <tbody />
-    </table>
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody />
+      </table>
+    </div>
   </div>
 </div>
 `;
@@ -696,213 +700,217 @@ exports[`Health display Health page based on config and status 2`] = `
   <div
     class="row"
   >
-    <table
-      class="table table-sm table-striped table-hover"
+    <div
+      class="container"
     >
-      <thead>
-        <tr />
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            version
-          </td>
-          <td>
-            0.5.7-dev
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            architecture
-          </td>
-          <td>
-            x64
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            currentDirectory
-          </td>
-          <td>
-            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            nodeVersion
-          </td>
-          <td>
-            v12.13.1
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            executable
-          </td>
-          <td>
-            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\oibus.exe
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            configurationFile
-          </td>
-          <td>
-            C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            memory
-          </td>
-          <td>
-            564.89/2047.61/27.59 MB/%
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            rss
-          </td>
-          <td>
-            127.80/128.79/354.32 MB
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            heapTotal
-          </td>
-          <td>
-            79.55/81.54/281.62 MB
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            heapUsed
-          </td>
-          <td>
-            60.54/60.54/261.28 MB
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            external
-          </td>
-          <td>
-            1.99/2.16/3.16 MB
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            processId
-          </td>
-          <td>
-            4916
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            uptime
-          </td>
-          <td>
-            3 minutes
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            hostname
-          </td>
-          <td>
-            EC2AMAZ-OBJ8M6C
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            osRelease
-          </td>
-          <td>
-            10.0.14393
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            osType
-          </td>
-          <td>
-            Windows_NT
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            Console (points)
-          </td>
-          <td>
-            count: 195410 / cache: 614
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            Console (files)
-          </td>
-          <td>
-            count: 195410 / cache: 0
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            MQTTServer
-          </td>
-          <td>
-            count: 62
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            SimulationServer
-          </td>
-          <td>
-            count: 422
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            OPC-HDA
-          </td>
-          <td>
-            count: 194926
-          </td>
-          <td />
-        </tr>
-        <tr>
-          <td>
-            copyright
-          </td>
-          <td>
-            (c) Copyright 2019 Optimistik, all rights reserved.
-          </td>
-          <td />
-        </tr>
-      </tbody>
-    </table>
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              version
+            </td>
+            <td>
+              0.5.7-dev
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              architecture
+            </td>
+            <td>
+              x64
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              currentDirectory
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              nodeVersion
+            </td>
+            <td>
+              v12.13.1
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              executable
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\oibus.exe
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              configurationFile
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              memory
+            </td>
+            <td>
+              564.89/2047.61/27.59 MB/%
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              rss
+            </td>
+            <td>
+              127.80/128.79/354.32 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              heapTotal
+            </td>
+            <td>
+              79.55/81.54/281.62 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              heapUsed
+            </td>
+            <td>
+              60.54/60.54/261.28 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              external
+            </td>
+            <td>
+              1.99/2.16/3.16 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              processId
+            </td>
+            <td>
+              4916
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              uptime
+            </td>
+            <td>
+              3 minutes
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              hostname
+            </td>
+            <td>
+              EC2AMAZ-OBJ8M6C
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              osRelease
+            </td>
+            <td>
+              10.0.14393
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              osType
+            </td>
+            <td>
+              Windows_NT
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              Console (points)
+            </td>
+            <td>
+              count: 195410 / cache: 614
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              Console (files)
+            </td>
+            <td>
+              count: 195410 / cache: 0
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              MQTTServer
+            </td>
+            <td>
+              count: 62
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              SimulationServer
+            </td>
+            <td>
+              count: 422
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              OPC-HDA
+            </td>
+            <td>
+              count: 194926
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              copyright
+            </td>
+            <td>
+              (c) Copyright 2019 Optimistik, all rights reserved.
+            </td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 `;
@@ -1019,14 +1027,18 @@ exports[`Health display Health with config null 1`] = `
   <div
     class="row"
   >
-    <table
-      class="table table-sm table-striped table-hover"
+    <div
+      class="container"
     >
-      <thead>
-        <tr />
-      </thead>
-      <tbody />
-    </table>
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody />
+      </table>
+    </div>
   </div>
 </div>
 `;

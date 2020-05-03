@@ -8,33 +8,47 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            FolderScanner
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              FolderScanner
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+          disabled=""
+        >
+          File
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -93,7 +107,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -118,12 +132,8 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           </div>
         </div>
       </div>
-    </div>
-    <div
-      class="row"
-    >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -272,20 +282,19 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         class="col-md-4"
       >
         <div
-          class="form-group"
+          class="form-check"
         >
           <label
-            class=""
+            class="form-check-label"
           >
+            <input
+              class="oi-form-input form-check-input"
+              id="south.dataSources.0.FolderScanner.preserve"
+              name="south.dataSources.0.FolderScanner.preserve"
+              type="checkbox"
+            />
             Preserve File?
           </label>
-          <input
-            class="oi-form-input form-check-input"
-            id="south.dataSources.0.FolderScanner.preserve"
-            name="south.dataSources.0.FolderScanner.preserve"
-            style="position: relative; left: 1.5rem;"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -364,33 +373,47 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            MQTTServer
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              MQTTServer
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -449,7 +472,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -472,20 +495,6 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (2)
-        </button>
       </div>
     </div>
     <div
@@ -1356,33 +1365,47 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            OPC-HDA
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              OPC-HDA
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -1441,7 +1464,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -1464,20 +1487,6 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (3)
-        </button>
       </div>
     </div>
     <div
@@ -2017,33 +2026,47 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            PLC-35
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              PLC-35
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (5)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -2102,7 +2125,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -2125,20 +2148,6 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (5)
-        </button>
       </div>
     </div>
     <div
@@ -2275,33 +2284,47 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            PLC-42
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              PLC-42
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -2360,7 +2383,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -2383,20 +2406,6 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (2)
-        </button>
       </div>
     </div>
     <div
@@ -2533,33 +2542,47 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            SQLDbToFile
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              SQLDbToFile
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+          disabled=""
+        >
+          File
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -2618,7 +2641,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -2642,12 +2665,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           </div>
         </div>
       </div>
-    </div>
-    <div
-      class="row"
-    >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -3706,33 +3725,47 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            SimulationServer
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              SimulationServer
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (2)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -3791,7 +3824,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -3814,20 +3847,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (2)
-        </button>
       </div>
     </div>
     <div
@@ -4116,33 +4135,47 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            SimulationServerBis
-          </span>
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              SimulationServerBis
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (1)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -4201,7 +4234,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -4224,20 +4257,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (1)
-        </button>
       </div>
     </div>
     <div
@@ -4526,31 +4545,45 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </a>
-          <a
-            class="oi-breadcrumb breadcrumb-item"
-            href="/south"
-          >
-            South
-          </a>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          />
-        </ol>
-      </h5>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            />
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (0)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -4609,22 +4642,8 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       />
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (0)
-        </button>
-      </div>
     </div>
     <div
       class="row"
