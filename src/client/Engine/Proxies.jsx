@@ -18,7 +18,7 @@ const Proxies = ({ proxies }) => {
     dispatchNewConfig({
       type: 'addRow',
       name: 'engine.proxies',
-      value: { name: '', protocol: '', host: '', port: '', username: '', password: '' },
+      value: { name: 'name', protocol: 'http', host: '', port: '', username: '', password: '' },
     })
   }
   return (
