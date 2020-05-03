@@ -20,7 +20,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   return (
     <Form>
       <Row>
-        <Col md={3}>
+        <Col md={5}>
           <Breadcrumb tag="h5">
             <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
               Home
