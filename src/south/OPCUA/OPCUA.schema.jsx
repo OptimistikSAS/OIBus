@@ -20,7 +20,8 @@ schema.form = {
   },
   url: {
     type: 'OIbLink',
-    defaultValue: '',
+    protocols: ['http', 'opc.tcp'],
+    defaultValue: 'opc.tcp://servername:port/endpoint',
     help: <div>The URL of OPC-UA server</div>,
   },
   retryInterval: {
