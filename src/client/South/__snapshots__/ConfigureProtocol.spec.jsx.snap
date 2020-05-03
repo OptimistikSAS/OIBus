@@ -8,33 +8,47 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <li
-            class="oi-breadcrumb breadcrumb-item"
-            to="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </li>
-          <li
-            class="oi-breadcrumb breadcrumb-item"
-            to="/south"
-          >
-            South
-          </li>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            OPC-HDA
-          </span>
-        </ol>
-      </h5>
+            <li
+              class="oi-breadcrumb breadcrumb-item"
+              to="/"
+            >
+              Home
+            </li>
+            <li
+              class="oi-breadcrumb breadcrumb-item"
+              to="/south"
+            >
+              South
+            </li>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              OPC-HDA
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -93,7 +107,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -116,20 +130,6 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (3)
-        </button>
       </div>
     </div>
     <div
@@ -689,33 +689,47 @@ exports[`ConfigureProtocol check update 1`] = `
     <div
       class="row"
     >
-      <h5
-        aria-label="breadcrumb"
-        class=""
+      <div
+        class="col-md-5"
       >
-        <ol
-          class="breadcrumb"
+        <h5
+          aria-label="breadcrumb"
+          class=""
         >
-          <li
-            class="oi-breadcrumb breadcrumb-item"
-            to="/"
+          <ol
+            class="breadcrumb"
           >
-            Home
-          </li>
-          <li
-            class="oi-breadcrumb breadcrumb-item"
-            to="/south"
-          >
-            South
-          </li>
-          <span
-            aria-current="page"
-            class="active breadcrumb-item"
-          >
-            OPC-HDA
-          </span>
-        </ol>
-      </h5>
+            <li
+              class="oi-breadcrumb breadcrumb-item"
+              to="/"
+            >
+              Home
+            </li>
+            <li
+              class="oi-breadcrumb breadcrumb-item"
+              to="/south"
+            >
+              South
+            </li>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              OPC-HDA
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (3)
+        </button>
+      </div>
     </div>
     <div
       class="row"
@@ -774,7 +788,7 @@ exports[`ConfigureProtocol check update 1`] = `
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -797,20 +811,6 @@ exports[`ConfigureProtocol check update 1`] = `
             </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Points (3)
-        </button>
       </div>
     </div>
     <div
