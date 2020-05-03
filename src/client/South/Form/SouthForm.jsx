@@ -20,17 +20,22 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   return (
     <Form>
       <Row>
-        <Breadcrumb tag="h5">
-          <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-            Home
-          </BreadcrumbItem>
-          <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
-            South
-          </BreadcrumbItem>
-          <BreadcrumbItem active tag="span">
-            {dataSourceId}
-          </BreadcrumbItem>
-        </Breadcrumb>
+        <Col md={3}>
+          <Breadcrumb tag="h5">
+            <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+              Home
+            </BreadcrumbItem>
+            <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
+              South
+            </BreadcrumbItem>
+            <BreadcrumbItem active tag="span">
+              {dataSourceId}
+            </BreadcrumbItem>
+          </Breadcrumb>
+        </Col>
+        <Col md={2}>
+          <PointsButton dataSource={dataSource} />
+        </Col>
       </Row>
       <OIbTitle label="General settings">
         <>
@@ -41,7 +46,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         </>
       </OIbTitle>
       <Row>
-        <Col md={2}>
+        <Col md={4}>
           <OIbCheckBox
             name={`${prefix}.enabled`}
             label="Enabled"
@@ -52,15 +57,9 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             switchButton
           />
         </Col>
-      </Row>
-      <Row>
-        {!schema.points ? (
-          <Col md={2}>
+        {!schema.points && (
+          <Col md={4}>
             <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
-          </Col>
-        ) : (
-          <Col md={2}>
-            <PointsButton dataSource={dataSource} />
           </Col>
         )}
       </Row>
