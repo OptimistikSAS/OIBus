@@ -720,7 +720,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not be empty
+            Value should start with any of: http://, https://
           </div>
         </div>
       </div>

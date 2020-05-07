@@ -20,8 +20,7 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbText',
-    valid: notEmpty(),
+    type: 'OIbLink',
     defaultValue: '',
   },
   endpoint: {

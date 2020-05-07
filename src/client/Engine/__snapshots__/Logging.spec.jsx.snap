@@ -410,21 +410,20 @@ exports[`Logging check Logging 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -907,21 +906,20 @@ exports[`Logging check change consoleLevel to "warning" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -1404,21 +1402,20 @@ exports[`Logging check change fileLevel to "warning" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -1901,21 +1898,20 @@ exports[`Logging check change filename to "new_filename" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -2398,21 +2394,20 @@ exports[`Logging check change maxFiles to 1 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -2895,21 +2890,20 @@ exports[`Logging check change maxsize 1000 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -3392,21 +3386,20 @@ exports[`Logging check change sqliteFilename to "new_sqliteFilename" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -3889,21 +3882,20 @@ exports[`Logging check change sqliteLevell to "warning" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -4386,21 +4378,20 @@ exports[`Logging check change sqliteMaxFileSize to 10000000 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
@@ -4883,21 +4874,20 @@ exports[`Logging check change tailable to false 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="form-check"
       >
         <label
-          class=""
+          class="form-check-label"
         >
+          <input
+            checked=""
+            class="oi-form-input form-check-input"
+            id="engine.logParameters.tailable"
+            name="engine.logParameters.tailable"
+            type="checkbox"
+          />
           Tailable
         </label>
-        <input
-          checked=""
-          class="oi-form-input form-check-input"
-          id="engine.logParameters.tailable"
-          name="engine.logParameters.tailable"
-          style="position: relative; left: 1.5rem;"
-          type="checkbox"
-        />
       </div>
     </div>
   </div>
