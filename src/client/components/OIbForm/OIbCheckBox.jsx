@@ -14,9 +14,9 @@ const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton 
     onChange(name, checked, null)
   }
   if (value === null) return null
-  return (
-    <FormGroup>
-      {switchButton ? (
+  if (switchButton) {
+    return (
+      <FormGroup>
         <CustomInput
           type="switch"
           id={name}
@@ -26,20 +26,22 @@ const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton 
           checked={value}
           color="secondary"
         />
-      ) : (
-        <>
-          <Label>{label}</Label>
-          <Input
-            className="oi-form-input"
-            type="checkbox"
-            id={name}
-            name={name}
-            onChange={handleChange}
-            checked={value}
-            style={{ position: 'relative', left: '1.5rem' }}
-          />
-        </>
-      )}
+      </FormGroup>
+    )
+  }
+  return (
+    <FormGroup check>
+      <Label check>
+        <Input
+          className="oi-form-input"
+          type="checkbox"
+          id={name}
+          name={name}
+          onChange={handleChange}
+          checked={value}
+        />
+        {label}
+      </Label>
     </FormGroup>
   )
 }

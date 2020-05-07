@@ -66,11 +66,15 @@ const testConfig = {
         protocol: 'MQTT',
         enabled: false,
         MQTT: {
-          port: 8883,
-          password: 'pppppppppppppppppppppp',
           server: 'simulator.factorythings.com',
-          mqttProtocol: 'mqtts',
+          mqttProtocol: 'mqtt',
           username: 'bai',
+          password: 'pppppppppppppppppppppp',
+          url: 'mqtt://simulator.factorythings.com:1883',
+          timeStampOrigin: 'oibus',
+          timeStampKey: 'timestamp',
+          timeStampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+          timeStampTimezone: 'Europe/Paris',
         },
         points: [
           { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'listen', topic: 'temperatureTank1' },
@@ -112,7 +116,7 @@ const testConfig = {
         dataSourceId: 'PLC-35',
         protocol: 'Modbus',
         enabled: false,
-        Modbus: { port: 502, host: '35.180.153.134' },
+        Modbus: { port: 502, host: 'http://35.180.153.134' },
         points: [
           {
             pointId: '/fttest.base/Tank 3.tank/333333.fill_level',
@@ -150,7 +154,7 @@ const testConfig = {
         dataSourceId: 'PLC-42',
         protocol: 'Modbus',
         enabled: false,
-        Modbus: { port: 502, host: '35.180.153.134' },
+        Modbus: { port: 502, host: 'http://35.180.153.134' },
         points: [
           {
             pointId: '/fttest.base/Tank4.tank/111111.fill_level',
@@ -189,7 +193,7 @@ const testConfig = {
           password: 'popopopopopopopopo',
           connectionTimeout: 1000,
           requestTimeout: 1000,
-          host: '192.168.0.11',
+          host: 'http://192.168.0.11',
           driver: 'mssql',
           username: 'oibus_user',
           database: 'oibus',
@@ -215,7 +219,7 @@ const testConfig = {
           retryInterval: 10000,
           agentFilename: '.\\deps\\win\\HdaAgent\\HdaAgent.exe',
           logLevel: 'debug',
-          host: 'opcserver',
+          host: 'http://opcserver',
           serverName: 'Matrikon.OPC.Simulation',
           maxReturnValues: 10000,
           maxReadInterval: 3600,
@@ -240,9 +244,7 @@ const testConfig = {
         enabled: true,
         Console: {},
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
-        subscribedTo: [
-          'MQTTServer',
-        ],
+        subscribedTo: ['MQTTServer'],
       },
       {
         applicationId: 'monoiconnect',
@@ -263,19 +265,8 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
-  apiList: [
-    'Console',
-    'OIConnect',
-  ],
-  protocolList: [
-    'CSV',
-    'OPCHDA',
-    'SQLDbToFile',
-    'FolderScanner',
-    'Modbus',
-    'OPCUA',
-    'MQTT',
-  ],
+  apiList: ['Console', 'OIConnect'],
+  protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
 }
 
 export default testConfig
