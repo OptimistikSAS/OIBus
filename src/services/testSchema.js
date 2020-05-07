@@ -3,6 +3,7 @@ const controls = [
   'OIbSelect',
   'OIbTable',
   'OIbText',
+  'OIbLink',
   'OIbCheckBox',
   'OIbScanMode',
   'OIbAuthentication',

@@ -10,8 +10,7 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbText',
-    valid: notEmpty(),
+    type: 'OIbLink',
     defaultValue: '',
     help: <div>IP address of the Modbus source</div>,
   },

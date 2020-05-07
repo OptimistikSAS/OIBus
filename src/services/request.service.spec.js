@@ -1,6 +1,5 @@
 const fetch = require('node-fetch')
 const axios = require('axios').default
-const request = require('request-promise-native')
 
 const requestService = require('./request.service')
 
@@ -68,28 +67,6 @@ describe('Request service', () => {
     await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
 
     expect(axios.create).toHaveBeenCalled()
-    expect(request).not.toBeCalled()
-    expect(fetch).not.toBeCalled()
-  })
-
-  it('should call request when stack is request', async () => {
-    const body = JSON.stringify({ status: 'status' })
-    const headers = { 'Content-Type': 'application/json' }
-    const stack = 'request'
-    const timeout = 30
-    const engineConfig = {
-      proxies: [proxy],
-      httpRequest: {
-        stack,
-        timeout,
-      },
-    }
-    engine.configService = { getConfig: () => ({ engineConfig }) }
-
-    await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
-
-    expect(axios.create).not.toBeCalled()
-    expect(request).toHaveBeenCalledTimes(1)
     expect(fetch).not.toBeCalled()
   })
 
@@ -111,7 +88,6 @@ describe('Request service', () => {
     await requestService.sendRequest(engine, requestUrl, postMethod, authentication, proxy, body, headers)
 
     expect(axios.create).not.toBeCalled()
-    expect(request).not.toBeCalled()
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 })
