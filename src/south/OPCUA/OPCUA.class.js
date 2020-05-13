@@ -1,30 +1,6 @@
 const Opcua = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const getOptimizedConfig = require('./config/getOptimizedConfig')
-
-/**
- * Returns the fields array from the point containing passed pointId.
- * The point is from the optimized config hence the scannedDataSource parameter
- * @param {Object} pointId - The point ID
- * @param {Array} types - The types
- * @param {Object} logger - The logger
- * @return {*} The fields
- */
-const fieldsFromPointId = (pointId, types, logger) => {
-  const type = types.find(
-    (typeCompared) => typeCompared.type
-      === pointId
-        .split('.')
-        .slice(-1)
-        .pop(),
-  )
-  const { fields = [] } = type
-  if (fields) {
-    return fields
-  }
-  logger.error(new Error(`Unable to retrieve fields associated with this pointId, ${pointId}, ${types}`))
-  return {}
-}
+const databaseService = require('../../services/database.service')
 
 /**
  *
@@ -42,14 +18,33 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    // as OPCUA can group multiple points in a single request
-    // we group points based on scanMode
-    this.optimizedConfig = getOptimizedConfig(dataSource)
-    const { host, opcuaPort, endPoint, maxAge } = dataSource.OPCUA
-    // define OPCUA connection parameters
-    this.client = new Opcua.OPCUAClient({ endpoint_must_exist: false })
-    this.url = `opc.tcp://${host}:${opcuaPort}/${endPoint}`
-    this.maxAge = maxAge || 10
+    const { url, retryInterval, maxReturnValues, maxReadInterval } = dataSource.OPCUA
+    this.url = url
+    this.retryInterval = retryInterval
+    this.maxReturnValues = maxReturnValues
+    this.maxReadInterval = maxReadInterval
+
+    this.lastCompletedAt = {}
+    this.ongoingReads = {}
+    if (this.dataSource.OPCUA.scanGroups) {
+      this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
+        const points = this.dataSource.points
+          .filter((point) => point.scanMode === scanGroup.scanMode)
+          .map((point) => point.nodeId)
+        this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
+        this.ongoingReads[scanGroup.scanMode] = false
+        return {
+          name: scanGroup.scanMode,
+          ...scanGroup,
+          points,
+        }
+      })
+    } else {
+      this.logger.error('OPCUA scanGroups are not defined. This South driver will not work')
+      this.scanGroups = []
+    }
+
+    this.reconnectTimeout = null
   }
 
   /**
@@ -58,75 +53,114 @@ class OPCUA extends ProtocolHandler {
    */
   async connect() {
     super.connect()
-    await this.client.connect(
-      this.url,
-      (connectError) => {
-        if (!connectError) {
-          this.logger.info('OPCUA Connected')
-          this.client.createSession((sessionError, session) => {
-            if (!sessionError) {
-              this.session = session
-              this.connected = true
-            } else {
-              this.logger.error(new Error(`Could not connect to: ${this.dataSource.dataSourceId}`))
-            }
-          })
-        } else {
-          this.logger.error(connectError)
-        }
-      },
-    )
+
+    // Initialize lastCompletedAt for every scanGroup
+    const { dataSourceId, startTime } = this.dataSource
+    const { engineConfig } = this.engine.configService.getConfig()
+    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+
+    const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
+    // Disable ESLint check because we need for..of loop to support async calls
+    // eslint-disable-next-line no-restricted-syntax
+    for (const scanGroup of Object.keys(this.lastCompletedAt)) {
+      // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
+      // eslint-disable-next-line no-await-in-loop
+      let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${scanGroup}`)
+      lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
+      this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
+      this.lastCompletedAt[scanGroup] = lastCompletedAt
+    }
+
+    await this.connectToOpcuaServer()
   }
 
   /**
    * On scan.
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
-   * @todo check if every async and await is useful
-   * @todo on the very first Scan dataSource.session might not be created yet, find out why
    */
   async onScan(scanMode) {
-    const scanGroup = this.optimizedConfig[scanMode]
-    if (!this.connected || !scanGroup) return
-    const nodesToRead = {}
-    scanGroup.forEach((point) => {
-      nodesToRead[point.pointId] = { nodeId: `ns=${point.ns};s=${point.s}` }
-    })
-    this.session.read(Object.values(nodesToRead), this.maxAge, (error, dataValues) => {
-      if (!error && Object.keys(nodesToRead).length === dataValues.length) {
-        Object.keys(nodesToRead).forEach((pointId) => {
-          const dataValue = dataValues.shift()
-          const data = []
-          const value = {
-            pointId,
-            timestamp: dataValue.sourceTimestamp.toISOString(),
-            data: '',
-            dataId: [], // to add after data{} is handled
-          }
-          this.logger.debug(pointId, scanGroup)
+    const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
 
-          const { engineConfig } = this.engine.configService.getConfig()
-          const fields = fieldsFromPointId(pointId, engineConfig.types, this.logger)
-          this.logger.debug(fields)
-          fields.forEach((field) => {
-            value.dataId.push(field.name)
-            if (field.name !== 'quality') {
-              data.push(dataValue.value.value) // .shift() // Assuming the values array would under dataValue.value.value
-            } else {
-              data.push(dataValue.statusCode.value)
-            }
+    if (!scanGroup) {
+      this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
+      return
+    }
+
+    if (!this.connected || this.ongoingReads[scanMode]) {
+      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      return
+    }
+
+    if (!scanGroup.points || !scanGroup.points.length) {
+      this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
+      return
+    }
+
+    this.ongoingReads[scanMode] = true
+
+    try {
+      const nodesToRead = scanGroup.points.map((point) => point)
+      let opcStartTime = new Date(this.lastCompletedAt[scanMode])
+      const opcEndTime = new Date()
+      let intervalOpcEndTime
+      let maxTimestamp = opcStartTime.getTime()
+      let values = []
+
+      do {
+        if ((opcEndTime.getTime() - opcStartTime.getTime()) > 1000 * this.maxReadInterval) {
+          intervalOpcEndTime = new Date(opcStartTime.getTime() + 1000 * this.maxReadInterval)
+        } else {
+          intervalOpcEndTime = opcEndTime
+        }
+
+        this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
+        // eslint-disable-next-line no-await-in-loop
+        const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
+        if (dataValues.length !== nodesToRead.length) {
+          this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
+        }
+        // The response doesn't seem to contain any information regarding the nodeId,
+        // so we iterate with a for loop and use the index to get the proper nodeId
+        for (let i = 0; i < dataValues.length; i += 1) {
+          // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+          // Reading from 1583914010001 returns values with timestamp 1583914010000
+          // Filter out values with timestamp smaller than startTime
+          // eslint-disable-next-line no-loop-func
+          const newerValues = dataValues[i].historyData.dataValues.filter((dataValue) => {
+            const serverTimestamp = dataValue.serverTimestamp.getTime()
+            return serverTimestamp >= opcStartTime.getTime()
           })
-          value.data = JSON.stringify(data)
-          /**
-           *  @todo below should send by batch instead of single points
-           *  @todo should extract the value but need to know the signature of data
-           */
-          this.addValues([value])
-        })
-      } else {
-        this.logger.error(error)
-      }
-    })
+          // eslint-disable-next-line no-loop-func
+          values = values.concat(newerValues.map((dataValue) => {
+            const serverTimestamp = dataValue.serverTimestamp.getTime()
+            maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
+            return {
+              pointId: nodesToRead[i],
+              timestamp: dataValue.serverTimestamp.toUTCString(),
+              data: {
+                value: dataValue.value.value,
+                quality: JSON.stringify(dataValue.statusCode),
+              },
+            }
+          }))
+        }
+
+        opcStartTime = intervalOpcEndTime
+      } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
+
+
+      this.addValues(values)
+
+      this.lastCompletedAt[scanMode] = maxTimestamp + 1
+      await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+      this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
+    } catch (error) {
+      this.logger.error(`on Scan ${scanMode}: ${error}`)
+    }
+
+    this.ongoingReads[scanMode] = false
   }
 
   /**
@@ -134,9 +168,45 @@ class OPCUA extends ProtocolHandler {
    * @return {void}
    */
   async disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+    }
+
     if (this.connected) {
+      await this.session.close()
       await this.client.disconnect()
       this.connected = false
+    }
+  }
+
+  /**
+   * Connect to OPCUA server with retry.
+   * @returns {Promise<void>} - The connect promise
+   */
+  async connectToOpcuaServer() {
+    this.reconnectTimeout = null
+
+    try {
+      // define OPCUA connection parameters
+      const connectionStrategy = {
+        initialDelay: 1000,
+        maxRetry: 1,
+      }
+      const options = {
+        applicationName: 'OIBus',
+        connectionStrategy,
+        securityMode: Opcua.MessageSecurityMode.None,
+        securityPolicy: Opcua.SecurityPolicy.None,
+        endpoint_must_exist: false,
+      }
+      this.client = Opcua.OPCUAClient.create(options)
+      await this.client.connect(this.url)
+      this.session = await this.client.createSession()
+      this.connected = true
+      this.logger.info('OPCUA Connected')
+    } catch (error) {
+      this.logger.error(error)
+      this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }
 }

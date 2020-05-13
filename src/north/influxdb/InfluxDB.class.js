@@ -1,23 +1,5 @@
-const fetch = require('node-fetch')
-
+const { vsprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId - String with this form : value1.name1/value2.name2#value
- * @return {Object} Values indexed by name
- */
-const pointIdToNodes = (pointId) => {
-  const attributes = {}
-  pointId
-    .slice(1)
-    .split('/')
-    .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-    })
-  return attributes
-}
 
 /**
  * Escape spaces.
@@ -70,69 +52,78 @@ class InfluxDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { host, user, password, db, precision = 'ms' } = this.application.InfluxDB
-    const url = `http://${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
+    const { host, user, password, db, precision = 'ms', regExp, measurement, tags } = this.application.InfluxDB
+    const url = `${host}/write?u=${user}&p=${this.decryptPassword(password)}&db=${db}&precision=${precision}`
 
     let body = ''
 
     entries.forEach((entry) => {
       const { pointId, data, timestamp } = entry
-      const Nodes = Object.entries(pointIdToNodes(pointId))
-      const measurement = Nodes[Nodes.length - 1][0]
 
-      // Convert nodes into tags for CLI
-      let tags = null
-      Nodes.slice(1).forEach(([tagKey, tagValue]) => {
-        if (!tags) tags = `${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-        else tags = `${tags},${escapeSpace(tagKey)}=${escapeSpace(tagValue)}`
-      })
+      const mainRegExp = new RegExp(regExp)
+      const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
+
+      const measurementValue = vsprintf(measurement, groups)
+      const tagsValue = vsprintf(tags, groups)
+
+      // If there are less groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      if ((measurementValue.match(/undefined/g) || []).length > (measurement.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for measurement`)
+        return
+      }
+      if ((tagsValue.match(/undefined/g) || []).length > (tags.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for tags`)
+        return
+      }
 
       // Converts data into fields for CLI
       let fields = null
-      // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
-      // The data received from MQTT is type of string, so we need to transform it to Json
-      const dataJson = JSON.parse(decodeURI(data))
-      Object.entries(dataJson).forEach(([fieldKey, fieldValue]) => {
-        if (!fields) fields = `${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
-        else fields = `${fields},${escapeSpace(fieldKey)}=${escapeSpace(fieldValue)}`
+      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+        const escapedFieldKey = escapeSpace(fieldKey)
+        let escapedFieldValue = escapeSpace(fieldValue)
+
+        if (typeof escapedFieldValue === 'string') {
+          escapedFieldValue = `"${escapedFieldValue}"`
+        }
+
+        if (!fields) fields = `${escapedFieldKey}=${escapedFieldValue}`
+        else fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
       })
 
       // Convert timestamp to the configured precision
-      let preciseTimestamp = new Date(timestamp).getTime()
+      const timestampTime = (new Date(timestamp)).getTime()
+      let preciseTimestamp
       switch (precision) {
         case 'ns':
-          preciseTimestamp = 1000 * 1000 * timestamp
+          preciseTimestamp = 1000 * 1000 * timestampTime
           break
         case 'u':
-          preciseTimestamp = 1000 * timestamp
+          preciseTimestamp = 1000 * timestampTime
           break
         case 'ms':
+          preciseTimestamp = timestampTime
           break
         case 's':
-          preciseTimestamp = Math.floor(timestamp / 1000)
+          preciseTimestamp = Math.floor(timestampTime / 1000)
           break
         case 'm':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60)
+          preciseTimestamp = Math.floor(timestampTime / 1000 / 60)
           break
         case 'h':
-          preciseTimestamp = Math.floor(timestamp / 1000 / 60 / 60)
+          preciseTimestamp = Math.floor(timestampTime / 1000 / 60 / 60)
           break
         default:
-          preciseTimestamp = timestamp
+          preciseTimestamp = timestampTime
       }
       // Append entry to body
-      body += `${measurement},${tags} ${fields} ${preciseTimestamp}\n`
+      body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
     })
 
-    const response = await fetch(url, {
-      body,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
-    })
-    if (!response.ok) {
-      throw new Error(response.statusText)
-    }
-    return true
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    return this.engine.sendRequest(url, 'POST', null, null, body, headers)
   }
 }
 

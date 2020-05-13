@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label, Row, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { Label, Row, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
@@ -9,7 +9,7 @@ import Overview from './Overview.jsx'
 import utils from '../helpers/utils'
 
 const Health = () => {
-  const [status, setStatus] = React.useState([])
+  const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
   const config = utils.jsonCopy(activeConfig)
@@ -99,7 +99,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview />
+      <Overview status={status} />
       <Row>
         <Label>
           <span>
@@ -109,7 +109,9 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Row>{tableRows && <Table headers={[]} rows={tableRows} />}</Row>
+      <Row>
+        <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
+      </Row>
     </>
   )
 }

@@ -57,7 +57,20 @@ exports[`Overview display overview based on config 1`] = `
           <div
             class="oi-box text-success d-flex align-items-center"
           >
-            Engine
+            Engine xxx
+          </div>
+        </a>
+      </div>
+      <div
+        class="tight col-1"
+      >
+        <a
+          href="/engine"
+        >
+          <div
+            class="oi-box d-flex align-items-center text-success"
+          >
+            Alive
           </div>
         </a>
       </div>
@@ -65,30 +78,6 @@ exports[`Overview display overview based on config 1`] = `
     <div
       class="row"
     >
-      <div
-        class="tight text-muted col"
-      >
-        <div
-          class="oi-box"
-        >
-          <a
-            href="/south/CSVServer"
-          >
-            <div>
-              CSVServer
-            </div>
-            <div>
-              (CSV)
-            </div>
-          </a>
-          <button
-            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-            type="button"
-          >
-            Points (2)
-          </button>
-        </div>
-      </div>
       <div
         class="tight text-muted col"
       >

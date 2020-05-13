@@ -3,6 +3,7 @@ const controls = [
   'OIbSelect',
   'OIbTable',
   'OIbText',
+  'OIbLink',
   'OIbCheckBox',
   'OIbScanMode',
   'OIbAuthentication',
@@ -11,6 +12,7 @@ const controls = [
   'OIbTextArea',
   'OIbProxy',
   'OIbAuthentication',
+  'OIbTimezone',
 ]
 
 const testSchema = (schema) => {

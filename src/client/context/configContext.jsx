@@ -124,4 +124,4 @@ const ConfigProvider = ({ children }) => {
 }
 
 ConfigProvider.propTypes = { children: PropTypes.element.isRequired }
-export { ConfigContext, ConfigProvider }
+export { ConfigContext, ConfigProvider, reducer }

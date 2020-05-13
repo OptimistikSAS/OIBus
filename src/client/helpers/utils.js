@@ -1,15 +1,19 @@
 import * as csv from 'fast-csv'
 
+const readFileContent = async (file) => new Promise((resolve) => {
+  const reader = new FileReader()
+  reader.readAsText(file)
+  reader.onload = () => {
+    resolve(reader.result)
+  }
+})
+
 function jsonCopy(src) {
   return JSON.parse(JSON.stringify(src))
 }
 
-const parseCSV = async (csvContent) => new Promise((resolve, reject) => {
+const parseCSV = async (csvContent, options = { headers: true, strictColumnHandling: true }) => new Promise((resolve, reject) => {
   const points = []
-  const options = {
-    headers: true,
-    strictColumnHandling: true,
-  }
   csv
     .parseString(csvContent, options)
     .on('error', (error) => reject(error))
@@ -57,7 +61,6 @@ const replaceValuesDiffHelper = (obj, keys, value) => {
       } else {
         replaceValuesHelper(i, keys, value)
       }
-      // replaceValuesDiffHelper(obj[i], keys, value)
     })
     return
   }
@@ -83,4 +86,4 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { jsonCopy, parseCSV, createCSV, replaceValues }
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues }
