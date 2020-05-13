@@ -36,8 +36,13 @@ module.exports = {
         ],
       },
       {
-        test: /\.(gif|jpe?g|png|ico)$/,
-        loader: 'url-loader?limit=10000',
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: { limit: 40000 },
+          },
+        ],
       },
     ],
   },

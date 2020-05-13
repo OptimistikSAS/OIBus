@@ -1,0 +1,401 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewApplicationRow check NewApplicationRow 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="applicationId"
+          >
+            New Application ID
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="applicationId"
+            name="applicationId"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="api"
+          >
+            API
+          </label>
+          <select
+            class="oi-form-input form-control"
+            id="api"
+            name="api"
+          >
+            <option
+              value="Console"
+            >
+              Console
+            </option>
+            <option
+              value="OIConnect"
+            >
+              OIConnect
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <button
+          class="oi-add-button btn btn-primary btn-sm"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`NewApplicationRow check add press 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="applicationId"
+          >
+            New Application ID
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="applicationId"
+            name="applicationId"
+            type="text"
+            value="new_application"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="api"
+          >
+            API
+          </label>
+          <select
+            class="oi-form-input form-control"
+            id="api"
+            name="api"
+          >
+            <option
+              value="Console"
+            >
+              Console
+            </option>
+            <option
+              value="OIConnect"
+            >
+              OIConnect
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <button
+          class="oi-add-button btn btn-primary btn-sm"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`NewApplicationRow check add pressed with empty application name 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="applicationId"
+          >
+            New Application ID
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="applicationId"
+            name="applicationId"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="api"
+          >
+            API
+          </label>
+          <select
+            class="oi-form-input form-control"
+            id="api"
+            name="api"
+          >
+            <option
+              value="Console"
+            >
+              Console
+            </option>
+            <option
+              value="OIConnect"
+            >
+              OIConnect
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <button
+          class="oi-add-button btn btn-primary btn-sm"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`NewApplicationRow check change api 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="applicationId"
+          >
+            New Application ID
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="applicationId"
+            name="applicationId"
+            type="text"
+            value="new_application"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="api"
+          >
+            API
+          </label>
+          <select
+            class="oi-form-input form-control"
+            id="api"
+            name="api"
+          >
+            <option
+              value="Console"
+            >
+              Console
+            </option>
+            <option
+              value="OIConnect"
+            >
+              OIConnect
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <button
+          class="oi-add-button btn btn-primary btn-sm"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`NewApplicationRow check change applicationId 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="applicationId"
+          >
+            New Application ID
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="applicationId"
+            name="applicationId"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="api"
+          >
+            API
+          </label>
+          <select
+            class="oi-form-input form-control"
+            id="api"
+            name="api"
+          >
+            <option
+              value="Console"
+            >
+              Console
+            </option>
+            <option
+              value="OIConnect"
+            >
+              OIConnect
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <button
+          class="oi-add-button btn btn-primary btn-sm"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;

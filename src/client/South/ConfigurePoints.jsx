@@ -73,38 +73,30 @@ const ConfigurePoints = () => {
   }
 
   /**
-   * Read content of file as text
-   * @param {Object} file the file returned by input
-   * @returns {void}
-   */
-  const readFileContent = async (file) => new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.readAsText(file)
-    reader.onload = () => {
-      resolve(reader.result)
-    }
-  })
-
-  /**
    * Send the imported file content to the backend
    * @param {Object} file the file returned by input
    * @returns {void}
    */
   const handleImportPoints = async (file) => {
-    const text = await readFileContent(file)
-    utils
-      .parseCSV(text)
-      .then((newPoints) => {
-        dispatchNewConfig({
-          type: 'importPoints',
-          name: `south.dataSources.${dataSourceIndex}.points`,
-          value: newPoints,
+    try {
+      const text = await utils.readFileContent(file)
+      utils
+        .parseCSV(text)
+        .then((newPoints) => {
+          dispatchNewConfig({
+            type: 'importPoints',
+            name: `south.dataSources.${dataSourceIndex}.points`,
+            value: newPoints,
+          })
         })
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
+        .catch((error) => {
+          console.error(error)
+          setAlert({ text: error.message, type: 'danger' })
+        })
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
   }
 
   /**

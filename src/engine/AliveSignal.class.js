@@ -1,8 +1,3 @@
-const url = require('url')
-
-const fetch = require('node-fetch')
-const ProxyAgent = require('proxy-agent')
-
 const Logger = require('./Logger.class')
 
 /**
@@ -53,78 +48,20 @@ class AliveSignal {
   }
 
   /**
-   * Generate request headers
-   * @param {object} authentication - Authentication parameters
-   * @return {{'Content-Type': string}} - The headers
-   */
-  generateHeaders(authentication) {
-    const headers = { 'Content-Type': 'application/json' }
-
-    if (authentication.type === 'Basic') {
-      const decryptedPassword = this.engine.decryptPassword(authentication.password)
-      if (decryptedPassword == null) {
-        this.logger.error(`Error decrypting auth password for ${this.constructor.name}`)
-      }
-      const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
-      headers.Authorization = `Basic ${basic}`
-    }
-
-    return headers
-  }
-
-  /**
-   * Construct proxy agent
-   * @param {object} proxy - The proxy parameters
-   * @return {null} - The proxy agent
-   */
-  configureProxyAgent(proxy) {
-    let agent = null
-
-    if (proxy) {
-      const { protocol, host, port, username = null, password = null } = proxy
-
-      const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
-
-      if (username && password) {
-        const decryptedPassword = this.engine.decryptPassword(password)
-        if (decryptedPassword == null) {
-          this.logger.error(`Error decrypting proxy password for ${this.constructor.name}`)
-        }
-
-        proxyOptions.auth = `${username}:${decryptedPassword}`
-      }
-
-      agent = new ProxyAgent(proxyOptions)
-    }
-
-    return agent
-  }
-
-  /**
    * Callback to send the alive signal.
    * @return {Promise<void>} - The response
    */
   async pingCallback() {
-    const headers = this.generateHeaders(this.authentication)
+    this.logger.silly('pingCallback')
+
     const status = await this.engine.getStatus()
     status.id = this.id
-    const body = JSON.stringify(status)
-
-    const fetchOptions = {
-      method: 'POST',
-      body,
-      headers,
-    }
-
-    if (this.proxy) fetchOptions.agent = this.configureProxyAgent(this.proxy)
 
     try {
-      const response = await fetch(this.host, fetchOptions)
-      if (response.ok) {
-        this.logger.info('Alive signal successful')
-      } else {
-        this.logger.error(new Error(`Alive signal error: ${response.statusText}`))
-      }
+      const data = JSON.stringify(status)
+      const headers = { 'Content-Type': 'application/json' }
+      await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, data, headers)
+      this.logger.debug('Alive signal successful')
     } catch (error) {
       this.logger.error(error)
     }

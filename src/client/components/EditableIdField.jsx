@@ -4,11 +4,10 @@ import { Button } from 'reactstrap'
 import { FaPencilAlt, FaCheck } from 'react-icons/fa'
 import { OIbText } from './OIbForm'
 
-const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
+const EditableIdField = ({ id, fromList, index, name, valid, idChanged }) => {
   const [editing, setEditing] = React.useState(false)
   const [editingId, setEditingId] = React.useState()
   const [otherIds, setOtherIds] = React.useState()
-  const [editingError, setEditingError] = React.useState()
 
   const handleEditName = () => {
     setEditing(true)
@@ -17,23 +16,12 @@ const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
     setOtherIds(list)
   }
 
-  const isValidName = (val) => {
-    let error = null
-    if (otherIds.includes(val)) {
-      error = 'Id already exists'
-    }
-    if (!error) {
-      error = (((typeof val === 'string' || val instanceof String) && val !== '') ? null : 'value must not be empty')
-    }
-    setEditingError(error)
-    return error
-  }
-
   const onChange = (_, value) => {
     setEditingId(value)
   }
 
   const handleDoneEditName = () => {
+    const editingError = valid(editingId, otherIds)
     if (!editingError) {
       idChanged(index, editingId)
       setEditing(false)
@@ -47,8 +35,8 @@ const EditableIdField = ({ id, fromList, index, name, idChanged }) => {
         <OIbText
           onChange={onChange}
           value={editingId}
-          valid={isValidName}
-          name={name}
+          valid={(val) => valid(val, otherIds)}
+          name={id}
           inline
         />
         <Button close>
@@ -80,6 +68,7 @@ EditableIdField.propTypes = {
   fromList: PropTypes.arrayOf(Object).isRequired,
   index: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
+  valid: PropTypes.func.isRequired,
   idChanged: PropTypes.func.isRequired,
 }
 export default EditableIdField

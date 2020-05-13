@@ -7,6 +7,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
+import validation from './Form/South.validation'
 
 const South = () => {
   const { setAlert } = React.useContext(AlertContext)
@@ -88,6 +89,7 @@ const South = () => {
           fromList={dataSources}
           index={index}
           name="dataSourceId"
+          valid={validation.protocol.isValidName}
           idChanged={handleDataSourceIdChanged}
         />
       ),

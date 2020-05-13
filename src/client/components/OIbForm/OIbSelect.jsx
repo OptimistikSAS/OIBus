@@ -9,7 +9,10 @@ const OIbSelect = ({ label, help, valid, value, options, name, onChange, default
 
   const handleChange = (event) => {
     const { target } = event
-    const { value: newVal } = target
+    const { selectedIndex } = target
+    // using selectedIndex from option to mantain type of option
+    // otherwise target.value is always string
+    const newVal = options[selectedIndex]
     onChange(name, newVal, null, valid(newVal))
   }
 
@@ -36,9 +39,18 @@ OIbSelect.propTypes = {
   label: PropTypes.string,
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
-  options: PropTypes.arrayOf(String).isRequired,
-  value: PropTypes.string,
-  defaultValue: PropTypes.string.isRequired,
+  options: PropTypes.oneOfType([
+    PropTypes.arrayOf(String),
+    PropTypes.arrayOf(Number),
+  ]).isRequired,
+  value: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+  defaultValue: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
   valid: PropTypes.func,
 }
 OIbSelect.defaultProps = { label: null, help: null, value: null, valid: () => null }

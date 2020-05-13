@@ -22,7 +22,15 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="text" id={name} name={name} invalid={validCheck !== null} onChange={handleChange} value={value} />
+      <Input
+        className="oi-form-input"
+        type="text"
+        id={name}
+        name={name}
+        invalid={validCheck !== null}
+        onChange={handleChange}
+        value={value}
+      />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
@@ -31,7 +39,7 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
 OIbText.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string,
-  help: PropTypes.element,
+  help: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   onChange: PropTypes.func.isRequired,
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   defaultValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),

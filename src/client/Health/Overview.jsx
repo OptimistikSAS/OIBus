@@ -1,13 +1,15 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Row, Col, Container } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 
-const Overview = () => {
+const Overview = ({ status }) => {
   const { activeConfig } = React.useContext(ConfigContext)
   const applications = activeConfig?.north?.applications
   const dataSources = activeConfig?.south?.dataSources
+  const engine = activeConfig?.engine
   return (
     <Container>
       <Row>
@@ -25,7 +27,18 @@ const Overview = () => {
       <Row>
         <Col className="tight">
           <Link to="/engine">
-            <div className="oi-box text-success d-flex align-items-center">Engine</div>
+            <div className="oi-box text-success d-flex align-items-center">
+              {`Engine ${status?.version}`}
+            </div>
+          </Link>
+        </Col>
+        <Col xs={1} className="tight">
+          <Link to="/engine">
+            <div
+              className={`oi-box d-flex align-items-center text-${engine?.aliveSignal?.enabled ? 'success' : 'muted'}`}
+            >
+              Alive
+            </div>
           </Link>
         </Col>
       </Row>
@@ -45,5 +58,8 @@ const Overview = () => {
     </Container>
   )
 }
+
+Overview.propTypes = { status: PropTypes.object }
+Overview.defaultProps = { status: {} }
 
 export default Overview
