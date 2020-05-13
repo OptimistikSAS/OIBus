@@ -19,7 +19,28 @@
 
 ## History
 
-# 5.5
+# 0.6.0
+- add Alive and version to Overview page
+- Allow access to points configuration from South pages
+- Refreshed MQTT South including allowing topics with wildcards
+- Refreshed OPCUA South
+- Completed unit tests for front-end
+- Added MongoDB North (limited release)
+- Added MQTT North (limited release)
+- Refreshed InfluxDB North
+
+# 0.5.8
+- Include Oracle drivers in distribution
+- Fix issue with Preserve attributes in FolderScanner
+
+# 0.5.7
+- new HDA agent
+
+# 0.5.6 
+- Generalize breadcumb menus
+- Allow SQLServer authentication with nlm
+
+# 0.5.5
 - Activation screen now allows to browse the active and the new Json configuration
 - Alive Signal has been added to the Engine
 - Improve CSV import for points

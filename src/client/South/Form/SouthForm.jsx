@@ -5,6 +5,7 @@ import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import { OIbTitle, OIbCheckBox, OIbScanMode } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
+import PointsButton from '../PointsButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
@@ -19,17 +20,22 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   return (
     <Form>
       <Row>
-        <Breadcrumb tag="h5">
-          <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-            Home
-          </BreadcrumbItem>
-          <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
-            South
-          </BreadcrumbItem>
-          <BreadcrumbItem active tag="span">
-            {dataSourceId}
-          </BreadcrumbItem>
-        </Breadcrumb>
+        <Col md={5}>
+          <Breadcrumb tag="h5">
+            <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
+              Home
+            </BreadcrumbItem>
+            <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
+              South
+            </BreadcrumbItem>
+            <BreadcrumbItem active tag="span">
+              {dataSourceId}
+            </BreadcrumbItem>
+          </Breadcrumb>
+        </Col>
+        <Col md={2}>
+          <PointsButton dataSource={dataSource} />
+        </Col>
       </Row>
       <OIbTitle label="General settings">
         <>
@@ -40,7 +46,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         </>
       </OIbTitle>
       <Row>
-        <Col md={2}>
+        <Col md={4}>
           <OIbCheckBox
             name={`${prefix}.enabled`}
             label="Enabled"
@@ -51,14 +57,12 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             switchButton
           />
         </Col>
-      </Row>
-      {!schema.points && (
-        <Row>
-          <Col md={2}>
+        {!schema.points && (
+          <Col md={4}>
             <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
           </Col>
-        </Row>
-      )}
+        )}
+      </Row>
       <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
     </Form>
   )

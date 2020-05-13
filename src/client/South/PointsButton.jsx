@@ -11,8 +11,8 @@ const PointsButton = ({ dataSource }) => {
     history.push({ pathname: link })
   }
   const { points, dataSourceId, protocol, enabled } = dataSource
-  const hasButton = ProtocolSchemas[protocol]?.points !== null
-  return hasButton ? (
+  const hasPoints = ProtocolSchemas[protocol]?.points !== null
+  return hasPoints ? (
     <Button
       className="inline-button autosize oi-points-button"
       // eslint-disable-next-line no-nested-ternary

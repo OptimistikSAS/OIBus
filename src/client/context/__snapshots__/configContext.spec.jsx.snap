@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ConfigProvider check ConfigProvider 1`] = `
+<div>
+  <div />
+</div>
+`;
+
+exports[`ConfigProvider check ConfigProvider unmount 1`] = `<div />`;
+
+exports[`ConfigProvider check initial data setup 1`] = `
+<div>
+  <div />
+</div>
+`;

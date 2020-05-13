@@ -134,4 +134,37 @@ module.exports = {
     logger.info('Add aliveSignal to engine config')
     config.engine.aliveSignal = aliveSignalConfig
   },
+  7: (config) => {
+    let stack = 'fetch'
+    let timeout = 30
+
+    config.north.applications.forEach((application) => {
+      if (['OIConnect', 'OIAnalyticsFile'].includes(application.api)) {
+        logger.info(`Remove HTTP stack related settings from ${application.applicationId}`)
+
+        stack = application[application.api].stack ? application[application.api].stack : stack
+        timeout = application[application.api].timeout ? application[application.api].timeout / 1000 : timeout
+
+        delete application[application.api].stack
+        delete application[application.api].timeout
+      }
+    })
+
+    logger.info('Add settings for the HTTP request (stack, timeout)')
+    config.engine.httpRequest = {
+      stack,
+      timeout,
+    }
+  },
+  8: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'FolderScanner') {
+        if (Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'preserveFiles')) {
+          logger.info('Rename preserveFiles to preserve for FolderScanner')
+          dataSource.FolderScanner.preserve = dataSource.FolderScanner.preserveFiles
+          delete dataSource.FolderScanner.preserveFiles
+        }
+      }
+    })
+  },
 }

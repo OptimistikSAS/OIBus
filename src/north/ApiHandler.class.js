@@ -1,5 +1,3 @@
-const path = require('path')
-
 const Logger = require('../engine/Logger.class')
 
 class ApiHandler {
@@ -108,17 +106,6 @@ class ApiHandler {
       this.logger.error(`Error decrypting password for ${this.constructor.name}`)
     }
     return decryptedPassword || ''
-  }
-
-  /**
-   * Get filename without timestamp from file path.
-   * @param {string} filePath - The file path
-   * @returns {string} - The filename
-   */
-  static getFilenameWithoutTimestamp(filePath) {
-    const { name, ext } = path.parse(filePath)
-    const filename = name.substr(0, name.lastIndexOf('-'))
-    return `${filename}${ext}`
   }
 }
 

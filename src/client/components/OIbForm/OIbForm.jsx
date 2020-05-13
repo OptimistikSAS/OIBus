@@ -24,7 +24,7 @@ const OIbForm = ({ schema, onChange, values, name: configName }) => {
     <Row key={cols[0].name}>
       {cols.map((col) => {
         const { type, name, ...rest } = col
-        if (!rest.md) rest.md = (['OItype', 'OIbAuthentication'].includes(type)) ? 12 : 4
+        if (!rest.md) rest.md = (['OIbTitle', 'OIbAuthentication'].includes(type)) ? 12 : 4
         const Control = (type === 'OIbTable') ? OIbTable : Controls[type]
         rest.value = values[name]
         return (
