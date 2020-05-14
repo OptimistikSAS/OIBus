@@ -118,9 +118,10 @@ class TimescaleDB extends ApiHandler {
 
       this.client.query(query, (error) => {
         if (error) {
-          reject(error)
+          this.logger.error(error)
+          reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
         } else {
-          resolve()
+          resolve(ApiHandler.STATUS.SUCCESS)
         }
       })
     })

@@ -27,7 +27,7 @@ class Console extends ApiHandler {
     } else {
       process.stdout.write(`(${values.length})`)
     }
-    return true
+    return ApiHandler.STATUS.SUCCESS
   }
 
   /**
