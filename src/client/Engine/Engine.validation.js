@@ -35,7 +35,10 @@ const validation = {
       id: notEmpty('Id'),
       frequency: inRange(60, 3600),
     },
-    httpRequest: { timeout: minValue(1) },
+    httpRequest: {
+      timeout: minValue(1),
+      retryCount: minValue(0),
+    },
   },
 }
 
