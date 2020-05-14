@@ -63,7 +63,7 @@ class AliveSignal {
       await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, data, headers)
       this.logger.debug('Alive signal successful')
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(`sendRequest error status: ${error}`)
     }
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)

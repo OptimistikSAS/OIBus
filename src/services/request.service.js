@@ -9,6 +9,7 @@ const FormData = require('form-data')
 const ProxyAgent = require('proxy-agent')
 
 const Logger = require('../engine/Logger.class')
+const ApiHandler = require('../north/ApiHandler.class')
 
 const logger = new Logger('request')
 const retryStatusCodes = [400, 500]
@@ -230,21 +231,25 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
         await sendWithFetch(engine, requestUrl, method, headers, proxy, data, timeout)
     }
   } catch (errorResult) {
-    if (errorResult.responseError) {
-      logger.silly(`sendRequest(): Error ${errorResult.error}`)
+    logger.silly(`sendRequest(): Error ${errorResult.error}`)
 
-      if (retryStatusCodes.includes(errorResult.statusCode) && (retryCount < httpRequest.retryCount)) {
-        const incrementedRetryCount = retryCount + 1
-        await sendRequest(engine, requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
+    if (errorResult.responseError) {
+      if (retryStatusCodes.includes(errorResult.statusCode)) {
+        if (retryCount < httpRequest.retryCount) {
+          const incrementedRetryCount = retryCount + 1
+          await sendRequest(engine, requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
+        } else {
+          return Promise.reject(ApiHandler.STATUS.LOGIC_ERROR)
+        }
       }
     }
 
-    return Promise.reject(errorResult.error)
+    return Promise.reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
   }
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
-  return true
+  return ApiHandler.STATUS.SUCCESS
 }
 
 module.exports = { sendRequest }
