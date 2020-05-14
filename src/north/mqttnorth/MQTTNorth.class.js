@@ -30,9 +30,9 @@ class MQTTNorth extends ApiHandler {
       await this.publishValues(values)
     } catch (error) {
       this.logger.error(error)
-      throw error
+      return Promise.reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
     }
-    return true
+    return ApiHandler.STATUS.SUCCESS
   }
 
   /**
