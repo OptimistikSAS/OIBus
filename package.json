@@ -62,7 +62,7 @@
     "node-opcua": "2.5.12",
     "object-path": "0.11.4",
     "oracledb": "4.2.0",
-    "pg": "8.1.0",
+    "pg": "8.2.1",
     "prop-types": "15.7.2",
     "proxy-agent": "3.1.1",
     "react": "16.13.1",
