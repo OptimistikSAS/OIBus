@@ -405,7 +405,7 @@ class Engine {
       osType: os.type(),
       apisCacheStats,
       protocolsCacheStats,
-      copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+      copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
     }
   }
 
