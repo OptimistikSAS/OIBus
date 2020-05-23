@@ -75,7 +75,7 @@
     "sprintf-js": "1.1.2",
     "sqlite": "4.0.7",
     "sqlite3": "4.2.0",
-    "timexe": "0.9.19",
+    "timexe": "1.0.0",
     "tunnel": "0.0.6",
     "winston": "3.2.1",
     "winston-transport": "4.3.0"
