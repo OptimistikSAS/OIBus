@@ -86,6 +86,26 @@ const createConfigDatabase = async (databasePath) => {
 }
 
 /**
+ * Initiate SQLite3 database and create the cache table.
+ * @param {string} databasePath - The database file path
+ * @return {Sqlite.Database} - The SQLite3 database
+ */
+const createValueErrorsDatabase = async (databasePath) => {
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+                   id INTEGER PRIMARY KEY,
+                   timestamp TEXT,
+                   data TEXT,
+                   point_id TEXT,
+                   application_id TEXT
+                 );`
+  const stmt = await database.prepare(query)
+  await stmt.run()
+
+  return database
+}
+
+/**
  * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {String} dataSourceId - The data source ID
@@ -99,6 +119,28 @@ const saveValues = async (database, dataSourceId, values) => {
     await database.run('BEGIN;')
     const stmt = await database.prepare(query)
     const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId))
+    await Promise.all(actions)
+    await database.run('COMMIT;')
+  } catch (error) {
+    logger.error(error)
+    throw error
+  }
+}
+
+/**
+ * Save errored values in database.
+ * @param {BetterSqlite3.Database} database - The database to use
+ * @param {String} applicationId - The application ID
+ * @param {object} values - The values to save
+ * @return {void}
+ */
+const saveErroredValues = async (database, applicationId, values) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, applicationId) 
+                 VALUES (?, ?, ?, ?)`
+  try {
+    await database.run('BEGIN;')
+    const stmt = await database.prepare(query)
+    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, applicationId))
     await Promise.all(actions)
     await database.run('COMMIT;')
   } catch (error) {
@@ -207,7 +249,7 @@ const saveFile = async (database, timestamp, applicationId, filePath) => {
  * @return {string|null} - The file path
  */
 const getFileToSend = async (database, applicationId) => {
-  const query = `SELECT path 
+  const query = `SELECT path, timestamp 
                  FROM ${CACHE_TABLE_NAME}
                  WHERE application = ?
                  ORDER BY timestamp
@@ -215,7 +257,7 @@ const getFileToSend = async (database, applicationId) => {
   const stmt = await database.prepare(query)
   const results = await stmt.all(applicationId)
 
-  return results.length > 0 ? results[0].path : null
+  return results.length > 0 ? results[0] : null
 }
 
 /**
@@ -354,7 +396,9 @@ module.exports = {
   createFilesDatabase,
   createFolderScannerDatabase,
   createConfigDatabase,
+  createValueErrorsDatabase,
   saveValues,
+  saveErroredValues,
   getCount,
   getValuesToSend,
   removeSentValues,
