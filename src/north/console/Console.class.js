@@ -44,7 +44,7 @@ class Console extends ApiHandler {
       fileSize,
     }]
     console.table(data)
-    return true
+    return ApiHandler.STATUS.SUCCESS
   }
 }
 
