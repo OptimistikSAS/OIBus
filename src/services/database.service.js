@@ -135,7 +135,7 @@ const saveValues = async (database, dataSourceId, values) => {
  * @return {void}
  */
 const saveErroredValues = async (database, applicationId, values) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, applicationId) 
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application_id)
                  VALUES (?, ?, ?, ?)`
   try {
     await database.run('BEGIN;')
