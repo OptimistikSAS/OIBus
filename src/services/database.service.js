@@ -349,6 +349,20 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
   return stmt.all([fromDate, toDate, ...verbosity])
 }
 
+/**
+ * Get logs count.
+ * @param {string} databasePath - The database path
+ * @return {number} - The logs count
+ */
+const getLogsCount = async (databasePath) => {
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const query = `SELECT level, COUNT(level) AS count
+                 FROM logs
+                 GROUP BY level`
+  const stmt = await database.prepare(query)
+  return stmt.all()
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -368,4 +382,5 @@ module.exports = {
   upsertConfig,
   getConfig,
   getLogs,
+  getLogsCount,
 }
