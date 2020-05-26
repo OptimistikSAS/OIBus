@@ -118,6 +118,8 @@ class Engine {
     this.jobs = []
 
     this.memoryStats = {}
+    this.addValuesMessages = 0
+    this.addValuesCount = 0
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
@@ -418,6 +420,8 @@ class Engine {
       osType: os.type(),
       apisCacheStats,
       protocolsCacheStats,
+      addValuesMessages: this.addValuesMessages,
+      addValuesCount: this.addValuesCount,
       logError: errorLogCount ? errorLogCount.count : 0,
       logWarning: warningLogCount ? warningLogCount.count : 0,
       copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
