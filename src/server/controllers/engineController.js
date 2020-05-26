@@ -46,6 +46,9 @@ const reload = async (ctx) => {
 const addValues = async (ctx) => {
   const { dataSourceId, values } = ctx.request.body
   try {
+    console.info(values)
+    ctx.app.engine.addValuesMessages += 1
+    ctx.app.engine.addValuesCount += values ? values.length : 0
     await ctx.app.engine.addValues(dataSourceId, values)
     ctx.ok()
   } catch (error) {
