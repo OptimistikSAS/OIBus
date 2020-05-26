@@ -68,6 +68,21 @@ class AliveSignal {
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
   }
+
+  /**
+   * Forward an aliveSignal request.
+   * @param {object} data - The content to forward
+   * @return {Promise<void>} - The response
+   */
+  async forwardRequest(data) {
+    if (this.enabled) {
+      this.logger.debug('Forwarding aliveSignal request')
+      const stringData = JSON.stringify(data)
+      const headers = { 'Content-Type': 'application/json' }
+      await this.engine.sendRequest(this.host, 'POST', this.authentication, this.proxy, stringData, headers)
+      this.logger.debug('Forwarding aliveSignal was successful')
+    }
+  }
 }
 
 module.exports = AliveSignal
