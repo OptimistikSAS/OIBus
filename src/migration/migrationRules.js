@@ -167,4 +167,8 @@ module.exports = {
       }
     })
   },
+  9: (config) => {
+    logger.info('Add retry count setting for the HTTP request')
+    config.engine.httpRequest.retryCount = 3
+  },
 }
