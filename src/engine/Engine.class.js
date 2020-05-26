@@ -403,6 +403,10 @@ class Engine {
     const errorLogCount = logsCount.find((logCount) => logCount.level === 'error')
     const warningLogCount = logsCount.find((logCount) => logCount.level === 'warn')
 
+    const processUptime = 1000 * 1000 * process.uptime()
+    const processCpuUsage = process.cpuUsage()
+    const cpuUsagePercentage = Number(100 * (processCpuUsage.user + processCpuUsage.system) / processUptime).toFixed(2)
+
     return {
       version: this.getVersion(),
       architecture: process.arch,
@@ -413,6 +417,7 @@ class Engine {
       memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
       disk: `${freeSpace}/${totalSpace} GB`,
+      cpuUsage: `${cpuUsagePercentage}%`,
       processId: process.pid,
       uptime: moment.duration(process.uptime(), 'seconds').humanize(),
       hostname: os.hostname(),
