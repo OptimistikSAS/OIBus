@@ -3,6 +3,7 @@ const path = require('path')
 const os = require('os')
 
 const moment = require('moment-timezone')
+const checkDiskSpace = require('check-disk-space')
 
 const encryptionService = require('../services/encryption.service')
 const requestService = require('../services/request.service')
@@ -389,6 +390,11 @@ class Engine {
     const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
+    const { engineConfig } = this.configService.getConfig()
+    const diskSpace = await checkDiskSpace(path.resolve(engineConfig.caching.cacheFolder))
+    const freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
+    const totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
+
     return {
       version: this.getVersion(),
       architecture: process.arch,
@@ -398,6 +404,7 @@ class Engine {
       configurationFile: this.configService.getConfigurationFileLocation(),
       memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
+      disk: `${freeSpace}/${totalSpace} GB`,
       processId: process.pid,
       uptime: moment.duration(process.uptime(), 'seconds').humanize(),
       hostname: os.hostname(),
