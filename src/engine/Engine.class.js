@@ -405,7 +405,7 @@ class Engine {
 
     const processUptime = 1000 * 1000 * process.uptime()
     const processCpuUsage = process.cpuUsage()
-    const cpuUsagePercentage = Number(100 * (processCpuUsage.user + processCpuUsage.system) / processUptime).toFixed(2)
+    const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime).toFixed(2)
 
     return {
       version: this.getVersion(),
