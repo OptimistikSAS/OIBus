@@ -8,6 +8,7 @@ const checkDiskSpace = require('check-disk-space')
 const encryptionService = require('../services/encryption.service')
 const requestService = require('../services/request.service')
 const VERSION = require('../../package.json').version
+const databaseService = require('../services/database.service')
 
 // South classes
 const protocolList = {}
@@ -395,6 +396,11 @@ class Engine {
     const freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
     const totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
 
+    const databasePath = engineConfig.logParameters.sqliteFilename
+    const logsCount = await databaseService.getLogsCount(databasePath)
+    const errorLogCount = logsCount.find((logCount) => logCount.level === 'error')
+    const warningLogCount = logsCount.find((logCount) => logCount.level === 'warn')
+
     return {
       version: this.getVersion(),
       architecture: process.arch,
@@ -412,6 +418,8 @@ class Engine {
       osType: os.type(),
       apisCacheStats,
       protocolsCacheStats,
+      logError: errorLogCount ? errorLogCount.count : 0,
+      logWarning: warningLogCount ? warningLogCount.count : 0,
       copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
     }
   }
