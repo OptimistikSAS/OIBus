@@ -2,8 +2,7 @@ const fs = require('fs')
 const FolderScanner = require('./FolderScanner.class')
 
 // Mock database service
-jest.mock('../../services/database.service', () => {
-})
+jest.mock('../../services/database.service', () => ({ getFolderScannerModifyTime: jest.fn() }))
 
 // Mock nodejs fs api
 jest.mock('fs')
@@ -13,7 +12,7 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
   return { silly: () => jest.fn() }
 }))
 
-const engine = { }
+const engine = {}
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -26,14 +25,14 @@ describe('folder-scanner', () => {
     const dataSource = {
       FolderScanner: {
         inputFolder: 'inputFolder',
-        preserveFiles: true,
+        preserve: false,
         minAge: 300,
         regex: '.*test-file.*csv$',
       },
     }
     const folderScanner = new FolderScanner(dataSource, engine)
-    const filename = 'my-test-file.csv'
-    const checkResult = folderScanner.checkFile(filename)
+    const filenames = ['my-test-file.csv', 'other.csv']
+    const checkResult = folderScanner.keepMatchingFiles(filenames)
     expect(checkResult).toBe(true)
   })
 })
