@@ -73,19 +73,22 @@ class FolderScanner extends ProtocolHandler {
    */
 
   async keepMatchingFiles(filenames) {
-    const filteredFiles = filenames.filter(async (filename) => {
+    const modifiedDate = this.preserveFiles && Object.fromEntries(
+      await Promise.all(
+        filenames.map((filename) => databaseService.getFolderScannerModifyTime(this.database, filename)),
+      ),
+    )
+    const filteredFiles = filenames.filter((filename) => {
       let matched = false
-
       if (this.regex.test(filename)) {
         const timestamp = new Date().getTime()
         const stats = fs.statSync(path.join(this.inputFolder, filename))
         this.logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
-        matched = (stats.mtimeMs < (timestamp - this.minAge))
+        matched = stats.mtimeMs < timestamp - this.minAge
         this.logger.silly(`checkFile ${filename} matched ${matched}`)
-        // now check if the file was already sent if preserveFiles is true
+        // now check if the file was already sent if preserveFiles is true)
         if (matched && this.preserveFiles) {
-          const modifiedDate = await databaseService.getFolderScannerModifyTime(this.database, filename)
-          if (stats.mtimeMs < modifiedDate) {
+          if (modifiedDate[filename] >= stats.mtimeMs) {
             this.logger.silly(`${filename} with modified Date ${modifiedDate} was already sent`)
             matched = false
           }
