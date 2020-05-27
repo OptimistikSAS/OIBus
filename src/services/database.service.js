@@ -293,7 +293,7 @@ const getFolderScannerModifyTime = async (database, filename) => {
   const stmt = await database.prepare(query)
   const results = await stmt.all(filename)
 
-  return results.length > 0 ? results[0].modified : null
+  return results.length > 0 ? [filename, results[0].modified] : [filename, null]
 }
 
 /**
