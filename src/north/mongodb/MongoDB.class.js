@@ -37,7 +37,7 @@ class MongoDB extends ApiHandler {
       await this.makeRequest(values)
     } catch (error) {
       this.logger.error(error)
-      return Promise.reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
+      throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
     return ApiHandler.STATUS.SUCCESS
   }
