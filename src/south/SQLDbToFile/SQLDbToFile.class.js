@@ -52,6 +52,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.domain = domain
     this.database = database
     this.query = query
+    this.containsLastCompletedDate = query.includes('@LastCompletedDate')
     this.connectionTimeout = connectionTimeout
     this.timeColumn = timeColumn
     this.requestTimeout = requestTimeout
@@ -76,14 +77,14 @@ class SQLDbToFile extends ProtocolHandler {
 
   async connect() {
     super.connect()
-    const { dataSourceId, startTime } = this.dataSource
+    const { dataSourceId } = this.dataSource
     const { engineConfig } = this.engine.configService.getConfig()
     const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
 
     this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
     if (!this.lastCompletedAt) {
-      this.lastCompletedAt = startTime ? new Date(startTime).toISOString() : new Date().toISOString()
+      this.lastCompletedAt = new Date().toISOString()
     }
   }
 
@@ -174,9 +175,15 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       const pool = await new mssql.ConnectionPool(config).connect()
-      const result = await pool.request()
-        .input('date1', mssql.DateTimeOffset, new Date(this.lastCompletedAt))
-        .query(adaptedQuery)
+      let result
+      if (this.containsLastCompletedDate) {
+        result = await pool.request()
+          .input('LastCompletedDate', mssql.DateTimeOffset, new Date(this.lastCompletedAt))
+          .query(adaptedQuery)
+      } else {
+        result = await pool.request()
+          .query(adaptedQuery)
+      }
       const [first] = result.recordsets
       data = first
     } catch (error) {
@@ -193,7 +200,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromMySQL() {
-    const adaptedQuery = this.query.replace('@date1', '?')
+    const adaptedQuery = this.query.replace('@LastCompletedDate', '?')
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -210,9 +217,10 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       connection = await mysql.createConnection(config)
+      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
       const [rows] = await connection.execute(
         { sql: adaptedQuery, timeout: this.requestTimeout },
-        [new Date(this.lastCompletedAt)],
+        params,
       )
       data = rows
     } catch (error) {
@@ -231,7 +239,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromPostgreSQL() {
-    const adaptedQuery = this.query.replace('@date1', '$1')
+    const adaptedQuery = this.query.replace('@LastCompletedDate', '$1')
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -248,7 +256,8 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       await client.connect()
-      const { rows } = await client.query(adaptedQuery, [new Date(this.lastCompletedAt)])
+      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
+      const { rows } = await client.query(adaptedQuery, params)
       data = rows
     } catch (error) {
       this.logger.error(error)
@@ -266,7 +275,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromOracle() {
-    const adaptedQuery = this.query.replace('@date1', ':date1')
+    const adaptedQuery = this.query.replace('@LastCompletedDate', ':date1')
     this.logger.debug(`Executing "${adaptedQuery}"`)
 
     const config = {
@@ -282,7 +291,8 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const { rows } = await connection.execute(adaptedQuery, [new Date(this.lastCompletedAt)])
+      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
+      const { rows } = await connection.execute(adaptedQuery, params)
       data = rows
     } catch (error) {
       this.logger.error(error)
