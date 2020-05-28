@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 import { combinedValidations, startsWithAnyOf, notEndsWith } from '../../../services/validation.service'
 
-const OIbLink = ({ label, help, value, protocols, name, onChange, defaultValue, inline }) => {
+const OIbLink = ({ label, help, value, substitutedValid, protocols, name, onChange, defaultValue, inline }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
   // valid if starts with any of provided protocol and not endsWith '/'
-  const valid = combinedValidations([startsWithAnyOf(protocols, '://'), notEndsWith('/')])
+  const valid = substitutedValid || combinedValidations([startsWithAnyOf(protocols, '://'), notEndsWith('/')])
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
@@ -45,6 +45,7 @@ OIbLink.propTypes = {
   help: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   onChange: PropTypes.func.isRequired,
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  substitutedValid: PropTypes.func,
   protocols: PropTypes.arrayOf(String),
   defaultValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   inline: PropTypes.bool,
@@ -53,6 +54,7 @@ OIbLink.defaultProps = {
   label: null,
   help: null,
   value: null,
+  substitutedValid: null,
   protocols: ['http', 'https'],
   defaultValue: '',
   inline: false,
