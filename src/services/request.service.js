@@ -239,12 +239,12 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
           const incrementedRetryCount = retryCount + 1
           await sendRequest(engine, requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
         } else {
-          return Promise.reject(ApiHandler.STATUS.LOGIC_ERROR)
+          throw ApiHandler.STATUS.LOGIC_ERROR
         }
       }
     }
 
-    return Promise.reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    throw ApiHandler.STATUS.COMMUNICATION_ERROR
   }
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
