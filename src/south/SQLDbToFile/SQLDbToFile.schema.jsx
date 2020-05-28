@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, minValue, hasLengthBetween, optional } from '../../services/validation.service'
+import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
 schema.form = {
@@ -48,9 +48,9 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbLink',
-    substitutedValid: notEmpty(),
+    type: 'OIbText',
     defaultValue: 'localhost',
+    valid: isHost(),
     help: <div>IP address of the SQLDbToFile server</div>,
   },
   port: {
