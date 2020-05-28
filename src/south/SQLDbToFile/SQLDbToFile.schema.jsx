@@ -16,7 +16,7 @@ schema.form = {
         </p>
         <ul>
           <li>
-            The query must have a specific format and contain a WHERE clause with the date constraint of the time column using @date1.
+            The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @LastCompletedDate.
           </li>
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
