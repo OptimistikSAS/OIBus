@@ -65,10 +65,11 @@ class AmazonS3 extends ApiHandler {
     try {
       await this.s3.upload(params).promise()
     } catch (error) {
-      return Promise.reject(error)
+      this.logger.error(error)
+      throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
 
-    return true
+    return ApiHandler.STATUS.SUCCESS
   }
 }
 
