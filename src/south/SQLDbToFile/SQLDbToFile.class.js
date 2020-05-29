@@ -256,14 +256,11 @@ class SQLDbToFile extends ProtocolHandler {
 
     types.setTypeParser(1114, (str) => new Date(`${str}Z`))
     const client = new Client(config)
-    console.info('new client')
     let data = []
     try {
       await client.connect()
-      console.info('connect')
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
       const { rows } = await client.query(adaptedQuery, params)
-      console.info('query')
       data = rows
     } catch (error) {
       this.logger.error(error)
