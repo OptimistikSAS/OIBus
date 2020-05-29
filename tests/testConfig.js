@@ -193,7 +193,7 @@ const testConfig = {
           password: 'popopopopopopopopo',
           connectionTimeout: 1000,
           requestTimeout: 1000,
-          host: 'http://192.168.0.11',
+          host: '192.168.0.11',
           driver: 'mssql',
           username: 'oibus_user',
           database: 'oibus',
