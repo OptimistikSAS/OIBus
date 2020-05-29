@@ -97,6 +97,14 @@ schema.form = {
     help: <div>(optional) used for ntlm authentication for mssql</div>,
     md: 3,
   },
+  encryption: {
+    newRow: false,
+    type: 'OIbCheckBox',
+    label: 'Encryption?',
+    defaultValue: true,
+    help: <div>Disable encryption for mssql if TLS 1.2 patch is not installed</div>,
+    md: 2,
+  },
   query: {
     md: 8,
     type: 'OIbTextArea',

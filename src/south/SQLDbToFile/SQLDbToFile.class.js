@@ -33,6 +33,7 @@ class SQLDbToFile extends ProtocolHandler {
       password,
       domain,
       database,
+      encryption,
       query,
       connectionTimeout,
       requestTimeout,
@@ -51,6 +52,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.password = password
     this.domain = domain
     this.database = database
+    this.encryption = encryption
     this.query = query
     this.containsLastCompletedDate = query.includes('@LastCompletedDate')
     this.connectionTimeout = connectionTimeout
@@ -158,7 +160,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromMSSQL() {
     const adaptedQuery = this.query
-    this.logger.debug(`Executing "${adaptedQuery}"`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
       user: this.username,
@@ -168,6 +170,7 @@ class SQLDbToFile extends ProtocolHandler {
       database: this.database,
       connectionTimeout: this.connectionTimeout,
       requestTimeout: this.requestTimeout,
+      encryption: this.encryption,
     }
     // domain is optional and allow to activate the ntlm authentication on windows.
     if (this.domain) config.domain = this.domain
@@ -201,7 +204,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromMySQL() {
     const adaptedQuery = this.query.replace('@LastCompletedDate', '?')
-    this.logger.debug(`Executing "${adaptedQuery}"`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
       host: this.host,
@@ -240,7 +243,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromPostgreSQL() {
     const adaptedQuery = this.query.replace('@LastCompletedDate', '$1')
-    this.logger.debug(`Executing "${adaptedQuery}"`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
       host: this.host,
@@ -253,11 +256,14 @@ class SQLDbToFile extends ProtocolHandler {
 
     types.setTypeParser(1114, (str) => new Date(`${str}Z`))
     const client = new Client(config)
+    console.info('new client')
     let data = []
     try {
       await client.connect()
+      console.info('connect')
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
       const { rows } = await client.query(adaptedQuery, params)
+      console.info('query')
       data = rows
     } catch (error) {
       this.logger.error(error)
@@ -276,7 +282,7 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromOracle() {
     const adaptedQuery = this.query.replace('@LastCompletedDate', ':date1')
-    this.logger.debug(`Executing "${adaptedQuery}"`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
       user: this.username,
