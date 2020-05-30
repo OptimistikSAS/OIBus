@@ -57,8 +57,10 @@ class FolderScanner extends ProtocolHandler {
       }
 
       if (files.length > 0) {
-        const matchedFiles = await this.keepMatchingFiles(files)
-        this.sendFiles(matchedFiles)
+        files.forEach(async (file) => {
+          const matchConditions = await this.checkConditions(file)
+          if (matchConditions) this.sendFile(file)
+        })
       } else {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
@@ -72,51 +74,40 @@ class FolderScanner extends ProtocolHandler {
    * @returns {Array} - Whether the file matches the conditions
    */
 
-  async keepMatchingFiles(filenames) {
-    const modifiedDate = this.preserveFiles && Object.fromEntries(
-      await Promise.all(
-        filenames.map((filename) => databaseService.getFolderScannerModifyTime(this.database, filename)),
-      ),
-    )
-    const filteredFiles = filenames.filter((filename) => {
-      let matched = false
-      if (this.regex.test(filename)) {
-        const timestamp = new Date().getTime()
-        const stats = fs.statSync(path.join(this.inputFolder, filename))
-        this.logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
-        matched = stats.mtimeMs < timestamp - this.minAge
-        this.logger.silly(`checkFile ${filename} matched ${matched}`)
-        // now check if the file was already sent if preserveFiles is true)
-        if (matched && this.preserveFiles) {
-          if (modifiedDate[filename] >= stats.mtimeMs) {
-            this.logger.silly(`${filename} with modified Date ${modifiedDate} was already sent`)
-            matched = false
-          }
-        }
-      }
-      return matched
-    })
-    return filteredFiles
+  async checkConditions(filename) {
+    // check regexp
+    if (!this.regex.test(filename)) return false
+    this.logger.silly(`checkConditions:${filename} match regexp`)
+    // check age
+    const timestamp = new Date().getTime()
+    const stats = fs.statSync(path.join(this.inputFolder, filename))
+    this.logger.silly(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
+    if (stats.mtimeMs + this.minAge > timestamp) return false
+    this.logger.silly(`checkConditions: ${filename} match age`)
+    // check if the file was already sent (if preserveFiles is true)
+    if (this.preserveFiles) {
+      const modifyTime = await databaseService.getFolderScannerModifyTime(this.database, filename)
+      if (modifyTime >= stats.mtimeMs) return false
+      this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
+    }
+    return true
   }
 
   /**
-   * Send the files to the Engine.
-   * @param {String} filenames - The filename
+   * Send the file to the Engine.
+   * @param {String} filename - The filename
    * @return {void}
    */
-  sendFiles(filenames) {
-    filenames.forEach(async (filename) => {
-      const filePath = path.join(this.inputFolder, filename)
+  async sendFile(filename) {
+    const filePath = path.join(this.inputFolder, filename)
+    this.logger.debug(`Sending ${filePath} to Engine.`)
+    this.addFile(filePath)
 
-      this.logger.debug(`Sending ${filePath} to Engine.`)
-      this.addFile(filePath)
-
-      if (this.preserveFiles) {
-        const stats = fs.statSync(path.join(this.inputFolder, filename))
-        this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
-        await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
-      }
-    })
+    if (this.preserveFiles) {
+      const stats = fs.statSync(path.join(this.inputFolder, filename))
+      this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
+      await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
+    }
   }
 }
 
