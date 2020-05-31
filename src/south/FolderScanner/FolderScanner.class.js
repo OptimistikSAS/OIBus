@@ -50,21 +50,15 @@ class FolderScanner extends ProtocolHandler {
     }
 
     // List files in the inputFolder and manage them.
-    fs.readdir(this.inputFolder, async (error, files) => {
-      if (error) {
-        this.logger.error(error)
-        return
-      }
-
-      if (files.length > 0) {
-        files.forEach(async (file) => {
-          const matchConditions = await this.checkConditions(file)
-          if (matchConditions) this.sendFile(file)
-        })
-      } else {
-        this.logger.debug(`The folder ${this.inputFolder} is empty.`)
-      }
-    })
+    const files = fs.readdirSync(this.inputFolder)
+    if (files.length > 0) {
+      files.forEach(async (file) => {
+        const matchConditions = await this.checkConditions(file)
+        if (matchConditions) this.sendFile(file)
+      })
+    } else {
+      this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+    }
   }
 
   /**
