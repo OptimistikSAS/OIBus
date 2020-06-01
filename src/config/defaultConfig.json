@@ -6,13 +6,13 @@
     "password": "",
     "filter": ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
     "logParameters": {
-      "consoleLevel": "silly",
-      "fileLevel": "error",
+      "consoleLevel": "debug",
+      "fileLevel": "debug",
       "filename": "./logs/journal.log",
       "maxsize": 1000000,
       "maxFiles": 5,
       "tailable": true,
-      "sqliteLevel": "error",
+      "sqliteLevel": "debug",
       "sqliteFilename": "./logs/journal.db",
       "sqliteMaxFileSize": 50000000
     },
