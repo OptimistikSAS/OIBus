@@ -154,36 +154,38 @@ class Engine {
    * Send values to a North application.
    * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
-   * @return {Promise} - The send promise
+   * @return {number} - The send status
    */
   async handleValuesFromCache(applicationId, values) {
     this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
-    let success = false
+
+    let status
     try {
-      success = await this.activeApis[applicationId].handleValues(values)
+      status = await this.activeApis[applicationId].handleValues(values)
     } catch (error) {
-      this.logger.error(error)
+      status = error
     }
-    return success
+
+    return status
   }
 
   /**
    * Send file to a North application.
    * @param {string} applicationId - The application ID
    * @param {string} filePath - The file to send
-   * @return {Promise} - The send promise
+   * @return {number} - The send status
    */
   async sendFile(applicationId, filePath) {
     this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
-    let success = false
 
+    let status
     try {
-      success = await this.activeApis[applicationId].handleFile(filePath)
+      status = await this.activeApis[applicationId].handleFile(filePath)
     } catch (error) {
-      this.logger.error(error)
+      status = error
     }
 
-    return success
+    return status
   }
 
   /**
