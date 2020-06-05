@@ -402,7 +402,13 @@ const getLogsCount = async (databasePath) => {
                  FROM logs
                  GROUP BY level`
   const stmt = await database.prepare(query)
-  return stmt.all()
+  const results = await stmt.all()
+  const errorLogCount = results.find((logCount) => logCount.level === 'error')
+  const warningLogCount = results.find((logCount) => logCount.level === 'warn')
+  return {
+    error: errorLogCount ? errorLogCount.count : 0,
+    warn: warningLogCount ? warningLogCount.count : 0,
+  }
 }
 
 /**
