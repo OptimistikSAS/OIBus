@@ -63,6 +63,7 @@ const addValues = async (ctx) => {
  */
 const aliveSignal = async (ctx) => {
   try {
+    ctx.app.engine.aliveSignalMessages += 1
     await ctx.app.engine.aliveSignal.forwardRequest(ctx.request.body)
     ctx.ok()
   } catch (error) {

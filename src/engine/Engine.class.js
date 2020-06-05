@@ -120,6 +120,7 @@ class Engine {
     this.memoryStats = {}
     this.addValuesMessages = 0
     this.addValuesCount = 0
+    this.aliveSignalMessages = 0
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
@@ -429,6 +430,7 @@ class Engine {
       protocolsCacheStats,
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
+      aliveSignalMessages: this.aliveSignalMessages,
       logError: errorLogCount ? errorLogCount.count : 0,
       logWarning: warningLogCount ? warningLogCount.count : 0,
       copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
