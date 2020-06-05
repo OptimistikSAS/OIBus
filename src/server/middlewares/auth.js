@@ -26,9 +26,8 @@ const auth = (opts = {}) => {
 
   return (ctx, next) => {
     const user = basicAuth(ctx)
-    if (user && user.pass && user.name === opts.name) {
-      if (user.pass === opts.pass) return next()
-      ctx.app.logger.error(new Error(`Bad password: ${user.pass}`))
+    if (user && user.pass && user.name === opts.name && user.pass === opts.pass) {
+      return next()
     }
     return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
   }

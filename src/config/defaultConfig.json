@@ -59,7 +59,8 @@
     },
     "httpRequest": {
       "stack": "fetch",
-      "timeout": 30
+      "timeout": 30,
+      "retryCount": 3
     }
   },
   "south": {
@@ -68,5 +69,5 @@
   "north": {
     "applications": []
   },
-  "schemaVersion": 3
+  "schemaVersion": 9
 }
