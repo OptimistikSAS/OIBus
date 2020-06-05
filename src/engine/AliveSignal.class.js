@@ -15,7 +15,7 @@ class AliveSignal {
     this.logger = new Logger(this.constructor.name)
     const { engineConfig } = this.engine.configService.getConfig()
 
-    const { enabled, host, endpoint, authentication, id, frequency, proxy = null } = engineConfig.aliveSignal
+    const { enabled, host, endpoint, authentication, id, frequency, proxy = null, verbose = false } = engineConfig.aliveSignal
 
     this.enabled = enabled
     this.host = `${host}${endpoint}`
@@ -24,6 +24,7 @@ class AliveSignal {
     this.frequency = 1000 * frequency
     this.proxy = Array.isArray(engineConfig.proxies) && engineConfig.proxies.find(({ name }) => name === proxy)
     this.timer = null
+    this.verbose = verbose
   }
 
   /**
@@ -54,8 +55,7 @@ class AliveSignal {
   async pingCallback() {
     this.logger.silly('pingCallback')
 
-    const status = await this.engine.getStatus()
-    status.id = this.id
+    const status = await this.prepareStatus()
 
     try {
       const data = JSON.stringify(status)
@@ -67,6 +67,19 @@ class AliveSignal {
     }
 
     this.timer = setTimeout(this.pingCallback.bind(this), this.frequency)
+  }
+
+  /**
+   * Prepare the status info
+   * @returns {object} - The status info
+   */
+  async prepareStatus() {
+    let status = { version: this.engine.getVersion() }
+    if (this.verbose) {
+      status = await this.engine.getStatus()
+    }
+    status.id = this.id
+    return status
   }
 
   /**

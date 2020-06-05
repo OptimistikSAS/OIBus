@@ -179,4 +179,8 @@ module.exports = {
       }
     })
   },
+  11: (config) => {
+    logger.info('Add verbose mode for AliveSignal')
+    config.engine.aliveSignal.verbose = false
+  },
 }
