@@ -410,6 +410,9 @@ class Engine {
     const processCpuUsage = process.cpuUsage()
     const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime).toFixed(2)
 
+    const filesErrorCount = await databaseService.getErroredFilesCount(this.cache.filesErrorDatabasePath)
+    const valuesErrorCount = await databaseService.getErroredValuesCount(this.cache.valuesErrorDatabasePath)
+
     return {
       version: this.getVersion(),
       architecture: process.arch,
@@ -433,6 +436,8 @@ class Engine {
       aliveSignalMessages: this.aliveSignalMessages,
       logError: errorLogCount ? errorLogCount.count : 0,
       logWarning: warningLogCount ? warningLogCount.count : 0,
+      filesErrorCount,
+      valuesErrorCount,
       copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
     }
   }
