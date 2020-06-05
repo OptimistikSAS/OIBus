@@ -2109,6 +2109,9 @@ exports[`Engine check Engine 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -4255,6 +4258,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -6696,6 +6702,9 @@ exports[`Engine check change engineName 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -9117,6 +9126,9 @@ exports[`Engine check change password 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -11538,6 +11550,9 @@ exports[`Engine check change port 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -13959,6 +13974,9 @@ exports[`Engine check change user 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
