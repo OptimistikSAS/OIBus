@@ -401,10 +401,7 @@ class Engine {
     const freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
     const totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
 
-    const databasePath = engineConfig.logParameters.sqliteFilename
-    const logsCount = await databaseService.getLogsCount(databasePath)
-    const errorLogCount = logsCount.find((logCount) => logCount.level === 'error')
-    const warningLogCount = logsCount.find((logCount) => logCount.level === 'warn')
+    const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteFilename)
 
     const processUptime = 1000 * 1000 * process.uptime()
     const processCpuUsage = process.cpuUsage()
@@ -434,8 +431,8 @@ class Engine {
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
       aliveSignalMessages: this.aliveSignalMessages,
-      logError: errorLogCount ? errorLogCount.count : 0,
-      logWarning: warningLogCount ? warningLogCount.count : 0,
+      logError: logsCount.error,
+      logWarning: logsCount.warn,
       filesErrorCount,
       valuesErrorCount,
       copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
