@@ -405,6 +405,34 @@ const getLogsCount = async (databasePath) => {
   return stmt.all()
 }
 
+/**
+ * Get number of errored values.
+ * @param {string} databasePath - The database path
+ * @returns {number} - The count
+ */
+const getErroredValuesCount = async (databasePath) => {
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const query = `SELECT COUNT(*) AS count
+                 FROM ${CACHE_TABLE_NAME}`
+  const stmt = await database.prepare(query)
+  const results = await stmt.all()
+  return results.length > 0 ? results[0].count : 0
+}
+
+/**
+ * Get number of errored files.
+ * @param {string} databasePath - The database path
+ * @returns {number} - The count
+ */
+const getErroredFilesCount = async (databasePath) => {
+  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const query = `SELECT COUNT(*) AS count
+                 FROM ${CACHE_TABLE_NAME}`
+  const stmt = await database.prepare(query)
+  const results = await stmt.all()
+  return results.length > 0 ? results[0].count : 0
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -427,4 +455,6 @@ module.exports = {
   getConfig,
   getLogs,
   getLogsCount,
+  getErroredValuesCount,
+  getErroredFilesCount,
 }

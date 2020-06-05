@@ -49,6 +49,9 @@ class Cache {
     // Cache stats
     this.cacheStats = {}
     this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
+    // Errored files/values database path
+    this.filesErrorDatabasePath = `${this.cacheFolder}/fileCache-error.db`
+    this.valuesErrorDatabasePath = `${this.cacheFolder}/valueCache-error.db`
   }
 
   /**
@@ -85,10 +88,10 @@ class Cache {
    * @return {void}
    */
   async initialize(activeApis) {
-    this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.cacheFolder}/fileCache-error.db`)
+    this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-    this.filesErrorDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache-error.db`)
-    this.valuesErrorDatabase = await databaseService.createValueErrorsDatabase(`${this.cacheFolder}/valueCache-error.db`)
+    this.filesErrorDatabase = await databaseService.createFilesDatabase(this.filesErrorDatabasePath)
+    this.valuesErrorDatabase = await databaseService.createValueErrorsDatabase(this.valuesErrorDatabasePath)
     this.logger.debug(`Files db count: ${await databaseService.getCount(this.filesDatabase)}`)
     this.logger.debug(`Files error db count: ${await databaseService.getCount(this.filesErrorDatabase)}`)
     this.logger.debug(`Values error db count: ${await databaseService.getCount(this.valuesErrorDatabase)}`)
