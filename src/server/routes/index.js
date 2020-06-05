@@ -13,6 +13,7 @@ router.put('/config/activate', configController.activateConfiguration)
 router.get('/config/schemas/north', engineController.getNorthList)
 router.get('/config/schemas/south', engineController.getSouthList)
 router.post('/engine/addValues', engineController.addValues)
+router.post('/engine/aliveSignal', engineController.aliveSignal)
 router.get('/status', engineController.getStatus)
 router.get('/reload', engineController.reload)
 

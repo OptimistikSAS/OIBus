@@ -167,4 +167,16 @@ module.exports = {
       }
     })
   },
+  9: (config) => {
+    logger.info('Add retry count setting for the HTTP request')
+    config.engine.httpRequest.retryCount = 3
+  },
+  10: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        logger.info('Add encryption field to SQLDbToFile')
+        dataSource.SQLDbToFile.encryption = true
+      }
+    })
+  },
 }
