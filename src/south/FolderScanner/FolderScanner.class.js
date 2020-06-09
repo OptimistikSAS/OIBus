@@ -50,24 +50,27 @@ class FolderScanner extends ProtocolHandler {
     }
 
     // List files in the inputFolder and manage them.
-    const files = fs.readdirSync(this.inputFolder)
-    if (files.length > 0) {
-      files.forEach(async (file) => {
-        const matchConditions = await this.checkConditions(file)
-        if (matchConditions) this.sendFile(file)
-      })
-    } else {
-      this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+    try {
+      const files = fs.readdirSync(this.inputFolder)
+      if (files.length > 0) {
+        files.forEach(async (file) => {
+          const matchConditions = await this.checkConditions(file)
+          if (matchConditions) this.sendFile(file)
+        })
+      } else {
+        this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+      }
+    } catch (error) {
+      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error}`)
     }
   }
 
   /**
    * Filter the files if the name and the age of the file meet the request
    * or (when preserveFiles)if they were already sent.
-   * @param {String} filenames - file
+   * @param {String} filename - file
    * @returns {Array} - Whether the file matches the conditions
    */
-
   async checkConditions(filename) {
     // check regexp
     if (!this.regex.test(filename)) return false
