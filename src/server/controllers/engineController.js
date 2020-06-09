@@ -40,16 +40,34 @@ const reload = async (ctx) => {
 /**
  * Add Values to the Engine
  * @param {Object} ctx - The KOA context
- * @param {Object} ctx.body contains the dataSourceId and the array of values
+ * @param {Object} ctx.request.body - The dataSourceId and the array of values
  * @return {void}
  */
 const addValues = async (ctx) => {
   const { dataSourceId, values } = ctx.request.body
   try {
+    ctx.app.engine.addValuesMessages += 1
+    ctx.app.engine.addValuesCount += values ? values.length : 0
     await ctx.app.engine.addValues(dataSourceId, values)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, `Unable to add ${values ? values.length : '...'} from ${dataSourceId}`)
+  }
+}
+
+/**
+ * Forward an aliveSignal request.
+ * @param {Object} ctx - The KOA context
+ * @param {Object} ctx.request.body - The aliveSignal content
+ * @return {void}
+ */
+const aliveSignal = async (ctx) => {
+  try {
+    ctx.app.engine.aliveSignalMessages += 1
+    await ctx.app.engine.aliveSignal.forwardRequest(ctx.request.body)
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to forward the aliveSignal request')
   }
 }
 
@@ -59,4 +77,5 @@ module.exports = {
   getSouthList,
   reload,
   addValues,
+  aliveSignal,
 }

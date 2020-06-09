@@ -9,8 +9,10 @@ const FormData = require('form-data')
 const ProxyAgent = require('proxy-agent')
 
 const Logger = require('../engine/Logger.class')
+const ApiHandler = require('../north/ApiHandler.class')
 
 const logger = new Logger('request')
+const retryStatusCodes = [400, 500]
 
 /**
  * Get filename without timestamp from file path.
@@ -110,7 +112,12 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
   try {
     await axiosInstance(axiosOptions)
   } catch (error) {
-    return Promise.reject(error)
+    const responseError = {
+      responseError: !!error.response,
+      statusCode: error.response ? error.response.status : undefined,
+      error,
+    }
+    return Promise.reject(responseError)
   }
 
   return true
@@ -169,10 +176,19 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
   try {
     const response = await fetch(requestUrl, fetchOptions)
     if (!response.ok) {
-      return Promise.reject(new Error(response.statusText))
+      const responseError = {
+        responseError: true,
+        statusCode: response.status,
+        error: new Error(response.statusText),
+      }
+      return Promise.reject(responseError)
     }
   } catch (error) {
-    return Promise.reject(error)
+    const connectError = {
+      responseError: false,
+      error,
+    }
+    return Promise.reject(connectError)
   }
 
   return true
@@ -189,9 +205,10 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
  * @param {object} proxy - Proxy to use
  * @param {string} data - The body or file to send
  * @param {object} baseHeaders - Headers to send
+ * @param {number} retryCount - The retry count
  * @returns {Promise} - The send status
  */
-const sendRequest = async (engine, requestUrl, method, authentication, proxy, data, baseHeaders = {}) => {
+const sendRequest = async (engine, requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) => {
   const { engineConfig: { httpRequest } } = engine.configService.getConfig()
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
@@ -213,14 +230,26 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
       default:
         await sendWithFetch(engine, requestUrl, method, headers, proxy, data, timeout)
     }
-  } catch (error) {
-    logger.silly(`sendRequest(): Error ${error}`)
-    return Promise.reject(error)
+  } catch (errorResult) {
+    logger.silly(`sendRequest(): Error ${errorResult.error}`)
+
+    if (errorResult.responseError) {
+      if (retryStatusCodes.includes(errorResult.statusCode)) {
+        if (retryCount < httpRequest.retryCount) {
+          const incrementedRetryCount = retryCount + 1
+          await sendRequest(engine, requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
+        } else {
+          throw ApiHandler.STATUS.LOGIC_ERROR
+        }
+      }
+    }
+
+    throw ApiHandler.STATUS.COMMUNICATION_ERROR
   }
 
   logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
-  return true
+  return ApiHandler.STATUS.SUCCESS
 }
 
 module.exports = { sendRequest }
