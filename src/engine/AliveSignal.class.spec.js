@@ -47,6 +47,7 @@ describe('AliveSignal', () => {
   engine.configService = { getConfig: () => ({ engineConfig }) }
   engine.decryptPassword = (password) => password
   engine.getStatus = jest.fn()
+  engine.getVersion = jest.fn()
   engine.sendRequest = jest.fn()
 
   it('should be properly initialized', () => {
@@ -103,21 +104,44 @@ describe('AliveSignal', () => {
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
+  it('should prepare simple status info when verbose is not enabled', async () => {
+    const aliveSignal = new AliveSignal(engine)
+    engine.getVersion.mockReturnValue('version')
+
+    aliveSignal.verbose = false
+    const status = await aliveSignal.prepareStatus()
+
+    expect(engine.getVersion).toHaveBeenCalledTimes(1)
+    expect(engine.getStatus).not.toHaveBeenCalled()
+    expect(status).toEqual({ version: 'version', id: 'id' })
+  })
+
+  it('should prepare full status info when verbose is enabled', async () => {
+    const aliveSignal = new AliveSignal(engine)
+    engine.getVersion.mockReturnValue('ver')
+    engine.getStatus.mockReturnValue({ status: 'status', version: 'version' })
+
+    aliveSignal.verbose = true
+    const status = await aliveSignal.prepareStatus()
+
+    expect(engine.getVersion).toHaveBeenCalledTimes(1)
+    expect(engine.getStatus).toHaveBeenCalledTimes(1)
+    expect(status).toEqual({ status: 'status', version: 'version', id: 'id' })
+  })
+
   it('should call Engine sendRequest()', async () => {
     const status = { status: 'status' }
 
     const aliveSignal = new AliveSignal(engine)
 
-    engine.getStatus.mockReturnValue(status)
+    aliveSignal.prepareStatus = jest.fn()
+    aliveSignal.prepareStatus.mockReturnValue(status)
 
     await aliveSignal.pingCallback()
 
     expect(aliveSignal.logger.silly).toBeCalledWith('pingCallback')
-    expect(engine.getStatus).toBeCalled()
-    const calledStatus = JSON.stringify({
-      ...status,
-      id: aliveSignal.id,
-    })
+    expect(aliveSignal.prepareStatus).toBeCalled()
+    const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }
     expect(engine.sendRequest).toBeCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus, headers)
     expect(aliveSignal.logger.debug).toBeCalledWith('Alive signal successful')
