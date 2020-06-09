@@ -6,12 +6,12 @@ const testConfig = {
     filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
     logParameters: {
       consoleLevel: 'debug',
-      fileLevel: 'debug',
+      fileLevel: 'error',
       filename: './logs/journal.log',
       maxsize: 1000000,
       maxFiles: 5,
       tailable: true,
-      sqliteLevel: 'debug',
+      sqliteLevel: 'error',
       sqliteFilename: './logs/journal.db',
       sqliteMaxFileSize: 50000000,
     },
@@ -175,7 +175,7 @@ const testConfig = {
         protocol: 'FolderScanner',
         enabled: true,
         FolderScanner: {
-          preserve: false,
+          preserve: true,
           minAge: 1000,
           inputFolder: './input/',
           scanMode: 'every5Second',
