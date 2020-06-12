@@ -183,4 +183,22 @@ module.exports = {
     logger.info('Add verbose mode for AliveSignal')
     config.engine.aliveSignal.verbose = false
   },
+  12: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'MQTT') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'qos')) {
+          logger.info('Add qos field to MQTT')
+          dataSource.MQTT.qos = 1
+        }
+      }
+    })
+    config.north.applications.forEach((application) => {
+      if (application.api === 'MQTTNorth') {
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'qos')) {
+          logger.info('Add qos field to MQTTNorth')
+          application.MQTTNorth.qos = 1
+        }
+      }
+    })
+  },
 }
