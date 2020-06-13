@@ -58,48 +58,6 @@
                 "cronTime": "listen"
             }
         ],
-        "types": [
-            {
-                "type": "fill_level",
-                "fields": [
-                    {
-                        "name": "value",
-                        "type": "number"
-                    }
-                ]
-            },
-            {
-                "type": "flow_rate",
-                "fields": [
-                    {
-                        "name": "quality",
-                        "type": "boolean"
-                    }
-                ]
-            },
-            {
-                "type": "valve_state",
-                "fields": [
-                    {
-                        "name": "value",
-                        "type": "boolean"
-                    }
-                ]
-            },
-            {
-                "type": "temperature",
-                "fields": [
-                    {
-                        "name": "value",
-                        "type": "number"
-                    },
-                    {
-                        "name": "quality",
-                        "type": "boolean"
-                    }
-                ]
-            }
-        ],
         "engineName": "OIBus",
         "aliveSignal": {
             "enabled": false,
