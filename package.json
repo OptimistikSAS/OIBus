@@ -112,7 +112,7 @@
     "ignore-loader": "0.1.2",
     "jest": "26.0.1",
     "less": "3.11.3",
-    "less-loader": "6.1.0",
+    "less-loader": "6.1.1",
     "merge-stream": "2.0.0",
     "ncp": "2.0.0",
     "pkg": "4.4.8",
