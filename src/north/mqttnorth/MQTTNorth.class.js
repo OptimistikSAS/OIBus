@@ -1,3 +1,4 @@
+const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -69,16 +70,18 @@ class MQTTNorth extends ApiHandler {
    * @return {Promise} - The request status
    */
   async publishValues(entries) {
+    const { regExp, topic } = this.application.MQTTNorth
     entries.forEach((entry) => {
       const { pointId, data } = entry
 
-      // The pointId string is normally stuctured like that
-      //   xxx..xxx/yyy...yyy/.../zzz.zzz
-      // In North MQTT usage we consider that the topic, to use, is given by yyy...yyy/.../zzz.zzz
-      // We have to retrieve the end of the string after subtract "xxx.xxx/" string
-      const topic = pointId.split('/').slice(1).join('/')
+      const mainRegExp = new RegExp(regExp)
+      const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
 
-      this.client.publish(topic, JSON.stringify(data), (error) => {
+      const topicValue = vsprintf(topic, groups)
+
+      this.client.publish(topicValue, JSON.stringify(data), (error) => {
         if (error) {
           this.logger.error('Publish Error :', topic, data, error)
         }
