@@ -260,12 +260,31 @@ const testConfig = {
         },
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
         subscribedTo: [],
-        OIAnalyticsFile: { stack: 'fetch' },
+      },
+      {
+        applicationId: 'RawFileSender',
+        enabled: false,
+        api: 'OIAnalyticsFile',
+        caching: {
+          sendInterval: 15000,
+          retryInterval: 10000,
+        },
+        OIAnalyticsFile: {
+          host: 'https://demo.oianalytics.fr',
+          endpoint: '/api/optimistik/data/values/upload',
+          authentication: {
+            type: 'Basic',
+            username: 'anyuser',
+            password: 'anypass',
+          },
+        },
+        proxy: '',
+        subscribedTo: [],
       },
     ],
   },
   schemaVersion: 5,
-  apiList: ['Console', 'OIConnect'],
+  apiList: ['Console', 'OIConnect', 'OIAnalyticsFile'],
   protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
 }
 
