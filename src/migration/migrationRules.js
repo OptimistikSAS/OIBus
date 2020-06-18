@@ -201,4 +201,18 @@ module.exports = {
       }
     })
   },
+  13: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'MQTTNorth') {
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'regExp')) {
+          logger.info('Add regExp field to MQTTNorth')
+          application.MQTTNorth.regExp = '(.*)/'
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'topic')) {
+          logger.info('Add topic field to MQTTNorth')
+          application.MQTTNorth.topic = '%1$s'
+        }
+      }
+    })
+  },
 }
