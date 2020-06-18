@@ -39,6 +39,13 @@ schema.form = {
     defaultValue: '',
     help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
+  qos: {
+    type: 'OIbSelect',
+    newRow: false,
+    md: 1,
+    options: [0, 1, 2],
+    defaultValue: 1,
+  },
   username: {
     type: 'OIbText',
     valid: notEmpty(),
