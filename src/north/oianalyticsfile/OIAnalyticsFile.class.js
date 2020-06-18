@@ -32,8 +32,7 @@ class OIAnalyticsFile extends ApiHandler {
    */
   async handleFile(filePath) {
     const stats = fs.statSync(filePath)
-    this.logger.silly(`OIAnalyticsFile handleFile() call with ${filePath} (${stats.size} bytes)`)
-
+    this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
     return this.engine.sendRequest(this.url, 'POST', this.authentication, this.proxy, filePath)
   }
 }
