@@ -16,6 +16,12 @@ class MQTTNorth extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
+    const { url, qos, username, password } = this.application.MQTTNorth
+    this.url = url
+    this.username = username
+    this.password = Buffer.from(this.decryptPassword(password))
+    this.qos = qos
+
     this.canHandleValues = true
   }
 
@@ -41,15 +47,14 @@ class MQTTNorth extends ApiHandler {
    */
   connect() {
     super.connect()
-    const { url, username, password } = this.application.MQTTNorth
-    this.logger.info(`Connecting North MQTT Connector to ${url}...`)
-    this.client = mqtt.connect(url, { username, password: Buffer.from(this.decryptPassword(password)) })
+    this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
+    this.client = mqtt.connect(this.url, { username: this.username, password: this.password })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
 
     this.client.on('connect', () => {
-      this.logger.info(`Connection North MQTT Connector to ${url}`)
+      this.logger.info(`Connection North MQTT Connector to ${this.url}`)
     })
   }
 
@@ -58,8 +63,7 @@ class MQTTNorth extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    const { url } = this.application.MQTTNorth
-    this.logger.info(`Disconnecting North MQTT Connector from ${url}`)
+    this.logger.info(`Disconnecting North MQTT Connector from ${this.url}`)
     this.client.end(true)
   }
 
@@ -72,13 +76,13 @@ class MQTTNorth extends ApiHandler {
     entries.forEach((entry) => {
       const { pointId, data } = entry
 
-      // The pointId string is normally stuctured like that
+      // The pointId string is normally structured like that
       //   xxx..xxx/yyy...yyy/.../zzz.zzz
       // In North MQTT usage we consider that the topic, to use, is given by yyy...yyy/.../zzz.zzz
       // We have to retrieve the end of the string after subtract "xxx.xxx/" string
       const topic = pointId.split('/').slice(1).join('/')
 
-      this.client.publish(topic, JSON.stringify(data), (error) => {
+      this.client.publish(topic, JSON.stringify(data), { qos: this.qos }, (error) => {
         if (error) {
           this.logger.error('Publish Error :', topic, data, error)
         }
