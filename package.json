@@ -60,7 +60,7 @@
     "mssql": "6.2.0",
     "mysql2": "2.1.0",
     "node-fetch": "2.6.0",
-    "node-opcua": "2.6.6",
+    "node-opcua": "2.7.0",
     "object-path": "0.11.4",
     "oracledb": "4.2.0",
     "pg": "8.2.1",
