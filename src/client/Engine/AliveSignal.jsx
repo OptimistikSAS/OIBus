@@ -79,6 +79,16 @@ const AliveSignal = ({ onChange, aliveSignal }) => (
             onChange={onChange}
           />
         </Col>
+        <Col md={2}>
+          <OIbCheckBox
+            label="Verbose"
+            name="engine.aliveSignal.verbose"
+            value={aliveSignal.verbose}
+            defaultValue={false}
+            help={<div>Send only version or everything</div>}
+            onChange={onChange}
+          />
+        </Col>
       </Row>
     )}
     {aliveSignal.enabled && (
