@@ -2,9 +2,6 @@ const fs = require('fs')
 const Console = require('./Console.class')
 const config = require('../../config/defaultConfig.json')
 
-// Mock nodejs fs api
-jest.mock('fs')
-
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})
 jest.spyOn(process.stdout, 'write').mockImplementation(() => {})
@@ -69,8 +66,7 @@ describe('Console north', () => {
   it('should properly handle file', () => {
     const consoleNorth = new Console({ Console: {} }, engine)
     const filePath = '/path/to/file/example.file'
-
-    fs.statSync.mockReturnValue({ size: 666 })
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
 
     consoleNorth.handleFile(filePath)
 

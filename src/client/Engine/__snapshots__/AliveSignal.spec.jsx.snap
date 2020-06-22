@@ -237,6 +237,9 @@ exports[`AliveSignal check AliveSignal 1`] = `
         </small>
       </div>
     </div>
+    <div
+      class="col-md-2"
+    />
   </div>
   <div
     class="row"
@@ -628,6 +631,9 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
         </small>
       </div>
     </div>
+    <div
+      class="col-md-2"
+    />
   </div>
   <div
     class="row"

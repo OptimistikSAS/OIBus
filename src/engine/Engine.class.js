@@ -3,10 +3,12 @@ const path = require('path')
 const os = require('os')
 
 const moment = require('moment-timezone')
+const checkDiskSpace = require('check-disk-space')
 
 const encryptionService = require('../services/encryption.service')
 const requestService = require('../services/request.service')
 const VERSION = require('../../package.json').version
+const databaseService = require('../services/database.service')
 
 // South classes
 const protocolList = {}
@@ -116,6 +118,9 @@ class Engine {
     this.jobs = []
 
     this.memoryStats = {}
+    this.addValuesMessages = 0
+    this.addValuesCount = 0
+    this.aliveSignalMessages = 0
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
@@ -150,36 +155,38 @@ class Engine {
    * Send values to a North application.
    * @param {string} applicationId - The application ID
    * @param {object[]} values - The values to send
-   * @return {Promise} - The send promise
+   * @return {number} - The send status
    */
   async handleValuesFromCache(applicationId, values) {
     this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
-    let success = false
+
+    let status
     try {
-      success = await this.activeApis[applicationId].handleValues(values)
+      status = await this.activeApis[applicationId].handleValues(values)
     } catch (error) {
-      this.logger.error(error)
+      status = error
     }
-    return success
+
+    return status
   }
 
   /**
    * Send file to a North application.
    * @param {string} applicationId - The application ID
    * @param {string} filePath - The file to send
-   * @return {Promise} - The send promise
+   * @return {number} - The send status
    */
   async sendFile(applicationId, filePath) {
     this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
-    let success = false
 
+    let status
     try {
-      success = await this.activeApis[applicationId].handleFile(filePath)
+      status = await this.activeApis[applicationId].handleFile(filePath)
     } catch (error) {
-      this.logger.error(error)
+      status = error
     }
 
-    return success
+    return status
   }
 
   /**
@@ -389,6 +396,20 @@ class Engine {
     const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
+    const { engineConfig } = this.configService.getConfig()
+    const diskSpace = await checkDiskSpace(path.resolve(engineConfig.caching.cacheFolder))
+    const freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
+    const totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
+
+    const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteFilename)
+
+    const processUptime = 1000 * 1000 * process.uptime()
+    const processCpuUsage = process.cpuUsage()
+    const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime).toFixed(2)
+
+    const filesErrorCount = await databaseService.getErroredFilesCount(this.cache.filesErrorDatabasePath)
+    const valuesErrorCount = await databaseService.getErroredValuesCount(this.cache.valuesErrorDatabasePath)
+
     return {
       version: this.getVersion(),
       architecture: process.arch,
@@ -398,6 +419,8 @@ class Engine {
       configurationFile: this.configService.getConfigurationFileLocation(),
       memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
+      disk: `${freeSpace}/${totalSpace} GB`,
+      cpuUsage: `${cpuUsagePercentage}%`,
       processId: process.pid,
       uptime: moment.duration(process.uptime(), 'seconds').humanize(),
       hostname: os.hostname(),
@@ -405,7 +428,14 @@ class Engine {
       osType: os.type(),
       apisCacheStats,
       protocolsCacheStats,
-      copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+      addValuesMessages: this.addValuesMessages,
+      addValuesCount: this.addValuesCount,
+      aliveSignalMessages: this.aliveSignalMessages,
+      logError: logsCount.error,
+      logWarning: logsCount.warn,
+      filesErrorCount,
+      valuesErrorCount,
+      copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
     }
   }
 

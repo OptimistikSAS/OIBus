@@ -288,6 +288,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="form-check-label"
           >
             <input
+              checked=""
               class="oi-form-input form-check-input"
               id="south.dataSources.0.FolderScanner.preserve"
               name="south.dataSources.0.FolderScanner.preserve"
@@ -2755,7 +2756,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 </p>
                 <ul>
                   <li>
-                    The query must have a specific format and contain a WHERE clause with the date constraint of the time column using @date1.
+                    The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @LastCompletedDate.
                   </li>
                   <li>
                     To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout.
@@ -2808,7 +2809,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.host"
             name="south.dataSources.0.SQLDbToFile.host"
             type="text"
-            value="http://192.168.0.11"
+            value="192.168.0.11"
           />
           <div
             class="invalid-feedback"
@@ -2997,6 +2998,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       </div>
       <div
         class="col-md-3"
+      />
+      <div
+        class="col-md-2"
       />
     </div>
     <div

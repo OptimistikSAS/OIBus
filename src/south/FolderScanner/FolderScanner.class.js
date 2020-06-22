@@ -50,69 +50,44 @@ class FolderScanner extends ProtocolHandler {
     }
 
     // List files in the inputFolder and manage them.
-    fs.readdir(this.inputFolder, async (error, files) => {
-      if (error) {
-        this.logger.error(error)
-        return
-      }
-
+    try {
+      const files = fs.readdirSync(this.inputFolder)
       if (files.length > 0) {
-        let filesToHandle = []
-
-        const matchedFiles = files.filter(this.checkFile.bind(this))
-
-        if (this.preserveFiles) {
-          filesToHandle = await this.filterHandledFiles(matchedFiles)
-        } else {
-          filesToHandle = matchedFiles
-        }
-
-        filesToHandle.forEach(this.sendFile.bind(this))
+        files.forEach(async (file) => {
+          const matchConditions = await this.checkConditions(file)
+          if (matchConditions) this.sendFile(file)
+        })
       } else {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
-    })
-  }
-
-  /**
-   * Check the file to verify if the name and the age of the file meet the request
-   * @param {String} filename - The name of the file
-   * @returns {Boolean} - Whether the file matches the conditions
-   */
-  checkFile(filename) {
-    let matched = false
-
-    if (this.regex.test(filename)) {
-      const timestamp = new Date().getTime()
-      const stats = fs.statSync(path.join(this.inputFolder, filename))
-      this.logger.silly(`checkFile ts:${timestamp} mT:${stats.mtimeMs} mA ${this.minAge}`)
-      matched = (stats.mtimeMs < (timestamp - this.minAge))
+    } catch (error) {
+      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error}`)
     }
-    this.logger.silly(`checkFile ${filename} matched ${matched}`)
-    return matched
   }
 
   /**
-   * Filter out already handled files.
-   * @param {string[]} filenames - The files to check
-   * @return {string[]} - The filtered files
+   * Filter the files if the name and the age of the file meet the request
+   * or (when preserveFiles)if they were already sent.
+   * @param {String} filename - file
+   * @returns {Array} - Whether the file matches the conditions
    */
-  async filterHandledFiles(filenames) {
-    const filesToHandle = []
-
-    await Promise.all(filenames.map(async (filename) => {
-      const stats = fs.statSync(path.join(this.inputFolder, filename))
-      const modified = await databaseService.getFolderScannerModifyTime(this.database, filename)
-      if (modified) {
-        if ((stats.mtimeMs > modified)) {
-          filesToHandle.push(filename)
-        }
-      } else {
-        filesToHandle.push(filename)
-      }
-    }))
-
-    return filesToHandle
+  async checkConditions(filename) {
+    // check regexp
+    if (!this.regex.test(filename)) return false
+    this.logger.silly(`checkConditions:${filename} match regexp`)
+    // check age
+    const timestamp = new Date().getTime()
+    const stats = fs.statSync(path.join(this.inputFolder, filename))
+    this.logger.silly(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
+    if (stats.mtimeMs + this.minAge > timestamp) return false
+    this.logger.silly(`checkConditions: ${filename} match age`)
+    // check if the file was already sent (if preserveFiles is true)
+    if (this.preserveFiles) {
+      const modifyTime = await databaseService.getFolderScannerModifyTime(this.database, filename)
+      if (modifyTime >= stats.mtimeMs) return false
+      this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
+    }
+    return true
   }
 
   /**
@@ -120,29 +95,16 @@ class FolderScanner extends ProtocolHandler {
    * @param {String} filename - The filename
    * @return {void}
    */
-  sendFile(filename) {
+  async sendFile(filename) {
     const filePath = path.join(this.inputFolder, filename)
-
     this.logger.debug(`Sending ${filePath} to Engine.`)
-
     this.addFile(filePath)
 
     if (this.preserveFiles) {
-      this.storeFile(filename)
+      const stats = fs.statSync(path.join(this.inputFolder, filename))
+      this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
+      await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
     }
-  }
-
-  /**
-   * Store the file with the modify time.
-   * @param {string} filename - The filename
-   * @return {void}
-   */
-  async storeFile(filename) {
-    const stats = fs.statSync(path.join(this.inputFolder, filename))
-
-    this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
-
-    await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
   }
 }
 
