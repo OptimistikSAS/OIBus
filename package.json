@@ -78,7 +78,7 @@
     "sqlite3": "4.2.0",
     "timexe": "1.0.0",
     "tunnel": "0.0.6",
-    "winston": "3.2.1",
+    "winston": "3.3.2",
     "winston-transport": "4.3.0"
   },
   "devDependencies": {
