@@ -29,6 +29,17 @@ schema.form = {
             Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
             client.
           </li>
+          <li>
+            <p>Regexp and Topic:</p>
+            Regexp will be used to identify token in the pointId that will be used to build the MQTT topic.
+            <ul>
+              <li>
+                {'(.*)\\/(.{2})(.)(.*)'}
+                This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
+              </li>
+              <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
+            </ul>
+          </li>
         </ul>
       </div>
     ),
@@ -38,6 +49,13 @@ schema.form = {
     protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     defaultValue: '',
     help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
+  },
+  qos: {
+    type: 'OIbSelect',
+    newRow: false,
+    md: 1,
+    options: [0, 1, 2],
+    defaultValue: 1,
   },
   username: {
     type: 'OIbText',
@@ -51,6 +69,17 @@ schema.form = {
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
     help: <div>password</div>,
+  },
+  regExp: {
+    type: 'OIbText',
+    valid: notEmpty(),
+    defaultValue: '(.*)',
+    help: 'for example (.*)\\/(.{2})(.)(.*) to split in 4 groups',
+  },
+  topic: {
+    type: 'OIbText',
+    valid: notEmpty(),
+    defaultValue: '%1$s',
   },
 }
 

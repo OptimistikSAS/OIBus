@@ -4,6 +4,7 @@ const path = require('path')
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
 const Logger = require('./Logger.class')
+const ApiHandler = require('../north/ApiHandler.class')
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -48,6 +49,9 @@ class Cache {
     // Cache stats
     this.cacheStats = {}
     this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
+    // Errored files/values database path
+    this.filesErrorDatabasePath = `${this.cacheFolder}/fileCache-error.db`
+    this.valuesErrorDatabasePath = `${this.cacheFolder}/valueCache-error.db`
   }
 
   /**
@@ -84,9 +88,13 @@ class Cache {
    * @return {void}
    */
   async initialize(activeApis) {
-    this.logger.debug(`use db: ${this.cacheFolder}/fileCache.db`)
+    this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-    this.logger.debug(`db count: ${await databaseService.getCount(this.filesDatabase)}`)
+    this.filesErrorDatabase = await databaseService.createFilesDatabase(this.filesErrorDatabasePath)
+    this.valuesErrorDatabase = await databaseService.createValueErrorsDatabase(this.valuesErrorDatabasePath)
+    this.logger.debug(`Files db count: ${await databaseService.getCount(this.filesDatabase)}`)
+    this.logger.debug(`Files error db count: ${await databaseService.getCount(this.filesErrorDatabase)}`)
+    this.logger.debug(`Values error db count: ${await databaseService.getCount(this.valuesErrorDatabase)}`)
     // initialize the internal object apis with the list of north apis
     const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
     await Promise.all(actions)
@@ -267,7 +275,7 @@ class Cache {
    */
   async sendCallback(api) {
     const { applicationId, canHandleValues, canHandleFiles, config } = api
-    let success = true
+    let status = ApiHandler.STATUS.SUCCESS
 
     this.logger.silly(`sendCallback ${applicationId}, sendInProgress ${!!this.sendInProgress[applicationId]}`)
 
@@ -276,15 +284,15 @@ class Cache {
       this.resendImmediately[applicationId] = false
 
       if (canHandleValues) {
-        success = await this.sendCallbackForValues(api)
+        status = await this.sendCallbackForValues(api)
       }
 
       if (canHandleFiles) {
-        success = await this.sendCallbackForFiles(api)
+        status = await this.sendCallbackForFiles(api)
       }
 
       const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
-      const timeout = success ? successTimeout : config.retryInterval
+      const timeout = (status === ApiHandler.STATUS.SUCCESS) ? successTimeout : config.retryInterval
       this.resetTimeout(api, timeout)
 
       this.sendInProgress[applicationId] = false
@@ -304,25 +312,42 @@ class Cache {
 
     try {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+      let removed
 
       if (values) {
         this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
-        const success = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(`Cache:handleValuesFromCache, success: ${success} AppId: ${application.applicationId}`)
-        if (success) {
-          const removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
-          if (removed !== values.length) {
-            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
-          }
+        const status = await this.engine.handleValuesFromCache(applicationId, values)
+        this.logger.silly(`Cache:handleValuesFromCache, status: ${status} AppId: ${application.applicationId}`)
+        switch (status) {
+          case ApiHandler.STATUS.SUCCESS:
+            removed = await databaseService.removeSentValues(database, values)
+            this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+            if (removed !== values.length) {
+              this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+            }
+            break
+          case ApiHandler.STATUS.LOGIC_ERROR:
+            // Add errored values into error table
+            this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${applicationId}`)
+            await databaseService.saveErroredValues(this.valuesErrorDatabase, applicationId, values)
+
+            // Remove them from the cache table
+            removed = await databaseService.removeSentValues(database, values)
+            this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+            if (removed !== values.length) {
+              this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+            }
+            break
+          default:
+            break
         }
       } else {
         this.logger.silly(`no values in the db for ${applicationId}`)
       }
-      return true
+      return ApiHandler.STATUS.SUCCESS
     } catch (error) {
       this.logger.error(error)
-      return false
+      return ApiHandler.STATUS.COMMUNICATION_ERROR
     }
   }
 
@@ -336,31 +361,43 @@ class Cache {
     this.logger.silly(`sendCallbackForFiles() for ${applicationId}`)
 
     try {
-      const filePath = await databaseService.getFileToSend(this.filesDatabase, applicationId)
-      this.logger.silly(`sendCallbackForFiles() filePath:${filePath}`)
+      const fileToSend = await databaseService.getFileToSend(this.filesDatabase, applicationId)
 
-      if (filePath === null) {
+      if (fileToSend === null) {
         this.logger.silly('sendCallbackForFiles(): no file to send')
-        return true
+        return ApiHandler.STATUS.SUCCESS
       }
 
-      if (!fs.existsSync(filePath)) {
+      this.logger.silly(`sendCallbackForFiles() file:${fileToSend.path}`)
+
+      if (!fs.existsSync(fileToSend.path)) {
         // file in cache does not exist on filesystem
-        await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
-        this.logger.error(new Error(`${filePath} not found! Removing it from db.`))
-        return false
+        await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+        this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
+        return ApiHandler.STATUS.SUCCESS
       }
-      this.logger.silly(`sendCallbackForFiles(${filePath}) call sendFile() ${applicationId}`)
-      const success = await this.engine.sendFile(applicationId, filePath)
-      if (success) {
-        this.logger.silly(`sendCallbackForFiles(${filePath}) deleteSentFile for ${applicationId}`)
-        await databaseService.deleteSentFile(this.filesDatabase, applicationId, filePath)
-        await this.handleSentFile(filePath)
+      this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${applicationId}`)
+      const status = await this.engine.sendFile(applicationId, fileToSend.path)
+      switch (status) {
+        case ApiHandler.STATUS.SUCCESS:
+          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${applicationId}`)
+          await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+          await this.handleSentFile(fileToSend.path)
+          break
+        case ApiHandler.STATUS.LOGIC_ERROR:
+          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${applicationId}`)
+          await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, applicationId, fileToSend.path)
+
+          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${applicationId}`)
+          await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+          break
+        default:
+          break
       }
-      return success
+      return status
     } catch (error) {
       this.logger.error(error)
-      return false
+      return ApiHandler.STATUS.COMMUNICATION_ERROR
     }
   }
 
