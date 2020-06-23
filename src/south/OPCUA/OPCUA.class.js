@@ -150,7 +150,6 @@ class OPCUA extends ProtocolHandler {
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
-
       this.addValues(values)
 
       this.lastCompletedAt[scanMode] = maxTimestamp + 1
