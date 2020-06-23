@@ -164,7 +164,6 @@ class MongoDB extends ApiHandler {
     return true
   }
 
-
   /**
    * Ensure Collection exists and create it with indexes if not exists
    * @param {string}   collection  - The collection name
