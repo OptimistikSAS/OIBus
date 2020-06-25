@@ -87,7 +87,7 @@ class MQTTNorth extends ApiHandler {
 
       this.client.publish(topicValue, JSON.stringify(data), { qos: this.qos }, (error) => {
         if (error) {
-          this.logger.error('Publish Error :', topic, data, error)
+          this.logger.error('Publish Error :', topicValue, data, error)
         }
       })
     })
