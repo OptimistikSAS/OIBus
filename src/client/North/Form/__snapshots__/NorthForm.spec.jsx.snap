@@ -244,6 +244,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.OIAnalyticsFile.host"
             name="north.applications.0.OIAnalyticsFile.host"
@@ -272,6 +273,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             End Point
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.OIAnalyticsFile.endpoint"
             name="north.applications.0.OIAnalyticsFile.endpoint"
@@ -359,6 +361,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 Type
               </label>
               <select
+                aria-invalid="false"
                 class="oi-form-input form-control"
                 id="type"
                 name="type"
@@ -391,6 +394,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 User name
               </label>
               <input
+                aria-invalid="false"
                 class="oi-form-input form-control"
                 id="username"
                 name="username"
@@ -418,6 +422,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 class="input-group"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="password"
                   name="password"
@@ -580,6 +585,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             Send interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.sendInterval"
             name="north.applications.0.caching.sendInterval"
@@ -604,6 +610,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             Retry interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.retryInterval"
             name="north.applications.0.caching.retryInterval"
@@ -632,6 +639,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             Group count
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.groupCount"
             name="north.applications.0.caching.groupCount"
@@ -658,6 +666,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             Max group count
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.maxSendCount"
             name="north.applications.0.caching.maxSendCount"
@@ -1025,6 +1034,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             Send interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.sendInterval"
             name="north.applications.0.caching.sendInterval"
@@ -1049,6 +1059,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             Retry interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.retryInterval"
             name="north.applications.0.caching.retryInterval"
@@ -1077,6 +1088,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             Group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.groupCount"
             name="north.applications.0.caching.groupCount"
@@ -1101,6 +1113,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             Max group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.maxSendCount"
             name="north.applications.0.caching.maxSendCount"
@@ -1205,6 +1218,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                   class="form-group"
                 >
                   <select
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="subscribedTo.0"
                     name="subscribedTo.0"
@@ -1476,6 +1490,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Host
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.OIConnect.host"
             name="north.applications.0.OIConnect.host"
@@ -1502,6 +1517,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             End Point
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.OIConnect.endpoint"
             name="north.applications.0.OIConnect.endpoint"
@@ -1591,6 +1607,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                 Type
               </label>
               <select
+                aria-invalid="false"
                 class="oi-form-input form-control"
                 id="type"
                 name="type"
@@ -1623,6 +1640,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                 User name
               </label>
               <input
+                aria-invalid="true"
                 class="oi-form-input is-invalid form-control"
                 id="username"
                 name="username"
@@ -1652,6 +1670,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                 class="input-group"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="password"
                   name="password"
@@ -1844,6 +1863,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Send interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.sendInterval"
             name="north.applications.0.caching.sendInterval"
@@ -1868,6 +1888,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Retry interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.retryInterval"
             name="north.applications.0.caching.retryInterval"
@@ -1896,6 +1917,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.groupCount"
             name="north.applications.0.caching.groupCount"
@@ -1920,6 +1942,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Max group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.maxSendCount"
             name="north.applications.0.caching.maxSendCount"
@@ -2259,6 +2282,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Url
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.MQTTNorth.url"
             name="north.applications.0.MQTTNorth.url"
@@ -2290,6 +2314,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Qos
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.MQTTNorth.qos"
             name="north.applications.0.MQTTNorth.qos"
@@ -2332,6 +2357,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Username
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.MQTTNorth.username"
             name="north.applications.0.MQTTNorth.username"
@@ -2366,6 +2392,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="input-group"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="north.applications.0.MQTTNorth.password"
               name="north.applications.0.MQTTNorth.password"
@@ -2403,6 +2430,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Reg exp
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.MQTTNorth.regExp"
             name="north.applications.0.MQTTNorth.regExp"
@@ -2436,6 +2464,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Topic
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.MQTTNorth.topic"
             name="north.applications.0.MQTTNorth.topic"
@@ -2526,6 +2555,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Send interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.sendInterval"
             name="north.applications.0.caching.sendInterval"
@@ -2550,6 +2580,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Retry interval (ms)
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.retryInterval"
             name="north.applications.0.caching.retryInterval"
@@ -2578,6 +2609,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.groupCount"
             name="north.applications.0.caching.groupCount"
@@ -2602,6 +2634,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             Max group count
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="north.applications.0.caching.maxSendCount"
             name="north.applications.0.caching.maxSendCount"
@@ -2942,6 +2975,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             Send interval (ms)
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.sendInterval"
             name="north.applications.0.caching.sendInterval"
@@ -2968,6 +3002,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             Retry interval (ms)
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.retryInterval"
             name="north.applications.0.caching.retryInterval"
@@ -2998,6 +3033,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             Group count
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.groupCount"
             name="north.applications.0.caching.groupCount"
@@ -3024,6 +3060,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             Max group count
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="north.applications.0.caching.maxSendCount"
             name="north.applications.0.caching.maxSendCount"

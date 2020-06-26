@@ -6,6 +6,7 @@ exports[`OIbScanMode check ScanMode with no label 1`] = `
     class="form-group"
   >
     <select
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
@@ -40,6 +41,7 @@ exports[`OIbScanMode check ScanMode with value="value" 1`] = `
       label
     </label>
     <select
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
@@ -74,6 +76,7 @@ exports[`OIbScanMode check ScanMode with value="value" and help 1`] = `
       label
     </label>
     <select
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"

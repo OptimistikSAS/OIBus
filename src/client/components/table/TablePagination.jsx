@@ -47,7 +47,6 @@ const TablePagination = ({ maxToDisplay, selected, total, onPagePressed }) => {
   )
 }
 
-
 TablePagination.propTypes = {
   maxToDisplay: PropTypes.number.isRequired,
   selected: PropTypes.number.isRequired,
