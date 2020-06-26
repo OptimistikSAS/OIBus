@@ -96,6 +96,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
           Host
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.host"
           name="engine.aliveSignal.host"
@@ -127,6 +128,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
           Endpoint
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.endpoint"
           name="engine.aliveSignal.endpoint"
@@ -158,6 +160,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
           Id
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.id"
           name="engine.aliveSignal.id"
@@ -189,6 +192,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
           Frequency
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.frequency"
           name="engine.aliveSignal.frequency"
@@ -316,6 +320,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
               Type
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="type"
               name="type"
@@ -348,6 +353,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
               User name
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="username"
               name="username"
@@ -375,6 +381,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
               class="input-group"
             >
               <input
+                aria-invalid="false"
                 class="oi-form-input form-control"
                 id="password"
                 name="password"
@@ -490,6 +497,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
           Host
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.host"
           name="engine.aliveSignal.host"
@@ -521,6 +529,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
           Endpoint
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.endpoint"
           name="engine.aliveSignal.endpoint"
@@ -552,6 +561,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
           Id
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.id"
           name="engine.aliveSignal.id"
@@ -583,6 +593,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
           Frequency
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.aliveSignal.frequency"
           name="engine.aliveSignal.frequency"
@@ -710,6 +721,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
               Type
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="type"
               name="type"
@@ -742,6 +754,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
               User name
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="username"
               name="username"
@@ -769,6 +782,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
               class="input-group"
             >
               <input
+                aria-invalid="false"
                 class="oi-form-input form-control"
                 id="password"
                 name="password"

@@ -14,6 +14,7 @@ exports[`OIbTextArea check Texte with inline 1`] = `
       label
     </label>
     <textarea
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -39,6 +40,7 @@ exports[`OIbTextArea check TexteArea with too short value 1`] = `
       label
     </label>
     <textarea
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -64,6 +66,7 @@ exports[`OIbTextArea check TexteArea with value and help text 1`] = `
       label
     </label>
     <textarea
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -96,6 +99,7 @@ exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
       label
     </label>
     <textarea
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -116,6 +120,7 @@ exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
     style="margin-bottom: 0px;"
   >
     <textarea
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -141,6 +146,7 @@ exports[`OIbTextArea check change text 1`] = `
       label
     </label>
     <textarea
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
