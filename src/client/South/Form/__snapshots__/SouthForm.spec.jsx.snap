@@ -139,6 +139,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="form-group"
         >
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.scanMode"
             name="south.dataSources.0.scanMode"
@@ -256,6 +257,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             Input folder
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.FolderScanner.inputFolder"
             name="south.dataSources.0.FolderScanner.inputFolder"
@@ -315,6 +317,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             Minimum Age
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.FolderScanner.minAge"
             name="south.dataSources.0.FolderScanner.minAge"
@@ -343,6 +346,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             RegExp
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.FolderScanner.regex"
             name="south.dataSources.0.FolderScanner.regex"
@@ -609,6 +613,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Url
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.url"
             name="south.dataSources.0.MQTT.url"
@@ -647,6 +652,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Username
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.username"
             name="south.dataSources.0.MQTT.username"
@@ -681,6 +687,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class="input-group"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="south.dataSources.0.MQTT.password"
               name="south.dataSources.0.MQTT.password"
@@ -790,6 +797,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Time stamp origin
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.timeStampOrigin"
             name="south.dataSources.0.MQTT.timeStampOrigin"
@@ -823,6 +831,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Time stamp key
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.timeStampKey"
             name="south.dataSources.0.MQTT.timeStampKey"
@@ -847,6 +856,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Time stamp format
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.timeStampFormat"
             name="south.dataSources.0.MQTT.timeStampFormat"
@@ -871,6 +881,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             Time stamp timezone
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.MQTT.timeStampTimezone"
             name="south.dataSources.0.MQTT.timeStampTimezone"
@@ -1573,6 +1584,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Agent filename
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.agentFilename"
             name="south.dataSources.0.OPCHDA.agentFilename"
@@ -1604,6 +1616,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             TCP Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.tcpPort"
             name="south.dataSources.0.OPCHDA.tcpPort"
@@ -1635,6 +1648,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Logging Level
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.logLevel"
             name="south.dataSources.0.OPCHDA.logLevel"
@@ -1761,6 +1775,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.host"
             name="south.dataSources.0.OPCHDA.host"
@@ -1792,6 +1807,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Server name
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.serverName"
             name="south.dataSources.0.OPCHDA.serverName"
@@ -1827,6 +1843,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Retry interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.retryInterval"
             name="south.dataSources.0.OPCHDA.retryInterval"
@@ -1858,6 +1875,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Max return values
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.maxReturnValues"
             name="south.dataSources.0.OPCHDA.maxReturnValues"
@@ -1889,6 +1907,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             Max read interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCHDA.maxReadInterval"
             name="south.dataSources.0.OPCHDA.maxReadInterval"
@@ -2223,6 +2242,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
@@ -2254,6 +2274,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.Modbus.port"
             name="south.dataSources.0.Modbus.port"
@@ -2481,6 +2502,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
@@ -2512,6 +2534,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.Modbus.port"
             name="south.dataSources.0.Modbus.port"
@@ -2673,6 +2696,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="form-group"
         >
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.scanMode"
             name="south.dataSources.0.scanMode"
@@ -2805,6 +2829,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.host"
             name="south.dataSources.0.SQLDbToFile.host"
@@ -2836,6 +2861,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.port"
             name="south.dataSources.0.SQLDbToFile.port"
@@ -2871,6 +2897,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Database
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.database"
             name="south.dataSources.0.SQLDbToFile.database"
@@ -2902,6 +2929,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             SQL Driver
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.driver"
             name="south.dataSources.0.SQLDbToFile.driver"
@@ -2956,6 +2984,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Username
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.username"
             name="south.dataSources.0.SQLDbToFile.username"
@@ -2983,6 +3012,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class="input-group"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="south.dataSources.0.SQLDbToFile.password"
               name="south.dataSources.0.SQLDbToFile.password"
@@ -3019,6 +3049,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Query
           </label>
           <textarea
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.query"
             name="south.dataSources.0.SQLDbToFile.query"
@@ -3054,6 +3085,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Connection timeout
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.connectionTimeout"
             name="south.dataSources.0.SQLDbToFile.connectionTimeout"
@@ -3078,6 +3110,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Request timeout
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.requestTimeout"
             name="south.dataSources.0.SQLDbToFile.requestTimeout"
@@ -3106,6 +3139,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Delimiter
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.delimiter"
             name="south.dataSources.0.SQLDbToFile.delimiter"
@@ -3137,6 +3171,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Date format
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.dateFormat"
             name="south.dataSources.0.SQLDbToFile.dateFormat"
@@ -3168,6 +3203,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Filename
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.filename"
             name="south.dataSources.0.SQLDbToFile.filename"
@@ -3203,6 +3239,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Time column
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.timeColumn"
             name="south.dataSources.0.SQLDbToFile.timeColumn"
@@ -3234,6 +3271,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             Timezone
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.SQLDbToFile.timezone"
             name="south.dataSources.0.SQLDbToFile.timezone"
@@ -3935,6 +3973,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             Retry interval
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.retryInterval"
             name="south.dataSources.0.OPCUA.retryInterval"
@@ -3968,6 +4007,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             Max return values
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCUA.maxReturnValues"
             name="south.dataSources.0.OPCUA.maxReturnValues"
@@ -3999,6 +4039,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             Max read interval
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.maxReadInterval"
             name="south.dataSources.0.OPCUA.maxReadInterval"
@@ -4345,6 +4386,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             Retry interval
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.retryInterval"
             name="south.dataSources.0.OPCUA.retryInterval"
@@ -4378,6 +4420,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             Max return values
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.0.OPCUA.maxReturnValues"
             name="south.dataSources.0.OPCUA.maxReturnValues"
@@ -4409,6 +4452,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             Max read interval
           </label>
           <input
+            aria-invalid="true"
             class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.OPCUA.maxReadInterval"
             name="south.dataSources.0.OPCUA.maxReadInterval"

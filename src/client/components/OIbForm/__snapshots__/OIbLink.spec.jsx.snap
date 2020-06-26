@@ -7,6 +7,7 @@ exports[`OIbLink check OIbLink inline 1`] = `
     style="margin-bottom: 0px; display: inline-block;"
   >
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -32,6 +33,7 @@ exports[`OIbLink check OIbLink with invalide value 1`] = `
       label
     </label>
     <input
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
@@ -59,6 +61,7 @@ exports[`OIbLink check OIbLink with value="http://localhost" 1`] = `
       label
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"

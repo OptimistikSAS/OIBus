@@ -21,6 +21,7 @@ exports[`NewApplicationRow check NewApplicationRow 1`] = `
             New Application ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="applicationId"
             name="applicationId"
@@ -45,6 +46,7 @@ exports[`NewApplicationRow check NewApplicationRow 1`] = `
             API
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="api"
             name="api"
@@ -106,6 +108,7 @@ exports[`NewApplicationRow check add press 1`] = `
             New Application ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="applicationId"
             name="applicationId"
@@ -130,6 +133,7 @@ exports[`NewApplicationRow check add press 1`] = `
             API
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="api"
             name="api"
@@ -191,6 +195,7 @@ exports[`NewApplicationRow check add pressed with empty application name 1`] = `
             New Application ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="applicationId"
             name="applicationId"
@@ -215,6 +220,7 @@ exports[`NewApplicationRow check add pressed with empty application name 1`] = `
             API
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="api"
             name="api"
@@ -276,6 +282,7 @@ exports[`NewApplicationRow check change api 1`] = `
             New Application ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="applicationId"
             name="applicationId"
@@ -300,6 +307,7 @@ exports[`NewApplicationRow check change api 1`] = `
             API
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="api"
             name="api"
@@ -361,6 +369,7 @@ exports[`NewApplicationRow check change applicationId 1`] = `
             New Application ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="applicationId"
             name="applicationId"
@@ -385,6 +394,7 @@ exports[`NewApplicationRow check change applicationId 1`] = `
             API
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="api"
             name="api"
