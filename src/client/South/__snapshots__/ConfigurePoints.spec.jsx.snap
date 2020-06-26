@@ -45,6 +45,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -106,6 +107,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -122,6 +124,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -176,6 +179,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -192,6 +196,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -246,6 +251,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -262,6 +268,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -484,6 +491,7 @@ exports[`ConfigurePoints check add new point 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -545,6 +553,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -561,6 +570,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -615,6 +625,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -631,6 +642,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -685,6 +697,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -701,6 +714,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -923,6 +937,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -984,6 +999,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -1000,6 +1016,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -1054,6 +1071,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -1070,6 +1088,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -1124,6 +1143,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -1140,6 +1160,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -1362,6 +1383,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -1423,6 +1445,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -1439,6 +1462,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -1493,6 +1517,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -1509,6 +1534,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -1563,6 +1589,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -1579,6 +1606,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -1801,6 +1829,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -1862,6 +1891,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -1878,6 +1908,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -1932,6 +1963,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -1948,6 +1980,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -2002,6 +2035,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -2018,6 +2052,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -2240,6 +2275,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -2301,6 +2337,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -2317,6 +2354,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -2371,6 +2409,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -2387,6 +2426,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -2441,6 +2481,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -2457,6 +2498,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -2679,6 +2721,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -2740,6 +2783,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -2756,6 +2800,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -2810,6 +2855,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -2826,6 +2872,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -2880,6 +2927,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -2896,6 +2944,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -3118,6 +3167,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -3179,6 +3229,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -3195,6 +3246,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -3249,6 +3301,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -3265,6 +3318,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -3319,6 +3373,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -3335,6 +3390,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -3557,6 +3613,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -3618,6 +3675,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -3634,6 +3692,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -3688,6 +3747,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -3704,6 +3764,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -3758,6 +3819,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -3774,6 +3836,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -3996,6 +4059,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -4057,6 +4121,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -4073,6 +4138,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -4127,6 +4193,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -4143,6 +4210,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -4197,6 +4265,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -4213,6 +4282,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -4435,6 +4505,7 @@ exports[`ConfigurePoints check export points 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -4496,6 +4567,7 @@ exports[`ConfigurePoints check export points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -4512,6 +4584,7 @@ exports[`ConfigurePoints check export points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -4566,6 +4639,7 @@ exports[`ConfigurePoints check export points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -4582,6 +4656,7 @@ exports[`ConfigurePoints check export points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -4636,6 +4711,7 @@ exports[`ConfigurePoints check export points 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -4652,6 +4728,7 @@ exports[`ConfigurePoints check export points 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -4874,6 +4951,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -4935,6 +5013,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -4951,6 +5030,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -5005,6 +5085,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -5021,6 +5102,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -5075,6 +5157,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -5091,6 +5174,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -5313,6 +5397,7 @@ exports[`ConfigurePoints check export points success 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -5374,6 +5459,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -5390,6 +5476,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -5444,6 +5531,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -5460,6 +5548,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -5514,6 +5603,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -5530,6 +5620,7 @@ exports[`ConfigurePoints check export points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -5752,6 +5843,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -5813,6 +5905,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -5829,6 +5922,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -5883,6 +5977,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -5899,6 +5994,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -5953,6 +6049,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -5969,6 +6066,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -6191,6 +6289,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -6252,6 +6351,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -6268,6 +6368,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -6322,6 +6423,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -6338,6 +6440,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -6392,6 +6495,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -6408,6 +6512,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -6630,6 +6735,7 @@ exports[`ConfigurePoints check import points press 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -6691,6 +6797,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -6707,6 +6814,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -6761,6 +6869,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -6777,6 +6886,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -6831,6 +6941,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -6847,6 +6958,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -7069,6 +7181,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -7130,6 +7243,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -7146,6 +7260,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -7200,6 +7315,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -7216,6 +7332,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -7270,6 +7387,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -7286,6 +7404,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -7508,6 +7627,7 @@ exports[`ConfigurePoints check import points success 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -7569,6 +7689,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -7585,6 +7706,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -7639,6 +7761,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -7655,6 +7778,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -7709,6 +7833,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -7725,6 +7850,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -7967,6 +8093,7 @@ exports[`ConfigurePoints check no points 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -8102,6 +8229,7 @@ exports[`ConfigurePoints check pagination 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"
@@ -8163,6 +8291,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.pointId"
               name="points.0.pointId"
@@ -8179,6 +8308,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.0.scanMode"
               name="points.0.scanMode"
@@ -8233,6 +8363,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.pointId"
               name="points.1.pointId"
@@ -8249,6 +8380,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.1.scanMode"
               name="points.1.scanMode"
@@ -8303,6 +8435,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             style="margin-bottom: 0px;"
           >
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.pointId"
               name="points.2.pointId"
@@ -8319,6 +8452,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             class="form-group"
           >
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="points.2.scanMode"
               name="points.2.scanMode"
@@ -8541,6 +8675,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
       Filter
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="filterText"
       name="filterText"

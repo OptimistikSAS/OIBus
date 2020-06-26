@@ -694,6 +694,7 @@ exports[`South check South 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -718,6 +719,7 @@ exports[`South check South 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"
@@ -1473,6 +1475,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -1497,6 +1500,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"
@@ -2252,6 +2256,7 @@ exports[`South check delete first dataSource 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -2276,6 +2281,7 @@ exports[`South check delete first dataSource 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"
@@ -3031,6 +3037,7 @@ exports[`South check edit first dataSource id 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -3055,6 +3062,7 @@ exports[`South check edit first dataSource id 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"
@@ -3830,6 +3838,7 @@ exports[`South check open edit first application 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -3854,6 +3863,7 @@ exports[`South check open edit first application 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"
@@ -3982,6 +3992,7 @@ exports[`South check press edit first dataSource id 1`] = `
                 style="margin-bottom: 0px; display: inline-block;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="MQTTServer"
                   name="MQTTServer"
@@ -4622,6 +4633,7 @@ exports[`South check press edit first dataSource id 1`] = `
               New DataSource ID
             </label>
             <input
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="dataSourceId"
               name="dataSourceId"
@@ -4646,6 +4658,7 @@ exports[`South check press edit first dataSource id 1`] = `
               Protocol
             </label>
             <select
+              aria-invalid="false"
               class="oi-form-input form-control"
               id="protocol"
               name="protocol"

@@ -5,7 +5,6 @@ import newConfig from '../../../tests/testConfig'
 import ConfigureProtocol from './ConfigureProtocol.jsx'
 import utils from '../helpers/utils'
 
-
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
