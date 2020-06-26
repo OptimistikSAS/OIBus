@@ -397,9 +397,15 @@ class Engine {
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
     const { engineConfig } = this.configService.getConfig()
-    const diskSpace = await checkDiskSpace(path.resolve(engineConfig.caching.cacheFolder))
-    const freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
-    const totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
+    let freeSpace = 'NA'
+    let totalSpace = 'NA'
+    try {
+      const diskSpace = await checkDiskSpace(path.resolve(engineConfig.caching.cacheFolder))
+      freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
+      totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
+    } catch (error) {
+      this.logger.error(error)
+    }
 
     const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteFilename)
 
