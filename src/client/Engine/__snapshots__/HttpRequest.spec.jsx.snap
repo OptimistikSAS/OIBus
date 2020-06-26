@@ -69,6 +69,7 @@ exports[`HttpRequest check HttpRequest 1`] = `
           Stack
         </label>
         <select
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
@@ -109,6 +110,7 @@ exports[`HttpRequest check HttpRequest 1`] = `
           Timeout
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.timeout"
           name="engine.httpRequest.timeout"
@@ -140,6 +142,7 @@ exports[`HttpRequest check HttpRequest 1`] = `
           Retry count
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.retryCount"
           name="engine.httpRequest.retryCount"
@@ -231,6 +234,7 @@ exports[`HttpRequest check change stack to "request" 1`] = `
           Stack
         </label>
         <select
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
@@ -271,6 +275,7 @@ exports[`HttpRequest check change stack to "request" 1`] = `
           Timeout
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.timeout"
           name="engine.httpRequest.timeout"
@@ -302,6 +307,7 @@ exports[`HttpRequest check change stack to "request" 1`] = `
           Retry count
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.retryCount"
           name="engine.httpRequest.retryCount"
@@ -393,6 +399,7 @@ exports[`HttpRequest check change timeout 1`] = `
           Stack
         </label>
         <select
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
@@ -433,6 +440,7 @@ exports[`HttpRequest check change timeout 1`] = `
           Timeout
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.timeout"
           name="engine.httpRequest.timeout"
@@ -464,6 +472,7 @@ exports[`HttpRequest check change timeout 1`] = `
           Retry count
         </label>
         <input
+          aria-invalid="false"
           class="oi-form-input form-control"
           id="engine.httpRequest.retryCount"
           name="engine.httpRequest.retryCount"

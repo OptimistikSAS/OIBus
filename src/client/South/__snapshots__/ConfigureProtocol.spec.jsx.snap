@@ -215,6 +215,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Agent filename
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.agentFilename"
             name="south.dataSources.7.OPCHDA.agentFilename"
@@ -246,6 +247,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             TCP Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.tcpPort"
             name="south.dataSources.7.OPCHDA.tcpPort"
@@ -277,6 +279,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Logging Level
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.logLevel"
             name="south.dataSources.7.OPCHDA.logLevel"
@@ -403,6 +406,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.host"
             name="south.dataSources.7.OPCHDA.host"
@@ -434,6 +438,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Server name
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.serverName"
             name="south.dataSources.7.OPCHDA.serverName"
@@ -469,6 +474,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Retry interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.retryInterval"
             name="south.dataSources.7.OPCHDA.retryInterval"
@@ -500,6 +506,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Max return values
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.maxReturnValues"
             name="south.dataSources.7.OPCHDA.maxReturnValues"
@@ -531,6 +538,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             Max read interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.maxReadInterval"
             name="south.dataSources.7.OPCHDA.maxReadInterval"
@@ -896,6 +904,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Agent filename
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.agentFilename"
             name="south.dataSources.7.OPCHDA.agentFilename"
@@ -927,6 +936,7 @@ exports[`ConfigureProtocol check update 1`] = `
             TCP Port
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.tcpPort"
             name="south.dataSources.7.OPCHDA.tcpPort"
@@ -958,6 +968,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Logging Level
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.logLevel"
             name="south.dataSources.7.OPCHDA.logLevel"
@@ -1084,6 +1095,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Host
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.host"
             name="south.dataSources.7.OPCHDA.host"
@@ -1115,6 +1127,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Server name
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.serverName"
             name="south.dataSources.7.OPCHDA.serverName"
@@ -1150,6 +1163,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Retry interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.retryInterval"
             name="south.dataSources.7.OPCHDA.retryInterval"
@@ -1181,6 +1195,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Max return values
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.maxReturnValues"
             name="south.dataSources.7.OPCHDA.maxReturnValues"
@@ -1212,6 +1227,7 @@ exports[`ConfigureProtocol check update 1`] = `
             Max read interval
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="south.dataSources.7.OPCHDA.maxReadInterval"
             name="south.dataSources.7.OPCHDA.maxReadInterval"

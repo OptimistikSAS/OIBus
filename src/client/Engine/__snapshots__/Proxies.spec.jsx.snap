@@ -120,6 +120,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -136,6 +137,7 @@ exports[`Proxies check Proxies 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -162,6 +164,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -179,6 +182,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -196,6 +200,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -215,6 +220,7 @@ exports[`Proxies check Proxies 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -252,6 +258,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -268,6 +275,7 @@ exports[`Proxies check Proxies 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -294,6 +302,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -311,6 +320,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -328,6 +338,7 @@ exports[`Proxies check Proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -347,6 +358,7 @@ exports[`Proxies check Proxies 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -504,6 +516,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -520,6 +533,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -546,6 +560,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -563,6 +578,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -580,6 +596,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -599,6 +616,7 @@ exports[`Proxies check add line to proxies 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -636,6 +654,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -652,6 +671,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -678,6 +698,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -695,6 +716,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -712,6 +734,7 @@ exports[`Proxies check add line to proxies 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -731,6 +754,7 @@ exports[`Proxies check add line to proxies 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -888,6 +912,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -904,6 +929,7 @@ exports[`Proxies check change first host 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -930,6 +956,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -947,6 +974,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -964,6 +992,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -983,6 +1012,7 @@ exports[`Proxies check change first host 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -1020,6 +1050,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -1036,6 +1067,7 @@ exports[`Proxies check change first host 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -1062,6 +1094,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -1079,6 +1112,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -1096,6 +1130,7 @@ exports[`Proxies check change first host 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -1115,6 +1150,7 @@ exports[`Proxies check change first host 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -1272,6 +1308,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -1288,6 +1325,7 @@ exports[`Proxies check change first name 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -1314,6 +1352,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -1331,6 +1370,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -1348,6 +1388,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -1367,6 +1408,7 @@ exports[`Proxies check change first name 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -1404,6 +1446,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -1420,6 +1463,7 @@ exports[`Proxies check change first name 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -1446,6 +1490,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -1463,6 +1508,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -1480,6 +1526,7 @@ exports[`Proxies check change first name 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -1499,6 +1546,7 @@ exports[`Proxies check change first name 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -1656,6 +1704,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -1672,6 +1721,7 @@ exports[`Proxies check change first password 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -1698,6 +1748,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -1715,6 +1766,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -1732,6 +1784,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -1751,6 +1804,7 @@ exports[`Proxies check change first password 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -1788,6 +1842,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -1804,6 +1859,7 @@ exports[`Proxies check change first password 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -1830,6 +1886,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -1847,6 +1904,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -1864,6 +1922,7 @@ exports[`Proxies check change first password 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -1883,6 +1942,7 @@ exports[`Proxies check change first password 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -2040,6 +2100,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -2056,6 +2117,7 @@ exports[`Proxies check change first port 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -2082,6 +2144,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -2099,6 +2162,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -2116,6 +2180,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -2135,6 +2200,7 @@ exports[`Proxies check change first port 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -2172,6 +2238,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -2188,6 +2255,7 @@ exports[`Proxies check change first port 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -2214,6 +2282,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -2231,6 +2300,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -2248,6 +2318,7 @@ exports[`Proxies check change first port 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -2267,6 +2338,7 @@ exports[`Proxies check change first port 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -2424,6 +2496,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -2440,6 +2513,7 @@ exports[`Proxies check change first protocol 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -2466,6 +2540,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -2483,6 +2558,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -2500,6 +2576,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -2519,6 +2596,7 @@ exports[`Proxies check change first protocol 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -2556,6 +2634,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -2572,6 +2651,7 @@ exports[`Proxies check change first protocol 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -2598,6 +2678,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -2615,6 +2696,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -2632,6 +2714,7 @@ exports[`Proxies check change first protocol 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -2651,6 +2734,7 @@ exports[`Proxies check change first protocol 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -2808,6 +2892,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -2824,6 +2909,7 @@ exports[`Proxies check change first username 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -2850,6 +2936,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -2867,6 +2954,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -2884,6 +2972,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -2903,6 +2992,7 @@ exports[`Proxies check change first username 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -2940,6 +3030,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -2956,6 +3047,7 @@ exports[`Proxies check change first username 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -2982,6 +3074,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -2999,6 +3092,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -3016,6 +3110,7 @@ exports[`Proxies check change first username 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -3035,6 +3130,7 @@ exports[`Proxies check change first username 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"
@@ -3192,6 +3288,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.name"
                   name="engine.proxies.0.name"
@@ -3208,6 +3305,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
@@ -3234,6 +3332,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.host"
                   name="engine.proxies.0.host"
@@ -3251,6 +3350,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.port"
                   name="engine.proxies.0.port"
@@ -3268,6 +3368,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.0.username"
                   name="engine.proxies.0.username"
@@ -3287,6 +3388,7 @@ exports[`Proxies check delete first proxie 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.0.password"
                     name="engine.proxies.0.password"
@@ -3324,6 +3426,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.name"
                   name="engine.proxies.1.name"
@@ -3340,6 +3443,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 class="form-group"
               >
                 <select
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
@@ -3366,6 +3470,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.host"
                   name="engine.proxies.1.host"
@@ -3383,6 +3488,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.port"
                   name="engine.proxies.1.port"
@@ -3400,6 +3506,7 @@ exports[`Proxies check delete first proxie 1`] = `
                 style="margin-bottom: 0px;"
               >
                 <input
+                  aria-invalid="false"
                   class="oi-form-input form-control"
                   id="engine.proxies.1.username"
                   name="engine.proxies.1.username"
@@ -3419,6 +3526,7 @@ exports[`Proxies check delete first proxie 1`] = `
                   class="input-group"
                 >
                   <input
+                    aria-invalid="false"
                     class="oi-form-input form-control"
                     id="engine.proxies.1.password"
                     name="engine.proxies.1.password"

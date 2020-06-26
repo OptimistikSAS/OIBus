@@ -21,6 +21,7 @@ exports[`NewDataSourceRow check NewDataSourceRow 1`] = `
             New DataSource ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="dataSourceId"
             name="dataSourceId"
@@ -45,6 +46,7 @@ exports[`NewDataSourceRow check NewDataSourceRow 1`] = `
             Protocol
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="protocol"
             name="protocol"
@@ -126,6 +128,7 @@ exports[`NewDataSourceRow check add press 1`] = `
             New DataSource ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="dataSourceId"
             name="dataSourceId"
@@ -150,6 +153,7 @@ exports[`NewDataSourceRow check add press 1`] = `
             Protocol
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="protocol"
             name="protocol"
@@ -231,6 +235,7 @@ exports[`NewDataSourceRow check add pressed with empty dataSource name 1`] = `
             New DataSource ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="dataSourceId"
             name="dataSourceId"
@@ -255,6 +260,7 @@ exports[`NewDataSourceRow check add pressed with empty dataSource name 1`] = `
             Protocol
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="protocol"
             name="protocol"
@@ -336,6 +342,7 @@ exports[`NewDataSourceRow check change dataSourceId 1`] = `
             New DataSource ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="dataSourceId"
             name="dataSourceId"
@@ -360,6 +367,7 @@ exports[`NewDataSourceRow check change dataSourceId 1`] = `
             Protocol
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="protocol"
             name="protocol"
@@ -441,6 +449,7 @@ exports[`NewDataSourceRow check change protocol 1`] = `
             New DataSource ID
           </label>
           <input
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="dataSourceId"
             name="dataSourceId"
@@ -465,6 +474,7 @@ exports[`NewDataSourceRow check change protocol 1`] = `
             Protocol
           </label>
           <select
+            aria-invalid="false"
             class="oi-form-input form-control"
             id="protocol"
             name="protocol"

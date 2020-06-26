@@ -12,6 +12,7 @@ exports[`OIbInteger check OIbInteger with too small value 1`] = `
       label
     </label>
     <input
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
@@ -39,6 +40,7 @@ exports[`OIbInteger check OIbInteger with value="a text" 1`] = `
       label
     </label>
     <input
+      aria-invalid="false"
       class="oi-form-input form-control"
       id="name"
       name="name"
@@ -64,6 +66,7 @@ exports[`OIbInteger check change 1`] = `
       label
     </label>
     <input
+      aria-invalid="true"
       class="oi-form-input is-invalid form-control"
       id="name"
       name="name"
