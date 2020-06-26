@@ -19,6 +19,21 @@
 
 ## History
 
+# 0.6.2
+## Fixes
+- Exceptions in Disk usage are now catched. (issue #766)
+
+# 0.6.1
+## Improvements
+- Improve Error Management: When a transaction was failing for a logical error (example bad json format), the retry was actually looping on this error blocking the rest of the cache to be transmitted. Now, "logical errors" (as opposed to "communication errors" that will eventually disappears) will be retried a few times but if the error persists, the transaction will be saved to an error table and OIBus will move to the next transaction.
+- AliveSignal can now be sent to another OIBus (itself acting as a gateway to OIAnalytics). This is useful when a OIBus is installed on the local industrial network not exposed to Internet directly.
+- Alive Signal (as well as the status page) now contains more diagnostic informations such as disk usage, CPU load, etc...
+- MQTT North Improvements (qos support, pointId translation to Topic with RegExp).
+- MSSQL South can now disable Encryption (not recommended but useful for old SQL installations).
+## Fixes
+- @Date1 is now replaced by @lastCompletedDate in SQL queries. A migration is included so existing configurations will be moved to this new syntax.
+- Validation of the URL was not working in SQLDBtoFile.
+
 # 0.6.0
 - add Alive and version to Overview page
 - Allow access to points configuration from South pages
