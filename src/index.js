@@ -18,7 +18,6 @@ const memStringify = ({ rss, heapTotal, heapUsed, external }) => (`
   external: ${Number(external / 1024 / 1024).toFixed(2)}
 `)
 
-
 if (cluster.isMaster) {
   // Master role is nothing except launching a worker and relauching another
   // one if exit is detected (typically to load a new configuration)
