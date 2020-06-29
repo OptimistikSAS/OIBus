@@ -44,17 +44,44 @@ describe('MQTTNorth north', () => {
     expect(mqttNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
   })
 
-  it('should properly handle values', async () => {
-    mqttNorth.client = { publish: jest.fn().mockImplementation(() => Promise.resolve(true)) }
+  it('should properly handle values and publish them', async () => {
+    mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback()) }
     const values = [{
       pointId: 'paris/sensor1',
       data: { value: 666 },
     }]
 
-    const result = await mqttNorth.handleValues(values)
+    let expectedResult = null
+    let expectedError = null
+    try {
+      expectedResult = await mqttNorth.handleValues(values)
+    } catch (error) {
+      expectedError = error
+    }
 
     expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(expectedError).toBeNull()
+  })
+
+  it('should properly handle values with publish error', async () => {
+    mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback(true)) }
+    const values = [{
+      pointId: 'paris/sensor1',
+      data: { value: 666 },
+    }]
+
+    let expectedResult = null
+    let expectedError = null
+    try {
+      expectedResult = await mqttNorth.handleValues(values)
+    } catch (error) {
+      expectedError = error
+    }
+
+    expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
+    expect(expectedResult).toBeNull()
+    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
   })
 
   it('should properly disconnect', () => {
