@@ -170,7 +170,7 @@ class SQLDbToFile extends ProtocolHandler {
       database: this.database,
       connectionTimeout: this.connectionTimeout,
       requestTimeout: this.requestTimeout,
-      encryption: this.encryption,
+      options: { encrypt: this.encryption },
     }
     // domain is optional and allow to activate the ntlm authentication on windows.
     if (this.domain) config.domain = this.domain
