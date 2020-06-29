@@ -19,6 +19,12 @@
 
 ## History
 
+# 0.6.3
+## Fixes
+- Fix issue when encryption not available on older mssql versions
+## Improvements
+- MQTT North now can build topic based on pointId (with a regexp)
+
 # 0.6.2
 ## Fixes
 - Exceptions in Disk usage are now catched. (issue #766)
