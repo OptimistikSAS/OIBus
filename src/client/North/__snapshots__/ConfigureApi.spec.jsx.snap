@@ -196,18 +196,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             Host
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="north.applications.1.OIConnect.host"
             name="north.applications.1.OIConnect.host"
             type="text"
-            value=""
+            value="http://localhost:2223"
           />
           <div
             class="invalid-feedback"
-          >
-            Value should start with any of: http://, https://
-          </div>
+          />
         </div>
       </div>
       <div
@@ -218,23 +216,46 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         >
           <label
             class=""
-            for="north.applications.1.OIConnect.endpoint"
+            for="north.applications.1.OIConnect.valuesEndpoint"
           >
-            End Point
+            Values endpoint
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
-            id="north.applications.1.OIConnect.endpoint"
-            name="north.applications.1.OIConnect.endpoint"
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.1.OIConnect.valuesEndpoint"
+            name="north.applications.1.OIConnect.valuesEndpoint"
             type="text"
-            value=""
+            value="/addValues"
           />
           <div
             class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="north.applications.1.OIConnect.fileEndpoint"
           >
-            Value should not be empty
-          </div>
+            File endpoint
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.1.OIConnect.fileEndpoint"
+            name="north.applications.1.OIConnect.fileEndpoint"
+            type="text"
+            value="/addFile"
+          />
+          <div
+            class="invalid-feedback"
+          />
         </div>
       </div>
     </div>
@@ -970,18 +991,16 @@ exports[`ConfigureApi check update 1`] = `
             Host
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="north.applications.1.OIConnect.host"
             name="north.applications.1.OIConnect.host"
             type="text"
-            value=""
+            value="http://localhost:2223"
           />
           <div
             class="invalid-feedback"
-          >
-            Value should start with any of: http://, https://
-          </div>
+          />
         </div>
       </div>
       <div
@@ -992,23 +1011,46 @@ exports[`ConfigureApi check update 1`] = `
         >
           <label
             class=""
-            for="north.applications.1.OIConnect.endpoint"
+            for="north.applications.1.OIConnect.valuesEndpoint"
           >
-            End Point
+            Values endpoint
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
-            id="north.applications.1.OIConnect.endpoint"
-            name="north.applications.1.OIConnect.endpoint"
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.1.OIConnect.valuesEndpoint"
+            name="north.applications.1.OIConnect.valuesEndpoint"
             type="text"
-            value=""
+            value="/addValues"
           />
           <div
             class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="north.applications.1.OIConnect.fileEndpoint"
           >
-            Value should not be empty
-          </div>
+            File endpoint
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.1.OIConnect.fileEndpoint"
+            name="north.applications.1.OIConnect.fileEndpoint"
+            type="text"
+            value="/addFile"
+          />
+          <div
+            class="invalid-feedback"
+          />
         </div>
       </div>
     </div>
