@@ -120,6 +120,7 @@ class Engine {
     this.memoryStats = {}
     this.addValuesMessages = 0
     this.addValuesCount = 0
+    this.addFileCount = 0
     this.aliveSignalMessages = 0
 
     // AliveSignal
@@ -436,6 +437,7 @@ class Engine {
       protocolsCacheStats,
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
+      addFileCount: this.addFileCount,
       aliveSignalMessages: this.aliveSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,

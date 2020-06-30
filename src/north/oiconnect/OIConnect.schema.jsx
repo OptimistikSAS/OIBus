@@ -23,12 +23,19 @@ schema.form = {
     type: 'OIbLink',
     defaultValue: '',
   },
-  endpoint: {
+  valuesEndpoint: {
     type: 'OIbText',
-    label: 'End Point',
+    label: 'Values endpoint',
     newRow: false,
     valid: notEmpty(),
     defaultValue: '/engine/addValues',
+  },
+  fileEndpoint: {
+    type: 'OIbText',
+    label: 'File endpoint',
+    newRow: false,
+    valid: notEmpty(),
+    defaultValue: '/engine/addFile',
   },
   authentication: { type: 'OIbAuthentication' },
   networkSection: {

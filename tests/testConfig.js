@@ -253,8 +253,9 @@ const testConfig = {
         OIConnect: {
           authentication: { password: '', type: 'Basic', username: '' },
           timeout: 180000,
-          host: '',
-          endpoint: '',
+          host: 'http://localhost:2223',
+          valuesEndpoint: '/addValues',
+          fileEndpoint: '/addFile',
           proxy: '',
           stack: 'fetch',
         },

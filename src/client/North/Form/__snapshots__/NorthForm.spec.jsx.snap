@@ -1490,18 +1490,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             Host
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="north.applications.0.OIConnect.host"
             name="north.applications.0.OIConnect.host"
             type="text"
-            value=""
+            value="http://localhost:2223"
           />
           <div
             class="invalid-feedback"
-          >
-            Value should start with any of: http://, https://
-          </div>
+          />
         </div>
       </div>
       <div
@@ -1512,23 +1510,46 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         >
           <label
             class=""
-            for="north.applications.0.OIConnect.endpoint"
+            for="north.applications.0.OIConnect.valuesEndpoint"
           >
-            End Point
+            Values endpoint
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
-            id="north.applications.0.OIConnect.endpoint"
-            name="north.applications.0.OIConnect.endpoint"
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.0.OIConnect.valuesEndpoint"
+            name="north.applications.0.OIConnect.valuesEndpoint"
             type="text"
-            value=""
+            value="/addValues"
           />
           <div
             class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="north.applications.0.OIConnect.fileEndpoint"
           >
-            Value should not be empty
-          </div>
+            File endpoint
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="north.applications.0.OIConnect.fileEndpoint"
+            name="north.applications.0.OIConnect.fileEndpoint"
+            type="text"
+            value="/addFile"
+          />
+          <div
+            class="invalid-feedback"
+          />
         </div>
       </div>
     </div>

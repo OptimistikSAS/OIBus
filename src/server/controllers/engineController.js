@@ -40,18 +40,41 @@ const reload = async (ctx) => {
 /**
  * Add Values to the Engine
  * @param {Object} ctx - The KOA context
- * @param {Object} ctx.request.body - The dataSourceId and the array of values
+ * @param {Object} ctx.request.body - Array of values
  * @return {void}
  */
 const addValues = async (ctx) => {
-  const { dataSourceId, values } = ctx.request.body
-  try {
-    ctx.app.engine.addValuesMessages += 1
-    ctx.app.engine.addValuesCount += values ? values.length : 0
-    await ctx.app.engine.addValues(dataSourceId, values)
-    ctx.ok()
-  } catch (error) {
-    ctx.throw(500, `Unable to add ${values ? values.length : '...'} from ${dataSourceId}`)
+  if (ctx.request.query.dataSourceId && Array.isArray(ctx.request.body)) {
+    try {
+      ctx.app.engine.addValuesMessages += 1
+      ctx.app.engine.addValuesCount += ctx.request.body.length
+      await ctx.app.engine.addValues(ctx.request.query.dataSourceId, ctx.request.body)
+      ctx.ok()
+    } catch (error) {
+      ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${ctx.request.query.dataSourceId}`)
+    }
+  } else {
+    throw ctx(400, 'Missing dataSourceId')
+  }
+}
+
+/**
+ * Add file to the Engine
+ * @param {Object} ctx - The KOA context
+ * @param {Object} ctx.request.body - The file
+ * @return {void}
+ */
+const addFile = async (ctx) => {
+  if (ctx.request.query.dataSourceId) {
+    try {
+      ctx.app.engine.addFileCount += 1
+      await ctx.app.engine.addFile(ctx.request.query.dataSourceId, ctx.request.file.path, false)
+      ctx.ok()
+    } catch (error) {
+      ctx.throw(500, `Unable to add file from ${ctx.request.query.dataSourceId}`)
+    }
+  } else {
+    throw ctx(400, 'Missing dataSourceId')
   }
 }
 
@@ -77,5 +100,6 @@ module.exports = {
   getSouthList,
   reload,
   addValues,
+  addFile,
   aliveSignal,
 }
