@@ -8,6 +8,7 @@ import { ConfigContext } from '../../context/configContext.jsx'
 const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
   const dataSourceIds = newConfig?.south?.dataSources?.map((dataSource) => dataSource.dataSourceId) ?? []
+  const externalSources = newConfig?.engine?.externalSources ?? []
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${applicationIndex}.subscribedTo.${rowIndex}` })
   }
@@ -38,7 +39,7 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
                     <OIbSelect
                       name={`subscribedTo.${i}`}
                       value={subscribedTo[i]}
-                      options={dataSourceIds}
+                      options={[...dataSourceIds, ...externalSources]}
                       defaultValue={dataSourceIds[0] || ''}
                       onChange={onChange}
                     />
