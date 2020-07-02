@@ -1263,6 +1263,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                     >
                       OPC-HDA
                     </option>
+                    <option
+                      value="any"
+                    >
+                      any
+                    </option>
                   </select>
                   <div
                     class="invalid-feedback"
