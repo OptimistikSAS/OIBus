@@ -58,6 +58,7 @@ const testConfig = {
       stack: 'fetch',
       timeout: 30,
     },
+    externalSources: ['any'],
   },
   south: {
     dataSources: [
