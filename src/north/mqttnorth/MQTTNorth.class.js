@@ -17,11 +17,14 @@ class MQTTNorth extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { url, qos, username, password } = this.application.MQTTNorth
+    const { url, qos, username, password, regExp, topic } = this.application.MQTTNorth
+
     this.url = url
     this.username = username
     this.password = Buffer.from(this.decryptPassword(password))
     this.qos = qos
+    this.regExp = regExp
+    this.topic = topic
 
     this.canHandleValues = true
   }
@@ -69,28 +72,46 @@ class MQTTNorth extends ApiHandler {
   }
 
   /**
+   * Publish MQTT message.
+   *
+   * @param {object} entry - The entry to publish
+   * @returns {Promise} - The publish status
+   */
+  publishValue(entry) {
+    return new Promise((resolve, reject) => {
+      const { pointId, data } = entry
+
+      const mainRegExp = new RegExp(this.regExp)
+      const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
+
+      const topicValue = vsprintf(this.topic, groups)
+
+      this.client.publish(topicValue, JSON.stringify(data), { qos: this.qos }, (error) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
    * Makes an MQTT publish message with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
   async publishValues(entries) {
-    const { regExp, topic } = this.application.MQTTNorth
-    entries.forEach((entry) => {
-      const { pointId, data } = entry
+    // Disable ESLint check because we need for..of loop to support async calls
+    // eslint-disable-next-line no-restricted-syntax
+    for (const entry of entries) {
+      // Disable ESLint check because we want to publish values one by one
+      // eslint-disable-next-line no-await-in-loop
+      await this.publishValue(entry)
+    }
 
-      const mainRegExp = new RegExp(regExp)
-      const groups = mainRegExp.exec(pointId)
-      // Remove the first element, which is the matched string, because we only need the groups
-      groups.shift()
-
-      const topicValue = vsprintf(topic, groups)
-
-      this.client.publish(topicValue, JSON.stringify(data), { qos: this.qos }, (error) => {
-        if (error) {
-          this.logger.error('Publish Error :', topic, data, error)
-        }
-      })
-    })
     return true
   }
 }
