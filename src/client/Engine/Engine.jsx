@@ -10,6 +10,7 @@ import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
 import AliveSignal from './AliveSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
+import ExternalSources from './ExternalSources.jsx'
 import validation from './Engine.validation'
 
 const Engine = () => {
@@ -101,6 +102,7 @@ const Engine = () => {
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
         <AliveSignal onChange={onChange} aliveSignal={newConfig.engine.aliveSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />
+        <ExternalSources onChange={onChange} externalSources={newConfig.engine.externalSources} />
       </Form>
     </>
   ) : (
