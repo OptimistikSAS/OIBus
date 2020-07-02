@@ -215,4 +215,16 @@ module.exports = {
       }
     })
   },
+  14: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'OIConnect') {
+        if (Object.prototype.hasOwnProperty.call(application.OIConnect, 'endpoint')) {
+          logger.info('Separate OIConnect endpoints for values and file')
+          application.OIConnect.valuesEndpoint = application.OIConnect.endpoint
+          application.OIConnect.fileEndpoint = '/engine/addFile'
+          delete application.OIConnect.endpoint
+        }
+      }
+    })
+  },
 }
