@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange, isPath, minValue } from '../../services/validation.service'
+import { notEmpty, inRange, isPath, minValue, isHost } from '../../services/validation.service'
 
 const schema = { name: 'OPCHDA' }
 schema.form = {
@@ -88,8 +88,9 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbLink',
-    defaultValue: 'http://localhost',
+    type: 'OIbText',
+    defaultValue: 'localhost',
+    valid: isHost(),
     help: <div>IP address or hostname of the HDA server</div>,
   },
   serverName: {
