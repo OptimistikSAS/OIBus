@@ -1780,7 +1780,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             id="south.dataSources.0.OPCHDA.host"
             name="south.dataSources.0.OPCHDA.host"
             type="text"
-            value="http://opcserver"
+            value="opcserver"
           />
           <div
             class="invalid-feedback"
