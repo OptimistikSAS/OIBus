@@ -220,7 +220,7 @@ const testConfig = {
           retryInterval: 10000,
           agentFilename: '.\\deps\\win\\HdaAgent\\HdaAgent.exe',
           logLevel: 'debug',
-          host: 'http://opcserver',
+          host: 'opcserver',
           serverName: 'Matrikon.OPC.Simulation',
           maxReturnValues: 10000,
           maxReadInterval: 3600,
