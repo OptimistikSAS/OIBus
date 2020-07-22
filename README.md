@@ -19,6 +19,12 @@
 
 ## History
 
+# 0.6.4
+## Improvements
+- OIConnect now support files
+- OIBus can now subscribe to external south (connected by OIConnect)
+## Fixes
+- Fix issue when OPC-HDA try to recover a large date range on startup
 # 0.6.3
 ## Fixes
 - Fix issue when encryption not available on older mssql versions
