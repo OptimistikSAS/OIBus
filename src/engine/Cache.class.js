@@ -316,30 +316,29 @@ class Cache {
 
       if (values) {
         this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
-        const status = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(`Cache:handleValuesFromCache, status: ${status} AppId: ${application.applicationId}`)
-        switch (status) {
-          case ApiHandler.STATUS.SUCCESS:
-            removed = await databaseService.removeSentValues(database, values)
-            this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
-            if (removed !== values.length) {
-              this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
-            }
-            break
-          case ApiHandler.STATUS.LOGIC_ERROR:
-            // Add errored values into error table
-            this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${applicationId}`)
-            await databaseService.saveErroredValues(this.valuesErrorDatabase, applicationId, values)
+        const successCountStatus = await this.engine.handleValuesFromCache(applicationId, values)
+        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus} AppId: ${application.applicationId}`)
+        // If there was a logic error
+        if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
+          // Add errored values into error table
+          this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${applicationId}`)
+          await databaseService.saveErroredValues(this.valuesErrorDatabase, applicationId, values)
 
-            // Remove them from the cache table
-            removed = await databaseService.removeSentValues(database, values)
-            this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
-            if (removed !== values.length) {
-              this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
-            }
-            break
-          default:
-            break
+          // Remove them from the cache table
+          removed = await databaseService.removeSentValues(database, values)
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+          if (removed !== values.length) {
+            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+          }
+        }
+        // If some values were successfully sent
+        if (successCountStatus > 0) {
+          const valuesSent = values.slice(0, successCountStatus)
+          removed = await databaseService.removeSentValues(database, valuesSent)
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+          if (removed !== valuesSent.length) {
+            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${valuesSent.length}`)
+          }
         }
       } else {
         this.logger.silly(`no values in the db for ${applicationId}`)

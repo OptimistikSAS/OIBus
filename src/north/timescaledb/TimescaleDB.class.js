@@ -121,7 +121,7 @@ class TimescaleDB extends ApiHandler {
           this.logger.error(error)
           reject(ApiHandler.STATUS.COMMUNICATION_ERROR)
         } else {
-          resolve(ApiHandler.STATUS.SUCCESS)
+          resolve(entries.length)
         }
       })
     })

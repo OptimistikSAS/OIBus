@@ -36,13 +36,11 @@ class MQTTNorth extends ApiHandler {
    */
   async handleValues(values) {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
-    try {
-      await this.publishValues(values)
-    } catch (error) {
-      this.logger.error(error)
+    const successCount = await this.publishValues(values)
+    if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
-    return ApiHandler.STATUS.SUCCESS
+    return successCount
   }
 
   /**
@@ -104,15 +102,21 @@ class MQTTNorth extends ApiHandler {
    * @return {Promise} - The request status
    */
   async publishValues(entries) {
-    // Disable ESLint check because we need for..of loop to support async calls
-    // eslint-disable-next-line no-restricted-syntax
-    for (const entry of entries) {
-      // Disable ESLint check because we want to publish values one by one
-      // eslint-disable-next-line no-await-in-loop
-      await this.publishValue(entry)
+    let successCount = 0
+    try {
+      // Disable ESLint check because we need for..of loop to support async calls
+      // eslint-disable-next-line no-restricted-syntax
+      for (const entry of entries) {
+        // Disable ESLint check because we want to publish values one by one
+        // eslint-disable-next-line no-await-in-loop
+        await this.publishValue(entry)
+        successCount += 1
+      }
+    } catch (error) {
+      this.logger.error(error)
     }
 
-    return true
+    return successCount
   }
 }
 
