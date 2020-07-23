@@ -69,7 +69,7 @@ class AmazonS3 extends ApiHandler {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
 
-    return ApiHandler.STATUS.SUCCESS
+    return 1
   }
 }
 
