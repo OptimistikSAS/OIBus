@@ -35,7 +35,8 @@ class OIConnect extends ApiHandler {
 
     const data = JSON.stringify(values)
     const headers = { 'Content-Type': 'application/json' }
-    return this.engine.sendRequest(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+    await this.engine.sendRequest(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+    return values.length
   }
 
   /**

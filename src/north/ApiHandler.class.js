@@ -3,8 +3,8 @@ const Logger = require('../engine/Logger.class')
 class ApiHandler {
   static STATUS = {
     SUCCESS: 0,
-    LOGIC_ERROR: 1,
-    COMMUNICATION_ERROR: 2,
+    LOGIC_ERROR: -1,
+    COMMUNICATION_ERROR: -2,
   }
 
   /**

@@ -60,7 +60,7 @@ describe('MQTTNorth north', () => {
     }
 
     expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
-    expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(expectedResult).toEqual(values.length)
     expect(expectedError).toBeNull()
   })
 
