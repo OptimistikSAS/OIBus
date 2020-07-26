@@ -43,7 +43,7 @@ class InfluxDB extends ApiHandler {
       this.logger.error(error)
       throw error
     }
-    return true
+    return values.length
   }
 
   /**
