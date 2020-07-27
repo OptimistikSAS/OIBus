@@ -37,27 +37,27 @@ const Overview = ({ status, onRestart, onShutdown }) => {
               {(confirm) => (
                 <Button
                   className="inline-button autosize oi-restart-button"
-                  color={'success'}
+                  color="success"
                   onClick={confirm(onRestart)}
                   size="sm"
                   outline
                 >
-                  {'Restart'}
+                  Restart
                 </Button>
-                )}
+              )}
             </Modal>
             <Modal show={false} title="Server shutdown" body="Confirm shutdown?">
               {(confirm) => (
                 <Button
                   className="inline-button autosize oi-shutdown-button"
-                  color={'success'}
+                  color="success"
                   onClick={confirm(onShutdown)}
                   size="sm"
                   outline
                 >
-                  {'Shutdown'}
+                  Shutdown
                 </Button>
-                )}
+              )}
             </Modal>
           </div>
         </Col>
@@ -66,7 +66,7 @@ const Overview = ({ status, onRestart, onShutdown }) => {
             <div
               className={`oi-box d-flex align-items-center text-${engine?.aliveSignal?.enabled ? 'success' : 'muted'}`}
             >
-              <div className={"oi-alive d-flex align-items-center"}>
+              <div className="oi-alive d-flex align-items-center">
                 Alive
               </div>
             </div>
@@ -90,7 +90,15 @@ const Overview = ({ status, onRestart, onShutdown }) => {
   )
 }
 
-Overview.propTypes = { status: PropTypes.object }
-Overview.defaultProps = { status: {} }
+Overview.propTypes = {
+  status: PropTypes.object,
+  onRestart: PropTypes.func,
+  onShutdown: PropTypes.func,
+}
+Overview.defaultProps = {
+  status: {},
+  onRestart: () => null,
+  onShutdown: () => null,
+}
 
 export default Overview
