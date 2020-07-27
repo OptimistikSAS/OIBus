@@ -39,6 +39,32 @@ const Health = () => {
   React.useEffect(() => {
     fetchStatus()
   }, [])
+  
+  /**
+   * Restart request
+   * @returns {void}
+   */
+  const handleRestart = async () => {
+    try {
+      await apis.reload()
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
+  }
+
+  /**
+   * Shutdown request
+   * @returns {void}
+   */
+  const handleShutdown = async () => {
+    try {
+      await apis.shutdown()
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
+  }
 
   /**
    * Generate string value from on object.
@@ -99,7 +125,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview status={status} />
+      <Overview status={status} onRestart={handleRestart} onShutdown={handleShutdown}/>
       <Row>
         <Label>
           <span>
