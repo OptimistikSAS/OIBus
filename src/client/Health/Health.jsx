@@ -39,7 +39,7 @@ const Health = () => {
   React.useEffect(() => {
     fetchStatus()
   }, [])
-  
+
   /**
    * Restart request
    * @returns {void}
@@ -125,7 +125,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview status={status} onRestart={handleRestart} onShutdown={handleShutdown}/>
+      <Overview status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
       <Row>
         <Label>
           <span>
