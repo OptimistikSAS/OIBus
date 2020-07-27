@@ -43,7 +43,7 @@ const reload = async (ctx) => {
  * @returns {void}
  */
 const shutdown = async (ctx) => {
-  await ctx.app.engine.shutdown(10000)
+  await ctx.app.engine.shutdown(1000)
 
   ctx.ok('Shutting down...')
 }
