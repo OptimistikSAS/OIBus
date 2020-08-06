@@ -92,7 +92,7 @@
     "babel-jest": "26.1.0",
     "babel-loader": "8.1.0",
     "babel-polyfill": "6.26.0",
-    "css-loader": "4.0.0",
+    "css-loader": "4.2.1",
     "esdoc": "1.1.0",
     "esdoc-ecmascript-proposal-plugin": "1.0.0",
     "esdoc-exclude-source-plugin": "1.0.0",
