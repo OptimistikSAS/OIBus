@@ -199,7 +199,7 @@ const testConfig = {
           username: 'oibus_user',
           database: 'oibus',
           query:
-            'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @date1 AND created_at <= @date2',
+            'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @LastCompletedDate',
           delimiter: ',',
           filename: 'sql-@date.csv',
           scanMode: 'everySecond',
