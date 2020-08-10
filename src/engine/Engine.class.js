@@ -12,7 +12,7 @@ const databaseService = require('../services/database.service')
 // South classes
 const protocolList = {}
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
-// protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
+protocolList.OPCUA = require('../south/OPCUA/OPCUA.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
