@@ -1,7 +1,12 @@
+const fs = require('fs')
+const path = require('path')
+
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
+const csv = require('fast-csv')
+const moment = require('moment-timezone')
 
 const SQLDbToFile = require('./SQLDbToFile.class')
 const databaseService = require('../../services/database.service')
@@ -13,6 +18,8 @@ jest.mock('pg', () => ({
 }))
 
 jest.mock('fs')
+
+jest.mock('fast-csv', () => ({ writeToString: jest.fn() }))
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -197,6 +204,41 @@ describe('sql-db-to-file', () => {
     await sqlSouth.onScan(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith('Driver invalid not supported by SQLDbToFile')
+  })
+
+  it('should not send file on emtpy result', async () => {
+    sqlSouth.driver = 'mysql'
+
+    sqlSouth.getDataFromMySQL = () => []
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(engine.addFile).not.toBeCalled()
+  })
+
+  it('should send file when the result is not empty', async () => {
+    const RealDate = Date
+    global.Date = jest.fn(() => new RealDate(nowDateString))
+
+    sqlSouth.driver = 'mysql'
+
+    const rows = [{
+      value: 75.2,
+      timestamp: '2019-10-03T14:36:38.590Z',
+    }]
+    const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
+    sqlSouth.getDataFromMySQL = () => rows
+    csv.writeToString.mockReturnValue(csvContent)
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    const expectedPath = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
+    expect(csv.writeToString).toBeCalledTimes(1)
+    expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
+    expect(engine.addFile).toBeCalledWith('SQLDbToFile', expectedPath, false)
+    global.Date = RealDate
   })
 
   it('should format date properly', () => {
