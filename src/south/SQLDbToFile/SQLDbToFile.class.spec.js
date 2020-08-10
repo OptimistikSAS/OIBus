@@ -6,7 +6,6 @@ const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
 const csv = require('fast-csv')
-const moment = require('moment-timezone')
 
 const SQLDbToFile = require('./SQLDbToFile.class')
 const databaseService = require('../../services/database.service')
