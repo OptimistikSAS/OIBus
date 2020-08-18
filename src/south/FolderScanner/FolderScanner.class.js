@@ -1,8 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 const zlib = require('zlib')
-const { promisify } = require('util')
-const { pipeline } = require('stream')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
