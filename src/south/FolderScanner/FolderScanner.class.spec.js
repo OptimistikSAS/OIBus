@@ -153,27 +153,27 @@ describe('folder-scanner', () => {
     folderScanner.compression = false
     fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
   })
-  // it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
-  //   const referenceCsv = path.resolve('./tests/test.csv')
-  //   const referenceGzip = path.resolve('./tests/test.gz')
-  //   const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
-  //   const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
-  //
-  //   databaseService.getFolderScannerModifyTime.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
-  //   fs.mkdirSync(folderScanner.inputFolder, { recursive: true })
-  //   fs.copyFileSync(referenceCsv, targetCsv)
-  //   folderScanner.compression = true
-  //
-  //   await folderScanner.onScan('xxx')
-  //
-  //   expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(1)
-  //   expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
-  //   expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(1)
-  //   const referenceBuffer = fs.readFileSync(referenceGzip)
-  //   const targetBuffer = fs.readFileSync(targetGzip)
-  //   expect(targetBuffer).toEqual(referenceBuffer)
-  //
-  //   folderScanner.compression = false
-  //   fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
-  // })
+  it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
+    const referenceCsv = path.resolve('./tests/test.csv')
+    const referenceGzip = path.resolve('./tests/test.gz')
+    const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
+    const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
+
+    databaseService.getFolderScannerModifyTime.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
+    fs.mkdirSync(folderScanner.inputFolder, { recursive: true })
+    fs.copyFileSync(referenceCsv, targetCsv)
+    folderScanner.compression = true
+
+    await folderScanner.onScan('xxx')
+
+    expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(1)
+    expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
+    expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(1)
+    const referenceBuffer = fs.readFileSync(referenceGzip)
+    const targetBuffer = fs.readFileSync(targetGzip)
+    expect(targetBuffer).toEqual(referenceBuffer)
+
+    folderScanner.compression = false
+    fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
+  })
 })
