@@ -322,7 +322,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             id="south.dataSources.0.FolderScanner.minAge"
             name="south.dataSources.0.FolderScanner.minAge"
             type="integer"
-            value="1000"
+            value="1"
           />
           <div
             class="invalid-feedback"
@@ -351,7 +351,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             id="south.dataSources.0.FolderScanner.regex"
             name="south.dataSources.0.FolderScanner.regex"
             type="text"
-            value=".txt"
+            value=".csv"
           />
           <div
             class="invalid-feedback"
@@ -363,6 +363,29 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               RegExp to filter the folder
             </div>
           </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            <input
+              class="oi-form-input form-check-input"
+              id="south.dataSources.0.FolderScanner.compression"
+              name="south.dataSources.0.FolderScanner.compression"
+              type="checkbox"
+            />
+            Compress File?
+          </label>
         </div>
       </div>
     </div>

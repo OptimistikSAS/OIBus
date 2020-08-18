@@ -55,6 +55,11 @@ schema.form = {
     defaultValue: '.txt',
     help: <div>RegExp to filter the folder</div>,
   },
+  compression: {
+    type: 'OIbCheckBox',
+    label: 'Compress File?',
+    defaultValue: false,
+  },
 }
 
 schema.points = null
