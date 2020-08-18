@@ -1,5 +1,8 @@
 const fs = require('fs')
 const path = require('path')
+const zlib = require('zlib')
+const { promisify } = require('util')
+const { pipeline } = require('stream')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -19,12 +22,14 @@ class FolderScanner extends ProtocolHandler {
     super(dataSource, engine)
 
     /** @todo migration for preserve to be added */
-    const { inputFolder, preserve: preserveFiles, minAge, regex } = this.dataSource.FolderScanner
+    const { inputFolder, preserve: preserveFiles, minAge, regex, compression } = this.dataSource.FolderScanner
 
     this.inputFolder = path.resolve(inputFolder)
     this.preserveFiles = preserveFiles
     this.minAge = minAge
     this.regex = new RegExp(regex)
+    this.compression = compression
+    this.compressionLevel = 9
   }
 
   async connect() {
@@ -41,7 +46,7 @@ class FolderScanner extends ProtocolHandler {
    * @param {*} scanMode - The scan mode
    * @return {void}
    */
-  onScan(scanMode) {
+  async onScan(scanMode) {
     this.logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
     // Check if input folder exists
     if (!fs.existsSync(this.inputFolder)) {
@@ -53,10 +58,17 @@ class FolderScanner extends ProtocolHandler {
     try {
       const files = fs.readdirSync(this.inputFolder)
       if (files.length > 0) {
-        files.forEach(async (file) => {
+        // Disable ESLint check because we need for..of loop to support async calls
+        // eslint-disable-next-line no-restricted-syntax
+        for (const file of files) {
+          // Disable ESLint check because we want to handle files one by one
+          // eslint-disable-next-line no-await-in-loop
           const matchConditions = await this.checkConditions(file)
-          if (matchConditions) this.sendFile(file)
-        })
+          if (matchConditions) {
+            // eslint-disable-next-line no-await-in-loop
+            await this.sendFile(file)
+          }
+        }
       } else {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
@@ -98,13 +110,55 @@ class FolderScanner extends ProtocolHandler {
   async sendFile(filename) {
     const filePath = path.join(this.inputFolder, filename)
     this.logger.debug(`Sending ${filePath} to Engine.`)
-    this.addFile(filePath)
+
+    if (this.compression) {
+      // Compress and send the compressed file
+      const gzipPath = `${filePath.substr(0, filePath.lastIndexOf('.'))}.gz`
+      await this.compress(filePath, gzipPath)
+      await this.addFile(gzipPath, false)
+
+      // Delete original file if preserveFile is not set
+      if (!this.preserveFiles) {
+        fs.unlink(filePath, (unlinkError) => {
+          if (unlinkError) {
+            this.logger.error(unlinkError)
+          } else {
+            this.logger.info(`File ${filePath} compressed and deleted`)
+          }
+        })
+      }
+    } else {
+      await this.addFile(filePath, this.preserveFiles)
+    }
 
     if (this.preserveFiles) {
       const stats = fs.statSync(path.join(this.inputFolder, filename))
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
       await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
     }
+  }
+
+  /**
+   * Compress the specified file
+   * @param {string} input - The path of the file to compress
+   * @param {string} output - The path to the compressed file
+   * @returns {Promise} - The compression result
+   */
+  compress(input, output) {
+    return new Promise((resolve, reject) => {
+      const readStream = fs.createReadStream(input)
+      const writeStream = fs.createWriteStream(output)
+      const gzip = zlib.createGzip({ level: this.compressionLevel })
+      readStream
+        .pipe(gzip)
+        .pipe(writeStream)
+        .on('error', (error) => {
+          reject(error)
+        })
+        .on('finish', () => {
+          resolve()
+        })
+    })
   }
 }
 

@@ -227,4 +227,14 @@ module.exports = {
       }
     })
   },
+  15: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'FolderScanner') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'compress')) {
+          logger.info('Add compress field to FolderScanner')
+          dataSource.FolderScanner.compress = false
+        }
+      }
+    })
+  },
 }

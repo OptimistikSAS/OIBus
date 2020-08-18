@@ -146,7 +146,7 @@ class SQLDbToFile extends ProtocolHandler {
           this.logger.debug(`Writing CSV file at ${filePath}`)
           fs.writeFileSync(filePath, csvContent)
           this.logger.debug(`Sending ${filePath} to Engine.`)
-          this.addFile(filePath)
+          this.addFile(filePath, this.preserveFiles)
         } catch (error) {
           this.logger.error(error)
         }
