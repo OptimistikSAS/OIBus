@@ -130,6 +130,8 @@ describe('folder-scanner', () => {
     expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(1)
   })
   it('onScan: should addFile() if file match conditions with preserveFiles false and compression true', async () => {
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+
     const referenceCsv = path.resolve('./tests/test.csv')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
     const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
@@ -156,6 +158,8 @@ describe('folder-scanner', () => {
     fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
   })
   it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+
     const referenceCsv = path.resolve('./tests/test.csv')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
     const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
