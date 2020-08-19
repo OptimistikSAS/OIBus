@@ -42,7 +42,7 @@ class SQLDbToFile extends ProtocolHandler {
       timeColumn,
       timezone,
       dateFormat,
-      compression
+      compression,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
