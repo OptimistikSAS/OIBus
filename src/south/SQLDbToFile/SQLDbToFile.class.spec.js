@@ -45,6 +45,7 @@ engine.addFile = jest.fn()
 beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
+  jest.restoreAllMocks()
 })
 
 const uncompress = (input, output) => new Promise((resolve, reject) => {
@@ -54,12 +55,8 @@ const uncompress = (input, output) => new Promise((resolve, reject) => {
   readStream
     .pipe(gunzip)
     .pipe(writeStream)
-    .on('error', (error) => {
-      reject(error)
-    })
-    .on('finish', () => {
-      resolve()
-    })
+    .on('error', (error) => reject(error))
+    .on('finish', () => resolve())
 })
 
 describe('sql-db-to-file', () => {
@@ -275,6 +272,7 @@ describe('sql-db-to-file', () => {
     fs.mkdirSync(tmpFolder, { recursive: true })
     const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.gz')
+    const decompressedCsv = path.join(tmpFolder, 'decompressed.csv')
     sqlSouth.compression = true
 
     await sqlSouth.onScan(sqlConfig.scanMode)
@@ -283,8 +281,8 @@ describe('sql-db-to-file', () => {
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
 
-    await uncompress(targetGzip, targetCsv)
-    const targetBuffer = fs.readFileSync(targetCsv)
+    await uncompress(targetGzip, decompressedCsv)
+    const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer.toString()).toEqual(csvContent)
 
     sqlSouth.compression = false
