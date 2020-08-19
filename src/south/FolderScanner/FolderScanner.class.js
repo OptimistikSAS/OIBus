@@ -1,6 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const zlib = require('zlib')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
@@ -27,7 +26,6 @@ class FolderScanner extends ProtocolHandler {
     this.minAge = minAge
     this.regex = new RegExp(regex)
     this.compression = compression
-    this.compressionLevel = 9
   }
 
   async connect() {
@@ -134,29 +132,6 @@ class FolderScanner extends ProtocolHandler {
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
       await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
     }
-  }
-
-  /**
-   * Compress the specified file
-   * @param {string} input - The path of the file to compress
-   * @param {string} output - The path to the compressed file
-   * @returns {Promise} - The compression result
-   */
-  compress(input, output) {
-    return new Promise((resolve, reject) => {
-      const readStream = fs.createReadStream(input)
-      const writeStream = fs.createWriteStream(output)
-      const gzip = zlib.createGzip({ level: this.compressionLevel })
-      readStream
-        .pipe(gzip)
-        .pipe(writeStream)
-        .on('error', (error) => {
-          reject(error)
-        })
-        .on('finish', () => {
-          resolve()
-        })
-    })
   }
 }
 

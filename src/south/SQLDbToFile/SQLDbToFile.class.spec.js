@@ -16,8 +16,6 @@ jest.mock('pg', () => ({
   types: jest.fn(),
 }))
 
-jest.mock('fs')
-
 jest.mock('fast-csv', () => ({ writeToString: jest.fn() }))
 
 // Mock database service
@@ -215,7 +213,7 @@ describe('sql-db-to-file', () => {
     expect(engine.addFile).not.toBeCalled()
   })
 
-  it('should send file when the result is not empty', async () => {
+  it('should send uncompressed file when the result is not empty and compression is false', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
@@ -228,6 +226,7 @@ describe('sql-db-to-file', () => {
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
     csv.writeToString.mockReturnValue(csvContent)
+    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
 
     await sqlSouth.onScan(sqlConfig.scanMode)
 
@@ -237,6 +236,45 @@ describe('sql-db-to-file', () => {
     expect(csv.writeToString).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', expectedPath, false)
+    global.Date = RealDate
+  })
+
+  it('should send compressed file when the result is not empty and compression is true', async () => {
+    const RealDate = Date
+    global.Date = jest.fn(() => new RealDate(nowDateString))
+
+    sqlSouth.driver = 'mysql'
+
+    const rows = [{
+      value: 75.2,
+      timestamp: '2019-10-03T14:36:38.590Z',
+    }]
+    const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
+    sqlSouth.getDataFromMySQL = () => rows
+    csv.writeToString.mockReturnValue(csvContent)
+    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
+
+    const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    const referenceCsv = path.resolve('./tests/test.csv')
+    const referenceGzip = path.resolve('./tests/test.gz')
+    const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
+    const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.gz')
+    fs.mkdirSync(tmpFolder, { recursive: true })
+    fs.copyFileSync(referenceCsv, targetCsv)
+    sqlSouth.compression = true
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(csv.writeToString).toBeCalledTimes(1)
+    expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
+    expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
+    const referenceBuffer = fs.readFileSync(referenceGzip)
+    const targetBuffer = fs.readFileSync(targetGzip)
+    expect(targetBuffer).toEqual(referenceBuffer)
+
+    sqlSouth.compression = false
+    fs.rmdirSync(tmpFolder, { recursive: true })
     global.Date = RealDate
   })
 
