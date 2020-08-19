@@ -94,7 +94,7 @@ schema.form = {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: <div>(optional) used for ntlm authentication for mssql</div>,
+    help: <div>(optional used for ntlm authentication for mssql</div>,
     md: 3,
   },
   encryption: {
@@ -159,6 +159,12 @@ schema.form = {
     type: 'OIbTimezone',
     newRow: false,
     md: 2,
+  },
+  compression: {
+    type: 'OIbCheckBox',
+    label: 'Compress File?',
+    md: 2,
+    defaultValue: false,
   },
 }
 schema.points = null
