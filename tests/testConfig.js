@@ -177,7 +177,7 @@ const testConfig = {
         enabled: true,
         FolderScanner: {
           preserve: true,
-          minAge: 1,
+          minAge: 0,
           inputFolder: './input/',
           scanMode: 'every5Second',
           regex: '.csv',

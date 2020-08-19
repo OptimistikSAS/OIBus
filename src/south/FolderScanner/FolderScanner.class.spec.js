@@ -78,7 +78,7 @@ describe('folder-scanner', () => {
   it('onScan: should exit if file is not old enough', () => {
     jest.spyOn(fs, 'existsSync').mockImplementation(() => true)
     jest.spyOn(fs, 'readdirSync').mockImplementation(() => ['test.csv'])
-    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() }))
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() + 666 }))
     folderScanner.onScan('xxx')
     expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
