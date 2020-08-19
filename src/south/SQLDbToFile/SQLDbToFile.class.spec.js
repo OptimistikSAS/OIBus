@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const zlib = require('zlib')
 
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
@@ -44,6 +45,21 @@ engine.addFile = jest.fn()
 beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
+})
+
+const uncompress = (input, output) => new Promise((resolve, reject) => {
+  const readStream = fs.createReadStream(input)
+  const writeStream = fs.createWriteStream(output)
+  const gunzip = zlib.createGunzip()
+  readStream
+    .pipe(gunzip)
+    .pipe(writeStream)
+    .on('error', (error) => {
+      reject(error)
+    })
+    .on('finish', () => {
+      resolve()
+    })
 })
 
 describe('sql-db-to-file', () => {
@@ -252,16 +268,13 @@ describe('sql-db-to-file', () => {
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
     csv.writeToString.mockReturnValue(csvContent)
-    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
+    jest.spyOn(fs, 'writeFileSync')
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
-    const referenceCsv = path.resolve('./tests/test.csv')
-    const referenceGzip = path.resolve('./tests/test.gz')
+    fs.mkdirSync(tmpFolder, { recursive: true })
     const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.gz')
-    fs.mkdirSync(tmpFolder, { recursive: true })
-    fs.copyFileSync(referenceCsv, targetCsv)
     sqlSouth.compression = true
 
     await sqlSouth.onScan(sqlConfig.scanMode)
@@ -269,9 +282,10 @@ describe('sql-db-to-file', () => {
     expect(csv.writeToString).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
-    const referenceBuffer = fs.readFileSync(referenceGzip)
-    const targetBuffer = fs.readFileSync(targetGzip)
-    expect(targetBuffer).toEqual(referenceBuffer)
+
+    await uncompress(targetGzip, targetCsv)
+    const targetBuffer = fs.readFileSync(targetCsv)
+    expect(targetBuffer.toString()).toEqual(csvContent)
 
     sqlSouth.compression = false
     fs.rmdirSync(tmpFolder, { recursive: true })
