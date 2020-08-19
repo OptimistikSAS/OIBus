@@ -71,10 +71,11 @@ class ProtocolHandler {
   /**
    * Add a new File to the Engine.
    * @param {string} filePath - The path to the File
+   * @param {boolean} preserveFiles - Whether to preserve the original file
    * @return {void}
    */
-  addFile(filePath) {
-    this.engine.addFile(this.dataSource.dataSourceId, filePath, this.preserveFiles)
+  addFile(filePath, preserveFiles) {
+    this.engine.addFile(this.dataSource.dataSourceId, filePath, preserveFiles)
   }
 
   /**
