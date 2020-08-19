@@ -177,7 +177,7 @@ const testConfig = {
         enabled: true,
         FolderScanner: {
           preserve: true,
-          minAge: 1,
+          minAge: 0,
           inputFolder: './input/',
           scanMode: 'every5Second',
           regex: '.csv',
@@ -208,6 +208,7 @@ const testConfig = {
           timezone: 'Europe/Paris',
           dateFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
           timeFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+          compression: false,
         },
         scanMode: 'every10Second',
         points: [],
