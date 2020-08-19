@@ -1,3 +1,6 @@
+const fs = require('fs')
+const zlib = require('zlib')
+
 const Logger = require('../engine/Logger.class')
 
 /**
@@ -37,6 +40,7 @@ class ProtocolHandler {
     this.dataSource = dataSource
     this.engine = engine
     this.logger = new Logger(this.constructor.name)
+    this.compressionLevel = 9
   }
 
   connect() {
@@ -89,6 +93,29 @@ class ProtocolHandler {
       this.logger.error(`Error decrypting password for ${this.constructor.name}`)
     }
     return decryptedPassword || ''
+  }
+
+  /**
+   * Compress the specified file
+   * @param {string} input - The path of the file to compress
+   * @param {string} output - The path to the compressed file
+   * @returns {Promise} - The compression result
+   */
+  compress(input, output) {
+    return new Promise((resolve, reject) => {
+      const readStream = fs.createReadStream(input)
+      const writeStream = fs.createWriteStream(output)
+      const gzip = zlib.createGzip({ level: this.compressionLevel })
+      readStream
+        .pipe(gzip)
+        .pipe(writeStream)
+        .on('error', (error) => {
+          reject(error)
+        })
+        .on('finish', () => {
+          resolve()
+        })
+    })
   }
 }
 

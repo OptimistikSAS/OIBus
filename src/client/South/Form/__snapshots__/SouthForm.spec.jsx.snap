@@ -3778,6 +3778,29 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         </div>
       </div>
     </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            <input
+              class="oi-form-input form-check-input"
+              id="south.dataSources.0.SQLDbToFile.compression"
+              name="south.dataSources.0.SQLDbToFile.compression"
+              type="checkbox"
+            />
+            Compress File?
+          </label>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 `;
