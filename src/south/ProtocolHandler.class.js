@@ -117,6 +117,30 @@ class ProtocolHandler {
         })
     })
   }
+
+  /**
+   * Decompress the specified file
+   * @param {string} input - The path of the compressed file
+   * @param {string} output - The path to the decompressed file
+   * @returns {Promise} - The decompression result
+   */
+  /* eslint-disable-next-line class-methods-use-this */
+  decompress(input, output) {
+    return new Promise((resolve, reject) => {
+      const readStream = fs.createReadStream(input)
+      const writeStream = fs.createWriteStream(output)
+      const gunzip = zlib.createGunzip()
+      readStream
+        .pipe(gunzip)
+        .pipe(writeStream)
+        .on('error', (error) => {
+          reject(error)
+        })
+        .on('finish', () => {
+          resolve()
+        })
+    })
+  }
 }
 
 module.exports = ProtocolHandler
