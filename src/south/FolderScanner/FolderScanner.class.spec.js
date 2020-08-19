@@ -131,7 +131,6 @@ describe('folder-scanner', () => {
   })
   it('onScan: should addFile() if file match conditions with preserveFiles false and compression true', async () => {
     const referenceCsv = path.resolve('./tests/test.csv')
-    const referenceGzip = path.resolve('./tests/test.gz')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
     const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
 
@@ -145,8 +144,11 @@ describe('folder-scanner', () => {
     expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
     expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(0)
-    const referenceBuffer = fs.readFileSync(referenceGzip)
-    const targetBuffer = fs.readFileSync(targetGzip)
+
+    const decompressedCsv = path.join(folderScanner.inputFolder, 'decompressed.csv')
+    await folderScanner.decompress(targetGzip, decompressedCsv)
+    const referenceBuffer = fs.readFileSync(referenceCsv)
+    const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer).toEqual(referenceBuffer)
 
     folderScanner.preserveFiles = true
@@ -155,7 +157,6 @@ describe('folder-scanner', () => {
   })
   it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
     const referenceCsv = path.resolve('./tests/test.csv')
-    const referenceGzip = path.resolve('./tests/test.gz')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
     const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
 
@@ -169,8 +170,11 @@ describe('folder-scanner', () => {
     expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(1)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
     expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(1)
-    const referenceBuffer = fs.readFileSync(referenceGzip)
-    const targetBuffer = fs.readFileSync(targetGzip)
+
+    const decompressedCsv = path.join(folderScanner.inputFolder, 'decompressed.csv')
+    await folderScanner.decompress(targetGzip, decompressedCsv)
+    const referenceBuffer = fs.readFileSync(referenceCsv)
+    const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer).toEqual(referenceBuffer)
 
     folderScanner.compression = false
