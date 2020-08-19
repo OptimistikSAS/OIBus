@@ -208,6 +208,7 @@ const testConfig = {
           timezone: 'Europe/Paris',
           dateFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
           timeFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+          compression: false,
         },
         scanMode: 'every10Second',
         points: [],
