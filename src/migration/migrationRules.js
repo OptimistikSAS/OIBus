@@ -237,4 +237,14 @@ module.exports = {
       }
     })
   },
+  16: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'compress')) {
+          logger.info('Add compress field to SQLDbToFile')
+          dataSource.SQLDbToFile.compress = false
+        }
+      }
+    })
+  },
 }
