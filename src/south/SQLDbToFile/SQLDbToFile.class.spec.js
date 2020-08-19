@@ -1,6 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const zlib = require('zlib')
 
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
@@ -46,17 +45,6 @@ beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
-})
-
-const uncompress = (input, output) => new Promise((resolve, reject) => {
-  const readStream = fs.createReadStream(input)
-  const writeStream = fs.createWriteStream(output)
-  const gunzip = zlib.createGunzip()
-  readStream
-    .pipe(gunzip)
-    .pipe(writeStream)
-    .on('error', (error) => reject(error))
-    .on('finish', () => resolve())
 })
 
 describe('sql-db-to-file', () => {
@@ -281,7 +269,7 @@ describe('sql-db-to-file', () => {
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
 
-    await uncompress(targetGzip, decompressedCsv)
+    await sqlSouth.decompress(targetGzip, decompressedCsv)
     const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer.toString()).toEqual(csvContent)
 
