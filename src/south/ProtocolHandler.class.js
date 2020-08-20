@@ -1,3 +1,6 @@
+const fs = require('fs')
+const zlib = require('zlib')
+
 const Logger = require('../engine/Logger.class')
 
 /**
@@ -37,6 +40,7 @@ class ProtocolHandler {
     this.dataSource = dataSource
     this.engine = engine
     this.logger = new Logger(this.constructor.name)
+    this.compressionLevel = 9
   }
 
   connect() {
@@ -71,10 +75,11 @@ class ProtocolHandler {
   /**
    * Add a new File to the Engine.
    * @param {string} filePath - The path to the File
+   * @param {boolean} preserveFiles - Whether to preserve the original file
    * @return {void}
    */
-  addFile(filePath) {
-    this.engine.addFile(this.dataSource.dataSourceId, filePath, this.preserveFiles)
+  addFile(filePath, preserveFiles) {
+    this.engine.addFile(this.dataSource.dataSourceId, filePath, preserveFiles)
   }
 
   /**
@@ -88,6 +93,53 @@ class ProtocolHandler {
       this.logger.error(`Error decrypting password for ${this.constructor.name}`)
     }
     return decryptedPassword || ''
+  }
+
+  /**
+   * Compress the specified file
+   * @param {string} input - The path of the file to compress
+   * @param {string} output - The path to the compressed file
+   * @returns {Promise} - The compression result
+   */
+  compress(input, output) {
+    return new Promise((resolve, reject) => {
+      const readStream = fs.createReadStream(input)
+      const writeStream = fs.createWriteStream(output)
+      const gzip = zlib.createGzip({ level: this.compressionLevel })
+      readStream
+        .pipe(gzip)
+        .pipe(writeStream)
+        .on('error', (error) => {
+          reject(error)
+        })
+        .on('finish', () => {
+          resolve()
+        })
+    })
+  }
+
+  /**
+   * Decompress the specified file
+   * @param {string} input - The path of the compressed file
+   * @param {string} output - The path to the decompressed file
+   * @returns {Promise} - The decompression result
+   */
+  /* eslint-disable-next-line class-methods-use-this */
+  decompress(input, output) {
+    return new Promise((resolve, reject) => {
+      const readStream = fs.createReadStream(input)
+      const writeStream = fs.createWriteStream(output)
+      const gunzip = zlib.createGunzip()
+      readStream
+        .pipe(gunzip)
+        .pipe(writeStream)
+        .on('error', (error) => {
+          reject(error)
+        })
+        .on('finish', () => {
+          resolve()
+        })
+    })
   }
 }
 

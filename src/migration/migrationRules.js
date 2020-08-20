@@ -215,4 +215,36 @@ module.exports = {
       }
     })
   },
+  14: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'OIConnect') {
+        if (Object.prototype.hasOwnProperty.call(application.OIConnect, 'endpoint')) {
+          logger.info('Separate OIConnect endpoints for values and file')
+          application.OIConnect.valuesEndpoint = application.OIConnect.endpoint
+          application.OIConnect.fileEndpoint = '/engine/addFile'
+          delete application.OIConnect.endpoint
+        }
+      }
+    })
+  },
+  15: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'FolderScanner') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'compress')) {
+          logger.info('Add compress field to FolderScanner')
+          dataSource.FolderScanner.compress = false
+        }
+      }
+    })
+  },
+  16: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'compress')) {
+          logger.info('Add compress field to SQLDbToFile')
+          dataSource.SQLDbToFile.compress = false
+        }
+      }
+    })
+  },
 }

@@ -39,7 +39,7 @@ class MongoDB extends ApiHandler {
       this.logger.error(error)
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
-    return ApiHandler.STATUS.SUCCESS
+    return values.length
   }
 
   /**

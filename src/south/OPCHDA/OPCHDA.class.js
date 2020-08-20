@@ -290,6 +290,13 @@ class OPCHDA extends ProtocolHandler {
           if (messageObject.Content.Error) {
             this.ongoingReads[messageObject.Content.Group] = false
             this.logger.error(messageObject.Content.Error)
+
+            if (messageObject.Content.Disconnected) {
+              this.logger.error('Agent disconnected from OPC HDA server')
+              this.agentReady = false
+              this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
+            }
+
             return
           }
 
