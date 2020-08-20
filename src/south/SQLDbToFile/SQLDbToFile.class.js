@@ -42,6 +42,7 @@ class SQLDbToFile extends ProtocolHandler {
       timeColumn,
       timezone,
       dateFormat,
+      compression,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -61,6 +62,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.filename = filename
     this.delimiter = delimiter
     this.dateFormat = dateFormat
+    this.compression = compression
 
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
@@ -145,8 +147,26 @@ class SQLDbToFile extends ProtocolHandler {
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
           fs.writeFileSync(filePath, csvContent)
-          this.logger.debug(`Sending ${filePath} to Engine.`)
-          this.addFile(filePath)
+
+          if (this.compression) {
+            // Compress and send the compressed file
+            const gzipPath = `${filePath.substr(0, filePath.lastIndexOf('.'))}.gz`
+            await this.compress(filePath, gzipPath)
+
+            fs.unlink(filePath, (unlinkError) => {
+              if (unlinkError) {
+                this.logger.error(unlinkError)
+              } else {
+                this.logger.info(`File ${filePath} compressed and deleted`)
+              }
+            })
+
+            this.logger.debug(`Sending compressed ${gzipPath} to Engine.`)
+            this.addFile(gzipPath, this.preserveFiles)
+          } else {
+            this.logger.debug(`Sending ${filePath} to Engine.`)
+            this.addFile(filePath, this.preserveFiles)
+          }
         } catch (error) {
           this.logger.error(error)
         }

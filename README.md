@@ -19,6 +19,16 @@
 
 ## History
 
+# 0.6.5
+## Improvements
+- FolderScanner and SQLDbToFile can now compress files before moving them to the Engine.
+
+# 0.6.4
+## Improvements
+- OIConnect now support files in addition to values.
+- OIBus can now subscribe to external south (connected by OIConnect)
+## Fixes
+- Fix issue when OPC-HDA try to recover a large date range on startup
 # 0.6.3
 ## Fixes
 - Fix issue when encryption not available on older mssql versions
