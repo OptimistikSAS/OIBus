@@ -322,7 +322,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             id="south.dataSources.0.FolderScanner.minAge"
             name="south.dataSources.0.FolderScanner.minAge"
             type="integer"
-            value="1000"
+            value=""
           />
           <div
             class="invalid-feedback"
@@ -351,7 +351,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             id="south.dataSources.0.FolderScanner.regex"
             name="south.dataSources.0.FolderScanner.regex"
             type="text"
-            value=".txt"
+            value=".csv"
           />
           <div
             class="invalid-feedback"
@@ -363,6 +363,29 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               RegExp to filter the folder
             </div>
           </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            <input
+              class="oi-form-input form-check-input"
+              id="south.dataSources.0.FolderScanner.compression"
+              name="south.dataSources.0.FolderScanner.compression"
+              type="checkbox"
+            />
+            Compress File?
+          </label>
         </div>
       </div>
     </div>
@@ -1780,7 +1803,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             id="south.dataSources.0.OPCHDA.host"
             name="south.dataSources.0.OPCHDA.host"
             type="text"
-            value="http://opcserver"
+            value="opcserver"
           />
           <div
             class="invalid-feedback"
@@ -3054,7 +3077,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.query"
             name="south.dataSources.0.SQLDbToFile.query"
           >
-            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @date1 AND created_at &lt;= @date2
+            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @LastCompletedDate
           </textarea>
           <div
             class="invalid-feedback"
@@ -3752,6 +3775,29 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               Time Zone
             </div>
           </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            <input
+              class="oi-form-input form-check-input"
+              id="south.dataSources.0.SQLDbToFile.compression"
+              name="south.dataSources.0.SQLDbToFile.compression"
+              type="checkbox"
+            />
+            Compress File?
+          </label>
         </div>
       </div>
     </div>

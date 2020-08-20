@@ -3,7 +3,6 @@ const path = require('path')
 const os = require('os')
 
 const moment = require('moment-timezone')
-const checkDiskSpace = require('check-disk-space')
 
 const encryptionService = require('../services/encryption.service')
 const requestService = require('../services/request.service')
@@ -120,6 +119,7 @@ class Engine {
     this.memoryStats = {}
     this.addValuesMessages = 0
     this.addValuesCount = 0
+    this.addFileCount = 0
     this.aliveSignalMessages = 0
 
     // AliveSignal
@@ -397,16 +397,6 @@ class Engine {
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
     const { engineConfig } = this.configService.getConfig()
-    let freeSpace = 'NA'
-    let totalSpace = 'NA'
-    try {
-      const diskSpace = await checkDiskSpace(path.resolve(engineConfig.caching.cacheFolder))
-      freeSpace = Number(diskSpace.free / 1024 / 1024 / 1024).toFixed(2)
-      totalSpace = Number(diskSpace.size / 1024 / 1024 / 1024).toFixed(2)
-    } catch (error) {
-      this.logger.error(error)
-    }
-
     const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteFilename)
 
     const processUptime = 1000 * 1000 * process.uptime()
@@ -425,7 +415,6 @@ class Engine {
       configurationFile: this.configService.getConfigurationFileLocation(),
       memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
-      disk: `${freeSpace}/${totalSpace} GB`,
       cpuUsage: `${cpuUsagePercentage}%`,
       processId: process.pid,
       uptime: moment.duration(process.uptime(), 'seconds').humanize(),
@@ -436,6 +425,7 @@ class Engine {
       protocolsCacheStats,
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
+      addFileCount: this.addFileCount,
       aliveSignalMessages: this.aliveSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,

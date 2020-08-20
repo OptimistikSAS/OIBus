@@ -6,7 +6,7 @@ const Logger = require('../engine/Logger.class')
 
 const logger = new Logger('migration')
 
-const REQUIRED_SCHEMA_VERSION = 13
+const REQUIRED_SCHEMA_VERSION = 16
 const DEFAULT_VERSION = 1
 
 /**
