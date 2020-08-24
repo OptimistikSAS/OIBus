@@ -203,6 +203,11 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -257,6 +262,11 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -311,6 +321,11 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -365,6 +380,7 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                
               </div>
             </td>
             <td>
@@ -594,6 +610,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -648,6 +669,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -702,6 +728,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -756,6 +787,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                
               </div>
             </td>
             <td>
@@ -985,6 +1017,11 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1039,6 +1076,11 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1093,6 +1135,11 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1147,6 +1194,7 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                
               </div>
             </td>
             <td>
@@ -1376,6 +1424,11 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1430,6 +1483,11 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1484,6 +1542,11 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1538,6 +1601,7 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                
               </div>
             </td>
             <td>
@@ -1767,6 +1831,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1821,6 +1890,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1875,6 +1949,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1929,6 +2008,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
+                
               </div>
             </td>
             <td>

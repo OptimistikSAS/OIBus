@@ -10,6 +10,14 @@ import Engine from './Engine.jsx'
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 
+// fixing date to match snapshot
+const RealDate = Date
+const realToLocaleString = global.Date.prototype.toLocaleString
+const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
+// Ensure test output is consistent across machine locale and time zone config.
+const mockToLocaleString = () => constantDate.toUTCString()
+global.Date.prototype.toLocaleString = mockToLocaleString
+
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
 global.Math = mockMath
@@ -77,5 +85,7 @@ describe('Engine', () => {
       ReactDOM.render(<BrowserRouter><Engine /></BrowserRouter>, container)
     })
     expect(container).toMatchSnapshot()
+    global.Date = RealDate
+    global.Date.prototype.toLocaleString = realToLocaleString
   })
 })

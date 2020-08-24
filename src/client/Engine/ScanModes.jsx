@@ -5,6 +5,7 @@ import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText } from '../components/OIbForm'
 import { ConfigContext } from '../context/configContext.jsx'
 import validation from './Engine.validation'
+import utils from '../helpers/utils'
 
 const ScanModes = ({ scanModes }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)
@@ -96,6 +97,7 @@ const ScanModes = ({ scanModes }) => {
                       value={scanMode.cronTime}
                       valid={validation.engine.scanModes.cronTime}
                       onChange={onChange}
+                      help={utils.nextTime(scanMode.cronTime)}
                     />
                   ),
                 },
