@@ -5,6 +5,14 @@ import { act, Simulate } from 'react-dom/test-utils'
 import testConfig from '../../../tests/testConfig'
 import ScanModes from './ScanModes.jsx'
 
+// fixing date to match snapshot
+const RealDate = Date
+const realToLocaleString = global.Date.prototype.toLocaleString
+const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
+// Ensure test output is consistent across machine locale and time zone config.
+const mockToLocaleString = () => constantDate.toUTCString()
+global.Date.prototype.toLocaleString = mockToLocaleString
+
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
 global.Math = mockMath
@@ -71,5 +79,7 @@ describe('ScanModes', () => {
     Simulate.click(document.querySelector('th path'))
     expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
     expect(container).toMatchSnapshot()
+    global.Date = RealDate
+    global.Date.prototype.toLocaleString = realToLocaleString
   })
 })

@@ -1,4 +1,5 @@
 import * as csv from 'fast-csv'
+import timexe from 'timexe'
 
 const readFileContent = async (file) => new Promise((resolve) => {
   const reader = new FileReader()
@@ -86,4 +87,17 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues }
+const nextTime = (value) => {
+  if (value !== null && value.length) {
+    const nextTimeData = timexe.nextTime(value)
+    // check if timexe can interpret time
+    if (nextTimeData.time > 0) {
+      const localeString = new Date(nextTimeData.time * 1000).toLocaleString()
+      const timeDate = `Next occurrence: ${localeString}`
+      return timeDate
+    }
+  }
+  return ''
+}
+
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime }
