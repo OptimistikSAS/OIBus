@@ -26,8 +26,11 @@
     "Optimistik"
   ],
   "browserslist": [
-    "defaults",
-    "edge >= 14"
+    "last 2 chrome versions",
+    "last 2 safari versions",
+    "last 2 edge versions",
+    "last 2 firefox versions",
+    "firefox esr"
   ],
   "dependencies": {
     "@babel/runtime": "7.11.2",
