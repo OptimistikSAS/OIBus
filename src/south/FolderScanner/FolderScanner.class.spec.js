@@ -134,7 +134,7 @@ describe('folder-scanner', () => {
 
     const referenceCsv = path.resolve('./tests/test.csv')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
-    const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
+    const targetGzip = path.join(folderScanner.inputFolder, 'test.csv.gz')
 
     fs.mkdirSync(folderScanner.inputFolder, { recursive: true })
     fs.copyFileSync(referenceCsv, targetCsv)
@@ -162,7 +162,7 @@ describe('folder-scanner', () => {
 
     const referenceCsv = path.resolve('./tests/test.csv')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
-    const targetGzip = path.join(folderScanner.inputFolder, 'test.gz')
+    const targetGzip = path.join(folderScanner.inputFolder, 'test.csv.gz')
 
     databaseService.getFolderScannerModifyTime.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
     fs.mkdirSync(folderScanner.inputFolder, { recursive: true })

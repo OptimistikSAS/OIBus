@@ -207,7 +207,11 @@ class Cache {
     // Cache files
     this.logger.debug(`cacheFile(${filePath}) from ${dataSourceId}, preserveFiles:${preserveFiles}`)
     const timestamp = new Date().getTime()
-    const cacheFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
+    // When compressed file is received the name looks like filename.txt.gz
+    const filename = path.parse(filePath).base
+    const name = filename.substr(0, filename.indexOf('.'))
+    const ext = filename.substr(filename.indexOf('.'))
+    const cacheFilename = `${name}-${timestamp}${ext}`
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
     try {
