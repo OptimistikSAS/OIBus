@@ -1,11 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Row, Col, Container } from 'reactstrap'
+import { Row, Col, Container, Button } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
+import Modal from '../components/Modal.jsx'
 
-const Overview = ({ status }) => {
+const Overview = ({ status, onRestart, onShutdown }) => {
   const { activeConfig } = React.useContext(ConfigContext)
   const applications = activeConfig?.north?.applications
   const dataSources = activeConfig?.south?.dataSources
@@ -26,18 +27,48 @@ const Overview = ({ status }) => {
       </Row>
       <Row>
         <Col className="tight">
-          <Link to="/engine">
-            <div className="oi-box text-success d-flex align-items-center">
-              {`Engine ${status?.version}`}
-            </div>
-          </Link>
+          <div className="oi-box text-success">
+            <Link to="/engine">
+              <div className="text-success center">
+                {`Engine ${status?.version}`}
+              </div>
+            </Link>
+            <Modal show={false} title="Server restart" body="Confirm restart?">
+              {(confirm) => (
+                <Button
+                  className="inline-button autosize oi-restart-button"
+                  color="success"
+                  onClick={confirm(onRestart)}
+                  size="sm"
+                  outline
+                >
+                  Restart
+                </Button>
+              )}
+            </Modal>
+            <Modal show={false} title="Server shutdown" body="Confirm shutdown?">
+              {(confirm) => (
+                <Button
+                  className="inline-button autosize oi-shutdown-button"
+                  color="success"
+                  onClick={confirm(onShutdown)}
+                  size="sm"
+                  outline
+                >
+                  Shutdown
+                </Button>
+              )}
+            </Modal>
+          </div>
         </Col>
         <Col xs={1} className="tight">
           <Link to="/engine">
             <div
               className={`oi-box d-flex align-items-center text-${engine?.aliveSignal?.enabled ? 'success' : 'muted'}`}
             >
-              Alive
+              <div className="oi-alive d-flex align-items-center">
+                Alive
+              </div>
             </div>
           </Link>
         </Col>
@@ -59,7 +90,15 @@ const Overview = ({ status }) => {
   )
 }
 
-Overview.propTypes = { status: PropTypes.object }
-Overview.defaultProps = { status: {} }
+Overview.propTypes = {
+  status: PropTypes.object,
+  onRestart: PropTypes.func,
+  onShutdown: PropTypes.func,
+}
+Overview.defaultProps = {
+  status: {},
+  onRestart: () => null,
+  onShutdown: () => null,
+}
 
 export default Overview

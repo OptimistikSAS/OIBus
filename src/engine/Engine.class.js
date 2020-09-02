@@ -308,6 +308,20 @@ class Engine {
   }
 
   /**
+   * Shutdown OIbus.
+   * @param {number} timeout - The delay to wait before restart
+   * @returns {void}
+   */
+  async shutdown(timeout) {
+    await this.stop()
+
+    setTimeout(() => {
+      // Ask the Master Cluster to shutdown
+      process.send({ type: 'shutdown' })
+    }, timeout)
+  }
+
+  /**
    * Decrypt password.
    * @param {string} password - The password to decrypt
    * @return {string|null} - The decrypted password
