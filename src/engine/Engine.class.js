@@ -300,6 +300,8 @@ class Engine {
    * @returns {void}
    */
   async reload(timeout) {
+    this.logger.warn('Reloading OIBus')
+
     await this.stop()
 
     setTimeout(() => {
@@ -313,6 +315,8 @@ class Engine {
    * @returns {void}
    */
   async shutdown(timeout) {
+    this.logger.warn('Shutting down OIBus')
+
     await this.stop()
 
     setTimeout(() => {
