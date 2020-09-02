@@ -19,7 +19,7 @@ const memStringify = ({ rss, heapTotal, heapUsed, external }) => (`
 `)
 
 if (cluster.isMaster) {
-  // Master role is nothing except launching a worker and relauching another
+  // Master role is nothing except launching a worker and relaunching another
   // one if exit is detected (typically to load a new configuration)
   logger.info(`Starting OIBus version: ${VERSION}`)
   cluster.fork()
@@ -35,11 +35,16 @@ if (cluster.isMaster) {
   })
   // Handle messages from the worker
   cluster.on('message', (_worker, msg) => {
-    if (msg.type === 'logMemoryUsage') {
-      logger.info(`memoryUsage worker: ${memStringify(msg.memoryUsage)}`)
-      logger.info(`memoryUsage master:', ${memStringify(process.memoryUsage())}`)
-    } else {
-      logger.warn(`Unknown message type received from Worker: ${msg.type}`)
+    switch (msg.type) {
+      case 'logMemoryUsage':
+        logger.info(`memoryUsage worker: ${memStringify(msg.memoryUsage)}`)
+        logger.info(`memoryUsage master:', ${memStringify(process.memoryUsage())}`)
+        break
+      case 'shutdown':
+        process.exit()
+        break
+      default:
+        logger.warn(`Unknown message type received from Worker: ${msg.type}`)
     }
   })
 } else {
