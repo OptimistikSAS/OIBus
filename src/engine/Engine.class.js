@@ -300,10 +300,28 @@ class Engine {
    * @returns {void}
    */
   async reload(timeout) {
+    this.logger.warn('Reloading OIBus')
+
     await this.stop()
 
     setTimeout(() => {
       process.exit(1)
+    }, timeout)
+  }
+
+  /**
+   * Shutdown OIbus.
+   * @param {number} timeout - The delay to wait before restart
+   * @returns {void}
+   */
+  async shutdown(timeout) {
+    this.logger.warn('Shutting down OIBus')
+
+    await this.stop()
+
+    setTimeout(() => {
+      // Ask the Master Cluster to shutdown
+      process.send({ type: 'shutdown' })
     }, timeout)
   }
 

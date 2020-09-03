@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label, Row, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
+import { Label, Row, Breadcrumb, BreadcrumbItem, Container, Spinner } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
@@ -9,6 +9,7 @@ import Overview from './Overview.jsx'
 import utils from '../helpers/utils'
 
 const Health = () => {
+  const [loading, setLoading] = React.useState()
   const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
@@ -39,6 +40,45 @@ const Health = () => {
   React.useEffect(() => {
     fetchStatus()
   }, [])
+
+  // Disable loading when server reachable
+  const stopLoadingWhenReachable = () => {
+    apis
+      .getConfig()
+      .then(() => setLoading(false))
+      // retry getConfig if error catched
+      .catch(() => setTimeout(() => stopLoadingWhenReachable(), 1000))
+  }
+
+  /**
+   * Restart request
+   * @returns {void}
+   */
+  const handleRestart = async () => {
+    try {
+      await apis.reload()
+      setLoading(true)
+      // start checking if server is reachable after 10 sec,
+      // as the restart on backend has a 10 sec delay
+      setTimeout(() => stopLoadingWhenReachable(), 10000)
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
+  }
+
+  /**
+   * Shutdown request
+   * @returns {void}
+   */
+  const handleShutdown = async () => {
+    try {
+      await apis.shutdown()
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
+  }
 
   /**
    * Generate string value from on object.
@@ -99,7 +139,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview status={status} />
+      <Overview status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
       <Row>
         <Label>
           <span>
@@ -112,6 +152,11 @@ const Health = () => {
       <Row>
         <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
       </Row>
+      {loading && (
+        <div className="spinner-container">
+          <Spinner color="primary" />
+        </div>
+      )}
     </>
   )
 }

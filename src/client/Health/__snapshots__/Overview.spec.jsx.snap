@@ -87,15 +87,31 @@ exports[`Overview display overview based on config 1`] = `
       <div
         class="tight col"
       >
-        <a
-          href="/engine"
+        <div
+          class="oi-box text-success"
         >
-          <div
-            class="oi-box text-success d-flex align-items-center"
+          <a
+            href="/engine"
           >
-            Engine xxx
-          </div>
-        </a>
+            <div
+              class="text-success center"
+            >
+              Engine xxx
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-restart-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Restart
+          </button>
+          <button
+            class="inline-button autosize oi-shutdown-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Shutdown
+          </button>
+        </div>
       </div>
       <div
         class="tight col-1"
@@ -106,7 +122,11 @@ exports[`Overview display overview based on config 1`] = `
           <div
             class="oi-box d-flex align-items-center text-success"
           >
-            Alive
+            <div
+              class="oi-alive d-flex align-items-center"
+            >
+              Alive
+            </div>
           </div>
         </a>
       </div>
