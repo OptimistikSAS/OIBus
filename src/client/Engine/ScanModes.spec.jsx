@@ -8,10 +8,13 @@ import ScanModes from './ScanModes.jsx'
 // fixing date to match snapshot
 const RealDate = Date
 const realToLocaleString = global.Date.prototype.toLocaleString
+const realNow = global.Date.now
 const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
 // Ensure test output is consistent across machine locale and time zone config.
 const mockToLocaleString = () => constantDate.toUTCString()
+const mockNow = () => 1577836799000
 global.Date.prototype.toLocaleString = mockToLocaleString
+global.Date.now = mockNow
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -56,8 +59,8 @@ describe('ScanModes', () => {
         scanModes={testConfig.engine.scanModes}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.cronTime'), { target: { value: '* * * * * /30' } })
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.cronTime', value: '* * * * * /30', validity: null })
+    Simulate.change(document.getElementById('engine.scanModes.0.cronTime.year'), { target: { value: '*' } })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.cronTime', value: '* * * * * *', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check delete first scan mode', () => {
@@ -81,5 +84,6 @@ describe('ScanModes', () => {
     expect(container).toMatchSnapshot()
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString
+    global.Date.now = realNow
   })
 })

@@ -298,6 +298,13 @@ label {
   border-radius: 2px;
 }
 
+.oi-cron-input {
+  display: inline-block;
+  width: 65px;
+  text-align: center;
+  margin-right: 5px;
+}
+
 h3 {
   font-size: 24px;
 }
