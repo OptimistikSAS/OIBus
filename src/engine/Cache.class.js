@@ -388,7 +388,7 @@ class Cache {
           await this.handleSentFile(fileToSend.path)
           break
         case ApiHandler.STATUS.LOGIC_ERROR:
-          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${applicationId}`)
+          this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${applicationId}`)
           await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, applicationId, fileToSend.path)
 
           this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${applicationId}`)
