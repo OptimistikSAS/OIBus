@@ -314,6 +314,19 @@ h3 {
   height: 20px;
 }
 
+.oi-restart-button {
+  height: 16px;
+  padding-top: 1px;
+  margin-top: 3px;
+}
+
+.oi-shutdown-button {
+  height: 16px;
+  padding-top: 1px;
+  margin-top: 3px;
+  margin-left: 5px;
+}
+
 .oi-points-button {
   height: 16px;
   padding-top: 1px;
@@ -360,6 +373,10 @@ h3 {
 
 .oi-box > a {
   color: inherit;
+}
+
+.oi-alive {
+  min-height: 38px;
 }
 
 .tight {
