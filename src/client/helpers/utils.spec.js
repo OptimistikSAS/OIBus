@@ -3,10 +3,13 @@ import utils from './utils'
 // fixing date to match snapshot
 const RealDate = Date
 const realToLocaleString = global.Date.prototype.toLocaleString
+const realNow = global.Date.now
 const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
 // Ensure test output is consistent across machine locale and time zone config.
 const mockToLocaleString = () => constantDate.toUTCString()
+const mockNow = () => 1577836799000
 global.Date.prototype.toLocaleString = mockToLocaleString
+global.Date.now = mockNow
 
 describe('utils', () => {
   it('check readFileContent', async () => {
@@ -84,8 +87,9 @@ describe('utils', () => {
   })
   it('check nextTime with * * *', () => {
     const result = utils.nextTime('* * *')
-    expect(result).toEqual('Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT')
+    expect(result).toEqual('Next occurrence in: 247.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT')
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString
+    global.Date.now = realNow
   })
 })

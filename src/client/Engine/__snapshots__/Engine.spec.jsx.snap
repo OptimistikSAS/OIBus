@@ -1151,11 +1151,66 @@ exports[`Engine check Engine 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -1163,7 +1218,7 @@ exports[`Engine check Engine 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -1210,11 +1265,66 @@ exports[`Engine check Engine 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -1222,7 +1332,7 @@ exports[`Engine check Engine 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -1269,11 +1379,66 @@ exports[`Engine check Engine 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -1281,7 +1446,7 @@ exports[`Engine check Engine 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -1328,11 +1493,66 @@ exports[`Engine check Engine 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -3766,11 +3986,66 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -3778,7 +4053,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -3825,11 +4100,66 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -3837,7 +4167,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -3884,11 +4214,66 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -3896,7 +4281,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -3943,11 +4328,66 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -6114,11 +6554,66 @@ exports[`Engine check change engineName 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -6126,7 +6621,7 @@ exports[`Engine check change engineName 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -6173,11 +6668,66 @@ exports[`Engine check change engineName 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -6185,7 +6735,7 @@ exports[`Engine check change engineName 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -6232,11 +6782,66 @@ exports[`Engine check change engineName 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -6244,7 +6849,7 @@ exports[`Engine check change engineName 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -6291,11 +6896,66 @@ exports[`Engine check change engineName 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -8729,11 +9389,66 @@ exports[`Engine check change password 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -8741,7 +9456,7 @@ exports[`Engine check change password 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -8788,11 +9503,66 @@ exports[`Engine check change password 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -8800,7 +9570,7 @@ exports[`Engine check change password 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -8847,11 +9617,66 @@ exports[`Engine check change password 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -8859,7 +9684,7 @@ exports[`Engine check change password 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -8906,11 +9731,66 @@ exports[`Engine check change password 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -11344,11 +12224,66 @@ exports[`Engine check change port 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -11356,7 +12291,7 @@ exports[`Engine check change port 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -11403,11 +12338,66 @@ exports[`Engine check change port 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -11415,7 +12405,7 @@ exports[`Engine check change port 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -11462,11 +12452,66 @@ exports[`Engine check change port 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -11474,7 +12519,7 @@ exports[`Engine check change port 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -11521,11 +12566,66 @@ exports[`Engine check change port 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -13959,11 +15059,66 @@ exports[`Engine check change user 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.0.cronTime"
-                    name="engine.scanModes.0.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -13971,7 +15126,7 @@ exports[`Engine check change user 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -14018,11 +15173,66 @@ exports[`Engine check change user 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.1.cronTime"
-                    name="engine.scanModes.1.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * * /10"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value="/10"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -14030,7 +15240,7 @@ exports[`Engine check change user 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -14077,11 +15287,66 @@ exports[`Engine check change user 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.2.cronTime"
-                    name="engine.scanModes.2.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
-                    value="* * * * *"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value="*"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
@@ -14089,7 +15354,7 @@ exports[`Engine check change user 1`] = `
                   <small
                     class="form-text text-muted"
                   >
-                    Next occurrence: Sat, 01 Feb 2020 00:00:00 GMT
+                    Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                   </small>
                 </div>
               </td>
@@ -14136,11 +15401,66 @@ exports[`Engine check change user 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="engine.scanModes.3.cronTime"
-                    name="engine.scanModes.3.cronTime"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.year"
+                    name="year"
+                    placeholder="Year"
                     type="text"
                     value="listen"
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.month"
+                    name="month"
+                    placeholder="Month"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.day"
+                    name="day"
+                    placeholder="Day"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.hour"
+                    name="hour"
+                    placeholder="Hour"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.minute"
+                    name="minute"
+                    placeholder="Minute"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.sec"
+                    name="sec"
+                    placeholder="Sec"
+                    type="text"
+                    value=""
+                  />
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.3.cronTime.msec"
+                    name="msec"
+                    placeholder="Msec"
+                    type="text"
+                    value=""
                   />
                   <div
                     class="invalid-feedback"
