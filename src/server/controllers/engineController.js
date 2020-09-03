@@ -38,6 +38,17 @@ const reload = async (ctx) => {
 }
 
 /**
+ * Shutdown OIBus.
+ * @param {Object} ctx  - The KOA context
+ * @returns {void}
+ */
+const shutdown = async (ctx) => {
+  await ctx.app.engine.shutdown(1000)
+
+  ctx.ok('Shutting down...')
+}
+
+/**
  * Add Values to the Engine
  * @param {Object} ctx - The KOA context
  * @param {Object} ctx.request.body - Array of values
@@ -99,6 +110,7 @@ module.exports = {
   getNorthList,
   getSouthList,
   reload,
+  shutdown,
   addValues,
   addFile,
   aliveSignal,

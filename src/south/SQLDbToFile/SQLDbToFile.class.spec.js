@@ -259,7 +259,7 @@ describe('sql-db-to-file', () => {
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
     fs.mkdirSync(tmpFolder, { recursive: true })
     const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
-    const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.gz')
+    const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv.gz')
     const decompressedCsv = path.join(tmpFolder, 'decompressed.csv')
     sqlSouth.compression = true
 
