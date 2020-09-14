@@ -231,7 +231,7 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
         await sendWithFetch(engine, requestUrl, method, headers, proxy, data, timeout)
     }
   } catch (errorResult) {
-    logger.silly(`sendRequest(): Error ${errorResult.error}`)
+    logger.error(`sendRequest(): Error ${errorResult.error}`)
 
     if (errorResult.responseError) {
       if (retryStatusCodes.includes(errorResult.statusCode)) {
