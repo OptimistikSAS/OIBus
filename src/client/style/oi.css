@@ -305,6 +305,18 @@ label {
   margin-right: 5px;
 }
 
+.oi-cron-custom-input {
+  display: inline-block;
+  width: 140px;
+  text-align: center;
+  margin-right: 5px;
+}
+
+.oi-cron-type-selector {
+  padding-left: 10px;
+  padding-right: 5px;
+}
+
 h3 {
   font-size: 24px;
 }
