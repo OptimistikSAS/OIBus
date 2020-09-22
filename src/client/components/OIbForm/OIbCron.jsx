@@ -1,75 +1,220 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, Row } from 'reactstrap'
+import OIbSelect from './OIbSelect.jsx'
 
 const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) => {
-  const types = ['year', 'month', 'day', 'hour', 'minute', 'sec', 'msec']
+  const intervals = ['year', 'month', 'day', 'hour', 'minute', 'sec', 'msec']
+  const options = ['every', 'custom', 'listen']
+  const commonOptions = [
+    {
+      every: '*',
+      specific: '/',
+      type: 'year',
+    },
+    {
+      every: '* *',
+      specific: '* /',
+      type: 'month',
+    },
+    {
+      every: '* * *',
+      specific: '* * /',
+      type: 'day',
+    },
+    {
+      every: '* * * *',
+      specific: '* * * /',
+      type: 'hour',
+    },
+    {
+      every: '* * * * *',
+      specific: '* * * * /',
+      type: 'minute',
+    },
+    {
+      every: '* * * * * *',
+      specific: '* * * * * /',
+      type: 'sec',
+    },
+    {
+      every: '* * * * * * *',
+      specific: '* * * * * * /',
+      type: 'msec',
+    },
+  ]
+  const selectStyle = { paddingBottom: 0, marginBottom: 0 }
+
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
 
-  // insert part change to value at index
-  // or at end of string
-  const newCronValue = (newVal, index) => {
-    const parts = value.split(' ')
-    if (parts.length === 0) {
-      return newVal
+  // get the specified value from cron string when every is selected
+  // to be used in the value input field.
+  // One of defined common option is used to try to read the value
+  const readSpecificValue = (common) => {
+    if (value === common.every) return 1
+    if (value.startsWith(common.specific)) {
+      const result = value.replace(common.specific, '')
+      // eslint-disable-next-line no-restricted-globals
+      if (isNaN(result)) return null
+      return Number(result)
     }
-    if (parts.length < index) {
-      parts.push(newVal)
-      return parts.filter((e) => e !== '').join(' ')
-    }
-    parts[index] = newVal
-    return parts.filter((e) => e !== '').join(' ')
+    return null
   }
 
-  const handleChange = (event) => {
-    const { target } = event
-    const { value: newVal, name: typeName } = target
-    const index = types.indexOf(typeName)
-
-    const newFinalValue = newCronValue(newVal, index)
-
-    onChange(name, newFinalValue, valid(newFinalValue))
+  // get the currect interval from cron value string
+  const readSpecificInterval = () => {
+    let result = null
+    commonOptions.forEach((option) => {
+      if (readSpecificValue(option)) {
+        result = option.type
+      }
+    })
+    return result
   }
-  // if no label, we are in a table so we need to minimize the row height
+
+  const specificInterval = readSpecificInterval()
+  const commonIndex = intervals.indexOf(specificInterval)
+  const commonOption = commonIndex > 0 ? commonOptions[commonIndex] : null
+  const intervalValue = commonOption ? readSpecificValue(commonOption) : null
+
+  // get current type based on value
+  const currentType = () => {
+    if (value === 'listen') return 'listen'
+    if (specificInterval) return 'every'
+    return 'custom'
+  }
+
+  const [type, setType] = React.useState((currentType))
   const style = label ? null : { marginBottom: 0 }
 
   const validCheck = valid(value)
   // if value is null, no need to render
   if (value === null) return null
 
-  // create capitalized placeholder
-  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1)
-
-  // get part based on index
-  const valuePart = (v, i) => {
-    if (v.split(' ').length > i) {
-      return v.split(' ')[i]
+  /*
+    Handle cron type change
+  */
+  const handleTypeChange = (newValue) => {
+    if (newValue !== type) {
+      setType(newValue)
+      switch (newValue) {
+        case 'every':
+          onChange(name, defaultValue, valid(defaultValue))
+          break
+        case 'custom':
+          onChange(name, '', valid(''))
+          break
+        case 'listen':
+          onChange(name, 'listen', valid('listen'))
+          break
+        default:
+          break
+      }
     }
-    return ''
   }
 
-  // render input part based on index
-  const renderInput = (index) => (
+  /*
+    Handle value change when type is every
+  */
+  const handleEveryValueChange = (event) => {
+    const { target } = event
+    const { value: newVal } = target
+    if (Number(newVal > 0)) {
+      const newCron = Number(newVal) === 1
+        ? commonOption.every
+        : `${commonOption.specific}${Number(newVal)}`
+      onChange(name, newCron, valid(newCron))
+    }
+  }
+
+  /*
+    Handle interval change when type is every
+  */
+  const handleEveryIntervalChange = (_, newVal) => {
+    const newIndex = intervals.indexOf(newVal)
+    const newCron = intervalValue === 1
+      ? commonOptions[newIndex].every
+      : `${commonOptions[newIndex].specific}${intervalValue}`
+    onChange(name, newCron, valid(newCron))
+  }
+
+  /*
+    Handle text value change when type is custom
+  */
+  const handleCustomValueChange = (event) => {
+    const { target } = event
+    const { value: newVal } = target
+    onChange(name, newVal, valid(newVal))
+  }
+
+  // render options for every type
+  const renderEveryOption = () => (
+    <>
+      <Input
+        className="oi-form-input oi-cron-input"
+        type="number"
+        id={`${name}.every.value`}
+        name="value"
+        onChange={handleEveryValueChange}
+        value={intervalValue}
+        placeholder="value"
+        min={1}
+      />
+      <OIbSelect
+        onChange={handleEveryIntervalChange}
+        value={specificInterval}
+        options={intervals}
+        defaultValue="msec"
+        name={`${name}.interval`}
+        style={selectStyle}
+      />
+    </>
+  )
+
+  // render option fro custom type
+  const renderCustomOption = () => (
     <Input
-      key={index}
-      className="oi-form-input oi-cron-input"
+      className="oi-form-input oi-cron-custom-input"
+      id={`${name}.custom`}
       type="text"
-      id={`${name}.${types[index]}`}
-      name={types[index]}
-      invalid={validCheck !== null}
-      onChange={handleChange}
-      value={valuePart(value, index)}
-      placeholder={capitalize(types[index])}
+      name="value"
+      onChange={handleCustomValueChange}
+      value={value}
+      placeholder="value"
     />
   )
+
+  // decide needed options based on selected type
+  const renderBasedOnSelectedType = () => {
+    switch (type) {
+      case 'every':
+        return renderEveryOption()
+      case 'custom':
+        return renderCustomOption()
+      default:
+        return null
+    }
+  }
 
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      {types.map((_, index) => renderInput(index))}
-      <FormFeedback>{validCheck}</FormFeedback>
+      <Row>
+        <div style={{ paddingLeft: 10, paddingRight: 5 }}>
+          <OIbSelect
+            onChange={(_, newValue) => handleTypeChange(newValue)}
+            value={type}
+            options={options}
+            defaultValue="every"
+            name={`${name}.type`}
+            style={selectStyle}
+          />
+        </div>
+        {renderBasedOnSelectedType()}
+      </Row>
+      <FormFeedback style={{ display: 'block' }}>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
@@ -88,7 +233,7 @@ OIbCron.defaultProps = {
   label: null,
   help: null,
   value: null,
-  defaultValue: '',
+  defaultValue: '* * * * * *',
 }
 
 export default OIbCron
