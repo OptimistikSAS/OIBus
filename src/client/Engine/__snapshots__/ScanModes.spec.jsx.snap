@@ -192,76 +192,113 @@ exports[`ScanModes check ScanModes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.0.cronTime.type"
+                        name="engine.scanModes.0.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.0.cronTime.interval"
+                      name="engine.scanModes.0.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -306,76 +343,113 @@ exports[`ScanModes check ScanModes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="/10"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.1.cronTime.type"
+                        name="engine.scanModes.1.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="10"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.1.cronTime.interval"
+                      name="engine.scanModes.1.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -420,76 +494,113 @@ exports[`ScanModes check ScanModes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.2.cronTime.type"
+                        name="engine.scanModes.2.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.2.cronTime.interval"
+                      name="engine.scanModes.2.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -534,73 +645,54 @@ exports[`ScanModes check ScanModes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="listen"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.3.cronTime.type"
+                        name="engine.scanModes.3.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
-                
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -819,76 +911,113 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.0.cronTime.type"
+                        name="engine.scanModes.0.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.0.cronTime.interval"
+                      name="engine.scanModes.0.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -933,76 +1062,113 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="/10"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.1.cronTime.type"
+                        name="engine.scanModes.1.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="10"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.1.cronTime.interval"
+                      name="engine.scanModes.1.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -1047,76 +1213,113 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.2.cronTime.type"
+                        name="engine.scanModes.2.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.2.cronTime.interval"
+                      name="engine.scanModes.2.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -1161,73 +1364,54 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="listen"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.3.cronTime.type"
+                        name="engine.scanModes.3.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
-                
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -1446,76 +1630,113 @@ exports[`ScanModes check change first cron 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.0.cronTime.type"
+                        name="engine.scanModes.0.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.0.cronTime.interval"
+                      name="engine.scanModes.0.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -1560,76 +1781,113 @@ exports[`ScanModes check change first cron 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="/10"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.1.cronTime.type"
+                        name="engine.scanModes.1.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="10"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.1.cronTime.interval"
+                      name="engine.scanModes.1.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -1674,76 +1932,113 @@ exports[`ScanModes check change first cron 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.2.cronTime.type"
+                        name="engine.scanModes.2.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.2.cronTime.interval"
+                      name="engine.scanModes.2.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -1788,73 +2083,54 @@ exports[`ScanModes check change first cron 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="listen"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.3.cronTime.type"
+                        name="engine.scanModes.3.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
-                
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -2073,76 +2349,113 @@ exports[`ScanModes check change first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.0.cronTime.type"
+                        name="engine.scanModes.0.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.0.cronTime.interval"
+                      name="engine.scanModes.0.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -2187,76 +2500,113 @@ exports[`ScanModes check change first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="/10"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.1.cronTime.type"
+                        name="engine.scanModes.1.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="10"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.1.cronTime.interval"
+                      name="engine.scanModes.1.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -2301,76 +2651,113 @@ exports[`ScanModes check change first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.2.cronTime.type"
+                        name="engine.scanModes.2.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.2.cronTime.interval"
+                      name="engine.scanModes.2.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -2415,73 +2802,54 @@ exports[`ScanModes check change first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="listen"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.3.cronTime.type"
+                        name="engine.scanModes.3.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
-                
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>
@@ -2700,76 +3068,113 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.0.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.0.cronTime.type"
+                        name="engine.scanModes.0.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.0.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.0.cronTime.interval"
+                      name="engine.scanModes.0.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -2814,76 +3219,113 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value="/10"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.1.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.1.cronTime.type"
+                        name="engine.scanModes.1.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.1.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="10"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.1.cronTime.interval"
+                      name="engine.scanModes.1.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -2928,76 +3370,113 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value="*"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.2.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.2.cronTime.type"
+                        name="engine.scanModes.2.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    class="oi-form-input oi-cron-input form-control"
+                    id="engine.scanModes.2.cronTime.every.value"
+                    min="1"
+                    name="value"
+                    placeholder="value"
+                    type="number"
+                    value="1"
+                  />
+                  <div
+                    class="form-group"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-control"
+                      id="engine.scanModes.2.cronTime.interval"
+                      name="engine.scanModes.2.cronTime.interval"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <option
+                        value="year"
+                      >
+                        year
+                      </option>
+                      <option
+                        value="month"
+                      >
+                        month
+                      </option>
+                      <option
+                        value="day"
+                      >
+                        day
+                      </option>
+                      <option
+                        value="hour"
+                      >
+                        hour
+                      </option>
+                      <option
+                        value="minute"
+                      >
+                        minute
+                      </option>
+                      <option
+                        value="sec"
+                      >
+                        sec
+                      </option>
+                      <option
+                        value="msec"
+                      >
+                        msec
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
                 <small
                   class="form-text text-muted"
                 >
-                  Next occurrence in: 246.6 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
                 </small>
               </div>
             </td>
@@ -3042,73 +3521,54 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 class="form-group"
                 style="margin-bottom: 0px;"
               >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.year"
-                  name="year"
-                  placeholder="Year"
-                  type="text"
-                  value="listen"
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.month"
-                  name="month"
-                  placeholder="Month"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.day"
-                  name="day"
-                  placeholder="Day"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.hour"
-                  name="hour"
-                  placeholder="Hour"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.minute"
-                  name="minute"
-                  placeholder="Minute"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.sec"
-                  name="sec"
-                  placeholder="Sec"
-                  type="text"
-                  value=""
-                />
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input oi-cron-input form-control"
-                  id="engine.scanModes.3.cronTime.msec"
-                  name="msec"
-                  placeholder="Msec"
-                  type="text"
-                  value=""
-                />
+                <div
+                  class="row"
+                >
+                  <div
+                    style="padding-left: 10px; padding-right: 5px;"
+                  >
+                    <div
+                      class="form-group"
+                      style="padding-bottom: 0px; margin-bottom: 0px;"
+                    >
+                      <select
+                        aria-invalid="false"
+                        class="oi-form-input form-control"
+                        id="engine.scanModes.3.cronTime.type"
+                        name="engine.scanModes.3.cronTime.type"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <option
+                          value="every"
+                        >
+                          every
+                        </option>
+                        <option
+                          value="custom"
+                        >
+                          custom
+                        </option>
+                        <option
+                          value="listen"
+                        >
+                          listen
+                        </option>
+                      </select>
+                      <div
+                        class="invalid-feedback"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div
                   class="invalid-feedback"
+                  style="display: block;"
                 />
-                
+                <small
+                  class="form-text text-muted"
+                >
+                  Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                </small>
               </div>
             </td>
             <td>

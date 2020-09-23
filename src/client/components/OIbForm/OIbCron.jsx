@@ -158,7 +158,7 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
         id={`${name}.every.value`}
         name="value"
         onChange={handleEveryValueChange}
-        value={intervalValue}
+        value={intervalValue || 1}
         placeholder="value"
         min={1}
       />

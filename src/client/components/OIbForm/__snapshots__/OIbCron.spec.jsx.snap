@@ -1,0 +1,228 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbCron check Cron with value="* * * /10" 1`] = `
+<div>
+  <div
+    class="form-group"
+    style="margin-bottom: 0px;"
+  >
+    <div
+      class="row"
+    >
+      <div
+        style="padding-left: 10px; padding-right: 5px;"
+      >
+        <div
+          class="form-group"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="name.type"
+            name="name.type"
+            style="padding-bottom: 0px; margin-bottom: 0px;"
+          >
+            <option
+              value="every"
+            >
+              every
+            </option>
+            <option
+              value="custom"
+            >
+              custom
+            </option>
+            <option
+              value="listen"
+            >
+              listen
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <input
+        class="oi-form-input oi-cron-input form-control"
+        id="name.every.value"
+        min="1"
+        name="value"
+        placeholder="value"
+        type="number"
+        value="10"
+      />
+      <div
+        class="form-group"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
+      >
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="name.interval"
+          name="name.interval"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <option
+            value="year"
+          >
+            year
+          </option>
+          <option
+            value="month"
+          >
+            month
+          </option>
+          <option
+            value="day"
+          >
+            day
+          </option>
+          <option
+            value="hour"
+          >
+            hour
+          </option>
+          <option
+            value="minute"
+          >
+            minute
+          </option>
+          <option
+            value="sec"
+          >
+            sec
+          </option>
+          <option
+            value="msec"
+          >
+            msec
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
+      </div>
+    </div>
+    <div
+      class="invalid-feedback"
+      style="display: block;"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbCron check Cron with value="* * w1-5 /3" 1`] = `
+<div>
+  <div
+    class="form-group"
+    style="margin-bottom: 0px;"
+  >
+    <div
+      class="row"
+    >
+      <div
+        style="padding-left: 10px; padding-right: 5px;"
+      >
+        <div
+          class="form-group"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="name.type"
+            name="name.type"
+            style="padding-bottom: 0px; margin-bottom: 0px;"
+          >
+            <option
+              value="every"
+            >
+              every
+            </option>
+            <option
+              value="custom"
+            >
+              custom
+            </option>
+            <option
+              value="listen"
+            >
+              listen
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <input
+        class="oi-form-input oi-cron-custom-input form-control"
+        id="name.custom"
+        name="value"
+        placeholder="value"
+        type="text"
+        value="* * w1-5 /3"
+      />
+    </div>
+    <div
+      class="invalid-feedback"
+      style="display: block;"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbCron check Cron with value="listen" 1`] = `
+<div>
+  <div
+    class="form-group"
+    style="margin-bottom: 0px;"
+  >
+    <div
+      class="row"
+    >
+      <div
+        style="padding-left: 10px; padding-right: 5px;"
+      >
+        <div
+          class="form-group"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="name.type"
+            name="name.type"
+            style="padding-bottom: 0px; margin-bottom: 0px;"
+          >
+            <option
+              value="every"
+            >
+              every
+            </option>
+            <option
+              value="custom"
+            >
+              custom
+            </option>
+            <option
+              value="listen"
+            >
+              listen
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="invalid-feedback"
+      style="display: block;"
+    />
+  </div>
+</div>
+`;
