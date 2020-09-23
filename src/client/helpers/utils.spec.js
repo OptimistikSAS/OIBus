@@ -1,3 +1,4 @@
+import timexe from 'timexe'
 import utils from './utils'
 
 // fixing date to match snapshot
@@ -86,10 +87,18 @@ describe('utils', () => {
     expect(result).toEqual('')
   })
   it('check nextTime with * * *', () => {
+    // mock timexe.nextTime
+    const realTimexeNextTime = timexe.nextTime
+    const mockTimexeNextTime = () => ({ time: '1600905600.000', error: '' })
+    timexe.nextTime = mockTimexeNextTime
+
     const result = utils.nextTime('* * *')
-    expect(result).toEqual('Next occurrence in: 247.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT')
+    expect(result).toEqual('Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT')
+
+    // reset mock functions
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString
     global.Date.now = realNow
+    timexe.nextTime = realTimexeNextTime
   })
 })
