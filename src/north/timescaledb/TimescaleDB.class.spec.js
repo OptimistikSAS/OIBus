@@ -20,9 +20,7 @@ engine.configService = { getConfig: () => config.engine }
 engine.decryptPassword = (password) => password
 engine.sendRequest = jest.fn()
 
-jest.mock('pg', () => ({
-  Client: jest.fn(),
-}))
+jest.mock('pg', () => ({ Client: jest.fn() }))
 
 beforeEach(() => {
   jest.resetAllMocks()
