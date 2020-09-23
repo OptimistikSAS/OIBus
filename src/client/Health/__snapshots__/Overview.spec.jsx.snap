@@ -80,6 +80,24 @@ exports[`Overview display overview based on config 1`] = `
           </a>
         </div>
       </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/Timescale"
+          >
+            <div>
+              Timescale
+            </div>
+            <div>
+              (TimescaleDB)
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="row"
