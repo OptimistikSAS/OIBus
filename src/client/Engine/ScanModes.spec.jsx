@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
+import timexe from 'timexe'
 
 import testConfig from '../../../tests/testConfig'
 import ScanModes from './ScanModes.jsx'
@@ -15,6 +16,11 @@ const mockToLocaleString = () => constantDate.toUTCString()
 const mockNow = () => 1577836799000
 global.Date.prototype.toLocaleString = mockToLocaleString
 global.Date.now = mockNow
+
+// mock timexe.nextTime
+const realTimexeNextTime = timexe.nextTime
+const mockTimexeNextTime = () => ({ time: '1600905600.000', error: '' })
+timexe.nextTime = mockTimexeNextTime
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -59,8 +65,8 @@ describe('ScanModes', () => {
         scanModes={testConfig.engine.scanModes}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.cronTime.year'), { target: { value: '*' } })
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.cronTime', value: '* * * * * *', validity: null })
+    Simulate.change(document.getElementById('engine.scanModes.0.cronTime.every.value'), { target: { value: '10' } })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.cronTime', value: '* * * * * /10', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check delete first scan mode', () => {
@@ -85,5 +91,6 @@ describe('ScanModes', () => {
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString
     global.Date.now = realNow
+    timexe.nextTime = realTimexeNextTime
   })
 })
