@@ -10,6 +10,7 @@ import OIbProxy from './OIbProxy.jsx'
 import OIbTitle from './OIbTitle.jsx'
 import OIbAuthentication from './OIbAuthentication.jsx'
 import OIbTimezone from './OIbTimezone.jsx'
+import OIbCron from './OIbCron.jsx'
 
 export {
   OIbCheckBox,
@@ -24,4 +25,5 @@ export {
   OIbTitle,
   OIbAuthentication,
   OIbTimezone,
+  OIbCron,
 }
