@@ -1,4 +1,5 @@
 import * as csv from 'fast-csv'
+import timexe from 'timexe'
 
 const readFileContent = async (file) => new Promise((resolve) => {
   const reader = new FileReader()
@@ -86,4 +87,41 @@ const replaceValues = (obj, keys, value, isDiff = false) => {
   }
 }
 
-export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues }
+const convertMillisecToReadable = (millisec) => {
+  const seconds = (millisec / 1000).toFixed(1)
+  const minutes = (millisec / (1000 * 60)).toFixed(1)
+  const hours = (millisec / (1000 * 60 * 60)).toFixed(1)
+  const days = (millisec / (1000 * 60 * 60 * 24)).toFixed(1)
+
+  if (millisec < 1000) {
+    return `${millisec} Milliseconds`
+  }
+  if (seconds < 60) {
+    return `${seconds} Seconds`
+  }
+  if (minutes < 60) {
+    return `${minutes} Minutes`
+  }
+  if (hours < 24) {
+    return `${hours} Hours`
+  }
+  return `${days} Days`
+}
+
+const nextTime = (value) => {
+  if (value !== null && value.length) {
+    const nextTimeData = timexe.nextTime(value)
+    const nextTimestamp = nextTimeData.time * 1000
+    const currentTimestamp = Date.now()
+    // check if timexe can interpret time
+    const diff = nextTimestamp - currentTimestamp
+    if (nextTimeData.time > 0 && diff > 0) {
+      const nextDate = new Date(nextTimestamp)
+      const localeString = nextDate.toLocaleString()
+      return `Next occurrence in: ${convertMillisecToReadable(diff)} at: ${localeString}`
+    }
+  }
+  return ''
+}
+
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime }

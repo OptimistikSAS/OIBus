@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbSelect = ({ label, help, valid, value, options, name, onChange, defaultValue }) => {
+const OIbSelect = ({ label, help, valid, value, options, name, onChange, defaultValue, style }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
@@ -20,9 +20,18 @@ const OIbSelect = ({ label, help, valid, value, options, name, onChange, default
   // if value is null, no need to render
   if (value === null) return null
   return (
-    <FormGroup>
+    <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      <Input className="oi-form-input" type="select" id={name} name={name} onChange={handleChange} value={value} invalid={validCheck !== null}>
+      <Input
+        className="oi-form-input"
+        style={style}
+        type="select"
+        id={name}
+        name={name}
+        onChange={handleChange}
+        value={value}
+        invalid={validCheck !== null}
+      >
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -52,7 +61,8 @@ OIbSelect.propTypes = {
     PropTypes.number,
   ]).isRequired,
   valid: PropTypes.func,
+  style: PropTypes.object,
 }
-OIbSelect.defaultProps = { label: null, help: null, value: null, valid: () => null }
+OIbSelect.defaultProps = { label: null, help: null, value: null, valid: () => null, style: {} }
 
 export default OIbSelect
