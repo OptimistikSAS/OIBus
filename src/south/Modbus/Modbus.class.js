@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 const jsmodbus = require('jsmodbus')
 const net = require('net')
 const getOptimizedConfig = require('./config/getOptimizedConfig')
