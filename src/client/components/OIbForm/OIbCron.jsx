@@ -54,7 +54,7 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
   // One of defined common option is used to try to read the value
   const readSpecificValue = (common) => {
     if (value === common.every) return 1
-    if (value.startsWith(common.specific)) {
+    if (value && value.startsWith(common.specific)) {
       const result = value.replace(common.specific, '')
       // eslint-disable-next-line no-restricted-globals
       if (isNaN(result)) return null
