@@ -1,4 +1,16 @@
+import timexe from 'timexe'
 import utils from './utils'
+
+// fixing date to match snapshot
+const RealDate = Date
+const realToLocaleString = global.Date.prototype.toLocaleString
+const realNow = global.Date.now
+const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
+// Ensure test output is consistent across machine locale and time zone config.
+const mockToLocaleString = () => constantDate.toUTCString()
+const mockNow = () => 1577836799000
+global.Date.prototype.toLocaleString = mockToLocaleString
+global.Date.now = mockNow
 
 describe('utils', () => {
   it('check readFileContent', async () => {
@@ -61,5 +73,32 @@ describe('utils', () => {
     const object = {}
     utils.replaceValues(object, ['a'], 'newValue', true)
     expect(object).toEqual({})
+  })
+  it('check nextTime with string value', () => {
+    const result = utils.nextTime('string')
+    expect(result).toEqual('')
+  })
+  it('check nextTime with null value', () => {
+    const result = utils.nextTime(null)
+    expect(result).toEqual('')
+  })
+  it('check nextTime with string value', () => {
+    const result = utils.nextTime('string')
+    expect(result).toEqual('')
+  })
+  it('check nextTime with * * *', () => {
+    // mock timexe.nextTime
+    const realTimexeNextTime = timexe.nextTime
+    const mockTimexeNextTime = () => ({ time: '1600905600.000', error: '' })
+    timexe.nextTime = mockTimexeNextTime
+
+    const result = utils.nextTime('* * *')
+    expect(result).toEqual('Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT')
+
+    // reset mock functions
+    global.Date = RealDate
+    global.Date.prototype.toLocaleString = realToLocaleString
+    global.Date.now = realNow
+    timexe.nextTime = realTimexeNextTime
   })
 })
