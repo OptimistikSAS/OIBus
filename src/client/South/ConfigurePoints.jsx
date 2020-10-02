@@ -118,7 +118,7 @@ const ConfigurePoints = () => {
    */
   const handleExportPoints = () => {
     utils
-      .createCSV(points.slice().reverse())
+      .createCSV(pointsOrdered)
       .then((csvString) => {
         const element = document.createElement('a')
         const file = new Blob([csvString], { type: 'text/csv' })
