@@ -112,7 +112,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -256,7 +256,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -558,7 +558,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -702,7 +702,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -1004,7 +1004,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -1148,7 +1148,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -1450,7 +1450,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -1594,7 +1594,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -1896,7 +1896,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -2040,7 +2040,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -2342,7 +2342,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -2486,7 +2486,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -2788,7 +2788,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -2932,7 +2932,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -3234,7 +3234,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -3378,7 +3378,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -3680,7 +3680,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -3824,7 +3824,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -4126,7 +4126,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -4270,7 +4270,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -4572,7 +4572,7 @@ exports[`ConfigurePoints check export points 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -4716,7 +4716,7 @@ exports[`ConfigurePoints check export points 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -5018,7 +5018,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -5162,7 +5162,7 @@ exports[`ConfigurePoints check export points fail 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -5464,7 +5464,7 @@ exports[`ConfigurePoints check export points success 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -5608,7 +5608,7 @@ exports[`ConfigurePoints check export points success 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -5910,7 +5910,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -6054,7 +6054,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -6356,7 +6356,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -6500,7 +6500,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -6802,7 +6802,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -6946,7 +6946,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -7248,7 +7248,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -7392,7 +7392,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -7694,7 +7694,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -7838,7 +7838,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -8296,7 +8296,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               id="points.0.pointId"
               name="points.0.pointId"
               type="text"
-              value="A13518/AI1/PV.CV"
+              value="_FC42404/PID1/PV.CV"
             />
             <div
               class="invalid-feedback"
@@ -8440,7 +8440,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               id="points.2.pointId"
               name="points.2.pointId"
               type="text"
-              value="_FC42404/PID1/PV.CV"
+              value="A13518/AI1/PV.CV"
             />
             <div
               class="invalid-feedback"
