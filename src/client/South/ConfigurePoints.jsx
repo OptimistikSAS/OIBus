@@ -35,7 +35,19 @@ const ConfigurePoints = () => {
   const dataSourceIndex = newConfig.south.dataSources.findIndex(
     (dataSource) => dataSource.dataSourceId === dataSourceId,
   )
-  const { points = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
+  const { points: pointsOrdered = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
+  const points = pointsOrdered.slice().reverse()
+
+  /**
+   * Get the index of point for reversed poitns list
+   * @param {number} index of point
+   * @returns {number} return reversed index
+   */
+  const reversedIndex = (index) => {
+    const totalIndex = points.length - 1
+    const totalOnPage = totalIndex - (MAX_ON_PAGE * (selectedPage - 1))
+    return totalOnPage - index
+  }
 
   /**
    * Sets the filter text
@@ -52,6 +64,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleAdd = () => {
+    setSelectedPage(1) // jump to first page, to see new row
     dispatchNewConfig({ type: 'addRow', name: `south.dataSources.${dataSourceIndex}.points`, value: {} })
   }
 
@@ -61,7 +74,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${index}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${reversedIndex(index)}` })
   }
 
   /**
@@ -105,7 +118,7 @@ const ConfigurePoints = () => {
    */
   const handleExportPoints = () => {
     utils
-      .createCSV(points)
+      .createCSV(points.slice().reverse())
       .then((csvString) => {
         const element = document.createElement('a')
         const file = new Blob([csvString], { type: 'text/csv' })
@@ -124,7 +137,7 @@ const ConfigurePoints = () => {
   const onChange = (name, value, validity) => {
     // add pageOffet before dispatch the update to update the correct point (pagination)
     const index = Number(name.match(/[0-9]+/g))
-    const pathWithPageOffset = name.replace(/[0-9]+/g, `${index + pageOffset}`)
+    const pathWithPageOffset = name.replace(/[0-9]+/g, `${reversedIndex(index)}`)
     dispatchNewConfig({
       type: 'update',
       name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`,

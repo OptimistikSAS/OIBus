@@ -115,7 +115,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_point_id' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.0.pointId',
+      name: 'south.dataSources.7.points.2.pointId',
       value: 'new_point_id',
       validity: null,
     })
@@ -130,7 +130,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'everySecond' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.0.scanMode',
+      name: 'south.dataSources.7.points.2.scanMode',
       value: 'everySecond',
       validity: null,
     })
@@ -145,7 +145,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_value' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.0.pointId',
+      name: 'south.dataSources.7.points.2.pointId',
       value: 'new_value',
       validity: null,
     })
@@ -160,7 +160,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'every1Min' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.0.scanMode',
+      name: 'south.dataSources.7.points.2.scanMode',
       value: 'every1Min',
       validity: null,
     })
@@ -175,7 +175,7 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.querySelector('td path')) // click on delete icon
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.7.points.0',
+      name: 'south.dataSources.7.points.2',
     })
     expect(container).toMatchSnapshot()
   })
