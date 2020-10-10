@@ -65,7 +65,7 @@
     "mysql2": "2.2.5",
     "node-fetch": "2.6.1",
     "node-opcua": "2.19.0",
-    "object-path": "0.11.4",
+    "object-path": "0.11.5",
     "oracledb": "5.0.0",
     "pg": "8.3.3",
     "prop-types": "15.7.2",
