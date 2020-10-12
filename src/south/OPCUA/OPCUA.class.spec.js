@@ -257,7 +257,7 @@ describe('OPCUA south', () => {
 
     const expectedValue = {
       pointId: opcuaConfig.points[0].nodeId,
-      timestamp: sampleDate.toUTCString(),
+      timestamp: sampleDate.toISOString(),
       data: {
         value: sampleValue,
         quality: '{"value":0}',
