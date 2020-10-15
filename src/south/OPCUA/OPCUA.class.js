@@ -138,7 +138,7 @@ class OPCUA extends ProtocolHandler {
             maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
             return {
               pointId: nodesToRead[i],
-              timestamp: dataValue.serverTimestamp.toUTCString(),
+              timestamp: dataValue.serverTimestamp.toISOString(),
               data: {
                 value: dataValue.value.value,
                 quality: JSON.stringify(dataValue.statusCode),
