@@ -3,12 +3,29 @@ import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 // need BrowserRouter so Link component is not complaining
 import { BrowserRouter } from 'react-router-dom'
+import timexe from 'timexe'
 
 import newConfig from '../../../tests/testConfig'
 import Engine from './Engine.jsx'
 
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+
+// fixing date to match snapshot
+const RealDate = Date
+const realToLocaleString = global.Date.prototype.toLocaleString
+const realNow = global.Date.now
+const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
+// Ensure test output is consistent across machine locale and time zone config.
+const mockToLocaleString = () => constantDate.toUTCString()
+const mockNow = () => 1577836799000
+global.Date.prototype.toLocaleString = mockToLocaleString
+global.Date.now = mockNow
+
+// mock timexe.nextTime
+const realTimexeNextTime = timexe.nextTime
+const mockTimexeNextTime = () => ({ time: '1600905600.000', error: '' })
+timexe.nextTime = mockTimexeNextTime
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -77,5 +94,9 @@ describe('Engine', () => {
       ReactDOM.render(<BrowserRouter><Engine /></BrowserRouter>, container)
     })
     expect(container).toMatchSnapshot()
+    global.Date = RealDate
+    global.Date.prototype.toLocaleString = realToLocaleString
+    global.Date.now = realNow
+    timexe.nextTime = realTimexeNextTime
   })
 })

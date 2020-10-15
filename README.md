@@ -19,6 +19,18 @@
 
 ## History
 
+# 0.6.6
+## Improvements
+- support for nodejs 14.x
+- easier entry of scanModes
+- Buttons added to Heath screen for start and shutdown
+- Two new endpoints to Engine: /restart and /shutdown
+## Fixes
+- Input field to a newly added points was not easily accessible for large lists
+- Fix issue with compressed filenames
+- TimescaleDB south was rewritten.
+- OPCUA timestamp has been corrected to ISO (was UTC)
+  
 # 0.6.5
 ## Improvements
 - FolderScanner and SQLDbToFile can now compress files before moving them to the Engine.

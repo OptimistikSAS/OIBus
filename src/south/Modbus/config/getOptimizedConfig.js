@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 /**
  * Retrieves a nested property from an object
  * @param {Object} obj - Object which contains the nested property
