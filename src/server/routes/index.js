@@ -25,6 +25,7 @@ router.post('/engine/addFile', upload.single('file'), engineController.addFile)
 router.post('/engine/aliveSignal', engineController.aliveSignal)
 router.get('/status', engineController.getStatus)
 router.get('/reload', engineController.reload)
+router.get('/shutdown', engineController.shutdown)
 
 router.get('/logs', logController.getLogs)
 

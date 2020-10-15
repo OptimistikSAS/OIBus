@@ -109,7 +109,7 @@ class FolderScanner extends ProtocolHandler {
 
     if (this.compression) {
       // Compress and send the compressed file
-      const gzipPath = `${filePath.substr(0, filePath.lastIndexOf('.'))}.gz`
+      const gzipPath = `${filePath}.gz`
       await this.compress(filePath, gzipPath)
       await this.addFile(gzipPath, false)
 

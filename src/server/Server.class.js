@@ -46,7 +46,7 @@ class Server {
 
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
-    this.app.use(helmet())
+    this.app.use(helmet({ contentSecurityPolicy: false }))
 
     // filter IP addresses
     this.app.use(ipFilter(filter))
