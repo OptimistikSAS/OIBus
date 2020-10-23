@@ -5,40 +5,27 @@ const schema = { name: 'WATSYConnect' }
 schema.form = {
   WATSYConnectParameters: {
     type: 'OIbTitle',
+    label: 'WATSY Connect Parameters',
     children: (
       <div>
-        <p>MQTT North is in Beta</p>
         <ul>
           <li>
-            <b>Protocol:</b>
-            Network protocol used by MQTT client to connect with MQTT broker. OIBus supports MQTT, and MQTTS.
+            <b>MQTT Url: </b>
+            Url which will be used in order to process data
           </li>
+        </ul>
+      </div>
+    ),
+  },
+  MQTTParameters: {
+    type: 'OIbTitle',
+    label: 'MQTT Authentication',
+    children: (
+      <div>
+        <ul>
           <li>
-            <b>Host and Port:</b>
-            MQTT host to connect. Make sure you specify right host and port number depending on MQTT connection protocol
-            you selected. MQTT client may not get connected if you mention wrong port number or interchange port
-            numbers.
-          </li>
-          <li>
-            <b>Username:</b>
-            Username required by broker, if any. MQTT allows to send username for authenticating and authorization of
-            client.
-          </li>
-          <li>
-            <b>Password:</b>
-            Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
-            client.
-          </li>
-          <li>
-            <p>Regexp and Topic:</p>
-            Regexp will be used to identify token in the pointId that will be used to build the MQTT topic.
-            <ul>
-              <li>
-                {'(.*)\\/(.{2})(.)(.*)'}
-                This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
-              </li>
-              <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
-            </ul>
+            <b>MQTT Url: </b>
+            Url which will be used in order to process data
           </li>
         </ul>
       </div>
@@ -46,16 +33,14 @@ schema.form = {
   },
   MQTTUrl: {
     type: 'OIbLink',
-    protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
+    protocols: ['mqtt', 'mqtts'],
     defaultValue: '',
-    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
+    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts </div>,
   },
-  qos: {
-    type: 'OIbSelect',
+  port: {
+    type: 'OIbInteger',
     newRow: false,
-    md: 1,
-    options: [0, 1, 2],
-    defaultValue: 1,
+    help: <div>The port use for RabbitMQ messages </div>,
   },
   username: {
     type: 'OIbText',
@@ -70,6 +55,20 @@ schema.form = {
     defaultValue: '',
     help: <div>password</div>,
   },
+  WebParameters: {
+    type: 'OIbTitle',
+    label: 'Web Service Authentication',
+    children: (
+      <div>
+        <ul>
+          <li>
+            <b>HTTP/HTTPS Url: </b>
+            Url which will be used in order to process data
+          </li>
+        </ul>
+      </div>
+    ),
+  },
   applicativeHostUrl: {
     type: 'OIbLink',
     protocols: ['http', 'https'],
@@ -77,7 +76,8 @@ schema.form = {
     help: <div>Host URL</div>,
   },
   token: {
-    type: 'OIbText',
+    type: 'OIbPassword',
+    newRow: false,
     valid: notEmpty(),
     defaultValue: '',
     help: <div>Host token for connection</div>,
