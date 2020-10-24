@@ -110,7 +110,7 @@
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-jsx-a11y": "6.3.1",
     "eslint-plugin-react": "7.21.4",
-    "eslint-plugin-react-hooks": "4.1.2",
+    "eslint-plugin-react-hooks": "4.2.0",
     "gulp": "4.0.2",
     "gulp-awspublish": "4.1.2",
     "gulp-zip": "5.0.2",
