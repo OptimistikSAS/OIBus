@@ -48,7 +48,7 @@ class WATSYConnect extends ApiHandler {
     this.password = Buffer.from(this.decryptPassword(password))
     this.qos = 1
     this.host = applicativeHostUrl
-    this.token = Buffer.from(this.decryptPassword(secretKey))  
+    this.token = this.decryptPassword(secretKey)
 
     this.splitMessageTimeout = this.application.caching.sendInterval //in ms
     this.OIBUSName = this.engine.configService.getConfig().engineConfig.engineName
@@ -192,13 +192,15 @@ class WATSYConnect extends ApiHandler {
 
         if ( Date.parse(messages[i]['timestamp']) < splitTimestamp - this.splitMessageTimeout ) {
           // Get all the message which are not in less than splitTImestamp than the last message
-          let splitMessage = messages.slice(0, i)
-          
+          let splitMessage = messages.slice(0, i +1)
+
           // Add the message which respect the splitTimestamp
           allWATSYMessages = this.recursiveSplitMessages(allWATSYMessages, splitMessage)
-          allWATSYMessages.push(this.convertIntoWATSYFormat(messages.slice(i)))
 
-          this.successCount += messages.slice(i).length
+          let pushMessages = messages.filter(x => !splitMessage.includes(x))
+          allWATSYMessages.push(this.convertIntoWATSYFormat(pushMessages))
+
+          this.successCount += pushMessages.length
           return allWATSYMessages
         }
         i--
