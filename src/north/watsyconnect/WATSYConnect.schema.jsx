@@ -10,8 +10,13 @@ schema.form = {
       <div>
         <ul>
           <li>
-            <b>MQTT Url: </b>
-            Url which will be used in order to process data
+            <b>MQTT Parameters: </b>
+            Configure Mqtt in order to send WATSY message to your Mqtt url
+          </li>
+          <li>
+            <b>Web Service Parameters: </b>
+            Configure your applicative host(url) thanks to: a url and a token. Thanks to it, WATSYConnect
+            will be able to send process your data and create loss if it is needed
           </li>
         </ul>
       </div>
@@ -25,7 +30,19 @@ schema.form = {
         <ul>
           <li>
             <b>MQTT Url: </b>
-            Url which will be used in order to process data
+            Url which will be used in order to send messages
+          </li>
+          <li>
+            <b>MQTT Port: </b>
+            The port use by RabbitMQ in order to send messages
+          </li>
+          <li>
+            <b>Authentication parameters: </b>
+            This paramaters allow WATSYConnect North to connect into mqtt Url thanks to:
+            <ul>
+              <li>Username</li>
+              <li>Password</li>
+            </ul>
           </li>
         </ul>
       </div>
@@ -35,25 +52,21 @@ schema.form = {
     type: 'OIbLink',
     protocols: ['mqtt', 'mqtts'],
     defaultValue: '',
-    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts </div>,
   },
   port: {
     type: 'OIbInteger',
     newRow: false,
-    help: <div>The port use for RabbitMQ messages </div>,
   },
   username: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
-    help: <div>authorized user to publish in the mqtt URL</div>,
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
-    help: <div>password</div>,
   },
   WebParameters: {
     type: 'OIbTitle',
@@ -65,6 +78,10 @@ schema.form = {
             <b>HTTP/HTTPS Url: </b>
             Url which will be used in order to process data
           </li>
+          <li>
+            <b>HTTP/HTTPS Token: </b>
+            Token which permits to connect into the applicative website
+          </li>
         </ul>
       </div>
     ),
@@ -73,14 +90,13 @@ schema.form = {
     type: 'OIbLink',
     protocols: ['http', 'https'],
     defaultValue: '',
-    help: <div>Host URL</div>,
   },
-  token: {
+  secretKey: {
     type: 'OIbPassword',
+    label: 'Token',
     newRow: false,
-    valid: notEmpty(),
+    valid: hasLengthBetween(0, 256),
     defaultValue: '',
-    help: <div>Host token for connection</div>,
   },
 }
 
