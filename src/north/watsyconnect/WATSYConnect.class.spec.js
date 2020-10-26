@@ -17,6 +17,7 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.sendRequest = jest.fn()
+engine.decryptPassword = (password) => password
 
 beforeEach(() => {
   jest.resetAllMocks(),
@@ -26,7 +27,9 @@ beforeEach(() => {
 describe('WATSY Connect', () => {
   const WATSYConfig = config.north.applications[5]
   const WATSYNorth = new WATSYConnect(WATSYConfig, engine)
+  
 
+// Data for tests
   const values = [
     {
       timestamp: '1998-06-12T21:00:00.000Z',
@@ -57,16 +60,56 @@ describe('WATSY Connect', () => {
       timestamp: '1998-06-12T23:45:00.000Z',
       pointId: 'atipik-solutions/WATSY/device_id',
       data: { value: "demo-capteur" },
+    },
+    {
+      timestamp: '2018-07-15T20:00:00.000Z',
+      pointId: 'atipik-solutions/WATSY/device_id',
+      data: { value: "demo-capteur" },
     }
   ]
+  
+  const allWATSYMessages = [
+    {
+      timestamp: 897685200000000000,
+      tags: {},
+      fields: {
+        'atipik-solutions/WATSY/device_id': 'demo-capteur',
+        'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
+        'atipik-solutions/WATSY/protocol': 'web'
+      },
+      host: WATSYNorth.host,
+      token: WATSYNorth.token
+    },
+    {
+      timestamp: 897695100000000000,
+      tags: {},
+      fields: {
+        'atipik-solutions/WATSY/device_id': 'demo-capteur',
+        'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
+        'atipik-solutions/WATSY/protocol': 'web'
+      },
+      host: WATSYNorth.host,
+      token: WATSYNorth.token
+    },
+    {
+      timestamp: 1531684800000000000,
+      tags: {},
+      fields: { 'atipik-solutions/WATSY/device_id': 'demo-capteur' },
+      host: WATSYNorth.host,
+      token: WATSYNorth.token
+    }  
+  ]
+  
+// End of data for tests
 
+// Begin of test functions
   it('Should properly connect', () => {
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
 
     WATSYNorth.connect()
 
-    const expectedOptions = { username: mqttConfig.WATSYNorth.username, password: Buffer.from(mqttConfig.WATSYNorth.password) }
-    expect(mqtt.connect).toBeCalledWith(mqttConfig.WATSYNorth.url, expectedOptions)
+    const expectedOptions = { username: WATSYConfig.WATSYConnect.username, password: Buffer.from(WATSYConfig.WATSYConnect.password) }
+    expect(mqtt.connect).toBeCalledWith(WATSYNorth.url, expectedOptions)
     expect(WATSYNorth.client.on).toHaveBeenCalledTimes(2)
     expect(WATSYNorth.client.on).toHaveBeenCalledWith('error', expect.any(Function))
     expect(WATSYNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
@@ -83,25 +126,69 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(WATSYNorth.client.publish).toBeCalledWith(WATSYNorth.mqttTopic, JSON.stringify(values[0].data), { qos: WATSYNorth.qos }, expect.any(Function))
-    expect(expectedResult).toEqual(2)
+    expect(WATSYNorth.client.publish).toBeCalledWith(WATSYNorth.mqttTopic, JSON.stringify(allWATSYMessages[0]), { qos: WATSYNorth.qos }, expect.any(Function))
+    expect(expectedResult).toEqual(values.length)
     expect(expectedError).toBeNull()
   })
 
-  it('Should properly handle values with publish error', async () => {
-    WATSYNorth.client = { publish: jest.fn().mockImplementation(( callback ) => callback(true)) }
+  it('Should properly not handle unexpected values ', async () => {
+    WATSYNorth.client = { publish: jest.fn().mockImplementation(( callback ) => callback()) }
 
     let expectedResult = null
     let expectedError = null
     try {
-      expectedResult = await WATSYNorth.handleValues(values)
+      expectedResult = await WATSYNorth.handleValues(values.data)
     } catch (error) {
       expectedError = error
     }
 
-    expect(WATSYNorth.client.publish).toBeCalledWith(WATSYConnect.mqttTopic, JSON.stringify(values[0].data), { qos: WATSYNorth.qos }, expect.any(Function))
     expect(expectedResult).toBeNull()
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(expectedError).not.toBeNull()
+  })
+
+  it('Should properly split message in  WATSY messages', () =>{
+    
+    let expectedResult = null
+    let expectedError = null
+
+    try {
+      expectedResult = WATSYNorth.splitMessages(values)
+    } catch (error) {
+      expectedError = error
+    }
+    
+    expect(expectedResult).toEqual(allWATSYMessages)
+    expect(expectedError).toBeNull()
+  })
+
+  it('Send an empty array an received an empty array ', () =>{
+    
+    let expectedResult = null
+    let expectedError = null
+
+    try {
+      expectedResult = WATSYNorth.splitMessages([])
+    } catch (error) {
+      expectedError = error
+    }
+    
+    expect(expectedResult.length).toEqual(0) // No message receive
+    expect(expectedError).toBeNull()
+  })
+
+  it('Send only message in the same sendInterval ', () =>{
+    
+    let expectedResult = null
+    let expectedError = null
+
+    try {
+      expectedResult = WATSYNorth.splitMessages(values.slice(0, 3))
+    } catch (error) {
+      expectedError = error
+    }
+    
+    expect(expectedResult.length).toEqual(1) // Only one message receive
+    expect(expectedError).toBeNull()
   })
 
   it('Should properly disconnect', () => {
