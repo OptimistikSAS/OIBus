@@ -12,19 +12,125 @@ exports[`OIbScanMode check ScanMode with no label 1`] = `
       name="name"
     >
       <option
-        value="value"
+        value="everySecond"
       >
-        value
+        everySecond
       </option>
       <option
-        value=""
-      />
+        value="every10Second"
+      >
+        every10Second
+      </option>
+      <option
+        value="every1Min"
+      >
+        every1Min
+      </option>
+      <option
+        value="listen"
+      >
+        listen
+      </option>
     </select>
     <div
       class="invalid-feedback"
     >
       Invalid scan mode
     </div>
+  </div>
+</div>
+`;
+
+exports[`OIbScanMode check ScanMode with value="" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <select
+      aria-invalid="true"
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value=""
+      />
+      <option
+        value="everySecond"
+      >
+        everySecond
+      </option>
+      <option
+        value="every10Second"
+      >
+        every10Second
+      </option>
+      <option
+        value="every1Min"
+      >
+        every1Min
+      </option>
+      <option
+        value="listen"
+      >
+        listen
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Invalid scan mode
+    </div>
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        help text
+      </div>
+    </small>
+  </div>
+</div>
+`;
+
+exports[`OIbScanMode check ScanMode with value="listen" and groupScan 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <select
+      aria-invalid="true"
+      class="oi-form-input is-invalid form-control"
+      id="name"
+      name="name"
+    >
+      <option
+        value="value"
+      >
+        value
+      </option>
+      <option
+        value="every1Min"
+      >
+        every1Min
+      </option>
+      <option
+        value="listen"
+      >
+        listen
+      </option>
+    </select>
+    <div
+      class="invalid-feedback"
+    >
+      Invalid scan mode
+    </div>
+    <small
+      class="form-text text-muted"
+    >
+      <div>
+        help text
+      </div>
+    </small>
   </div>
 </div>
 `;
@@ -47,13 +153,25 @@ exports[`OIbScanMode check ScanMode with value="value" 1`] = `
       name="name"
     >
       <option
-        value="value"
+        value="everySecond"
       >
-        value
+        everySecond
       </option>
       <option
-        value=""
-      />
+        value="every10Second"
+      >
+        every10Second
+      </option>
+      <option
+        value="every1Min"
+      >
+        every1Min
+      </option>
+      <option
+        value="listen"
+      >
+        listen
+      </option>
     </select>
     <div
       class="invalid-feedback"
@@ -82,13 +200,25 @@ exports[`OIbScanMode check ScanMode with value="value" and help 1`] = `
       name="name"
     >
       <option
-        value="value"
+        value="everySecond"
       >
-        value
+        everySecond
       </option>
       <option
-        value=""
-      />
+        value="every10Second"
+      >
+        every10Second
+      </option>
+      <option
+        value="every1Min"
+      >
+        every1Min
+      </option>
+      <option
+        value="listen"
+      >
+        listen
+      </option>
     </select>
     <div
       class="invalid-feedback"

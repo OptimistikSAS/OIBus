@@ -235,6 +235,7 @@ const testConfig = {
         scanGroups: [
           { scanMode: 'everySecond', aggregate: '', resampling: 'Minute' },
           { scanMode: 'every10Second', aggregate: '', resampling: 'Minute' },
+          { scanMode: '', aggregate: '', resampling: 'Minute' },
         ],
       },
     ],

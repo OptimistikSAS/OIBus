@@ -138,7 +138,7 @@ schema.form = {
   scanGroups: {
     type: 'OIbTable',
     rows: {
-      scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+      scanMode: { type: 'OIbScanMode', label: 'Scan Mode', scanGroup: true },
       Aggregate: {
         type: 'OIbSelect',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
