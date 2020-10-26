@@ -59,6 +59,36 @@ describe('ScanModes', () => {
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.scanMode', value: 'every30Second', validity: null })
     expect(container).toMatchSnapshot()
   })
+  test('check change first scan mode to invalide: already existing', () => {
+    act(() => {
+      ReactDOM.render(<ScanModes
+        scanModes={testConfig.engine.scanModes}
+      />, container)
+    })
+    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'listen' } })
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'update',
+      name: 'engine.scanModes.0.scanMode',
+      value: 'listen',
+      validity: 'Scan mode already exists',
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check change first scan mode to invalide: empty', () => {
+    act(() => {
+      ReactDOM.render(<ScanModes
+        scanModes={testConfig.engine.scanModes}
+      />, container)
+    })
+    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: '' } })
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'update',
+      name: 'engine.scanModes.0.scanMode',
+      value: '',
+      validity: 'Value must not be empty',
+    })
+    expect(container).toMatchSnapshot()
+  })
   test('check change first cron', () => {
     act(() => {
       ReactDOM.render(<ScanModes
