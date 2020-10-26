@@ -86,8 +86,8 @@ const ScanModes = ({ scanModes }) => {
                       name={`engine.scanModes.${i}.scanMode`}
                       value={scanMode.scanMode}
                       valid={(val) => {
-                        const invalideNames = existingNames.filter((_, index) => index !== i)
-                        return validation.engine.scanModes.scanMode(val, invalideNames)
+                        const excludedList = existingNames.filter((_, index) => index !== i)
+                        return validation.engine.scanModes.scanMode(val, excludedList)
                       }}
                       onChange={onChange}
                     />
