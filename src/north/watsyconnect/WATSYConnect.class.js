@@ -1,11 +1,20 @@
 const mqtt = require('mqtt')
-
 const ApiHandler = require('../ApiHandler.class')
+
+/**
+ * Expected caching parameters:
+ * Send Interval (ms): [1000, 3000]
+ * Retry Interval (ms): 5000
+ * Group count : 10000
+ * Max Group Count : 10000
+ * with the condition: Group Count <= Max Group Count
+ */
+
 
 /**
  * Class WATSYConnect - generates and sends MQTT messages for WATSY
  * The MQTT message sent will have the format:
-* {
+ * {
       'timestamp' : $timestamp in ns
       'tags'    : {
           'tag1'  : $tag_value_1
@@ -20,10 +29,10 @@ const ApiHandler = require('../ApiHandler.class')
       'host'      : $host (can't be null)
       'token'     : $token (can't be null)
   }
-*/
+ */
 
 class WATSYConnect extends ApiHandler {
-    /**
+  /**
    * Constructor for WATSYConnect
    * @constructor
    * @param {Object} applicationParameters - The application parameters
@@ -33,14 +42,14 @@ class WATSYConnect extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { MQTTUrl, port, username, password, applicativeHostUrl, token } = this.application.WATSYConnect
+    const { MQTTUrl, port, username, password, applicativeHostUrl, secretKey } = this.application.WATSYConnect
     this.url = MQTTUrl + ':' + port
     this.username = username
     this.password = Buffer.from(this.decryptPassword(password))
     this.qos = 1
     this.host = applicativeHostUrl
-    this.token = token  
-    
+    this.token = Buffer.from(this.decryptPassword(secretKey))  
+
     this.splitMessageTimeout = this.application.caching.sendInterval //in ms
     this.OIBUSName = this.engine.configService.getConfig().engineConfig.engineName
     this.initMQTTTopic()
@@ -135,6 +144,25 @@ class WATSYConnect extends ApiHandler {
   }
 
   /**
+   * Publish MQTT message.
+   *
+   * @param {object} message - The message to publish
+   * @returns {Promise} - The publish status
+   */
+  publishWATSYMQTTMessage(message) {
+    return new Promise((resolve, reject) => {
+      this.client.publish(this.mqttTopic, JSON.stringify(message), { qos: this.qos }, (error) => {
+        if (error) {
+          this.logger.error(error)
+          reject(error)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
    * Convert the message into WATSY format
    *
    * @param {object[]} messages - The message to publish
@@ -157,26 +185,32 @@ class WATSYConnect extends ApiHandler {
     if (messages.length > 1){
       // Declare all local var for the split logic
       let splitTimestamp = Date.parse(messages[messages.length - 1]['timestamp']) // Convert to timestamp
-
-      for (let i = messages.length - 1; i > 0 ; i--){
+    
+      let i = messages.length - 1
+      while( i > 0 ){
         // Check if the the message is in the splitTimestamp delta time
 
-        if ( Date.parse(messages[i]['timestamp']) < splitTimestamp - this.splitMessageTimeout) {
+        if ( Date.parse(messages[i]['timestamp']) < splitTimestamp - this.splitMessageTimeout ) {
           // Get all the message which are not in less than splitTImestamp than the last message
           let splitMessage = messages.slice(0, i)
+          
           // Add the message which respect the splitTimestamp
-
           allWATSYMessages = this.recursiveSplitMessages(allWATSYMessages, splitMessage)
           allWATSYMessages.push(this.convertIntoWATSYFormat(messages.slice(i)))
+
           this.successCount += messages.slice(i).length
           return allWATSYMessages
         }
+        i--
       }
+
+      // All the message are in the sendMessage Interval ([1, 3] sec)
       allWATSYMessages.push(this.convertIntoWATSYFormat(messages))
       this.successCount += messages.length
       return allWATSYMessages
     }
     else{
+      // End of the recursive function
       if (messages.length == 1){
         allWATSYMessages.push(this.convertIntoWATSYFormat(messages))
         this.successCount += 1
@@ -212,25 +246,6 @@ class WATSYConnect extends ApiHandler {
       'host'      : this.host,
       'token'     : this.token
     }
-  }
-
-  /**
-   * Publish MQTT message.
-   *
-   * @param {object} message - The message to publish
-   * @returns {Promise} - The publish status
-   */
-  publishWATSYMQTTMessage(message) {
-    return new Promise((resolve, reject) => {
-      this.client.publish(this.mqttTopic, JSON.stringify(message), { qos: this.qos }, (error) => {
-        if (error) {
-          this.logger.error(error)
-          reject(error)
-        } else {
-          resolve()
-        }
-      })
-    })
   }
 }
 
