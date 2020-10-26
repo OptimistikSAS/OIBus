@@ -18,6 +18,7 @@ const ScanModes = ({ scanModes }) => {
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
   }
+  const existingNames = scanModes.map(({ scanMode }) => scanMode)
   return (
     scanModes && (
       <>
@@ -84,7 +85,10 @@ const ScanModes = ({ scanModes }) => {
                     <OIbText
                       name={`engine.scanModes.${i}.scanMode`}
                       value={scanMode.scanMode}
-                      valid={validation.engine.scanModes.scanMode}
+                      valid={(val) => {
+                        const invalideNames = existingNames.filter((_, index) => index !== i)
+                        return validation.engine.scanModes.scanMode(val, invalideNames)
+                      }}
                       onChange={onChange}
                     />
                   ),
