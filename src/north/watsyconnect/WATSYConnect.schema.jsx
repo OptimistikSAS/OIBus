@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, inRange } from '../../services/validation.service'
 
 const schema = { name: 'WATSYConnect' }
 schema.form = {
@@ -56,6 +56,7 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
+    valid: inRange(1, 65535),
   },
   username: {
     type: 'OIbText',
