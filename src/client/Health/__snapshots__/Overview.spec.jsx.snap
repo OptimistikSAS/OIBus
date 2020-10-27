@@ -98,6 +98,24 @@ exports[`Overview display overview based on config 1`] = `
           </a>
         </div>
       </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/WATSYConnect"
+          >
+            <div>
+              WATSYConnect
+            </div>
+            <div>
+              (WATSYConnect)
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="row"
