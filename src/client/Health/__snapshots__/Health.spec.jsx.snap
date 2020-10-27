@@ -139,6 +139,24 @@ exports[`Health display Health page based on config and status 1`] = `
           </a>
         </div>
       </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/WATSYConnect"
+          >
+            <div>
+              WATSYConnect
+            </div>
+            <div>
+              (WATSYConnect)
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -591,6 +609,24 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
             <div>
               (TimescaleDB)
+            </div>
+          </a>
+        </div>
+      </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/WATSYConnect"
+          >
+            <div>
+              WATSYConnect
+            </div>
+            <div>
+              (WATSYConnect)
             </div>
           </a>
         </div>
