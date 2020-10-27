@@ -10,7 +10,6 @@ const ApiHandler = require('../ApiHandler.class')
  * with the condition: Group Count <= Max Group Count
  */
 
-
 /**
  * Class WATSYConnect - generates and sends MQTT messages for WATSY
  * The MQTT message sent will have the format:
@@ -18,13 +17,13 @@ const ApiHandler = require('../ApiHandler.class')
       'timestamp' : $timestamp in ns
       'tags'    : {
           'tag1'  : $tag_value_1
-          'tag2'  : $tag_value_2  
-          ...                  
+          'tag2'  : $tag_value_2
+          ...
       }
       'fields'    : {
           'field1'  : $field_value_1
-          'field2'  : $field_value_2  
-          ...                  
+          'field2'  : $field_value_2
+          ...
       }
       'host'      : $host (can't be null)
       'token'     : $token (can't be null)
@@ -43,14 +42,14 @@ class WATSYConnect extends ApiHandler {
     super(applicationParameters, engine)
 
     const { MQTTUrl, port, username, password, applicativeHostUrl, secretKey } = this.application.WATSYConnect
-    this.url = MQTTUrl + ':' + port
+    this.url = `${MQTTUrl}:${port}`
     this.username = username
     this.password = Buffer.from(this.decryptPassword(password))
     this.qos = 1
     this.host = applicativeHostUrl
     this.token = this.decryptPassword(secretKey)
 
-    this.splitMessageTimeout = this.application.caching.sendInterval //in ms
+    this.splitMessageTimeout = this.application.caching.sendInterval // in ms
     this.OIBUSName = this.engine.configService.getConfig().engineConfig.engineName
     this.initMQTTTopic()
 
@@ -58,18 +57,18 @@ class WATSYConnect extends ApiHandler {
 
     this.canHandleValues = true
   }
-  
+
   /**
-   * Init the Mqqt Topic from 
+   * Init the Mqqt Topic from
    * @return {void}
    */
-  initMQTTTopic(){
+  initMQTTTopic() {
     // Declare local var which will be used to construct the topic
     let mqttTopic
-    let regex = /^https?:\/\// // clean $host in mqtt topic construction
-    
+    const regex = /^https?:\/\// // clean $host in mqtt topic construction
+
     // Construct the topic
-    mqttTopic = 'data/' + this.host.replace(regex, '') + '/' + this.OIBUSName 
+    mqttTopic = `data/:${this.host.replace(regex, '')}/${this.OIBUSName}`
     // Replace all . by _ in the topic
     mqttTopic = mqttTopic.split('.').join('_')
     this.mqttTopic = mqttTopic
@@ -115,7 +114,7 @@ class WATSYConnect extends ApiHandler {
     }
     return successCount
   }
-  
+
   /**
    * Makes an MQTT publish message with the parameters in the Object arg.
    * @param {Object[]} messages - The message from the event
@@ -124,19 +123,18 @@ class WATSYConnect extends ApiHandler {
   async publishOIBusMessages(messages) {
     // Only for Debug
     console.table(messages, ['id', 'pointId', 'timestamp', 'data'])
-    
+
     // Intit succesCount to 0 when we handle new messages
     this.successCount = 0
 
     try {
-      if (messages.length > 0){
-        let allWATSYMessages = this.splitMessages(messages)
-        for (const index in allWATSYMessages){
-          await this.publishWATSYMQTTMessage(allWATSYMessages[index])
-        }
+      if (messages.length > 0) {
+        const allWATSYMessages = this.splitMessages(messages)
+        allWATSYMessages.forEach((message) => {
+          this.publishWATSYMQTTMessage(message)
+        })
       }
-    } 
-    catch (error) {
+    } catch (error) {
       this.logger.error(error)
     }
 
@@ -168,42 +166,42 @@ class WATSYConnect extends ApiHandler {
    * @param {object[]} messages - The message to publish
    * @return {object[]} - The publish value
    */
-  splitMessages(messages){
-    
-    let allWATSYMessages = this.recursiveSplitMessages([], messages)
+  splitMessages(messages) {
+    const allWATSYMessages = this.recursiveSplitMessages([], messages)
     return allWATSYMessages
   }
 
   /**
    * Convert the message into WATSY format
-   * @param {object[]} allWATSYMessages
+   * @param {Object[]} allWATSYMessages - All messages which will be returned
    * @param {object[]} messages - The message to publish
    * @return {object[]} - The publish value
    */
-  recursiveSplitMessages(allWATSYMessages, messages){
+  recursiveSplitMessages(allWATSYMessages, messages) {
     // Check if messages is not null
-    if (messages.length > 1){
+    if (messages.length > 1) {
       // Declare all local var for the split logic
-      let splitTimestamp = Date.parse(messages[messages.length - 1]['timestamp']) // Convert to timestamp
-    
+      const splitTimestamp = Date.parse(messages[messages.length - 1].timestamp)
+
       let i = messages.length - 1
-      while( i > 0 ){
+
+      while (i > 0) {
         // Check if the the message is in the splitTimestamp delta time
 
-        if ( Date.parse(messages[i]['timestamp']) < splitTimestamp - this.splitMessageTimeout ) {
+        if (Date.parse(messages[i].timestamp) < splitTimestamp - this.splitMessageTimeout) {
           // Get all the message which are not in less than splitTImestamp than the last message
-          let splitMessage = messages.slice(0, i +1)
+          const splitMessage = messages.slice(0, i + 1)
 
           // Add the message which respect the splitTimestamp
-          allWATSYMessages = this.recursiveSplitMessages(allWATSYMessages, splitMessage)
+          const allWATSYMessagesVar = this.recursiveSplitMessages(allWATSYMessages, splitMessage)
 
-          let pushMessages = messages.filter(x => !splitMessage.includes(x))
-          allWATSYMessages.push(this.convertIntoWATSYFormat(pushMessages))
+          const pushMessages = messages.filter((x) => !splitMessage.includes(x))
+          allWATSYMessagesVar.push(this.convertIntoWATSYFormat(pushMessages))
 
           this.successCount += pushMessages.length
-          return allWATSYMessages
+          return allWATSYMessagesVar
         }
-        i--
+        i -= 1
       }
 
       // All the message are in the sendMessage Interval ([1, 3] sec)
@@ -211,14 +209,12 @@ class WATSYConnect extends ApiHandler {
       this.successCount += messages.length
       return allWATSYMessages
     }
-    else{
-      // End of the recursive function
-      if (messages.length == 1){
-        allWATSYMessages.push(this.convertIntoWATSYFormat(messages))
-        this.successCount += 1
-      }
-      return allWATSYMessages
+    // End of the recursive function
+    if (messages.length === 1) {
+      allWATSYMessages.push(this.convertIntoWATSYFormat(messages))
+      this.successCount += 1
     }
+    return allWATSYMessages
   }
 
   /**
@@ -227,26 +223,26 @@ class WATSYConnect extends ApiHandler {
    * @param {object[]} message - The message to publish
    * @return {Object} - The publish status
    */
-  convertIntoWATSYFormat(message){
-    let tags = {}
-    let fields = {}
+  convertIntoWATSYFormat(message) {
+    const tagsVar = {}
+    const fieldsVar = {}
 
     // Construct fields and tags choosing the latest state for each PointId
-    for (let i = message.length -1; i >= 0; i--){
+    for (let i = message.length - 1; i >= 0; i -= 1) {
       // Add the current fields (datpointID) if it's not in JSON fields
-      if (!fields.hasOwnProperty(message[i]['pointId'])){
-        fields[message[i]['pointId']] = message[i]['data']['value']
+      if (!Object.prototype.hasOwnProperty.call(fieldsVar, message[i].pointId)) {
+        fieldsVar[message[i].pointId] = message[i].data.value
       }
     }
 
     // TODO: Add all tags
 
     return {
-      'timestamp' : Date.parse(message[message.length -1]['timestamp'])*1000*1000, //from ms to ns 
-      'tags'      : tags,
-      'fields'    : fields,
-      'host'      : this.host,
-      'token'     : this.token
+      timestamp: Date.parse(message[message.length - 1].timestamp) * 1000 * 1000, // from ms to ns
+      tags: tagsVar,
+      fields: fieldsVar,
+      host: this.host,
+      token: this.token,
     }
   }
 }
