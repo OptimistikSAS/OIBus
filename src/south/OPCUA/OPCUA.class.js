@@ -100,7 +100,7 @@ class OPCUA extends ProtocolHandler {
           const serverTimestamp = value.serverTimestamp.getTime()
           return serverTimestamp >= opcStartTime.getTime()
         })
-        values.push(newerValues.map((value) => {
+        values.push(...newerValues.map((value) => {
           const serverTimestamp = value.serverTimestamp.getTime()
           maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
           return {
@@ -114,7 +114,7 @@ class OPCUA extends ProtocolHandler {
         }))
       } else {
       // eslint-disable-next-line no-underscore-dangle
-        this.logger.warn(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}}`)
+        this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}}`)
       }
     })
     // send the packet immediately to the engine
