@@ -23,14 +23,29 @@ class OPCUA extends ProtocolHandler {
     this.retryInterval = retryInterval
     this.maxReturnValues = maxReturnValues
     this.maxReadInterval = maxReadInterval
-
     this.lastCompletedAt = {}
     this.ongoingReads = {}
+    this.reconnectTimeout = null
+  }
+
+  /**
+   * Connect.
+   * @return {Promise<void>} The connection promise
+   */
+  async connect() {
+    super.connect()
+
     if (this.dataSource.OPCUA.scanGroups) {
       this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
         const points = this.dataSource.points
-          .filter((point) => point.scanMode === scanGroup.scanMode)
-          .map((point) => point.nodeId)
+          .filter((point) => {
+            /**  @todo finalize the filter */
+            if (point.nodeId[0] !== 'n') {
+              this.logger.error(`Point Ignored because it does not have a valid OPCUA pointId: ${point.nodeId}`)
+              return false
+            }
+            return point.scanMode === scanGroup.scanMode
+          }).map((point) => point.nodeId)
         this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
         this.ongoingReads[scanGroup.scanMode] = false
         return {
@@ -43,16 +58,6 @@ class OPCUA extends ProtocolHandler {
       this.logger.error('OPCUA scanGroups are not defined. This South driver will not work')
       this.scanGroups = []
     }
-
-    this.reconnectTimeout = null
-  }
-
-  /**
-   * Connect.
-   * @return {Promise<void>} The connection promise
-   */
-  async connect() {
-    super.connect()
 
     // Initialize lastCompletedAt for every scanGroup
     const { dataSourceId, startTime } = this.dataSource
@@ -166,6 +171,7 @@ class OPCUA extends ProtocolHandler {
         }
         // The response doesn't seem to contain any information regarding the nodeId,
         // so we iterate with a for loop and use the index to get the proper nodeId
+        // eslint-disable-next-line no-await-in-loop
         this.manageDataValues(dataValues, nodesToRead, opcStartTime, intervalOpcEndTime, scanMode)
 
         opcStartTime = intervalOpcEndTime
