@@ -76,6 +76,48 @@ class OPCUA extends ProtocolHandler {
   }
 
   /**
+   * manageDataValues
+   * @param {array} dataValues - the list of values
+   * @param {Array} nodesToRead - the list of nodes
+   * @param {Date} opcStartTime - the start time of the period
+   * @param {String} scanMode - the current scanmode
+   * @return {Promise<void>} The connection promise
+   */
+  manageDataValues = (dataValues, nodesToRead, opcStartTime, scanMode) => {
+    const values = []
+    let maxTimestamp = opcStartTime.getTime()
+    dataValues.forEach((dataValue, i) => {
+    // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+    // Reading from 1583914010001 returns values with timestamp 1583914010000
+    // Filter out values with timestamp smaller than startTime
+      if (dataValue.historyData) {
+        const newerValues = dataValue.historyData.dataValues.filter((value) => {
+          const serverTimestamp = value.serverTimestamp.getTime()
+          return serverTimestamp >= opcStartTime.getTime()
+        })
+        values.push(newerValues.map((value) => {
+          const serverTimestamp = value.serverTimestamp.getTime()
+          maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
+          return {
+            pointId: nodesToRead[i],
+            timestamp: value.serverTimestamp.toISOString(),
+            data: {
+              value: value.value.value,
+              quality: JSON.stringify(value.statusCode),
+            },
+          }
+        }))
+      } else {
+      // eslint-disable-next-line no-underscore-dangle
+        this.logger.warn(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}}`)
+      }
+    })
+    // send the packet immediately to the engine
+    this.addValues(values)
+    this.lastCompletedAt[scanMode] = maxTimestamp + 1
+  }
+
+  /**
    * On scan.
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
@@ -105,10 +147,10 @@ class OPCUA extends ProtocolHandler {
       let opcStartTime = new Date(this.lastCompletedAt[scanMode])
       const opcEndTime = new Date()
       let intervalOpcEndTime
-      let maxTimestamp = opcStartTime.getTime()
-      let values = []
 
       do {
+        // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+        // requests (for example only one hour if maxReadInterval is 3600)
         if ((opcEndTime.getTime() - opcStartTime.getTime()) > 1000 * this.maxReadInterval) {
           intervalOpcEndTime = new Date(opcStartTime.getTime() + 1000 * this.maxReadInterval)
         } else {
@@ -116,6 +158,7 @@ class OPCUA extends ProtocolHandler {
         }
 
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
+        // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
         const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
         if (dataValues.length !== nodesToRead.length) {
@@ -123,36 +166,11 @@ class OPCUA extends ProtocolHandler {
         }
         // The response doesn't seem to contain any information regarding the nodeId,
         // so we iterate with a for loop and use the index to get the proper nodeId
-        for (let i = 0; i < dataValues.length; i += 1) {
-          // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-          // Reading from 1583914010001 returns values with timestamp 1583914010000
-          // Filter out values with timestamp smaller than startTime
-          // eslint-disable-next-line no-loop-func
-          const newerValues = dataValues[i].historyData.dataValues.filter((dataValue) => {
-            const serverTimestamp = dataValue.serverTimestamp.getTime()
-            return serverTimestamp >= opcStartTime.getTime()
-          })
-          // eslint-disable-next-line no-loop-func
-          values = values.concat(newerValues.map((dataValue) => {
-            const serverTimestamp = dataValue.serverTimestamp.getTime()
-            maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
-            return {
-              pointId: nodesToRead[i],
-              timestamp: dataValue.serverTimestamp.toISOString(),
-              data: {
-                value: dataValue.value.value,
-                quality: JSON.stringify(dataValue.statusCode),
-              },
-            }
-          }))
-        }
+        this.manageDataValues(dataValues, nodesToRead, opcStartTime, intervalOpcEndTime, scanMode)
 
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
-      this.addValues(values)
-
-      this.lastCompletedAt[scanMode] = maxTimestamp + 1
       await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
       this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
