@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -64,6 +64,24 @@ schema.form = {
     defaultValue: '',
     help: <div>password</div>,
   },
+  dataArrayPath: { type: 'OIbText', valid: optional },
+  valuePath: {
+    type: 'OIbText',
+    defaultValue: 'value',
+    valid: notEmpty(),
+  },
+  nodeIdPath: {
+    type: 'OIbText',
+    defaultValue: 'name',
+    newRow: false,
+    valid: optional,
+  },
+  qualityPath: {
+    type: 'OIbText',
+    defaultValue: 'quality',
+    newRow: false,
+    valid: notEmpty(),
+  },
   timeStampSettings: {
     type: 'OIbTitle',
     children: (
@@ -88,7 +106,7 @@ schema.form = {
     options: ['payload', 'oibus'],
     defaultValue: 'oibus',
   },
-  timeStampKey: {
+  timestampPath: {
     type: 'OIbText',
     newRow: false,
     valid: notEmpty(),
@@ -113,7 +131,10 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+  scanMode: {
+    type: 'OIbScanMode',
+    label: 'Scan Mode',
+  },
   topic: {
     type: 'OIbText',
     defaultValue: '',

@@ -15,7 +15,20 @@ class MQTT extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, qos, timeStampOrigin, timeStampKey, timeStampFormat, timeStampTimezone } = this.dataSource.MQTT
+    const {
+      url,
+      username,
+      password,
+      qos,
+      dataArrayPath,
+      valuePath,
+      nodeIdPath,
+      qualityPath,
+      timeStampOrigin,
+      timeStampPath,
+      timeStampFormat,
+      timeStampTimezone,
+    } = this.dataSource.MQTT
     if (moment.tz.zone(timeStampTimezone)) {
       this.timezone = timeStampTimezone
     } else {
@@ -26,8 +39,12 @@ class MQTT extends ProtocolHandler {
     this.username = username
     this.password = Buffer.from(this.decryptPassword(password))
     this.qos = qos
+    this.dataArrayPath = dataArrayPath
+    this.valuePath = valuePath
+    this.nodeIdPath = nodeIdPath
+    this.qualityPath = qualityPath
     this.timeStampOrigin = timeStampOrigin
-    this.timeStampKey = timeStampKey
+    this.timeStampPath = timeStampPath
     this.timeStampFormat = timeStampFormat
   }
 
@@ -39,7 +56,10 @@ class MQTT extends ProtocolHandler {
     super.connect()
 
     this.logger.info(`Connecting to ${this.url}...`)
-    const options = { username: this.username, password: this.password }
+    const options = {
+      username: this.username,
+      password: this.password,
+    }
     this.client = mqtt.connect(this.url, options)
     this.client.on('error', this.handleConnectError.bind(this))
     this.client.on('connect', this.handleConnectEvent.bind(this))
@@ -79,17 +99,50 @@ class MQTT extends ProtocolHandler {
     }
   }
 
+  /**
+   *
+   * @param {object} data - the data to format
+   * @param {string} topic - the mqtt topic
+   * @returns {{pointId: string, data: {value: *, quality: *}, timestamp: string}|null} - the formatted data
+   */
+  formatValue(data, topic) {
+    const dataNodeId = this.getPointId(topic, data)
+    if (dataNodeId) {
+      const dataTimestamp = this.getTimestamp(data[this.timeStampPath])
+      const dataValue = data[this.valuePath]
+      const dataQuality = data[this.qualityPath]
+      delete data[this.timeStampPath] // delete fields to avoid duplicates in the returned object
+      delete data[this.valuePath]
+      delete data[this.nodeIdPath]
+      delete data[this.qualityPath]
+      return {
+        pointId: dataNodeId,
+        timestamp: dataTimestamp,
+        data: {
+          ...data,
+          value: dataValue,
+          quality: dataQuality,
+        },
+      }
+    }
+    this.logger.error(`PointId cant be determined. The followingvalue ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
+    return null
+  }
+
   handleMessageEvent(topic, message, packet) {
     this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
 
     try {
-      const data = JSON.parse(message.toString())
-      const timestamp = this.getTimestamp(data)
-      const pointId = this.getPointId(topic)
-      if (pointId) {
-        this.addValues([{ pointId, timestamp, data }])
-      } else {
-        this.logger.error('PointId can\'t be determined. The value is not saved. Configuration needs to be changed')
+      const parsedMessage = JSON.parse(message.toString())
+      if (this.dataArrayPath) { // if a path is set to get the data array from the message
+        if (parsedMessage[this.dataArrayPath]) { // if the data array exists at this path
+          const dataArray = parsedMessage[this.dataArrayPath].map((data) => this.formatValue(data, topic))
+          this.addValues(dataArray) // send a formatted array of values
+        } else {
+          this.logger.error(`Could not find the dataArrayPath ${JSON.stringify(this.dataArrayPath)} in message ${JSON.stringify(parsedMessage)}`)
+        }
+      } else { // if the message contains only one value as a json
+        this.addValues([this.formatValue(parsedMessage, topic)])
       }
     } catch (error) {
       this.logger.error(error)
@@ -106,15 +159,15 @@ class MQTT extends ProtocolHandler {
 
   /**
    * Get timestamp.
-   * @param {object} messageObject - The message object received
+   * @param {string} elementTimestamp - The element timestamp
    * @return {string} - The timestamp
    */
-  getTimestamp(messageObject) {
+  getTimestamp(elementTimestamp) {
     let timestamp = new Date().toISOString()
 
     if (this.timeStampOrigin === 'payload') {
-      if (this.timezone && messageObject[this.timeStampKey]) {
-        timestamp = MQTT.generateDateWithTimezone(messageObject[this.timeStampKey], this.timezone, this.timeStampFormat)
+      if (this.timezone && elementTimestamp) {
+        timestamp = MQTT.generateDateWithTimezone(elementTimestamp, this.timezone, this.timeStampFormat)
       } else {
         this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
       }
@@ -126,9 +179,17 @@ class MQTT extends ProtocolHandler {
   /**
    * Get pointId.
    * @param {string} topic - The topic
+   * @param {object} currentData - The data being parsed
    * @return {string | null} - The pointId
    */
-  getPointId(topic) {
+  getPointId(topic, currentData) {
+    if (this.nodeIdPath) { // if the nodeId is in the data
+      if (!currentData[this.nodeIdPath]) {
+        this.logger.error(`Could node find nodeId in path ${this.nodeIdPath} for data: ${JSON.stringify(currentData)}`)
+        return null
+      }
+      return currentData[this.nodeIdPath]
+    } // else, the pointId is in the topic
     let pointId = null
     const matchedPoints = []
 
@@ -167,8 +228,10 @@ class MQTT extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
+    const timestampWithoutTZAsString = moment.utc(date, dateFormat)
+      .format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone)
+      .toISOString()
   }
 }
 
