@@ -742,6 +742,107 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="row"
         >
           <h5>
+            Mqtt payload
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <div>
+                  <ul>
+                    <li>
+                      <b>
+                        Data array path:
+                      </b>
+                      Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+                    </li>
+                    <li>
+                      <b>
+                        Value path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Node id path:
+                      </b>
+                      Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Quality path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
             Time stamp settings
             <button
               aria-label="Close"
@@ -792,9 +893,21 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                     </li>
                     <li>
                       <b>
-                        TimeStamp Key:
+                        TimeStamp Path:
                       </b>
-                      The string indicates which key in the payload contains the value timestamp.
+                      The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that contains the timestamp value in the elements of this array
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp Format:
+                      </b>
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp timezone:
+                      </b>
+                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>
@@ -843,29 +956,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       </div>
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.MQTT.timeStampKey"
-          >
-            Time stamp key
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.timeStampKey"
-            name="south.dataSources.0.MQTT.timeStampKey"
-            type="text"
-            value="timestamp"
-          />
-          <div
-            class="invalid-feedback"
-          />
-        </div>
-      </div>
+      />
       <div
         class="col-md-4"
       >
@@ -4864,6 +4955,107 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="row"
         >
           <h5>
+            Mqtt payload
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <div>
+                  <ul>
+                    <li>
+                      <b>
+                        Data array path:
+                      </b>
+                      Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+                    </li>
+                    <li>
+                      <b>
+                        Value path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Node id path:
+                      </b>
+                      Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Quality path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
             Time stamp settings
             <button
               aria-label="Close"
@@ -4914,9 +5106,21 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                     </li>
                     <li>
                       <b>
-                        TimeStamp Key:
+                        TimeStamp Path:
                       </b>
-                      The string indicates which key in the payload contains the value timestamp.
+                      The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that contains the timestamp value in the elements of this array
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp Format:
+                      </b>
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp timezone:
+                      </b>
+                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>
