@@ -166,7 +166,7 @@ class OPCUA extends ProtocolHandler {
         // The response doesn't seem to contain any information regarding the nodeId,
         // so we iterate with a for loop and use the index to get the proper nodeId
         // eslint-disable-next-line no-await-in-loop
-        this.manageDataValues(dataValues, nodesToRead, opcStartTime, intervalOpcEndTime, scanMode)
+        await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
