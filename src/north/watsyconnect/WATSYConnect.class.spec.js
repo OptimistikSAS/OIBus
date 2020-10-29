@@ -30,32 +30,32 @@ describe('WATSY Connect', () => {
   // Data for tests
   const values = [
     {
-      timestamp: '1998-06-12T21:00:00.000Z',
+      timestamp: '1998-07-12T21:00:00.000Z',
       pointId: 'atipik-solutions/WATSY/protocol',
       data: { value: 'web' },
     },
     {
-      timestamp: '1998-06-12T21:00:00.000Z',
+      timestamp: '1998-07-12T21:00:00.000Z',
       pointId: 'atipik-solutions/WATSY/device_model',
       data: { value: 'oibusWATSYConnect' },
     },
     {
-      timestamp: '1998-06-12T21:00:00.000Z',
+      timestamp: '1998-07-12T21:00:00.000Z',
       pointId: 'atipik-solutions/WATSY/device_id',
       data: { value: 'demo-capteur' },
     },
     {
-      timestamp: '1998-06-12T23:45:00.000Z',
+      timestamp: '1998-07-12T23:45:00.000Z',
       pointId: 'atipik-solutions/WATSY/protocol',
       data: { value: 'web' },
     },
     {
-      timestamp: '1998-06-12T23:45:00.000Z',
+      timestamp: '1998-07-12T23:45:00.000Z',
       pointId: 'atipik-solutions/WATSY/device_model',
       data: { value: 'oibusWATSYConnect' },
     },
     {
-      timestamp: '1998-06-12T23:45:00.000Z',
+      timestamp: '1998-07-12T23:45:00.000Z',
       pointId: 'atipik-solutions/WATSY/device_id',
       data: { value: 'demo-capteur' },
     },
@@ -68,7 +68,7 @@ describe('WATSY Connect', () => {
 
   const allWATSYMessages = [
     {
-      timestamp: 897685200000000000,
+      timestamp: 900277200000000000,
       tags: {},
       fields: {
         'atipik-solutions/WATSY/device_id': 'demo-capteur',
@@ -79,7 +79,7 @@ describe('WATSY Connect', () => {
       token: WATSYNorth.token,
     },
     {
-      timestamp: 897695100000000000,
+      timestamp: 900287100000000000,
       tags: {},
       fields: {
         'atipik-solutions/WATSY/device_id': 'demo-capteur',
