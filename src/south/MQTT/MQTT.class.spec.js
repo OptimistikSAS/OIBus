@@ -251,7 +251,7 @@ describe('MQTT south', () => {
 
     expect(mqttSouth.addValues)
       .toBeCalledWith([
-        { // TODO : check timezone
+        {
           timestamp: '2020-02-02T01:02:02.000Z',
           pointId: 'point1',
           data: {
