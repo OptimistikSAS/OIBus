@@ -38,14 +38,8 @@ class OPCUA extends ProtocolHandler {
     if (this.dataSource.OPCUA.scanGroups) {
       this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
         const points = this.dataSource.points
-          .filter((point) => {
-            /**  @todo finalize the filter */
-            if (point.nodeId[0] !== 'n') {
-              this.logger.error(`Point Ignored because it does not have a valid OPCUA pointId: ${point.nodeId}`)
-              return false
-            }
-            return point.scanMode === scanGroup.scanMode
-          }).map((point) => point.nodeId)
+          .filter((point) => point.scanMode === scanGroup.scanMode)
+          .map((point) => point.nodeId)
         this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
         this.ongoingReads[scanGroup.scanMode] = false
         return {
@@ -92,9 +86,9 @@ class OPCUA extends ProtocolHandler {
     const values = []
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
-    // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-    // Reading from 1583914010001 returns values with timestamp 1583914010000
-    // Filter out values with timestamp smaller than startTime
+      // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+      // Reading from 1583914010001 returns values with timestamp 1583914010000
+      // Filter out values with timestamp smaller than startTime
       if (dataValue.historyData) {
         const newerValues = dataValue.historyData.dataValues.filter((value) => {
           const serverTimestamp = value.serverTimestamp.getTime()
@@ -113,7 +107,7 @@ class OPCUA extends ProtocolHandler {
           }
         }))
       } else {
-      // eslint-disable-next-line no-underscore-dangle
+        // eslint-disable-next-line no-underscore-dangle
         this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}}`)
       }
     })
