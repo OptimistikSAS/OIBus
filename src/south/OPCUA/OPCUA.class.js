@@ -108,7 +108,7 @@ class OPCUA extends ProtocolHandler {
         }))
       } else {
         // eslint-disable-next-line no-underscore-dangle
-        this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}}`)
+        this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}`)
       }
     })
     // send the packet immediately to the engine
