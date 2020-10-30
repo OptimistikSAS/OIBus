@@ -1,4 +1,4 @@
-const schema = require('./OIAnalyticsFile.schema.jsx').default
+const schema = require('./OIAnalytics.schema.jsx').default
 const testSchema = require('../../services/testSchema.js').default
 
 testSchema(schema)
