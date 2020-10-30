@@ -14,9 +14,12 @@ schema.form = {
           startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
           accessible by editing manually the oibus configuration time) indicates a different start time. This feature
           has been added to be allow recovering of values from the past when needed.
+          example: starTime: &quot;2020-01-15T23:59:00.000Z&quot;
+          Please use the ISO format even if other format are supported.
         </p>
         <p>
-          <b>retry interval:</b>retry interval before trying to connect again
+          <b>retry interval:</b>
+          retry interval before trying to connect again
         </p>
       </>
     ),

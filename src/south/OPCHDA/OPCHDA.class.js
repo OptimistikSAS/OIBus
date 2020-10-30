@@ -51,9 +51,10 @@ class OPCHDA extends ProtocolHandler {
     if (process.platform === 'win32') {
       super.connect()
       // Initialize lastCompletedAt for every scanGroup
+      // "startTime" is currently a "hidden" parameter of oibus.json
       const { startTime } = this.dataSource
-
       const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
+
       Object.keys(this.lastCompletedAt).forEach(async (key) => {
         let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${key}`)
         lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
