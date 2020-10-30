@@ -4079,7 +4079,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   This protocol is in restricted release. Please contact Optimistik
                 </p>
                 <p>
-                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
+                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                </p>
+                <p>
+                  <b>
+                    retry interval:
+                  </b>
+                  retry interval before trying to connect again
                 </p>
               </div>
             </div>
@@ -4127,38 +4133,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           >
             <div>
               Retry Interval (ms)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
-          >
-            Max return values
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
-            type="integer"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Max return values
             </div>
           </small>
         </div>
@@ -4492,7 +4466,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                   This protocol is in restricted release. Please contact Optimistik
                 </p>
                 <p>
-                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
+                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                </p>
+                <p>
+                  <b>
+                    retry interval:
+                  </b>
+                  retry interval before trying to connect again
                 </p>
               </div>
             </div>
@@ -4540,38 +4520,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           >
             <div>
               Retry Interval (ms)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
-          >
-            Max return values
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
-            type="integer"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Max return values
             </div>
           </small>
         </div>

@@ -49,7 +49,7 @@ class OPCHDA extends ProtocolHandler {
    */
   async connect() {
     if (process.platform === 'win32') {
-      super.connect()
+      await super.connect()
       // Initialize lastCompletedAt for every scanGroup
       // "startTime" is currently a "hidden" parameter of oibus.json
       const { startTime } = this.dataSource

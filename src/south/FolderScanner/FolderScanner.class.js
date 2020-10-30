@@ -29,7 +29,7 @@ class FolderScanner extends ProtocolHandler {
   }
 
   async connect() {
-    super.connect()
+    await super.connect()
     if (this.preserveFiles) {
       const { engineConfig } = this.engine.configService.getConfig()
       const databasePath = `${engineConfig.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
