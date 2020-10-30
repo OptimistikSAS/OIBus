@@ -1,6 +1,5 @@
 const Opcua = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const databaseService = require('../../services/database.service')
 
 /**
  *
@@ -18,10 +17,9 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    const { url, retryInterval, maxReturnValues, maxReadInterval } = dataSource.OPCUA
+    const { url, retryInterval, maxReadInterval } = dataSource.OPCUA
     this.url = url
-    this.retryInterval = retryInterval
-    this.maxReturnValues = maxReturnValues
+    this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval
     this.lastCompletedAt = {}
     this.ongoingReads = {}
@@ -36,6 +34,8 @@ class OPCUA extends ProtocolHandler {
     super.connect()
 
     if (this.dataSource.OPCUA.scanGroups) {
+      // group all points in their respective scanGroup
+      // each scangroup is also initialized with a default "last completed date" equal to current Time
       this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
         const points = this.dataSource.points
           .filter((point) => point.scanMode === scanGroup.scanMode)
@@ -54,10 +54,7 @@ class OPCUA extends ProtocolHandler {
     }
 
     // Initialize lastCompletedAt for every scanGroup
-    const { dataSourceId, startTime } = this.dataSource
-    const { engineConfig } = this.engine.configService.getConfig()
-    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+    const { startTime } = this.dataSource
 
     const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
     // Disable ESLint check because we need for..of loop to support async calls
@@ -65,7 +62,7 @@ class OPCUA extends ProtocolHandler {
     for (const scanGroup of Object.keys(this.lastCompletedAt)) {
       // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
       // eslint-disable-next-line no-await-in-loop
-      let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${scanGroup}`)
+      let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${scanGroup}`)
       lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
       this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
       this.lastCompletedAt[scanGroup] = lastCompletedAt
@@ -171,7 +168,7 @@ class OPCUA extends ProtocolHandler {
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
-      await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+      await this.upsertConfigDb(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
       this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}: ${error}`)
