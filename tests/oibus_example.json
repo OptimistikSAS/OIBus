@@ -134,7 +134,6 @@
                     "maxAge": 1000,
                     "url": "opc.tcp://138.68.80.236:53530/OPCUA/SimulationServer",
                     "retryInterval": 10000,
-                    "maxReturnValues": 0,
                     "maxReadInterval": 3600,
                     "scanGroups": [
                         {

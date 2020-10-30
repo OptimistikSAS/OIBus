@@ -48,7 +48,6 @@ describe('OPCUA south', () => {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       timeOrigin: 'server',
-      maxReturnValues: 10,
       maxReadInterval: 3600,
       scanGroups: [{
         Aggregate: 'Raw',
@@ -77,8 +76,6 @@ describe('OPCUA south', () => {
       .toEqual(opcuaConfig.OPCUA.url)
     expect(opcuaSouth.retryInterval)
       .toEqual(opcuaConfig.OPCUA.retryInterval)
-    expect(opcuaSouth.maxReturnValues)
-      .toEqual(opcuaConfig.OPCUA.maxReturnValues)
     expect(opcuaSouth.maxReadInterval)
       .toEqual(opcuaConfig.OPCUA.maxReadInterval)
     expect(opcuaSouth.reconnectTimeout)
