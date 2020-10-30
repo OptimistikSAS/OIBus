@@ -121,9 +121,6 @@ class WATSYConnect extends ApiHandler {
    * @returns {Promise} - The request status
    */
   async publishOIBusMessages(messages) {
-    // Only for Debug
-    console.table(messages, ['id', 'pointId', 'timestamp', 'data'])
-
     // Intit succesCount to 0 when we handle new messages
     this.successCount = 0
 
