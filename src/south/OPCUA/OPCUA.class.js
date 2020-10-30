@@ -54,6 +54,7 @@ class OPCUA extends ProtocolHandler {
     }
 
     // Initialize lastCompletedAt for every scanGroup
+    // "startTime" is currently a "hidden" parameter of oibus.json
     const { startTime } = this.dataSource
 
     const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
@@ -67,7 +68,6 @@ class OPCUA extends ProtocolHandler {
       this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
       this.lastCompletedAt[scanGroup] = lastCompletedAt
     }
-
     await this.connectToOpcuaServer()
   }
 
