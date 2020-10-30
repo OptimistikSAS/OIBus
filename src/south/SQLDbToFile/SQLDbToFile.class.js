@@ -79,7 +79,7 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   async connect() {
-    super.connect()
+    await super.connect()
     this.lastCompletedAt = await this.getConfigDb('lastCompletedAt')
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = new Date().toISOString()

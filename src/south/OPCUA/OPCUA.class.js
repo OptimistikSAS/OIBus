@@ -31,7 +31,7 @@ class OPCUA extends ProtocolHandler {
    * @return {Promise<void>} The connection promise
    */
   async connect() {
-    super.connect()
+    await super.connect()
 
     if (this.dataSource.OPCUA.scanGroups) {
       // group all points in their respective scanGroup
