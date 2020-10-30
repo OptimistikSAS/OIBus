@@ -52,8 +52,8 @@ class MQTT extends ProtocolHandler {
    * Initiate connection and start listening.
    * @return {void}
    */
-  connect() {
-    super.connect()
+  async connect() {
+    await super.connect()
 
     this.logger.info(`Connecting to ${this.url}...`)
     const options = {
