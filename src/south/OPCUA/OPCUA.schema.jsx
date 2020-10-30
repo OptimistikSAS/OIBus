@@ -15,6 +15,9 @@ schema.form = {
           accessible by editing manually the oibus configuration time) indicates a different start time. This feature
           has been added to be allow recovering of values from the past when needed.
         </p>
+        <p>
+          <b>retry interval:</b>retry interval before trying to connect again
+        </p>
       </>
     ),
   },
@@ -31,14 +34,6 @@ schema.form = {
     valid: minValue(1000),
     defaultValue: 10000,
     help: <div>Retry Interval (ms)</div>,
-  },
-  maxReturnValues: {
-    type: 'OIbInteger',
-    newRow: false,
-    md: 2,
-    valid: minValue(0),
-    defaultValue: 0,
-    help: <div>Max return values</div>,
   },
   maxReadInterval: {
     type: 'OIbInteger',
