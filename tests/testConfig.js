@@ -268,12 +268,12 @@ const testConfig = {
       {
         applicationId: 'RawFileSender',
         enabled: false,
-        api: 'OIAnalyticsFile',
+        api: 'OIAnalytics',
         caching: {
           sendInterval: 15000,
           retryInterval: 10000,
         },
-        OIAnalyticsFile: {
+        OIAnalytics: {
           host: 'https://demo.oianalytics.fr',
           endpoint: '/api/optimistik/data/values/upload',
           authentication: {
@@ -326,7 +326,7 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
-  apiList: ['Console', 'OIConnect', 'OIAnalyticsFile'],
+  apiList: ['Console', 'OIConnect', 'OIAnalytics'],
   protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
 }
 

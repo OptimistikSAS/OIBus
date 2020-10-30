@@ -98,7 +98,7 @@ exports[`Health display Health page based on config and status 1`] = `
               RawFileSender
             </div>
             <div>
-              (OIAnalyticsFile)
+              (OIAnalytics)
             </div>
           </a>
         </div>
@@ -530,7 +530,7 @@ exports[`Health display Health page based on config and status 2`] = `
               RawFileSender
             </div>
             <div>
-              (OIAnalyticsFile)
+              (OIAnalytics)
             </div>
           </a>
         </div>
