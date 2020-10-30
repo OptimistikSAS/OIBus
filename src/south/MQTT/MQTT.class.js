@@ -145,7 +145,7 @@ class MQTT extends ProtocolHandler {
         this.addValues([this.formatValue(parsedMessage, topic)])
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(`could not parse message ${message} for topic ${topic} ${error.stack}`)
     }
   }
 
