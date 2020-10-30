@@ -370,7 +370,7 @@ describe('OPCUA south', () => {
     await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject()) }
+    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject(new Error('fail'))) }
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
