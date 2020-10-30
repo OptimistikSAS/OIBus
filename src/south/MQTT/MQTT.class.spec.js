@@ -115,11 +115,11 @@ describe('MQTT south', () => {
       .toBeUndefined()
   })
 
-  it('should properly connect', () => {
+  it('should properly connect', async () => {
     const mqttSouth = new MQTT(mqttConfig, engine)
     mqtt.connect.mockReturnValue({ on: jest.fn() })
 
-    mqttSouth.connect()
+    await mqttSouth.connect()
 
     const expectedOptions = {
       username: mqttConfig.MQTT.username,

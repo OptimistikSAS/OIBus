@@ -47,8 +47,8 @@ class MQTTNorth extends ApiHandler {
    * Connection to Broker MQTT
    * @return {void}
    */
-  async connect() {
-    await super.connect()
+  connect() {
+    super.connect()
     this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
     this.client = mqtt.connect(this.url, { username: this.username, password: this.password })
     this.client.on('error', (error) => {
