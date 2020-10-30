@@ -143,7 +143,6 @@ class OPCUA extends ProtocolHandler {
       let opcStartTime = new Date(this.lastCompletedAt[scanMode])
       const opcEndTime = new Date()
       let intervalOpcEndTime
-
       do {
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests (for example only one hour if maxReadInterval is 3600)
@@ -171,7 +170,7 @@ class OPCUA extends ProtocolHandler {
       await this.upsertConfigDb(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
       this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
-      this.logger.error(`on Scan ${scanMode}: ${error}`)
+      this.logger.error(`on Scan ${scanMode}:${error.stack}`)
     }
 
     this.ongoingReads[scanMode] = false
