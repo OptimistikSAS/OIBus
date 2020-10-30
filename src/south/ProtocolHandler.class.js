@@ -2,6 +2,7 @@ const fs = require('fs')
 const zlib = require('zlib')
 
 const Logger = require('../engine/Logger.class')
+const databaseService = require('../services/database.service')
 
 /**
  * Class Protocol : provides general attributes and methods for protocols.
@@ -43,8 +44,11 @@ class ProtocolHandler {
     this.compressionLevel = 9
   }
 
-  connect() {
+  async connect() {
     const { dataSourceId, protocol } = this.dataSource
+    const { engineConfig } = this.engine.configService.getConfig()
+    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
@@ -116,6 +120,31 @@ class ProtocolHandler {
           resolve()
         })
     })
+  }
+
+  /**
+   * Read a given key in the config db of the protocol handler
+   * @param {string} configKey - key to retrieve
+   * @returns {Promise} - The value of the key
+   */
+
+  async getConfigDb(configKey) {
+    return databaseService.getConfig(this.configDatabase, configKey)
+  }
+
+  /**
+   * Update or add a given key in the config db of the protocol handler
+   * @param {string} configKey - key to update/add
+   * @param {string} value - value of the key
+   * @returns {Promise} - the value to update the key
+   */
+
+  async upsertConfigDb(configKey, value) {
+    return databaseService.upsertConfig(
+      this.configDatabase,
+      configKey,
+      value,
+    )
   }
 
   /**

@@ -2,7 +2,6 @@ const { spawn } = require('child_process')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
-const databaseService = require('../../services/database.service')
 const Logger = require('../../engine/Logger.class')
 
 /**
@@ -52,14 +51,11 @@ class OPCHDA extends ProtocolHandler {
     if (process.platform === 'win32') {
       super.connect()
       // Initialize lastCompletedAt for every scanGroup
-      const { dataSourceId, startTime } = this.dataSource
-      const { engineConfig } = this.engine.configService.getConfig()
-      const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-      this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+      const { startTime } = this.dataSource
 
       const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
       Object.keys(this.lastCompletedAt).forEach(async (key) => {
-        let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${key}`)
+        let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${key}`)
         lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
         this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
         this.lastCompletedAt[key] = lastCompletedAt
@@ -330,8 +326,7 @@ class OPCHDA extends ProtocolHandler {
 
           dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
           this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
-          await databaseService.upsertConfig(
-            this.configDatabase,
+          await this.upsertConfigDb(
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group],
           )
