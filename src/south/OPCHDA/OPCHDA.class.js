@@ -346,7 +346,7 @@ class OPCHDA extends ProtocolHandler {
           this.logger.warn(`unknown messageObject.Reply ${messageObject.Reply}`)
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(`can't handle message ${message} ${error.stack}`)
     }
   }
 }

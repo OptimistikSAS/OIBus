@@ -69,7 +69,7 @@ class FolderScanner extends ProtocolHandler {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
     } catch (error) {
-      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error}`)
+      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error.stack}`)
     }
   }
 
