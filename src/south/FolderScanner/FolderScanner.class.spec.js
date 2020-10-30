@@ -34,8 +34,8 @@ beforeEach(() => {
 const folderScanner = new FolderScanner(config.south.dataSources[5], engine)
 
 describe('folder-scanner', () => {
-  it('should connect properly when preserveFiles is true', () => {
-    folderScanner.connect()
+  it('should connect properly when preserveFiles is true', async () => {
+    await folderScanner.connect()
     expect(databaseService.createFolderScannerDatabase).toHaveBeenCalledWith('./cache/FolderScanner.db')
   })
   it('should connect properly when preserveFiles is false', () => {
