@@ -21,6 +21,13 @@ const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.decryptPassword = (password) => password
 
+// Mock database service
+jest.mock('../../services/database.service', () => ({
+  createConfigDatabase: jest.fn(() => 'configDatabase'),
+  getConfig: jest.fn((_database, _key) => '1587640141001.0'),
+  upsertConfig: jest.fn(),
+}))
+
 beforeEach(() => {
   jest.resetAllMocks()
   jest.clearAllMocks()
