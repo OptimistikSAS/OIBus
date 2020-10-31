@@ -92,6 +92,10 @@ const testConfig = {
           host: '35.180.179.217',
           endPoint: 'Server/Simulation',
           timeOrigin: 'server',
+          scanGroups: [
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+          ],
         },
         points: [
           { ns: 5, pointId: '/fttest.base/Tank 5.tank/333333.temperature', scanMode: 'everySecond', s: 'Counter1' },
