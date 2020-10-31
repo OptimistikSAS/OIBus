@@ -154,18 +154,23 @@ exports[`OIbTable check delete from table 1`] = `
             class="form-group"
           >
             <select
-              aria-invalid="false"
-              class="oi-form-input form-control"
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
               id="name.0.scanMode"
               name="name.0.scanMode"
             >
               <option
                 value=""
               />
+              <option
+                value=""
+              />
             </select>
             <div
               class="invalid-feedback"
-            />
+            >
+              Invalid scan mode
+            </div>
           </div>
         </td>
         <td>
