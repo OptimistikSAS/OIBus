@@ -6,7 +6,8 @@ import { BrowserRouter } from 'react-router-dom'
 import newConfig from '../../../../tests/testConfig'
 import SouthForm from './SouthForm.jsx'
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+const dispatchNewConfig = jest.fn()
+React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
