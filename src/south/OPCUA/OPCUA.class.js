@@ -84,15 +84,15 @@ class OPCUA extends ProtocolHandler {
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
       if (dataValue.historyData) {
-      // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-      // Reading from 1583914010001 returns values with timestamp 1583914010000
-      // Filter out values with timestamp smaller than startTime
+        // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+        // Reading from 1583914010001 returns values with timestamp 1583914010000
+        // Filter out values with timestamp smaller than startTime
         const newerValues = dataValue.historyData.dataValues.filter((value) => {
-          const serverTimestamp = value.serverTimestamp.getTime()
-          return serverTimestamp >= opcStartTime.getTime()
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          return selectedTimestamp.getTime() >= opcStartTime.getTime()
         })
         values.push(...newerValues.map((value) => {
-          const selectedTimestamp = value.sourceTimestamp ? value.sourceTimestamp : value.serverTimestamp
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
           const selectedTime = selectedTimestamp.getTime()
           maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
           return {
