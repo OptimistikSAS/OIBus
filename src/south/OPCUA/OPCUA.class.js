@@ -83,20 +83,21 @@ class OPCUA extends ProtocolHandler {
     const values = []
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
-      // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-      // Reading from 1583914010001 returns values with timestamp 1583914010000
-      // Filter out values with timestamp smaller than startTime
       if (dataValue.historyData) {
+        // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+        // Reading from 1583914010001 returns values with timestamp 1583914010000
+        // Filter out values with timestamp smaller than startTime
         const newerValues = dataValue.historyData.dataValues.filter((value) => {
-          const serverTimestamp = value.serverTimestamp.getTime()
-          return serverTimestamp >= opcStartTime.getTime()
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          return selectedTimestamp.getTime() >= opcStartTime.getTime()
         })
         values.push(...newerValues.map((value) => {
-          const serverTimestamp = value.serverTimestamp.getTime()
-          maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          const selectedTime = selectedTimestamp.getTime()
+          maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
           return {
             pointId: nodesToRead[i],
-            timestamp: value.serverTimestamp.toISOString(),
+            timestamp: selectedTimestamp.toISOString(),
             data: {
               value: value.value.value,
               quality: JSON.stringify(value.statusCode),
@@ -156,11 +157,65 @@ class OPCUA extends ProtocolHandler {
         // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
         const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
+        /*
+        Below are two example of responses
+        1- With OPCUA WINCC
+          [
+            {
+              "statusCode": { "value": 0 },
+              "historyData": {
+                "dataValues": [
+                  {
+                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                    "statusCode": {
+                      "value": 1024
+                    },
+                    "sourceTimestamp": "2020-10-31T14:11:20.238Z",
+                    "sourcePicoseconds": 0,
+                    "serverPicoseconds": 0
+                  },
+                  {"value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                    "statusCode": {
+                      "value": 1024
+                    },
+                    "sourceTimestamp": "2020-10-31T14:11:21.238Z",
+                    "sourcePicoseconds": 0,
+                    "serverPicoseconds": 0
+                  }
+                ]
+              }
+            }
+          ]
+          2/ With OPCUA MATRIKON
+          [
+            {
+              "statusCode": {"value": 0},
+              "historyData": {
+                "dataValues": [
+                  {
+                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": -0.927561841177095 },
+                    "statusCode": { "value": 0 },
+                    "sourceTimestamp": "2020-10-31T14:23:01.000Z",
+                    "sourcePicoseconds": 0,
+                    "serverTimestamp": "2020-10-31T14:23:01.000Z",
+                    "serverPicoseconds": 0
+                  },
+                  {
+                    "value": {"dataType": "Double", "arrayType": "Scalar","value": 0.10154855112346262},
+                    "statusCode": {"value": 0},
+                    "sourceTimestamp": "2020-10-31T14:23:02.000Z",
+                    "sourcePicoseconds": 0,
+                    "serverTimestamp": "2020-10-31T14:23:02.000Z",
+                    "serverPicoseconds": 0
+                  }
+                ]
+              }
+            }
+          ]
+        */
         if (dataValues.length !== nodesToRead.length) {
           this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
         }
-        // The response doesn't seem to contain any information regarding the nodeId,
-        // so we iterate with a for loop and use the index to get the proper nodeId
         // eslint-disable-next-line no-await-in-loop
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
