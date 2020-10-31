@@ -6,9 +6,9 @@ import { ConfigContext } from '../../context/configContext.jsx'
 const OIbScanMode = ({ label, help, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const scanModes = newConfig?.engine?.scanModes ?? [] // scan modes defined in engine
-  let options = scanModes.map((e) => e.scanMode)
+  const options = scanModes.map((e) => e.scanMode)
   if (options === null || options.length === 0) {
-    options = [''] // empty string if no scan mode on engine
+    options.push(['']) // empty string if no scan mode on engine
   }
   const defaultValue = options[0]
   let validCheck = null
