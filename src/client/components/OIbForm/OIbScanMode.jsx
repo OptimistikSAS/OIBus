@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input, FormFeedback } from 'reactstrap'
 import { ConfigContext } from '../../context/configContext.jsx'
 
-const OIbScanMode = ({ label, help, value, name, onChange }) => {
+const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const scanModes = newConfig?.engine?.scanModes ?? [] // scan modes defined in engine
   const options = scanModes.map((e) => e.scanMode)
@@ -11,7 +11,7 @@ const OIbScanMode = ({ label, help, value, name, onChange }) => {
     options.push(['']) // empty string if no scan mode on engine
   }
   const defaultValue = options[0]
-  let validCheck = null
+  let validCheck = valid(value, name, newConfig)
 
   React.useEffect(() => {
     if (value === '') onChange(name, defaultValue)
@@ -25,7 +25,7 @@ const OIbScanMode = ({ label, help, value, name, onChange }) => {
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal, null)
+    onChange(name, newVal, valid(newVal, name, newConfig))
   }
 
   // check if defined scanmode is unknown to the engine
@@ -53,9 +53,10 @@ OIbScanMode.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string,
   help: PropTypes.element,
+  valid: PropTypes.func,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string,
 }
-OIbScanMode.defaultProps = { label: null, help: null, value: '' }
+OIbScanMode.defaultProps = { label: null, help: null, valid: () => null, value: '' }
 
 export default OIbScanMode
