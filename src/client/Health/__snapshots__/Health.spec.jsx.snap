@@ -272,6 +272,30 @@ exports[`Health display Health page based on config and status 1`] = `
           class="oi-box"
         >
           <a
+            href="/south/SimulationServerBis copy"
+          >
+            <div>
+              SimulationServerBis copy
+            </div>
+            <div>
+              (OPCUA)
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
+        </div>
+      </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box"
+        >
+          <a
             href="/south/PLC-35"
           >
             <div>
@@ -684,6 +708,30 @@ exports[`Health display Health page based on config and status 2`] = `
           >
             <div>
               SimulationServerBis
+            </div>
+            <div>
+              (OPCUA)
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
+        </div>
+      </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box"
+        >
+          <a
+            href="/south/SimulationServerBis copy"
+          >
+            <div>
+              SimulationServerBis copy
             </div>
             <div>
               (OPCUA)
