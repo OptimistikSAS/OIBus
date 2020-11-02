@@ -5,7 +5,7 @@ const ApiHandler = require('../ApiHandler.class')
 /**
  * Class OIAnalytics - sends files through a POST Multipart HTTP
  */
-class OIAnalyticsFile extends ApiHandler {
+class OIAnalytics extends ApiHandler {
   /**
    * Constructor for OIAnalytics
    * @constructor
@@ -62,4 +62,4 @@ class OIAnalyticsFile extends ApiHandler {
   }
 }
 
-module.exports = OIAnalyticsFile
+module.exports = OIAnalytics
