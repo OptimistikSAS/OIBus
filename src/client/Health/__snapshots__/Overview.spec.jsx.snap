@@ -231,6 +231,30 @@ exports[`Overview display overview based on config 1`] = `
           class="oi-box"
         >
           <a
+            href="/south/SimulationServerBis copy"
+          >
+            <div>
+              SimulationServerBis copy
+            </div>
+            <div>
+              (OPCUA)
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+            type="button"
+          >
+            Points (1)
+          </button>
+        </div>
+      </div>
+      <div
+        class="tight text-muted col"
+      >
+        <div
+          class="oi-box"
+        >
+          <a
             href="/south/PLC-35"
           >
             <div>

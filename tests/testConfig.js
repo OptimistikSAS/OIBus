@@ -118,6 +118,21 @@ const testConfig = {
         ],
       },
       {
+        dataSourceId: 'SimulationServerBis copy',
+        protocol: 'OPCUA',
+        enabled: false,
+        OPCUA: {
+          opcuaPort: 53530,
+          httpsPort: 53443,
+          host: '35.180.179.217',
+          endPoint: 'Server/Simulation',
+          timeOrigin: 'server',
+        },
+        points: [
+          { ns: 5, pointId: '/fttest.base/Tank 9.tank/333333.temperature', scanMode: 'everySecond', s: 'Sinusoid1' },
+        ],
+      },
+      {
         dataSourceId: 'PLC-35',
         protocol: 'Modbus',
         enabled: false,

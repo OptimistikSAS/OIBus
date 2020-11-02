@@ -84,6 +84,50 @@ describe('South', () => {
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].dataSourceId}` })
     expect(container).toMatchSnapshot()
   })
+  test('check duplicate first dataSource', () => {
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const duplicateButton = firstApplicationButtons.querySelectorAll('path')[2]
+    Simulate.click(duplicateButton)
+    const dataSource = newConfig.south.dataSources[0]
+    const newName = `${dataSource.dataSourceId} copy`
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'addRow',
+      name: 'south.dataSources',
+      value: {
+        ...dataSource,
+        dataSourceId: newName,
+        enabled: false,
+      },
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check duplicate first dataSource with countCopies', () => {
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    const thirdApplicationButtons = document.querySelectorAll('td')[14]
+    const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[2]
+    Simulate.click(duplicateButton)
+    const dataSource = newConfig.south.dataSources[2]
+    const newName = `${dataSource.dataSourceId} copy2`
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'addRow',
+      name: 'south.dataSources',
+      value: {
+        ...dataSource,
+        dataSourceId: newName,
+        enabled: false,
+      },
+    })
+    expect(container).toMatchSnapshot()
+  })
   test('check add pressed with "new_datasource" id', () => {
     act(() => {
       ReactDOM.render(

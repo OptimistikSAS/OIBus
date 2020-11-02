@@ -1794,6 +1794,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                       SimulationServerBis
                     </option>
                     <option
+                      value="SimulationServerBis copy"
+                    >
+                      SimulationServerBis copy
+                    </option>
+                    <option
                       value="PLC-35"
                     >
                       PLC-35
