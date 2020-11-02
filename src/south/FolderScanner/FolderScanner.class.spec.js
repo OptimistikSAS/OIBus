@@ -31,7 +31,7 @@ beforeEach(() => {
   jest.restoreAllMocks()
 })
 
-const folderScanner = new FolderScanner(config.south.dataSources[5], engine)
+const folderScanner = new FolderScanner(config.south.dataSources[6], engine)
 
 describe('folder-scanner', () => {
   it('should connect properly when preserveFiles is true', async () => {

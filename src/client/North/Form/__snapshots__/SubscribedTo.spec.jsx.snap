@@ -303,6 +303,11 @@ exports[`SubscribedTo check SubscribedTo with application: c 1`] = `
                     SimulationServerBis
                   </option>
                   <option
+                    value="SimulationServerBis copy"
+                  >
+                    SimulationServerBis copy
+                  </option>
+                  <option
                     value="PLC-35"
                   >
                     PLC-35
@@ -665,6 +670,11 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
                     SimulationServerBis
                   </option>
                   <option
+                    value="SimulationServerBis copy"
+                  >
+                    SimulationServerBis copy
+                  </option>
+                  <option
                     value="PLC-35"
                   >
                     PLC-35
@@ -839,6 +849,11 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
                     SimulationServerBis
                   </option>
                   <option
+                    value="SimulationServerBis copy"
+                  >
+                    SimulationServerBis copy
+                  </option>
+                  <option
                     value="PLC-35"
                   >
                     PLC-35
@@ -1011,6 +1026,11 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
                     value="SimulationServerBis"
                   >
                     SimulationServerBis
+                  </option>
+                  <option
+                    value="SimulationServerBis copy"
+                  >
+                    SimulationServerBis copy
                   </option>
                   <option
                     value="PLC-35"
