@@ -97,7 +97,7 @@ const North = () => {
   ])
 
   return tableRows && Array.isArray(apiList) ? (
-    <Col md="6">
+    <Col md="6" className="north">
       <Breadcrumb tag="h5">
         <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
           Home
