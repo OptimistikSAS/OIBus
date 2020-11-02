@@ -3,7 +3,7 @@
 exports[`South check South 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -987,7 +987,7 @@ exports[`South check South 1`] = `
 exports[`South check add pressed with "new_datasource" id 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -1971,7 +1971,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
 exports[`South check delete first dataSource 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -2955,7 +2955,7 @@ exports[`South check delete first dataSource 1`] = `
 exports[`South check duplicate first dataSource 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -3939,7 +3939,7 @@ exports[`South check duplicate first dataSource 1`] = `
 exports[`South check duplicate first dataSource with countCopies 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -4923,7 +4923,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
 exports[`South check edit first dataSource id 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -5927,7 +5927,7 @@ exports[`South check missing protocolList 1`] = `
 exports[`South check open edit first application 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
@@ -6911,7 +6911,7 @@ exports[`South check open edit first application 1`] = `
 exports[`South check press edit first dataSource id 1`] = `
 <div>
   <div
-    class="col-md-8"
+    class="south col-md-8"
   >
     <h5
       aria-label="breadcrumb"
