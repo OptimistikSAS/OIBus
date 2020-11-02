@@ -247,4 +247,17 @@ module.exports = {
       }
     })
   },
+  17: (config) => {
+    config.north.applications.forEach((application) => {
+      if (application.api === 'OIAnalyticsFile') {
+        logger.info('Rename OIAnalyticsFile to OIAnalytics')
+        application.api = 'OIAnalytics'
+        if (Object.prototype.hasOwnProperty.call(application, 'OIAnalyticsFile')) {
+          delete application.OIAnalyticsFile.endpoint
+          application.OIAnalytics = application.OIAnalyticsFile
+          delete application.OIAnalyticsFile
+        }
+      }
+    })
+  },
 }
