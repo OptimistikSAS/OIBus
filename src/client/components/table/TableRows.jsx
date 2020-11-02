@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FaTrashAlt, FaCog } from 'react-icons/fa'
+import { FaTrashAlt, FaCog, FaCopy } from 'react-icons/fa'
 
-const TableRows = ({ rows, handleEdit, handleDelete }) => (
+const TableRows = ({ rows, handleEdit, handleDelete, handleDuplicate }) => (
   <tbody>
     {rows.map((row, index) => (
       <tr key={row[0].name}>
@@ -28,6 +28,15 @@ const TableRows = ({ rows, handleEdit, handleDelete }) => (
               }}
             />
           )}
+          {handleDuplicate && (
+            <FaCopy
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleDuplicate(index)
+              }}
+            />
+          )}
         </td>
       </tr>
     ))}
@@ -38,8 +47,9 @@ TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   handleEdit: PropTypes.func,
   handleDelete: PropTypes.func,
+  handleDuplicate: PropTypes.func,
 }
 
-TableRows.defaultProps = { handleDelete: null, handleEdit: null }
+TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleDuplicate: null }
 
 export default TableRows
