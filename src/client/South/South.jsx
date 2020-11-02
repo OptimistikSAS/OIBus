@@ -130,7 +130,7 @@ const South = () => {
   ])
 
   return tableRows && Array.isArray(protocolList) ? (
-    <Col md="8">
+    <Col md="8" className="south">
       <Breadcrumb tag="h5">
         <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
           Home
