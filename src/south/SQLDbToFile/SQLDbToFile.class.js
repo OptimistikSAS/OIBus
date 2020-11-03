@@ -178,7 +178,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     const config = {
       user: this.username,
-      password: this.decryptPassword(this.password),
+      password: this.encryptionService.decryptText(this.password),
       server: this.host,
       port: this.port,
       database: this.database,
@@ -224,7 +224,7 @@ class SQLDbToFile extends ProtocolHandler {
       host: this.host,
       port: this.port,
       user: this.username,
-      password: this.decryptPassword(this.password),
+      password: this.encryptionService.decryptText(this.password),
       database: this.database,
       connectTimeout: this.connectionTimeout,
       timezone: 'Z',
@@ -263,7 +263,7 @@ class SQLDbToFile extends ProtocolHandler {
       host: this.host,
       port: this.port,
       user: this.username,
-      password: this.decryptPassword(this.password),
+      password: this.encryptionService.decryptText(this.password),
       database: this.database,
       query_timeout: this.requestTimeout,
     }
@@ -297,7 +297,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     const config = {
       user: this.username,
-      password: this.decryptPassword(this.password),
+      password: this.encryptionService.decryptText(this.password),
       connectString: `${this.host}:${this.port}/${this.database}`,
     }
 
