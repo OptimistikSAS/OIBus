@@ -65,12 +65,16 @@ class WATSYConnect extends ApiHandler {
   initMQTTTopic() {
     // Declare local var which will be used to construct the topic
     let mqttTopic
-    const regex = /^https?:\/\// // clean $host in mqtt topic construction
+    let regex = /^https?:\/\// // clean $host in mqtt topic construction
+    let regexHost = this.host.replace(regex, '')
+    regex = /.com$|.fr$/
+    regexHost = regexHost.replace(regex, '')
 
     // Construct the topic
-    mqttTopic = `data/:${this.host.replace(regex, '')}/${this.OIBUSName}`
+    mqttTopic = `data/${regexHost}/${this.OIBUSName}`
     // Replace all . by _ in the topic
     mqttTopic = mqttTopic.split('.').join('_')
+    mqttTopic = mqttTopic.split('-').join('_')
     this.mqttTopic = mqttTopic
   }
 
