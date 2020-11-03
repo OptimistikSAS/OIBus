@@ -3,7 +3,7 @@ const fs = require('fs')
 
 const minimist = require('minimist')
 
-const encryptionService = require('./encryption.service')
+const EncryptionService = require('./EncryptionService.class')
 const Logger = require('../engine/Logger.class')
 
 /**
@@ -17,6 +17,7 @@ class ConfigService {
   constructor(engine, configFile) {
     this.engine = engine
     this.logger = new Logger(this.constructor.name)
+    this.encryptionService = EncryptionService.getInstance()
 
     this.configFile = configFile
 
@@ -150,12 +151,12 @@ class ConfigService {
    * @returns {void}
    */
   updateConfig(config) {
-    encryptionService.encryptSecrets(config.engine, this.keyFolder)
+    this.encryptionService.encryptSecrets(config.engine)
     config.north.applications.forEach((application) => {
-      encryptionService.encryptSecrets(application, this.keyFolder)
+      this.encryptionService.encryptSecrets(application)
     })
     config.south.dataSources.forEach((dataSource) => {
-      encryptionService.encryptSecrets(dataSource, this.keyFolder)
+      this.encryptionService.encryptSecrets(dataSource)
     })
     this.modifiedConfig = config
   }
