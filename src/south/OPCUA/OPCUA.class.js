@@ -1,6 +1,5 @@
 const Opcua = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const databaseService = require('../../services/database.service')
 
 /**
  *
@@ -18,15 +17,25 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    const { url, retryInterval, maxReturnValues, maxReadInterval } = dataSource.OPCUA
+    const { url, retryInterval, maxReadInterval } = dataSource.OPCUA
     this.url = url
-    this.retryInterval = retryInterval
-    this.maxReturnValues = maxReturnValues
+    this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval
-
     this.lastCompletedAt = {}
     this.ongoingReads = {}
+    this.reconnectTimeout = null
+  }
+
+  /**
+   * Connect.
+   * @return {Promise<void>} The connection promise
+   */
+  async connect() {
+    await super.connect()
+
     if (this.dataSource.OPCUA.scanGroups) {
+      // group all points in their respective scanGroup
+      // each scangroup is also initialized with a default "last completed date" equal to current Time
       this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
         const points = this.dataSource.points
           .filter((point) => point.scanMode === scanGroup.scanMode)
@@ -44,21 +53,9 @@ class OPCUA extends ProtocolHandler {
       this.scanGroups = []
     }
 
-    this.reconnectTimeout = null
-  }
-
-  /**
-   * Connect.
-   * @return {Promise<void>} The connection promise
-   */
-  async connect() {
-    super.connect()
-
     // Initialize lastCompletedAt for every scanGroup
-    const { dataSourceId, startTime } = this.dataSource
-    const { engineConfig } = this.engine.configService.getConfig()
-    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+    // "startTime" is currently a "hidden" parameter of oibus.json
+    const { startTime } = this.dataSource
 
     const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
     // Disable ESLint check because we need for..of loop to support async calls
@@ -66,13 +63,55 @@ class OPCUA extends ProtocolHandler {
     for (const scanGroup of Object.keys(this.lastCompletedAt)) {
       // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
       // eslint-disable-next-line no-await-in-loop
-      let lastCompletedAt = await databaseService.getConfig(this.configDatabase, `lastCompletedAt-${scanGroup}`)
+      let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${scanGroup}`)
       lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
       this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
       this.lastCompletedAt[scanGroup] = lastCompletedAt
     }
-
     await this.connectToOpcuaServer()
+  }
+
+  /**
+   * manageDataValues
+   * @param {array} dataValues - the list of values
+   * @param {Array} nodesToRead - the list of nodes
+   * @param {Date} opcStartTime - the start time of the period
+   * @param {String} scanMode - the current scanmode
+   * @return {Promise<void>} The connection promise
+   */
+  manageDataValues = (dataValues, nodesToRead, opcStartTime, scanMode) => {
+    const values = []
+    let maxTimestamp = opcStartTime.getTime()
+    dataValues.forEach((dataValue, i) => {
+      if (dataValue.historyData) {
+        // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+        // Reading from 1583914010001 returns values with timestamp 1583914010000
+        // Filter out values with timestamp smaller than startTime
+        const newerValues = dataValue.historyData.dataValues.filter((value) => {
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          return selectedTimestamp.getTime() >= opcStartTime.getTime()
+        })
+        values.push(...newerValues.map((value) => {
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          const selectedTime = selectedTimestamp.getTime()
+          maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
+          return {
+            pointId: nodesToRead[i],
+            timestamp: selectedTimestamp.toISOString(),
+            data: {
+              value: value.value.value,
+              quality: JSON.stringify(value.statusCode),
+            },
+          }
+        }))
+      } else {
+        // eslint-disable-next-line no-underscore-dangle
+        this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}`)
+      }
+    })
+    // send the packet immediately to the engine
+    this.addValues(values)
+    this.lastCompletedAt[scanMode] = maxTimestamp + 1
   }
 
   /**
@@ -105,10 +144,9 @@ class OPCUA extends ProtocolHandler {
       let opcStartTime = new Date(this.lastCompletedAt[scanMode])
       const opcEndTime = new Date()
       let intervalOpcEndTime
-      let maxTimestamp = opcStartTime.getTime()
-      let values = []
-
       do {
+        // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+        // requests (for example only one hour if maxReadInterval is 3600)
         if ((opcEndTime.getTime() - opcStartTime.getTime()) > 1000 * this.maxReadInterval) {
           intervalOpcEndTime = new Date(opcStartTime.getTime() + 1000 * this.maxReadInterval)
         } else {
@@ -116,47 +154,78 @@ class OPCUA extends ProtocolHandler {
         }
 
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
+        // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
         const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
+        /*
+        Below are two example of responses
+        1- With OPCUA WINCC
+          [
+            {
+              "statusCode": { "value": 0 },
+              "historyData": {
+                "dataValues": [
+                  {
+                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                    "statusCode": {
+                      "value": 1024
+                    },
+                    "sourceTimestamp": "2020-10-31T14:11:20.238Z",
+                    "sourcePicoseconds": 0,
+                    "serverPicoseconds": 0
+                  },
+                  {"value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                    "statusCode": {
+                      "value": 1024
+                    },
+                    "sourceTimestamp": "2020-10-31T14:11:21.238Z",
+                    "sourcePicoseconds": 0,
+                    "serverPicoseconds": 0
+                  }
+                ]
+              }
+            }
+          ]
+          2/ With OPCUA MATRIKON
+          [
+            {
+              "statusCode": {"value": 0},
+              "historyData": {
+                "dataValues": [
+                  {
+                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": -0.927561841177095 },
+                    "statusCode": { "value": 0 },
+                    "sourceTimestamp": "2020-10-31T14:23:01.000Z",
+                    "sourcePicoseconds": 0,
+                    "serverTimestamp": "2020-10-31T14:23:01.000Z",
+                    "serverPicoseconds": 0
+                  },
+                  {
+                    "value": {"dataType": "Double", "arrayType": "Scalar","value": 0.10154855112346262},
+                    "statusCode": {"value": 0},
+                    "sourceTimestamp": "2020-10-31T14:23:02.000Z",
+                    "sourcePicoseconds": 0,
+                    "serverTimestamp": "2020-10-31T14:23:02.000Z",
+                    "serverPicoseconds": 0
+                  }
+                ]
+              }
+            }
+          ]
+        */
         if (dataValues.length !== nodesToRead.length) {
           this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
         }
-        // The response doesn't seem to contain any information regarding the nodeId,
-        // so we iterate with a for loop and use the index to get the proper nodeId
-        for (let i = 0; i < dataValues.length; i += 1) {
-          // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-          // Reading from 1583914010001 returns values with timestamp 1583914010000
-          // Filter out values with timestamp smaller than startTime
-          // eslint-disable-next-line no-loop-func
-          const newerValues = dataValues[i].historyData.dataValues.filter((dataValue) => {
-            const serverTimestamp = dataValue.serverTimestamp.getTime()
-            return serverTimestamp >= opcStartTime.getTime()
-          })
-          // eslint-disable-next-line no-loop-func
-          values = values.concat(newerValues.map((dataValue) => {
-            const serverTimestamp = dataValue.serverTimestamp.getTime()
-            maxTimestamp = serverTimestamp > maxTimestamp ? serverTimestamp : maxTimestamp
-            return {
-              pointId: nodesToRead[i],
-              timestamp: dataValue.serverTimestamp.toISOString(),
-              data: {
-                value: dataValue.value.value,
-                quality: JSON.stringify(dataValue.statusCode),
-              },
-            }
-          }))
-        }
+        // eslint-disable-next-line no-await-in-loop
+        await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
-      this.addValues(values)
-
-      this.lastCompletedAt[scanMode] = maxTimestamp + 1
-      await databaseService.upsertConfig(this.configDatabase, `lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+      await this.upsertConfigDb(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
       this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
-      this.logger.error(`on Scan ${scanMode}: ${error}`)
+      this.logger.error(`on Scan ${scanMode}:${error.stack}`)
     }
 
     this.ongoingReads[scanMode] = false

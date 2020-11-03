@@ -31,17 +31,16 @@ beforeEach(() => {
   jest.restoreAllMocks()
 })
 
-const folderScanner = new FolderScanner(config.south.dataSources[5], engine)
+const folderScanner = new FolderScanner(config.south.dataSources[6], engine)
 
 describe('folder-scanner', () => {
-  it('should connect properly when preserveFiles is true', () => {
-    folderScanner.connect()
+  it('should connect properly when preserveFiles is true', async () => {
+    await folderScanner.connect()
     expect(databaseService.createFolderScannerDatabase).toHaveBeenCalledWith('./cache/FolderScanner.db')
   })
   it('should connect properly when preserveFiles is false', () => {
     folderScanner.preserveFiles = false
     folderScanner.connect()
-    folderScanner.preserveFiles = true
     expect(databaseService.createFolderScannerDatabase).toHaveBeenCalledTimes(0)
   })
   it('onScan: should exit if folder does not exist', () => {
@@ -85,6 +84,7 @@ describe('folder-scanner', () => {
     expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(0)
   })
   it('onScan: should not addFile() if file match conditions with preserveFiles true and already sent', async () => {
+    folderScanner.preserveFiles = true
     jest.spyOn(fs, 'existsSync').mockImplementation(() => true)
     jest.spyOn(fs, 'readdirSync').mockImplementation(() => ['test.csv'])
     jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
@@ -103,7 +103,6 @@ describe('folder-scanner', () => {
     jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     folderScanner.preserveFiles = false
     await folderScanner.onScan('xxx')
-    folderScanner.preserveFiles = true
     expect(databaseService.getFolderScannerModifyTime).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(
       folderScanner.dataSource.dataSourceId,
@@ -113,6 +112,7 @@ describe('folder-scanner', () => {
     expect(databaseService.upsertFolderScanner).toHaveBeenCalledTimes(0)
   })
   it('onScan: should addFile() if file match conditions with preserveFiles true and compression false', async () => {
+    folderScanner.preserveFiles = true
     jest.spyOn(fs, 'existsSync').mockImplementation(() => true)
     jest.spyOn(fs, 'readdirSync').mockImplementation(() => ['test.csv'])
     jest.spyOn(fs, 'statSync').mockImplementation(() => ({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
@@ -152,9 +152,7 @@ describe('folder-scanner', () => {
     const referenceBuffer = fs.readFileSync(referenceCsv)
     const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer).toEqual(referenceBuffer)
-
-    folderScanner.preserveFiles = true
-    folderScanner.compression = false
+    jest.restoreAllMocks()
     fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
   })
   it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
@@ -163,11 +161,11 @@ describe('folder-scanner', () => {
     const referenceCsv = path.resolve('./tests/test.csv')
     const targetCsv = path.join(folderScanner.inputFolder, 'test.csv')
     const targetGzip = path.join(folderScanner.inputFolder, 'test.csv.gz')
-
+    folderScanner.preserveFiles = true
+    folderScanner.compression = true
     databaseService.getFolderScannerModifyTime.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
     fs.mkdirSync(folderScanner.inputFolder, { recursive: true })
     fs.copyFileSync(referenceCsv, targetCsv)
-    folderScanner.compression = true
 
     await folderScanner.onScan('xxx')
 
@@ -181,7 +179,7 @@ describe('folder-scanner', () => {
     const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer).toEqual(referenceBuffer)
 
-    folderScanner.compression = false
+    jest.restoreAllMocks()
     fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
   })
 })

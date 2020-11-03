@@ -32,15 +32,15 @@ const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton 
   return (
     <FormGroup check>
       <Label check>
+        {label}
         <Input
-          className="oi-form-input"
+          className="oi-form-input checkbox"
           type="checkbox"
           id={name}
           name={name}
           onChange={handleChange}
           checked={value}
         />
-        {label}
       </Label>
     </FormGroup>
   )

@@ -123,8 +123,8 @@ class Modbus extends ProtocolHandler {
    * Initiates a connection for every data source to the right host and port.
    * @return {void}
    */
-  connect() {
-    super.connect()
+  async connect() {
+    await super.connect()
     const { host, port } = this
 
     this.socket.connect(

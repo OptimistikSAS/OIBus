@@ -9,7 +9,6 @@ const csv = require('fast-csv')
 const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
-const databaseService = require('../../services/database.service')
 
 /**
  * Class SQLDbToFile
@@ -80,13 +79,8 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   async connect() {
-    super.connect()
-    const { dataSourceId } = this.dataSource
-    const { engineConfig } = this.engine.configService.getConfig()
-    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
-
-    this.lastCompletedAt = await databaseService.getConfig(this.configDatabase, 'lastCompletedAt')
+    await super.connect()
+    this.lastCompletedAt = await this.getConfigDb('lastCompletedAt')
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = new Date().toISOString()
     }
@@ -139,7 +133,7 @@ class SQLDbToFile extends ProtocolHandler {
       } else {
         this.logger.debug('lastCompletedAt not used')
       }
-      await databaseService.upsertConfig(this.configDatabase, 'lastCompletedAt', this.lastCompletedAt)
+      await this.upsertConfigDb('lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))

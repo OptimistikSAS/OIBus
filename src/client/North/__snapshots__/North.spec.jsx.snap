@@ -3,7 +3,7 @@
 exports[`North check North 1`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -226,7 +226,7 @@ exports[`North check North 1`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -459,9 +459,9 @@ exports[`North check North 1`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div
@@ -488,7 +488,7 @@ exports[`North check North 1`] = `
 exports[`North check add pressed with "new_application" id 1`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -711,7 +711,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -944,9 +944,9 @@ exports[`North check add pressed with "new_application" id 1`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div
@@ -973,7 +973,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
 exports[`North check delete first application 1`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -1196,7 +1196,7 @@ exports[`North check delete first application 1`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -1429,9 +1429,9 @@ exports[`North check delete first application 1`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div
@@ -1458,7 +1458,7 @@ exports[`North check delete first application 1`] = `
 exports[`North check edit first application 1`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -1681,7 +1681,7 @@ exports[`North check edit first application 1`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -1914,9 +1914,9 @@ exports[`North check edit first application 1`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div
@@ -1963,7 +1963,7 @@ exports[`North check missing apiList 1`] = `
 exports[`North check press edit first application id 1`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -2200,7 +2200,7 @@ exports[`North check press edit first application id 1`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -2433,9 +2433,9 @@ exports[`North check press edit first application id 1`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div
@@ -2462,7 +2462,7 @@ exports[`North check press edit first application id 1`] = `
 exports[`North check press edit first application id 2`] = `
 <div>
   <div
-    class="col-md-6"
+    class="north col-md-6"
   >
     <h5
       aria-label="breadcrumb"
@@ -2685,7 +2685,7 @@ exports[`North check press edit first application id 2`] = `
             </div>
           </td>
           <td>
-            OIAnalyticsFile
+            OIAnalytics
           </td>
           <td>
             <svg
@@ -2918,9 +2918,9 @@ exports[`North check press edit first application id 2`] = `
                 OIConnect
               </option>
               <option
-                value="OIAnalyticsFile"
+                value="OIAnalytics"
               >
-                OIAnalyticsFile
+                OIAnalytics
               </option>
             </select>
             <div

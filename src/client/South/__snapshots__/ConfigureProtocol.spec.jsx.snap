@@ -118,13 +118,13 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <input
               class="custom-control-input"
               color="secondary"
-              id="south.dataSources.7.enabled"
-              name="south.dataSources.7.enabled"
+              id="south.dataSources.8.enabled"
+              name="south.dataSources.8.enabled"
               type="checkbox"
             />
             <label
               class="custom-control-label"
-              for="south.dataSources.7.enabled"
+              for="south.dataSources.8.enabled"
             >
               Enabled
             </label>
@@ -210,15 +210,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.agentFilename"
+            for="south.dataSources.8.OPCHDA.agentFilename"
           >
             Agent filename
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.agentFilename"
-            name="south.dataSources.7.OPCHDA.agentFilename"
+            id="south.dataSources.8.OPCHDA.agentFilename"
+            name="south.dataSources.8.OPCHDA.agentFilename"
             type="text"
             value=".\\\\deps\\\\win\\\\HdaAgent\\\\HdaAgent.exe"
           />
@@ -242,15 +242,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.tcpPort"
+            for="south.dataSources.8.OPCHDA.tcpPort"
           >
             TCP Port
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.tcpPort"
-            name="south.dataSources.7.OPCHDA.tcpPort"
+            id="south.dataSources.8.OPCHDA.tcpPort"
+            name="south.dataSources.8.OPCHDA.tcpPort"
             type="integer"
             value="3333"
           />
@@ -274,15 +274,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.logLevel"
+            for="south.dataSources.8.OPCHDA.logLevel"
           >
             Logging Level
           </label>
           <select
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.logLevel"
-            name="south.dataSources.7.OPCHDA.logLevel"
+            id="south.dataSources.8.OPCHDA.logLevel"
+            name="south.dataSources.8.OPCHDA.logLevel"
           >
             <option
               value="silly"
@@ -401,15 +401,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.host"
+            for="south.dataSources.8.OPCHDA.host"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.host"
-            name="south.dataSources.7.OPCHDA.host"
+            id="south.dataSources.8.OPCHDA.host"
+            name="south.dataSources.8.OPCHDA.host"
             type="text"
             value="opcserver"
           />
@@ -433,15 +433,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.serverName"
+            for="south.dataSources.8.OPCHDA.serverName"
           >
             Server name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.serverName"
-            name="south.dataSources.7.OPCHDA.serverName"
+            id="south.dataSources.8.OPCHDA.serverName"
+            name="south.dataSources.8.OPCHDA.serverName"
             type="text"
             value="Matrikon.OPC.Simulation"
           />
@@ -469,15 +469,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.retryInterval"
+            for="south.dataSources.8.OPCHDA.retryInterval"
           >
             Retry interval
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.retryInterval"
-            name="south.dataSources.7.OPCHDA.retryInterval"
+            id="south.dataSources.8.OPCHDA.retryInterval"
+            name="south.dataSources.8.OPCHDA.retryInterval"
             type="integer"
             value="10000"
           />
@@ -501,15 +501,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.maxReturnValues"
+            for="south.dataSources.8.OPCHDA.maxReturnValues"
           >
             Max return values
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.maxReturnValues"
-            name="south.dataSources.7.OPCHDA.maxReturnValues"
+            id="south.dataSources.8.OPCHDA.maxReturnValues"
+            name="south.dataSources.8.OPCHDA.maxReturnValues"
             type="integer"
             value="10000"
           />
@@ -533,15 +533,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.maxReadInterval"
+            for="south.dataSources.8.OPCHDA.maxReadInterval"
           >
             Max read interval
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.maxReadInterval"
-            name="south.dataSources.7.OPCHDA.maxReadInterval"
+            id="south.dataSources.8.OPCHDA.maxReadInterval"
+            name="south.dataSources.8.OPCHDA.maxReadInterval"
             type="integer"
             value="3600"
           />
@@ -807,13 +807,13 @@ exports[`ConfigureProtocol check update 1`] = `
             <input
               class="custom-control-input"
               color="secondary"
-              id="south.dataSources.7.enabled"
-              name="south.dataSources.7.enabled"
+              id="south.dataSources.8.enabled"
+              name="south.dataSources.8.enabled"
               type="checkbox"
             />
             <label
               class="custom-control-label"
-              for="south.dataSources.7.enabled"
+              for="south.dataSources.8.enabled"
             >
               Enabled
             </label>
@@ -899,15 +899,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.agentFilename"
+            for="south.dataSources.8.OPCHDA.agentFilename"
           >
             Agent filename
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.agentFilename"
-            name="south.dataSources.7.OPCHDA.agentFilename"
+            id="south.dataSources.8.OPCHDA.agentFilename"
+            name="south.dataSources.8.OPCHDA.agentFilename"
             type="text"
             value=".\\\\deps\\\\win\\\\HdaAgent\\\\HdaAgent.exe"
           />
@@ -931,15 +931,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.tcpPort"
+            for="south.dataSources.8.OPCHDA.tcpPort"
           >
             TCP Port
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.tcpPort"
-            name="south.dataSources.7.OPCHDA.tcpPort"
+            id="south.dataSources.8.OPCHDA.tcpPort"
+            name="south.dataSources.8.OPCHDA.tcpPort"
             type="integer"
             value="3333"
           />
@@ -963,15 +963,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.logLevel"
+            for="south.dataSources.8.OPCHDA.logLevel"
           >
             Logging Level
           </label>
           <select
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.logLevel"
-            name="south.dataSources.7.OPCHDA.logLevel"
+            id="south.dataSources.8.OPCHDA.logLevel"
+            name="south.dataSources.8.OPCHDA.logLevel"
           >
             <option
               value="silly"
@@ -1090,15 +1090,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.host"
+            for="south.dataSources.8.OPCHDA.host"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.host"
-            name="south.dataSources.7.OPCHDA.host"
+            id="south.dataSources.8.OPCHDA.host"
+            name="south.dataSources.8.OPCHDA.host"
             type="text"
             value="opcserver"
           />
@@ -1122,15 +1122,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.serverName"
+            for="south.dataSources.8.OPCHDA.serverName"
           >
             Server name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.serverName"
-            name="south.dataSources.7.OPCHDA.serverName"
+            id="south.dataSources.8.OPCHDA.serverName"
+            name="south.dataSources.8.OPCHDA.serverName"
             type="text"
             value="Matrikon.OPC.Simulation"
           />
@@ -1158,15 +1158,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.retryInterval"
+            for="south.dataSources.8.OPCHDA.retryInterval"
           >
             Retry interval
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.retryInterval"
-            name="south.dataSources.7.OPCHDA.retryInterval"
+            id="south.dataSources.8.OPCHDA.retryInterval"
+            name="south.dataSources.8.OPCHDA.retryInterval"
             type="integer"
             value="10000"
           />
@@ -1190,15 +1190,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.maxReturnValues"
+            for="south.dataSources.8.OPCHDA.maxReturnValues"
           >
             Max return values
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.maxReturnValues"
-            name="south.dataSources.7.OPCHDA.maxReturnValues"
+            id="south.dataSources.8.OPCHDA.maxReturnValues"
+            name="south.dataSources.8.OPCHDA.maxReturnValues"
             type="integer"
             value="10000"
           />
@@ -1222,15 +1222,15 @@ exports[`ConfigureProtocol check update 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.7.OPCHDA.maxReadInterval"
+            for="south.dataSources.8.OPCHDA.maxReadInterval"
           >
             Max read interval
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.7.OPCHDA.maxReadInterval"
-            name="south.dataSources.7.OPCHDA.maxReadInterval"
+            id="south.dataSources.8.OPCHDA.maxReadInterval"
+            name="south.dataSources.8.OPCHDA.maxReadInterval"
             type="integer"
             value="3600"
           />

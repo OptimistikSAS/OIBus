@@ -18,8 +18,19 @@
 * To release (should be run on the release branch after correct merge) run `npm version {major | minor |patch}` this will trigger a full build zip the content of each distribution folder and upload in S3 (you should have s3 credentials properly configured on the build machine) 
 
 ## History
+# 0.7.1
+## Improvements
+- UI improvements to insure unicity of scanModes and scanGroups
+- North OIAnalyticsFile (renamed into OIAnalytics) nows supports both files and values. Configuration has also been simplified.
+- Ability to duplicate a South
+- Improvements to MQTT South that can now handle messages with array of values and more flexibility to identify the timestamp, value and quality in the payload.
+- Simplify developement of South by adding method for the config dB.
+- OPCUA now read SourceTimeStamp by default and fallback on ServerTimeStamp (can still ignore them and use OIBus for the timestamp per config)
 
-# 0.6.6
+## Fixes
+- new HDAAgent allowing bulk export of tag names containing / or \ in the name
+- minor visual improvements and package updates.
+# 0.7.0
 ## Improvements
 - support for nodejs 14.x
 - easier entry of scanModes

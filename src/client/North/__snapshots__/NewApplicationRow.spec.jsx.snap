@@ -62,9 +62,9 @@ exports[`NewApplicationRow check NewApplicationRow 1`] = `
               OIConnect
             </option>
             <option
-              value="OIAnalyticsFile"
+              value="OIAnalytics"
             >
-              OIAnalyticsFile
+              OIAnalytics
             </option>
           </select>
           <div
@@ -149,9 +149,9 @@ exports[`NewApplicationRow check add press 1`] = `
               OIConnect
             </option>
             <option
-              value="OIAnalyticsFile"
+              value="OIAnalytics"
             >
-              OIAnalyticsFile
+              OIAnalytics
             </option>
           </select>
           <div
@@ -236,9 +236,9 @@ exports[`NewApplicationRow check add pressed with empty application name 1`] = `
               OIConnect
             </option>
             <option
-              value="OIAnalyticsFile"
+              value="OIAnalytics"
             >
-              OIAnalyticsFile
+              OIAnalytics
             </option>
           </select>
           <div
@@ -323,9 +323,9 @@ exports[`NewApplicationRow check change api 1`] = `
               OIConnect
             </option>
             <option
-              value="OIAnalyticsFile"
+              value="OIAnalytics"
             >
-              OIAnalyticsFile
+              OIAnalytics
             </option>
           </select>
           <div
@@ -410,9 +410,9 @@ exports[`NewApplicationRow check change applicationId 1`] = `
               OIConnect
             </option>
             <option
-              value="OIAnalyticsFile"
+              value="OIAnalytics"
             >
-              OIAnalyticsFile
+              OIAnalytics
             </option>
           </select>
           <div

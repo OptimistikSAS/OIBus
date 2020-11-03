@@ -1,5 +1,6 @@
 import React from 'react'
 import { notEmpty, minValue } from '../../services/validation.service'
+import validation from '../../client/South/Form/South.validation'
 
 const schema = { name: 'OPCUA' }
 schema.form = {
@@ -14,6 +15,12 @@ schema.form = {
           startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
           accessible by editing manually the oibus configuration time) indicates a different start time. This feature
           has been added to be allow recovering of values from the past when needed.
+          example: starTime: &quot;2020-01-15T23:59:00.000Z&quot;
+          Please use the ISO format even if other format are supported.
+        </p>
+        <p>
+          <b>retry interval:</b>
+          retry interval before trying to connect again
         </p>
       </>
     ),
@@ -31,14 +38,6 @@ schema.form = {
     valid: minValue(1000),
     defaultValue: 10000,
     help: <div>Retry Interval (ms)</div>,
-  },
-  maxReturnValues: {
-    type: 'OIbInteger',
-    newRow: false,
-    md: 2,
-    valid: minValue(0),
-    defaultValue: 0,
-    help: <div>Max return values</div>,
   },
   maxReadInterval: {
     type: 'OIbInteger',
@@ -63,7 +62,11 @@ schema.form = {
   scanGroups: {
     type: 'OIbTable',
     rows: {
-      scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+      scanMode: {
+        type: 'OIbScanMode',
+        label: 'Scan Mode',
+        valid: validation.scanMode.isSelectedOnce,
+      },
       Aggregate: {
         type: 'OIbSelect',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
