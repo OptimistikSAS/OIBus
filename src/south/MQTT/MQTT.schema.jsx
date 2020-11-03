@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -64,6 +64,55 @@ schema.form = {
     defaultValue: '',
     help: <div>password</div>,
   },
+  MqttPayload: {
+    type: 'OIbTitle',
+    children: (
+      <div>
+        <ul>
+          <li>
+            <b>Data array path:</b>
+            Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+          </li>
+          <li>
+            <b>Value path:</b>
+            Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in
+            the JSON object if not).
+          </li>
+          <li>
+            <b>Node id path:</b>
+            Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the
+            array element if data array path is specified, or directly in the JSON object if not).
+          </li>
+          <li>
+            <b>Quality path:</b>
+            Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly
+            in the JSON object if not).
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  dataArrayPath: {
+    type: 'OIbText',
+    valid: optional(),
+  },
+  valuePath: {
+    type: 'OIbText',
+    defaultValue: 'value',
+    valid: notEmpty(),
+  },
+  nodeIdPath: {
+    type: 'OIbText',
+    defaultValue: 'name',
+    newRow: false,
+    valid: optional(),
+  },
+  qualityPath: {
+    type: 'OIbText',
+    defaultValue: 'quality',
+    newRow: false,
+    valid: notEmpty(),
+  },
   timeStampSettings: {
     type: 'OIbTitle',
     children: (
@@ -76,8 +125,18 @@ schema.form = {
             If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using the key specified below.
           </li>
           <li>
-            <b>TimeStamp Key:</b>
-            The string indicates which key in the payload contains the value timestamp.
+            <b>TimeStamp Path:</b>
+            The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that
+            contains the timestamp value in the elements of this array
+          </li>
+          <li>
+            <b>TimeStamp Format:</b>
+            The string indicates which format to use to parse the timestamp. For example, the timestamp &apos;2020-09-16 07:00:00.000&apos; is in the
+            format YYYY-MM-DD HH:mm:ss.SSS
+          </li>
+          <li>
+            <b>TimeStamp timezone:</b>
+            This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
           </li>
         </ul>
       </div>
@@ -88,7 +147,7 @@ schema.form = {
     options: ['payload', 'oibus'],
     defaultValue: 'oibus',
   },
-  timeStampKey: {
+  timestampPath: {
     type: 'OIbText',
     newRow: false,
     valid: notEmpty(),
@@ -113,7 +172,10 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+  scanMode: {
+    type: 'OIbScanMode',
+    label: 'Scan Mode',
+  },
   topic: {
     type: 'OIbText',
     defaultValue: '',

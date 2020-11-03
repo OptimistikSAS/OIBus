@@ -128,7 +128,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="row"
         >
           <h5>
-            OIAnalyticsFile settings
+            OIAnalytics settings
             <button
               aria-label="Close"
               class="close"
@@ -166,7 +166,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 class="col"
               >
                 <p>
-                  OIAnalyticsFile sends the received file to OIAnalytics.
+                  OIAnalytics sends the received values/file to OIAnalytics.
                 </p>
                 <p>
                   To fill the user and password :
@@ -220,7 +220,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="row"
         >
           <h5>
-            End Point
+            Host
           </h5>
         </div>
         <div
@@ -239,46 +239,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         >
           <label
             class=""
-            for="north.applications.0.OIAnalyticsFile.host"
+            for="north.applications.0.OIAnalytics.host"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="north.applications.0.OIAnalyticsFile.host"
-            name="north.applications.0.OIAnalyticsFile.host"
+            id="north.applications.0.OIAnalytics.host"
+            name="north.applications.0.OIAnalytics.host"
             type="text"
             value="https://demo.oianalytics.fr"
-          />
-          <div
-            class="invalid-feedback"
-          />
-        </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="north.applications.0.OIAnalyticsFile.endpoint"
-          >
-            End Point
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="north.applications.0.OIAnalyticsFile.endpoint"
-            name="north.applications.0.OIAnalyticsFile.endpoint"
-            type="text"
-            value="/api/optimistik/data/values/upload"
           />
           <div
             class="invalid-feedback"
@@ -1792,6 +1763,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                       value="SimulationServerBis"
                     >
                       SimulationServerBis
+                    </option>
+                    <option
+                      value="SimulationServerBis copy"
+                    >
+                      SimulationServerBis copy
                     </option>
                     <option
                       value="PLC-35"

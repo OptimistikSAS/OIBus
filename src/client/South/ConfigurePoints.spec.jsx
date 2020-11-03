@@ -101,7 +101,7 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.querySelector('th path'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources.7.points',
+      name: 'south.dataSources.8.points',
       value: {},
     })
     expect(container).toMatchSnapshot()
@@ -115,7 +115,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_point_id' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.2.pointId',
+      name: 'south.dataSources.8.points.2.pointId',
       value: 'new_point_id',
       validity: null,
     })
@@ -130,7 +130,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'everySecond' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.2.scanMode',
+      name: 'south.dataSources.8.points.2.scanMode',
       value: 'everySecond',
       validity: null,
     })
@@ -145,7 +145,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_value' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.2.pointId',
+      name: 'south.dataSources.8.points.2.pointId',
       value: 'new_value',
       validity: null,
     })
@@ -160,7 +160,7 @@ describe('ConfigurePoints', () => {
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'every1Min' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.points.2.scanMode',
+      name: 'south.dataSources.8.points.2.scanMode',
       value: 'every1Min',
       validity: null,
     })
@@ -175,7 +175,7 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.querySelector('td path')) // click on delete icon
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.7.points.2',
+      name: 'south.dataSources.8.points.2',
     })
     expect(container).toMatchSnapshot()
   })
@@ -254,7 +254,7 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'importPoints',
-      name: 'south.dataSources.7.points',
+      name: 'south.dataSources.8.points',
       value: newPoints,
     })
   })
@@ -330,7 +330,7 @@ describe('ConfigurePoints', () => {
   })
   test('check no points', () => {
     const configNoPoints = utils.jsonCopy(newConfig)
-    configNoPoints.south.dataSources[7].points = undefined
+    configNoPoints.south.dataSources[8].points = undefined
     React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
     act(() => {
       ReactDOM.render(
@@ -351,7 +351,7 @@ describe('ConfigurePoints', () => {
     Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteAllRows',
-      name: 'south.dataSources.7.points',
+      name: 'south.dataSources.8.points',
     })
     expect(container).toMatchSnapshot()
   })

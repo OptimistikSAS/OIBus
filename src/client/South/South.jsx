@@ -79,6 +79,26 @@ const South = () => {
     dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${index}` })
   }
 
+  /**
+   * Copy the chosen dataSource
+   * @param {integer} index The id to copy
+   * @returns {void}
+   */
+  const handleDuplicate = (index) => {
+    const dataSource = dataSources[index]
+    const newName = `${dataSource.dataSourceId} copy`
+    const countCopies = dataSources.filter((e) => e.dataSourceId.startsWith(newName)).length
+    dispatchNewConfig({
+      type: 'addRow',
+      name: 'south.dataSources',
+      value: {
+        ...dataSource,
+        dataSourceId: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
+        enabled: false,
+      },
+    })
+  }
+
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
   const tableRows = dataSources?.map((dataSource, index) => [
     {
@@ -110,7 +130,7 @@ const South = () => {
   ])
 
   return tableRows && Array.isArray(protocolList) ? (
-    <Col md="8">
+    <Col md="8" className="south">
       <Breadcrumb tag="h5">
         <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
           Home
@@ -119,7 +139,13 @@ const South = () => {
           South
         </BreadcrumbItem>
       </Breadcrumb>
-      <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
+      <Table
+        headers={tableHeaders}
+        rows={tableRows}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        handleDuplicate={handleDuplicate}
+      />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>
   ) : (

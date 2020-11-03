@@ -174,7 +174,7 @@ const ConfigurePoints = () => {
   }))
 
   return (
-    <>
+    <div className="points">
       <Breadcrumb tag="h5">
         <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
           Home
@@ -234,7 +234,7 @@ const ConfigurePoints = () => {
           )}
         </Modal>
       </div>
-    </>
+    </div>
   )
 }
 

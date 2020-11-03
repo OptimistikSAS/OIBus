@@ -221,6 +221,11 @@ label {
 
 .form-check-input {
   margin-top: 0.172rem;
+  display: block;
+}
+
+.form-check {
+  padding-left: 0;
 }
 
 /* log pannels */
@@ -285,6 +290,13 @@ label {
   margin-bottom: 7px;
   width: 100%;
   overflow: hidden;
+}
+
+.checkbox {
+  position: relative;
+  margin-top: 10px;
+  width: 14px;
+  margin-left: 0;
 }
 
 .oi-form-append {
@@ -394,4 +406,12 @@ h3 {
 .tight {
   padding-right: 5px;
   padding-left: 5px;
+}
+
+.col .table td .oi-icon,
+.col-md-4 .table td .oi-icon, 
+.col-md-6:not(.north) .table td .oi-icon,
+.col-md-8:not(.south) .table td .oi-icon,
+.points .table td .oi-icon {
+  margin-top: 9px;
 }

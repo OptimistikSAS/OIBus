@@ -92,6 +92,10 @@ const testConfig = {
           host: '35.180.179.217',
           endPoint: 'Server/Simulation',
           timeOrigin: 'server',
+          scanGroups: [
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+          ],
         },
         points: [
           { ns: 5, pointId: '/fttest.base/Tank 5.tank/333333.temperature', scanMode: 'everySecond', s: 'Counter1' },
@@ -100,6 +104,21 @@ const testConfig = {
       },
       {
         dataSourceId: 'SimulationServerBis',
+        protocol: 'OPCUA',
+        enabled: false,
+        OPCUA: {
+          opcuaPort: 53530,
+          httpsPort: 53443,
+          host: '35.180.179.217',
+          endPoint: 'Server/Simulation',
+          timeOrigin: 'server',
+        },
+        points: [
+          { ns: 5, pointId: '/fttest.base/Tank 9.tank/333333.temperature', scanMode: 'everySecond', s: 'Sinusoid1' },
+        ],
+      },
+      {
+        dataSourceId: 'SimulationServerBis copy',
         protocol: 'OPCUA',
         enabled: false,
         OPCUA: {
@@ -268,12 +287,12 @@ const testConfig = {
       {
         applicationId: 'RawFileSender',
         enabled: false,
-        api: 'OIAnalyticsFile',
+        api: 'OIAnalytics',
         caching: {
           sendInterval: 15000,
           retryInterval: 10000,
         },
-        OIAnalyticsFile: {
+        OIAnalytics: {
           host: 'https://demo.oianalytics.fr',
           endpoint: '/api/optimistik/data/values/upload',
           authentication: {
@@ -326,7 +345,7 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
-  apiList: ['Console', 'OIConnect', 'OIAnalyticsFile'],
+  apiList: ['Console', 'OIConnect', 'OIAnalytics'],
   protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
 }
 

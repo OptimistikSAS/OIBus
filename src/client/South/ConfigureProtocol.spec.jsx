@@ -40,10 +40,10 @@ describe('ConfigureProtocol', () => {
     act(() => {
       ReactDOM.render(<ConfigureProtocol />, container)
     })
-    Simulate.change(document.getElementById('south.dataSources.7.OPCHDA.host'), { target: { value: 'newhost' } })
+    Simulate.change(document.getElementById('south.dataSources.8.OPCHDA.host'), { target: { value: 'newhost' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.7.OPCHDA.host',
+      name: 'south.dataSources.8.OPCHDA.host',
       value: 'newhost',
       validity: null,
     })
