@@ -48,7 +48,7 @@ beforeEach(() => {
 })
 
 describe('sql-db-to-file', () => {
-  const sqlConfig = config.south.dataSources[6]
+  const sqlConfig = config.south.dataSources[7]
   const sqlSouth = new SQLDbToFile(sqlConfig, engine)
   const nowDateString = '2020-02-02T02:02:02.222Z'
 

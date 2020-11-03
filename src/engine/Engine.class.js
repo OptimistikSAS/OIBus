@@ -23,7 +23,7 @@ const apiList = {}
 apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
-apiList.OIAnalyticsFile = require('../north/oianalyticsfile/OIAnalyticsFile.class')
+apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
@@ -135,7 +135,11 @@ class Engine {
    */
   async addValues(dataSourceId, values) {
     this.logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
-    await this.cache.cacheValues(dataSourceId, values)
+    const sanytizedValues = values.filter((value) => {
+      if (!value || !value.data.value || !value.timestamp || !value.pointId) return false
+      return true
+    })
+    await this.cache.cacheValues(dataSourceId, sanytizedValues)
   }
 
   /**

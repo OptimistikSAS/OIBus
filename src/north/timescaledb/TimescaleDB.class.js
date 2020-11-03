@@ -110,7 +110,7 @@ class TimescaleDB extends ApiHandler {
 
         query += statement
       } catch (error) {
-        this.logger.error(error)
+        this.logger.error(`Issue to build query: ${query} ${error.stack}`)
       }
     })
 

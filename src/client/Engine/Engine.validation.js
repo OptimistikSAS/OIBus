@@ -15,7 +15,16 @@ const validation = {
       sqliteMaxFileSize: minValue(10000),
     },
     scanModes: {
-      scanMode: notEmpty('ScanMode'),
+      scanMode: (val, excludedList) => {
+        let error = null
+        if (excludedList.includes(val)) {
+          error = 'Scan mode already exists'
+        }
+        if (!error) {
+          error = (((typeof val === 'string' || val instanceof String) && val !== '') ? null : 'Value must not be empty')
+        }
+        return error
+      },
       cronTime: notEmpty('Cron'),
     },
     caching: {

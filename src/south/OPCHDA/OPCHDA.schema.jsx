@@ -1,5 +1,6 @@
 import React from 'react'
 import { notEmpty, inRange, isPath, minValue, isHost } from '../../services/validation.service'
+import validation from '../../client/South/Form/South.validation'
 
 const schema = { name: 'OPCHDA' }
 schema.form = {
@@ -138,7 +139,11 @@ schema.form = {
   scanGroups: {
     type: 'OIbTable',
     rows: {
-      scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+      scanMode: {
+        type: 'OIbScanMode',
+        label: 'Scan Mode',
+        valid: validation.scanMode.isSelectedOnce,
+      },
       Aggregate: {
         type: 'OIbSelect',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],

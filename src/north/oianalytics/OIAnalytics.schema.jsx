@@ -3,16 +3,16 @@ import { notEmpty, startsWith, combinedValidations } from '../../services/valida
 import screenshot from './screenshot.png'
 import userpass from './userpass.png'
 
-const schema = { name: 'OIAnalyticsFile' }
+const schema = { name: 'OIAnalytics' }
 schema.form = {
-  OIAnalyticsFileSettings: {
+  OIAnalyticsSettings: {
     type: 'OIbTitle',
-    label: 'OIAnalyticsFile settings',
+    label: 'OIAnalytics settings',
     md: 12,
     children: (
       <>
         <p>
-          OIAnalyticsFile sends the received file to OIAnalytics.
+          OIAnalytics sends the received values/file to OIAnalytics.
         </p>
         <p>To fill the user and password :</p>
         <ul>
@@ -29,20 +29,15 @@ schema.form = {
       </>
     ),
   },
-  endPointSection: {
+  hostSection: {
     type: 'OIbTitle',
-    label: 'End Point',
-    help: <p>default endpoint for OIAnalytics is /api/optimistik/data/values/upload</p>,
+    label: 'Host',
+    help: <p>Host for OIAnalytics is https://_account_.oianalytics.fr</p>,
   },
   host: {
     type: 'OIbLink',
+    valid: combinedValidations([notEmpty('Host'), startsWith('http', 'Host')]),
     defaultValue: '',
-  },
-  endpoint: {
-    type: 'OIbText',
-    label: 'End Point',
-    valid: combinedValidations([notEmpty('End Point'), startsWith('/', 'End Point')]),
-    defaultValue: '/api/optimistik/data/values/upload',
   },
   authentication: { type: 'OIbAuthentication' },
   networkSection: {

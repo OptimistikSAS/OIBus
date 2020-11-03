@@ -48,7 +48,6 @@ describe('OPCUA south', () => {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       timeOrigin: 'server',
-      maxReturnValues: 10,
       maxReadInterval: 3600,
       scanGroups: [{
         Aggregate: 'Raw',
@@ -73,14 +72,14 @@ describe('OPCUA south', () => {
   it('should be properly initialized', () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
 
-    expect(opcuaSouth.url).toEqual(opcuaConfig.OPCUA.url)
-    expect(opcuaSouth.retryInterval).toEqual(opcuaConfig.OPCUA.retryInterval)
-    expect(opcuaSouth.maxReturnValues).toEqual(opcuaConfig.OPCUA.maxReturnValues)
-    expect(opcuaSouth.maxReadInterval).toEqual(opcuaConfig.OPCUA.maxReadInterval)
-    expect(opcuaSouth.scanGroups).toEqual(opcuaScanGroups)
-    expect(Object.keys(opcuaSouth.lastCompletedAt)).toEqual([opcuaConfig.OPCUA.scanGroups[0].scanMode])
-    expect(Object.keys(opcuaSouth.ongoingReads)).toEqual([opcuaConfig.OPCUA.scanGroups[0].scanMode])
-    expect(opcuaSouth.reconnectTimeout).toBeNull()
+    expect(opcuaSouth.url)
+      .toEqual(opcuaConfig.OPCUA.url)
+    expect(opcuaSouth.retryInterval)
+      .toEqual(opcuaConfig.OPCUA.retryInterval)
+    expect(opcuaSouth.maxReadInterval)
+      .toEqual(opcuaConfig.OPCUA.maxReadInterval)
+    expect(opcuaSouth.reconnectTimeout)
+      .toBeNull()
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
@@ -90,10 +89,21 @@ describe('OPCUA south', () => {
     opcuaSouth.connectToOpcuaServer = jest.fn()
     await opcuaSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
-    expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(1587640141001)
-    expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.scanGroups)
+      .toEqual(opcuaScanGroups)
+    expect(Object.keys(opcuaSouth.lastCompletedAt))
+      .toEqual([opcuaConfig.OPCUA.scanGroups[0].scanMode])
+    expect(Object.keys(opcuaSouth.ongoingReads))
+      .toEqual([opcuaConfig.OPCUA.scanGroups[0].scanMode])
+
+    expect(databaseService.createConfigDatabase)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+    expect(databaseService.getConfig)
+      .toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.lastCompletedAt.every10Second)
+      .toEqual(1587640141001)
+    expect(opcuaSouth.connectToOpcuaServer)
+      .toHaveBeenCalledTimes(1)
   })
 
   it('should properly connect and set lastCompletedAt from config file', async () => {
@@ -103,10 +113,14 @@ describe('OPCUA south', () => {
     opcuaSouth.connectToOpcuaServer = jest.fn()
     await opcuaSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
-    expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(new Date(opcuaConfig.startTime).getTime())
-    expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
+    expect(databaseService.createConfigDatabase)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+    expect(databaseService.getConfig)
+      .toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.lastCompletedAt.every10Second)
+      .toEqual(new Date(opcuaConfig.startTime).getTime())
+    expect(opcuaSouth.connectToOpcuaServer)
+      .toHaveBeenCalledTimes(1)
   })
 
   it('should properly connect and set lastCompletedAt now', async () => {
@@ -118,10 +132,15 @@ describe('OPCUA south', () => {
     opcuaSouth.connectToOpcuaServer = jest.fn()
     await opcuaSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
-    expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(opcuaSouth.lastCompletedAt.every10Second).not.toEqual(new Date(opcuaConfig.originalStartTime).getTime())
-    expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
+    expect(databaseService.createConfigDatabase)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+    expect(databaseService.getConfig)
+      .toHaveBeenCalledTimes(1)
+    expect(opcuaSouth.lastCompletedAt.every10Second)
+      .not
+      .toEqual(new Date(opcuaConfig.originalStartTime).getTime())
+    expect(opcuaSouth.connectToOpcuaServer)
+      .toHaveBeenCalledTimes(1)
   })
 
   it('should properly connect to OPC UA server', async () => {
@@ -143,11 +162,17 @@ describe('OPCUA south', () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
-    expect(Opcua.OPCUAClient.create).toBeCalledWith(expectedOptions)
-    expect(opcuaSouth.client.connect).toBeCalledWith(opcuaConfig.OPCUA.url)
-    expect(opcuaSouth.client.createSession).toBeCalledTimes(1)
-    expect(opcuaSouth.connected).toBeTruthy()
-    expect(setTimeout).not.toBeCalled()
+    expect(Opcua.OPCUAClient.create)
+      .toBeCalledWith(expectedOptions)
+    expect(opcuaSouth.client.connect)
+      .toBeCalledWith(opcuaConfig.OPCUA.url)
+    expect(opcuaSouth.client.createSession)
+      .toBeCalledTimes(1)
+    expect(opcuaSouth.connected)
+      .toBeTruthy()
+    expect(setTimeout)
+      .not
+      .toBeCalled()
   })
 
   it('should properly retry connection to OPC UA server', async () => {
@@ -169,34 +194,46 @@ describe('OPCUA south', () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
-    expect(Opcua.OPCUAClient.create).toBeCalledWith(expectedOptions)
-    expect(opcuaSouth.client.connect).toBeCalledWith(opcuaConfig.OPCUA.url)
-    expect(opcuaSouth.client.createSession).not.toBeCalled()
-    expect(opcuaSouth.connected).toBeFalsy()
-    expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), opcuaConfig.OPCUA.retryInterval)
+    expect(Opcua.OPCUAClient.create)
+      .toBeCalledWith(expectedOptions)
+    expect(opcuaSouth.client.connect)
+      .toBeCalledWith(opcuaConfig.OPCUA.url)
+    expect(opcuaSouth.client.createSession)
+      .not
+      .toBeCalled()
+    expect(opcuaSouth.connected)
+      .toBeFalsy()
+    expect(setTimeout)
+      .toHaveBeenLastCalledWith(expect.any(Function), opcuaConfig.OPCUA.retryInterval)
   })
 
   it('should quit onScan if not connected', async () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
 
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
-    opcuaSouth.connected = false
+    await opcuaSouth.connect()
+    await opcuaSouth.disconnect()
     opcuaSouth.session = { readHistoryValue: jest.fn() }
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+    expect(opcuaSouth.session.readHistoryValue)
+      .not
+      .toBeCalled()
   })
 
   it('should quit onScan if previous read did not complete', async () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
 
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = true
     opcuaSouth.session = { readHistoryValue: jest.fn() }
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+    expect(opcuaSouth.session.readHistoryValue)
+      .not
+      .toBeCalled()
   })
 
   it('should quit onScan if scan group has no points to read', async () => {
@@ -209,12 +246,15 @@ describe('OPCUA south', () => {
       }],
     }
     const opcuaSouth = new OPCUA(testOpcuaConfig, engine)
+    await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
     opcuaSouth.session = { readHistoryValue: jest.fn() }
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).not.toBeCalled()
+    expect(opcuaSouth.session.readHistoryValue)
+      .not
+      .toBeCalled()
   })
 
   it('should in onScan call readHistoryValue once if maxReadInterval is bigger than the read interval', async () => {
@@ -263,16 +303,22 @@ describe('OPCUA south', () => {
         quality: '{"value":0}',
       },
     }
-    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(1)
-    expect(opcuaSouth.session.readHistoryValue).toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate)
-    expect(opcuaSouth.addValues).toBeCalledTimes(1)
-    expect(opcuaSouth.addValues).toBeCalledWith([expectedValue])
-    expect(databaseService.upsertConfig).toBeCalledWith(
-      'configDatabase',
-      `lastCompletedAt-${opcuaConfig.OPCUA.scanGroups[0].scanMode}`,
-      sampleDate.getTime() + 1,
-    )
-    expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode]).toBeFalsy()
+    expect(opcuaSouth.session.readHistoryValue)
+      .toBeCalledTimes(1)
+    expect(opcuaSouth.session.readHistoryValue)
+      .toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate)
+    expect(opcuaSouth.addValues)
+      .toBeCalledTimes(1)
+    expect(opcuaSouth.addValues)
+      .toBeCalledWith([expectedValue])
+    expect(databaseService.upsertConfig)
+      .toBeCalledWith(
+        'configDatabase',
+        `lastCompletedAt-${opcuaConfig.OPCUA.scanGroups[0].scanMode}`,
+        sampleDate.getTime() + 1,
+      )
+    expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode])
+      .toBeFalsy()
   })
 
   it('should in onScan call readHistoryValue multiple times if maxReadInterval is smaller than the read interval', async () => {
@@ -292,7 +338,8 @@ describe('OPCUA south', () => {
 
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(3)
+    expect(opcuaSouth.session.readHistoryValue)
+      .toBeCalledTimes(3)
   })
 
   it('should in onScan call check if readHistoryValue returns the requested number of node IDs', async () => {
@@ -312,19 +359,24 @@ describe('OPCUA south', () => {
 
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).toBeCalledTimes(1)
-    expect(opcuaSouth.logger.error).toHaveBeenCalledWith('received 0, requested 1')
+    expect(opcuaSouth.session.readHistoryValue)
+      .toBeCalledTimes(1)
+    expect(opcuaSouth.logger.error)
+      .toHaveBeenCalledWith('received 0, requested 1')
   })
 
   it('should onScan catch errors', async () => {
     const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject()) }
+    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject(new Error('fail'))) }
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue).toBeCalled()
-    expect(opcuaSouth.logger.error).toHaveBeenCalled()
+    expect(opcuaSouth.session.readHistoryValue)
+      .toBeCalled()
+    expect(opcuaSouth.logger.error)
+      .toHaveBeenCalled()
   })
 
   it('should properly disconnect when trying to connect', async () => {
@@ -341,9 +393,14 @@ describe('OPCUA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout).toBeCalled()
-    expect(opcuaSouth.session.close).not.toBeCalled()
-    expect(opcuaSouth.client.disconnect).not.toBeCalled()
+    expect(clearTimeout)
+      .toBeCalled()
+    expect(opcuaSouth.session.close)
+      .not
+      .toBeCalled()
+    expect(opcuaSouth.client.disconnect)
+      .not
+      .toBeCalled()
   })
 
   it('should properly disconnect when connected', async () => {
@@ -360,8 +417,12 @@ describe('OPCUA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout).not.toBeCalled()
-    expect(opcuaSouth.session.close).toBeCalled()
-    expect(opcuaSouth.client.disconnect).toBeCalled()
+    expect(clearTimeout)
+      .not
+      .toBeCalled()
+    expect(opcuaSouth.session.close)
+      .toBeCalled()
+    expect(opcuaSouth.client.disconnect)
+      .toBeCalled()
   })
 })

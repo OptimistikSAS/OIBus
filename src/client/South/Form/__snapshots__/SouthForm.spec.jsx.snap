@@ -289,14 +289,14 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           <label
             class="form-check-label"
           >
+            Preserve File?
             <input
               checked=""
-              class="oi-form-input form-check-input"
+              class="oi-form-input checkbox form-check-input"
               id="south.dataSources.0.FolderScanner.preserve"
               name="south.dataSources.0.FolderScanner.preserve"
               type="checkbox"
             />
-            Preserve File?
           </label>
         </div>
       </div>
@@ -378,13 +378,13 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           <label
             class="form-check-label"
           >
+            Compress File?
             <input
-              class="oi-form-input form-check-input"
+              class="oi-form-input checkbox form-check-input"
               id="south.dataSources.0.FolderScanner.compression"
               name="south.dataSources.0.FolderScanner.compression"
               type="checkbox"
             />
-            Compress File?
           </label>
         </div>
       </div>
@@ -742,6 +742,107 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="row"
         >
           <h5>
+            Mqtt payload
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <div>
+                  <ul>
+                    <li>
+                      <b>
+                        Data array path:
+                      </b>
+                      Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+                    </li>
+                    <li>
+                      <b>
+                        Value path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Node id path:
+                      </b>
+                      Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Quality path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
             Time stamp settings
             <button
               aria-label="Close"
@@ -792,9 +893,21 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                     </li>
                     <li>
                       <b>
-                        TimeStamp Key:
+                        TimeStamp Path:
                       </b>
-                      The string indicates which key in the payload contains the value timestamp.
+                      The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that contains the timestamp value in the elements of this array
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp Format:
+                      </b>
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp timezone:
+                      </b>
+                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>
@@ -843,29 +956,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       </div>
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.MQTT.timeStampKey"
-          >
-            Time stamp key
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.timeStampKey"
-            name="south.dataSources.0.MQTT.timeStampKey"
-            type="text"
-            value="timestamp"
-          />
-          <div
-            class="invalid-feedback"
-          />
-        </div>
-      </div>
+      />
       <div
         class="col-md-4"
       >
@@ -3790,13 +3881,13 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           <label
             class="form-check-label"
           >
+            Compress File?
             <input
-              class="oi-form-input form-check-input"
+              class="oi-form-input checkbox form-check-input"
               id="south.dataSources.0.SQLDbToFile.compression"
               name="south.dataSources.0.SQLDbToFile.compression"
               type="checkbox"
             />
-            Compress File?
           </label>
         </div>
       </div>
@@ -3988,7 +4079,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   This protocol is in restricted release. Please contact Optimistik
                 </p>
                 <p>
-                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
+                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                </p>
+                <p>
+                  <b>
+                    retry interval:
+                  </b>
+                  retry interval before trying to connect again
                 </p>
               </div>
             </div>
@@ -4036,38 +4133,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           >
             <div>
               Retry Interval (ms)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
-          >
-            Max return values
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
-            type="integer"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Max return values
             </div>
           </small>
         </div>
@@ -4210,7 +4275,280 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               />
             </tr>
           </thead>
-          <tbody />
+          <tbody>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.0.scanMode"
+                    name="south.dataSources.0.OPCUA.scanGroups.0.scanMode"
+                  >
+                    <option
+                      value="everySecond"
+                    >
+                      everySecond
+                    </option>
+                    <option
+                      value="every10Second"
+                    >
+                      every10Second
+                    </option>
+                    <option
+                      value="every1Min"
+                    >
+                      every1Min
+                    </option>
+                    <option
+                      value="listen"
+                    >
+                      listen
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.0.Aggregate"
+                    name="south.dataSources.0.OPCUA.scanGroups.0.Aggregate"
+                  >
+                    <option
+                      value="Raw"
+                    >
+                      Raw
+                    </option>
+                    <option
+                      value="Average"
+                    >
+                      Average
+                    </option>
+                    <option
+                      value="Minimum"
+                    >
+                      Minimum
+                    </option>
+                    <option
+                      value="Maximum"
+                    >
+                      Maximum
+                    </option>
+                    <option
+                      value="Start"
+                    >
+                      Start
+                    </option>
+                    <option
+                      value="End"
+                    >
+                      End
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.0.resampling"
+                    name="south.dataSources.0.OPCUA.scanGroups.0.resampling"
+                  >
+                    <option
+                      value="None"
+                    >
+                      None
+                    </option>
+                    <option
+                      value="Minute"
+                    >
+                      Minute
+                    </option>
+                    <option
+                      value="Hour"
+                    >
+                      Hour
+                    </option>
+                    <option
+                      value="Day"
+                    >
+                      Day
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.1.scanMode"
+                    name="south.dataSources.0.OPCUA.scanGroups.1.scanMode"
+                  >
+                    <option
+                      value="everySecond"
+                    >
+                      everySecond
+                    </option>
+                    <option
+                      value="every10Second"
+                    >
+                      every10Second
+                    </option>
+                    <option
+                      value="every1Min"
+                    >
+                      every1Min
+                    </option>
+                    <option
+                      value="listen"
+                    >
+                      listen
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.1.Aggregate"
+                    name="south.dataSources.0.OPCUA.scanGroups.1.Aggregate"
+                  >
+                    <option
+                      value="Raw"
+                    >
+                      Raw
+                    </option>
+                    <option
+                      value="Average"
+                    >
+                      Average
+                    </option>
+                    <option
+                      value="Minimum"
+                    >
+                      Minimum
+                    </option>
+                    <option
+                      value="Maximum"
+                    >
+                      Maximum
+                    </option>
+                    <option
+                      value="Start"
+                    >
+                      Start
+                    </option>
+                    <option
+                      value="End"
+                    >
+                      End
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="south.dataSources.0.OPCUA.scanGroups.1.resampling"
+                    name="south.dataSources.0.OPCUA.scanGroups.1.resampling"
+                  >
+                    <option
+                      value="None"
+                    >
+                      None
+                    </option>
+                    <option
+                      value="Minute"
+                    >
+                      Minute
+                    </option>
+                    <option
+                      value="Hour"
+                    >
+                      Hour
+                    </option>
+                    <option
+                      value="Day"
+                    >
+                      Day
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -4401,7 +4739,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                   This protocol is in restricted release. Please contact Optimistik
                 </p>
                 <p>
-                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
+                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                </p>
+                <p>
+                  <b>
+                    retry interval:
+                  </b>
+                  retry interval before trying to connect again
                 </p>
               </div>
             </div>
@@ -4461,26 +4805,381 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
+            for="south.dataSources.0.OPCUA.maxReadInterval"
           >
-            Max return values
+            Max read interval
           </label>
           <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.OPCUA.maxReadInterval"
+            name="south.dataSources.0.OPCUA.maxReadInterval"
             type="integer"
             value=""
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should not greater than 60
+          </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              Max return values
+              Max read interval (s)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
+            ScanGroups
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <p>
+                  OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <table
+          class="table table-sm table-striped table-hover"
+        >
+          <thead>
+            <tr>
+              <th
+                scope="col"
+              >
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
+                  />
+                </svg>
+                <span>
+                  Scan Mode
+                </span>
+              </th>
+              <th
+                scope="col"
+              >
+                Aggregate
+              </th>
+              <th
+                scope="col"
+              >
+                resampling
+              </th>
+              <th
+                scope="col"
+              />
+            </tr>
+          </thead>
+          <tbody />
+        </table>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-5"
+      >
+        <h5
+          aria-label="breadcrumb"
+          class=""
+        >
+          <ol
+            class="breadcrumb"
+          >
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/"
+            >
+              Home
+            </a>
+            <a
+              class="oi-breadcrumb breadcrumb-item"
+              href="/south"
+            >
+              South
+            </a>
+            <span
+              aria-current="page"
+              class="active breadcrumb-item"
+            >
+              SimulationServerBis copy
+            </span>
+          </ol>
+        </h5>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Points (1)
+        </button>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        General settings
+        <button
+          aria-label="Close"
+          class="close"
+          id="id"
+        >
+          <svg
+            class="oi-help"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+            />
+          </svg>
+        </button>
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    >
+      <div
+        class="collapse"
+        toggler="id"
+      >
+        <div
+          class="row"
+          style="margin-bottom: 15px;"
+        >
+          <div
+            class="col"
+          >
+            <ul>
+              <li>
+                This form allows to configure protocol-specific parameters.
+              </li>
+              <li>
+                You need to activate the protocol with the enabled checkbox.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <div
+            class="custom-switch custom-control"
+          >
+            <input
+              class="custom-control-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
+            <label
+              class="custom-control-label"
+              for="south.dataSources.0.enabled"
+            >
+              Enabled
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
+            Opcua settings
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <p>
+                  This protocol is in restricted release. Please contact Optimistik
+                </p>
+                <p>
+                  By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                </p>
+                <p>
+                  <b>
+                    retry interval:
+                  </b>
+                  retry interval before trying to connect again
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCUA.retryInterval"
+          >
+            Retry interval
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.OPCUA.retryInterval"
+            name="south.dataSources.0.OPCUA.retryInterval"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value should not greater than 1000
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Retry Interval (ms)
             </div>
           </small>
         </div>
@@ -4864,6 +5563,107 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="row"
         >
           <h5>
+            Mqtt payload
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        >
+          <div
+            class="collapse"
+            toggler="id"
+          >
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <div>
+                  <ul>
+                    <li>
+                      <b>
+                        Data array path:
+                      </b>
+                      Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+                    </li>
+                    <li>
+                      <b>
+                        Value path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Node id path:
+                      </b>
+                      Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                    <li>
+                      <b>
+                        Quality path:
+                      </b>
+                      Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly in the JSON object if not).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
             Time stamp settings
             <button
               aria-label="Close"
@@ -4914,9 +5714,21 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                     </li>
                     <li>
                       <b>
-                        TimeStamp Key:
+                        TimeStamp Path:
                       </b>
-                      The string indicates which key in the payload contains the value timestamp.
+                      The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that contains the timestamp value in the elements of this array
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp Format:
+                      </b>
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                    </li>
+                    <li>
+                      <b>
+                        TimeStamp timezone:
+                      </b>
+                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>

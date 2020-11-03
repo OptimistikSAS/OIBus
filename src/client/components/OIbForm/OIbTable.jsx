@@ -15,8 +15,8 @@ const OIbTable = ({ name, rows, value }) => {
     Object.keys(rows).forEach((rowKey) => { defaultValue[rowKey] = rows[rowKey].defaultValue })
     dispatchNewConfig({ type: 'addRow', name, value: defaultValue })
   }
-  const onChange = (valueName, newVal) => {
-    dispatchNewConfig({ type: 'update', name: `${valueName}`, value: newVal })
+  const onChange = (valueName, newVal, validity) => {
+    dispatchNewConfig({ type: 'update', name: `${valueName}`, value: newVal, validity })
   }
   const tableHeaders = Object.entries(rows).map(([rowKey, row]) => row.label || rowKey)
   const tableRows = value.map((point, index) => Object.entries(rows).map(([rowKey, rowValue]) => {
