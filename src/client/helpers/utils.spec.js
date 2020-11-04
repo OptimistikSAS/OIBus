@@ -26,13 +26,13 @@ describe('utils', () => {
     expect(result).toEqual([{ a: '1', b: '2', c: '3', d: '4' }])
   })
   it('check parseCSV error', async () => {
-    await utils.parseCSV('a,b,c\n1,2,3,4', { headers: true, strictColumnHandling: false }).catch((error) => {
+    await utils.parseCSV('error').catch((error) => {
       expect(error).toBeTruthy()
     })
   })
   it('check createCSV', async () => {
     const result = await utils.createCSV([{ a: '1', b: '2', c: '3', d: '4' }])
-    expect(result).toEqual('a,b,c,d\n1,2,3,4')
+    expect(result).toEqual('a,b,c,d\r\n1,2,3,4')
   })
   it('check replaceValues', () => {
     const object = { a: 'value', b: 'value' }
