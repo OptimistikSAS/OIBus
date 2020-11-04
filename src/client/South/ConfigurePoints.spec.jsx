@@ -258,17 +258,7 @@ describe('ConfigurePoints', () => {
       value: newPoints,
     })
   })
-  test('check export points', () => {
-    console.error = jest.fn()
-    act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
-    })
-    Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
-    expect(container).toMatchSnapshot()
-  })
-  test('check export points success', async () => {
+  test('check export points', async () => {
     console.error = jest.fn()
     const originalUrlCreateObjectURL = URL.createObjectURL
     URL.createObjectURL = jest.fn()
@@ -283,19 +273,6 @@ describe('ConfigurePoints', () => {
       resolve('test,csv')
     })
     URL.createObjectURL = originalUrlCreateObjectURL
-  })
-  test('check export points fail', async () => {
-    console.error = jest.fn()
-    act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
-    })
-    Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
-    expect(container).toMatchSnapshot()
-    await act(async () => {
-      reject('error')
-    })
   })
   test('check pagination', () => {
     act(() => {
