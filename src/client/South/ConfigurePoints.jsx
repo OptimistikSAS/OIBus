@@ -117,21 +117,14 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleExportPoints = () => {
-    utils
-      .createCSV(pointsOrdered)
-      .then((csvString) => {
-        const element = document.createElement('a')
-        const file = new Blob([csvString], { type: 'text/csv' })
-        element.href = URL.createObjectURL(file)
-        element.download = `${dataSourceId}.csv`
-        document.body.appendChild(element)
-        element.click()
-        document.body.removeChild(element)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
+    const csvString = utils.createCSV(pointsOrdered)
+    const element = document.createElement('a')
+    const file = new Blob([csvString], { type: 'text/csv' })
+    element.href = URL.createObjectURL(file)
+    element.download = `${dataSourceId}.csv`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
   }
 
   const onChange = (name, value, validity) => {
