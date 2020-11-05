@@ -36,8 +36,6 @@ class Modbus extends ProtocolHandler {
     const { connected, optimizedScanModes } = this
     const scanGroup = optimizedScanModes[scanMode]
 
-    // ignore if scanMode if not relevant to this data source/ or not connected
-    /** @todo we should likely filter onScan at the engine level */
     if (!scanGroup || !connected) return
 
     Object.keys(scanGroup).forEach((modbusType) => {

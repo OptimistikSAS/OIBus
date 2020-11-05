@@ -4,7 +4,6 @@ const controls = [
   'OIbTable',
   'OIbText',
   'OIbLink',
-  'OIbIpAddress',
   'OIbCheckBox',
   'OIbScanMode',
   'OIbAuthentication',
