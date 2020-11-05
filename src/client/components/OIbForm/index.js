@@ -2,6 +2,7 @@ import OIbCheckBox from './OIbCheckBox.jsx'
 import OIbInteger from './OIbInteger.jsx'
 import OIbText from './OIbText.jsx'
 import OIbTextArea from './OIbTextArea.jsx'
+import OIbIpAddress from './OIbIpAddress.jsx'
 import OIbLink from './OIbLink.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
@@ -18,6 +19,7 @@ export {
   OIbText,
   OIbTextArea,
   OIbLink,
+  OIbIpAddress,
   OIbPassword,
   OIbSelect,
   OIbScanMode,
