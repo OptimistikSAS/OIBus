@@ -22,13 +22,13 @@ const findProperty = (obj, nestedProp, delProp) => {
  * Groups objects based on a mutual property
  * @param {[ Object ]} array - Array of objects to group
  * @param {String} key - Name of the property on which base the groups
- * @param {Object} newProps - The new props
  * @return {Object} Grouped objects
  */
-const groupBy = (array, key, newProps = {}) => array.reduce((acc, obj) => {
-  const group = findProperty(obj, key, true)
+const groupBy = (array, key) => array.reduce((acc, obj) => {
+  const myNewObj = { ...obj }
+  const group = findProperty(myNewObj, key, true)
   if (!acc[group]) acc[group] = []
-  acc[group].push({ ...obj, ...newProps })
+  acc[group].push({ ...myNewObj })
   return acc
 }, {})
 

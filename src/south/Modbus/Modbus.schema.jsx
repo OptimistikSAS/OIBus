@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange, notEmpty } from '../../services/validation.service'
+import { inRange, isHost, notEmpty } from '../../services/validation.service'
 
 const schema = { name: 'Modbus' }
 schema.form = {
@@ -22,8 +22,9 @@ schema.form = {
     ),
   },
   host: {
-    type: 'OIbIpAddress',
+    type: 'OIbText',
     defaultValue: '127.0.0.1',
+    valid: isHost(),
     help: <div>IP address of the Modbus source</div>,
   },
   port: {
@@ -41,7 +42,10 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode' },
+  scanMode: {
+    type: 'OIbScanMode',
+    label: 'Scan Mode',
+  },
   address: {
     type: 'OIbText',
     defaultValue: '',
