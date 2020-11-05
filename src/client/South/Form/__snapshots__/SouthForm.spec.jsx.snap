@@ -2356,8 +2356,8 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             Host
           </label>
           <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
@@ -2365,7 +2365,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should be a valid ip
+          </div>
           <small
             class="form-text text-muted"
           >
@@ -2616,8 +2618,8 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             Host
           </label>
           <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
@@ -2625,7 +2627,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           />
           <div
             class="invalid-feedback"
-          />
+          >
+            Value should be a valid ip
+          </div>
           <small
             class="form-text text-muted"
           >
