@@ -2,33 +2,8 @@
 
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const getOptimizedConfig = require('./config/getOptimizedConfig')
+const { getOptimizedScanModes, parseAddr } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
-
-/**
- * Gives a type to a point based on the config
- * @param {Object} point - The point
- * @param {Array} types - The types
- * @param {Object} logger - The logger
- * @return {void}
- */
-const giveType = (point, types, logger) => {
-  types.forEach((typeCompared) => {
-    if (
-      typeCompared.type
-      === point.pointId
-        .split('.')
-        .slice(-1)
-        .pop()
-    ) {
-      point.type = typeCompared.fields[0].type
-      point.dataId = typeCompared.fields[0].name
-      if (typeCompared.fields.length > 1) {
-        logger.error('Modbus points cannot contain more than 1 field')
-      }
-    }
-  })
-}
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
@@ -44,12 +19,12 @@ class Modbus extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    this.optimizedConfig = getOptimizedConfig(this.dataSource.points, this.dataSource.Modbus.addressGap)
+    this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.logger)
     this.socket = new net.Socket()
     this.host = this.dataSource.Modbus.host
     this.port = this.dataSource.Modbus.port
     this.connected = false
-    this.client = new jsmodbus.client.TCP(this.socket)
+    this.modbusClient = new jsmodbus.client.TCP(this.socket)
   }
 
   /**
@@ -58,23 +33,22 @@ class Modbus extends ProtocolHandler {
    * @return {void}
    */
   onScan(scanMode) {
-    const { connected, optimizedConfig } = this
-    const scanGroup = optimizedConfig[scanMode]
+    const { connected, optimizedScanModes } = this
+    const scanGroup = optimizedScanModes[scanMode]
+
     // ignore if scanMode if not relevant to this data source/ or not connected
     /** @todo we should likely filter onScan at the engine level */
     if (!scanGroup || !connected) return
 
-    Object.keys(scanGroup).forEach((type) => {
-      const addressesForType = scanGroup[type] // Addresses of the group
+    Object.keys(scanGroup).forEach((modbusType) => {
+      const addressesForType = scanGroup[modbusType] // Addresses of the group
       // Build function name, IMPORTANT: type must be singular
-      const funcName = `read${`${type.charAt(0).toUpperCase()}${type.slice(1)}`}s`
-      // Dynamic call of the appropriate function based on type
-      const { engineConfig } = this.engine.configService.getConfig()
+      const funcName = `read${`${modbusType.charAt(0).toUpperCase()}${modbusType.slice(1)}`}s`
       Object.entries(addressesForType).forEach(([range, points]) => {
-        points.forEach((point) => giveType(point, engineConfig.types, this.logger))
+        // console.log(`Entry with range ${range} :  ${JSON.stringify(points, null, 2)}`)
         const rangeAddresses = range.split('-')
-        const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-        const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
+        const startAddress = parseAddr(rangeAddresses[0]) // First address of the group
+        const endAddress = parseAddr(rangeAddresses[1]) // Last address of the group
         const rangeSize = endAddress - startAddress // Size of the addresses group
         this.modbusFunction(funcName, { startAddress, rangeSize }, points)
       })
@@ -89,34 +63,36 @@ class Modbus extends ProtocolHandler {
    * @return {void}
    */
   modbusFunction(funcName, { startAddress, rangeSize }, points) {
-    this.client[funcName](startAddress, rangeSize)
-      .then(({ response }) => {
-        const timestamp = new Date().toISOString()
-        points.forEach((point) => {
-          const position = parseInt(point.address, 16) - startAddress - 1
-          let data = response.body.valuesAsArray[position]
-          switch (point.type) {
-            case 'boolean':
-              data = !!data
-              break
-            case 'number':
-              break
-            default:
-              this.logger.error(new Error(`This point type was not recognized: ${point.type}`))
-          }
-          /** @todo: below should send by batch instead of single points */
-          this.addValues([
-            {
-              pointId: point.pointId,
-              timestamp,
-              data: { value: JSON.stringify(data) },
-            },
-          ])
+    if (this.modbusClient[funcName]) {
+      this.modbusClient[funcName](startAddress, rangeSize)
+        .then(({ response }) => {
+          const timestamp = new Date().toISOString()
+          points.forEach((point) => {
+            const position = parseAddr(point.address) - startAddress - 1
+            let data = response.body.valuesAsArray[position]
+            switch (point.type) {
+              case 'boolean':
+                data = !!data
+                break
+              case 'number':
+                break
+              default:
+                throw new Error(`The point ${point.pointId} type was not recognized: ${point.type}`)
+            }
+            /** @todo: below should send by batch instead of single points */
+            this.addValues([
+              {
+                pointId: point.pointId,
+                timestamp,
+                data: { value: JSON.stringify(data) },
+              },
+            ])
+          })
         })
-      })
-      .catch((error) => {
-        this.logger.error(error)
-      })
+        .catch((error) => {
+          this.logger.error(`Modbus onScan error: for ${startAddress} and ${rangeSize}, ${funcName} error : ${JSON.stringify(error)}`)
+        })
+    }
   }
 
   /**
@@ -126,7 +102,6 @@ class Modbus extends ProtocolHandler {
   async connect() {
     await super.connect()
     const { host, port } = this
-
     this.socket.connect(
       { host, port },
       () => {
@@ -134,7 +109,7 @@ class Modbus extends ProtocolHandler {
       },
     )
     this.socket.on('error', (error) => {
-      this.logger.error(error)
+      this.logger.error(`Modbus connect error: ${JSON.stringify(error)}`)
     })
   }
 
