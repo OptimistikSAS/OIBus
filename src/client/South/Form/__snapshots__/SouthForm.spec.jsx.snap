@@ -2385,7 +2385,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should be a valid ip
+            Value should be a valid hostname or ip
           </div>
           <small
             class="form-text text-muted"
@@ -2666,7 +2666,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should be a valid ip
+            Value should be a valid hostname or ip
           </div>
           <small
             class="form-text text-muted"
