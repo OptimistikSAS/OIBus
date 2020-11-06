@@ -1,11 +1,10 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
-const { getOptimizedScanModes, parseAddr } = require('./config/getOptimizedConfig')
+const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
- * @todo: Warning: this protocol needs rework to be production ready.
  */
 class Modbus extends ProtocolHandler {
   /**
@@ -36,14 +35,11 @@ class Modbus extends ProtocolHandler {
     }
 
     Object.keys(scanGroup).forEach((modbusType) => {
-      const addressesForType = scanGroup[modbusType] // Addresses of the group
-      // Build function name, IMPORTANT: type must be singular
       const funcName = `read${`${modbusType.charAt(0).toUpperCase()}${modbusType.slice(1)}`}s`
-      Object.entries(addressesForType).forEach(([range, points]) => {
-        // console.log(`Entry with range ${range} :  ${JSON.stringify(points, null, 2)}`)
+      Object.entries(scanGroup[modbusType]).forEach(([range, points]) => {
         const rangeAddresses = range.split('-')
-        const startAddress = parseAddr(rangeAddresses[0]) // First address of the group
-        const endAddress = parseAddr(rangeAddresses[1]) // Last address of the group
+        const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
+        const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
         const rangeSize = endAddress - startAddress // Size of the addresses group
         this.modbusFunction(funcName, { startAddress, rangeSize }, points)
       })
@@ -63,17 +59,8 @@ class Modbus extends ProtocolHandler {
         .then(({ response }) => {
           const timestamp = new Date().toISOString()
           points.forEach((point) => {
-            const position = parseAddr(point.address) - startAddress - 1
-            let data = response.body.valuesAsArray[position]
-            switch (point.type) {
-              case 'boolean':
-                data = !!data
-                break
-              case 'number':
-                break
-              default:
-                throw new Error(`The point ${point.pointId} type was not recognized: ${point.type}`)
-            }
+            const position = point.address - startAddress - 1
+            const data = response.body.valuesAsArray[position]
             /** @todo: below should send by batch instead of single points */
             this.addValues([
               {
@@ -87,6 +74,8 @@ class Modbus extends ProtocolHandler {
         .catch((error) => {
           this.logger.error(`Modbus onScan error: for ${startAddress} and ${rangeSize}, ${funcName} error : ${JSON.stringify(error)}`)
         })
+    } else {
+      this.logger.error(`Modbus function name ${funcName} not recognized`)
     }
   }
 
@@ -98,7 +87,7 @@ class Modbus extends ProtocolHandler {
     await super.connect()
     this.socket = new net.Socket()
     this.modbusClient = new jsmodbus.client.TCP(this.socket)
-    const { host, port } = this.dataSource
+    const { host, port } = this.dataSource.Modbus
     this.socket.connect(
       { host, port },
       () => {

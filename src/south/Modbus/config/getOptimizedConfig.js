@@ -40,46 +40,79 @@ const findAddressesGroup = (object, address) => Object.keys(object)
     return address >= start && address <= end
   })
 
-const parseAddr = (addr) => {
-  if (typeof addr === 'string' && addr.startsWith('0x')) {
-    return parseInt(addr, 16)
-  }
-  return parseInt(addr, 10)
-}
-
 /**
  * Return the modbusType and deduce the register address
- * @param {number} addr - the address in decimal
+ * @param {string} addr - the address in decimal
  * @param {Object} logger - the logger to display errors
- * @returns {{address: number, modbusType: string}} - The computed address for this modbusType
+ * @returns {{address: number, modbusType: string, type: string}} - The computed address for this modbusType
  */
 const getModbusType = (addr, logger) => {
-  // coil = [0x00001 - 0x09999 (=39321)]
-  if (addr < 39321) {
-    return {
-      modbusType: 'coil',
-      address: addr, // the addr does not neet to be change
+  const addrValue = parseInt(addr, 16)
+  if (addr.length < 6) {
+    // coil = [0x00001 - 0x09999 (=39321)]
+    if (addrValue <= 0x09999) {
+      return {
+        modbusType: 'coil',
+        address: addrValue, // the addr does not need to be change
+        type: 'boolean',
+      }
     }
-  }
-  // discreteInput = [0x10001 (=65537) - 0x19999 (=104857)]
-  if (addr > 65536 && addr <= 104857) {
-    return {
-      modbusType: 'discreteInput',
-      address: addr - 65536, // need to remove the address of discreteInput register to keep the value address only
+    // discreteInput = [0x10001 (=65537) - 0x19999 (=104857)]
+    if (addrValue >= 0x10001 && addrValue <= 0x19999) {
+      return {
+        modbusType: 'discreteInput',
+        address: addrValue - 0x10000, // need to remove the address of discreteInput register to keep the value address only
+        type: 'number',
+      }
     }
-  }
-  // inputRegister = [0x30001 (=196609) - 0x39999 (=235929)]
-  if (addr > 196608 && addr <= 235929) {
-    return {
-      modbusType: 'inputRegister',
-      address: addr - 196608, // need to remove the address of inputRegister register to keep the value address only
+    // inputRegister = [0x30001 (=196609) - 0x39999 (=235929)]
+    if (addrValue >= 0x30001 && addrValue <= 0x39999) {
+      return {
+        modbusType: 'inputRegister',
+        address: addrValue - 0x30000, // need to remove the address of inputRegister register to keep the value address only
+        type: 'number',
+      }
     }
-  }
-  // holdingRegister = [0x40001 (=262145) - 0x49999 (=301465)]
-  if (addr > 262144 && addr <= 301465) {
-    return {
-      modbusType: 'holdingRegister',
-      address: addr - 262144, // need to remove the address of holdingRegister register to keep the value address only
+    // holdingRegister = [0x40001 (=262145) - 0x49999 (=301465)]
+    if (addrValue >= 0x40001 && addrValue <= 0x49999) {
+      return {
+        modbusType: 'holdingRegister',
+        address: addrValue - 0x40000, // need to remove the address of holdingRegister register to keep the value address only
+        type: 'number',
+      }
+    }
+  } else if (addr.length === 6) {
+    // coil = [0x000001 - 0x065535]
+    if (addrValue <= 0x065535) {
+      return {
+        modbusType: 'coil',
+        address: addrValue, // the addr does not need to be change
+        type: 'boolean',
+      }
+    }
+    // discreteInput = [0x100001 - 0x165535]
+    if (addrValue >= 0x100001 && addrValue <= 0x165535) {
+      return {
+        modbusType: 'discreteInput',
+        address: addrValue - 0x100000, // need to remove the address of discreteInput register to keep the value address only
+        type: 'number',
+      }
+    }
+    // inputRegister = [0x300001 - 0x365535]
+    if (addrValue >= 0x300001 && addrValue <= 0x365535) {
+      return {
+        modbusType: 'inputRegister',
+        address: addrValue - 0x300000, // need to remove the address of inputRegister register to keep the value address only
+        type: 'number',
+      }
+    }
+    // holdingRegister = [0x400001 - 0x465535]
+    if (addrValue >= 0x400001 && addrValue <= 0x465535) {
+      return {
+        modbusType: 'holdingRegister',
+        address: addrValue - 0x400000, // need to remove the address of holdingRegister register to keep the value address only
+        type: 'number',
+      }
     }
   }
 
@@ -88,6 +121,7 @@ const getModbusType = (addr, logger) => {
   return {
     modbusType: 'unknown',
     address: 999999,
+    type: 'unknown',
   }
 }
 
@@ -102,12 +136,12 @@ const groupAddresses = (array, key, maxGroupSize) => {
   const sortedArray = array.sort((a, b) => {
     const strAddressA = findProperty(a, key, false) // String address A
     const strAddressB = findProperty(b, key, false) // String address B
-    return parseAddr(strAddressA) - parseAddr(strAddressB)
+    return parseInt(strAddressA, 10) - parseInt(strAddressB, 10)
   })
 
   return sortedArray.reduce((acc, obj) => {
     const strAddress = findProperty(obj, key, false)
-    const addressValue = parseAddr(strAddress)
+    const addressValue = parseInt(strAddress, 10)
     const nearestLimit = Math.round(addressValue / 16) * 16 // Nearest address group limit
     const groupStart = addressValue <= nearestLimit ? nearestLimit - 16 : nearestLimit // First address of the group
     const end = Math.round((nearestLimit + maxGroupSize) / 16) * 16 // Last address
@@ -131,11 +165,12 @@ const getOptimizedScanModes = (points, logger) => {
     .forEach((scanMode) => {
       // add modbusType and register address to each point
       scanModes[scanMode] = scanModes[scanMode].map((myPoint) => {
-        const { modbusType, address } = getModbusType(parseAddr(myPoint.address), logger)
+        const { modbusType, address, type } = getModbusType(myPoint.address, logger)
         return {
           ...myPoint,
           modbusType,
           address,
+          type,
         }
       })
       scanModes[scanMode] = groupBy(scanModes[scanMode], 'modbusType')
@@ -147,7 +182,4 @@ const getOptimizedScanModes = (points, logger) => {
   return scanModes
 }
 
-module.exports = {
-  getOptimizedScanModes,
-  parseAddr,
-}
+module.exports = { getOptimizedScanModes }
