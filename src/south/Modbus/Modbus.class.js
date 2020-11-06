@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-
 const jsmodbus = require('jsmodbus')
 const net = require('net')
 const { getOptimizedScanModes, parseAddr } = require('./config/getOptimizedConfig')
@@ -20,11 +18,7 @@ class Modbus extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
     this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.logger)
-    this.socket = new net.Socket()
-    this.host = this.dataSource.Modbus.host
-    this.port = this.dataSource.Modbus.port
     this.connected = false
-    this.modbusClient = new jsmodbus.client.TCP(this.socket)
   }
 
   /**
@@ -36,7 +30,10 @@ class Modbus extends ProtocolHandler {
     const { connected, optimizedScanModes } = this
     const scanGroup = optimizedScanModes[scanMode]
 
-    if (!scanGroup || !connected) return
+    if (!scanGroup || !connected) {
+      this.logger.debug(`onScan ignored: connected:${connected}, scanMode:${scanMode}`)
+      return
+    }
 
     Object.keys(scanGroup).forEach((modbusType) => {
       const addressesForType = scanGroup[modbusType] // Addresses of the group
@@ -99,7 +96,9 @@ class Modbus extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
-    const { host, port } = this
+    this.socket = new net.Socket()
+    this.modbusClient = new jsmodbus.client.TCP(this.socket)
+    const { host, port } = this.dataSource
     this.socket.connect(
       { host, port },
       () => {
