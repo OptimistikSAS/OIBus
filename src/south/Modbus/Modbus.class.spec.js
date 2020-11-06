@@ -4,13 +4,24 @@ const databaseService = require('../../services/database.service')
 
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
-
 // Mock database service
 jest.mock('../../services/database.service', () => ({
   createConfigDatabase: jest.fn(() => 'configDatabase'),
   getConfig: jest.fn((_database, _key) => '1587640141001.0'),
   upsertConfig: jest.fn(),
 }))
+
+jest.mock('net', () => {
+  class Socket {
+    // eslint-disable-next-line class-methods-use-this
+    connect(_connectionObject, callback) { callback() }
+
+    // eslint-disable-next-line class-methods-use-this
+    on() { jest.fn() }
+  }
+  return { Socket }
+})
+// jest.mock('net')
 
 // Mock logger
 jest.mock('../../engine/Logger.class', () => (function logger() {
@@ -80,8 +91,6 @@ describe('Modbus south', () => {
 
     expect(modbusSouth.url)
       .toEqual(modbusConfig.Modbus.url)
-    expect(modbusSouth.port)
-      .toEqual(modbusConfig.Modbus.port)
     expect(modbusSouth.optimizedScanModes)
       .toEqual(optimizedScanModes)
   })
@@ -90,36 +99,40 @@ describe('Modbus south', () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
 
     const modbusSouth = new Modbus(modbusConfig, engine)
-    modbusSouth.socket.connect = jest.fn(() => {
-      modbusSouth.connected = true
-    })
+
     await modbusSouth.connect()
 
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.dataSourceId}.db`)
 
-    expect(modbusSouth.socket.connect)
-      .toHaveBeenCalledTimes(1)
+    expect(modbusSouth.connected).toBeTruthy()
+  })
 
-    expect(modbusSouth.socket.connect)
-      .toHaveBeenCalledWith({ host: modbusConfig.Modbus.host, port: modbusConfig.Modbus.port }, expect.any(Function))
-    expect(modbusSouth.connected)
-      .toBeTruthy()
+  it('should properly onScan', async () => {
+    const modbusSouth = new Modbus(modbusConfig, engine)
+
+    // activate flag connect
+    modbusSouth.connected = true
+    modbusSouth.socket = { end: jest.fn() }
+    modbusSouth.modbusFunction = jest.fn()
+
+    await modbusSouth.onScan('every10Seconds')
+    expect(modbusSouth.modbusFunction)
+      // eslint-disable-next-line max-len
+      .toBeCalledWith('readHoldingRegisters', { rangeSize: 32, startAddress: 15984 }, [{ address: 16000, pointId: 'EtatBB2T1', type: 'number' }, { address: 16001, pointId: 'EtatBB2T0', type: 'number' }])
   })
 
   it('should properly disconnect', async () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
-    modbusSouth.socket.connect = jest.fn(() => {
-      modbusSouth.connected = true
-    })
 
+    // activate flag connect
+    modbusSouth.connected = true
+    modbusSouth.socket = { end: jest.fn() }
     modbusSouth.modbusFunction = jest.fn()
-    await modbusSouth.connect()
-
-    expect(modbusSouth.connected)
-      .toBeTruthy()
 
     await modbusSouth.disconnect()
+    expect(modbusSouth.socket.end)
+      .toBeCalled()
     expect(modbusSouth.connected)
       .toBeFalsy()
 
