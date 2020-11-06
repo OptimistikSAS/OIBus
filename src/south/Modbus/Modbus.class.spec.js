@@ -4,6 +4,7 @@ const databaseService = require('../../services/database.service')
 
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
+
 // Mock database service
 jest.mock('../../services/database.service', () => ({
   createConfigDatabase: jest.fn(() => 'configDatabase'),
@@ -14,11 +15,16 @@ jest.mock('../../services/database.service', () => ({
 jest.mock('net', () => {
   class Socket {
     // eslint-disable-next-line class-methods-use-this
-    connect(_connectionObject, callback) { callback() }
+    connect(_connectionObject, callback) {
+      callback()
+    }
 
     // eslint-disable-next-line class-methods-use-this
-    on() { jest.fn() }
+    on() {
+      jest.fn()
+    }
   }
+
   return { Socket }
 })
 // jest.mock('net')
@@ -54,14 +60,14 @@ describe('Modbus south', () => {
     points: [
       {
         pointId: 'EtatBB2T0',
-        address: '0x43E81', // 278145
+        address: '43E80',
         type: 'number',
         scanMode: 'every10Seconds',
       },
       {
         pointId: 'EtatBB2T1',
         scanMode: 'every10Seconds',
-        address: '278144', // 0x43E80
+        address: '43E81',
         type: 'number',
       },
     ],
@@ -72,12 +78,12 @@ describe('Modbus south', () => {
       holdingRegister: {
         '15984-16016': [
           {
-            pointId: 'EtatBB2T1',
+            pointId: 'EtatBB2T0',
             address: 16000,
             type: 'number',
           },
           {
-            pointId: 'EtatBB2T0',
+            pointId: 'EtatBB2T1',
             address: 16001,
             type: 'number',
           },
@@ -105,21 +111,22 @@ describe('Modbus south', () => {
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.dataSourceId}.db`)
 
-    expect(modbusSouth.connected).toBeTruthy()
+    expect(modbusSouth.connected)
+      .toBeTruthy()
   })
 
   it('should properly onScan', async () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
 
-    // activate flag connect
-    modbusSouth.connected = true
-    modbusSouth.socket = { end: jest.fn() }
-    modbusSouth.modbusFunction = jest.fn()
-
+    await modbusSouth.connect()
+    modbusSouth.modbusClient = { readHoldingRegisters: jest.fn() }
+    modbusSouth.modbusClient.readHoldingRegisters.mockReturnValue(Promise.resolve([]))
     await modbusSouth.onScan('every10Seconds')
-    expect(modbusSouth.modbusFunction)
-      // eslint-disable-next-line max-len
-      .toBeCalledWith('readHoldingRegisters', { rangeSize: 32, startAddress: 15984 }, [{ address: 16000, pointId: 'EtatBB2T1', type: 'number' }, { address: 16001, pointId: 'EtatBB2T0', type: 'number' }])
+
+    expect(modbusSouth.modbusClient.readHoldingRegisters)
+      .toBeCalledWith(15984, 32) // see the optimizedScanModes to get the startAddress and range
+    expect(modbusSouth.modbusClient.readHoldingRegisters)
+      .toBeCalledTimes(1) // addresses are in the same group, so it makes one call
   })
 
   it('should properly disconnect', async () => {
