@@ -45,7 +45,6 @@ describe('AliveSignal', () => {
     proxies: [proxy],
   }
   engine.configService = { getConfig: () => ({ engineConfig }) }
-  engine.decryptPassword = (password) => password
   engine.getStatus = jest.fn()
   engine.getVersion = jest.fn()
   engine.sendRequest = jest.fn()
