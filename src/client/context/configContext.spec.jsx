@@ -76,22 +76,6 @@ describe('ConfigProvider', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check ConfigProvider unmount', () => {
-    const originalConsoleInfo = console.info
-    console.info = jest.fn()
-    act(() => {
-      ReactDOM.render(
-        <ConfigProvider>
-          <div />
-        </ConfigProvider>,
-        container,
-      )
-    })
-    unmountComponentAtNode(container)
-    expect(console.info).toBeCalledWith('unmount')
-    expect(container).toMatchSnapshot()
-    console.info = originalConsoleInfo
-  })
   test('check initial data setup', async () => {
     await act(async () => {
       ReactDOM.render(
