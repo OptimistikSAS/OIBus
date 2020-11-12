@@ -3,6 +3,7 @@ const mqtt = require('mqtt')
 const ApiHandler = require('../ApiHandler.class')
 const MQTTNorth = require('./MQTTNorth.class')
 const config = require('../../../tests/testConfig').default
+const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock mqtt
 // jest.mock('mqtt', () => ({ connect: jest.fn() }))
@@ -16,6 +17,9 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
     error: jest.fn(),
   }
 }))
+
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')

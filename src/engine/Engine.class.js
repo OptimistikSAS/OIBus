@@ -4,7 +4,6 @@ const os = require('os')
 
 const moment = require('moment-timezone')
 
-const encryptionService = require('../services/encryption.service')
 const requestService = require('../services/request.service')
 const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
@@ -35,6 +34,7 @@ const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
 const AliveSignal = require('./AliveSignal.class')
+const EncryptionService = require('../services/EncryptionService.class')
 
 /**
  *
@@ -70,8 +70,11 @@ class Engine {
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
+
     // Check for private key
-    encryptionService.checkOrCreatePrivateKey(this.configService.keyFolder)
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
 
     // prepare config
     // Associate the scanMode to all corresponding data sources
@@ -327,15 +330,6 @@ class Engine {
       // Ask the Master Cluster to shutdown
       process.send({ type: 'shutdown' })
     }, timeout)
-  }
-
-  /**
-   * Decrypt password.
-   * @param {string} password - The password to decrypt
-   * @return {string|null} - The decrypted password
-   */
-  decryptPassword(password) {
-    return encryptionService.decryptText(password, this.configService.keyFolder)
   }
 
   /**

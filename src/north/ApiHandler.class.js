@@ -1,4 +1,5 @@
 const Logger = require('../engine/Logger.class')
+const EncryptionService = require('../services/EncryptionService.class')
 
 class ApiHandler {
   static STATUS = {
@@ -22,7 +23,6 @@ class ApiHandler {
    *
    * In addition, it is possible to use a number of helper functions:
    * - **getProxy**: get the proxy handler
-   * - **decryptPassword**: to decrypt a password
    * - **logger**: to log an event with different levels (error,warning,info,debug)
    *
    * @constructor
@@ -35,6 +35,7 @@ class ApiHandler {
     this.canHandleFiles = false
 
     this.logger = new Logger(this.constructor.name)
+    this.encryptionService = EncryptionService.getInstance()
 
     this.application = applicationParameters
     this.engine = engine
@@ -99,19 +100,6 @@ class ApiHandler {
     }
 
     return proxy
-  }
-
-  /**
-   * Decrypt password.
-   * @param {string} password - The password to decrypt
-   * @returns {string} - The decrypted password
-   */
-  decryptPassword(password) {
-    const decryptedPassword = this.engine.decryptPassword(password)
-    if (decryptedPassword == null) {
-      this.logger.error(`Error decrypting password for ${this.constructor.name}`)
-    }
-    return decryptedPassword || ''
   }
 }
 

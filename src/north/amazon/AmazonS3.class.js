@@ -27,7 +27,7 @@ class AmazonS3 extends ApiHandler {
 
     AWS.config.update({
       accessKeyId: authentication.accessKey,
-      secretAccessKey: this.decryptPassword(authentication.secretKey),
+      secretAccessKey: this.encryptionService.decryptText(authentication.secretKey),
     })
 
     const configuredProxy = this.getProxy(proxy)
@@ -37,7 +37,7 @@ class AmazonS3 extends ApiHandler {
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${this.decryptPassword(password)}`
+        proxyOptions.auth = `${username}:${this.encryptionService.decryptText(password)}`
       }
 
       const agent = new ProxyAgent(proxyOptions)
