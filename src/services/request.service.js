@@ -70,7 +70,7 @@ const sendWithAxios = async (engine, requestUrl, method, headers, proxy, data, t
     }
 
     if (username && password) {
-      axiosProxy.proxyAuth = `${username}:${engine.decryptPassword(password)}`
+      axiosProxy.proxyAuth = `${username}:${engine.encryptionService.decryptText(password)}`
     }
 
     let tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
@@ -147,7 +147,7 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
     const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
     if (username && password) {
-      proxyOptions.auth = `${username}:${engine.decryptPassword(password)}`
+      proxyOptions.auth = `${username}:${engine.encryptionService.decryptText(password)}`
     }
 
     agent = new ProxyAgent(proxyOptions)
@@ -216,7 +216,7 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
   // Generate authentication header
   const headers = baseHeaders
   if (authentication && (authentication.type === 'Basic')) {
-    const decryptedPassword = engine.decryptPassword(authentication.password)
+    const decryptedPassword = engine.encryptionService.decryptText(authentication.password)
     const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
     headers.Authorization = `Basic ${basic}`
   }
