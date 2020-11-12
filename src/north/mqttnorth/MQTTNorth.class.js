@@ -21,7 +21,7 @@ class MQTTNorth extends ApiHandler {
 
     this.url = url
     this.username = username
-    this.password = Buffer.from(this.decryptPassword(password))
+    this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.qos = qos
     this.regExp = regExp
     this.topic = topic

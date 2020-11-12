@@ -10,6 +10,7 @@ const csv = require('papaparse')
 const SQLDbToFile = require('./SQLDbToFile.class')
 const databaseService = require('../../services/database.service')
 const config = require('../../../tests/testConfig').default
+const EncryptionService = require('../../services/EncryptionService.class')
 
 jest.mock('pg', () => ({
   Client: jest.fn(),
@@ -34,6 +35,9 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
     error: jest.fn(),
   }
 }))
+
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
