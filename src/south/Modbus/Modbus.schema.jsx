@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange, isHost, notEmpty, isHexa } from '../../services/validation.service'
+import { inRange, isHost, notEmpty, isHexa, combinedValidations } from '../../services/validation.service'
 
 const schema = { name: 'Modbus' }
 schema.form = {
@@ -57,7 +57,7 @@ schema.points = {
   address: {
     type: 'OIbText',
     defaultValue: '',
-    valid: isHexa(),
+    valid: combinedValidations([isHexa(), notEmpty()]),
   },
   scanMode: {
     type: 'OIbScanMode',
