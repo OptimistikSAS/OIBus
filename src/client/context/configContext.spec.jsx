@@ -1,5 +1,5 @@
 import React from 'react'
-import ReactDOM, { unmountComponentAtNode } from 'react-dom'
+import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
 import utils from '../helpers/utils'
