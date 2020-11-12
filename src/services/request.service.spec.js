@@ -25,8 +25,7 @@ jest.mock('../engine/Logger.class', () => (function logger() {
 }))
 
 // Mock engine
-const engine = jest.fn()
-engine.decryptPassword = (password) => password
+const engine = { encryptionService: { decryptText: (password) => password } }
 
 beforeEach(() => {
   jest.resetAllMocks()
