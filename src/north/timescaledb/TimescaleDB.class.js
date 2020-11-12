@@ -69,7 +69,7 @@ class TimescaleDB extends ApiHandler {
   async makeRequest(entries) {
     const { host, user, password, db } = this.application.TimescaleDB
     // Build the url
-    const url = `postgres://${user}:${this.decryptPassword(password)}@${host}/${db}`
+    const url = `postgres://${user}:${this.encryptionService.decryptText(password)}@${host}/${db}`
     // Get client object and connect to the database
     const client = new Client(url)
     await client.connect()

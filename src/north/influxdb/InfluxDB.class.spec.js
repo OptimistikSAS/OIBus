@@ -1,5 +1,6 @@
 const InfluxDB = require('./InfluxDB.class')
 const config = require('../../config/defaultConfig.json')
+const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
 jest.mock('../../engine/Logger.class', () => (function logger() {
@@ -11,10 +12,26 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
   }
 }))
 
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
+
+// jest.mock('../../services/EncryptionService.class')
+// EncryptionService.mockImplementation(() => ({
+//   getInstance: () => ({
+//     decryptText: (password) => password,
+//   }),
+// }))
+
+// jest.mock('../../services/EncryptionService.class', () => {
+//   return jest.fn().mockImplementation(() => ({ decryptText: (password) => password }))
+// })
+// EncryptionService.getInstance = jest.fn().mockReturnValue({
+//   decryptText: jest.fn(),
+// })
+
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => config.engine }
-engine.decryptPassword = (password) => password
 engine.sendRequest = jest.fn()
 
 beforeEach(() => {

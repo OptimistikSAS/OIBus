@@ -37,7 +37,7 @@ class MQTT extends ProtocolHandler {
 
     this.url = url
     this.username = username
-    this.password = Buffer.from(this.decryptPassword(password))
+    this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.qos = qos
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath

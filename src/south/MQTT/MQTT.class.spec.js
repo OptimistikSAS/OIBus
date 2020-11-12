@@ -2,6 +2,7 @@ const mqtt = require('mqtt')
 
 const MQTT = require('./MQTT.class')
 const config = require('../../config/defaultConfig.json')
+const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
@@ -15,6 +16,9 @@ jest.mock('../../engine/Logger.class', () => (function logger() {
     error: jest.fn(),
   }
 }))
+
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
