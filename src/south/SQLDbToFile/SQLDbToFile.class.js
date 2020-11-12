@@ -347,13 +347,11 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<string>} - The CSV content
    */
   generateCSV(result) {
-    const transform = (row) => {
-      Object.entries(row).forEach(([column, value]) => {
-        if (value instanceof Date) {
-          row[column] = SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
-        }
-      })
-      return (row)
+    const transform = (value) => {
+      if (value instanceof Date) {
+        return SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
+      }
+      return value
     }
     const options = {
       header: true,
