@@ -25,7 +25,7 @@ const isHost = (name = 'Value') => (val) => (
 const isIp = (name = 'Value') => (val) => (
   (ipv4.test(val) || ipv6.test(val)) ? null : `${name} should be a valid ip`
 )
-const isHexa = (name = 'Value') => (val) => (val.match(/^[a-f0-9]*$/i) !== null ? null : `${name} should be an hexa string (example: 3E61)`)
+const isHexa = (name = 'Value') => (val) => (val?.match(/^[a-f0-9]*$/i) !== null ? null : `${name} should be an hexa string (example: 3E61)`)
 const minValue = (min, name = 'Value') => (val) => (val >= min ? null : `${name} should not greater than ${min}`)
 const maxValue = (max, name = 'Value') => (val) => (val >= max ? null : `${name} should not lower than ${max}`)
 const inRange = (min, max, name = 'Value') => (val) => (
