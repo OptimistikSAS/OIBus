@@ -5,7 +5,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
-const csv = require('fast-csv')
+const csv = require('papaparse')
 const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
@@ -356,11 +356,11 @@ class SQLDbToFile extends ProtocolHandler {
       return (row)
     }
     const options = {
-      headers: true,
+      header: true,
       delimiter: this.delimiter,
       transform,
     }
-    return csv.writeToString(result, options)
+    return csv.unparse(result, options)
   }
 }
 
