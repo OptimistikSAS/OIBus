@@ -1,4 +1,4 @@
-import * as csv from 'fast-csv'
+import * as Papa from 'papaparse'
 import timexe from 'timexe'
 
 const readFileContent = async (file) => new Promise((resolve) => {
@@ -13,22 +13,17 @@ function jsonCopy(src) {
   return JSON.parse(JSON.stringify(src))
 }
 
-const parseCSV = async (csvContent, options = { headers: true, strictColumnHandling: true }) => new Promise((resolve, reject) => {
-  const points = []
-  csv
-    .parseString(csvContent, options)
-    .on('error', (error) => reject(error))
-    .on('data', (csvObjects) => {
-      points.push(csvObjects)
-    })
-    .on('end', () => {
-      resolve(points)
-    })
+const parseCSV = async (csvContent, options = { header: true }) => new Promise((resolve, reject) => {
+  const result = Papa.parse(csvContent, options)
+  const { data, errors } = result
+  if (errors.length) {
+    reject(errors[0])
+  } else resolve(data)
 })
 
 const createCSV = (array) => {
-  const options = { headers: true }
-  return csv.writeToString(array, options)
+  const options = { header: true }
+  return Papa.unparse(array, options)
 }
 
 const replaceValuesHelper = (obj, keys, value) => {

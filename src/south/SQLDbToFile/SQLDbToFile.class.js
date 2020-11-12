@@ -5,7 +5,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
-const csv = require('fast-csv')
+const csv = require('papaparse')
 const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
@@ -347,20 +347,20 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<string>} - The CSV content
    */
   generateCSV(result) {
-    const transform = (row) => {
-      Object.entries(row).forEach(([column, value]) => {
+    // loop through each value and format date to timezone if value is Date
+    result.forEach((row) => {
+      Object.keys(row).forEach((key) => {
+        const value = row[key]
         if (value instanceof Date) {
-          row[column] = SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
+          row[key] = SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
         }
       })
-      return (row)
-    }
+    })
     const options = {
-      headers: true,
+      header: true,
       delimiter: this.delimiter,
-      transform,
     }
-    return csv.writeToString(result, options)
+    return csv.unparse(result, options)
   }
 }
 
