@@ -13,6 +13,7 @@ module.exports = {
       'react-dom$': 'react-dom/profiling',
       'scheduler/tracing': 'scheduler/tracing-profiling',
     },
+    fallback: { path: require.resolve('path-browserify') },
   },
   // devServer: { contentBase: './build' },
   devtool: 'source-map',
@@ -47,5 +48,4 @@ module.exports = {
     ],
   },
   plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') })],
-  node: { fs: 'empty' },
 }
