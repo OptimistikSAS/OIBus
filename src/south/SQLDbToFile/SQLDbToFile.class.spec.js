@@ -5,7 +5,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
-const csv = require('fast-csv')
+const csv = require('papaparse')
 
 const SQLDbToFile = require('./SQLDbToFile.class')
 const databaseService = require('../../services/database.service')
@@ -17,7 +17,7 @@ jest.mock('pg', () => ({
   types: jest.fn(),
 }))
 
-jest.mock('fast-csv', () => ({ writeToString: jest.fn() }))
+jest.mock('papaparse', () => ({ unparse: jest.fn() }))
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -230,7 +230,7 @@ describe('sql-db-to-file', () => {
     }]
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
-    csv.writeToString.mockReturnValue(csvContent)
+    csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
 
     await sqlSouth.onScan(sqlConfig.scanMode)
@@ -238,7 +238,7 @@ describe('sql-db-to-file', () => {
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
     const expectedPath = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
-    expect(csv.writeToString).toBeCalledTimes(1)
+    expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', expectedPath, false)
     global.Date = RealDate
@@ -256,7 +256,7 @@ describe('sql-db-to-file', () => {
     }]
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
-    csv.writeToString.mockReturnValue(csvContent)
+    csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync')
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
@@ -269,7 +269,7 @@ describe('sql-db-to-file', () => {
 
     await sqlSouth.onScan(sqlConfig.scanMode)
 
-    expect(csv.writeToString).toBeCalledTimes(1)
+    expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
 
