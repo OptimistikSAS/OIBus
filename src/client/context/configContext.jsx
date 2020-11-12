@@ -105,7 +105,6 @@ const ConfigProvider = ({ children }) => {
     fetchActiveConfig()
     return () => {
       mounted = false
-      console.info('unmount')
     }
   }, [])
   // the provider return the new and active config and their respective setters
