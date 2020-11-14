@@ -78,7 +78,7 @@
     "react-router-dom": "5.2.0",
     "reactstrap": "8.7.1",
     "sprintf-js": "1.1.2",
-    "sqlite": "4.0.15",
+    "sqlite": "4.0.17",
     "sqlite3": "5.0.0",
     "timexe": "1.0.1",
     "tunnel": "0.0.6",
