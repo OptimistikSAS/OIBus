@@ -55,7 +55,7 @@
     "koa-send": "5.0.1",
     "micromatch": "4.0.2",
     "minimist": "1.2.5",
-    "moment-timezone": "0.5.31",
+    "moment-timezone": "0.5.32",
     "mongodb": "3.6.3",
     "mqtt": "4.2.5",
     "mqtt-wildcard": "3.0.9",
