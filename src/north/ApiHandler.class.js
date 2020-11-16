@@ -1,4 +1,5 @@
 const EncryptionService = require('../services/EncryptionService.class')
+const Logger = require('../engine/Logger.class')
 
 class ApiHandler {
   static STATUS = {
@@ -40,6 +41,10 @@ class ApiHandler {
     this.scanModes = this.engine.scanModes
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
+
+    const { logParameters } = this.application
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
   }
 
   /**

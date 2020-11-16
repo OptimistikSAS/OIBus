@@ -23,9 +23,6 @@ class OPCHDA extends ProtocolHandler {
     this.agentLogger = new Logger()
     this.agentLogger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
-
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
