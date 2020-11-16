@@ -66,6 +66,7 @@ class Logger {
     this.logger.silly(message, { source: this.source })
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   removeDefaultSettings(parameters) {
     if (parameters.consoleLevel === ENGINE_LOG_LEVEL_ENTRY) {
       delete parameters.consoleLevel
