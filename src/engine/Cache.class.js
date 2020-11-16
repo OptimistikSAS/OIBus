@@ -22,7 +22,7 @@ class Cache {
    */
   constructor(engine) {
     this.engine = engine
-    this.logger = new Logger('Cache')
+    this.logger = Logger.getDefaultLogger()
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching

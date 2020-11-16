@@ -2,6 +2,7 @@ const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Class MQTT - generates and sends MQTT messages
@@ -17,7 +18,10 @@ class MQTTNorth extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { url, qos, username, password, regExp, topic } = this.application.MQTTNorth
+    const { url, qos, username, password, regExp, topic, logParameters } = this.application.MQTTNorth
+
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.url = url
     this.username = username

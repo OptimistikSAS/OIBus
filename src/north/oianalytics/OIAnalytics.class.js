@@ -1,6 +1,7 @@
 const fs = require('fs')
 
 const ApiHandler = require('../ApiHandler.class')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Class OIAnalytics - sends files through a POST Multipart HTTP
@@ -19,7 +20,11 @@ class OIAnalytics extends ApiHandler {
     const valuesEndpoint = '/api/optimistik/oibus/data/time_values'
     const fileEndpoint = '/api/optimistik/data/values/upload'
     const queryParam = `?dataSourceId=${this.application.applicationId}`
-    const { host, authentication, proxy = null } = applicationParameters.OIAnalytics
+
+    const { host, authentication, proxy = null, logParameters } = applicationParameters.OIAnalytics
+
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.valuesUrl = `${host}${valuesEndpoint}${queryParam}`
     this.fileUrl = `${host}${fileEndpoint}${queryParam}`

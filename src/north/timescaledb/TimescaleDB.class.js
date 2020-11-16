@@ -1,6 +1,7 @@
 const { Client } = require('pg')
 
 const ApiHandler = require('../ApiHandler.class')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Reads a string in pointId format and returns an object with corresponding indexes and values.
@@ -41,6 +42,11 @@ class TimescaleDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
+
+    const { logParameters } = applicationParameters.TimescaleDB
+
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.canHandleValues = true
   }

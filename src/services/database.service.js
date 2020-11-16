@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3')
 
 const Logger = require('../engine/Logger.class')
 
-const logger = new Logger('database')
+const logger = Logger.getDefaultLogger()
 
 const CACHE_TABLE_NAME = 'cache'
 
