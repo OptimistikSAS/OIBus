@@ -1,7 +1,6 @@
 const { vsprintf } = require('sprintf-js')
 
 const ApiHandler = require('../ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Escape spaces.
@@ -28,11 +27,6 @@ class InfluxDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-
-    const { logParameters } = applicationParameters.InfluxDB
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.canHandleValues = true
   }

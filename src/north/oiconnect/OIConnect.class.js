@@ -1,7 +1,6 @@
 const fs = require('fs')
 
 const ApiHandler = require('../ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 class OIConnect extends ApiHandler {
   /**
@@ -14,10 +13,7 @@ class OIConnect extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { host, valuesEndpoint, fileEndpoint, authentication, proxy = null, logParameters } = applicationParameters.OIConnect
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
+    const { host, valuesEndpoint, fileEndpoint, authentication, proxy = null } = applicationParameters.OIConnect
 
     const dataSourceId = `${this.engineConfig.engineName}:${this.application.applicationId}`
     this.valuesUrl = `${host}${valuesEndpoint}?dataSourceId=${dataSourceId}`

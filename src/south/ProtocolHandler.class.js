@@ -3,6 +3,7 @@ const zlib = require('zlib')
 
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class Protocol : provides general attributes and methods for protocols.
@@ -43,6 +44,10 @@ class ProtocolHandler {
     this.compressionLevel = 9
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
+
+    const { logParameters } = this.dataSource
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
   }
 
   async connect() {

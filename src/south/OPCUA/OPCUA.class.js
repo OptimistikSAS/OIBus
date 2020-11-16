@@ -1,7 +1,6 @@
 const Opcua = require('node-opcua')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  *
@@ -20,10 +19,7 @@ class OPCUA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, retryInterval, maxReadInterval, logParameters } = dataSource.OPCUA
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
+    const { url, retryInterval, maxReadInterval } = dataSource.OPCUA
 
     this.url = url
     this.retryInterval = retryInterval // retry interval before trying to connect again

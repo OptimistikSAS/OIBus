@@ -3,7 +3,6 @@ const net = require('net')
 
 const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
@@ -20,11 +19,6 @@ class Modbus extends ProtocolHandler {
     super(dataSource, engine)
     this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.logger)
     this.connected = false
-
-    const { logParameters } = this.dataSource.Modbus
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
   }
 
   /**
