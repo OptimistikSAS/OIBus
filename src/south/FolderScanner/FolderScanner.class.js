@@ -3,6 +3,7 @@ const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const databaseService = require('../../services/database.service')
+const Logger = require('../../engine/Logger.class')
 
 /**
  * Class FolderScanner
@@ -19,7 +20,10 @@ class FolderScanner extends ProtocolHandler {
     super(dataSource, engine)
 
     /** @todo migration for preserve to be added */
-    const { inputFolder, preserve: preserveFiles, minAge, regex, compression } = this.dataSource.FolderScanner
+    const { inputFolder, preserve: preserveFiles, minAge, regex, compression, logParameters } = this.dataSource.FolderScanner
+
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.inputFolder = path.resolve(inputFolder)
     this.preserveFiles = preserveFiles

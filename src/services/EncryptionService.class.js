@@ -9,7 +9,7 @@ class EncryptionService {
    * Constructor.
    */
   constructor() {
-    this.logger = new Logger(this.constructor.name)
+    this.logger = Logger.getDefaultLogger()
   }
 
   static getInstance() {

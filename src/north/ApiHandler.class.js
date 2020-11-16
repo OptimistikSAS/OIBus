@@ -1,4 +1,3 @@
-const Logger = require('../engine/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 
 class ApiHandler {
@@ -34,7 +33,6 @@ class ApiHandler {
     this.canHandleValues = false
     this.canHandleFiles = false
 
-    this.logger = new Logger(this.constructor.name)
     this.encryptionService = EncryptionService.getInstance()
 
     this.application = applicationParameters
