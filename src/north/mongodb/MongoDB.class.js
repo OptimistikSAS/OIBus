@@ -4,7 +4,6 @@ const mongo = require('mongodb')
 const { vsprintf } = require('sprintf-js')
 
 const ApiHandler = require('../ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
@@ -26,11 +25,6 @@ class MongoDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-
-    const { logParameters } = applicationParameters.MongoDB
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.canHandleValues = true
   }

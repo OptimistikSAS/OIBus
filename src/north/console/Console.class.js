@@ -1,7 +1,6 @@
 const fs = require('fs')
 
 const ApiHandler = require('../ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 class Console extends ApiHandler {
   /**
@@ -15,13 +14,7 @@ class Console extends ApiHandler {
     super(applicationParameters, engine)
     this.canHandleValues = true
     this.canHandleFiles = true
-
-    const { verbose = false, logParameters } = applicationParameters.Console
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
-
-    this.verbose = verbose
+    this.verbose = applicationParameters.Console.verbose || false
   }
 
   /**

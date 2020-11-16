@@ -4,7 +4,6 @@ const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 class MQTT extends ProtocolHandler {
   /**
@@ -30,11 +29,7 @@ class MQTT extends ProtocolHandler {
       timeStampPath,
       timeStampFormat,
       timeStampTimezone,
-      logParameters,
     } = this.dataSource.MQTT
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     if (moment.tz.zone(timeStampTimezone)) {
       this.timezone = timeStampTimezone

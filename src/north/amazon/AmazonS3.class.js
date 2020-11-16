@@ -5,7 +5,6 @@ const AWS = require('aws-sdk')
 const ProxyAgent = require('proxy-agent')
 
 const ApiHandler = require('../ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Class AmazonS3 - sends files to Amazon AWS S3
@@ -21,10 +20,7 @@ class AmazonS3 extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { bucket, folder, authentication, proxy = null, logParameters } = applicationParameters.AmazonS3
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
+    const { bucket, folder, authentication, proxy = null } = applicationParameters.AmazonS3
 
     this.bucket = bucket
     this.folder = folder

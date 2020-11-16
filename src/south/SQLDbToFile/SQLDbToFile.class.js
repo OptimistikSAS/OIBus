@@ -9,7 +9,6 @@ const csv = require('papaparse')
 const moment = require('moment-timezone')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Class SQLDbToFile
@@ -43,11 +42,7 @@ class SQLDbToFile extends ProtocolHandler {
       timezone,
       dateFormat,
       compression,
-      logParameters,
     } = this.dataSource.SQLDbToFile
-
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
 
     this.preserveFiles = false
     this.driver = driver
