@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import { Link } from 'react-router-dom'
 // import { AlertContext } from '../context/AlertContext.jsx'
-import { OIbTitle, OIbCheckBox, OIbInteger } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbInteger, OIbLogLevel } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
@@ -56,6 +56,11 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           />
         </Col>
       </Row>
+      <OIbLogLevel
+        name={`${prefix}.logParameters`}
+        value={application.logParameters}
+        onChange={onChange}
+      />
       <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${api}`} values={application[api]} />
       <OIbTitle label="Caching">
         <>

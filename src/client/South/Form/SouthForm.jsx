@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
-import { OIbTitle, OIbCheckBox, OIbScanMode } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
@@ -63,6 +63,11 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           </Col>
         )}
       </Row>
+      <OIbLogLevel
+        name={`${prefix}.logParameters`}
+        value={dataSource.logParameters}
+        onChange={onChange}
+      />
       <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
     </Form>
   )
