@@ -10,13 +10,11 @@ jest.spyOn(process.stdout, 'write').mockImplementation(() => {})
 jest.mock('../../services/database.service', () => {})
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return { silly: () => jest.fn() }
-}))
+jest.mock('../../engine/Logger.class')
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
-engine.configService = { getConfig: () => config.engine }
+engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
   jest.resetAllMocks()

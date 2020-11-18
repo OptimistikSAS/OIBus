@@ -1,14 +1,9 @@
 const AliveSignal = require('./AliveSignal.class')
+const Logger = require('./Logger.class')
 
 // Mock logger
-jest.mock('./Logger.class', () => (function logger() {
-  return {
-    info: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    silly: jest.fn(),
-  }
-}))
+jest.mock('./Logger.class')
+Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
 const engine = jest.genMockFromModule('./Engine.class')
