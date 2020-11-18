@@ -8,7 +8,7 @@ const ConfigService = require('./services/config.service.class')
 const Engine = require('./engine/Engine.class')
 const Logger = require('./engine/Logger.class')
 
-const logger = new Logger('main')
+const logger = new Logger()
 
 // used to pretty print memusage output
 const memStringify = ({ rss, heapTotal, heapUsed, external }) => (`

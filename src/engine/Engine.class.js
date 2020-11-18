@@ -58,7 +58,7 @@ class Engine {
 
     // Configure the logger
     this.logger = Logger.getDefaultLogger()
-    this.logger.changeParameters(engineConfig.logParameters, {}, this.constructor.name)
+    this.logger.changeParameters(engineConfig.logParameters)
 
     // Configure the Cache
     this.cache = new Cache(this)
