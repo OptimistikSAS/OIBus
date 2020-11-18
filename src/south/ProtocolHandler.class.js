@@ -1,9 +1,9 @@
 const fs = require('fs')
 const zlib = require('zlib')
 
-const Logger = require('../engine/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
+const Logger = require('../engine/Logger.class')
 
 /**
  * Class Protocol : provides general attributes and methods for protocols.
@@ -40,15 +40,19 @@ class ProtocolHandler {
   constructor(dataSource, engine) {
     this.dataSource = dataSource
     this.engine = engine
-    this.logger = new Logger(this.constructor.name)
     this.encryptionService = EncryptionService.getInstance()
     this.compressionLevel = 9
+    const { engineConfig } = this.engine.configService.getConfig()
+    this.engineConfig = engineConfig
+
+    const { logParameters } = this.dataSource
+    this.logger = new Logger()
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
   }
 
   async connect() {
     const { dataSourceId, protocol } = this.dataSource
-    const { engineConfig } = this.engine.configService.getConfig()
-    const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
     this.configDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }

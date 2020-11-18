@@ -27,17 +27,9 @@ jest.mock('net', () => {
 
   return { Socket }
 })
-// jest.mock('net')
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
 
 // Mock engine
 const engine = jest.createMockFromModule('../../engine/Engine.class')

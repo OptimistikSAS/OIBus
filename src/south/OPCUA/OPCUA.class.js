@@ -1,4 +1,5 @@
 const Opcua = require('node-opcua')
+
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
@@ -17,7 +18,9 @@ class OPCUA extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
+
     const { url, retryInterval, maxReadInterval } = dataSource.OPCUA
+
     this.url = url
     this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval

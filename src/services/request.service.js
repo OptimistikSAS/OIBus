@@ -11,7 +11,7 @@ const ProxyAgent = require('proxy-agent')
 const Logger = require('../engine/Logger.class')
 const ApiHandler = require('../north/ApiHandler.class')
 
-const logger = new Logger('request')
+const logger = Logger.getDefaultLogger()
 const retryStatusCodes = [400, 500]
 
 /**

@@ -11,6 +11,7 @@ import OIbTitle from './OIbTitle.jsx'
 import OIbAuthentication from './OIbAuthentication.jsx'
 import OIbTimezone from './OIbTimezone.jsx'
 import OIbCron from './OIbCron.jsx'
+import OIbLogLevel from './OIbLogLevel.jsx'
 
 export {
   OIbCheckBox,
@@ -26,4 +27,5 @@ export {
   OIbAuthentication,
   OIbTimezone,
   OIbCron,
+  OIbLogLevel,
 }
