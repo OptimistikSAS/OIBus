@@ -2,16 +2,11 @@ const fs = require('fs')
 const crypto = require('crypto')
 
 const EncryptionService = require('./EncryptionService.class')
+const Logger = require('../engine/Logger.class')
 
 // Mock logger
-jest.mock('../engine/Logger.class', () => (function logger() {
-  return {
-    info: jest.fn(),
-    error: jest.fn(),
-    silly: jest.fn(),
-    warn: jest.fn(),
-  }
-}))
+jest.mock('../engine/Logger.class')
+Logger.getDefaultLogger = () => new Logger()
 
 beforeEach(() => {
   jest.resetAllMocks()
