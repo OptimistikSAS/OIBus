@@ -18,11 +18,6 @@ class OPCHDA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { logParameters } = this.dataSource.OPCHDA
-
-    this.agentLogger = new Logger()
-    this.agentLogger.changeParameters(this.engineConfig.logParameters, logParameters, 'OIBusOPCHDA')
-
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
@@ -113,7 +108,7 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.child.stderr.on('data', (data) => {
-      this.agentLogger.error(`HDA stderr: ${data}`)
+      this.logger.error(`HDA stderr: ${data}`)
     })
 
     this.child.on('close', (code) => {
@@ -161,24 +156,24 @@ class OPCHDA extends ProtocolHandler {
       const message = `Agent stdout: ${parsedLog.Message}`
       switch (parsedLog.Level) {
         case 'error':
-          this.agentLogger.error(message)
+          this.logger.error(message)
           break
         case 'info':
-          this.agentLogger.info(message)
+          this.logger.info(message)
           break
         case 'debug':
-          this.agentLogger.debug(message)
+          this.logger.debug(message)
           break
         case 'silly':
-          this.agentLogger.silly(message)
+          this.logger.silly(message)
           break
         default:
-          this.agentLogger.debug(message)
+          this.logger.debug(message)
           break
       }
     } catch (error) {
       this.logger.error(error)
-      this.agentLogger.debug(`Agent stdout error: ${log}`)
+      this.logger.debug(`Agent stdout error: ${log}`)
     }
   }
 
