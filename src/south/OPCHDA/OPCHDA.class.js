@@ -2,7 +2,6 @@ const { spawn } = require('child_process')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
-const Logger = require('../../engine/Logger.class')
 
 /**
  * Class OPCHDA.
