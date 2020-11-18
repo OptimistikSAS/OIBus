@@ -21,7 +21,7 @@ class OPCHDA extends ProtocolHandler {
     const { logParameters } = this.dataSource.OPCHDA
 
     this.agentLogger = new Logger()
-    this.agentLogger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
+    this.agentLogger.changeParameters(this.engineConfig.logParameters, logParameters, 'OIBusOPCHDA')
 
     this.tcpServer = null
     this.transactionId = 0
