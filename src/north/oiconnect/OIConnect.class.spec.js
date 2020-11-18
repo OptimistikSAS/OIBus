@@ -4,14 +4,7 @@ const OIConnect = require('./OIConnect.class')
 const config = require('../../../tests/testConfig').default
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')

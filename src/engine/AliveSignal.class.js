@@ -12,7 +12,7 @@ class AliveSignal {
    */
   constructor(engine) {
     this.engine = engine
-    this.logger = new Logger(this.constructor.name)
+    this.logger = Logger.getDefaultLogger()
     const { engineConfig } = this.engine.configService.getConfig()
 
     const { enabled, host, endpoint, authentication, id, frequency, proxy = null, verbose = false } = engineConfig.aliveSignal

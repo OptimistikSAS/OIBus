@@ -8,7 +8,7 @@ class Queue {
   constructor() {
     this.queue = []
     this.run = false
-    this.logger = new Logger(this.constructor.name)
+    this.logger = Logger.getDefaultLogger()
   }
 
   clear() {

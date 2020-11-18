@@ -3,36 +3,16 @@ const config = require('../../config/defaultConfig.json')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// jest.mock('../../services/EncryptionService.class')
-// EncryptionService.mockImplementation(() => ({
-//   getInstance: () => ({
-//     decryptText: (password) => password,
-//   }),
-// }))
-
-// jest.mock('../../services/EncryptionService.class', () => {
-//   return jest.fn().mockImplementation(() => ({ decryptText: (password) => password }))
-// })
-// EncryptionService.getInstance = jest.fn().mockReturnValue({
-//   decryptText: jest.fn(),
-// })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => config.engine }
 engine.sendRequest = jest.fn()
+engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
   jest.resetAllMocks()
