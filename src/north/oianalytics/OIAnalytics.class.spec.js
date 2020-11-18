@@ -8,15 +8,7 @@ engine.sendRequest = jest.fn()
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 // Mock the logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: () => jest.fn(),
-    debug: () => jest.fn(),
-    info: () => jest.fn(),
-    error: () => jest.fn(),
-    warn: () => jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
 
 describe('oi-analytics', () => {
   const timestamp = new Date().toISOString()

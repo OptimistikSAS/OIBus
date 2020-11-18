@@ -1,12 +1,6 @@
 import Queue from './queue.class'
 // Mock logger
-jest.mock('../engine/Logger.class', () => (function logger() {
-  return {
-    info: jest.fn(),
-    error: jest.fn(),
-    silly: jest.fn(),
-  }
-}))
+jest.mock('../engine/Logger.class')
 
 describe('Queue services', () => {
   jest.useFakeTimers()

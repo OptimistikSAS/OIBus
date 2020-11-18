@@ -11,15 +11,7 @@ engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
 
 // Mock the logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: () => jest.fn(),
-    debug: () => jest.fn(),
-    info: () => jest.fn(),
-    error: () => jest.fn(),
-    warn: () => jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
 
 // Mock database service
 jest.mock('../../services/database.service')
