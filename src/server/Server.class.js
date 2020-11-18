@@ -26,7 +26,7 @@ class Server {
     this.app = new Koa()
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
-    this.app.logger = new Logger('server')
+    this.app.logger = Logger.getDefaultLogger()
 
     // Get the config entries
     const { engineConfig } = engine.configService.getConfig()

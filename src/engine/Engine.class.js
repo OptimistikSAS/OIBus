@@ -57,7 +57,7 @@ class Engine {
     const { engineConfig, southConfig } = this.configService.getConfig()
 
     // Configure the logger
-    this.logger = new Logger(this.constructor.name)
+    this.logger = Logger.getDefaultLogger()
     this.logger.changeParameters(engineConfig.logParameters)
 
     // Configure the Cache

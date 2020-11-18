@@ -2,6 +2,7 @@ const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
+
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
@@ -29,6 +30,7 @@ class MQTT extends ProtocolHandler {
       timeStampFormat,
       timeStampTimezone,
     } = this.dataSource.MQTT
+
     if (moment.tz.zone(timeStampTimezone)) {
       this.timezone = timeStampTimezone
     } else {

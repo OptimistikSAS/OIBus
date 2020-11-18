@@ -1,5 +1,6 @@
 const jsmodbus = require('jsmodbus')
 const net = require('net')
+
 const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
