@@ -47,7 +47,7 @@ class ProtocolHandler {
 
     const { logParameters } = this.dataSource
     this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters, this.constructor.name)
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
   }
 
   async connect() {
