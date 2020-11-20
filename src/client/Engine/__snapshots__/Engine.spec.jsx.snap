@@ -2275,6 +2275,12 @@ exports[`Engine check Engine 1`] = `
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
             </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
+            </p>
           </div>
         </div>
       </div>
@@ -4924,6 +4930,12 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           >
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
+            </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
             </p>
           </div>
         </div>
@@ -7862,6 +7874,12 @@ exports[`Engine check change engineName 1`] = `
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
             </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
+            </p>
           </div>
         </div>
       </div>
@@ -10788,6 +10806,12 @@ exports[`Engine check change password 1`] = `
           >
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
+            </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
             </p>
           </div>
         </div>
@@ -13716,6 +13740,12 @@ exports[`Engine check change port 1`] = `
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
             </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
+            </p>
           </div>
         </div>
       </div>
@@ -16642,6 +16672,12 @@ exports[`Engine check change user 1`] = `
           >
             <p>
               This component allows to send an alive signal on a given frequency to the chosen host.
+            </p>
+            <p>
+              The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+            </p>
+            <p>
+              You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
             </p>
           </div>
         </div>
