@@ -166,7 +166,7 @@ const sendWithFetch = async (engine, requestUrl, method, headers, proxy, data, t
   }
 
   const fetchOptions = {
-    method: 'POST',
+    method,
     headers,
     body,
     agent,
