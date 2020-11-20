@@ -123,7 +123,7 @@ class Engine {
     this.addValuesMessages = 0
     this.addValuesCount = 0
     this.addFileCount = 0
-    this.aliveSignalMessages = 0
+    this.forwardedAliveSignalMessages = 0
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
@@ -442,7 +442,7 @@ class Engine {
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
       addFileCount: this.addFileCount,
-      aliveSignalMessages: this.aliveSignalMessages,
+      forwardedAliveSignalMessages: this.forwardedAliveSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,
       filesErrorCount,
