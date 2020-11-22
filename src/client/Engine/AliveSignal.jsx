@@ -8,7 +8,15 @@ const AliveSignal = ({ onChange, aliveSignal }) => (
   <>
     <OIbTitle label="AliveSignal parameters">
       <>
-        <p>This component allows to send an alive signal on a given frequency to the chosen host.</p>
+        <p>
+          This component allows to send an alive signal on a given frequency to the chosen host.
+        </p>
+        <p>
+          The chosen host can also be an another OIBus instance which will forward the message based on its own AliveSignal configuration.
+        </p>
+        <p>
+          You can check the number of forwarded messages on the OIBus health status screen looking for the forwardedAliveSignalMessages field.
+        </p>
       </>
     </OIbTitle>
     <Row>
