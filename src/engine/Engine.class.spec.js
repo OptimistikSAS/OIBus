@@ -1,6 +1,8 @@
 const Engine = require('./Engine.class')
 const Logger = require('./Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
+const config = require('../config/defaultConfig.json')
+const ConfigService = require('../services/config.service.class')
 
 // Mock logger
 jest.mock('./Logger.class')
@@ -15,17 +17,35 @@ EncryptionService.getInstance = () => ({
   },
 })
 
+// Mock configService
+jest.createMockFromModule('../services/config.service.class')
+jest.mock('../services/config.service.class')
+
+const mockConfigService = { getConfig: jest.fn() }
+mockConfigService.getConfig.mockReturnValue({
+  engineConfig: config.engine,
+  southConfig: config.south,
+})
+
+ConfigService.mockImplementation(() => mockConfigService)
+
 beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
 })
 
-const engine = new Engine('src/tests/oibus win.json')
+const engine = new Engine('../config/defaultConfig.json')
 
 describe('Engine', () => {
   it('should be properly initialized', () => {
-    expect(engine)
-      .toMatchSnapshot()
+    expect(engine.addFileCount)
+      .toEqual(0)
+    expect(engine.addValuesCount)
+      .toEqual(0)
+    expect(engine.addValuesMessages)
+      .toEqual(0)
+    expect(engine.aliveSignal.enabled)
+      .toEqual(false)
   })
 
   it('should add values', async () => {
@@ -92,6 +112,7 @@ describe('Engine', () => {
 
     engine.cache.cacheValues = jest.fn()
     await engine.addValues('sourceId', sampleValues)
-    expect(engine.cache.cacheValues).toBeCalledWith('sourceId', sanitizedValues)
+    expect(engine.cache.cacheValues)
+      .toBeCalledWith('sourceId', sanitizedValues)
   })
 })
