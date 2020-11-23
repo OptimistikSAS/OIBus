@@ -133,12 +133,12 @@ class Engine {
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} dataSourceId - The South generating the value
-   * @param {array} values - array of values
+   * @param {object} values - array of values
    * @return {void}
    */
   async addValues(dataSourceId, values) {
     this.logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
-    const sanitizedValues = values.filter((value) => !(value?.data?.value ?? false))
+    const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
     await this.cache.cacheValues(dataSourceId, sanitizedValues)
   }
 
