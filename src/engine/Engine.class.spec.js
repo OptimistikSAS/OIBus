@@ -20,7 +20,7 @@ beforeEach(() => {
   jest.useFakeTimers()
 })
 
-const engine = new Engine('../../tests/oibus_win.json')
+const engine = new Engine('/tests/oibus_win.json')
 
 describe('Engine', () => {
   it('should be properly initialized', () => {
