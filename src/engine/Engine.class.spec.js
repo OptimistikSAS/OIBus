@@ -20,12 +20,14 @@ beforeEach(() => {
   jest.useFakeTimers()
 })
 
-const engine = new Engine('../../tests/oibus win.json')
+const engine = new Engine('../../tests/oibus_win.json')
 
 describe('Engine', () => {
   it('should be properly initialized', () => {
-    expect(engine)
-      .toMatchSnapshot()
+    expect(engine.addFileCount).toEqual(0)
+    expect(engine.addValuesCount).toEqual(0)
+    expect(engine.addValuesMessages).toEqual(0)
+    expect(engine.aliveSignal.enabled).toEqual(false)
   })
 
   it('should add values', async () => {
