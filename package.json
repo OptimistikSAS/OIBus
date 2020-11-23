@@ -1,10 +1,9 @@
 {
   "name": "oibus",
-  "private": true,
-  "version": "0.7.1",
+  "version": "0.7.3-dev",
   "main": "index.js",
-  "author": "Optimistik",
-  "license": "SEE LICENSE in LICENSE",
+  "author": "Optimistik SAS",
+  "license": "EUPL",
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
     "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
@@ -38,7 +37,7 @@
     "@koa/cors": "3.1.0",
     "@koa/multer": "3.0.0",
     "@koa/router": "10.0.0",
-    "aws-sdk": "2.797.0",
+    "aws-sdk": "2.798.0",
     "axios": "0.21.0",
     "basic-auth": "2.0.1",
     "bootstrap-less-port": "2.3.1",
@@ -86,8 +85,8 @@
     "winston-transport": "4.4.0"
   },
   "devDependencies": {
-    "@babel/cli": "7.12.7",
-    "@babel/core": "7.12.7",
+    "@babel/cli": "7.12.8",
+    "@babel/core": "7.12.8",
     "@babel/plugin-proposal-class-properties": "7.12.1",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.12.1",
     "@babel/plugin-proposal-optional-chaining": "7.12.7",
