@@ -3,13 +3,13 @@
 | ----------- | ----------- |
 | **release**   | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=release)        |
 
-## Overall workflow
-
-* The Engine is what holds everything together : its start method is like a pseudo-constructor, it creates and then stores every Protocol, Application that will be used to receive and treat the data.
-
-* The index reads the config file, instanciates the unique Engine and runs its start method which will also create the CronJobs to call the onScan() methods on the right time and for the right points.
-
-* The onScan() methods are what run the services : protocols' onScan() will make the data requests to the right data sources and store it in the queues ; applications' onScan will retrieve the data in their own queue to treat it however they need to.
+## Introduction
+* OIBus is intended to simplify the data collection. We felt we had a missing piece between NodeRed and commercial products for a tool able to solve most of the common requirements for industrial communications and very easy to setup.
+ 
+* OIBus is composed of 3 layers. 
+- The **Engine** that orchestrates everything and is configured through an admin interface
+- Several **South** handlers that will manage a given protocol (OPCUA, MQTT, Modbus, ...)
+- Several **North** handlers that will be able to transfer the information to application such as OIAnalytics, Rest API, Timeseries databases, etc.. 
 
 ## Build and deploy step
 
@@ -18,6 +18,18 @@
 * To release (should be run on the release branch after correct merge) run `npm version {major | minor |patch}` this will trigger a full build zip the content of each distribution folder and upload in S3 (you should have s3 credentials properly configured on the build machine) 
 
 ## History
+# 0.7.3
+**OIBus is changing into an open source license. EUPL V1.2**
+## Improvements 
+- Modbus South Handler has been refreshed and tested.
+- Logger is now giving the filename and the line number
+- Each Handler can now specify is own level of log (Error, Warning, ...) or default to same level as the Engine.
+## Fixes
+- Alive Signal online help has been clarified
+- CSV import/export has been refactored
+
+# 0.7.2
+- same as 0.7.1 (publish error)
 # 0.7.1
 ## Improvements
 - UI improvements to insure unicity of scanModes and scanGroups
