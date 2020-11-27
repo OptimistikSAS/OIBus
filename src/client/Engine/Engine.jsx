@@ -57,7 +57,8 @@ const Engine = () => {
               name="engine.engineName"
               label="Engine name"
               value={newConfig.engine.engineName}
-              defaultValue="false"
+              valid={validation.engine.engineName}
+              defaultValue="OIBus"
               onChange={onChange}
               help={<div>The name for the OIBus</div>}
             />
