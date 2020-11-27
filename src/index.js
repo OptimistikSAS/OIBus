@@ -8,9 +8,12 @@ const ConfigService = require('./services/config.service.class')
 const Engine = require('./engine/Engine.class')
 const Logger = require('./engine/Logger.class')
 
+const MAX_RESTART_COUNT = 3
+const MAX_INTERVAL_MILLISECOND = 30 * 1000
+
 const logger = new Logger()
 
-// used to pretty print memusage output
+// used to pretty print memory usage output
 const memStringify = ({ rss, heapTotal, heapUsed, external }) => (`
   rss: ${Number(rss / 1024 / 1024).toFixed(2)}
   heapTotal: ${Number(heapTotal / 1024 / 1024).toFixed(2)}
@@ -22,6 +25,10 @@ if (cluster.isMaster) {
   // Master role is nothing except launching a worker and relaunching another
   // one if exit is detected (typically to load a new configuration)
   logger.info(`Starting OIBus version: ${VERSION}`)
+
+  let restartCount = 0
+  let startTime = (new Date()).getTime()
+
   cluster.fork()
 
   cluster.on('exit', (sourceWorker, code, signal) => {
@@ -31,7 +38,17 @@ if (cluster.isMaster) {
       logger.error(`Worker ${sourceWorker.process.pid} exited with error code: ${code}`)
     }
 
-    cluster.fork()
+    // Check if we got a restart loop and go in safe mode
+    restartCount += code > 0 ? 1 : 0
+    const safeMode = restartCount >= MAX_RESTART_COUNT
+
+    const endTime = (new Date()).getTime()
+    if (safeMode || ((endTime - startTime) > MAX_INTERVAL_MILLISECOND)) {
+      restartCount = 0
+      startTime = endTime
+    }
+
+    cluster.fork({ SAFE_MODE: `${safeMode}` })
   })
   // Handle messages from the worker
   cluster.on('message', (_worker, msg) => {
@@ -57,7 +74,7 @@ if (cluster.isMaster) {
   // this condition is reached only for a worker (i.e. not master)
   // so this is here where we execute the OIBus Engine
   const engine = new Engine(configFile)
-  engine.start()
+  engine.start(process.env.SAFE_MODE === 'true')
 
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {

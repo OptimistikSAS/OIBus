@@ -127,6 +127,9 @@ class Engine {
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
+
+    // Safe mode
+    this.safeMode = engineConfig.safeMode
   }
 
   /**
@@ -196,13 +199,20 @@ class Engine {
   /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
+   *
+   * @param {boolean} safeMode - Whether to start in safe mode
    * @return {void}
    */
-  start() {
+  start(safeMode = false) {
     const { southConfig, northConfig, engineConfig } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
     server.listen()
+
+    if (this.safeMode || safeMode) {
+      this.logger.info('Starting in safe mode!')
+      return
+    }
 
     // 2. start Protocol for each data sources
     southConfig.dataSources.forEach((dataSource) => {
@@ -270,6 +280,10 @@ class Engine {
    * @return {void}
    */
   async stop() {
+    if (this.safeMode) {
+      return
+    }
+
     // Stop AliveSignal
     this.aliveSignal.stop()
 
@@ -309,7 +323,7 @@ class Engine {
     await this.stop()
 
     setTimeout(() => {
-      process.exit(1)
+      process.exit(0)
     }, timeout)
   }
 

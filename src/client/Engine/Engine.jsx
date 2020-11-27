@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Col, Row, Form, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
 import { ConfigContext } from '../context/configContext.jsx'
-import { OIbInteger, OIbText, OIbPassword, OIbTitle } from '../components/OIbForm'
+import { OIbInteger, OIbText, OIbPassword, OIbTitle, OIbCheckBox } from '../components/OIbForm'
 import Filters from './Filters.jsx'
 import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
@@ -45,6 +45,9 @@ const Engine = () => {
                 password, you need to access the OIbus server and remove the password key in the OIBus configuration
                 file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </>
         </OIbTitle>
@@ -54,8 +57,7 @@ const Engine = () => {
               name="engine.engineName"
               label="Engine name"
               value={newConfig.engine.engineName}
-              valid={validation.engine.engineName}
-              defaultValue="OIBus"
+              defaultValue="false"
               onChange={onChange}
               help={<div>The name for the OIBus</div>}
             />
@@ -92,6 +94,18 @@ const Engine = () => {
               valid={validation.engine.password}
               value={newConfig.engine.password}
               help={<div>The password of the Admin user</div>}
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={2}>
+            <OIbCheckBox
+              name="engine.safeMode"
+              label="Safe mode"
+              value={newConfig.engine.safeMode}
+              defaultValue={false}
+              onChange={onChange}
+              help={<div>When safe mode is active OIBus only starts the web server for configuration</div>}
             />
           </Col>
         </Row>
