@@ -159,11 +159,6 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             >
               every1Min
             </option>
-            <option
-              value="listen"
-            >
-              listen
-            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -4447,11 +4442,6 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             >
               every1Min
             </option>
-            <option
-              value="listen"
-            >
-              listen
-            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6529,11 +6519,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     >
                       every1Min
                     </option>
-                    <option
-                      value="listen"
-                    >
-                      listen
-                    </option>
                   </select>
                   <div
                     class="invalid-feedback"
@@ -6664,11 +6649,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       value="every1Min"
                     >
                       every1Min
-                    </option>
-                    <option
-                      value="listen"
-                    >
-                      listen
                     </option>
                   </select>
                   <div

@@ -112,20 +112,6 @@ describe('OIbCron', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check change cron type to listen', () => {
-    const onChange = jest.fn()
-    act(() => {
-      ReactDOM.render(<OIbCron
-        name="name"
-        value="* * * /10"
-        onChange={onChange}
-      />, container)
-    })
-    Simulate.change(document.getElementById('name.type'), { target: { value: 'listen', selectedIndex: 2 } })
-    expect(onChange).toBeCalledWith('name', 'listen', null)
-    expect(container).toMatchSnapshot()
-  })
-
   test('check change cron type to custom', () => {
     const onChange = jest.fn()
     act(() => {
@@ -199,11 +185,11 @@ describe('OIbCron', () => {
     act(() => {
       ReactDOM.render(<OIbCron
         name="name"
-        value="listen"
+        value="custom"
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('name.type'), { target: { value: 'listen', selectedIndex: 2 } })
+    Simulate.change(document.getElementById('name.type'), { target: { value: 'custom', selectedIndex: 1 } })
     expect(container).toMatchSnapshot()
   })
 })

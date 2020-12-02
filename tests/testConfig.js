@@ -20,7 +20,6 @@ const testConfig = {
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },
       { scanMode: 'every1Min', cronTime: '* * * * *' },
-      { scanMode: 'listen', cronTime: 'listen' },
     ],
     proxies: [
       {
@@ -78,8 +77,8 @@ const testConfig = {
           timeStampTimezone: 'Europe/Paris',
         },
         points: [
-          { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'listen', topic: 'temperatureTank1' },
-          { pointId: '/fttest.base/Tank 6.tank/Sensor23.temperature', scanMode: 'listen', topic: 'temperatureTank2' },
+          { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'every1Min', topic: 'temperatureTank1' },
+          { pointId: '/fttest.base/Tank 6.tank/Sensor23.temperature', scanMode: 'every1Min', topic: 'temperatureTank2' },
         ],
       },
       {
