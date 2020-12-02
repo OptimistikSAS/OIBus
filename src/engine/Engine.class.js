@@ -54,7 +54,7 @@ class Engine {
     this.version = VERSION
 
     this.configService = new ConfigService(this, configFile)
-    const { engineConfig, southConfig } = this.configService.getConfig()
+    const { engineConfig } = this.configService.getConfig()
 
     // Configure the logger
     this.logger = Logger.getDefaultLogger()
@@ -76,43 +76,6 @@ class Engine {
     this.encryptionService.setKeyFolder(this.configService.keyFolder)
     this.encryptionService.checkOrCreatePrivateKey()
 
-    // prepare config
-    // Associate the scanMode to all corresponding data sources
-    // so the engine will know which datasource to activate when a
-    // scanMode has a tick.
-
-    // initialize the scanLists with empty arrays
-    this.scanLists = {}
-    engineConfig.scanModes.forEach(({ scanMode }) => {
-      this.scanLists[scanMode] = []
-    })
-
-    // browse config file for the various dataSource and points and build the object scanLists
-    // with the list of dataSource to activate for each ScanMode.
-    southConfig.dataSources.forEach((dataSource) => {
-      if (dataSource.enabled) {
-        if (dataSource.scanMode) {
-          if (!this.scanLists[dataSource.scanMode]) {
-            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
-          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
-            // add the source for this scan only if not already there
-            this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
-          }
-        } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
-          dataSource.points.forEach((point) => {
-            if (!this.scanLists[point.scanMode]) {
-              this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
-            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
-              // add the source for this scan only if not already there
-              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
-            }
-          })
-        } else {
-          this.logger.error(` dataSource: ${dataSource.dataSourceId} has no scan mode defined`)
-        }
-      }
-    })
-    this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
@@ -124,9 +87,6 @@ class Engine {
     this.addValuesCount = 0
     this.addFileCount = 0
     this.forwardedAliveSignalMessages = 0
-
-    // AliveSignal
-    this.aliveSignal = new AliveSignal(this)
   }
 
   /**
@@ -245,7 +205,46 @@ class Engine {
     // 4. Initiate the cache
     this.cache.initialize(this.activeApis)
 
-    // 5. start the timers for each scan modes
+    // 5. Initialize scan lists
+
+    // Associate the scanMode to all corresponding data sources
+    // so the engine will know which datasource to activate when a
+    // scanMode has a tick.
+
+    // Initialize the scanLists with empty arrays
+    this.scanLists = {}
+    engineConfig.scanModes.forEach(({ scanMode }) => {
+      this.scanLists[scanMode] = []
+    })
+
+    // Browse config file for the various dataSource and points and build the object scanLists
+    // with the list of dataSource to activate for each ScanMode.
+    southConfig.dataSources.forEach((dataSource) => {
+      if (dataSource.enabled) {
+        if (dataSource.scanMode) {
+          if (!this.scanLists[dataSource.scanMode]) {
+            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
+          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+            // add the source for this scan only if not already there
+            this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
+          }
+        } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
+          dataSource.points.forEach((point) => {
+            if (!this.scanLists[point.scanMode]) {
+              this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
+            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+              // add the source for this scan only if not already there
+              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+            }
+          })
+        } else {
+          this.logger.error(` dataSource: ${dataSource.dataSourceId} has no scan mode defined`)
+        }
+      }
+    })
+    this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
+
+    // 6. Start the timers for each scan modes
     engineConfig.scanModes.forEach(({ scanMode, cronTime }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
@@ -266,7 +265,8 @@ class Engine {
       }
     })
 
-    // 6. Start AliveSignal
+    // 7. Start AliveSignal
+    this.aliveSignal = new AliveSignal(this)
     this.aliveSignal.start()
 
     this.logger.info('OIBus started')
