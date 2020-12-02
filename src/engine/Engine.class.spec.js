@@ -44,8 +44,6 @@ describe('Engine', () => {
       .toEqual(0)
     expect(engine.addValuesMessages)
       .toEqual(0)
-    expect(engine.aliveSignal.enabled)
-      .toEqual(false)
   })
 
   it('should add values', async () => {

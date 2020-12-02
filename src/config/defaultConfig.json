@@ -5,6 +5,7 @@
     "user": "admin",
     "password": "",
     "filter": ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
+    "safeMode": true,
     "logParameters": {
       "consoleLevel": "debug",
       "fileLevel": "debug",
@@ -69,5 +70,5 @@
   "north": {
     "applications": []
   },
-  "schemaVersion": 9
+  "schemaVersion": 17
 }

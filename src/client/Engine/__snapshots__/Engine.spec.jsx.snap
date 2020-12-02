@@ -80,6 +80,9 @@ exports[`Engine check Engine 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -225,6 +228,13 @@ exports[`Engine check Engine 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -3013,6 +3023,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -3158,6 +3171,13 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -5679,6 +5699,9 @@ exports[`Engine check change engineName 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -5824,6 +5847,13 @@ exports[`Engine check change engineName 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -8612,6 +8642,9 @@ exports[`Engine check change password 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -8757,6 +8790,13 @@ exports[`Engine check change password 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -11545,6 +11585,9 @@ exports[`Engine check change port 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -11690,6 +11733,13 @@ exports[`Engine check change port 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -14478,6 +14528,9 @@ exports[`Engine check change user 1`] = `
               <li>
                 The user name and password that will be used to access this console. Make sure the default password is changed to avoid unauthorized access. The password is encrypted with a local private key. To reset the password, you need to access the OIbus server and remove the password key in the OIBus configuration file. It will reset to the default password that will have to be changed.
               </li>
+              <li>
+                With safe mode enabled OIBus will start only the web server for configuration.
+              </li>
             </ul>
           </div>
         </div>
@@ -14623,6 +14676,13 @@ exports[`Engine check change user 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
