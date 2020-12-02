@@ -167,7 +167,7 @@ class Engine {
     server.listen()
 
     if (engineConfig.safeMode || safeMode) {
-      this.logger.info('Starting in safe mode!')
+      this.logger.warn('Starting in safe mode!')
       return
     }
 
