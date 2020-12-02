@@ -127,9 +127,6 @@ class Engine {
 
     // AliveSignal
     this.aliveSignal = new AliveSignal(this)
-
-    // Safe mode
-    this.safeMode = engineConfig.safeMode
   }
 
   /**
@@ -209,7 +206,7 @@ class Engine {
     const server = new Server(this)
     server.listen()
 
-    if (this.safeMode || safeMode) {
+    if (engineConfig.safeMode || safeMode) {
       this.logger.info('Starting in safe mode!')
       return
     }
