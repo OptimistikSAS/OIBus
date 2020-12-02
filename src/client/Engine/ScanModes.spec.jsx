@@ -65,11 +65,11 @@ describe('ScanModes', () => {
         scanModes={testConfig.engine.scanModes}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'listen' } })
+    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'every1Min' } })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'engine.scanModes.0.scanMode',
-      value: 'listen',
+      value: 'every1Min',
       validity: 'Scan mode already exists',
     })
     expect(container).toMatchSnapshot()
