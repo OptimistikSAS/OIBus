@@ -40,6 +40,7 @@ if (cluster.isMaster) {
 
     // Check if we got a restart loop and go in safe mode
     restartCount += code > 0 ? 1 : 0
+    logger.info(`Restart count: ${restartCount}`)
     const safeMode = restartCount >= MAX_RESTART_COUNT
 
     const endTime = (new Date()).getTime()
