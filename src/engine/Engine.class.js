@@ -277,7 +277,9 @@ class Engine {
    * @return {void}
    */
   async stop() {
-    if (this.safeMode) {
+    const { engineConfig } = this.configService.getConfig()
+
+    if (engineConfig.safeMode) {
       return
     }
 
