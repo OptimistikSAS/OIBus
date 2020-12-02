@@ -382,8 +382,6 @@ class Engine {
    */
   getMemoryUsage() {
     const memoryUsage = process.memoryUsage()
-    // ask the Master Cluster to also log memory usage
-    process.send({ type: 'logMemoryUsage', memoryUsage })
     Object.entries(memoryUsage).forEach(([key, value]) => {
       if (!Object.keys(this.memoryStats).includes(key)) {
         this.memoryStats[key] = {
