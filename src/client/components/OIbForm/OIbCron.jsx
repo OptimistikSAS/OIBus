@@ -5,7 +5,7 @@ import OIbSelect from './OIbSelect.jsx'
 
 const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) => {
   const intervals = ['year', 'month', 'day', 'hour', 'minute', 'sec', 'msec']
-  const options = ['every', 'custom', 'listen']
+  const options = ['every', 'custom']
   const commonOptions = [
     {
       every: '*',
@@ -81,7 +81,6 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
 
   // get current type based on value
   const currentType = () => {
-    if (value === 'listen') return 'listen'
     if (specificInterval) return 'every'
     return 'custom'
   }
@@ -105,9 +104,6 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
           break
         case 'custom':
           onChange(name, '', valid(''))
-          break
-        case 'listen':
-          onChange(name, 'listen', valid('listen'))
           break
         default:
           break
