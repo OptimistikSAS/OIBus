@@ -147,11 +147,6 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -219,11 +214,6 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -290,11 +280,6 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -597,11 +582,6 @@ exports[`ConfigurePoints check add new point 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -669,11 +649,6 @@ exports[`ConfigurePoints check add new point 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -740,11 +715,6 @@ exports[`ConfigurePoints check add new point 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -1047,11 +1017,6 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1119,11 +1084,6 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1190,11 +1150,6 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -1497,11 +1452,6 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1569,11 +1519,6 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1640,11 +1585,6 @@ exports[`ConfigurePoints check delete all points 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -1947,11 +1887,6 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2019,11 +1954,6 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2090,11 +2020,6 @@ exports[`ConfigurePoints check delete first point 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -2397,11 +2322,6 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2469,11 +2389,6 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2540,11 +2455,6 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -2847,11 +2757,6 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2919,11 +2824,6 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2990,11 +2890,6 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -3297,11 +3192,6 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -3369,11 +3259,6 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -3440,11 +3325,6 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -3747,11 +3627,6 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -3819,11 +3694,6 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -3890,11 +3760,6 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -4197,11 +4062,6 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -4269,11 +4129,6 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -4340,11 +4195,6 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -4647,11 +4497,6 @@ exports[`ConfigurePoints check export points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -4719,11 +4564,6 @@ exports[`ConfigurePoints check export points 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -4790,11 +4630,6 @@ exports[`ConfigurePoints check export points 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -5097,11 +4932,6 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -5169,11 +4999,6 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -5240,11 +5065,6 @@ exports[`ConfigurePoints check import points file input 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -5547,11 +5367,6 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -5619,11 +5434,6 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -5690,11 +5500,6 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -5997,11 +5802,6 @@ exports[`ConfigurePoints check import points press 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -6069,11 +5869,6 @@ exports[`ConfigurePoints check import points press 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -6140,11 +5935,6 @@ exports[`ConfigurePoints check import points press 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -6447,11 +6237,6 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -6519,11 +6304,6 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -6590,11 +6370,6 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -6897,11 +6672,6 @@ exports[`ConfigurePoints check import points success 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -6969,11 +6739,6 @@ exports[`ConfigurePoints check import points success 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -7040,11 +6805,6 @@ exports[`ConfigurePoints check import points success 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
@@ -7507,11 +7267,6 @@ exports[`ConfigurePoints check pagination 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -7579,11 +7334,6 @@ exports[`ConfigurePoints check pagination 1`] = `
                 >
                   every1Min
                 </option>
-                <option
-                  value="listen"
-                >
-                  listen
-                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -7650,11 +7400,6 @@ exports[`ConfigurePoints check pagination 1`] = `
                   value="every1Min"
                 >
                   every1Min
-                </option>
-                <option
-                  value="listen"
-                >
-                  listen
                 </option>
               </select>
               <div
