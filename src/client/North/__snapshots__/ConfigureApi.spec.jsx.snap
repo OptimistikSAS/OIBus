@@ -506,7 +506,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             id="north.applications.1.OIConnect.host"
             name="north.applications.1.OIConnect.host"
             type="text"
-            value="http://localhost:2223"
+            value="http://hostname:2223"
           />
           <div
             class="invalid-feedback"
@@ -1606,7 +1606,7 @@ exports[`ConfigureApi check update 1`] = `
             id="north.applications.1.OIConnect.host"
             name="north.applications.1.OIConnect.host"
             type="text"
-            value="http://localhost:2223"
+            value="http://hostname:2223"
           />
           <div
             class="invalid-feedback"

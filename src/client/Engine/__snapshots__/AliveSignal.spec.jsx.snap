@@ -107,7 +107,7 @@ exports[`AliveSignal check AliveSignal 1`] = `
           id="engine.aliveSignal.host"
           name="engine.aliveSignal.host"
           type="text"
-          value="https://demo.host"
+          value="https://hostname"
         />
         <div
           class="invalid-feedback"
@@ -514,7 +514,7 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
           id="engine.aliveSignal.host"
           name="engine.aliveSignal.host"
           type="text"
-          value="https://demo.host"
+          value="https://hostname"
         />
         <div
           class="invalid-feedback"

@@ -1251,7 +1251,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             id="south.dataSources.0.MQTT.url"
             name="south.dataSources.0.MQTT.url"
             type="text"
-            value="mqtt://simulator.factorythings.com:1883"
+            value="mqtt://hostname:1883"
           />
           <div
             class="invalid-feedback"
@@ -3625,7 +3625,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
-            value="http://35.180.153.134"
+            value="http://hostname"
           />
           <div
             class="invalid-feedback"
@@ -4236,7 +4236,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             id="south.dataSources.0.Modbus.host"
             name="south.dataSources.0.Modbus.host"
             type="text"
-            value="http://35.180.153.134"
+            value="http://hostname"
           />
           <div
             class="invalid-feedback"
