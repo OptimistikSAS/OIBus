@@ -554,7 +554,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             id="north.applications.0.OIAnalytics.host"
             name="north.applications.0.OIAnalytics.host"
             type="text"
-            value="https://demo.oianalytics.fr"
+            value="https://hostname"
           />
           <div
             class="invalid-feedback"
@@ -3251,7 +3251,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             id="north.applications.0.OIConnect.host"
             name="north.applications.0.OIConnect.host"
             type="text"
-            value="http://localhost:2223"
+            value="http://hostname:2223"
           />
           <div
             class="invalid-feedback"
@@ -4369,7 +4369,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             id="north.applications.0.MQTTNorth.url"
             name="north.applications.0.MQTTNorth.url"
             type="text"
-            value="mqtt://simulator.factorythings.com:1883"
+            value="mqtt://hostname:1883"
           />
           <div
             class="invalid-feedback"
