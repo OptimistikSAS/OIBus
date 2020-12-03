@@ -3,8 +3,12 @@
 | ----------- | ----------- |
 | **release**   | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=release)        |
 
+#
+
+![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/logo-OIBus.png)
+
 ## Introduction
-* OIBus is intended to simplify the data collection. We felt we had a missing piece between NodeRed and commercial products for a tool able to solve most of the common requirements for industrial communications and very easy to setup.
+* OIBus is intended to simplify the data collection. We felt we had a missing piece between NodeRed and proprietary products for a tool able to solve most of the common requirements for industrial communications and very easy to setup.
  
 * OIBus is composed of 3 layers. 
 - The **Engine** that orchestrates everything and is configured through an admin interface
