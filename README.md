@@ -5,7 +5,7 @@
 
 #
 
-![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/logo-OIBus.png)
+![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/OIBus.png)
 
 ## Introduction
 * OIBus is intended to simplify the data collection. We felt we had a missing piece between NodeRed and proprietary products for a tool able to solve most of the common requirements for industrial communications and very easy to setup.
