@@ -342,6 +342,26 @@ const testConfig = {
         },
         subscribedTo: [],
       },
+      {
+        applicationId: 'WATSYConnect',
+        api: 'WATSYConnect',
+        enabled: false,
+        WATSYConnect: {
+          MQTTUrl: 'mqtt://hostname',
+          port: 1883,
+          username: 'anyuser',
+          password: 'anypass',
+          applicativeHostUrl: 'https://localhost.com', // Random path
+          secretKey: 'anytoken',
+        },
+        caching: {
+          sendInterval: 1000,
+          retryInterval: 5000,
+          groupCount: 10000,
+          maxSendCount: 10000,
+        },
+        subscribedTo: [],
+      },
     ],
   },
   schemaVersion: 5,
