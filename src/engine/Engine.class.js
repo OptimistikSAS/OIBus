@@ -62,6 +62,8 @@ class Engine {
 
     // Configure the Cache
     this.cache = new Cache(this)
+    this.cache.initialize()
+
     this.logger.info(`
     Starting Engine ${this.version}
     architecture: ${process.arch}
@@ -160,7 +162,7 @@ class Engine {
    * @param {boolean} safeMode - Whether to start in safe mode
    * @return {void}
    */
-  start(safeMode = false) {
+  async start(safeMode = false) {
     const { southConfig, northConfig, engineConfig } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
@@ -202,8 +204,8 @@ class Engine {
       }
     })
 
-    // 4. Initiate the cache
-    this.cache.initialize(this.activeApis)
+    // 4. Initiate the cache for every North
+    await this.cache.initializeApis(this.activeApis)
 
     // 5. Initialize scan lists
 
