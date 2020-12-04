@@ -44,10 +44,10 @@ class WATSYConnect extends ApiHandler {
     const { MQTTUrl, port, username, password, applicativeHostUrl, secretKey } = this.application.WATSYConnect
     this.url = `${MQTTUrl}:${port}`
     this.username = username
-    this.password = Buffer.from(this.decryptPassword(password))
+    this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.qos = 1
     this.host = applicativeHostUrl
-    this.token = this.decryptPassword(secretKey)
+    this.token = this.encryptionService.decryptText(secretKey)
 
     this.splitMessageTimeout = this.application.caching.sendInterval // in ms
     this.OIBUSName = this.engine.configService.getConfig().engineConfig.engineName

@@ -1,16 +1,15 @@
 const mqtt = require('mqtt')
 const WATSYConnect = require('./WATSYConnect.class')
 const config = require('../../../tests/testConfig').default
+const Logger = require('../../engine/Logger.class')
+const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
-jest.mock('../../engine/Logger.class', () => (function logger() {
-  return {
-    silly: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-  }
-}))
+jest.mock('../../engine/Logger.class')
+Logger.getDefaultLogger = () => new Logger()
+
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
