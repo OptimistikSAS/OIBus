@@ -87,7 +87,17 @@ class Cache {
    * @param {object} activeApis - The active North applications
    * @return {void}
    */
-  async initialize(activeApis) {
+  async initializeApis(activeApis) {
+    // initialize the internal object apis with the list of north apis
+    const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
+    await Promise.all(actions)
+  }
+
+  /**
+   * Initialize the cache by creating a database files and value errors.
+   * @return {void}
+   */
+  async initialize() {
     this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
     this.filesErrorDatabase = await databaseService.createFilesDatabase(this.filesErrorDatabasePath)
@@ -95,9 +105,6 @@ class Cache {
     this.logger.debug(`Files db count: ${await databaseService.getCount(this.filesDatabase)}`)
     this.logger.debug(`Files error db count: ${await databaseService.getCount(this.filesErrorDatabase)}`)
     this.logger.debug(`Values error db count: ${await databaseService.getCount(this.valuesErrorDatabase)}`)
-    // initialize the internal object apis with the list of north apis
-    const actions = Object.values(activeApis).map((activeApi) => this.initializeApi(activeApi))
-    await Promise.all(actions)
   }
 
   /**
