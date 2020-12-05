@@ -13,8 +13,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 14.x
-    - name: Authenticate with GitHub package registry
-      run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.OICONVERT_TOKEN }}" > ~/.npmrc
     - name: npm install, test and lint
       run: |
         npm ci
