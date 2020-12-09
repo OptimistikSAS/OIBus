@@ -1,6 +1,6 @@
 {
   "name": "oibus",
-  "version": "0.7.3-dev",
+  "version": "0.7.3",
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
@@ -19,7 +19,8 @@
     "test": "jest --coverage",
     "lint": "eslint src --ext .jsx --ext .js",
     "version": "npm run build && gulp build-archives",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "release": "standard-version -i CHANGELOG.md && git push --follow-tags origin"
   },
   "keywords": [
     "Optimistik"
@@ -124,6 +125,7 @@
     "pkg": "4.4.9",
     "react-test-renderer": "17.0.1",
     "rimraf": "3.0.2",
+    "standard-version": "^9.0.0",
     "style-loader": "2.0.0",
     "url-loader": "4.1.1",
     "webpack": "5.6.0",
