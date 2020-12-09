@@ -1,0 +1,45 @@
+name: release
+on:
+  workflow_dispatch:
+jobs:
+  release-master:
+    name: 'Release master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
+      - name: Bump version
+        id: standard-version
+        run: |
+          git config --global user.name 'optimistik-actions'
+          git config --global user.email 'optimistiksas@users.noreply.github.com'
+          npm ci
+          npm run release
+          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
+
+      - name: Create github release
+        id: create-release
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.REPO_ACCESS_TOKEN}} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
+          script: |
+            var fs = require('fs');
+            var changelog = fs.readFileSync('./CHANGELOG.md');
+            const release = await github.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `${{ steps.standard-version.outputs.version-tag }}`,
+              name: `${{ steps.standard-version.outputs.version-tag }}`,
+              body: `${changelog}`,
+              prerelease: false
+            });
+            return release.data
