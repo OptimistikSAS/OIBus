@@ -29,10 +29,11 @@ class FolderScanner extends ProtocolHandler {
   }
 
   async connect() {
-    await super.connect()
+    const { dataSourceId, protocol } = this.dataSource
+    this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
     if (this.preserveFiles) {
       const { engineConfig } = this.engine.configService.getConfig()
-      const databasePath = `${engineConfig.caching.cacheFolder}/${this.dataSource.dataSourceId}.db`
+      const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
       this.database = await databaseService.createFolderScannerDatabase(databasePath)
     }
   }
