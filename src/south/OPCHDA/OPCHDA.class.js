@@ -53,7 +53,7 @@ class OPCHDA extends ProtocolHandler {
       const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
 
       Object.keys(this.lastCompletedAt).forEach(async (key) => {
-        let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${key}`)
+        let lastCompletedAt = await this.getConfig(`lastCompletedAt-${key}`)
         lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
         this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
         this.lastCompletedAt[key] = lastCompletedAt
@@ -324,7 +324,7 @@ class OPCHDA extends ProtocolHandler {
 
           dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
           this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
-          await this.upsertConfigDb(
+          await this.setConfig(
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group],
           )

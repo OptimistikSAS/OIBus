@@ -66,7 +66,7 @@ class OPCUA extends ProtocolHandler {
     for (const scanGroup of Object.keys(this.lastCompletedAt)) {
       // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
       // eslint-disable-next-line no-await-in-loop
-      let lastCompletedAt = await this.getConfigDb(`lastCompletedAt-${scanGroup}`)
+      let lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanGroup}`)
       lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
       this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
       this.lastCompletedAt[scanGroup] = lastCompletedAt
@@ -225,7 +225,7 @@ class OPCUA extends ProtocolHandler {
         opcStartTime = intervalOpcEndTime
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
-      await this.upsertConfigDb(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
       this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)

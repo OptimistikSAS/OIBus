@@ -52,25 +52,6 @@ const createFilesDatabase = async (databasePath) => {
  * @param {string} databasePath - The database file path
  * @return {BetterSqlite3.Database} - The SQLite3 database
  */
-const createFolderScannerDatabase = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
-
-  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
-                   id INTEGER PRIMARY KEY,
-                   filename TEXT UNIQUE,
-                   modified INTEGER
-                 );`
-  const stmt = await database.prepare(query)
-  await stmt.run()
-
-  return database
-}
-
-/**
- * Initiate SQLite3 database and create the cache table.
- * @param {string} databasePath - The database file path
- * @return {BetterSqlite3.Database} - The SQLite3 database
- */
 const createConfigDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
 
@@ -308,37 +289,6 @@ const getFileCountForApi = async (database, api) => {
 }
 
 /**
- * Upsert handled raw file.
- * @param {BetterSqlite3.Database} database - The database to use
- * @param {string} filename - The filename
- * @param {number} modified - The modify time
- * @return {void}
- */
-const upsertFolderScanner = async (database, filename, modified) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (filename, modified) 
-                 VALUES (?, ?)
-                 ON CONFLICT(filename) DO UPDATE SET modified = ?`
-  const stmt = await database.prepare(query)
-  await stmt.run(filename, modified, modified)
-}
-
-/**
- * Get modify time for handled raw file.
- * @param {BetterSqlite3.Database} database - The database to use
- * @param {string} filename - The filename
- * @return {string|null} - The modify time
- */
-const getFolderScannerModifyTime = async (database, filename) => {
-  const query = `SELECT modified 
-                 FROM ${CACHE_TABLE_NAME}
-                 WHERE filename = ?`
-  const stmt = await database.prepare(query)
-  const results = await stmt.all(filename)
-
-  return results.length > 0 ? results[0].modified : null
-}
-
-/**
  * Upsert config entry.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {string} name - The config entry
@@ -442,7 +392,6 @@ const getErroredFilesCount = async (databasePath) => {
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
-  createFolderScannerDatabase,
   createConfigDatabase,
   createValueErrorsDatabase,
   saveValues,
@@ -455,8 +404,6 @@ module.exports = {
   deleteSentFile,
   getFileCount,
   getFileCountForApi,
-  upsertFolderScanner,
-  getFolderScannerModifyTime,
   upsertConfig,
   getConfig,
   getLogs,
