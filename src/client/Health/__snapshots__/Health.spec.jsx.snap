@@ -158,19 +158,19 @@ exports[`Health display Health page based on config and status 1`] = `
         </div>
       </div>
       <div
-        class="tight text-success col"
+        class="tight text-muted col"
       >
         <div
           class="oi-box d-flex align-items-center"
         >
           <a
-            href="/north/c2"
+            href="/north/CsvToHttp"
           >
             <div>
-              c2
+              CsvToHttp
             </div>
             <div>
-              (Console)
+              (CsvToHttp)
             </div>
           </a>
         </div>
@@ -650,19 +650,19 @@ exports[`Health display Health page based on config and status 2`] = `
         </div>
       </div>
       <div
-        class="tight text-success col"
+        class="tight text-muted col"
       >
         <div
           class="oi-box d-flex align-items-center"
         >
           <a
-            href="/north/c2"
+            href="/north/CsvToHttp"
           >
             <div>
-              c2
+              CsvToHttp
             </div>
             <div>
-              (Console)
+              (CsvToHttp)
             </div>
           </a>
         </div>

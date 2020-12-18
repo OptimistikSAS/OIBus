@@ -20,6 +20,7 @@ const testConfig = {
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },
       { scanMode: 'every1Min', cronTime: '* * * * *' },
+      { scanMode: 'listen', cronTime: 'listen' },
     ],
     proxies: [
       {
@@ -77,8 +78,8 @@ const testConfig = {
           timeStampTimezone: 'Europe/Paris',
         },
         points: [
-          { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'every1Min', topic: 'temperatureTank1' },
-          { pointId: '/fttest.base/Tank 6.tank/Sensor23.temperature', scanMode: 'every1Min', topic: 'temperatureTank2' },
+          { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'listen', topic: 'temperatureTank1' },
+          { pointId: '/fttest.base/Tank 6.tank/Sensor23.temperature', scanMode: 'listen', topic: 'temperatureTank2' },
         ],
       },
       {
@@ -218,7 +219,7 @@ const testConfig = {
           username: 'oibus_user',
           database: 'oibus',
           query:
-            'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @LastCompletedDate',
+              'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @LastCompletedDate',
           delimiter: ',',
           filename: 'sql-@date.csv',
           scanMode: 'everySecond',
@@ -362,12 +363,40 @@ const testConfig = {
         subscribedTo: [],
       },
       {
-        applicationId: 'c2',
-        api: 'Console',
-        enabled: true,
-        Console: {},
-        caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
-        subscribedTo: ['MQTTServer'],
+        applicationId: 'CsvToHttp',
+        api: 'CsvToHttp',
+        enabled: false,
+        CsvToHttp: {
+          applicativeHostUrl: 'https://localhost.com',
+          requestMethod: 'POST',
+          proxy: '',
+          mapping: [
+            {
+              csvField: 'Id',
+              httpField: 'Identification',
+              type: 'integer',
+            },
+            {
+              csvField: 'Begin',
+              httpField: 'date',
+              type: 'short date (yyyy-mm-dd)',
+            },
+          ],
+          authentication: {
+            type: 'Custom',
+            secretKey: 'anytoken',
+            headerName: 'anyvalue',
+          },
+          bodyMaxLength: 100,
+          csvDelimiter: ';',
+        },
+        caching: {
+          sendInterval: 1000,
+          retryInterval: 5000,
+          groupCount: 1000,
+          maxSendCount: 10000,
+        },
+        subscribedTo: [],
       },
     ],
   },

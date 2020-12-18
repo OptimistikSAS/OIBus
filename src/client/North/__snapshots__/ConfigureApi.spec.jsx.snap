@@ -649,6 +649,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                 >
                   Basic
                 </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1748,6 +1753,11 @@ exports[`ConfigureApi check update 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div

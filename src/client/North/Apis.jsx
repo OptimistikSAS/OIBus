@@ -7,7 +7,8 @@ import TimescaleDB from '../../north/timescaledb/TimescaleDB.schema.jsx'
 import MongoDB from '../../north/mongodb/MongoDB.schema.jsx'
 import MQTTNorth from '../../north/mqttnorth/MQTTNorth.schema.jsx'
 import WATSYConnect from '../../north/watsyconnect/WATSYConnect.schema.jsx'
+import CsvToHttp from '../../north/CsvToHttp/CsvToHttp.schema.jsx'
 
-const ApiSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalytics, TimescaleDB, MongoDB, MQTTNorth, WATSYConnect }
+const ApiSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalytics, TimescaleDB, MongoDB, MQTTNorth, WATSYConnect, CsvToHttp }
 
 export default ApiSchemas

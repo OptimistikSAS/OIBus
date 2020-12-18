@@ -1573,6 +1573,100 @@ exports[`Engine check Engine 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -2478,6 +2572,11 @@ exports[`Engine check Engine 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
@@ -4410,6 +4509,100 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -5028,6 +5221,11 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
@@ -6980,6 +7178,100 @@ exports[`Engine check change engineName 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -7885,6 +8177,11 @@ exports[`Engine check change engineName 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
@@ -9817,6 +10114,100 @@ exports[`Engine check change password 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -10722,6 +11113,11 @@ exports[`Engine check change password 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
@@ -12654,6 +13050,100 @@ exports[`Engine check change port 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -13559,6 +14049,11 @@ exports[`Engine check change port 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
@@ -15491,6 +15986,100 @@ exports[`Engine check change user 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.scanModes.3.scanMode"
+                    name="engine.scanModes.3.scanMode"
+                    type="text"
+                    value="listen"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      style="padding-left: 10px; padding-right: 5px;"
+                    >
+                      <div
+                        class="form-group"
+                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      >
+                        <select
+                          aria-invalid="false"
+                          class="oi-form-input form-control"
+                          id="engine.scanModes.3.cronTime.type"
+                          name="engine.scanModes.3.cronTime.type"
+                          style="padding-bottom: 0px; margin-bottom: 0px;"
+                        >
+                          <option
+                            value="every"
+                          >
+                            every
+                          </option>
+                          <option
+                            value="custom"
+                          >
+                            custom
+                          </option>
+                        </select>
+                        <div
+                          class="invalid-feedback"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      class="oi-form-input oi-cron-custom-input form-control"
+                      id="engine.scanModes.3.cronTime.custom"
+                      name="value"
+                      placeholder="value"
+                      type="text"
+                      value="listen"
+                    />
+                  </div>
+                  <div
+                    class="invalid-feedback"
+                    style="display: block;"
+                  />
+                  <small
+                    class="form-text text-muted"
+                  >
+                    Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -16396,6 +16985,11 @@ exports[`Engine check change user 1`] = `
                   value="Basic"
                 >
                   Basic
+                </option>
+                <option
+                  value="Custom"
+                >
+                  Custom
                 </option>
               </select>
               <div
