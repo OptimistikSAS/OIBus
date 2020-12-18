@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
-const databaseService = require('../../services/database.service')
 
 /**
  * Class FolderScanner
