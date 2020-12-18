@@ -28,6 +28,7 @@ apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
 apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
 apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
+apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
 
 // Engine classes
 const Server = require('../server/Server.class')

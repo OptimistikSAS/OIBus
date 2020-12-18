@@ -215,10 +215,21 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
 
   // Generate authentication header
   const headers = baseHeaders
-  if (authentication && (authentication.type === 'Basic')) {
-    const decryptedPassword = engine.encryptionService.decryptText(authentication.password)
-    const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
-    headers.Authorization = `Basic ${basic}`
+  if (authentication) {
+    switch (authentication.type) {
+      case 'Basic': {
+        const decryptedPassword = engine.encryptionService.decryptText(authentication.password)
+        const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
+        headers.Authorization = `Basic ${basic}`
+        break
+      }
+      case 'Custom': {
+        const decryptedPassword = engine.encryptionService.decryptText(authentication.secretKey)
+        headers[authentication.headerName] = decryptedPassword
+        break
+      }
+      default: throw ApiHandler.STATUS.LOGIC_ERROR
+    }
   }
 
   try {

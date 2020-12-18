@@ -336,6 +336,11 @@ exports[`AliveSignal check AliveSignal 1`] = `
               >
                 Basic
               </option>
+              <option
+                value="Custom"
+              >
+                Custom
+              </option>
             </select>
             <div
               class="invalid-feedback"
@@ -742,6 +747,11 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
                 value="Basic"
               >
                 Basic
+              </option>
+              <option
+                value="Custom"
+              >
+                Custom
               </option>
             </select>
             <div
