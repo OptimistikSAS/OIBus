@@ -80,7 +80,7 @@ class SQLDbToFile extends ProtocolHandler {
 
   async connect() {
     await super.connect()
-    this.lastCompletedAt = await this.getConfigDb('lastCompletedAt')
+    this.lastCompletedAt = await this.getConfig('lastCompletedAt')
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = new Date().toISOString()
     }
@@ -133,7 +133,7 @@ class SQLDbToFile extends ProtocolHandler {
       } else {
         this.logger.debug('lastCompletedAt not used')
       }
-      await this.upsertConfigDb('lastCompletedAt', this.lastCompletedAt)
+      await this.setConfig('lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
