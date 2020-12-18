@@ -28,16 +28,6 @@ class FolderScanner extends ProtocolHandler {
     this.compression = compression
   }
 
-  async connect() {
-    const { dataSourceId, protocol } = this.dataSource
-    this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
-    if (this.preserveFiles) {
-      const { engineConfig } = this.engine.configService.getConfig()
-      const databasePath = `${engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-      this.database = await databaseService.createFolderScannerDatabase(databasePath)
-    }
-  }
-
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    * @param {*} scanMode - The scan mode
@@ -92,8 +82,8 @@ class FolderScanner extends ProtocolHandler {
     this.logger.silly(`checkConditions: ${filename} match age`)
     // check if the file was already sent (if preserveFiles is true)
     if (this.preserveFiles) {
-      const modifyTime = await databaseService.getFolderScannerModifyTime(this.database, filename)
-      if (modifyTime >= stats.mtimeMs) return false
+      const modifyTime = await this.getConfig(filename)
+      if (parseInt(modifyTime, 10) >= stats.mtimeMs) return false
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
@@ -131,7 +121,7 @@ class FolderScanner extends ProtocolHandler {
     if (this.preserveFiles) {
       const stats = fs.statSync(path.join(this.inputFolder, filename))
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
-      await databaseService.upsertFolderScanner(this.database, filename, stats.mtimeMs)
+      await this.setConfig(filename, `${stats.mtimeMs}`)
     }
   }
 }

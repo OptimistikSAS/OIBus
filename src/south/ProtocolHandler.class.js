@@ -53,7 +53,7 @@ class ProtocolHandler {
   async connect() {
     const { dataSourceId, protocol } = this.dataSource
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
-    this.configDatabase = await databaseService.createConfigDatabase(databasePath)
+    this.southDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
@@ -120,8 +120,8 @@ class ProtocolHandler {
    * @returns {Promise} - The value of the key
    */
 
-  async getConfigDb(configKey) {
-    return databaseService.getConfig(this.configDatabase, configKey)
+  async getConfig(configKey) {
+    return databaseService.getConfig(this.southDatabase, configKey)
   }
 
   /**
@@ -131,9 +131,9 @@ class ProtocolHandler {
    * @returns {Promise} - the value to update the key
    */
 
-  async upsertConfigDb(configKey, value) {
+  async setConfig(configKey, value) {
     return databaseService.upsertConfig(
-      this.configDatabase,
+      this.southDatabase,
       configKey,
       value,
     )
