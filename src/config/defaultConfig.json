@@ -38,10 +38,6 @@
       {
         "scanMode": "every10Minutes",
         "cronTime": "* * * * /10"
-      },
-      {
-        "scanMode": "listen",
-        "cronTime": "listen"
       }
     ],
     "proxies" : [],
@@ -70,5 +66,5 @@
   "north": {
     "applications": []
   },
-  "schemaVersion": 17
+  "schemaVersion": 18
 }

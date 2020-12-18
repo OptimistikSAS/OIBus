@@ -260,4 +260,8 @@ module.exports = {
       }
     })
   },
+  18: (config) => {
+    logger.info('Remove listen scan mode')
+    config.engine.scanModes = config.engine.scanModes.filter((scanMode) => scanMode.cronTime !== 'listen')
+  },
 }
