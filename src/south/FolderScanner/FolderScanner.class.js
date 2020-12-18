@@ -82,7 +82,7 @@ class FolderScanner extends ProtocolHandler {
     // check if the file was already sent (if preserveFiles is true)
     if (this.preserveFiles) {
       const modifyTime = await this.getConfig(filename)
-      if (parseInt(modifyTime, 10) >= stats.mtimeMs) return false
+      if (parseFloat(modifyTime) >= stats.mtimeMs) return false
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
