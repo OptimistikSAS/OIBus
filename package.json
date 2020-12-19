@@ -44,7 +44,7 @@
     "bootstrap-less-port": "2.3.1",
     "form-data": "3.0.0",
     "humanize-string": "2.1.0",
-    "jsmodbus": "4.0.4",
+    "jsmodbus": "4.0.5",
     "jsondiffpatch": "0.4.1",
     "koa": "2.13.0",
     "koa-bodyparser": "4.3.0",
