@@ -173,7 +173,10 @@ schema.points = {
     defaultValue: '',
   },
   scanMode: {
-    type: 'OIbScanMode',
+    type: 'OIbText',
+    valid: notEmpty(),
+    defaultValue: 'listen',
+    disabled: true,
     label: 'Scan Mode',
   },
   topic: {
