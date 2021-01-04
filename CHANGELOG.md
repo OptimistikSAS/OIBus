@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.6](https://github.com/OptimistikSAS/OIBus/compare/v0.7.5...v0.7.6) (2021-01-04)
+
+
+### Bug Fixes
+
+* **deps:** add OPC Foundation Agreement of Use ([48c87c0](https://github.com/OptimistikSAS/OIBus/commit/48c87c08ac1d8a8f7c811ecd0e1a0e4c02644dfc))
+
 ### [0.7.5](https://github.com/OptimistikSAS/OIBus/compare/v0.7.4...v0.7.5) (2021-01-04)
 
 ### [0.7.4](https://github.com/OptimistikSAS/OIBus/compare/v0.7.2...v0.7.4) (2021-01-04)
