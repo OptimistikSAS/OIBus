@@ -7,7 +7,11 @@ import South from './South.jsx'
 
 const dispatchNewConfig = jest.fn((link) => link)
 const setAlert = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, protocolList: newConfig.protocolList, dispatchNewConfig, setAlert })
+const sort = {
+  setSortSouthBy: jest.fn(),
+  setIsSouthAscending: jest.fn(),
+}
+React.useContext = jest.fn().mockReturnValue({ newConfig, protocolList: newConfig.protocolList, dispatchNewConfig, setAlert, sort })
 
 const mockHistoryPush = jest.fn()
 jest.mock('react-router-dom', () => (
@@ -154,8 +158,59 @@ describe('South', () => {
     }
     console.error = originalError
   })
+  test('check sort pressed on dataSourceId', () => {
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    const firstHeader = document.querySelectorAll('th')[0]
+    Simulate.click(firstHeader.querySelectorAll('path')[1])
+    expect(container).toMatchSnapshot()
+  })
+  test('check sort pressed on dataSourceId ascending', () => {
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    const firstHeader = document.querySelectorAll('th')[0]
+    Simulate.click(firstHeader.querySelectorAll('path')[0])
+    expect(container).toMatchSnapshot()
+  })
   test('check missing protocolList', () => {
-    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with sortBy=dataSourceId', () => {
+    sort.sortSouthBy = 'dataSourceId'
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with sortBy=protocol', () => {
+    sort.sortSouthBy = 'protocol'
+    sort.isSouthAscending = true
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <South />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with missing dataSources', () => {
+    newConfig.south.dataSources = null
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
     act(() => {
       ReactDOM.render(
         <South />, container,

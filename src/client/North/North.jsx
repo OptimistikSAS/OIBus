@@ -7,28 +7,52 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
 import validation from './Form/North.validation'
+import utils from '../helpers/utils'
 
 const North = () => {
   const { setAlert } = React.useContext(AlertContext)
-  const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig, apiList, sort } = React.useContext(ConfigContext)
+  const { sortNorthBy: sortBy, setSortNorthBy: setSortBy } = sort
+  const { isNorthAscending: isAscending, setIsNorthAscending: setIsAscending } = sort
   const applications = newConfig?.north?.applications
   const history = useHistory()
 
+  // create a sortable copy to matain original order in case of sort
+  const sortableApplications = utils.jsonCopy(applications ?? [])
+  // add index for each north application for later use in case of sort
+  sortableApplications?.forEach((application, index) => {
+    application.index = index
+  })
+  // sort based on selected property
+  if (sortBy !== undefined) {
+    sortableApplications.sort((a, b) => {
+      if (a[sortBy].toString().toLowerCase() > b[sortBy].toString().toLowerCase()) return isAscending ? 1 : -1
+      if (b[sortBy].toString().toLowerCase() > a[sortBy].toString().toLowerCase()) return isAscending ? -1 : 1
+      return 0
+    })
+  }
+
   /**
-   * Gets the config json of a north application
+   * Gets the index of a north application
    * @param {string} applicationId ID of an application
    * @returns {object} The selected application's config
    */
-  const getApplicationIndex = (applicationId) => applications.findIndex((application) => application.applicationId === applicationId)
+  const getApplicationIndex = ((applicationId) => {
+    const position = sortableApplications.findIndex((application) => application.applicationId === applicationId)
+    if (position === -1) {
+      return position
+    }
+    return sortableApplications[position].index
+  })
 
   /**
    * Handles the edit of application and redirects the
    * user to the selected north applications's configuration page
-   * @param {integer} index The id to edit
+   * @param {integer} position The id to edit
    * @return {void}
    */
-  const handleEdit = (index) => {
-    const application = applications[index]
+  const handleEdit = (position) => {
+    const application = sortableApplications[position]
     const link = `/north/${application.applicationId}`
     history.push({ pathname: link })
   }
@@ -67,21 +91,33 @@ const North = () => {
 
   /**
    * Deletes the chosen application
-   * @param {integer} index The id to delete
+   * @param {integer} position The index to delete
    * @returns {void}
    */
-  const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${index}` })
+  const handleDelete = (position) => {
+    dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${sortableApplications[position].index}` })
+  }
+
+  /**
+  * Sort applications list
+  * @param {string} property to be used for sorting
+  * @param {bool} ascending flag for ascending/descending
+  * @returns {void}
+  */
+  const handleSort = (property, ascending) => {
+    setSortBy(property)
+    setIsAscending(ascending)
   }
 
   const tableHeaders = ['Application ID', 'Status', 'API']
-  const tableRows = applications?.map(({ applicationId, enabled, api }, index) => [
+  const sortableProperties = ['applicationId', 'enabled', 'api']
+  const tableRows = sortableApplications?.map(({ applicationId, enabled, api, index }) => [
     {
       name: applicationId,
       value: (
         <EditableIdField
           id={applicationId}
-          fromList={applications}
+          fromList={sortableApplications}
           index={index}
           name="applicationId"
           valid={validation.application.isValidName}
@@ -106,7 +142,16 @@ const North = () => {
           North
         </BreadcrumbItem>
       </Breadcrumb>
-      <Table headers={tableHeaders} rows={tableRows} handleEdit={handleEdit} handleDelete={handleDelete} />
+      <Table
+        headers={tableHeaders}
+        sortableProperties={sortableProperties}
+        sortBy={sortBy}
+        isAscending={isAscending}
+        rows={tableRows}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        handleSort={handleSort}
+      />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
     </Col>
   ) : (
