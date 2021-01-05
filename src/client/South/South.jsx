@@ -8,28 +8,52 @@ import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from './PointsButton.jsx'
 import EditableIdField from '../components/EditableIdField.jsx'
 import validation from './Form/South.validation'
+import utils from '../helpers/utils'
 
 const South = () => {
   const { setAlert } = React.useContext(AlertContext)
-  const { newConfig, dispatchNewConfig, protocolList } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig, protocolList, sort } = React.useContext(ConfigContext)
+  const { sortSouthBy: sortBy, setSortSouthBy: setSortBy } = sort
+  const { isSouthAscending: isAscending, setIsSouthAscending: setIsAscending } = sort
   const dataSources = newConfig?.south?.dataSources
   const history = useHistory()
 
+  // create a sortable copy to matain original order in case of sort
+  const sortableDataSources = utils.jsonCopy(dataSources ?? [])
+  // add index for each south datasource for later use in case of sort
+  sortableDataSources?.forEach((dataSource, index) => {
+    dataSource.index = index
+  })
+  // sort based on selected property
+  if (sortBy !== undefined) {
+    sortableDataSources.sort((a, b) => {
+      if (a[sortBy].toString().toLowerCase() > b[sortBy].toString().toLowerCase()) return isAscending ? 1 : -1
+      if (b[sortBy].toString().toLowerCase() > a[sortBy].toString().toLowerCase()) return isAscending ? -1 : 1
+      return 0
+    })
+  }
+
   /**
-   * Gets the config json of a south dataSource
+   * Gets the index of a south dataSource
    * @param {string} dataSourceId ID of an dataSource
    * @returns {object} The selected dataSource's config
    */
-  const getDataSourceIndex = (dataSourceId) => dataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+  const getDataSourceIndex = ((dataSourceId) => {
+    const position = sortableDataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+    if (position === -1) {
+      return position
+    }
+    return sortableDataSources[position].index
+  })
 
   /**
    * Handles the edit of dataSource and redirects the
    * user to the selected south datasource's configuration page
-   * @param {integer} index The id to edit
+   * @param {integer} position The id to edit
    * @return {void}
    */
-  const handleEdit = (index) => {
-    const dataSource = dataSources[index]
+  const handleEdit = (position) => {
+    const dataSource = sortableDataSources[position]
     const pathname = `/south/${dataSource.dataSourceId}`
     history.push({ pathname })
   }
@@ -72,20 +96,31 @@ const South = () => {
 
   /**
    * Deletes the chosen dataSource
-   * @param {integer} index The id to delete
+   * @param {integer} position The id to delete
    * @returns {void}
    */
-  const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${index}` })
+  const handleDelete = (position) => {
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${sortableDataSources[position].index}` })
+  }
+
+  /**
+  * Sort applications list
+  * @param {string} property to be used for sorting
+  * @param {bool} ascending flag for ascending/descending
+  * @returns {void}
+  */
+  const handleSort = (property, ascending) => {
+    setSortBy(property)
+    setIsAscending(ascending)
   }
 
   /**
    * Copy the chosen dataSource
-   * @param {integer} index The id to copy
+   * @param {integer} position The id to copy
    * @returns {void}
    */
-  const handleDuplicate = (index) => {
-    const dataSource = dataSources[index]
+  const handleDuplicate = (position) => {
+    const dataSource = dataSources[sortableDataSources[position].index]
     const newName = `${dataSource.dataSourceId} copy`
     const countCopies = dataSources.filter((e) => e.dataSourceId.startsWith(newName)).length
     dispatchNewConfig({
@@ -100,14 +135,15 @@ const South = () => {
   }
 
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
-  const tableRows = dataSources?.map((dataSource, index) => [
+  const sortableProperties = ['dataSourceId', 'enabled', 'protocol']
+  const tableRows = sortableDataSources?.map((dataSource) => [
     {
       name: dataSource.dataSourceId,
       value: (
         <EditableIdField
           id={dataSource.dataSourceId}
-          fromList={dataSources}
-          index={index}
+          fromList={sortableDataSources}
+          index={dataSource.index}
           name="dataSourceId"
           valid={validation.protocol.isValidName}
           idChanged={handleDataSourceIdChanged}
@@ -141,10 +177,14 @@ const South = () => {
       </Breadcrumb>
       <Table
         headers={tableHeaders}
+        sortableProperties={sortableProperties}
+        sortBy={sortBy}
+        isAscending={isAscending}
         rows={tableRows}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
         handleDuplicate={handleDuplicate}
+        handleSort={handleSort}
       />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
     </Col>

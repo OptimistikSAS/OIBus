@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FaPlusCircle } from 'react-icons/fa'
+import { FaPlusCircle, FaLongArrowAltDown, FaLongArrowAltUp } from 'react-icons/fa'
 
-const TableHeader = ({ headers, handleAdd, handleDelete }) => {
+const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleAdd, handleDelete, handleSort }) => {
   const decoratedHeaders = headers
   if (handleAdd) {
     decoratedHeaders[0] = ( // add Icon in the header
@@ -17,13 +17,39 @@ const TableHeader = ({ headers, handleAdd, handleDelete }) => {
     // headers.push('actions') // used for the unique key
   }
 
+  const renderSorting = (index) => {
+    const property = sortableProperties[index]
+    const isSelectedAscending = property === sortBy && isAscending
+    const isSelectedDescending = property === sortBy && !isAscending
+    return (
+      <>
+        <FaLongArrowAltDown
+          className="oi-icon"
+          onClick={() => handleSort(sortableProperties[index], true)}
+          style={{ opacity: isSelectedAscending ? 1.0 : 0.5, width: 6, marginLeft: 2 }}
+        />
+        <FaLongArrowAltUp
+          className="oi-icon"
+          onClick={() => handleSort(sortableProperties[index], false)}
+          style={{ opacity: isSelectedDescending ? 1.0 : 0.5, width: 6 }}
+        />
+      </>
+    )
+  }
   return (
     <thead>
       <tr>
         {decoratedHeaders.map((decoratedHeader, index) => (
-          <th key={headers[index]} scope="col">
-            {decoratedHeader}
-          </th>
+          sortableProperties && sortableProperties.length > index ? (
+            <th key={headers[index]} scope="col">
+              {decoratedHeader}
+              {renderSorting(index)}
+            </th>
+          ) : (
+            <th key={headers[index]} scope="col">
+              {decoratedHeader}
+            </th>
+          )
         ))}
       </tr>
     </thead>
@@ -32,9 +58,13 @@ const TableHeader = ({ headers, handleAdd, handleDelete }) => {
 
 TableHeader.propTypes = {
   headers: PropTypes.PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
+  sortableProperties: PropTypes.arrayOf(PropTypes.string),
+  sortBy: PropTypes.string,
+  isAscending: PropTypes.bool,
   handleAdd: PropTypes.func,
   handleDelete: PropTypes.func,
+  handleSort: PropTypes.func,
 }
-TableHeader.defaultProps = { handleAdd: null, handleDelete: null }
+TableHeader.defaultProps = { sortableProperties: null, sortBy: null, isAscending: null, handleAdd: null, handleDelete: null, handleSort: null }
 
 export default TableHeader

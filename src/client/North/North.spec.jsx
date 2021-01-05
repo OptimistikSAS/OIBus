@@ -7,7 +7,11 @@ import North from './North.jsx'
 
 const dispatchNewConfig = jest.fn((link) => link)
 const setAlert = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, apiList: newConfig.apiList, dispatchNewConfig, setAlert })
+const sort = {
+  setSortNorthBy: jest.fn(),
+  setIsNorthAscending: jest.fn(),
+}
+React.useContext = jest.fn().mockReturnValue({ newConfig, apiList: newConfig.apiList, dispatchNewConfig, setAlert, sort })
 
 const mockHistoryPush = jest.fn()
 jest.mock('react-router-dom', () => (
@@ -110,8 +114,49 @@ describe('North', () => {
     }
     console.error = originalError
   })
+  test('check sort pressed on applicationId', () => {
+    act(() => {
+      ReactDOM.render(
+        <North />, container,
+      )
+    })
+    const firstHeader = document.querySelectorAll('th')[0]
+    Simulate.click(firstHeader.querySelectorAll('path')[1])
+    expect(container).toMatchSnapshot()
+  })
   test('check missing apiList', () => {
-    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <North />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with sortBy=applicationId', () => {
+    sort.sortNorthBy = 'applicationId'
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <North />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with sortBy=api', () => {
+    sort.sortNorthBy = 'api'
+    sort.isNorthAscending = true
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
+    act(() => {
+      ReactDOM.render(
+        <North />, container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check with missing applications', () => {
+    newConfig.north.applications = null
+    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
     act(() => {
       ReactDOM.render(
         <North />, container,
