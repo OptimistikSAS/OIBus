@@ -28,7 +28,7 @@ More information on [OIBus homepage](https://optimistik.io/oibus)
 * To buid the client and the executable for each distribution run `npm run build`
 * To start the client, run 'npm run start' (or directly one of the distribution with 'npm run start-win', 'npm run start-linux' or 'npm run start-macos'
 
-More information on [OIBus homepage](https://optimistik.io/oibus)
+More information on [OIBus Get Started page](https://optimistik.io/start-with-oibus/)
 
 ## History
 # 0.7.3
