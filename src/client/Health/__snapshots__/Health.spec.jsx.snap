@@ -157,6 +157,24 @@ exports[`Health display Health page based on config and status 1`] = `
           </a>
         </div>
       </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/c2"
+          >
+            <div>
+              c2
+            </div>
+            <div>
+              (Console)
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -627,6 +645,24 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
             <div>
               (WATSYConnect)
+            </div>
+          </a>
+        </div>
+      </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/c2"
+          >
+            <div>
+              c2
+            </div>
+            <div>
+              (Console)
             </div>
           </a>
         </div>
