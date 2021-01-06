@@ -1506,7 +1506,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                       <b>
                         TimeStamp Format:
                       </b>
-                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS. Another example : if the timestamp is '2020-09-16T07:00:00Z' so the format would be YYYY-MM-DDTHH:mm:ssZ.
                     </li>
                     <li>
                       <b>
@@ -8844,7 +8844,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       <b>
                         TimeStamp Format:
                       </b>
-                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS
+                      The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS. Another example : if the timestamp is '2020-09-16T07:00:00Z' so the format would be YYYY-MM-DDTHH:mm:ssZ.
                     </li>
                     <li>
                       <b>
