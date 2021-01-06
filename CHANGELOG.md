@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.9](https://github.com/OptimistikSAS/OIBus/compare/v0.7.8...v0.7.9) (2021-01-06)
+
+
+### Bug Fixes
+
+* **south-mqtt:** optional password and more example for timestamp format ([36169aa](https://github.com/OptimistikSAS/OIBus/commit/36169aa527fb02ce8344505025351fb54d2bef14))
+
 ### [0.7.8](https://github.com/OptimistikSAS/OIBus/compare/v0.7.7...v0.7.8) (2021-01-06)
 
 
