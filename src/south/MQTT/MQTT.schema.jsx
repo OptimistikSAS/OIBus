@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween, optional } from '../../services/validation.service'
+import { notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -60,7 +60,7 @@ schema.form = {
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: optional(),
     defaultValue: '',
     help: <div>password</div>,
   },
@@ -132,7 +132,8 @@ schema.form = {
           <li>
             <b>TimeStamp Format:</b>
             The string indicates which format to use to parse the timestamp. For example, the timestamp &apos;2020-09-16 07:00:00.000&apos; is in the
-            format YYYY-MM-DD HH:mm:ss.SSS
+            format YYYY-MM-DD HH:mm:ss.SSS.
+            Another example : if the timestamp is &apos;2020-09-16T07:00:00Z&apos; so the format would be YYYY-MM-DDTHH:mm:ssZ.
           </li>
           <li>
             <b>TimeStamp timezone:</b>
