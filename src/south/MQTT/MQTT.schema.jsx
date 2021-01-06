@@ -53,7 +53,7 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: optional(),
     defaultValue: '',
     help: <div>authorized user</div>,
   },
