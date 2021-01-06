@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.8](https://github.com/OptimistikSAS/OIBus/compare/v0.7.7...v0.7.8) (2021-01-06)
+
+
+### Bug Fixes
+
+* **deps:** update oracledb dep to 5.1.0 ([ba3e1f5](https://github.com/OptimistikSAS/OIBus/commit/ba3e1f52774415ce51e7db691f9d5dcf3df704c0))
+
 ### [0.7.7](https://github.com/OptimistikSAS/OIBus/compare/v0.7.6...v0.7.7) (2021-01-06)
 
 
