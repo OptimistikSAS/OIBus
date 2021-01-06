@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.7](https://github.com/OptimistikSAS/OIBus/compare/v0.7.6...v0.7.7) (2021-01-06)
+
+
+### Bug Fixes
+
+* **doc:** README History removal ([a9966da](https://github.com/OptimistikSAS/OIBus/commit/a9966daf77d77463da26ee8c2217644bc3eefa5f))
+* **south-mqtt:** allow no user for authentication ([fdea603](https://github.com/OptimistikSAS/OIBus/commit/fdea6034bdea707a2fbb005d91dbf2c21ebc0824))
+
 ### [0.7.6](https://github.com/OptimistikSAS/OIBus/compare/v0.7.5...v0.7.6) (2021-01-04)
 
 
