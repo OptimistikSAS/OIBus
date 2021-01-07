@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.10](https://github.com/OptimistikSAS/OIBus/compare/v0.7.9...v0.7.10) (2021-01-07)
+
+
+### Features
+
+* **south, north:** Added list sorting by column on south and north listing. ([542f28b](https://github.com/OptimistikSAS/OIBus/commit/542f28b816695d1a8e5d080c10874bfdbae20b1d))
+
 ### [0.7.9](https://github.com/OptimistikSAS/OIBus/compare/v0.7.8...v0.7.9) (2021-01-06)
 
 
