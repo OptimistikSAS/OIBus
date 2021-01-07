@@ -3011,7 +3011,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"
@@ -6314,14 +6314,14 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       />
     </div>
     <div
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -6355,7 +6355,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         </div>
       </div>
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -6449,7 +6449,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"
@@ -7269,14 +7269,14 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       />
     </div>
     <div
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -7310,7 +7310,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         </div>
       </div>
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -7404,7 +7404,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"
@@ -7961,14 +7961,14 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       />
     </div>
     <div
       class="row"
     >
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -8002,7 +8002,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         </div>
       </div>
       <div
-        class="col-md-2"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -8096,7 +8096,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"

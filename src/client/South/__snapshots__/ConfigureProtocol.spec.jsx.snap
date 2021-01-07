@@ -923,7 +923,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"
@@ -1917,7 +1917,7 @@ exports[`ConfigureProtocol check update 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-6"
       >
         <table
           class="table table-sm table-striped table-hover"
