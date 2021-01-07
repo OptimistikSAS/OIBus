@@ -30,11 +30,12 @@ schema.form = {
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
     help: <div>The URL of OPC-UA server</div>,
+    md: 6,
   },
   retryInterval: {
     type: 'OIbInteger',
     newRow: true,
-    md: 2,
+    md: 3,
     valid: minValue(1000),
     defaultValue: 10000,
     help: <div>Retry Interval (ms)</div>,
@@ -42,7 +43,7 @@ schema.form = {
   maxReadInterval: {
     type: 'OIbInteger',
     newRow: false,
-    md: 2,
+    md: 3,
     valid: minValue(60),
     defaultValue: 3600,
     help: <div>Max read interval (s)</div>,
@@ -78,6 +79,7 @@ schema.form = {
         defaultValue: 'None',
       },
     },
+    md: 6,
   },
 }
 

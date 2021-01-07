@@ -155,6 +155,7 @@ schema.form = {
         defaultValue: 'None',
       },
     },
+    md: 6,
   },
 }
 
