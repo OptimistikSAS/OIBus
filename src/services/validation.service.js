@@ -18,7 +18,9 @@ const combinedValidations = (array) => (val) => {
 const notEmpty = (name = 'Value') => (val) => (
   !Number.isNaN(parseFloat(val)) || (val && val.length > 0) ? null : `${name} should not be empty`
 )
-const isPath = (name = 'Value') => (val) => (path.basename(val) === val ? null : `${name} should be a valid path`)
+const isPath = (name = 'Value') => (val) => (
+  ((typeof val === 'string' || val instanceof String) && path.basename(val) === val) ? null : `${name} should be a valid path`
+)
 const isHost = (name = 'Value') => (val) => (
   (ipv4.test(val) || ipv6.test(val) || hostname.test(val)) ? null : `${name} should be a valid hostname or ip`
 )
