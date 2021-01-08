@@ -25,6 +25,16 @@ schema.form = {
             </ul>
           </li>
           <li>
+            <b>Persistent:</b>
+            In this mode the broker will store subscription information, and undelivered messages for the client.
+            With a non persistent connection the broker does not store any subscription information or undelivered messages for the client.
+            For this option to take effect QoS must be set to 1 or 2.
+          </li>
+          <li>
+            <b>Client ID:</b>
+            In order for the broker to store session information for a client a client id must be used.
+          </li>
+          <li>
             <b>Username:</b>
             Username required by broker, if any. MQTT allows to send username for authenticating and authorization of
             client.
@@ -50,6 +60,18 @@ schema.form = {
     md: 1,
     options: [0, 1, 2],
     defaultValue: 1,
+  },
+  persistent: {
+    type: 'OIbCheckBox',
+    md: 1,
+    newRow: false,
+    defaultValue: false,
+  },
+  clientId: {
+    type: 'OIbText',
+    md: 2,
+    newRow: false,
+    defaultValue: `OIBus-${Math.random().toString(16).substr(2, 8)}`,
   },
   username: {
     type: 'OIbText',

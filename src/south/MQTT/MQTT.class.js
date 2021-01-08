@@ -21,6 +21,8 @@ class MQTT extends ProtocolHandler {
       username,
       password,
       qos,
+      persistent,
+      clientId,
       dataArrayPath,
       valuePath,
       nodeIdPath,
@@ -41,6 +43,8 @@ class MQTT extends ProtocolHandler {
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.qos = qos
+    this.persistent = persistent
+    this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath
     this.nodeIdPath = nodeIdPath
@@ -61,6 +65,8 @@ class MQTT extends ProtocolHandler {
     const options = {
       username: this.username,
       password: this.password,
+      clientId: this.clientId,
+      clean: !this.persistent,
     }
     this.client = mqtt.connect(this.url, options)
     this.client.on('error', this.handleConnectError.bind(this))
