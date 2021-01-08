@@ -190,7 +190,6 @@ class Engine {
     })
 
     // 3. start Applications
-    this.pointApplication = {}
     northConfig.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
@@ -233,11 +232,13 @@ class Engine {
           }
         } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
           dataSource.points.forEach((point) => {
-            if (!this.scanLists[point.scanMode]) {
-              this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
-            } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
-              // add the source for this scan only if not already there
-              this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+            if (point.scanMode !== 'listen') {
+              if (!this.scanLists[point.scanMode]) {
+                this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
+              } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+                // add the source for this scan only if not already there
+                this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+              }
             }
           })
         } else {
