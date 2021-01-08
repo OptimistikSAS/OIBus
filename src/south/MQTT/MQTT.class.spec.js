@@ -37,6 +37,8 @@ describe('MQTT south', () => {
     MQTT: {
       url: 'mqtt://localhost:1883',
       qos: 1,
+      persistent: true,
+      clientId: 'OIBus-s57fvl9',
       username: 'bai',
       password: 'password',
       dataArrayPath: null,
@@ -70,6 +72,10 @@ describe('MQTT south', () => {
       .toEqual(mqttConfig.MQTT.url)
     expect(mqttSouth.qos)
       .toEqual(mqttConfig.MQTT.qos)
+    expect(mqttSouth.persistent)
+      .toEqual(mqttConfig.MQTT.persistent)
+    expect(mqttSouth.clientId)
+      .toEqual(mqttConfig.MQTT.clientId)
     expect(mqttSouth.username)
       .toEqual(mqttConfig.MQTT.username)
     expect(mqttSouth.password)
@@ -100,6 +106,10 @@ describe('MQTT south', () => {
       .toEqual(testMqttConfig.MQTT.url)
     expect(mqttSouth.qos)
       .toEqual(testMqttConfig.MQTT.qos)
+    expect(mqttSouth.persistent)
+      .toEqual(mqttConfig.MQTT.persistent)
+    expect(mqttSouth.clientId)
+      .toEqual(mqttConfig.MQTT.clientId)
     expect(mqttSouth.username)
       .toEqual(testMqttConfig.MQTT.username)
     expect(mqttSouth.password)
@@ -125,6 +135,8 @@ describe('MQTT south', () => {
     await mqttSouth.connect()
 
     const expectedOptions = {
+      clean: !mqttConfig.MQTT.persistent,
+      clientId: mqttConfig.MQTT.clientId,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
     }

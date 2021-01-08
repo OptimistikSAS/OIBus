@@ -264,4 +264,18 @@ module.exports = {
     logger.info('Remove listen scan mode')
     config.engine.scanModes = config.engine.scanModes.filter((scanMode) => scanMode.cronTime !== 'listen')
   },
+  19: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'MQTT') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'persistent')) {
+          logger.info('Add persistent field to MQTT')
+          dataSource.MQTT.persistent = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'clientId')) {
+          logger.info('Add clientId field to MQTT')
+          dataSource.MQTT.clientId = `OIBus-${Math.random().toString(16).substr(2, 8)}`
+        }
+      }
+    })
+  },
 }
