@@ -29,8 +29,7 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
     secretKey: hasLengthBetween(0, 256),
     username: notEmpty(),
     password: hasLengthBetween(0, 256),
-    headerName: notEmpty(),
-    headerValue: hasLengthBetween(0, 256),
+    key: notEmpty(),
   }
   return [
     <OIbTitle label={label} key="title">
@@ -47,7 +46,7 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
               label="Type"
               onChange={changeAuthType}
               value={value.type}
-              options={['Basic', 'Custom']}
+              options={['Basic', 'API Key']}
               defaultValue="Basic"
               name="type"
             />
@@ -78,16 +77,16 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
           <Row key="user">
             <Col md="4">
               <OIbText
-                label="Header Name"
+                label="Key"
                 onChange={handleChange}
-                value={value.headerName}
-                valid={validation.headerName}
-                name="headerName"
+                value={value.key}
+                valid={validation.key}
+                name="key"
               />
             </Col>
             <Col md="4">
               <OIbPassword
-                label="Header Value"
+                label="Value"
                 onChange={handleChange}
                 value={value.secretKey}
                 valid={validation.secretKey}
@@ -131,7 +130,7 @@ OIbAuthentication.propTypes = {
 }
 
 OIbAuthentication.defaultProps = {
-  value: { type: 'Basic', username: '', password: '', headerName: '', accessKey: '', secretKey: '' },
+  value: { type: 'Basic', username: '', password: '', key: '', accessKey: '', secretKey: '' },
   mode: 'user',
   label: 'Authentication',
 }

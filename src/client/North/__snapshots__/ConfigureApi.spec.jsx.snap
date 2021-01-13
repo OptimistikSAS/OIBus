@@ -650,9 +650,9 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -1755,9 +1755,9 @@ exports[`ConfigureApi check update 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div

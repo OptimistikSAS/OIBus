@@ -2574,9 +2574,9 @@ exports[`Engine check Engine 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -5223,9 +5223,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -8179,9 +8179,9 @@ exports[`Engine check change engineName 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -11115,9 +11115,9 @@ exports[`Engine check change password 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -14051,9 +14051,9 @@ exports[`Engine check change port 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -16987,9 +16987,9 @@ exports[`Engine check change user 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div

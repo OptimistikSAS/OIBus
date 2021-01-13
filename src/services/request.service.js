@@ -223,9 +223,9 @@ const sendRequest = async (engine, requestUrl, method, authentication, proxy, da
         headers.Authorization = `Basic ${basic}`
         break
       }
-      case 'Custom': {
+      case 'API Key': {
         const decryptedPassword = engine.encryptionService.decryptText(authentication.secretKey)
-        headers[authentication.headerName] = decryptedPassword
+        headers[authentication.key] = decryptedPassword
         break
       }
       default: throw ApiHandler.STATUS.LOGIC_ERROR
