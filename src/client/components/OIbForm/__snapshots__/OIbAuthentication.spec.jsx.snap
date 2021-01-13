@@ -199,9 +199,9 @@ exports[`OIbAuthentication check Authentication with "custom" mode (headerName/s
             Basic
           </option>
           <option
-            value="Custom"
+            value="API Key"
           >
-            Custom
+            API Key
           </option>
         </select>
         <div
@@ -221,15 +221,15 @@ exports[`OIbAuthentication check Authentication with "custom" mode (headerName/s
       >
         <label
           class=""
-          for="headerName"
+          for="key"
         >
-          Header Name
+          Key
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="headerName"
-          name="headerName"
+          id="key"
+          name="key"
           type="text"
           value="anyHeader"
         />
@@ -248,7 +248,7 @@ exports[`OIbAuthentication check Authentication with "custom" mode (headerName/s
           class=""
           for="secretKey"
         >
-          Header Value
+          Value
         </label>
         <div
           class="input-group"
@@ -354,9 +354,9 @@ exports[`OIbAuthentication check Authentication with default mode (user/password
             Basic
           </option>
           <option
-            value="Custom"
+            value="API Key"
           >
-            Custom
+            API Key
           </option>
         </select>
         <div

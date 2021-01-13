@@ -36,7 +36,7 @@ describe('OIbAuthentication', () => {
   test('check Authentication with "custom" mode (headerName/secretKey)', () => {
     act(() => {
       ReactDOM.render(<OIbAuthentication
-        value={{ type: 'Custom', headerName: 'anyHeader', secretKey: 'anySecretKey' }}
+        value={{ type: 'API Key', key: 'anyHeader', secretKey: 'anySecretKey' }}
         name="name"
         onChange={() => (1)}
       />, container)
@@ -88,16 +88,16 @@ describe('OIbAuthentication', () => {
     const onChangeMock = jest.fn()
     act(() => {
       ReactDOM.render(<OIbAuthentication
-        value={{ type: 'Custom', headerName: 'anyHeader', secretKey: 'anySecretKey' }}
+        value={{ type: 'API Key', key: 'anyHeader', secretKey: 'anySecretKey' }}
         name="anyname"
         onChange={onChangeMock}
       />, container)
     })
 
-    const headerField = container.querySelector('#headerName')
+    const keyField = container.querySelector('#key')
     const secretField = container.querySelector('#secretKey')
-    Simulate.change(headerField, { target: { value: 'toto' } })
-    expect(onChangeMock).toBeCalledWith('anyname.headerName', 'toto', null)
+    Simulate.change(keyField, { target: { value: 'toto' } })
+    expect(onChangeMock).toBeCalledWith('anyname.key', 'toto', null)
     Simulate.change(secretField, { target: { value: 'passpass' } })
     expect(onChangeMock).toBeCalledWith('anyname.secretKey', '{{notEncrypted}}passpass', null)
   })

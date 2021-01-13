@@ -383,9 +383,9 @@ const testConfig = {
             },
           ],
           authentication: {
-            type: 'Custom',
+            type: 'API Key',
             secretKey: 'anytoken',
-            headerName: 'anyvalue',
+            key: 'anyvalue',
           },
           bodyMaxLength: 100,
           csvDelimiter: ';',

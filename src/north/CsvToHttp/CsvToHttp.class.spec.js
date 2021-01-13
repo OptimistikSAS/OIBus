@@ -79,7 +79,7 @@ describe('CsvToHttp', () => {
     expect(response.value).toEqual('1998-07-12')
   })
 
-  it('should properly convert wrong values', async () => {
+  it('should fail to convert wrong values', async () => {
     let response = CsvToHttp.convertToCorrectType('testValue', 'integer')
     expect(response.value).toEqual('testValue')
     expect(response.error.length).toBeGreaterThan(0)

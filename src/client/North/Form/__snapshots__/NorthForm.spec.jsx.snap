@@ -678,9 +678,9 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -700,15 +700,15 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             >
               <label
                 class=""
-                for="headerName"
+                for="key"
               >
-                Header Name
+                Key
               </label>
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="headerName"
-                name="headerName"
+                id="key"
+                name="key"
                 type="text"
                 value="anyvalue"
               />
@@ -727,7 +727,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                 class=""
                 for="secretKey"
               >
-                Header Value
+                Value
               </label>
               <div
                 class="input-group"
@@ -2118,9 +2118,9 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
@@ -5949,9 +5949,9 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                   Basic
                 </option>
                 <option
-                  value="Custom"
+                  value="API Key"
                 >
-                  Custom
+                  API Key
                 </option>
               </select>
               <div
