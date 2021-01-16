@@ -185,10 +185,10 @@ describe('MQTT south', () => {
     const mqttSouth = new MQTT(mqttConfig, engine)
     const error = new Error('test')
 
-    mqttSouth.subscribeCallback(error)
+    mqttSouth.subscribeCallback({ pointId: 'point Id' }, error)
 
     expect(mqttSouth.logger.error)
-      .toBeCalledWith(error)
+      .toHaveBeenCalledTimes(2)
   })
 
   it('should properly handle message and call addValues if point ID was found', () => {

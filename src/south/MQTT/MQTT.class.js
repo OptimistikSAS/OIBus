@@ -92,7 +92,9 @@ class MQTT extends ProtocolHandler {
 
   /**
    * Callback to handle subscription.
+   * @param {object} point - the point being subscribed
    * @param {object} error - The error
+   * @param {array} _granted - not used
    * @return {void}
    */
   subscribeCallback(point, error, _granted) {
