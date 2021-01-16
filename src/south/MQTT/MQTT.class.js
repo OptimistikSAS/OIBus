@@ -84,7 +84,7 @@ class MQTT extends ProtocolHandler {
     this.logger.info(`Connected to ${this.url}`)
 
     this.dataSource.points.forEach((point) => {
-      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this))
+      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this, point))
     })
 
     this.client.on('message', this.handleMessageEvent.bind(this))
@@ -95,8 +95,9 @@ class MQTT extends ProtocolHandler {
    * @param {object} error - The error
    * @return {void}
    */
-  subscribeCallback(error) {
+  subscribeCallback(point, error, _granted) {
     if (error) {
+      this.logger.error(`Error in subscription for topic ${point.topic}`)
       this.logger.error(error)
     }
   }
