@@ -460,7 +460,7 @@ class Engine {
       logWarning: logsCount.warn,
       filesErrorCount,
       valuesErrorCount,
-      copyright: '(c) Copyright 2019-2020 Optimistik, all rights reserved.',
+      copyright: '(c) Copyright 2019-2021 Optimistik, all rights reserved.',
     }
   }
 

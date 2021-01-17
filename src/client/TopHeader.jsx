@@ -49,6 +49,9 @@ const TopHeader = () => {
             {'Activation '}
             {configModified ? <Badge color="warning" pill>new</Badge> : null}
           </NavItem>
+          <NavItem className="oi-navitem" active={isActive('about')} tag={Link} to="/about">
+            About
+          </NavItem>
           <NavItem className="oi-navname">
             <FaNetworkWired />
             {` ${engineName}`}
