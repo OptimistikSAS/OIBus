@@ -69,6 +69,7 @@ schema.form = {
   },
   clientId: {
     type: 'OIbText',
+    valid: optional(),
     md: 2,
     newRow: false,
     defaultValue: `OIBus-${Math.random().toString(16).substr(2, 8)}`,
