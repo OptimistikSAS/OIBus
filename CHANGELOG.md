@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/OptimistikSAS/OIBus/compare/v0.7.9...v0.8.0) (2021-01-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **south-mqtt:** fix timestamp key payload
+
+### Features
+
+* **client:** add the About menu ([4ba8404](https://github.com/OptimistikSAS/OIBus/commit/4ba8404014837f3cf2ba1dfe132a662c80dfaec6))
+* **north:** Add API Key auth in OIbAuthentication component ([b1c6df9](https://github.com/OptimistikSAS/OIBus/commit/b1c6df91ed8cdb8eb21641210964d073f68d5a33))
+* **north-CsvToHttp:** Add new North CsvToHttp ([d891f57](https://github.com/OptimistikSAS/OIBus/commit/d891f57c1f0d4ba242d30b160156ebcdb4105e0a))
+* **south-mqtt:** Add point in the error callback subscription ([5f1a91a](https://github.com/OptimistikSAS/OIBus/commit/5f1a91af4071321a58123ce31c3964e3efddadbc))
+* **south, north:** Added list sorting by column on south and north listing. ([b82c9ea](https://github.com/OptimistikSAS/OIBus/commit/b82c9ea5adf9675515a62643ca4ea1f14f00e9f2))
+
+
+### Bug Fixes
+
+* **engine:** listen mode should not generate error for each dataSource point and remove unused variable ([39835b4](https://github.com/OptimistikSAS/OIBus/commit/39835b49af1eae3a72889db364aedbd72c721cf2))
+* **south:** handled if val is null ([1410ae4](https://github.com/OptimistikSAS/OIBus/commit/1410ae44d92528ba72ba3f56841abe61d0de1bd2))
+* **south:** increased width on Scan Groups in OPCUA  and OPCHDA . Increased width in OPCUA settings. ([01cf190](https://github.com/OptimistikSAS/OIBus/commit/01cf1900e02868b077c3f9ee58f8bf25e3aa3459))
+* **south-mqtt:** fix timestamp key payload ([89fcf07](https://github.com/OptimistikSAS/OIBus/commit/89fcf07adce7e3189595944fe666b85b2bbe487e))
+* **test:** add testConfig.js ([f13a966](https://github.com/OptimistikSAS/OIBus/commit/f13a96676aeed31dc127b50647cc4d184b490bbe))
+
 ### [0.7.9](https://github.com/OptimistikSAS/OIBus/compare/v0.7.8...v0.7.9) (2021-01-06)
 
 
