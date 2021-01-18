@@ -114,12 +114,14 @@ schema.form = {
   },
   connectionTimeout: {
     type: 'OIbInteger',
+    label: 'Connection timeout (ms)',
     valid: minValue(0),
     defaultValue: 1000,
     md: 3,
   },
   requestTimeout: {
     type: 'OIbInteger',
+    label: 'Request timeout (ms)',
     newRow: false,
     valid: minValue(0),
     defaultValue: 1000,

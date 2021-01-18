@@ -5118,7 +5118,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class=""
             for="south.dataSources.0.SQLDbToFile.connectionTimeout"
           >
-            Connection timeout
+            Connection timeout (ms)
           </label>
           <input
             aria-invalid="false"
@@ -5143,7 +5143,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class=""
             for="south.dataSources.0.SQLDbToFile.requestTimeout"
           >
-            Request timeout
+            Request timeout (ms)
           </label>
           <input
             aria-invalid="false"
