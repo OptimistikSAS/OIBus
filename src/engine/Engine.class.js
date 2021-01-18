@@ -4,7 +4,6 @@ const os = require('os')
 
 const moment = require('moment-timezone')
 
-const requestService = require('../services/request.service')
 const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
 
@@ -38,6 +37,7 @@ const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
 const AliveSignal = require('./AliveSignal.class')
 const EncryptionService = require('../services/EncryptionService.class')
+const RequestFactory = require('../services/request/RequestFactory.class')
 
 /**
  *
@@ -80,6 +80,9 @@ class Engine {
     this.encryptionService = EncryptionService.getInstance()
     this.encryptionService.setKeyFolder(this.configService.keyFolder)
     this.encryptionService.checkOrCreatePrivateKey()
+
+    // Request service
+    this.requestService = RequestFactory.create(this)
 
     // Will only contain protocols/application used
     // based on the config file
@@ -463,20 +466,6 @@ class Engine {
       valuesErrorCount,
       copyright: '(c) Copyright 2019-2021 Optimistik, all rights reserved.',
     }
-  }
-
-  /**
-   * Send HTTP request.
-   * @param {string} requestUrl - The URL to send the request to
-   * @param {string} method - The request type
-   * @param {object} authentication - Authentication info
-   * @param {object} proxy - Proxy to use
-   * @param {string} data - The body to send
-   * @param {object} baseHeaders - Headers to send
-   * @returns {Promise} - The send status
-   */
-  async sendRequest(requestUrl, method, authentication, proxy, data, baseHeaders = {}) {
-    return requestService.sendRequest(this, requestUrl, method, authentication, proxy, data, baseHeaders)
   }
 }
 
