@@ -398,6 +398,16 @@ const testConfig = {
         },
         subscribedTo: [],
       },
+      {
+        applicationId: 'filewriter',
+        api: 'FileWriter',
+        enabled: true,
+        FileWriter: {
+          outputFolder: './output'
+        },
+        caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+        subscribedTo: [],
+      },
     ],
   },
   schemaVersion: 5,
