@@ -4,8 +4,8 @@ const config = require('../../../tests/testConfig').default
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
-engine.sendRequest = jest.fn()
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.requestService = { send: jest.fn() }
 
 // Mock the logger
 jest.mock('../../engine/Logger.class')
@@ -39,7 +39,7 @@ describe('oi-analytics', () => {
       pointId: value.pointId,
     })))
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(engine.sendRequest).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
+    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
   })
 
   it('should properly handle files', async () => {
@@ -49,6 +49,6 @@ describe('oi-analytics', () => {
 
     const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/optimistik/data/values/upload?dataSourceId=${oiAnalyticsConfig.applicationId}`
     const expectedAuthentication = oiAnalyticsConfig.OIAnalytics.authentication
-    expect(engine.sendRequest).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, 'test')
+    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, 'test')
   })
 })

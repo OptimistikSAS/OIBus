@@ -124,7 +124,7 @@ class InfluxDB extends ApiHandler {
     })
 
     const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    return this.engine.sendRequest(url, 'POST', null, null, body, headers)
+    return this.engine.requestService.send(url, 'POST', null, null, body, headers)
   }
 }
 

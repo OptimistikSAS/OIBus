@@ -10,9 +10,8 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
-engine.configService = { getConfig: () => config.engine }
-engine.sendRequest = jest.fn()
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.requestService = { send: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -63,8 +62,8 @@ describe('InfluxDB north', () => {
     const expectedHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
     const expectedBody = 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality="good" 1582978332\n'
     const expectedMethod = 'POST'
-    expect(engine.sendRequest).toHaveBeenCalledTimes(1)
-    expect(engine.sendRequest).toHaveBeenCalledWith(expectedUrl, expectedMethod, null, null, expectedBody, expectedHeaders)
+    expect(engine.requestService.send).toHaveBeenCalledTimes(1)
+    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, expectedMethod, null, null, expectedBody, expectedHeaders)
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {
