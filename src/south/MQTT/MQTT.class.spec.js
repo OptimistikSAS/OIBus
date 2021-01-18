@@ -45,7 +45,7 @@ describe('MQTT south', () => {
       valuePath: 'value',
 
       timeStampOrigin: 'oibus',
-      timeStampPath: 'timestamp',
+      timestampPath: 'timestamp',
       timeStampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
       timeStampTimezone: 'Europe/Paris',
     },
@@ -77,7 +77,7 @@ describe('MQTT south', () => {
     expect(mqttSouth.timeStampOrigin)
       .toEqual(mqttConfig.MQTT.timeStampOrigin)
     expect(mqttSouth.timeStampPath)
-      .toEqual(mqttConfig.MQTT.timeStampPath)
+      .toEqual(mqttConfig.MQTT.timestampPath)
     expect(mqttSouth.timeStampFormat)
       .toEqual(mqttConfig.MQTT.timeStampFormat)
     expect(mqttSouth.timezone)
@@ -107,7 +107,7 @@ describe('MQTT south', () => {
     expect(mqttSouth.timeStampOrigin)
       .toEqual(testMqttConfig.MQTT.timeStampOrigin)
     expect(mqttSouth.timeStampPath)
-      .toEqual(testMqttConfig.MQTT.timeStampPath)
+      .toEqual(testMqttConfig.MQTT.timestampPath)
     expect(mqttSouth.timeStampFormat)
       .toEqual(testMqttConfig.MQTT.timeStampFormat)
     expect(mqttSouth.timezone)
@@ -375,7 +375,7 @@ describe('MQTT south', () => {
       .not
       .toBeCalled()
     expect(mqttSouth.logger.error)
-      .toBeCalledWith('Invalid timezone specified or the timezone key is missing in the payload')
+      .toBeCalledWith('Invalid timezone specified or the timestamp key is missing in the payload')
 
     mockGenerateDateWithTimezone.mockRestore()
   })
@@ -391,7 +391,7 @@ describe('MQTT south', () => {
       .not
       .toBeCalled()
     expect(mqttSouth.logger.error)
-      .toBeCalledWith('Invalid timezone specified or the timezone key is missing in the payload')
+      .toBeCalledWith('Invalid timezone specified or the timestamp key is missing in the payload')
 
     mockGenerateDateWithTimezone.mockRestore()
   })

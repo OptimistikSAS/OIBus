@@ -26,7 +26,7 @@ class MQTT extends ProtocolHandler {
       nodeIdPath,
       qualityPath,
       timeStampOrigin,
-      timeStampPath,
+      timestampPath,
       timeStampFormat,
       timeStampTimezone,
     } = this.dataSource.MQTT
@@ -46,7 +46,7 @@ class MQTT extends ProtocolHandler {
     this.nodeIdPath = nodeIdPath
     this.qualityPath = qualityPath
     this.timeStampOrigin = timeStampOrigin
-    this.timeStampPath = timeStampPath
+    this.timeStampPath = timestampPath
     this.timeStampFormat = timeStampFormat
   }
 
@@ -174,7 +174,7 @@ class MQTT extends ProtocolHandler {
       if (this.timezone && elementTimestamp) {
         timestamp = MQTT.generateDateWithTimezone(elementTimestamp, this.timezone, this.timeStampFormat)
       } else {
-        this.logger.error('Invalid timezone specified or the timezone key is missing in the payload')
+        this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
       }
     }
 
