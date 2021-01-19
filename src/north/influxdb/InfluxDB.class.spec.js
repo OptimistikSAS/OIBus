@@ -11,7 +11,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { send: jest.fn() }
+engine.requestService = { postWwwFormUrlencodedData: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -59,11 +59,8 @@ describe('InfluxDB north', () => {
     await influxDbNorth.handleValues(values)
 
     const expectedUrl = 'http://localhost:8086/write?u=user&p=password&db=database&precision=s'
-    const expectedHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
     const expectedBody = 'ANA,site=BL,unit=1,sensor=RCP05 value=666,quality="good" 1582978332\n'
-    const expectedMethod = 'POST'
-    expect(engine.requestService.send).toHaveBeenCalledTimes(1)
-    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, expectedMethod, null, null, expectedBody, expectedHeaders)
+    expect(engine.requestService.postWwwFormUrlencodedData).toHaveBeenCalledWith(expectedUrl, expectedBody)
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {

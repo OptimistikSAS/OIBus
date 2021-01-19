@@ -123,8 +123,7 @@ class InfluxDB extends ApiHandler {
       body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
     })
 
-    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    return this.engine.requestService.send(url, 'POST', null, null, body, headers)
+    return this.engine.requestService.postWwwFormUrlencodedData(url, body)
   }
 }
 

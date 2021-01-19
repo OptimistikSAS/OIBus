@@ -33,9 +33,7 @@ class OIConnect extends ApiHandler {
   async handleValues(values) {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
 
-    const data = JSON.stringify(values)
-    const headers = { 'Content-Type': 'application/json' }
-    await this.engine.requestService.send(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+    await this.engine.requestService.postJsonValues(this.valuesUrl, values, this.authentication, this.proxy)
     return values.length
   }
 
@@ -47,7 +45,7 @@ class OIConnect extends ApiHandler {
   async handleFile(filePath) {
     const stats = fs.statSync(filePath)
     this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
-    return this.engine.requestService.send(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
+    return this.engine.requestService.postFile(this.fileUrl, filePath, this.authentication, this.proxy)
   }
 }
 
