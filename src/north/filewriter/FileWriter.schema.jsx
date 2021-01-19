@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'FileWriter' }
 schema.form = {
@@ -25,11 +25,13 @@ schema.form = {
     type: 'OIbText',
     defaultValue: '',
     help: <div>A prefix for the filename</div>,
+    valid: hasLengthBetween(0, 256),
   },
   suffixFileName: {
     type: 'OIbText',
     defaultValue: '',
     help: <div>A suffix for the filename</div>,
+    valid: hasLengthBetween(0, 256),
   },
 }
 export default schema

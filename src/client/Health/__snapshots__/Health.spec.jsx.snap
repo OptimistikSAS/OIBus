@@ -175,6 +175,24 @@ exports[`Health display Health page based on config and status 1`] = `
           </a>
         </div>
       </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/filewriter"
+          >
+            <div>
+              filewriter
+            </div>
+            <div>
+              (FileWriter)
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -663,6 +681,24 @@ exports[`Health display Health page based on config and status 2`] = `
             </div>
             <div>
               (CsvToHttp)
+            </div>
+          </a>
+        </div>
+      </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box d-flex align-items-center"
+        >
+          <a
+            href="/north/filewriter"
+          >
+            <div>
+              filewriter
+            </div>
+            <div>
+              (FileWriter)
             </div>
           </a>
         </div>

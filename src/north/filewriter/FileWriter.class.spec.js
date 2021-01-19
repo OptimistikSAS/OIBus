@@ -1,4 +1,3 @@
-const fs = require('fs')
 const FileWriter = require('./FileWriter.class')
 // const config = require('../../config/defaultConfig.json')
 const config = require('../../../tests/testConfig').default
@@ -18,8 +17,6 @@ beforeEach(() => {
 })
 
 describe('FileWriter north', () => {
-  const timestamp = new Date().toISOString()
-
   it('should be properly initialized', () => {
     const fileWriterNorth = new FileWriter(config.north.applications[7], engine)
 
@@ -28,5 +25,4 @@ describe('FileWriter north', () => {
     expect(fileWriterNorth.prefixFileName).toBe('')
     expect(fileWriterNorth.suffixFileName).toBe('')
   })
-
 })

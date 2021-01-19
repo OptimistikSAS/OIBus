@@ -72,7 +72,6 @@ class CsvToHttp extends ApiHandler {
         return ApiHandler.STATUS.LOGIC_ERROR
       }
     }
-    console.log('there')
     // Logs all the erros
     if (convertionErrorBuffer.length > 0) {
       this.logger.error(`${convertionErrorBuffer.length} convertions error`)
