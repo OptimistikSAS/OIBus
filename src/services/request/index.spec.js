@@ -1,4 +1,4 @@
-const RequestFactory = require('./RequestFactory.class')
+const { createRequestService } = require('./index')
 const AxiosRequest = require('./AxiosRequest.class')
 const FetchRequest = require('./FetchRequest.class')
 
@@ -16,7 +16,7 @@ describe('RequestFactory', () => {
     config.engine.httpRequest.stack = 'axios'
     engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
-    const request = RequestFactory.create(engine)
+    const request = createRequestService(engine)
 
     expect(request).toBeInstanceOf(AxiosRequest)
   })
@@ -25,7 +25,7 @@ describe('RequestFactory', () => {
     config.engine.httpRequest.stack = 'fetch'
     engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
-    const request = RequestFactory.create(engine)
+    const request = createRequestService(engine)
 
     expect(request).toBeInstanceOf(FetchRequest)
   })
