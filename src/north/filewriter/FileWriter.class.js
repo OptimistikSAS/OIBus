@@ -1,6 +1,5 @@
-const fsPromises = require('fs').promises;
-const fs = require('fs');
-const path = require("path");
+const fs = require('fs/promises')
+const path = require('path')
 
 const ApiHandler = require('../ApiHandler.class')
 
@@ -36,14 +35,13 @@ class FileWriter extends ApiHandler {
       pointId: value.pointId,
     }))
     const data = JSON.stringify(cleanedValues)
-    return fsPromises.writeFile(path.join(this.outputFolder, fileName), data)
-    .then(results => {
-      return values.length;
-     })
-    .catch(err => { 
-      this.logger.error(`Error handling values, ${err}`);
-      return ApiHandler.STATUS.LOGIC_ERROR;
-    })
+    try {
+      await fs.writeFile(path.join(this.outputFolder, fileName), data)
+      return values.length
+    } catch (error) {
+      this.logger.error(`Error handling values, ${error}`)
+      return ApiHandler.STATUS.LOGIC_ERROR
+    }
   }
 
   /**
@@ -58,14 +56,13 @@ class FileWriter extends ApiHandler {
     const extension = path.extname(filePath)
     let fileName = path.basename(filePath, extension)
     fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
-    return fsPromises.copyFile(filePath, path.join(this.outputFolder, fileName))
-    .then(results => {
-      return ApiHandler.STATUS.SUCCESS;
-     })
-    .catch(err => { 
-      this.logger.error(`Error handling file, ${err}`)
+    try {
+      await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
+      return ApiHandler.STATUS.SUCCESS
+    } catch (error) {
+      this.logger.error(`Error handling file, ${error}`)
       return ApiHandler.STATUS.LOGIC_ERROR
-    })
+    }
   }
 }
 
