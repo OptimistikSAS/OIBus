@@ -113,7 +113,7 @@ describe('WATSY Connect', () => {
   })
 
   it('Should properly handle values and publish them', async () => {
-    WATSYNorth.client = { publish: jest.fn().mockImplementation() }
+    WATSYNorth.client = { publish: jest.fn() }
 
     let expectedResult = null
     let expectedError = null
