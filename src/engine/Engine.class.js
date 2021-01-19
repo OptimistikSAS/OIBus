@@ -37,7 +37,7 @@ const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
 const AliveSignal = require('./AliveSignal.class')
 const EncryptionService = require('../services/EncryptionService.class')
-const RequestFactory = require('../services/request/RequestFactory.class')
+const { createRequestService } = require('../services/request')
 
 /**
  *
@@ -82,7 +82,7 @@ class Engine {
     this.encryptionService.checkOrCreatePrivateKey()
 
     // Request service
-    this.requestService = RequestFactory.create(this)
+    this.requestService = createRequestService(this)
 
     // Will only contain protocols/application used
     // based on the config file
