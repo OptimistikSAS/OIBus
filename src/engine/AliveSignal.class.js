@@ -60,7 +60,7 @@ class AliveSignal {
     try {
       const data = JSON.stringify(status)
       const headers = { 'Content-Type': 'application/json' }
-      await this.engine.requestService.send(this.host, 'POST', this.authentication, this.proxy, data, headers)
+      await this.engine.requestService.httpSend(this.host, 'POST', this.authentication, this.proxy, data, headers)
       this.logger.debug('Alive signal successful')
     } catch (error) {
       this.logger.error(`sendRequest error status: ${error}`)
@@ -92,7 +92,7 @@ class AliveSignal {
       this.logger.debug('Forwarding aliveSignal request')
       const stringData = JSON.stringify(data)
       const headers = { 'Content-Type': 'application/json' }
-      await this.engine.requestService.send(this.host, 'POST', this.authentication, this.proxy, stringData, headers)
+      await this.engine.requestService.httpSend(this.host, 'POST', this.authentication, this.proxy, stringData, headers)
       this.logger.debug('Forwarding aliveSignal was successful')
     }
   }

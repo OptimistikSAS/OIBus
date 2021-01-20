@@ -71,7 +71,7 @@ class BaseRequest {
    * @param {number} retryCount - The retry count
    * @returns {Promise} - The send status
    */
-  async send(requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) {
+  async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) {
     const { engineConfig: { httpRequest } } = this.engine.configService.getConfig()
 
     this.logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
@@ -117,21 +117,6 @@ class BaseRequest {
     this.logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
     return ApiHandler.STATUS.SUCCESS
-  }
-
-  /**
-   * POST data as JSON.
-   *
-   * @param {string} url - The URL to send the request to
-   * @param {string} values - The values to send
-   * @param {object} authentication - Authentication info
-   * @param {object} proxy - Proxy to use
-   * @returns {Promise} - The send status
-   */
-  async postJsonValues(url, values, authentication = null, proxy = null) {
-    const data = JSON.stringify(values)
-    const headers = { 'Content-Type': 'application/json' }
-    return this.send(url, 'POST', authentication, proxy, data, headers)
   }
 }
 

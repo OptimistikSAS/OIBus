@@ -112,7 +112,7 @@ class ApiHandler {
    * @returns {Promise} - The send status
    */
   async postFile(filePath) {
-    return this.engine.requestService.send(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
+    return this.engine.requestService.httpSend(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
   }
 
   /**
@@ -124,7 +124,7 @@ class ApiHandler {
   async postJson(values) {
     const data = JSON.stringify(values)
     const headers = { 'Content-Type': 'application/json' }
-    return this.engine.requestService.send(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+    return this.engine.requestService.httpSend(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
   }
 }
 

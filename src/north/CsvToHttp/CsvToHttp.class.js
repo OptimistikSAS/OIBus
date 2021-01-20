@@ -261,7 +261,7 @@ class CsvToHttp extends ApiHandler {
     // Create a base header in order not to send a request with a file but a content
     const baseHeaders = { 'Content-Type': 'application/json' }
     try {
-      await this.engine.requestService.send(
+      await this.engine.requestService.httpSend(
         this.request.host,
         this.request.method,
         this.request.authenticationField,
