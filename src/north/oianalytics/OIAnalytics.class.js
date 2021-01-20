@@ -44,7 +44,7 @@ class OIAnalytics extends ApiHandler {
       data: value.data,
       pointId: value.pointId,
     }))
-    await this.engine.requestService.postJsonValues(this.valuesUrl, cleanedValues, this.authentication, this.proxy)
+    await this.postJson(cleanedValues)
 
     return values.length
   }
@@ -57,7 +57,7 @@ class OIAnalytics extends ApiHandler {
   async handleFile(filePath) {
     const stats = fs.statSync(filePath)
     this.logger.silly(`OIAnalytics handleFile(${filePath}) (${stats.size} bytes)`)
-    return this.engine.requestService.postFile(this.fileUrl, filePath, this.authentication, this.proxy)
+    return this.postFile(filePath)
   }
 }
 

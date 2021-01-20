@@ -55,9 +55,12 @@ class AliveSignal {
   async pingCallback() {
     this.logger.silly('pingCallback')
 
+    const status = await this.prepareStatus()
+
     try {
-      const status = await this.prepareStatus()
-      await this.engine.requestService.postJsonValues(this.host, status, this.authentication, this.proxy)
+      const data = JSON.stringify(status)
+      const headers = { 'Content-Type': 'application/json' }
+      await this.engine.requestService.send(this.host, 'POST', this.authentication, this.proxy, data, headers)
       this.logger.debug('Alive signal successful')
     } catch (error) {
       this.logger.error(`sendRequest error status: ${error}`)
@@ -87,7 +90,9 @@ class AliveSignal {
   async forwardRequest(data) {
     if (this.enabled) {
       this.logger.debug('Forwarding aliveSignal request')
-      await this.engine.requestService.postJsonValues(this.host, data, this.authentication, this.proxy)
+      const stringData = JSON.stringify(data)
+      const headers = { 'Content-Type': 'application/json' }
+      await this.engine.requestService.send(this.host, 'POST', this.authentication, this.proxy, stringData, headers)
       this.logger.debug('Forwarding aliveSignal was successful')
     }
   }
