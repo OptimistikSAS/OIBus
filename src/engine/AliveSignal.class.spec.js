@@ -42,7 +42,7 @@ describe('AliveSignal', () => {
   engine.configService = { getConfig: () => ({ engineConfig }) }
   engine.getStatus = jest.fn()
   engine.getVersion = jest.fn()
-  engine.requestService = { send: jest.fn() }
+  engine.requestService = { httpSend: jest.fn() }
 
   it('should be properly initialized', () => {
     const aliveSignal = new AliveSignal(engine)
@@ -123,7 +123,7 @@ describe('AliveSignal', () => {
     expect(status).toEqual({ status: 'status', version: 'version', id: 'id' })
   })
 
-  it('should call RequestService postJsonValues()', async () => {
+  it('should call RequestService httpSend()', async () => {
     const status = { status: 'status' }
 
     const aliveSignal = new AliveSignal(engine)
@@ -137,7 +137,14 @@ describe('AliveSignal', () => {
     expect(aliveSignal.prepareStatus).toBeCalled()
     const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.send).toHaveBeenCalledWith(aliveSignal.host, 'POST', aliveSignal.authentication, aliveSignal.proxy, calledStatus, headers)
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+      aliveSignal.host,
+      'POST',
+      aliveSignal.authentication,
+      aliveSignal.proxy,
+      calledStatus,
+      headers,
+    )
     expect(aliveSignal.logger.debug).toBeCalledWith('Alive signal successful')
     expect(setTimeout).toHaveBeenCalledTimes(1)
   })

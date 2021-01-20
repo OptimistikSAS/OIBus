@@ -15,7 +15,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { send: jest.fn() }
+engine.requestService = { httpSend: jest.fn() }
 engine.decryptPassword = (password) => password
 
 // Define the CsvToHttp North
@@ -143,7 +143,7 @@ describe('CsvToHttp', () => {
 
     await CsvToHttpNorth.sendData(httpBody)
 
-    expect(engine.requestService.send).toHaveBeenCalledTimes(2)
+    expect(engine.requestService.httpSend).toHaveBeenCalledTimes(2)
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
@@ -159,7 +159,7 @@ describe('CsvToHttp', () => {
     const expectedbody = JSON.stringify(httpBody)
     const expectedAuthentication = CsvToHttpConfig.CsvToHttp.authentication
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.send).toHaveBeenCalledWith(
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       expectedRequestMethod,
       expectedAuthentication,
@@ -167,6 +167,6 @@ describe('CsvToHttp', () => {
       expectedbody,
       expectedHeaders,
     )
-    expect(engine.requestService.send).toHaveBeenCalledTimes(1)
+    expect(engine.requestService.httpSend).toHaveBeenCalledTimes(1)
   })
 })

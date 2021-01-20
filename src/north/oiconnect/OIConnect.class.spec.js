@@ -9,7 +9,7 @@ jest.mock('../../engine/Logger.class')
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { send: jest.fn() }
+engine.requestService = { httpSend: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -39,7 +39,7 @@ describe('Console north', () => {
     const expectedBody = JSON.stringify(values)
     const expectedHeaders = { 'Content-Type': 'application/json' }
 
-    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
   })
 
   it('should properly handle file', async () => {
@@ -50,6 +50,6 @@ describe('Console north', () => {
 
     const expectedUrl = 'http://hostname:2223/addFile?dataSourceId=OIBus:monoiconnect'
     const expectedAuthentication = config.north.applications[1].OIConnect.authentication
-    expect(engine.requestService.send).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
   })
 })
