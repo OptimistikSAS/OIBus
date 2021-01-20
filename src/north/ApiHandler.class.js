@@ -104,6 +104,28 @@ class ApiHandler {
 
     return proxy
   }
+
+  /**
+   * POST file.
+   *
+   * @param {string} filePath - The path to the file to send
+   * @returns {Promise} - The send status
+   */
+  async postFile(filePath) {
+    return this.engine.requestService.send(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
+  }
+
+  /**
+   * POST data as JSON.
+   *
+   * @param {object[]} values - The values to send
+   * @returns {Promise} - The send status
+   */
+  async postJson(values) {
+    const data = JSON.stringify(values)
+    const headers = { 'Content-Type': 'application/json' }
+    return this.engine.requestService.send(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+  }
 }
 
 module.exports = ApiHandler

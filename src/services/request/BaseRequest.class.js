@@ -133,33 +133,6 @@ class BaseRequest {
     const headers = { 'Content-Type': 'application/json' }
     return this.send(url, 'POST', authentication, proxy, data, headers)
   }
-
-  /**
-   * POST data as x-www-form-urlencoded.
-   *
-   * @param {string} url - The URL to send the request to
-   * @param {string} data - The values to send
-   * @param {object} authentication - Authentication info
-   * @param {object} proxy - Proxy to use
-   * @returns {Promise} - The send status
-   */
-  async postWwwFormUrlencodedData(url, data, authentication = null, proxy = null) {
-    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    return this.send(url, 'POST', authentication, proxy, data, headers)
-  }
-
-  /**
-   * POST file.
-   *
-   * @param {string} url - The URL to send the request to
-   * @param {string} filePath - The path to the file to send
-   * @param {object} authentication - Authentication info
-   * @param {object} proxy - Proxy to use
-   * @returns {Promise} - The send status
-   */
-  async postFile(url, filePath, authentication, proxy) {
-    return this.send(url, 'POST', authentication, proxy, filePath)
-  }
 }
 
 module.exports = BaseRequest
