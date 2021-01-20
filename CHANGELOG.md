@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.1](https://github.com/OptimistikSAS/OIBus/compare/v0.8.0...v0.8.1) (2021-01-20)
+
+
+### Features
+
+* **North-fileWriter:** Add filewritter module ([ec8a10b](https://github.com/OptimistikSAS/OIBus/commit/ec8a10b892232d4273dd57988b3d843773ea8051))
+
+
+### Bug Fixes
+
+* **filewriter:** move to async syntax ([15b3cdc](https://github.com/OptimistikSAS/OIBus/commit/15b3cdc5b0c514c013a01cfff9c7259cc02a0409))
+* **south-sqldbtofile:** Added unit for connection and request timeout. ([306b565](https://github.com/OptimistikSAS/OIBus/commit/306b565ed2bca06e46a06c5fdbcdb370e4152abf))
+
 ## [0.8.0](https://github.com/OptimistikSAS/OIBus/compare/v0.7.9...v0.8.0) (2021-01-18)
 
 
