@@ -14,7 +14,6 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.sendRequest = jest.fn()
 engine.decryptPassword = (password) => password
 
 beforeEach(() => {
