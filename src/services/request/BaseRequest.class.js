@@ -104,7 +104,7 @@ class BaseRequest {
         if (this.retryStatusCodes.includes(errorResult.statusCode)) {
           if (retryCount < httpRequest.retryCount) {
             const incrementedRetryCount = retryCount + 1
-            await this.send(requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
+            await this.httpSend(requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
           } else {
             throw ApiHandler.STATUS.LOGIC_ERROR
           }
