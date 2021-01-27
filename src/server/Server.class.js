@@ -4,6 +4,8 @@ const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
+const { PassThrough } = require('stream')
+const EventEmitter = require('events')
 
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
@@ -24,6 +26,36 @@ class Server {
    */
   constructor(engine) {
     this.app = new Koa()
+    // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
+    this.events = new EventEmitter()
+    this.events.setMaxListeners(0)
+    // eslint-disable-next-line consistent-return
+    this.app.use(async (ctx, next) => {
+      console.log(ctx.path)
+      if (ctx.path !== '/sse') {
+        // eslint-disable-next-line no-return-await
+        return await next()
+      }
+      ctx.request.socket.setTimeout(0)
+      ctx.req.socket.setNoDelay(true)
+      ctx.req.socket.setKeepAlive(true)
+      ctx.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+      const stream = new PassThrough()
+      ctx.status = 200
+      ctx.body = stream
+      const listener = (data) => {
+        stream.write(`data: ${data}\n\n`)
+      }
+      this.events.on('data', listener)
+
+      stream.on('close', () => {
+        this.events.off('data', listener)
+      })
+    })
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
     this.app.logger = Logger.getDefaultLogger()
@@ -100,7 +132,14 @@ class Server {
     this.app.use(clientController.serveClient)
   }
 
+  interval() {
+    setInterval(() => {
+      this.events.emit('data', new Date())
+    }, 1000)
+  }
+
   listen() {
+    this.interval()
     this.app.listen(this.port, () => this.app.logger.info(`Server started on ${this.port}`))
   }
 }

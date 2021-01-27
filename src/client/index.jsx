@@ -17,6 +17,7 @@ import SouthStatus from './South/SouthStatus.jsx'
 import ConfigurePoints from './South/ConfigurePoints.jsx'
 import Logs from './Logs/Logs.jsx'
 import About from './About/About.jsx'
+import Viewer from './Viewer/Viewer.jsx'
 import Health from './Health/Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
@@ -41,6 +42,7 @@ const Main = () => (
               <Route exact path="/north/:applicationId" component={ConfigureApi} />
               <Route exact path="/log" component={Logs} />
               <Route exact path="/about" component={About} />
+              <Route exact path="/viewer" component={Viewer} />
               <Route exact path="/activation" component={Activation} />
               <Route component={NotFound} />
             </Switch>
