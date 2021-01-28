@@ -276,6 +276,7 @@ describe('OPCUA south', () => {
     opcuaSouth.session = { readHistoryValue: jest.fn() }
     opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve(historicalValue))
     opcuaSouth.addValues = jest.fn()
+    opcuaSouth.delay = jest.fn()
 
     const RealDate = Date
     global.Date = jest.fn((dateParam) => {
@@ -312,6 +313,7 @@ describe('OPCUA south', () => {
       )
     expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode])
       .toBeFalsy()
+    expect(opcuaSouth.delay).not.toBeCalled()
   })
 
   it('should in onScan call readHistoryValue multiple times if maxReadInterval is smaller than the read interval', async () => {
@@ -323,16 +325,20 @@ describe('OPCUA south', () => {
     await opcuaSouth.connect()
 
     opcuaSouth.maxReadInterval = 3600
+    opcuaSouth.readIntervalDelay = 200
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
     opcuaSouth.session = { readHistoryValue: jest.fn() }
     opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve([]))
     opcuaSouth.addValues = jest.fn()
+    opcuaSouth.delay = jest.fn().mockReturnValue(Promise.resolve())
 
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
       .toBeCalledTimes(3)
+    expect(opcuaSouth.delay).toBeCalledTimes(2)
+    expect(opcuaSouth.delay.mock.calls).toEqual([[200], [200]])
   })
 
   it('should in onScan call check if readHistoryValue returns the requested number of node IDs', async () => {

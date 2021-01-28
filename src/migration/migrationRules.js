@@ -264,4 +264,14 @@ module.exports = {
     logger.info('Remove listen scan mode')
     config.engine.scanModes = config.engine.scanModes.filter((scanMode) => scanMode.cronTime !== 'listen')
   },
+  19: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCUA') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'readIntervalDelay')) {
+          logger.info('Add readIntervalDelay field to OPCUA')
+          dataSource.OPCUA.readIntervalDelay = 200
+        }
+      }
+    })
+  },
 }
