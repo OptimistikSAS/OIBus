@@ -48,13 +48,21 @@ schema.form = {
     defaultValue: 3600,
     help: <div>Max read interval (s)</div>,
   },
+  readIntervalDelay: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 3,
+    valid: minValue(0),
+    defaultValue: 200,
+    help: <div>Time to wait between the read interval iterations (ms)</div>,
+  },
   scanGroupsSection: {
     type: 'OIbTitle',
     label: 'ScanGroups',
     md: 12,
     children: (
       <p>
-        OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
+        OPCUA application will request all points in the same scanMode. OPCUA can query raw values but can also
         aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected.
         Important: a point with a scanMode without the corresponding scangroup will not be requested
       </p>

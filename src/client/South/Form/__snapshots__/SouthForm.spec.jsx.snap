@@ -6513,6 +6513,38 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCUA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCUA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -6562,7 +6594,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                 class="col"
               >
                 <p>
-                  OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
+                  OPCUA application will request all points in the same scanMode. OPCUA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
                 </p>
               </div>
             </div>
@@ -7478,6 +7510,38 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCUA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCUA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -7527,7 +7591,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                 class="col"
               >
                 <p>
-                  OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
+                  OPCUA application will request all points in the same scanMode. OPCUA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
                 </p>
               </div>
             </div>
@@ -8170,6 +8234,38 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           </small>
         </div>
       </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCUA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCUA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -8219,7 +8315,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                 class="col"
               >
                 <p>
-                  OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
+                  OPCUA application will request all points in the same scanMode. OPCUA can query raw values but can also aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested
                 </p>
               </div>
             </div>

@@ -162,6 +162,18 @@ class ProtocolHandler {
         })
     })
   }
+
+  /**
+   * Method to return a delayed promise.
+   * @param {number} timeout - The delay
+   * @return {Promise<any>} - The delay promise
+   */
+  /* eslint-disable-next-line class-methods-use-this */
+  async delay(timeout) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, timeout)
+    })
+  }
 }
 
 module.exports = ProtocolHandler

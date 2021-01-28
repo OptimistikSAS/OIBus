@@ -266,6 +266,12 @@ module.exports = {
   },
   19: (config) => {
     config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCUA') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'readIntervalDelay')) {
+          logger.info('Add readIntervalDelay field to OPCUA')
+          dataSource.OPCUA.readIntervalDelay = 200
+        }
+      }
       if (dataSource.protocol === 'MQTT') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'persistent')) {
           logger.info('Add persistent field to MQTT')
