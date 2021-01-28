@@ -6425,9 +6425,21 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                 </p>
                 <p>
                   <b>
-                    retry interval:
+                    Retry interval:
                   </b>
-                  retry interval before trying to connect again
+                  Retry interval before trying to connect again
+                </p>
+                <p>
+                  <b>
+                    Max read interval:
+                  </b>
+                  Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                </p>
+                <p>
+                  <b>
+                    Read interval delay:
+                  </b>
+                  A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
               </div>
             </div>
@@ -7422,9 +7434,21 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                 </p>
                 <p>
                   <b>
-                    retry interval:
+                    Retry interval:
                   </b>
-                  retry interval before trying to connect again
+                  Retry interval before trying to connect again
+                </p>
+                <p>
+                  <b>
+                    Max read interval:
+                  </b>
+                  Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                </p>
+                <p>
+                  <b>
+                    Read interval delay:
+                  </b>
+                  A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
               </div>
             </div>
@@ -8146,9 +8170,21 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                 </p>
                 <p>
                   <b>
-                    retry interval:
+                    Retry interval:
                   </b>
-                  retry interval before trying to connect again
+                  Retry interval before trying to connect again
+                </p>
+                <p>
+                  <b>
+                    Max read interval:
+                  </b>
+                  Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                </p>
+                <p>
+                  <b>
+                    Read interval delay:
+                  </b>
+                  A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
               </div>
             </div>
