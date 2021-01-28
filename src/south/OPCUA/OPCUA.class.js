@@ -19,11 +19,12 @@ class OPCUA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, retryInterval, maxReadInterval } = dataSource.OPCUA
+    const { url, retryInterval, maxReadInterval, readIntervalDelay } = dataSource.OPCUA
 
     this.url = url
     this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval
+    this.readIntervalDelay = readIntervalDelay
     this.lastCompletedAt = {}
     this.ongoingReads = {}
     this.reconnectTimeout = null
@@ -147,7 +148,14 @@ class OPCUA extends ProtocolHandler {
       let opcStartTime = new Date(this.lastCompletedAt[scanMode])
       const opcEndTime = new Date()
       let intervalOpcEndTime
+      let firstIteration = true
       do {
+        // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
+        if (!firstIteration) {
+          this.logger.silly(`Wait ${this.readIntervalDelay} ms`)
+          // eslint-disable-next-line no-await-in-loop
+          await this.delay(this.readIntervalDelay)
+        }
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests (for example only one hour if maxReadInterval is 3600)
         if ((opcEndTime.getTime() - opcStartTime.getTime()) > 1000 * this.maxReadInterval) {
@@ -223,6 +231,7 @@ class OPCUA extends ProtocolHandler {
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
         opcStartTime = intervalOpcEndTime
+        firstIteration = false
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
 
       await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
