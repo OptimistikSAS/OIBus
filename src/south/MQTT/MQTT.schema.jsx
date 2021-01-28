@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, optional } from '../../services/validation.service'
+import { minValue, notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -44,6 +44,18 @@ schema.form = {
             Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
             client.
           </li>
+          <li>
+            <b>Keepalive:</b>
+            Set to 0 to disable.
+          </li>
+          <li>
+            <b>Reconnect period:</b>
+            Interval between two reconnections. Disable auto reconnect by setting to 0.
+          </li>
+          <li>
+            <b>Connect timout:</b>
+            Time to wait before a CONNACK is received.
+          </li>
         </ul>
       </div>
     ),
@@ -86,6 +98,26 @@ schema.form = {
     valid: optional(),
     defaultValue: '',
     help: <div>password</div>,
+  },
+  keepalive: {
+    type: 'OIbInteger',
+    label: 'Keep Alive Interval',
+    valid: minValue(0),
+    defaultValue: 60000,
+  },
+  reconnectPeriod: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'Reconnect period',
+    valid: minValue(0),
+    defaultValue: 1000,
+  },
+  connectTimeout: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'Connect Timeout',
+    valid: minValue(0),
+    defaultValue: 30000,
   },
   MqttPayload: {
     type: 'OIbTitle',
@@ -160,7 +192,7 @@ schema.form = {
           </li>
           <li>
             <b>TimeStamp timezone:</b>
-            This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
+            This field indicates in which timezone the timestamp received is. OIBus then converts it into an UTC timestamp.
           </li>
         </ul>
       </div>

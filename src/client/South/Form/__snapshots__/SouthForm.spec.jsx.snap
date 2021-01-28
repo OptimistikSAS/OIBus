@@ -1234,6 +1234,24 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                       </b>
                       Password required by broker, if any. MQTT allows to send password for authenticating and authorization of client.
                     </li>
+                    <li>
+                      <b>
+                        Keepalive:
+                      </b>
+                      Set to 0 to disable.
+                    </li>
+                    <li>
+                      <b>
+                        Reconnect period:
+                      </b>
+                      Interval between two reconnections. Disable auto reconnect by setting to 0.
+                    </li>
+                    <li>
+                      <b>
+                        Connect timout:
+                      </b>
+                      Time to wait before a CONNACK is received.
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -1357,6 +1375,85 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               password
             </div>
           </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.keepalive"
+          >
+            Keep Alive Interval
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.keepalive"
+            name="south.dataSources.0.MQTT.keepalive"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.reconnectPeriod"
+          >
+            Reconnect period
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.reconnectPeriod"
+            name="south.dataSources.0.MQTT.reconnectPeriod"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.connectTimeout"
+          >
+            Connect Timeout
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.connectTimeout"
+            name="south.dataSources.0.MQTT.connectTimeout"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
         </div>
       </div>
     </div>
@@ -1535,7 +1632,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                       <b>
                         TimeStamp timezone:
                       </b>
-                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
+                      This field indicates in which timezone the timestamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>
@@ -8697,6 +8794,24 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       </b>
                       Password required by broker, if any. MQTT allows to send password for authenticating and authorization of client.
                     </li>
+                    <li>
+                      <b>
+                        Keepalive:
+                      </b>
+                      Set to 0 to disable.
+                    </li>
+                    <li>
+                      <b>
+                        Reconnect period:
+                      </b>
+                      Interval between two reconnections. Disable auto reconnect by setting to 0.
+                    </li>
+                    <li>
+                      <b>
+                        Connect timout:
+                      </b>
+                      Time to wait before a CONNACK is received.
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -8730,6 +8845,85 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
       <div
         class="col-md-4"
       />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.keepalive"
+          >
+            Keep Alive Interval
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.keepalive"
+            name="south.dataSources.0.MQTT.keepalive"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.reconnectPeriod"
+          >
+            Reconnect period
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.reconnectPeriod"
+            name="south.dataSources.0.MQTT.reconnectPeriod"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.connectTimeout"
+          >
+            Connect Timeout
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.connectTimeout"
+            name="south.dataSources.0.MQTT.connectTimeout"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -8906,7 +9100,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       <b>
                         TimeStamp timezone:
                       </b>
-                      This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
+                      This field indicates in which timezone the timestamp received is. OIBus then converts it into an UTC timestamp.
                     </li>
                   </ul>
                 </div>
