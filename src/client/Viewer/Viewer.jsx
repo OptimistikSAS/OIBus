@@ -14,6 +14,7 @@ const Viewer = () => {
     source.onmessage = (event) => {
       setMessages((prevMessages) => [...prevMessages, event.data])
     }
+    return (() => source.close())
   }, [])
 
   return (
@@ -27,7 +28,7 @@ const Viewer = () => {
         </BreadcrumbItem>
       </Breadcrumb>
       <List>
-        {messages.map((message) => <li>{message}</li>)}
+        {messages.map((message) => <li key={message}>{message}</li>)}
       </List>
     </>
   )

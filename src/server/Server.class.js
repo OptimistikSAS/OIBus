@@ -31,7 +31,6 @@ class Server {
     this.events.setMaxListeners(0)
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
-      console.log(ctx.path)
       if (ctx.path !== '/sse') {
         // eslint-disable-next-line no-return-await
         return await next()
