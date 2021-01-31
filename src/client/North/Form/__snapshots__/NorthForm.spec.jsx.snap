@@ -4980,6 +4980,13 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
     <div
       class="row"
     >
+      <div
+        class="col-md-2"
+      />
+    </div>
+    <div
+      class="row"
+    >
       <h5>
         Caching
         <button
@@ -8664,6 +8671,13 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           </div>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"

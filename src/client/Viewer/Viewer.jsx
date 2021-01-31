@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { List, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { List, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
 import { AlertContext } from '../context/AlertContext.jsx'
 
 const Viewer = () => {
@@ -27,9 +27,11 @@ const Viewer = () => {
           Viewer
         </BreadcrumbItem>
       </Breadcrumb>
-      <List>
-        {messages.map((message) => <li key={message}>{message}</li>)}
-      </List>
+      <Container fluid>
+        <List>
+          {messages.map((message) => <li key={message}>{message}</li>)}
+        </List>
+      </Container>
     </>
   )
 }

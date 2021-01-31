@@ -14,7 +14,8 @@ class Console extends ApiHandler {
     super(applicationParameters, engine)
     this.canHandleValues = true
     this.canHandleFiles = true
-    this.verbose = applicationParameters.Console.verbose || false
+    this.verbose = applicationParameters.Console.verbose ?? false
+    this.viewer = applicationParameters.Console.viewer ?? true
   }
 
   /**
@@ -27,6 +28,9 @@ class Console extends ApiHandler {
       console.table(values, ['pointId', 'timestamp', 'data'])
     } else {
       process.stdout.write(`(${values.length})`)
+    }
+    if (this.viewer) {
+      this.engine.events.emit('data', `(${values.length})`)
     }
     return values.length
   }

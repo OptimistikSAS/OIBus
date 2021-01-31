@@ -27,8 +27,8 @@ class Server {
   constructor(engine) {
     this.app = new Koa()
     // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
-    this.events = new EventEmitter()
-    this.events.setMaxListeners(0)
+    engine.events = new EventEmitter()
+    engine.events.setMaxListeners(0)
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       if (ctx.path !== '/sse') {
@@ -49,10 +49,10 @@ class Server {
       const listener = (data) => {
         stream.write(`data: ${data}\n\n`)
       }
-      this.events.on('data', listener)
+      engine.events.on('data', listener)
 
       stream.on('close', () => {
-        this.events.off('data', listener)
+        engine.events.off('data', listener)
       })
     })
     // capture the engine and logger under app for reuse in routes.
@@ -131,14 +131,7 @@ class Server {
     this.app.use(clientController.serveClient)
   }
 
-  interval() {
-    setInterval(() => {
-      this.events.emit('data', new Date())
-    }, 1000)
-  }
-
   listen() {
-    this.interval()
     this.app.listen(this.port, () => this.app.logger.info(`Server started on ${this.port}`))
   }
 }
