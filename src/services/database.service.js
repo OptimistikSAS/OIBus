@@ -99,7 +99,6 @@ const saveValues = async (database, dataSourceId, values) => {
   const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceId}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   try {
-    console.log(query)
     await database.run(query)
   } catch (error) {
     logger.error(error)
