@@ -4,6 +4,11 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 const ERROR_PRINT_SIZE = 5
+const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/
+const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/
+const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/
+const REGEX_GET_VARIABLE = /[^${}]+/
+
 /**
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
  */
@@ -132,15 +137,18 @@ class CsvToHttp extends ApiHandler {
     // Log all headers in the csv file and log the value ine the mapping not present in headers
     this.logger.silly(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
 
+    const onlyValidMappingValue = []
     this.mapping.forEach((mapping) => {
-      if (csvFileInJson[0][mapping.csvField] === undefined) {
+      if (!CsvToHttp.isHeaderValid(csvFileInJson[0], mapping.csvField)) {
         this.logger.warn(`The header: '${mapping.csvField}' is not present in the csv file`)
+      } else {
+        onlyValidMappingValue.push(mapping)
       }
     })
 
     // Start the mapping for each row
     csvFileInJson.forEach((csvRowInJson, index) => {
-      const { value, error } = this.convertCSVRowIntoHttpBody(csvRowInJson)
+      const { value, error } = CsvToHttp.convertCSVRowIntoHttpBody(csvRowInJson, onlyValidMappingValue)
 
       // Test the result of the mapping/convertion before add it in the httpBody
       // Add if we accept error convertion or if everything is fine
@@ -159,13 +167,87 @@ class CsvToHttp extends ApiHandler {
   }
 
   /**
+   * @param {Array} httpBody - Body to send
+   * @return {Promise} - Promise
+   */
+  sendData(httpBody) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (httpBody.length > this.bodyMaxLength) {
+          // Divide the current body in array of maximun maxLength elements
+          let i = 0
+          for (i; i < httpBody.length; i += this.bodyMaxLength) {
+            this.sendRequest(httpBody.slice(i, i + this.bodyMaxLength - 1))
+          }
+        } else {
+          this.sendRequest(httpBody)
+        }
+        resolve(true)
+      } catch (error) {
+        this.logger.error(error)
+        reject()
+      }
+    })
+  }
+
+  /**
+   * Send Request(s) to the selected host
+   * @param {Array} body - Body to send
+   * @return {void}
+   */
+  async sendRequest(body) {
+    // Create a base header in order not to send a request with a file but a content
+    const baseHeaders = { 'Content-Type': 'application/json' }
+    try {
+      await this.engine.requestService.httpSend(
+        this.request.host,
+        this.request.method,
+        this.request.authenticationField,
+        this.proxy,
+        JSON.stringify(body),
+        baseHeaders,
+      )
+    } catch (error) {
+      this.logger.error(error)
+    }
+  }
+
+  /**
+   * Test if the field is valid thanks to all headers
+   * @param {Mixed} allHeaders - available headears in the csvFile
+   * @param {Mixed} field - field to test if it matchs with the available headears
+   * @return {Boolean} - Return a bool
+   */
+  static isHeaderValid(allHeaders, field) {
+    if (field.match(REGEX_CONTAIN_VARIABLE_STRING)) {
+      const csvFieldSplit = field.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
+      csvFieldSplit.forEach((element) => {
+        if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
+          const headerToGet = element.match(REGEX_GET_VARIABLE)
+          headerToGet.forEach((header) => {
+            if (allHeaders[header] === undefined) {
+              return false
+            }
+          })
+        }
+      })
+      return true
+    }
+
+    if (allHeaders[field] === undefined) { return false }
+
+    return true
+  }
+
+  /**
    * @param {Object} csvRowInJson - json object of a csv row
+   * @param {Array} mappingValues - array of valid mapping field
    * @return {Object} - Object mapped for one row
    */
-  convertCSVRowIntoHttpBody(csvRowInJson) {
+  static convertCSVRowIntoHttpBody(csvRowInJson, mappingValues) {
     const object = { value: {}, error: [] }
 
-    this.mapping.forEach((mapping) => {
+    mappingValues.forEach((mapping) => {
       if (!(csvRowInJson[mapping.csvField] === undefined)) {
         const field = mapping.httpField
         const response = CsvToHttp.convertToCorrectType(csvRowInJson[mapping.csvField], mapping.type)
@@ -174,10 +256,45 @@ class CsvToHttp extends ApiHandler {
           object.error.push(`Header "${mapping.httpField}": ${response.error}`)
         }
         object.value[field] = response.value
+      } else if (mapping.csvField.match(REGEX_CONTAIN_VARIABLE_STRING)) {
+        // split the input into a array of string
+        // "test ${value}" => [ "test ", ${value}]
+        const csvFieldSplit = mapping.csvField.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
+        const field = mapping.httpField
+        csvFieldSplit.forEach((element) => {
+          if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
+            const headerToGet = element.match(REGEX_GET_VARIABLE)
+            headerToGet.forEach((header) => {
+              const response = CsvToHttp.convertToCorrectType(csvRowInJson[header], mapping.type)
+              if (response.error) {
+                object.error.push(`Header "${mapping.httpField}": ${response.error}`)
+              }
+              if (response.value) {
+                object.value[field] = CsvToHttp.insertValueInObject(object.value[field], response.value)
+              }
+            })
+          } else {
+            object.value[field] = CsvToHttp.insertValueInObject(object.value[field], element)
+          }
+        })
       }
     })
 
     return object
+  }
+
+  /**
+   * @param {Mixed} object - object
+   * @param {Mixed} value - value
+   * @return {Mixed} - The converted value
+   */
+  static insertValueInObject(object, value) {
+    if (object) {
+      let response = object
+      response += value
+      return response
+    }
+    return value
   }
 
   /**
@@ -225,52 +342,6 @@ class CsvToHttp extends ApiHandler {
         return { value: valueToConvert, error: `Fail To convert ${valueToConvert} into ${type}` }
       }
       default: return { value: valueToConvert }
-    }
-  }
-
-  /**
-   * @param {Array} httpBody - Body to send
-   * @return {Promise} - Promise
-   */
-  sendData(httpBody) {
-    return new Promise((resolve, reject) => {
-      try {
-        if (httpBody.length > this.bodyMaxLength) {
-          // Divide the current body in array of maximun maxLength elements
-          let i = 0
-          for (i; i < httpBody.length; i += this.bodyMaxLength) {
-            this.sendRequest(httpBody.slice(i, i + this.bodyMaxLength - 1))
-          }
-        } else {
-          this.sendRequest(httpBody)
-        }
-        resolve(true)
-      } catch (error) {
-        this.logger.error(error)
-        reject()
-      }
-    })
-  }
-
-  /**
-   * Send Request(s) to the selected host
-   * @param {Array} body - Body to send
-   * @return {void}
-   */
-  async sendRequest(body) {
-    // Create a base header in order not to send a request with a file but a content
-    const baseHeaders = { 'Content-Type': 'application/json' }
-    try {
-      await this.engine.requestService.httpSend(
-        this.request.host,
-        this.request.method,
-        this.request.authenticationField,
-        this.proxy,
-        JSON.stringify(body),
-        baseHeaders,
-      )
-    } catch (error) {
-      this.logger.error(error)
     }
   }
 }
