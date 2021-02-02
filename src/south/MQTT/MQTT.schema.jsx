@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, optional } from '../../services/validation.service'
+import { minValue, notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
 schema.form = {
@@ -25,6 +25,16 @@ schema.form = {
             </ul>
           </li>
           <li>
+            <b>Persistent:</b>
+            In this mode the broker will store subscription information, and undelivered messages for the client.
+            With a non persistent connection the broker does not store any subscription information or undelivered messages for the client.
+            For this option to take effect QoS must be set to 1 or 2.
+          </li>
+          <li>
+            <b>Client ID:</b>
+            In order for the broker to store session information for a client a client id must be used.
+          </li>
+          <li>
             <b>Username:</b>
             Username required by broker, if any. MQTT allows to send username for authenticating and authorization of
             client.
@@ -33,6 +43,18 @@ schema.form = {
             <b>Password:</b>
             Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
             client.
+          </li>
+          <li>
+            <b>Keepalive:</b>
+            Set to 0 to disable.
+          </li>
+          <li>
+            <b>Reconnect period:</b>
+            Interval between two reconnections. Disable auto reconnect by setting to 0.
+          </li>
+          <li>
+            <b>Connect timout:</b>
+            Time to wait before a CONNACK is received.
           </li>
         </ul>
       </div>
@@ -51,6 +73,19 @@ schema.form = {
     options: [0, 1, 2],
     defaultValue: 1,
   },
+  persistent: {
+    type: 'OIbCheckBox',
+    md: 1,
+    newRow: false,
+    defaultValue: false,
+  },
+  clientId: {
+    type: 'OIbText',
+    valid: optional(),
+    md: 2,
+    newRow: false,
+    defaultValue: `OIBus-${Math.random().toString(16).substr(2, 8)}`,
+  },
   username: {
     type: 'OIbText',
     valid: optional(),
@@ -63,6 +98,26 @@ schema.form = {
     valid: optional(),
     defaultValue: '',
     help: <div>password</div>,
+  },
+  keepalive: {
+    type: 'OIbInteger',
+    label: 'Keep Alive Interval',
+    valid: minValue(0),
+    defaultValue: 60000,
+  },
+  reconnectPeriod: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'Reconnect period',
+    valid: minValue(0),
+    defaultValue: 1000,
+  },
+  connectTimeout: {
+    type: 'OIbInteger',
+    newRow: false,
+    label: 'Connect Timeout',
+    valid: minValue(0),
+    defaultValue: 30000,
   },
   MqttPayload: {
     type: 'OIbTitle',
@@ -137,7 +192,7 @@ schema.form = {
           </li>
           <li>
             <b>TimeStamp timezone:</b>
-            This field indicates in which timezone the timstamp received is. OIBus then converts it into an UTC timestamp.
+            This field indicates in which timezone the timestamp received is. OIBus then converts it into an UTC timestamp.
           </li>
         </ul>
       </div>

@@ -272,6 +272,28 @@ module.exports = {
           dataSource.OPCUA.readIntervalDelay = 200
         }
       }
+      if (dataSource.protocol === 'MQTT') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'persistent')) {
+          logger.info('Add persistent field to MQTT')
+          dataSource.MQTT.persistent = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'clientId')) {
+          logger.info('Add clientId field to MQTT')
+          dataSource.MQTT.clientId = `OIBus-${Math.random().toString(16).substr(2, 8)}`
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keepalive')) {
+          logger.info('Add keepalive field to MQTT')
+          dataSource.MQTT.keepalive = 60000
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'reconnectPeriod')) {
+          logger.info('Add reconnectPeriod field to MQTT')
+          dataSource.MQTT.reconnectPeriod = 1000
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'connectTimeout')) {
+          logger.info('Add connectTimeout field to MQTT')
+          dataSource.MQTT.connectTimeout = 30000
+        }
+      }
     })
   },
 }

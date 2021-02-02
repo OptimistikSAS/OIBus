@@ -19,8 +19,18 @@ schema.form = {
           Please use the ISO format even if other format are supported.
         </p>
         <p>
-          <b>retry interval:</b>
-          retry interval before trying to connect again
+          <b>Retry interval:</b>
+          Retry interval before trying to connect again
+        </p>
+        <p>
+          <b>Max read interval:</b>
+          Max read interval will divide a huge request (for example 1 year of data) into smaller
+          requests (for example only one hour if maxReadInterval is 3600).
+        </p>
+        <p>
+          <b>Read interval delay:</b>
+          A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in
+          several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
         </p>
       </>
     ),
