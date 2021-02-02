@@ -94,17 +94,14 @@ const createValueErrorsDatabase = async (databasePath) => {
  * @return {void}
  */
 const saveValues = async (database, dataSourceId, values) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id) 
-                 VALUES (?, ?, ?, ?)`
+  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id)
+                      VALUES `
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceId}')`)
+  const query = `${queryStart}${prepValues.join(',')};`
   try {
-    await database.run('BEGIN;')
-    const stmt = await database.prepare(query)
-    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, dataSourceId))
-    await Promise.all(actions)
-    await database.run('COMMIT;')
+    await database.run(query)
   } catch (error) {
     logger.error(error)
-    throw error
   }
 }
 
