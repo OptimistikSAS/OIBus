@@ -4,10 +4,10 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 const ERROR_PRINT_SIZE = 5
-const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/
-const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/
-const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/
-const REGEX_GET_VARIABLE = /[^${}]+/
+const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/ // match if the strind contains ${...}
+const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/ // split the input into a array of string: "test ${value}" => [ "test ", ${value}]
+const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/ // match if the string starts with: ${...}
+const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 
 /**
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
@@ -231,15 +231,17 @@ class CsvToHttp extends ApiHandler {
   static isHeaderValid(allHeaders, field) {
     if (field.match(REGEX_CONTAIN_VARIABLE_STRING)) {
       const csvFieldSplit = field.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
-      csvFieldSplit.every((element) => {
+      return csvFieldSplit.every((element) => {
         if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
           const headerToGet = element.match(REGEX_GET_VARIABLE)
-          return headerToGet.every((header) => {
-            if (allHeaders[header] === undefined) {
-              return false
-            }
+          // The regex must match with only one value and return an array with one element
+          if (headerToGet.length !== 1) {
+            return false
+          }
+          // Check if the headerToGet is in the CSV file
+          if (allHeaders[headerToGet[0]] !== undefined) {
             return true
-          })
+          }
         }
         return true
       })
@@ -273,17 +275,22 @@ class CsvToHttp extends ApiHandler {
         const csvFieldSplit = mapping.csvField.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
         const field = mapping.httpField
         csvFieldSplit.forEach((element) => {
+          // match if the string starts with: ${...}
           if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
             const headerToGet = element.match(REGEX_GET_VARIABLE)
-            headerToGet.forEach((header) => {
-              const response = CsvToHttp.convertToCorrectType(csvRowInJson[header], mapping.type)
+            // The regex must match with only one value and return an array with one element
+            if (headerToGet.length !== 1) {
+              object.error.push(`Regex doesn't match only with one value (tried element: ${element})`)
+            } else if (csvRowInJson[headerToGet[0]] !== undefined) {
+              // Check if the headerToGet is in the CSV file
+              const response = CsvToHttp.convertToCorrectType(csvRowInJson[headerToGet], 'string')
               if (response.error) {
                 object.error.push(`Header "${mapping.httpField}": ${response.error}`)
               }
               if (response.value) {
                 object.value[field] = CsvToHttp.insertValueInObject(object.value[field], response.value)
               }
-            })
+            }
           } else {
             object.value[field] = CsvToHttp.insertValueInObject(object.value[field], element)
           }
@@ -295,17 +302,17 @@ class CsvToHttp extends ApiHandler {
   }
 
   /**
-   * @param {Mixed} object - object
-   * @param {Mixed} value - value
+   * It returns the concatenation of value with the previous object
+   * If the oject is empty it return the value sent
+   * @param {Mixed} currentJsonValue - currentJsonValue
+   * @param {Mixed} valueToAdd - valueToAdd
    * @return {Mixed} - The converted value
    */
-  static insertValueInObject(object, value) {
-    if (object) {
-      let response = object
-      response += value
-      return response
+  static insertValueInObject(currentJsonValue, valueToAdd) {
+    if (currentJsonValue) {
+      return `${currentJsonValue}${valueToAdd}`
     }
-    return value
+    return valueToAdd
   }
 
   /**

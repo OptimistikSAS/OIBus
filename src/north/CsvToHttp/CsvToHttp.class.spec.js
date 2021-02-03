@@ -20,12 +20,12 @@ engine.decryptPassword = (password) => password
 
 // Define the CsvToHttp North
 const CsvToHttpConfig = config.north.applications[6]
-const CsvToHttpNorth = new CsvToHttp(CsvToHttpConfig, engine)
+let CsvToHttpNorth = new CsvToHttp(CsvToHttpConfig, engine)
 
 beforeEach(() => {
   jest.resetAllMocks()
   jest.clearAllMocks()
-  CsvToHttpNorth.httpBody = []
+  CsvToHttpNorth = new CsvToHttp(CsvToHttpConfig, engine)
 })
 
 describe('CsvToHttp', () => {
@@ -44,6 +44,52 @@ describe('CsvToHttp', () => {
     const response = await CsvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
 
     expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
+  })
+
+  it('should properly test validity of header', async () => {
+    const jsonObject = {}
+
+    CsvToHttpNorth.mapping.forEach((mapping) => {
+      jsonObject[mapping.csvField] = 'testValue'
+    })
+
+    let mappingValues = CsvToHttpNorth.getOnlyValidMappingValue(jsonObject)
+
+    expect(CsvToHttpNorth.mapping.length).toEqual(mappingValues.length)
+
+    CsvToHttpNorth.mapping.push(
+      {
+        csvField: 'unvalid header',
+        httpField: 'IdentificationBy template',
+        type: 'string',
+      },
+    )
+
+    CsvToHttpNorth.mapping.push(
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        csvField: '${unvalid header}',
+        httpField: 'IdentificationBy template',
+        type: 'string',
+      },
+    )
+
+    mappingValues = CsvToHttpNorth.getOnlyValidMappingValue(jsonObject)
+
+    expect(CsvToHttpNorth.mapping.length).toBeGreaterThan(mappingValues.length)
+  })
+
+  it('should properly handle csv files with template string', async () => {
+    CsvToHttpNorth.mapping.push({
+      // eslint-disable-next-line no-template-curly-in-string
+      csvField: '${id}',
+      httpField: 'IdentificationBy template',
+      type: 'string',
+    })
+    const response = await CsvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
+
+    expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
+    CsvToHttpNorth.mapping.pop()
   })
 
   it('should properly convert values', async () => {
@@ -123,12 +169,14 @@ describe('CsvToHttp', () => {
 
   it('should properly convert one row (from a json)', async () => {
     const jsonObject = {}
+    const mappingValues = []
 
     CsvToHttpNorth.mapping.forEach((mapping) => {
       jsonObject[mapping.csvField] = 'testValue'
+      mappingValues.push(mapping)
     })
 
-    const response = await CsvToHttpNorth.convertCSVRowIntoHttpBody(jsonObject)
+    const response = await CsvToHttp.convertCSVRowIntoHttpBody(jsonObject, mappingValues)
 
     CsvToHttpNorth.mapping.forEach((mapping) => {
       expect(response.value[mapping.httpField]).toEqual('testValue')
