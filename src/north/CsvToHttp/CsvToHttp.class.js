@@ -4,10 +4,10 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 const ERROR_PRINT_SIZE = 5
-const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/
-const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/
-const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/
-const REGEX_GET_VARIABLE = /[^${}]+/
+const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/ // match if the strind contains ${...}
+const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/ // split the input into a array of string: "test ${value}" => [ "test ", ${value}]
+const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/ // match if the string starts with: ${...}
+const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 
 /**
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
