@@ -69,10 +69,10 @@ schema.form = {
             Csv delimiter: this delimiter will be used to parse your csv file.
           </li>
           <li>
-            Name in csv file: key to be converted.
+            Header in csv file: key to be converted.
           </li>
           <li>
-            Name in http request: the new name of the key.
+            Field in http request(body): the new name of the key.
           </li>
           <li>
             Type: the wanted type for you data (by default it is a string). Every data will be send as a string if the converted method fails.
@@ -80,6 +80,22 @@ schema.form = {
         </ul>
         <p>
           The unselected keys will be omitted during the mapping.
+        </p>
+        <p>
+          <b>Example 1: </b>
+          If the csv file contains 2 headers called header1 and header2, it is possible to specify the name for each field in the
+          http request. It is possible to have in the body of the request a field called header1AfterMapping with the value of the header1
+        </p>
+        <p>
+          <b>Example 2: </b>
+          With the same csv file, it is possible to specify the name for each header in the http request using template string
+          (references to other header as a variable). The syntax is the js one (such as: $
+          {'{value}'}
+          ).It is possible to have in the request&lsquo;s body a field called header1AndHeader2 its value is the concatenation of both
+          header&lsquo;s value.
+          The &quot;Header in csv file&quot; must be filled with the value: $
+          {'{header1} and {header2}'}
+          .
         </p>
       </div>
     ),
@@ -111,6 +127,7 @@ schema.form = {
       type: {
         type: 'OIbSelect',
         newRow: false,
+        label: 'Type',
         options: ['string', 'integer', 'float', 'timestamp', 'date (ISO)', 'short date (yyyy-mm-dd)'],
         md: 3,
         defaultValue: 'string',
