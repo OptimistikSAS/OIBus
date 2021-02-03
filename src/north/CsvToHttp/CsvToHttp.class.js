@@ -231,17 +231,18 @@ class CsvToHttp extends ApiHandler {
   static isHeaderValid(allHeaders, field) {
     if (field.match(REGEX_CONTAIN_VARIABLE_STRING)) {
       const csvFieldSplit = field.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
-      csvFieldSplit.forEach((element) => {
+      csvFieldSplit.every((element) => {
         if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
           const headerToGet = element.match(REGEX_GET_VARIABLE)
-          headerToGet.forEach((header) => {
+          return headerToGet.every((header) => {
             if (allHeaders[header] === undefined) {
               return false
             }
+            return true
           })
         }
+        return true
       })
-      return true
     }
 
     if (allHeaders[field] === undefined) { return false }
