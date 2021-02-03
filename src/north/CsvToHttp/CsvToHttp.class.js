@@ -137,14 +137,7 @@ class CsvToHttp extends ApiHandler {
     // Log all headers in the csv file and log the value ine the mapping not present in headers
     this.logger.silly(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
 
-    const onlyValidMappingValue = []
-    this.mapping.forEach((mapping) => {
-      if (!CsvToHttp.isHeaderValid(csvFileInJson[0], mapping.csvField)) {
-        this.logger.warn(`The header: '${mapping.csvField}' is not present in the csv file`)
-      } else {
-        onlyValidMappingValue.push(mapping)
-      }
-    })
+    const onlyValidMappingValue = this.getOnlyValidMappingValue(csvFileInJson[0])
 
     // Start the mapping for each row
     csvFileInJson.forEach((csvRowInJson, index) => {
@@ -164,6 +157,23 @@ class CsvToHttp extends ApiHandler {
       }
     })
     return { httpBody, convertionErrorBuffer }
+  }
+
+  /**
+   * Get only the valid mapping fields
+   * @param {Mixed} allHeaders - available headears in the csvFile
+   * @return {Array} - Return a bool
+   */
+  getOnlyValidMappingValue(allHeaders) {
+    const onlyValidMappingValue = []
+    this.mapping.forEach((mapping) => {
+      if (!CsvToHttp.isHeaderValid(allHeaders, mapping.csvField)) {
+        this.logger.warn(`The header: '${mapping.csvField}' is not present in the csv file`)
+      } else {
+        onlyValidMappingValue.push(mapping)
+      }
+    })
+    return onlyValidMappingValue
   }
 
   /**
