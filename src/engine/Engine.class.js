@@ -107,7 +107,7 @@ class Engine {
   async addValues(dataSourceId, values) {
     this.logger.silly(`Engine: Add ${values ? values.length : '?'} values from ${dataSourceId}`)
     const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    await this.cache.cacheValues(dataSourceId, sanitizedValues)
+    if (sanitizedValues.length) await this.cache.cacheValues(dataSourceId, sanitizedValues)
   }
 
   /**

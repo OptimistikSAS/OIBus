@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-loop-func */
 const Opcua = require('node-opcua')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
@@ -89,35 +91,77 @@ class OPCUA extends ProtocolHandler {
     const values = []
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
-      if (dataValue.historyData) {
-        // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-        // Reading from 1583914010001 returns values with timestamp 1583914010000
-        // Filter out values with timestamp smaller than startTime
-        const newerValues = dataValue.historyData.dataValues.filter((value) => {
-          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
-          return selectedTimestamp.getTime() >= opcStartTime.getTime()
-        })
-        values.push(...newerValues.map((value) => {
-          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
-          const selectedTime = selectedTimestamp.getTime()
-          maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
-          return {
-            pointId: nodesToRead[i],
-            timestamp: selectedTimestamp.toISOString(),
-            data: {
-              value: value.value.value,
-              quality: JSON.stringify(value.statusCode),
-            },
-          }
-        }))
-      } else {
-        // eslint-disable-next-line no-underscore-dangle
-        this.logger.error(`id:${nodesToRead[i]} error ${dataValue.statusCode._name}: ${dataValue.statusCode._description}`)
-      }
+      // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+      // Reading from 1583914010001 returns values with timestamp 1583914010000
+      // Filter out values with timestamp smaller than startTime
+      const newerValues = dataValue.filter((value) => {
+        const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+        return selectedTimestamp.getTime() >= opcStartTime.getTime()
+      })
+      values.push(...newerValues.map((value) => {
+        const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+        const selectedTime = selectedTimestamp.getTime()
+        maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
+        return {
+          pointId: nodesToRead[i],
+          timestamp: selectedTimestamp.toISOString(),
+          data: {
+            value: value.value.value,
+            quality: JSON.stringify(value.statusCode),
+          },
+        }
+      }))
     })
     // send the packet immediately to the engine
     this.addValues(values)
     this.lastCompletedAt[scanMode] = maxTimestamp + 1
+  }
+
+  async readHistoryValue(nodes, startTime, endTime, options) {
+    this.logger.info('read')
+    let continuationPointFound
+    const numValuesPerNode = options?.numValuesPerNode ?? 0
+    let historyReadResult = []
+    const dataValues = [[]]
+    do {
+      continuationPointFound = false
+      const nodesToRead = nodes.map((node, i) => ({
+        continuationPoint: historyReadResult[i]?.continuationPoint,
+        dataEncoding: undefined,
+        indexRange: undefined,
+        nodeId: node,
+      }))
+      const readRawModifiedDetails = new Opcua.ReadRawModifiedDetails({
+        endTime,
+        isReadModified: false,
+        numValuesPerNode,
+        returnBounds: false,
+        startTime,
+      })
+      const request = new Opcua.HistoryReadRequest({
+        historyReadDetails: readRawModifiedDetails,
+        nodesToRead,
+        releaseContinuationPoints: false,
+        timestampsToReturn: Opcua.TimestampsToReturn.Both,
+      })
+      if (options?.timeout) request.requestHeader.timeoutHint = options.timeout
+      let response
+      try {
+        response = await this.session.performMessageTransaction(request)
+      } catch (error) {
+        this.logger.error(error)
+      }
+      if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
+        this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
+      }
+      historyReadResult = response?.results
+      historyReadResult?.forEach((result, i) => {
+        if (!dataValues[i]) dataValues.push([])
+        dataValues[i].push(...result.historyData.dataValues)
+        continuationPointFound = continuationPointFound || !!result.continuationPoint
+      })
+    } while (continuationPointFound)
+    return dataValues
   }
 
   /**
@@ -169,7 +213,7 @@ class OPCUA extends ProtocolHandler {
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
         // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
-        const dataValues = await this.session.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime)
+        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, { timeout: 600000, numValuesPerNode: 5 })
         /*
         Below are two example of responses
         1- With OPCUA WINCC
