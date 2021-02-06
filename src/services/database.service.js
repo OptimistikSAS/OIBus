@@ -16,7 +16,7 @@ const createValuesDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
-                   timestamp TEXT,
+                   timestamp TEXT KEY,
                    data TEXT,
                    point_id TEXT,
                    data_source_id TEXT
