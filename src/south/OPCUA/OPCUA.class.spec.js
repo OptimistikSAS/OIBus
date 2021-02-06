@@ -301,15 +301,11 @@ describe('OPCUA south', () => {
     const nowDate = new Date('2020-02-03T02:02:02.222Z')
     const sampleDate = new Date('2020-02-12T02:02:02.222Z')
     const sampleValue = 666.666
-    const historicalValue = [{
-      historyData: {
-        dataValues: [{
-          serverTimestamp: sampleDate,
-          value: { value: sampleValue },
-          statusCode: { value: 0 },
-        }],
-      },
-    }]
+    const dataValues = [[{
+      serverTimestamp: sampleDate,
+      value: { value: sampleValue },
+      statusCode: { value: 0 },
+    }]]
 
     databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
     databaseService.createConfigDatabase.mockReturnValue('configDatabase')
@@ -319,8 +315,7 @@ describe('OPCUA south', () => {
     opcuaSouth.maxReadInterval = 24 * 60 * 60
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn() }
-    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve(historicalValue))
+    opcuaSouth.readHistoryValue = jest.fn().mockReturnValue(Promise.resolve(dataValues))
     opcuaSouth.addValues = jest.fn()
     opcuaSouth.delay = jest.fn()
 
@@ -343,10 +338,10 @@ describe('OPCUA south', () => {
         quality: '{"value":0}',
       },
     }
-    expect(opcuaSouth.session.readHistoryValue)
+    expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(1)
-    expect(opcuaSouth.session.readHistoryValue)
-      .toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate)
+    expect(opcuaSouth.readHistoryValue)
+      .toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate, { numValuesPerNode: 1000, timeout: 600000 })
     expect(opcuaSouth.addValues)
       .toBeCalledTimes(1)
     expect(opcuaSouth.addValues)
@@ -374,14 +369,14 @@ describe('OPCUA south', () => {
     opcuaSouth.readIntervalDelay = 200
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn() }
-    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve([]))
+    opcuaSouth.readHistoryValue = jest.fn()
+    opcuaSouth.readHistoryValue.mockReturnValue(Promise.resolve([]))
     opcuaSouth.addValues = jest.fn()
     opcuaSouth.delay = jest.fn().mockReturnValue(Promise.resolve())
 
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue)
+    expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(3)
     expect(opcuaSouth.delay).toBeCalledTimes(2)
     expect(opcuaSouth.delay.mock.calls).toEqual([[200], [200]])
@@ -398,13 +393,13 @@ describe('OPCUA south', () => {
     opcuaSouth.maxReadInterval = 24 * 60 * 60 * 1000
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn() }
-    opcuaSouth.session.readHistoryValue.mockReturnValue(Promise.resolve([]))
+    opcuaSouth.readHistoryValue = jest.fn()
+    opcuaSouth.readHistoryValue.mockReturnValue(Promise.resolve([]))
     opcuaSouth.addValues = jest.fn()
 
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue)
+    expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(1)
     expect(opcuaSouth.logger.error)
       .toHaveBeenCalledWith('received 0, requested 1')
@@ -415,10 +410,11 @@ describe('OPCUA south', () => {
     await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
-    opcuaSouth.session = { readHistoryValue: jest.fn(() => Promise.reject(new Error('fail'))) }
+    opcuaSouth.readHistoryValue = jest.fn()
+    opcuaSouth.readHistoryValue.mockReturnValue(Promise.reject(new Error('fail')))
     await opcuaSouth.onScan(opcuaConfig.OPCUA.scanGroups[0].scanMode)
 
-    expect(opcuaSouth.session.readHistoryValue)
+    expect(opcuaSouth.readHistoryValue)
       .toBeCalled()
     expect(opcuaSouth.logger.error)
       .toHaveBeenCalled()
