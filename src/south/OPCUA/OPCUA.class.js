@@ -118,7 +118,7 @@ class OPCUA extends ProtocolHandler {
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
-    this.logger.info('read')
+    this.logger.silly(`read with options ${options}`)
     let continuationPointFound
     const numValuesPerNode = options?.numValuesPerNode ?? 0
     let historyReadResult = []
@@ -160,6 +160,14 @@ class OPCUA extends ProtocolHandler {
         dataValues[i].push(...result.historyData.dataValues)
         continuationPointFound = continuationPointFound || !!result.continuationPoint
       })
+      if (!continuationPointFound) {
+        await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
+          historyReadDetails: readRawModifiedDetails,
+          nodesToRead,
+          releaseContinuationPoints: true,
+          timestampsToReturn: Opcua.TimestampsToReturn.Both,
+        }))
+      }
     } while (continuationPointFound)
     return dataValues
   }
@@ -213,7 +221,10 @@ class OPCUA extends ProtocolHandler {
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
         // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
-        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, { timeout: 600000, numValuesPerNode: 5 })
+        /**
+         * @todo timeout and maxNodes should be parameters
+         */
+        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, { timeout: 600000, numValuesPerNode: 1000 })
         /*
         Below are two example of responses
         1- With OPCUA WINCC
