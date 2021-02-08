@@ -15,13 +15,13 @@ schema.form = {
         </p>
         <ul>
           <li>
-            Host url: url which will be used in order to send the csv file converted into a http request.
+            Host url: url which will be used in order to send the CSV file converted into a http request.
           </li>
           <li>
             Request Method: method wich will be used in the http request.
           </li>
           <li>
-            Max Length of the body: number of object send in one request. If the number of rows in the csv file
+            Max Length of the body: number of object send in one request. If the number of rows in the CSV file
             is bigger, we will split in different requests.
           </li>
         </ul>
@@ -61,15 +61,15 @@ schema.form = {
     children: (
       <div>
         <p>
-          The csv file sent will be converted row by row into an http request. It is necessary to configure the mapping parameters in order to convert
-          the wanted csv headers into a http request. The key of the wanted csv headers can be renamed.
+          The CSV file sent will be converted row by row into an http request. It is necessary to configure the mapping parameters in order to convert
+          the wanted CSV headers into a http request. The key of the wanted CSV headers can be renamed.
         </p>
         <ul>
           <li>
-            Csv delimiter: this delimiter will be used to parse your csv file.
+            CSV delimiter: this delimiter will be used to parse your CSV file.
           </li>
           <li>
-            Header in csv file: key to be converted.
+            Header in CSV file: key to be converted.
           </li>
           <li>
             Field in http request(body): the new name of the key.
@@ -83,17 +83,20 @@ schema.form = {
         </p>
         <p>
           <b>Example 1: </b>
-          If the csv file contains 2 headers called header1 and header2, it is possible to specify the name for each field in the
-          http request. It is possible to have in the body of the request a field called header1AfterMapping with the value of the header1
+          If the CSV file contains 2 headers called header1 and header2, it is possible to specify the name for each field in the
+          http request. It&lsquo;s possible to have in the body of the request a field called &quot;AfterMapping&quot;
+          which contains the value of the header1 for each row. We can do the same for each header present in the CSV file
         </p>
         <p>
           <b>Example 2: </b>
-          With the same csv file, it is possible to specify the name for each header in the http request using template string
-          (references to other header as a variable). The syntax is the js one (such as: $
-          {'{value}'}
-          ).It is possible to have in the request&lsquo;s body a field called header1AndHeader2 its value is the concatenation of both
-          header&lsquo;s value.
-          The &quot;Header in csv file&quot; must be filled with the value: $
+          It is possible to specify the name for each header in the http request using template string
+          (references to other header as a variable). Thanks to it we can reference header present in the CSV file as variable.
+          For it, the syntax to use is the javascript one (such as: $
+          {'{name of your header}'}
+          ).
+          With the same CSV file, it is possible to have in the request&lsquo;s body a field called header1AndHeader2 its value is the
+          concatenation of both header&lsquo;s value.
+          The &quot;Header in CSV file&quot; must be filled with the value: $
           {'{header1} and {header2}'}
           .
         </p>

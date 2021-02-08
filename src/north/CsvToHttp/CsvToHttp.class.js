@@ -273,6 +273,7 @@ class CsvToHttp extends ApiHandler {
         const csvFieldSplit = mapping.csvField.split(REGEX_SPLIT_TEMPLATE_STRING).filter(Boolean)
         const field = mapping.httpField
         csvFieldSplit.forEach((element) => {
+          // match if the string starts with: ${...}
           if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
             const headerToGet = element.match(REGEX_GET_VARIABLE)
             headerToGet.forEach((header) => {
@@ -295,6 +296,8 @@ class CsvToHttp extends ApiHandler {
   }
 
   /**
+   * It returns the concatenation of value with the previous object
+   * If the oject is empty it return the value sent
    * @param {Mixed} object - object
    * @param {Mixed} value - value
    * @return {Mixed} - The converted value
