@@ -118,20 +118,20 @@ class OPCUA extends ProtocolHandler {
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
-    this.logger.silly(`read with options ${options}`)
-    let continuationPointFound
+    this.logger.silly(`read with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
     let historyReadResult = []
+    let nodesToRead = nodes.map((nodeId) => ({
+      continuationPoint: null,
+      dataEncoding: undefined,
+      indexRange: undefined,
+      nodeId,
+    }))
+    let readRawModifiedDetails
+
     const dataValues = [[]]
     do {
-      continuationPointFound = false
-      const nodesToRead = nodes.map((node, i) => ({
-        continuationPoint: historyReadResult[i]?.continuationPoint,
-        dataEncoding: undefined,
-        indexRange: undefined,
-        nodeId: node,
-      }))
-      const readRawModifiedDetails = new Opcua.ReadRawModifiedDetails({
+      readRawModifiedDetails = new Opcua.ReadRawModifiedDetails({
         endTime,
         isReadModified: false,
         numValuesPerNode,
@@ -145,30 +145,33 @@ class OPCUA extends ProtocolHandler {
         timestampsToReturn: Opcua.TimestampsToReturn.Both,
       })
       if (options?.timeout) request.requestHeader.timeoutHint = options.timeout
-      let response
-      try {
-        response = await this.session.performMessageTransaction(request)
-      } catch (error) {
-        this.logger.error(error)
-      }
+      const response = await this.session.performMessageTransaction(request)
       if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
       historyReadResult = response?.results
       historyReadResult?.forEach((result, i) => {
         if (!dataValues[i]) dataValues.push([])
-        dataValues[i].push(...result.historyData.dataValues)
-        continuationPointFound = continuationPointFound || !!result.continuationPoint
+        dataValues[i].push(...result.historyData?.dataValues ?? [])
+        nodesToRead[i].continuationPoint = result.continuationPoint
       })
-      if (!continuationPointFound) {
-        await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
-          historyReadDetails: readRawModifiedDetails,
-          nodesToRead,
-          releaseContinuationPoints: true,
-          timestampsToReturn: Opcua.TimestampsToReturn.Both,
-        }))
-      }
-    } while (continuationPointFound)
+      // remove points fully retrieved
+      nodesToRead = nodesToRead.filter((node) => !!node.continuationPoint)
+      this.logger.silly(`continue read for ${nodesToRead.length} points`)
+    } while (nodesToRead.length)
+    // if all is retrieved, clean continatuon points
+    nodesToRead = nodes.map((nodeId) => ({
+      continuationPoint: null,
+      dataEncoding: undefined,
+      indexRange: undefined,
+      nodeId,
+    }))
+    await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
+      historyReadDetails: readRawModifiedDetails,
+      nodesToRead,
+      releaseContinuationPoints: true,
+      timestampsToReturn: Opcua.TimestampsToReturn.Both,
+    }))
     return dataValues
   }
 
@@ -218,7 +221,8 @@ class OPCUA extends ProtocolHandler {
           intervalOpcEndTime = opcEndTime
         }
 
-        this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} the nodes ${nodesToRead}`)
+        // eslint-disable-next-line max-len
+        this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
         // The request for the current Interval
         // eslint-disable-next-line no-await-in-loop
         /**
@@ -287,12 +291,12 @@ class OPCUA extends ProtocolHandler {
         // eslint-disable-next-line no-await-in-loop
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
+        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+        this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
+
         opcStartTime = intervalOpcEndTime
         firstIteration = false
       } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
-
-      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
-      this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
     }
