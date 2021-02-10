@@ -21,7 +21,7 @@ class OPCUA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay } = dataSource.OPCUA
+    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay, maxReturnValues, readTimeout } = dataSource.OPCUA
 
     this.url = url
     this.username = username
@@ -29,6 +29,8 @@ class OPCUA extends ProtocolHandler {
     this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
+    this.maxReturnValues = maxReturnValues
+    this.readTimeout = readTimeout
     this.lastCompletedAt = {}
     this.ongoingReads = {}
     this.reconnectTimeout = null
@@ -228,7 +230,8 @@ class OPCUA extends ProtocolHandler {
         /**
          * @todo timeout and maxNodes should be parameters
          */
-        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, { timeout: 600000, numValuesPerNode: 1000 })
+        const options = { timeout: this.readTimeout, numValuesPerNode: this.maxReturnValues }
+        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
         /*
         Below are two example of responses
         1- With OPCUA WINCC
