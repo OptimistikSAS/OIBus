@@ -27,8 +27,8 @@ class FileWriter extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`Link handleValues() call with ${values.length} values`)
-    const fileName = `${this.prefixFileName}${this.application.applicationId}-${new Date().getTime() + this.suffixFileName}.json`
+    this.logger.debug(`FileWriter handleValues() with ${values.length} values`)
+    const fileName = `${this.prefixFileName}${new Date().getTime()}${this.suffixFileName}.json`
     const cleanedValues = values.map((value) => ({
       timestamp: value.timestamp,
       data: value.data,
@@ -37,6 +37,7 @@ class FileWriter extends ApiHandler {
     const data = JSON.stringify(cleanedValues)
     try {
       await fs.writeFile(path.join(this.outputFolder, fileName), data)
+      this.logger.debug(`FileWriter created ${fileName}`)
       return values.length
     } catch (error) {
       this.logger.error(`Error handling values, ${error}`)
@@ -58,6 +59,7 @@ class FileWriter extends ApiHandler {
     fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
     try {
       await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
+      this.logger.debug(`FileWriter copied file ${fileName}`)
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
       this.logger.error(`Error handling file, ${error}`)
