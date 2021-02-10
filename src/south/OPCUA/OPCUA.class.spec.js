@@ -313,6 +313,8 @@ describe('OPCUA south', () => {
     await opcuaSouth.connect()
 
     opcuaSouth.maxReadInterval = 24 * 60 * 60
+    opcuaSouth.maxReturnValues = 1000
+    opcuaSouth.readTimeout = 600000
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA.scanGroups[0].scanMode] = false
     opcuaSouth.readHistoryValue = jest.fn().mockReturnValue(Promise.resolve(dataValues))

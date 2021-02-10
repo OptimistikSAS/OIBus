@@ -296,4 +296,18 @@ module.exports = {
       }
     })
   },
+  20: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCUA') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'maxReturnValues')) {
+          logger.info('Add maxReturnValues field to OPCUA')
+          dataSource.OPCUA.maxReturnValues = 1000
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'readTimeout')) {
+          logger.info('Add readTimeout field to OPCUA')
+          dataSource.OPCUA.readTimeout = 180000
+        }
+      }
+    })
+  },
 }

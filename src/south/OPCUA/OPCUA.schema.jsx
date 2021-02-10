@@ -61,7 +61,7 @@ schema.form = {
   retryInterval: {
     type: 'OIbInteger',
     newRow: true,
-    md: 3,
+    md: 2,
     valid: minValue(1000),
     defaultValue: 10000,
     help: <div>Retry Interval (ms)</div>,
@@ -69,7 +69,7 @@ schema.form = {
   maxReadInterval: {
     type: 'OIbInteger',
     newRow: false,
-    md: 3,
+    md: 2,
     valid: minValue(60),
     defaultValue: 3600,
     help: <div>Max read interval (s)</div>,
@@ -77,10 +77,26 @@ schema.form = {
   readIntervalDelay: {
     type: 'OIbInteger',
     newRow: false,
-    md: 3,
+    md: 2,
     valid: minValue(0),
     defaultValue: 200,
     help: <div>Time to wait between the read interval iterations (ms)</div>,
+  },
+  maxReturnValues: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 1000,
+    help: <div>Max return values</div>,
+  },
+  readTimeout: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 180000,
+    help: <div>Read timeout</div>,
   },
   scanGroupsSection: {
     type: 'OIbTitle',
