@@ -37,7 +37,7 @@ class OIAnalytics extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`OIAnalytics handleValues() call with ${values.length} values`)
+    this.logger.silly(`OIAnalytics handleValues() with ${values.length} values`)
 
     const cleanedValues = values.map((value) => ({
       timestamp: value.timestamp,
@@ -45,6 +45,7 @@ class OIAnalytics extends ApiHandler {
       pointId: value.pointId,
     }))
     await this.postJson(cleanedValues)
+    this.logger.silly(`OIAnalytics has posted ${cleanedValues.length} values`)
 
     return values.length
   }
