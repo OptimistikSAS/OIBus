@@ -90,15 +90,16 @@ schema.form = {
         <p>
           <b>Example 2: </b>
           It is possible to specify the name for each header in the http request using template string
-          (references to other header as a variable). Thanks to it we can reference header present in the CSV file as variable.
+          (references to other headers as a variable). Thanks to it we can reference headers present in the CSV file as variables.
           For it, the syntax to use is the javascript one (such as: $
           {'{name of your header}'}
           ).
-          With the same CSV file, it is possible to have in the request&lsquo;s body a field called header1AndHeader2 its value is the
+          With the same CSV file, it is possible to have in the request&lsquo;s body a field called myNewHeader its value is the
           concatenation of both header&lsquo;s value.
           The &quot;Header in CSV file&quot; must be filled with the value: $
           {'{header1} and {header2}'}
-          .
+          . If a row has &lsquo;value1&lsquo; in the column &lsquo;header1&lsquo; and &lsquo;value2&lsquo; in the column &lsquo;header2&lsquo;, the
+          resulting value will be &lsquo;value1 and value2&lsquo;.
         </p>
       </div>
     ),
