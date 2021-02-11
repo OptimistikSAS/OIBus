@@ -281,9 +281,8 @@ class CsvToHttp extends ApiHandler {
             // The regex must match with only one value and return an array with one element
             if (headerToGet.length !== 1) {
               object.error.push(`Regex doesn't match only with one value (tried element: ${element})`)
-            }
-            // Check if the headerToGet is in the CSV file
-            if (csvRowInJson[headerToGet[0]] !== undefined) {
+            } else if (csvRowInJson[headerToGet[0]] !== undefined) {
+              // Check if the headerToGet is in the CSV file
               const response = CsvToHttp.convertToCorrectType(csvRowInJson[headerToGet], 'string')
               if (response.error) {
                 object.error.push(`Header "${mapping.httpField}": ${response.error}`)
