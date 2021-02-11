@@ -277,7 +277,7 @@ class CsvToHttp extends ApiHandler {
           if (element.match(REGEX_MATCH_VARIABLE_STRING)) {
             const headerToGet = element.match(REGEX_GET_VARIABLE)
             headerToGet.forEach((header) => {
-              const response = CsvToHttp.convertToCorrectType(csvRowInJson[header], mapping.type)
+              const response = CsvToHttp.convertToCorrectType(csvRowInJson[header], 'string')
               if (response.error) {
                 object.error.push(`Header "${mapping.httpField}": ${response.error}`)
               }
@@ -298,13 +298,13 @@ class CsvToHttp extends ApiHandler {
   /**
    * It returns the concatenation of value with the previous object
    * If the oject is empty it return the value sent
-   * @param {Mixed} object - object
+   * @param {Mixed} currentJsonValue - currentJsonValue
    * @param {Mixed} value - value
    * @return {Mixed} - The converted value
    */
-  static insertValueInObject(object, value) {
-    if (object) {
-      let response = object
+  static insertValueInObject(currentJsonValue, value) {
+    if (currentJsonValue) {
+      let response = currentJsonValue
       response += value
       return response
     }
