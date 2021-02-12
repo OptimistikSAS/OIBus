@@ -1,6 +1,6 @@
-const sqlite = require('sqlite')
-const sqlite3 = require('sqlite3')
-
+// const sqlite = require('sqlite')
+// const sqlite3 = require('sqlite3')
+const Database = require('better-sqlite3')
 const Logger = require('../engine/Logger.class')
 
 const logger = Logger.getDefaultLogger()
@@ -14,24 +14,24 @@ const CACHE_TABLE_NAME = 'cache'
  * @return {Sqlite.Database} - The SQLite3 database
  */
 const createValuesDatabase = async (databasePath, options) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
-  await database.run(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+  const database = new Database(databasePath)
+  database.prepare(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
                    timestamp TEXT KEY,
                    data TEXT,
                    point_id TEXT,
                    data_source_id TEXT
-                 );`)
+                 );`).run()
+  database.pragma('LOCKING_MODE = exclusive')
+  database.pragma('cache_size = 100000')
+  /*
   await database.run('PRAGMA secure_delete = OFF;')
-  // await database.run('PRAGMA synchronous = OFF')
-  // await database.run('PRAGMA journal_mode = MEMORY')
-  // await database.run('PRAGMA JOURNAL_MODE = OFF;')
-  await database.run('PRAGMA cache_size = 100000;')
-  await database.run('PRAGMA LOCKING_MODE = exclusive;')
+  await database.run('PRAGMA synchronous = OFF;')
+  await database.run('PRAGMA cache_size = 100000')
   if (options?.wal) await database.run('PRAGMA journal_mode = WAL;')
   if (options?.optimize) await database.run('PRAGMA optimize;')
   if (options?.vacuum) await database.run('PRAGMA vacuum;')
-
+  */
   return database
 }
 
@@ -43,14 +43,14 @@ const createValuesDatabase = async (databasePath, options) => {
 const createFilesDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
 
-  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
-                   id INTEGER PRIMARY KEY,
-                   timestamp INTEGER,
-                   application TEXT,
-                   path TEXT
-                 );`
-  const stmt = await database.prepare(query)
-  await stmt.run()
+  await database.run(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+    id INTEGER PRIMARY KEY,
+    timestamp INTEGER,
+    application TEXT,
+    path TEXT
+  );`)
+
+  await database.run('PRAGMA journal_mode=wal;')
 
   return database
 }
@@ -101,13 +101,13 @@ const createValueErrorsDatabase = async (databasePath) => {
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveValues = async (database, dataSourceId, values) => {
+const saveValues = (database, dataSourceId, values) => {
   const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id)
                       VALUES `
   const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceId}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   try {
-    await database.run(query)
+    database.prepare(query).run()
   } catch (error) {
     logger.error(error)
   }
@@ -145,8 +145,7 @@ const getCount = async (database) => {
                  FROM ${CACHE_TABLE_NAME}`
   let result = {}
   try {
-    const stmt = await database.prepare(query)
-    result = await stmt.get()
+    result = database.prepare(query).get()
   } catch (error) {
     logger.error(error)
     throw error
@@ -165,21 +164,29 @@ const getValuesToSend = async (database, count) => {
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
-  const values = []
+  let results
   try {
-    await database.each(query, (err, value) => {
-      if (err) throw err
-      try {
-        values.push({ ...value, data: JSON.parse(decodeURI(value.data)) })
-      } catch (error) {
-        // log error but try to continue with value unchanged
-        logger.error(`Decoding Error: ${error.message} detected for value.data ${JSON.stringify(value)}`)
-      }
-    })
+    results = database.prepare(query).all()
   } catch (error) {
     logger.error(error)
     throw error
   }
+
+  let values = null
+
+  if (results.length > 0) {
+    values = results.map((value) => {
+      try {
+        // data is a JSON object containing value and quality
+        value.data = JSON.parse(decodeURI(value.data))
+      } catch (error) {
+        // log error but try to continue with value unchanged
+        logger.error(`Decoding Error: ${error.message} detected for value.data ${JSON.stringify(value)}`)
+      }
+      return value
+    })
+  }
+
   return values
 }
 
@@ -189,18 +196,17 @@ const getValuesToSend = async (database, count) => {
  * @param {Object} values - The values to remove
  * @return {number} number of deleted values
  */
-const removeSentValues = async (database, values) => {
-  let result
+const removeSentValues = (database, values) => {
   try {
     const ids = values.map((value) => value.id).join()
     const query = `DELETE FROM ${CACHE_TABLE_NAME}
                    WHERE id IN (${ids})`
-    result = await database.run(query)
+    database.prepare(query).run()
   } catch (error) {
     logger.error(error)
     throw error
   }
-  return result.changes
+  return values.length
 }
 
 /**
