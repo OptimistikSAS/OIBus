@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue } from '../../services/validation.service'
+import { notEmpty, minValue, optional } from '../../services/validation.service'
 import validation from '../../client/South/Form/South.validation'
 
 const schema = { name: 'OPCUA' }
@@ -41,6 +41,22 @@ schema.form = {
     defaultValue: 'opc.tcp://servername:port/endpoint',
     help: <div>The URL of OPC-UA server</div>,
     md: 6,
+  },
+  username: {
+    type: 'OIbText',
+    newRow: false,
+    md: 2,
+    valid: optional(),
+    defaultValue: '',
+    help: <div>authorized user</div>,
+  },
+  password: {
+    type: 'OIbPassword',
+    newRow: false,
+    md: 2,
+    valid: optional(),
+    defaultValue: '',
+    help: <div>password</div>,
   },
   retryInterval: {
     type: 'OIbInteger',

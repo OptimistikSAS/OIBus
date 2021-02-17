@@ -3,12 +3,14 @@ const Opcua = require('node-opcua')
 const OPCUA = require('./OPCUA.class')
 const config = require('../../config/defaultConfig.json')
 const databaseService = require('../../services/database.service')
+const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock node-opcua
 jest.mock('node-opcua', () => ({
   OPCUAClient: { create: jest.fn() },
   MessageSecurityMode: { None: 1 },
   SecurityPolicy: { None: 'http://opcfoundation.org/UA/SecurityPolicy#None' },
+  UserTokenType: { UserName: 1 },
 }))
 
 // Mock database service
@@ -17,6 +19,9 @@ jest.mock('../../services/database.service', () => ({
   getConfig: jest.fn((_database, _key) => '1587640141001.0'),
   upsertConfig: jest.fn(),
 }))
+
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock logger
 jest.mock('../../engine/Logger.class')
@@ -136,7 +141,7 @@ describe('OPCUA south', () => {
       .toHaveBeenCalledTimes(1)
   })
 
-  it('should properly connect to OPC UA server', async () => {
+  it('should properly connect to OPC UA server without password', async () => {
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -161,6 +166,47 @@ describe('OPCUA south', () => {
       .toBeCalledWith(opcuaConfig.OPCUA.url)
     expect(opcuaSouth.client.createSession)
       .toBeCalledTimes(1)
+    expect(opcuaSouth.connected)
+      .toBeTruthy()
+    expect(setTimeout)
+      .not
+      .toBeCalled()
+  })
+
+  it('should properly connect to OPC UA server with password', async () => {
+    const expectedOptions = {
+      applicationName: 'OIBus',
+      connectionStrategy: {
+        initialDelay: 1000,
+        maxRetry: 1,
+      },
+      securityMode: Opcua.MessageSecurityMode.None,
+      securityPolicy: Opcua.SecurityPolicy.None,
+      endpoint_must_exist: false,
+    }
+    Opcua.OPCUAClient.create.mockReturnValue({
+      connect: jest.fn(),
+      createSession: jest.fn(),
+    })
+    opcuaConfig.OPCUA.username = 'username'
+    opcuaConfig.OPCUA.password = 'password'
+
+    const opcuaSouth = new OPCUA(opcuaConfig, engine)
+    await opcuaSouth.connect()
+
+    delete opcuaConfig.OPCUA.username
+    delete opcuaConfig.OPCUA.password
+    const expectedUserIdentity = {
+      type: 1,
+      userName: 'username',
+      password: 'password',
+    }
+    expect(Opcua.OPCUAClient.create)
+      .toBeCalledWith(expectedOptions)
+    expect(opcuaSouth.client.connect)
+      .toBeCalledWith(opcuaConfig.OPCUA.url)
+    expect(opcuaSouth.client.createSession)
+      .toBeCalledWith(expectedUserIdentity)
     expect(opcuaSouth.connected)
       .toBeTruthy()
     expect(setTimeout)
