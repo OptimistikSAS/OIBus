@@ -6453,6 +6453,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       <div
         class="col-md-6"
       />
+      <div
+        class="col-md-2"
+      />
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -7462,6 +7468,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       <div
         class="col-md-6"
       />
+      <div
+        class="col-md-2"
+      />
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -8197,6 +8209,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
     >
       <div
         class="col-md-6"
+      />
+      <div
+        class="col-md-2"
+      />
+      <div
+        class="col-md-2"
       />
     </div>
     <div

@@ -19,9 +19,11 @@ class OPCUA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, retryInterval, maxReadInterval, readIntervalDelay } = dataSource.OPCUA
+    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay } = dataSource.OPCUA
 
     this.url = url
+    this.username = username
+    this.password = this.encryptionService.decryptText(password)
     this.retryInterval = retryInterval // retry interval before trying to connect again
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
@@ -281,7 +283,15 @@ class OPCUA extends ProtocolHandler {
       }
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
-      this.session = await this.client.createSession()
+      let userIdentity = null
+      if (this.username && this.password) {
+        userIdentity = {
+          type: Opcua.UserTokenType.UserName,
+          userName: this.username,
+          password: this.password,
+        }
+      }
+      this.session = await this.client.createSession(userIdentity)
       this.connected = true
       this.logger.info('OPCUA Connected')
     } catch (error) {
