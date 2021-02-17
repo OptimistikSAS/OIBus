@@ -225,11 +225,6 @@ class OPCUA extends ProtocolHandler {
 
         // eslint-disable-next-line max-len
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
-        // The request for the current Interval
-        // eslint-disable-next-line no-await-in-loop
-        /**
-         * @todo timeout and maxNodes should be parameters
-         */
         const options = { timeout: this.readTimeout, numValuesPerNode: this.maxReturnValues }
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
         /*

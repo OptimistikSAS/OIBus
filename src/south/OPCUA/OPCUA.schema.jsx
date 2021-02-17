@@ -32,6 +32,16 @@ schema.form = {
           A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in
           several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
         </p>
+        <p>
+          <b>Max return values:</b>
+          Max return values is a parameter allowing to indicate the maximum number of values that can be
+          returned in a single read request. A low value requires the server to split a single reply in multiple chunks
+          creating more network traffic.
+        </p>
+        <p>
+          <b>Read timeout:</b>
+          This timeout in milliseconds is used in the Client side Communication Stack to set the timeout on a per-call base.
+        </p>
       </>
     ),
   },
@@ -88,7 +98,7 @@ schema.form = {
     md: 2,
     valid: minValue(0),
     defaultValue: 1000,
-    help: <div>Max return values</div>,
+    help: <div>Max number of values returned for one point during a read interval</div>,
   },
   readTimeout: {
     type: 'OIbInteger',
@@ -96,7 +106,7 @@ schema.form = {
     md: 2,
     valid: minValue(0),
     defaultValue: 180000,
-    help: <div>Read timeout</div>,
+    help: <div>Read timeout (ms)</div>,
   },
   scanGroupsSection: {
     type: 'OIbTitle',

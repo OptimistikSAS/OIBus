@@ -6441,6 +6441,18 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   </b>
                   A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
+                <p>
+                  <b>
+                    Max return values:
+                  </b>
+                  Max return values is a parameter allowing to indicate the maximum number of values that can be returned in a single read request. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
+                </p>
+                <p>
+                  <b>
+                    Read timeout:
+                  </b>
+                  This timeout in milliseconds is used in the Client side Communication Stack to set the timeout on a per-call base.
+                </p>
               </div>
             </div>
           </div>
@@ -6590,7 +6602,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Max return values
+              Max number of values returned for one point during a read interval
             </div>
           </small>
         </div>
@@ -6622,7 +6634,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Read timeout
+              Read timeout (ms)
             </div>
           </small>
         </div>
@@ -7520,6 +7532,18 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                   </b>
                   A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
+                <p>
+                  <b>
+                    Max return values:
+                  </b>
+                  Max return values is a parameter allowing to indicate the maximum number of values that can be returned in a single read request. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
+                </p>
+                <p>
+                  <b>
+                    Read timeout:
+                  </b>
+                  This timeout in milliseconds is used in the Client side Communication Stack to set the timeout on a per-call base.
+                </p>
               </div>
             </div>
           </div>
@@ -7669,7 +7693,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Max return values
+              Max number of values returned for one point during a read interval
             </div>
           </small>
         </div>
@@ -7701,7 +7725,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Read timeout
+              Read timeout (ms)
             </div>
           </small>
         </div>
@@ -8326,6 +8350,18 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                   </b>
                   A delay (in ms) used to wait between two read intervals. Useful when large amount of data are requested in several requests. The larger the data requested, the bigger the delay should be to avoid cache congestion.
                 </p>
+                <p>
+                  <b>
+                    Max return values:
+                  </b>
+                  Max return values is a parameter allowing to indicate the maximum number of values that can be returned in a single read request. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
+                </p>
+                <p>
+                  <b>
+                    Read timeout:
+                  </b>
+                  This timeout in milliseconds is used in the Client side Communication Stack to set the timeout on a per-call base.
+                </p>
               </div>
             </div>
           </div>
@@ -8475,7 +8511,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             class="form-text text-muted"
           >
             <div>
-              Max return values
+              Max number of values returned for one point during a read interval
             </div>
           </small>
         </div>
@@ -8507,7 +8543,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             class="form-text text-muted"
           >
             <div>
-              Read timeout
+              Read timeout (ms)
             </div>
           </small>
         </div>

@@ -23,11 +23,8 @@ const createValuesDatabase = async (databasePath, options) => {
                    data_source_id TEXT
                  );`)
   await database.run('PRAGMA secure_delete = OFF;')
-  // await database.run('PRAGMA synchronous = OFF')
-  // await database.run('PRAGMA journal_mode = MEMORY')
-  // await database.run('PRAGMA JOURNAL_MODE = OFF;')
   await database.run('PRAGMA cache_size = 100000;')
-  await database.run('PRAGMA LOCKING_MODE = exclusive;')
+  await database.run('PRAGMA locking_mode = exclusive;')
   if (options?.wal) await database.run('PRAGMA journal_mode = WAL;')
   if (options?.optimize) await database.run('PRAGMA optimize;')
   if (options?.vacuum) await database.run('PRAGMA vacuum;')
