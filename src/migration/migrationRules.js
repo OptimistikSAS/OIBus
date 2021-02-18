@@ -310,4 +310,16 @@ module.exports = {
       }
     })
   },
+  21: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCUA') {
+        logger.info('Rename OPCUA to OPCUA_HA')
+        dataSource.protocol = 'OPCUA_HA'
+        if (Object.prototype.hasOwnProperty.call(dataSource, 'OPCUA')) {
+          dataSource.OPCUA_HA = dataSource.OPCUA
+          delete dataSource.OPCUA
+        }
+      }
+    })
+  },
 }

@@ -2,7 +2,7 @@ import React from 'react'
 import { notEmpty, minValue, optional } from '../../services/validation.service'
 import validation from '../../client/South/Form/South.validation'
 
-const schema = { name: 'OPCUA' }
+const schema = { name: 'OPCUA_HA' }
 schema.form = {
   opcuaSettings: {
     type: 'OIbTitle',
@@ -10,7 +10,7 @@ schema.form = {
       <>
         <p>This protocol is in restricted release. Please contact Optimistik</p>
         <p>
-          By default, when you restart, OPCUA South will query from the last succesful timestamp (for each scan group)
+          By default, when you restart, OPCUA HA South will query from the last succesful timestamp (for each scan group)
           so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first
           startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
           accessible by editing manually the oibus configuration time) indicates a different start time. This feature
@@ -114,7 +114,7 @@ schema.form = {
     md: 12,
     children: (
       <p>
-        OPCUA application will request all points in the same scanMode. OPCUA can query raw values but can also
+        OPCUA HA application will request all points in the same scanMode. OPCUA HA can query raw values but can also
         aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected.
         Important: a point with a scanMode without the corresponding scangroup will not be requested
       </p>

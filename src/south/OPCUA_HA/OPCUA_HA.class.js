@@ -7,12 +7,12 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 /**
  *
  *
- * @class OPCUA
+ * @class OPCUA_HA
  * @extends {ProtocolHandler}
  */
-class OPCUA extends ProtocolHandler {
+class OPCUA_HA extends ProtocolHandler {
   /**
-   * Constructor for OPCUA
+   * Constructor for OPCUA_HA
    * @constructor
    * @param {Object} dataSource - The data source
    * @param {Engine} engine - The engine
@@ -21,7 +21,7 @@ class OPCUA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay, maxReturnValues, readTimeout } = dataSource.OPCUA
+    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay, maxReturnValues, readTimeout } = dataSource.OPCUA_HA
 
     this.url = url
     this.username = username
@@ -43,10 +43,10 @@ class OPCUA extends ProtocolHandler {
   async connect() {
     await super.connect()
 
-    if (this.dataSource.OPCUA.scanGroups) {
+    if (this.dataSource.OPCUA_HA.scanGroups) {
       // group all points in their respective scanGroup
       // each scangroup is also initialized with a default "last completed date" equal to current Time
-      this.scanGroups = this.dataSource.OPCUA.scanGroups.map((scanGroup) => {
+      this.scanGroups = this.dataSource.OPCUA_HA.scanGroups.map((scanGroup) => {
         const points = this.dataSource.points
           .filter((point) => point.scanMode === scanGroup.scanMode)
           .map((point) => point.nodeId)
@@ -59,7 +59,7 @@ class OPCUA extends ProtocolHandler {
         }
       })
     } else {
-      this.logger.error('OPCUA scanGroups are not defined. This South driver will not work')
+      this.logger.error('OPCUA_HA scanGroups are not defined. This South driver will not work')
       this.scanGroups = []
     }
 
@@ -229,7 +229,7 @@ class OPCUA extends ProtocolHandler {
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
         /*
         Below are two example of responses
-        1- With OPCUA WINCC
+        1- With OPCUA_HA WINCC
           [
             {
               "statusCode": { "value": 0 },
@@ -256,7 +256,7 @@ class OPCUA extends ProtocolHandler {
               }
             }
           ]
-          2/ With OPCUA MATRIKON
+          2/ With OPCUA_HA MATRIKON
           [
             {
               "statusCode": {"value": 0},
@@ -319,14 +319,14 @@ class OPCUA extends ProtocolHandler {
   }
 
   /**
-   * Connect to OPCUA server with retry.
+   * Connect to OPCUA_HA server with retry.
    * @returns {Promise<void>} - The connect promise
    */
   async connectToOpcuaServer() {
     this.reconnectTimeout = null
 
     try {
-      // define OPCUA connection parameters
+      // define OPCUA_HA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
         maxRetry: 1,
@@ -350,7 +350,7 @@ class OPCUA extends ProtocolHandler {
       }
       this.session = await this.client.createSession(userIdentity)
       this.connected = true
-      this.logger.info('OPCUA Connected')
+      this.logger.info('OPCUA_HA Connected')
     } catch (error) {
       this.logger.error(error)
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
@@ -358,4 +358,4 @@ class OPCUA extends ProtocolHandler {
   }
 }
 
-module.exports = OPCUA
+module.exports = OPCUA_HA
