@@ -130,7 +130,7 @@ class Engine {
    * @return {number} - The send status
    */
   async handleValuesFromCache(applicationId, values) {
-    this.logger.silly(`Engine handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
+    this.logger.silly(`handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
 
     let status
     try {

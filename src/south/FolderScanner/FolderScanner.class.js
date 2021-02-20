@@ -33,11 +33,14 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   async onScan(scanMode) {
-    this.logger.silly(`FolderScanner activated on scanMode: ${scanMode}.`)
+    this.logger.debug(`FolderScanner activated on scanMode: ${scanMode}.`)
     // Check if input folder exists
-    if (!fs.existsSync(this.inputFolder)) {
-      this.logger.warn(`The input folder ${this.inputFolder} doesn't exist.`)
-      return
+    try {
+      // eslint-disable-next-line no-bitwise
+      fs.accessSync(this.inputFolder, fs.constants.R_OK | fs.constants.W_OK)
+      this.logger.debug(`${this.dataSource.dataSourceId} is checking folder ${this.inputFolder}.`)
+    } catch (err) {
+      this.logger.error(`can't write to ${this.inputFolder}: ${err.message}`)
     }
 
     // List files in the inputFolder and manage them.
@@ -59,7 +62,7 @@ class FolderScanner extends ProtocolHandler {
         this.logger.debug(`The folder ${this.inputFolder} is empty.`)
       }
     } catch (error) {
-      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error.stack}`)
+      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error.message}`)
     }
   }
 
