@@ -125,7 +125,7 @@
     "pkg": "4.4.9",
     "react-test-renderer": "17.0.1",
     "rimraf": "3.0.2",
-    "standard-version": "9.1.0",
+    "standard-version": "9.1.1",
     "style-loader": "2.0.0",
     "url-loader": "4.1.1",
     "webpack": "5.21.2",
