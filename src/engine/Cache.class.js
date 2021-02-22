@@ -323,7 +323,7 @@ class Cache {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
       let removed
 
-      if (values) {
+      if (values.length) {
         this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
         const successCountStatus = await this.engine.handleValuesFromCache(applicationId, values)
         this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus} AppId: ${application.applicationId}`)

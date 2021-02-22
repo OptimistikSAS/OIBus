@@ -47,6 +47,9 @@ const length = (_length, name = 'Value') => (val) => (
 const notEndsWith = (test, name = 'Value') => (val) => (
   !val || !val.endsWith(test) ? null : `${name} should not end with ${test}`
 )
+const endsWith = (test, name = 'Value') => (val) => (
+  !val || val.endsWith(test) ? null : `${name} should end with ${test}`
+)
 const startsWith = (test, name = 'Value') => (val) => (
   val && val.startsWith(test) ? null : `${name} should start with ${test}`
 )
@@ -81,6 +84,7 @@ export {
   minValue,
   maxValue,
   notEndsWith,
+  endsWith,
   startsWith,
   startsWithAnyOf,
   combinedValidations,

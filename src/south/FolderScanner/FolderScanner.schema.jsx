@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue } from '../../services/validation.service'
+import { notEmpty, minValue, endsWith } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {
@@ -14,11 +14,20 @@ schema.form = {
           When a new file is detected it will be sent to any North capable of handling files and configured to accept files from this South.
         </p>
         <p>
+          Please use always the / separator. OIBus will convert it according to the platform.
+          For example, on Windows, c:/input/ will be converted to c:\input\
+          Make sure OIBus has READ and WRITE access to this folder.
+          <b>
+            When OIBus is started as a Windows service,
+            you may have to assign a user logon in the Windows services.msc console.
+          </b>
+        </p>
+        <p>
           It is possible to specify how to handle files.
         </p>
         <ul>
           <li>
-            If Preserve File is checked the files will be left intact, otherwise they will be deleted from the input folder.
+            If Preserve File is checked the files will be left intact, otherwise they will be removed from the input folder.
           </li>
           <li>
             The Minimum Age option is used to specify the time since the file was last modified.
@@ -33,9 +42,9 @@ schema.form = {
   },
   inputFolder: {
     type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: './input',
-    help: <div>Path to the input folder</div>,
+    valid: endsWith('/'),
+    defaultValue: './input/',
+    help: <div>Path to folder such as: c:/input/</div>,
   },
   preserve: {
     type: 'OIbCheckBox',
