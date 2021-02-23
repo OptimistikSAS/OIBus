@@ -243,7 +243,7 @@ exports[`Overview display overview based on config 1`] = `
               SimulationServer
             </div>
             <div>
-              (OPCUA)
+              (OPCUA_HA)
             </div>
           </a>
           <button
@@ -267,7 +267,7 @@ exports[`Overview display overview based on config 1`] = `
               SimulationServerBis
             </div>
             <div>
-              (OPCUA)
+              (OPCUA_HA)
             </div>
           </a>
           <button
@@ -291,7 +291,7 @@ exports[`Overview display overview based on config 1`] = `
               SimulationServerBis copy
             </div>
             <div>
-              (OPCUA)
+              (OPCUA_HA)
             </div>
           </a>
           <button

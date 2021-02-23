@@ -19,11 +19,11 @@ describe('South.validation', () => {
     expect(error).toBeTruthy()
   })
   it('check scanMode.isSelectedOnce no error', () => {
-    const error = validation.scanMode.isSelectedOnce('value', 'south.dataSources.1.OPCUA.scanGroups.0.scanMode', testConfig)
+    const error = validation.scanMode.isSelectedOnce('value', 'south.dataSources.1.OPCUA_HA.scanGroups.0.scanMode', testConfig)
     expect(error).toEqual(null)
   })
   it('check scanMode.isSelectedOnce already exists', () => {
-    const error = validation.scanMode.isSelectedOnce('everySecond', 'south.dataSources.1.OPCUA.scanGroups.1.scanMode', testConfig)
+    const error = validation.scanMode.isSelectedOnce('everySecond', 'south.dataSources.1.OPCUA_HA.scanGroups.1.scanMode', testConfig)
     expect(error).toBeTruthy()
   })
 })

@@ -84,9 +84,9 @@ const testConfig = {
       },
       {
         dataSourceId: 'SimulationServer',
-        protocol: 'OPCUA',
+        protocol: 'OPCUA_HA',
         enabled: false,
-        OPCUA: {
+        OPCUA_HA: {
           opcuaPort: 53530,
           httpsPort: 53443,
           host: 'hostname',
@@ -104,9 +104,9 @@ const testConfig = {
       },
       {
         dataSourceId: 'SimulationServerBis',
-        protocol: 'OPCUA',
+        protocol: 'OPCUA_HA',
         enabled: false,
-        OPCUA: {
+        OPCUA_HA: {
           opcuaPort: 53530,
           httpsPort: 53443,
           host: 'hostname',
@@ -119,9 +119,9 @@ const testConfig = {
       },
       {
         dataSourceId: 'SimulationServerBis copy',
-        protocol: 'OPCUA',
+        protocol: 'OPCUA_HA',
         enabled: false,
-        OPCUA: {
+        OPCUA_HA: {
           opcuaPort: 53530,
           httpsPort: 53443,
           host: 'hostname',
@@ -412,7 +412,7 @@ const testConfig = {
   },
   schemaVersion: 5,
   apiList: ['Console', 'OIConnect', 'OIAnalytics'],
-  protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA', 'MQTT'],
+  protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA_HA', 'MQTT'],
 }
 
 export default testConfig
