@@ -99,19 +99,13 @@ class OPCUA_DA extends ProtocolHandler {
     }
 
     if (this.connected) {
-      if (this.subscription) {
-        await this.subscription.terminate()
-      }
       await this.session.close()
       await this.client.disconnect()
       this.connected = false
     }
   }
 
-  /**
-   * Monitor points with scan mode "listen"
-   * @returns {void}
-   */
+  /*
   monitorPoints() {
     const nodesToMonitor = this.dataSource.points
       .filter((point) => point.scanMode === 'listen')
@@ -146,7 +140,13 @@ class OPCUA_DA extends ProtocolHandler {
 
       monitoredItem.on('changed', (dataValue) => this.manageDataValues([dataValue], nodesToMonitor))
     })
+
+    // On disconnect()
+    if (this.subscription) {
+      await this.subscription.terminate()
+    }
   }
+   */
 
   /**
    * Connect to OPCUA_DA server with retry.
@@ -179,9 +179,6 @@ class OPCUA_DA extends ProtocolHandler {
         }
       }
       this.session = await this.client.createSession(userIdentity)
-
-      this.monitorPoints()
-
       this.connected = true
       this.logger.info('OPCUA_DA Connected')
     } catch (error) {
