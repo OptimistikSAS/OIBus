@@ -274,7 +274,7 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -365,7 +365,7 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -456,7 +456,7 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -1043,9 +1043,9 @@ exports[`South check South 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -1348,7 +1348,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -1439,7 +1439,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -1530,7 +1530,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -2117,9 +2117,9 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -2422,7 +2422,7 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -2513,7 +2513,7 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -2604,7 +2604,7 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -3191,9 +3191,9 @@ exports[`South check delete first dataSource 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -3496,7 +3496,7 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -3587,7 +3587,7 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -3678,7 +3678,7 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -4265,9 +4265,9 @@ exports[`South check duplicate first dataSource 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -4570,7 +4570,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -4661,7 +4661,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -4752,7 +4752,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -5339,9 +5339,9 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -5644,7 +5644,7 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -5735,7 +5735,7 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -5826,7 +5826,7 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -6413,9 +6413,9 @@ exports[`South check edit first dataSource id 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -6738,7 +6738,7 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -6829,7 +6829,7 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -6920,7 +6920,7 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -7507,9 +7507,9 @@ exports[`South check open edit first application 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -7826,7 +7826,7 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -7917,7 +7917,7 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -8008,7 +8008,7 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -8595,9 +8595,9 @@ exports[`South check press edit first dataSource id 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -8900,7 +8900,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -8991,7 +8991,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -9082,7 +9082,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -9669,9 +9669,9 @@ exports[`South check sort pressed on dataSourceId 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"
@@ -9974,7 +9974,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -10065,7 +10065,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -10156,7 +10156,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            OPCUA
+            OPCUA_HA
           </td>
           <td>
             <button
@@ -10743,9 +10743,9 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
                 Modbus
               </option>
               <option
-                value="OPCUA"
+                value="OPCUA_HA"
               >
-                OPCUA
+                OPCUA_HA
               </option>
               <option
                 value="MQTT"

@@ -6489,15 +6489,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.retryInterval"
+            for="south.dataSources.0.OPCUA_HA.retryInterval"
           >
             Retry interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.retryInterval"
-            name="south.dataSources.0.OPCUA.retryInterval"
+            id="south.dataSources.0.OPCUA_HA.retryInterval"
+            name="south.dataSources.0.OPCUA_HA.retryInterval"
             type="integer"
             value=""
           />
@@ -6523,15 +6523,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReadInterval"
+            for="south.dataSources.0.OPCUA_HA.maxReadInterval"
           >
             Max read interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.maxReadInterval"
-            name="south.dataSources.0.OPCUA.maxReadInterval"
+            id="south.dataSources.0.OPCUA_HA.maxReadInterval"
+            name="south.dataSources.0.OPCUA_HA.maxReadInterval"
             type="integer"
             value=""
           />
@@ -6557,15 +6557,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readIntervalDelay"
+            for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
           >
             Read interval delay
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readIntervalDelay"
-            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            id="south.dataSources.0.OPCUA_HA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             type="integer"
             value=""
           />
@@ -6589,15 +6589,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
+            for="south.dataSources.0.OPCUA_HA.maxReturnValues"
           >
             Max return values
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
+            id="south.dataSources.0.OPCUA_HA.maxReturnValues"
+            name="south.dataSources.0.OPCUA_HA.maxReturnValues"
             type="integer"
             value=""
           />
@@ -6621,15 +6621,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readTimeout"
+            for="south.dataSources.0.OPCUA_HA.readTimeout"
           >
             Read timeout
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readTimeout"
-            name="south.dataSources.0.OPCUA.readTimeout"
+            id="south.dataSources.0.OPCUA_HA.readTimeout"
+            name="south.dataSources.0.OPCUA_HA.readTimeout"
             type="integer"
             value=""
           />
@@ -6758,8 +6758,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.0.scanMode"
-                    name="south.dataSources.0.OPCUA.scanGroups.0.scanMode"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.0.scanMode"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.0.scanMode"
                   >
                     <option
                       value="everySecond"
@@ -6794,8 +6794,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.0.Aggregate"
-                    name="south.dataSources.0.OPCUA.scanGroups.0.Aggregate"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.0.Aggregate"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.0.Aggregate"
                   >
                     <option
                       value="Raw"
@@ -6840,8 +6840,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.0.resampling"
-                    name="south.dataSources.0.OPCUA.scanGroups.0.resampling"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.0.resampling"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.0.resampling"
                   >
                     <option
                       value="None"
@@ -6894,8 +6894,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.1.scanMode"
-                    name="south.dataSources.0.OPCUA.scanGroups.1.scanMode"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.1.scanMode"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.1.scanMode"
                   >
                     <option
                       value="everySecond"
@@ -6930,8 +6930,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.1.Aggregate"
-                    name="south.dataSources.0.OPCUA.scanGroups.1.Aggregate"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.1.Aggregate"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.1.Aggregate"
                   >
                     <option
                       value="Raw"
@@ -6976,8 +6976,8 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   <select
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA.scanGroups.1.resampling"
-                    name="south.dataSources.0.OPCUA.scanGroups.1.resampling"
+                    id="south.dataSources.0.OPCUA_HA.scanGroups.1.resampling"
+                    name="south.dataSources.0.OPCUA_HA.scanGroups.1.resampling"
                   >
                     <option
                       value="None"
@@ -7580,15 +7580,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.retryInterval"
+            for="south.dataSources.0.OPCUA_HA.retryInterval"
           >
             Retry interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.retryInterval"
-            name="south.dataSources.0.OPCUA.retryInterval"
+            id="south.dataSources.0.OPCUA_HA.retryInterval"
+            name="south.dataSources.0.OPCUA_HA.retryInterval"
             type="integer"
             value=""
           />
@@ -7614,15 +7614,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReadInterval"
+            for="south.dataSources.0.OPCUA_HA.maxReadInterval"
           >
             Max read interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.maxReadInterval"
-            name="south.dataSources.0.OPCUA.maxReadInterval"
+            id="south.dataSources.0.OPCUA_HA.maxReadInterval"
+            name="south.dataSources.0.OPCUA_HA.maxReadInterval"
             type="integer"
             value=""
           />
@@ -7648,15 +7648,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readIntervalDelay"
+            for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
           >
             Read interval delay
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readIntervalDelay"
-            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            id="south.dataSources.0.OPCUA_HA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             type="integer"
             value=""
           />
@@ -7680,15 +7680,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
+            for="south.dataSources.0.OPCUA_HA.maxReturnValues"
           >
             Max return values
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
+            id="south.dataSources.0.OPCUA_HA.maxReturnValues"
+            name="south.dataSources.0.OPCUA_HA.maxReturnValues"
             type="integer"
             value=""
           />
@@ -7712,15 +7712,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readTimeout"
+            for="south.dataSources.0.OPCUA_HA.readTimeout"
           >
             Read timeout
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readTimeout"
-            name="south.dataSources.0.OPCUA.readTimeout"
+            id="south.dataSources.0.OPCUA_HA.readTimeout"
+            name="south.dataSources.0.OPCUA_HA.readTimeout"
             type="integer"
             value=""
           />
@@ -8398,15 +8398,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.retryInterval"
+            for="south.dataSources.0.OPCUA_HA.retryInterval"
           >
             Retry interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.retryInterval"
-            name="south.dataSources.0.OPCUA.retryInterval"
+            id="south.dataSources.0.OPCUA_HA.retryInterval"
+            name="south.dataSources.0.OPCUA_HA.retryInterval"
             type="integer"
             value=""
           />
@@ -8432,15 +8432,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReadInterval"
+            for="south.dataSources.0.OPCUA_HA.maxReadInterval"
           >
             Max read interval
           </label>
           <input
             aria-invalid="true"
             class="oi-form-input is-invalid form-control"
-            id="south.dataSources.0.OPCUA.maxReadInterval"
-            name="south.dataSources.0.OPCUA.maxReadInterval"
+            id="south.dataSources.0.OPCUA_HA.maxReadInterval"
+            name="south.dataSources.0.OPCUA_HA.maxReadInterval"
             type="integer"
             value=""
           />
@@ -8466,15 +8466,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readIntervalDelay"
+            for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
           >
             Read interval delay
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readIntervalDelay"
-            name="south.dataSources.0.OPCUA.readIntervalDelay"
+            id="south.dataSources.0.OPCUA_HA.readIntervalDelay"
+            name="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             type="integer"
             value=""
           />
@@ -8498,15 +8498,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.maxReturnValues"
+            for="south.dataSources.0.OPCUA_HA.maxReturnValues"
           >
             Max return values
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.maxReturnValues"
-            name="south.dataSources.0.OPCUA.maxReturnValues"
+            id="south.dataSources.0.OPCUA_HA.maxReturnValues"
+            name="south.dataSources.0.OPCUA_HA.maxReturnValues"
             type="integer"
             value=""
           />
@@ -8530,15 +8530,15 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         >
           <label
             class=""
-            for="south.dataSources.0.OPCUA.readTimeout"
+            for="south.dataSources.0.OPCUA_HA.readTimeout"
           >
             Read timeout
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.OPCUA.readTimeout"
-            name="south.dataSources.0.OPCUA.readTimeout"
+            id="south.dataSources.0.OPCUA_HA.readTimeout"
+            name="south.dataSources.0.OPCUA_HA.readTimeout"
             type="integer"
             value=""
           />

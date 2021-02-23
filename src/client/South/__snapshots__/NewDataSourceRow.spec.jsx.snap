@@ -77,9 +77,9 @@ exports[`NewDataSourceRow check NewDataSourceRow 1`] = `
               Modbus
             </option>
             <option
-              value="OPCUA"
+              value="OPCUA_HA"
             >
-              OPCUA
+              OPCUA_HA
             </option>
             <option
               value="MQTT"
@@ -184,9 +184,9 @@ exports[`NewDataSourceRow check add press 1`] = `
               Modbus
             </option>
             <option
-              value="OPCUA"
+              value="OPCUA_HA"
             >
-              OPCUA
+              OPCUA_HA
             </option>
             <option
               value="MQTT"
@@ -291,9 +291,9 @@ exports[`NewDataSourceRow check add pressed with empty dataSource name 1`] = `
               Modbus
             </option>
             <option
-              value="OPCUA"
+              value="OPCUA_HA"
             >
-              OPCUA
+              OPCUA_HA
             </option>
             <option
               value="MQTT"
@@ -398,9 +398,9 @@ exports[`NewDataSourceRow check change dataSourceId 1`] = `
               Modbus
             </option>
             <option
-              value="OPCUA"
+              value="OPCUA_HA"
             >
-              OPCUA
+              OPCUA_HA
             </option>
             <option
               value="MQTT"
@@ -505,9 +505,9 @@ exports[`NewDataSourceRow check change protocol 1`] = `
               Modbus
             </option>
             <option
-              value="OPCUA"
+              value="OPCUA_HA"
             >
-              OPCUA
+              OPCUA_HA
             </option>
             <option
               value="MQTT"
