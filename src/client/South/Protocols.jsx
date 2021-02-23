@@ -6,6 +6,6 @@ import OPCUA_DA from '../../south/OPCUA_DA/OPCUA_DA.schema.jsx'
 import FolderScanner from '../../south/FolderScanner/FolderScanner.schema.jsx'
 import SQLDbToFile from '../../south/SQLDbToFile/SQLDbToFile.schema.jsx'
 
-const ProtocolSchemas = { OPCUA: OPCUA_HA, OPCUA_DA, OPCHDA, MQTT, Modbus, FolderScanner, SQLDbToFile }
+const ProtocolSchemas = { OPCUA_HA, OPCUA_DA, OPCHDA, MQTT, Modbus, FolderScanner, SQLDbToFile }
 
 export default ProtocolSchemas
