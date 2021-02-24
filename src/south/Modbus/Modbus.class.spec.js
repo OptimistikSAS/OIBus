@@ -48,6 +48,7 @@ describe('Modbus south', () => {
     Modbus: {
       port: 502,
       host: '127.0.0.1',
+      slaveId: 1,
     },
     points: [
       {
