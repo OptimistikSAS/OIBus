@@ -46,6 +46,13 @@ schema.form = {
     defaultValue: 502,
     help: <div>Port number of the Modbus source</div>,
   },
+  slaveId: {
+    type: 'OIbInteger',
+    newRow: false,
+    valid: inRange(1, 255),
+    defaultValue: 1,
+    help: <div>Slave ID of the Modbus source</div>,
+  },
 }
 
 schema.points = {

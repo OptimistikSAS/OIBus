@@ -48,6 +48,7 @@ describe('Modbus south', () => {
     Modbus: {
       port: 502,
       host: '127.0.0.1',
+      slaveId: 1,
     },
     points: [
       {
@@ -86,11 +87,12 @@ describe('Modbus south', () => {
 
   it('should be properly initialized', () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
-
     expect(modbusSouth.url)
       .toEqual(modbusConfig.Modbus.url)
     expect(modbusSouth.optimizedScanModes)
       .toEqual(optimizedScanModes)
+    expect(modbusSouth.dataSource.Modbus.slaveId)
+      .toEqual(modbusConfig.Modbus.slaveId)
   })
 
   it('should properly connect', async () => {
