@@ -322,4 +322,14 @@ module.exports = {
       }
     })
   },
+  22: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'slaveId')) {
+          logger.info('Add slaveId field to Modbus')
+          dataSource.Modbus.slaveId = 1
+        }
+      }
+    })
+  },
 }
