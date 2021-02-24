@@ -87,8 +87,8 @@ class Modbus extends ProtocolHandler {
   async connect() {
     await super.connect()
     this.socket = new net.Socket()
-    this.modbusClient = new jsmodbus.client.TCP(this.socket)
-    const { host, port } = this.dataSource.Modbus
+    const { host, port, slaveId } = this.dataSource.Modbus
+    this.modbusClient = new jsmodbus.client.TCP(this.socket, slaveId)
     this.socket.connect(
       { host, port },
       () => {
