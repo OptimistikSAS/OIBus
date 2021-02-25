@@ -3794,6 +3794,40 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.Modbus.slaveId"
+          >
+            Slave id
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.Modbus.slaveId"
+            name="south.dataSources.0.Modbus.slaveId"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value should be between 1 and 255
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Slave ID of the Modbus source
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
   </form>
 </div>
@@ -4401,6 +4435,40 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           >
             <div>
               Port number of the Modbus source
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.Modbus.slaveId"
+          >
+            Slave id
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.Modbus.slaveId"
+            name="south.dataSources.0.Modbus.slaveId"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value should be between 1 and 255
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Slave ID of the Modbus source
             </div>
           </small>
         </div>
