@@ -87,11 +87,13 @@ describe('Modbus south', () => {
 
   it('should be properly initialized', () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
-
+    console.log(modbusSouth)
     expect(modbusSouth.url)
       .toEqual(modbusConfig.Modbus.url)
     expect(modbusSouth.optimizedScanModes)
       .toEqual(optimizedScanModes)
+    expect(modbusSouth.dataSource.Modbus.slaveId)
+      .toEqual(modbusConfig.Modbus.slaveId)
   })
 
   it('should properly connect', async () => {
