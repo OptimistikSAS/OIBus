@@ -128,14 +128,14 @@ schema.form = {
         label: 'Scan Mode',
         valid: validation.scanMode.isSelectedOnce,
       },
-      Aggregate: {
+      aggregate: {
         type: 'OIbSelect',
-        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
+        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
         defaultValue: 'Raw',
       },
       resampling: {
         type: 'OIbSelect',
-        options: ['None', 'Minute', 'Hour', 'Day'],
+        options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
       },
     },
