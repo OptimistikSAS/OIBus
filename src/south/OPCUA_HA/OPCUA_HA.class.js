@@ -169,8 +169,15 @@ class OPCUA_HA extends ProtocolHandler {
       historyReadResult?.forEach((result, i) => {
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
-        // eslint-disable-next-line no-underscore-dangle
-        if (result.statusCode) console.log(result.statusCode._description)
+        /**
+         * @todo: need to check if throw is good enough to manage result.statusCode
+         */
+        if (result.statusCode.value !== 0) {
+          // eslint-disable-next-line no-underscore-dangle
+          this.logger.error(result.statusCode._description)
+          // eslint-disable-next-line no-underscore-dangle
+          throw result.statusCode._description
+        }
         nodesToRead[i].continuationPoint = result.continuationPoint
       })
       // remove points fully retrieved
