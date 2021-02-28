@@ -2711,6 +2711,592 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                   <li>
                     By default, when you restart the agent, it will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
                   </li>
+                  <p>
+                    <b>
+                      DA Quality code
+                    </b>
+                  </p>
+                  <table
+                    border="1"
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000000
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Non-Specific]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000004
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Configuration Error]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000008
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Not Connected]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0000000c
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Device Failure]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000010
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Sensor Failure]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000014
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Last Known Value]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000018
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Communication Failure]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0000001C
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Out of Service]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000040
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000041
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000042
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000043
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000044
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Last Usable]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000045
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Last Usable] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000046
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Last Usable] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000047
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Last Usable] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000050
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sensor Not Accurate]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000051
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sensor Not Accurate] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000052
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sensor Not Accurate] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000053
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sensor Not Accurate] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000054
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [EU Exceeded]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000055
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [EU Exceeded] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000056
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [EU Exceeded] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000057
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [EU Exceeded] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000058
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sub-Normal]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00000059
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sub-Normal] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0000005a
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sub-Normal] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0000005b
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Sub-Normal] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000c0
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Non-Specific]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000c1
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Non-Specific] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000c2
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Non-Specific] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000c3
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Non-Specific] (Constant)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000d8
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Local Override]
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000d9
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Local Override] (Low Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000da
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Local Override] (High Limited)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x000000db
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Good [Local Override] (Constant)
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p>
+                    <b>
+                      HDA Quality code
+                    </b>
+                  </p>
+                  <table
+                    border="1"
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010000
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Non-Specific] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010004
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Configuration Error] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010008
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Not Connected] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0001000c
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Device Failure] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010010
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Sensor Failure] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010014
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Last Known Value] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010018
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Communication Failure] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x0001001c
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Bad [Out of Service] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010040
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010041
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] (Low Limited) : Extra Data
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          vertical-align="middle"
+                        >
+                          0x00010042
+                        </td>
+                        <td
+                          vertical-align="middle"
+                        >
+                          Uncertain [Non-Specific] (High Limited) : Extra Data
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </ul>
               </div>
             </div>
@@ -6737,7 +7323,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               <th
                 scope="col"
               >
-                Aggregate
+                aggregate
               </th>
               <th
                 scope="col"
@@ -6787,52 +7373,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   />
                 </div>
               </td>
-              <td>
-                <div
-                  class="form-group"
-                >
-                  <select
-                    aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA_HA.scanGroups.0.Aggregate"
-                    name="south.dataSources.0.OPCUA_HA.scanGroups.0.Aggregate"
-                  >
-                    <option
-                      value="Raw"
-                    >
-                      Raw
-                    </option>
-                    <option
-                      value="Average"
-                    >
-                      Average
-                    </option>
-                    <option
-                      value="Minimum"
-                    >
-                      Minimum
-                    </option>
-                    <option
-                      value="Maximum"
-                    >
-                      Maximum
-                    </option>
-                    <option
-                      value="Start"
-                    >
-                      Start
-                    </option>
-                    <option
-                      value="End"
-                    >
-                      End
-                    </option>
-                  </select>
-                  <div
-                    class="invalid-feedback"
-                  />
-                </div>
-              </td>
+              <td />
               <td>
                 <div
                   class="form-group"
@@ -6847,6 +7388,21 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       value="None"
                     >
                       None
+                    </option>
+                    <option
+                      value="Second"
+                    >
+                      Second
+                    </option>
+                    <option
+                      value="10 Seconds"
+                    >
+                      10 Seconds
+                    </option>
+                    <option
+                      value="30 Seconds"
+                    >
+                      30 Seconds
                     </option>
                     <option
                       value="Minute"
@@ -6923,52 +7479,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   />
                 </div>
               </td>
-              <td>
-                <div
-                  class="form-group"
-                >
-                  <select
-                    aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="south.dataSources.0.OPCUA_HA.scanGroups.1.Aggregate"
-                    name="south.dataSources.0.OPCUA_HA.scanGroups.1.Aggregate"
-                  >
-                    <option
-                      value="Raw"
-                    >
-                      Raw
-                    </option>
-                    <option
-                      value="Average"
-                    >
-                      Average
-                    </option>
-                    <option
-                      value="Minimum"
-                    >
-                      Minimum
-                    </option>
-                    <option
-                      value="Maximum"
-                    >
-                      Maximum
-                    </option>
-                    <option
-                      value="Start"
-                    >
-                      Start
-                    </option>
-                    <option
-                      value="End"
-                    >
-                      End
-                    </option>
-                  </select>
-                  <div
-                    class="invalid-feedback"
-                  />
-                </div>
-              </td>
+              <td />
               <td>
                 <div
                   class="form-group"
@@ -6983,6 +7494,21 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       value="None"
                     >
                       None
+                    </option>
+                    <option
+                      value="Second"
+                    >
+                      Second
+                    </option>
+                    <option
+                      value="10 Seconds"
+                    >
+                      10 Seconds
+                    </option>
+                    <option
+                      value="30 Seconds"
+                    >
+                      30 Seconds
                     </option>
                     <option
                       value="Minute"
@@ -7828,7 +8354,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               <th
                 scope="col"
               >
-                Aggregate
+                aggregate
               </th>
               <th
                 scope="col"
@@ -8646,7 +9172,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               <th
                 scope="col"
               >
-                Aggregate
+                aggregate
               </th>
               <th
                 scope="col"
