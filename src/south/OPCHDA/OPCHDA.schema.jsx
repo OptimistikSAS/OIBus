@@ -412,6 +412,50 @@ schema.form = {
                   Uncertain [Non-Specific] (High Limited) : Extra Data
                 </td>
               </tr>
+              <tr>
+                <td vertical-align="middle">
+                  0x00040000
+                </td>
+                <td vertical-align="middle">
+                  Indicates the quality of raw data transmission.
+                </td>
+              </tr>
+              <tr>
+                <td vertical-align="middle">
+                  0x00080000
+                </td>
+                <td vertical-align="middle">
+                  Indicates the quality of calculated data
+                  transmission.
+                </td>
+              </tr>
+              <tr>
+                <td vertical-align="middle">
+                  0x00100000
+                </td>
+                <td vertical-align="middle">
+                  No bounding values were found at the starting
+                  or ending point.
+                </td>
+              </tr>
+              <tr>
+                <td vertical-align="middle">
+                  0x00200000
+                </td>
+                <td vertical-align="middle">
+                  No raw data were found for the specified time
+                  interval.
+                </td>
+              </tr>
+              <tr>
+                <td vertical-align="middle">
+                  0x00400000
+                </td>
+                <td vertical-align="middle">
+                  The raw data in the selected interval were not
+                  completely archived.
+                </td>
+              </tr>
             </tbody>
           </table>
         </ul>
@@ -517,8 +561,10 @@ schema.form = {
     children: (
       <p>
         OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
-        aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected.
-        Important: a point with a scanMode without the corresponding scangroup will not be requested
+        aggregate points on a given period.
+        if an aggregate is chosen, the resampling period must also be selected.
+        Important: a point with a scanMode without the corresponding scangroup will not be requested.
+        <b>In the current version, aggregates are NOT supported for production mode. Please use &quot;Raw&quot;</b>
       </p>
     ),
   },
