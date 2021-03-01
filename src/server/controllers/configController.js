@@ -35,8 +35,18 @@ const activateConfiguration = (ctx) => {
   }
 }
 
+/**
+ * Get the live configuration.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getLiveConfiguration = (ctx) => {
+  ctx.ok({ liveConfig: ctx.app.engine.getLiveConfiguration() })
+}
+
 module.exports = {
   getActiveConfiguration,
   updateConfig,
   activateConfiguration,
+  getLiveConfiguration,
 }

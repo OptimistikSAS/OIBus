@@ -469,6 +469,26 @@ class Engine {
       copyright: '(c) Copyright 2019-2021 Optimistik, all rights reserved.',
     }
   }
+
+  /**
+   * Get the live configuration.
+   * @returns {object} - The live configuration
+   */
+  getLiveConfiguration() {
+    const liveConfiguration = []
+    Object.entries(this.activeProtocols)
+      .forEach(([protocolId, protocol]) => {
+        if (protocol.canHandleHistory) {
+          const lastCompletedAt = protocol instanceof protocolList.SQLDbToFile
+            ? { general: new Date(protocol.lastCompletedAt).getTime() } : protocol.lastCompletedAt
+          liveConfiguration.push({
+            name: protocolId,
+            lastCompletedAt,
+          })
+        }
+      })
+    return liveConfiguration
+  }
 }
 
 module.exports = Engine
