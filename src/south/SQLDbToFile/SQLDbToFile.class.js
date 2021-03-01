@@ -76,6 +76,8 @@ class SQLDbToFile extends ProtocolHandler {
     if (!fs.existsSync(this.tmpFolder)) {
       fs.mkdirSync(this.tmpFolder, { recursive: true })
     }
+
+    this.canHandleHistory = true
   }
 
   async connect() {

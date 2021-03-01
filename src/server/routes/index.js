@@ -17,6 +17,7 @@ const upload = multer({ storage })
 router.get('/config', configController.getActiveConfiguration)
 router.put('/config', configController.updateConfig)
 router.put('/config/activate', configController.activateConfiguration)
+router.get('/liveConfig', configController.getLiveConfiguration)
 
 router.get('/config/schemas/north', engineController.getNorthList)
 router.get('/config/schemas/south', engineController.getSouthList)

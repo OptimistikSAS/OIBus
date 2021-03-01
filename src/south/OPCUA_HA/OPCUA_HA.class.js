@@ -34,6 +34,8 @@ class OPCUA_HA extends ProtocolHandler {
     this.lastCompletedAt = {}
     this.ongoingReads = {}
     this.reconnectTimeout = null
+
+    this.canHandleHistory = true
   }
 
   /**
