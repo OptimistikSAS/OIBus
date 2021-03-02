@@ -561,9 +561,9 @@ schema.form = {
     children: (
       <p>
         OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
-        aggregate points on a given period.
-        if an aggregate is chosen, the resampling period must also be selected.
+        aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected.
         Important: a point with a scanMode without the corresponding scangroup will not be requested.
+        <br />
         <b>In the current version, aggregates are NOT supported for production mode. Please use &quot;Raw&quot;</b>
       </p>
     ),
