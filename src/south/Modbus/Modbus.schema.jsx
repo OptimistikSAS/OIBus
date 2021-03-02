@@ -53,6 +53,15 @@ schema.form = {
     defaultValue: 1,
     help: <div>Slave ID of the Modbus source</div>,
   },
+  addressOffset: {
+    type: 'OIbSelect',
+    md: 2,
+    newRow: false,
+    options: [0, -1],
+    label: 'Address Offset',
+    defaultValue: 0,
+    help: <div>Address offset to be applied for all points during requests (0 for the traditionnal Modbus protocol and 1 when using JBus)</div>,
+  },
 }
 
 schema.points = {

@@ -350,4 +350,14 @@ module.exports = {
       }
     })
   },
+  24: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'adressOffset')) {
+          logger.info('Add addressOffset field to Modbus')
+          dataSource.Modbus.addressOffset = 0
+        }
+      }
+    })
+  },
 }
