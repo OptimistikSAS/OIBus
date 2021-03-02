@@ -332,4 +332,22 @@ module.exports = {
       }
     })
   },
+  23: (config) => {
+    const modbusTypes = {
+      1: 'coil',
+      2: 'discreteInput',
+      3: 'inputRegister',
+      4: 'holdingRegister',
+    }
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        dataSource.points.forEach((point) => {
+          if (!Object.prototype.hasOwnProperty.call(point, 'modbusType')) {
+            point.modbusType = modbusTypes[point.address.charAt(0)]
+            point.address = '0x' + point.address.slice(1)
+          }
+        })
+      }
+    })
+  },
 }
