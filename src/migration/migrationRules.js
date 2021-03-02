@@ -344,7 +344,7 @@ module.exports = {
         dataSource.points.forEach((point) => {
           if (!Object.prototype.hasOwnProperty.call(point, 'modbusType')) {
             point.modbusType = modbusTypes[point.address.charAt(0)]
-            point.address = '0x' + point.address.slice(1)
+            point.address = `0x${point.address.slice(1)}`
           }
         })
       }

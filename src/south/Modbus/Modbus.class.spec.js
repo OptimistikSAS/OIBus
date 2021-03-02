@@ -53,14 +53,14 @@ describe('Modbus south', () => {
     points: [
       {
         pointId: 'EtatBB2T0',
-        modbusType: "holdingRegister",
+        modbusType: 'holdingRegister',
         address: '0x3E80',
         type: 'number',
         scanMode: 'every10Seconds',
       },
       {
         pointId: 'EtatBB2T1',
-        modbusType: "holdingRegister",
+        modbusType: 'holdingRegister',
         scanMode: 'every10Seconds',
         address: '0x3E81',
         type: 'number',
