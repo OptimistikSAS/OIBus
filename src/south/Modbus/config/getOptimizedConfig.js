@@ -41,91 +41,6 @@ const findAddressesGroup = (object, address) => Object.keys(object)
   })
 
 /**
- * Return the modbusType and deduce the register address
- * @param {string} addr - the address in decimal
- * @param {Object} logger - the logger to display errors
- * @returns {{address: number, modbusType: string, type: string}} - The computed address for this modbusType
- */
-const getModbusType = (addr, logger) => {
-  const addrValue = parseInt(addr, 16)
-  if (addr.length < 6) {
-    // coil = [0x00001 - 0x09999 (=39321)]
-    if (addrValue <= 0x09999) {
-      return {
-        modbusType: 'coil',
-        address: addrValue, // the addr does not need to be change
-        type: 'boolean',
-      }
-    }
-    // discreteInput = [0x10001 (=65537) - 0x19999 (=104857)]
-    if (addrValue >= 0x10001 && addrValue <= 0x19999) {
-      return {
-        modbusType: 'discreteInput',
-        address: addrValue - 0x10000, // need to remove the address of discreteInput register to keep the value address only
-        type: 'number',
-      }
-    }
-    // inputRegister = [0x30001 (=196609) - 0x39999 (=235929)]
-    if (addrValue >= 0x30001 && addrValue <= 0x39999) {
-      return {
-        modbusType: 'inputRegister',
-        address: addrValue - 0x30000, // need to remove the address of inputRegister register to keep the value address only
-        type: 'number',
-      }
-    }
-    // holdingRegister = [0x40001 (=262145) - 0x49999 (=301465)]
-    if (addrValue >= 0x40001 && addrValue <= 0x49999) {
-      return {
-        modbusType: 'holdingRegister',
-        address: addrValue - 0x40000, // need to remove the address of holdingRegister register to keep the value address only
-        type: 'number',
-      }
-    }
-  } else if (addr.length === 6) {
-    // coil = [0x000001 - 0x065535]
-    if (addrValue <= 0x065535) {
-      return {
-        modbusType: 'coil',
-        address: addrValue, // the addr does not need to be change
-        type: 'boolean',
-      }
-    }
-    // discreteInput = [0x100001 - 0x165535]
-    if (addrValue >= 0x100001 && addrValue <= 0x165535) {
-      return {
-        modbusType: 'discreteInput',
-        address: addrValue - 0x100000, // need to remove the address of discreteInput register to keep the value address only
-        type: 'number',
-      }
-    }
-    // inputRegister = [0x300001 - 0x365535]
-    if (addrValue >= 0x300001 && addrValue <= 0x365535) {
-      return {
-        modbusType: 'inputRegister',
-        address: addrValue - 0x300000, // need to remove the address of inputRegister register to keep the value address only
-        type: 'number',
-      }
-    }
-    // holdingRegister = [0x400001 - 0x465535]
-    if (addrValue >= 0x400001 && addrValue <= 0x465535) {
-      return {
-        modbusType: 'holdingRegister',
-        address: addrValue - 0x400000, // need to remove the address of holdingRegister register to keep the value address only
-        type: 'number',
-      }
-    }
-  }
-
-  logger.error(`The address ${addr} (HEX : ${addr.toString(16)}) was not recognized.`)
-  // return invalid modbusType and address to trigger an error
-  return {
-    modbusType: 'unknown',
-    address: 999999,
-    type: 'unknown',
-  }
-}
-
-/**
  * Groups the data sources by addresses to optimize requests
  * @param {[ Object ]} array - Array of objects to group
  * @param {String} key - Key or nested key address to find it inside the objects
@@ -153,6 +68,13 @@ const groupAddresses = (array, key, maxGroupSize) => {
   }, {})
 }
 
+const modbusTypes = {
+  coil: 'boolean',
+  discreteInput: 'number',
+  inputRegister: 'number',
+  holdingRegister: 'number',
+}
+
 /**
  * Gets the configuration file
  * @param {Array} points - The list of points to request with ModBus
@@ -165,7 +87,12 @@ const getOptimizedScanModes = (points, logger) => {
     .forEach((scanMode) => {
       // add modbusType and register address to each point
       scanModes[scanMode] = scanModes[scanMode].map((myPoint) => {
-        const { modbusType, address, type } = getModbusType(myPoint.address, logger)
+        const { modbusType } = myPoint
+        const address = myPoint.address.match(/^0x[0-9a-f]+$/i) ? parseInt(myPoint.address, 16) : myPoint.address
+        const type = modbusTypes[myPoint.modbusType]
+        if (type === undefined || type === null) {
+          logger.error(`The modbus type ${modbusType} was not recognized.`)
+        }
         return {
           ...myPoint,
           modbusType,
