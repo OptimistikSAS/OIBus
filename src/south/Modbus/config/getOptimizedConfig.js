@@ -78,17 +78,18 @@ const modbusTypes = {
 /**
  * Gets the configuration file
  * @param {Array} points - The list of points to request with ModBus
+ * @param {Array} addressOffset - The address offset to be applied during requests for each points
  * @param {Object} logger - The logger to display errors
  * @return {Object} The scan modes
  */
-const getOptimizedScanModes = (points, logger) => {
+const getOptimizedScanModes = (points, addressOffset, logger) => {
   const scanModes = groupBy(points, 'scanMode')
   Object.keys(scanModes)
     .forEach((scanMode) => {
       // add modbusType and register address to each point
       scanModes[scanMode] = scanModes[scanMode].map((myPoint) => {
         const { modbusType } = myPoint
-        const address = myPoint.address.match(/^0x[0-9a-f]+$/i) ? parseInt(myPoint.address, 16) : myPoint.address
+        const address = (myPoint.address.match(/^0x[0-9a-f]+$/i) ? parseInt(myPoint.address, 16) : myPoint.address) + addressOffset
         const type = modbusTypes[myPoint.modbusType]
         if (type === undefined || type === null) {
           logger.error(`The modbus type ${modbusType} was not recognized.`)
