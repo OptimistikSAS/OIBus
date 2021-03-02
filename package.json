@@ -33,7 +33,6 @@
     "firefox esr"
   ],
   "dependencies": {
-    "@babel/runtime": "7.13.7",
     "@fortawesome/fontawesome-free": "5.15.2",
     "@koa/cors": "3.1.0",
     "@koa/multer": "3.0.0",

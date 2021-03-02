@@ -115,8 +115,10 @@ schema.form = {
     children: (
       <p>
         OPCUA HA application will request all points in the same scanMode. OPCUA HA can query raw values but can also
-        aggregate points on a given period. if an aggregate is chosen, the resampling period must also be selected.
-        Important: a point with a scanMode without the corresponding scangroup will not be requested
+        aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected.
+        Important: a point with a scanMode without the corresponding scangroup will not be requested.
+        <br />
+        <b>In the current version, aggregates are NOT supported for production mode. Please use &quot;Raw&quot;</b>
       </p>
     ),
   },
@@ -128,14 +130,14 @@ schema.form = {
         label: 'Scan Mode',
         valid: validation.scanMode.isSelectedOnce,
       },
-      Aggregate: {
+      aggregate: {
         type: 'OIbSelect',
-        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
+        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
         defaultValue: 'Raw',
       },
       resampling: {
         type: 'OIbSelect',
-        options: ['None', 'Minute', 'Hour', 'Day'],
+        options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
       },
     },

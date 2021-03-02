@@ -129,19 +129,33 @@ class OPCUA_HA extends ProtocolHandler {
       indexRange: undefined,
       nodeId,
     }))
-    let readRawModifiedDetails
+    let historyReadDetails
 
     const dataValues = [[]]
     do {
-      readRawModifiedDetails = new Opcua.ReadRawModifiedDetails({
-        endTime,
-        isReadModified: false,
-        numValuesPerNode,
-        returnBounds: false,
-        startTime,
-      })
+      if (options?.aggregateFn) {
+        if (!options.processingInterval) {
+          this.logger.error(`option aggregageFn ${options.aggregateFn} without processingInterval`)
+        }
+        // we use the same aggregate for all nodes (OPCUA allows to have a different one for each)
+        const aggregateType = Array(nodesToRead.length).fill(options.aggregateFn)
+        historyReadDetails = new Opcua.ReadProcessedDetails({
+          aggregateType,
+          endTime,
+          processingInterval: options.processingInterval,
+          startTime,
+        })
+      } else {
+        historyReadDetails = new Opcua.ReadRawModifiedDetails({
+          endTime,
+          isReadModified: false,
+          numValuesPerNode,
+          returnBounds: false,
+          startTime,
+        })
+      }
       const request = new Opcua.HistoryReadRequest({
-        historyReadDetails: readRawModifiedDetails,
+        historyReadDetails,
         nodesToRead,
         releaseContinuationPoints: false,
         timestampsToReturn: Opcua.TimestampsToReturn.Both,
@@ -155,6 +169,15 @@ class OPCUA_HA extends ProtocolHandler {
       historyReadResult?.forEach((result, i) => {
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
+        /**
+         * @todo: need to check if throw is good enough to manage result.statusCode
+         */
+        if (result.statusCode.value !== 0) {
+          // eslint-disable-next-line no-underscore-dangle
+          this.logger.error(result.statusCode._description)
+          // eslint-disable-next-line no-underscore-dangle
+          throw result.statusCode._description
+        }
         nodesToRead[i].continuationPoint = result.continuationPoint
       })
       // remove points fully retrieved
@@ -169,7 +192,7 @@ class OPCUA_HA extends ProtocolHandler {
       nodeId,
     }))
     await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
-      historyReadDetails: readRawModifiedDetails,
+      historyReadDetails,
       nodesToRead,
       releaseContinuationPoints: true,
       timestampsToReturn: Opcua.TimestampsToReturn.Both,
@@ -226,6 +249,49 @@ class OPCUA_HA extends ProtocolHandler {
         // eslint-disable-next-line max-len
         this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
         const options = { timeout: this.readTimeout, numValuesPerNode: this.maxReturnValues }
+        switch (scanGroup.resampling) {
+          case 'Second':
+            options.processingInterval = 1000
+            break
+          case '10 Seconds':
+            options.processingInterval = 1000 * 10
+            break
+          case '30 Seconds':
+            options.processingInterval = 1000 * 30
+            break
+          case 'Minute':
+            options.processingInterval = 1000 * 60
+            break
+          case 'Hour':
+            options.processingInterval = 1000 * 3600
+            break
+          case 'Day':
+            options.processingInterval = 1000 * 3600 * 24
+            break
+          case 'None':
+            break
+          default:
+            this.logger.error(`unsupported resampling: ${scanGroup.resampling}`)
+        }
+        switch (scanGroup.aggregate) {
+          case 'Average':
+            options.aggregateFn = Opcua.AggregateFunction.Average
+            break
+          case 'Minimum':
+            options.aggregateFn = Opcua.AggregateFunction.Minimum
+            break
+          case 'Maximum':
+            options.aggregateFn = Opcua.AggregateFunction.Maximum
+            break
+          case 'Count':
+            options.aggregateFn = Opcua.AggregateFunction.Count
+            break
+          case 'Raw':
+            break
+          default:
+            this.logger.error(`unsupported aggregage: ${scanGroup.aggregate}`)
+        }
+
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
         /*
         Below are two example of responses
