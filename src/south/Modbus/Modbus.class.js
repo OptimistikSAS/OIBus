@@ -17,7 +17,7 @@ class Modbus extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.logger)
+    this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.dataSource.Modbus.addressOffset, this.logger)
     this.connected = false
 
     this.handlesPoints = true

@@ -49,6 +49,7 @@ describe('Modbus south', () => {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,
+      addressOffset: 0,
     },
     points: [
       {
@@ -87,6 +88,53 @@ describe('Modbus south', () => {
     },
   }
 
+  const modbusConfigAddressOffset = {
+    dataSourceId: 'Modbus',
+    protocol: 'Modbus',
+    enabled: true,
+    Modbus: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: -1,
+    },
+    points: [
+      {
+        pointId: 'EtatBB2T0',
+        modbusType: 'holdingRegister',
+        address: '0x3E80',
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+      {
+        pointId: 'EtatBB2T1',
+        modbusType: 'holdingRegister',
+        scanMode: 'every10Seconds',
+        address: '0x3E81',
+        type: 'number',
+      },
+    ],
+  }
+
+  const optimizedScanModesAddressOffset = {
+    every10Seconds: {
+      holdingRegister: {
+        '15984-16016': [
+          {
+            pointId: 'EtatBB2T0',
+            address: 15999,
+            type: 'number',
+          },
+          {
+            pointId: 'EtatBB2T1',
+            address: 16000,
+            type: 'number',
+          },
+        ],
+      },
+    },
+  }
+
   it('should be properly initialized', () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
     expect(modbusSouth.url)
@@ -95,6 +143,12 @@ describe('Modbus south', () => {
       .toEqual(optimizedScanModes)
     expect(modbusSouth.dataSource.Modbus.slaveId)
       .toEqual(modbusConfig.Modbus.slaveId)
+  })
+
+  it('should be properly initialized with addressOffset', () => {
+    const modbusSouth = new Modbus(modbusConfigAddressOffset, engine)
+    expect(modbusSouth.optimizedScanModes)
+      .toEqual(optimizedScanModesAddressOffset)
   })
 
   it('should properly connect', async () => {
