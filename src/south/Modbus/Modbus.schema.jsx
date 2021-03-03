@@ -57,9 +57,9 @@ schema.form = {
     type: 'OIbSelect',
     md: 2,
     newRow: false,
-    options: [0, -1],
+    options: ['Modbus', 'JBus'],
     label: 'Address Offset',
-    defaultValue: 0,
+    defaultValue: 'Modbus',
     help: <div>Address offset to be applied for all points during requests (0 for the traditionnal Modbus protocol and 1 when using JBus)</div>,
   },
 }

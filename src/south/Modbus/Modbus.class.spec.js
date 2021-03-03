@@ -49,7 +49,7 @@ describe('Modbus south', () => {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,
-      addressOffset: 0,
+      addressOffset: 'Modbus',
     },
     points: [
       {
@@ -96,7 +96,7 @@ describe('Modbus south', () => {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,
-      addressOffset: -1,
+      addressOffset: 'JBus',
     },
     points: [
       {
