@@ -89,7 +89,8 @@ const getOptimizedScanModes = (points, addressOffset, logger) => {
       // add modbusType and register address to each point
       scanModes[scanMode] = scanModes[scanMode].map((myPoint) => {
         const { modbusType } = myPoint
-        const address = (myPoint.address.match(/^0x[0-9a-f]+$/i) ? parseInt(myPoint.address, 16) : myPoint.address) + addressOffset
+        const offset = addressOffset === 'Modbus' ? 0 : -1
+        const address = (myPoint.address.match(/^0x[0-9a-f]+$/i) ? parseInt(myPoint.address, 16) : myPoint.address) + offset
         const type = modbusTypes[myPoint.modbusType]
         if (type === undefined || type === null) {
           logger.error(`The modbus type ${modbusType} was not recognized.`)

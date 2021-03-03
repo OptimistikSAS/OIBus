@@ -355,7 +355,7 @@ module.exports = {
       if (dataSource.protocol === 'Modbus') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'adressOffset')) {
           logger.info('Add addressOffset field to Modbus')
-          dataSource.Modbus.addressOffset = 0
+          dataSource.Modbus.addressOffset = 'Modbus'
         }
       }
     })
