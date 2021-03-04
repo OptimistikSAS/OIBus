@@ -78,6 +78,20 @@ schema.points = {
     defaultValue: 'holdingRegister',
     help: <div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)</div>,
   },
+  dataType: {
+    type: 'OIbSelect',
+    newRow: false,
+    options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
+    label: 'Data type',
+    defaultValue: 'Uint16',
+    help: (
+      <div>
+        In the case of a value from a holdingRegister or an inputRegister, what is the type of the data
+        (Is it an integer or a decimal number, on how many bits the value is stored and is the value signed or not.).
+        By default for these registers the value is stored on a UInt16
+      </div>
+    ),
+  },
   address: {
     type: 'OIbText',
     defaultValue: '',
