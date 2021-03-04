@@ -5,6 +5,21 @@ const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
+ * Read point value according to it's data type (UInt16, UInt32, etc)
+ * @param {Object} response Response of the modbus request
+ * @param {Object} point The point to read
+ * @param {Number} position Position of the point in the response
+ * @return {Number} Value stored at the specified address
+ */
+const readRegisterValue = (response, point, position) => {
+  if (response.body.constructor.name === 'ReadCoilsResponseBody' || response.body.constructor.name === 'ReadDiscreteInputsResponseBody') {
+    return response.body.valuesAsArray[position]
+  }
+  const funcName = `read${point.dataType}BE`
+  return response.body.valuesAsBuffer[funcName](position * 2)
+}
+
+/**
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
@@ -63,13 +78,12 @@ class Modbus extends ProtocolHandler {
           const timestamp = new Date().toISOString()
           points.forEach((point) => {
             const position = point.address - startAddress - 1
-            const data = response.body.valuesAsArray[position]
             /** @todo: below should send by batch instead of single points */
             this.addValues([
               {
                 pointId: point.pointId,
                 timestamp,
-                data: { value: JSON.stringify(data) },
+                data: { value: JSON.stringify(readRegisterValue(response, point, position)) },
               },
             ])
           })
