@@ -9,6 +9,7 @@ const databaseService = require('../services/database.service')
 
 // South classes
 const protocolList = {}
+protocolList.ADS = require('../south/ADS/ADS.class')
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
 protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
