@@ -55,6 +55,7 @@ describe('Modbus south', () => {
       {
         pointId: 'EtatBB2T0',
         modbusType: 'holdingRegister',
+        dataType: 'UInt16',
         address: '0x3E80',
         type: 'number',
         scanMode: 'every10Seconds',
@@ -62,6 +63,7 @@ describe('Modbus south', () => {
       {
         pointId: 'EtatBB2T1',
         modbusType: 'holdingRegister',
+        dataType: 'UInt16',
         scanMode: 'every10Seconds',
         address: '0x3E81',
         type: 'number',
@@ -75,11 +77,13 @@ describe('Modbus south', () => {
         '15984-16016': [
           {
             pointId: 'EtatBB2T0',
+            dataType: 'UInt16',
             address: 16000,
             type: 'number',
           },
           {
             pointId: 'EtatBB2T1',
+            dataType: 'UInt16',
             address: 16001,
             type: 'number',
           },
@@ -102,6 +106,7 @@ describe('Modbus south', () => {
       {
         pointId: 'EtatBB2T0',
         modbusType: 'holdingRegister',
+        dataType: 'UInt16',
         address: '0x3E80',
         type: 'number',
         scanMode: 'every10Seconds',
@@ -109,6 +114,7 @@ describe('Modbus south', () => {
       {
         pointId: 'EtatBB2T1',
         modbusType: 'holdingRegister',
+        dataType: 'UInt16',
         scanMode: 'every10Seconds',
         address: '0x3E81',
         type: 'number',
@@ -122,11 +128,13 @@ describe('Modbus south', () => {
         '15984-16016': [
           {
             pointId: 'EtatBB2T0',
+            dataType: 'UInt16',
             address: 15999,
             type: 'number',
           },
           {
             pointId: 'EtatBB2T1',
+            dataType: 'UInt16',
             address: 16000,
             type: 'number',
           },

@@ -360,4 +360,16 @@ module.exports = {
       }
     })
   },
+  25: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        dataSource.points.forEach((point) => {
+          if (!Object.prototype.hasOwnProperty.call(point, 'dataType')) {
+            logger.info('Add dataType field to Modbus points')
+            point.dataType = 'UInt16'
+          }
+        })
+      }
+    })
+  },
 }
