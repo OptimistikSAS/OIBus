@@ -36,35 +36,27 @@ class ADS extends ProtocolHandler {
       return
     }
 
-    const nodesToRead = this.dataSource.points
-      .filter((point) => point.scanMode === scanMode)
-      .map((point) => point.address)
+    const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
       this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
       return
     }
 
-    try {
-      this.dataSource.points
-        .filter((point) => point.scanMode === scanMode)
-        .forEach((point) => {
-          this.client.readSymbol(point.address)
-            .then((res) => {
-              this.addValues([
-                {
-                  pointId: point.pointId,
-                  timestamp: new Date().toISOString(),
-                  data: { value: JSON.stringify(res) },
-                },
-              ])
-            })
-            .catch((err) => {
-              this.logger.error(`ADS onScan error for ${point.address}: ${err}`)
-            })
+    await nodesToRead.forEach((node) => {
+      this.client.readSymbol(node.address)
+        .then((nodeResult) => {
+          this.addValues([
+            {
+              pointId: node.pointId,
+              timestamp: new Date().toISOString(),
+              data: { value: JSON.stringify(nodeResult) },
+            },
+          ])
         })
-    } catch (error) {
-      this.logger.error(`on Scan ${scanMode}:${error.stack}`)
-    }
+        .catch((error) => {
+          this.logger.error(`on Scan ${scanMode}:${error.stack}`)
+        })
+    })
   }
 
   /**
@@ -81,8 +73,7 @@ class ADS extends ProtocolHandler {
     this.client.connect()
       .then((res) => {
         this.connected = true
-        this.logger.info(`Connected to the ${res.targetAmsNetId}`)
-        this.logger.info(`Router assigned AmsNetId ${res.localAmsNetId} and port ${res.localAdsPort} to this client`)
+        this.logger.info(`Connected to the ${res.targetAmsNetId} with local AmsNetId ${res.localAmsNetId} and local port ${res.localAdsPort}`)
       })
       .catch((error) => {
         this.connected = false
@@ -97,13 +88,8 @@ class ADS extends ProtocolHandler {
   disconnect() {
     if (this.connected) {
       this.client.disconnect()
-        .then(() => {
-          this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
-        })
-        .catch(() => {
-          this.logger.error(`ADS client error while disconnecting from ${this.netId}:${this.port}`)
-        })
         .finally(() => {
+          this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
           this.connected = false
         })
     }
