@@ -1,3 +1,4 @@
+const ads = require('ads-client')
 const ADS = require('./ADS.class')
 const config = require('../../config/defaultConfig.json')
 const databaseService = require('../../services/database.service')
@@ -9,16 +10,27 @@ jest.mock('../../services/database.service', () => ({
   upsertConfig: jest.fn(),
 }))
 
+// Mock ads client
+jest.mock('ads-client')
+
 // Mock logger
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
 const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.addValues = jest.fn()
 
 beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
+  // Mock ads Client constructor and the used function
+  ads.Client.mockReturnValue({
+    connect: () => new Promise((resolve) => resolve()),
+    disconnect: () => new Promise((resolve) => resolve()),
+    readSymbol: jest.fn(), // () => new Promise((resolve) => resolve()),
+  })
+  databaseService.getConfig.mockReturnValue('1587640141001.0')
 })
 
 describe('ADS south', () => {
@@ -54,45 +66,82 @@ describe('ADS south', () => {
   })
 
   it('should properly connect', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
-
     const adsSouth = new ADS(adsConfig, engine)
     await adsSouth.connect()
-
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.dataSourceId}.db`)
+
+    expect(adsSouth.connected)
+      .toBeTruthy()
   })
 
   it('should properly onScan', async () => {
     const adsSouth = new ADS(adsConfig, engine)
-
-    await adsSouth.connect()
     adsSouth.connected = true
-    adsSouth.client.readSymbol = jest.fn()
-    adsSouth.client.readSymbol.mockReturnValue(Promise.resolve([]))
+    adsSouth.client = { readSymbol: jest.fn() }
+    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve) => resolve([])))
     await adsSouth.onScan('every10Seconds')
 
     expect(adsSouth.client.readSymbol)
       .toBeCalledWith('Etat.BB2T0') // see the optimizedScanModes to get the startAddress and range
     expect(adsSouth.client.readSymbol)
       .toBeCalledTimes(2) // two points are set in the config
+    expect(adsSouth.logger.error)
+      .toBeCalledTimes(0)
+  })
+
+  it('should not read when no point', async () => {
+    const adsSouth = new ADS(adsConfig, engine)
+
+    await adsSouth.connect()
+    await adsSouth.onScan('every5Seconds')
+    // no point for every5Seconds
+    expect(adsSouth.client.readSymbol)
+      .toBeCalledTimes(0)
+  })
+
+  it('should catch errors on scan', async () => {
+    const adsSouth = new ADS(adsConfig, engine)
+
+    adsSouth.connected = true
+    adsSouth.client = { readSymbol: jest.fn() }
+    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => reject(new Error('test'))))
+    await adsSouth.onScan('every10Seconds')
+
+    expect(adsSouth.logger.error)
+      .toBeCalledTimes(2)
   })
 
   it('should properly disconnect', async () => {
     const adsSouth = new ADS(adsConfig, engine)
-
-    // activate flag connect
     adsSouth.connected = true
+    adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
+    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => resolve()))
 
-    adsSouth.client = { disconnect: jest.fn(), readSymbol: jest.fn() }
-    adsSouth.client.disconnect.mockReturnValue(Promise.resolve([]))
     await adsSouth.disconnect()
-    expect(adsSouth.client.disconnect)
-      .toBeCalled()
+
+    expect(adsSouth.connected)
+      .toBeFalsy()
 
     await adsSouth.onScan()
 
     expect(adsSouth.client.readSymbol)
+      .not
+      .toBeCalled()
+  })
+
+  it('disconnect should do nothing if not connected', async () => {
+    const adsSouth = new ADS(adsConfig, engine)
+    adsSouth.connected = false
+
+    adsSouth.client = { disconnect: jest.fn() }
+    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => resolve()))
+    await adsSouth.disconnect()
+
+    expect(adsSouth.connected)
+      .toBeFalsy()
+
+    expect(adsSouth.client.disconnect)
       .not
       .toBeCalled()
   })
