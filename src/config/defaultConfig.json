@@ -25,6 +25,9 @@
       },
         "cacheFolder": "./cache"
     },
+    "bulk": {
+      "bulkFolder": "./bulk"
+    },
     "scanModes": [
       {
         "scanMode": "everySecond",
@@ -69,5 +72,5 @@
   "north": {
     "applications": []
   },
-  "schemaVersion": 18
+  "schemaVersion": 22
 }

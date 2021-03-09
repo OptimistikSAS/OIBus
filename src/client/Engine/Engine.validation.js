@@ -30,6 +30,7 @@ const validation = {
       },
       cacheFolder: notEmpty('Cache Folder'),
     },
+    bulk: { bulkFolder: notEmpty('Bulk Folder') },
     proxies: {
       name: minLength(2),
       host: isHost(),

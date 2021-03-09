@@ -24,14 +24,15 @@ const testConfig = {
         host: 'localhost:3100',
       },
     },
-    caching: { 
-      cacheFolder: './cache', 
+    caching: {
+      cacheFolder: './cache',
       archive: {
         enabled: true,
         archiveFolder: "./cache/archive/",
         retentionDuration: 720
       },
    },
+    bulk: { bulkFolder: './bulk' },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },
