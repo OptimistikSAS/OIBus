@@ -463,6 +463,30 @@ exports[`Health display Health page based on config and status 1`] = `
           </button>
         </div>
       </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box"
+        >
+          <a
+            href="/south/ADS - Test"
+          >
+            <div>
+              ADS - Test
+            </div>
+            <div>
+              (ADS)
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (8)
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div
@@ -970,6 +994,30 @@ exports[`Health display Health page based on config and status 2`] = `
             type="button"
           >
             Points (3)
+          </button>
+        </div>
+      </div>
+      <div
+        class="tight text-success col"
+      >
+        <div
+          class="oi-box"
+        >
+          <a
+            href="/south/ADS - Test"
+          >
+            <div>
+              ADS - Test
+            </div>
+            <div>
+              (ADS)
+            </div>
+          </a>
+          <button
+            class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+            type="button"
+          >
+            Points (8)
           </button>
         </div>
       </div>

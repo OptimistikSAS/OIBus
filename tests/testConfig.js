@@ -256,6 +256,62 @@ const testConfig = {
           { scanMode: 'every10Second', aggregate: '', resampling: 'Minute' },
         ],
       },
+      {
+        dataSourceId: 'ADS - Test',
+        protocol: 'ADS',
+        enabled: true,
+        ADS: {
+          port: 851,
+          netId: '10.211.55.3.1.1',
+          clientAdsPort: 32750,
+          routerTcpPort: 48898,
+          clientAmsNetId: '10.211.55.2.1.1',
+          routerAddress: '10.211.55.3',
+          retryInterval: 10000,
+        },
+        points: [
+          {
+            pointId: 'MAIN.TestIntTask',
+            address: 'MAIN.TestIntTask',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestENUM',
+            address: 'GVL_Test.TestENUM',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestINT',
+            address: 'GVL_Test.TestINT',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestSTRING',
+            address: 'GVL_Test.TestSTRING',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.ExampleSTRUCT',
+            address: 'GVL_Test.ExampleSTRUCT',
+            scanMode: 'everySecond',
+          },
+          {
+            pointId: 'GVL_Test.TestARRAY',
+            address: 'GVL_Test.TestARRAY',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestARRAY2',
+            address: 'GVL_Test.TestARRAY2',
+            scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestTimer',
+            address: 'GVL_Test.TestTimer',
+            scanMode: 'every10Seconds',
+          },
+        ],
+      },
     ],
   },
   north: {
@@ -402,9 +458,7 @@ const testConfig = {
         applicationId: 'filewriter',
         api: 'FileWriter',
         enabled: true,
-        FileWriter: {
-          outputFolder: './output'
-        },
+        FileWriter: { outputFolder: './output' },
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
         subscribedTo: [],
       },
