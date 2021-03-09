@@ -391,6 +391,8 @@ module.exports = {
         }
       }
     })
+    logger.info('Add bulk settings to Engine')
+    config.engine.bulk = { bulkFolder: './bulk' }
   },
   23: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
