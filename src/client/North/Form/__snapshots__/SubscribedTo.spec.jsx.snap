@@ -521,6 +521,11 @@ exports[`SubscribedTo check SubscribedTo with application: c 1`] = `
                     OPC-HDA
                   </option>
                   <option
+                    value="ADS - Test"
+                  >
+                    ADS - Test
+                  </option>
+                  <option
                     value="any"
                   >
                     any
@@ -982,6 +987,11 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
                     OPC-HDA
                   </option>
                   <option
+                    value="ADS - Test"
+                  >
+                    ADS - Test
+                  </option>
+                  <option
                     value="any"
                   >
                     any
@@ -1161,6 +1171,11 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
                     OPC-HDA
                   </option>
                   <option
+                    value="ADS - Test"
+                  >
+                    ADS - Test
+                  </option>
+                  <option
                     value="any"
                   >
                     any
@@ -1338,6 +1353,11 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
                     value="OPC-HDA"
                   >
                     OPC-HDA
+                  </option>
+                  <option
+                    value="ADS - Test"
+                  >
+                    ADS - Test
                   </option>
                   <option
                     value="any"
