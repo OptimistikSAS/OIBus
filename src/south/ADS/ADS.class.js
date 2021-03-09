@@ -15,9 +15,15 @@ class ADS extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
+    const { netId, port, clientAmsNetId, clientAdsPort, routerAddress, routerTcpPort, retryInterval } = this.dataSource.ADS
     this.connected = false
-    this.netId = this.dataSource.ADS.netId
-    this.port = this.dataSource.ADS.port
+    this.netId = netId
+    this.port = port
+    this.clientAmsNetId = clientAmsNetId
+    this.clientAdsPort = clientAdsPort
+    this.routerAddress = routerAddress
+    this.routerTcpPort = routerTcpPort
+    this.retryInterval = retryInterval
   }
 
   /**
@@ -49,7 +55,7 @@ class ADS extends ProtocolHandler {
             {
               pointId: node.pointId,
               timestamp: new Date().toISOString(),
-              data: { value: JSON.stringify(nodeResult) },
+              data: { value: JSON.stringify(nodeResult.value) },
             },
           ])
         })
@@ -68,17 +74,26 @@ class ADS extends ProtocolHandler {
     this.client = new ads.Client({
       targetAmsNetId: this.netId, // example: 192.168.1.120.1.1
       targetAdsPort: this.port, // example: 851
+      localAmsNetId: this.clientAmsNetId, // needs to match a route declared in PLC StaticRoutes.xml file. Example: 10.211.55.2.1.1
+      localAdsPort: this.clientAdsPort, // should be an unused port. Example: 32750
+      routerAddress: this.routerAddress, // distant address of the PLC. Example: 10.211.55.3
+      routerTcpPort: this.routerTcpPort, // port of the Ams router (must be open on the PLC). Example : 48898 (which is default)
     })
 
-    this.client.connect()
-      .then((res) => {
-        this.connected = true
-        this.logger.info(`Connected to the ${res.targetAmsNetId} with local AmsNetId ${res.localAmsNetId} and local port ${res.localAdsPort}`)
-      })
-      .catch((error) => {
-        this.connected = false
-        this.logger.error(`ADS connect error: ${JSON.stringify(error)}`)
-      })
+    await this.connectToAdsServer()
+  }
+
+  async connectToAdsServer() {
+    this.reconnectTimeout = null
+    try {
+      const result = await this.client.connect()
+      this.connected = true
+      this.logger.info(`Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`)
+    } catch (error) {
+      this.connected = false
+      this.logger.error(`ADS connect error: ${JSON.stringify(error)}`)
+      this.reconnectTimeout = setTimeout(this.connectToAdsServer.bind(this), this.retryInterval)
+    }
   }
 
   /**
@@ -86,6 +101,9 @@ class ADS extends ProtocolHandler {
    * @return {void}
    */
   disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+    }
     if (this.connected) {
       this.client.disconnect()
         .finally(() => {
