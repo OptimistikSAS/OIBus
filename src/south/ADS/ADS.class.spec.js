@@ -26,7 +26,7 @@ beforeEach(() => {
   jest.useFakeTimers()
   // Mock ads Client constructor and the used function
   ads.Client.mockReturnValue({
-    connect: () => new Promise((resolve) => resolve()),
+    connect: () => new Promise((resolve) => resolve({})),
     disconnect: () => new Promise((resolve) => resolve()),
     readSymbol: jest.fn(), // () => new Promise((resolve) => resolve()),
   })
@@ -41,6 +41,11 @@ describe('ADS south', () => {
     ADS: {
       netId: '127.0.0.1.1.1',
       port: 851,
+      routerAddress: '10.211.55.3',
+      routerTcpPort: 48898,
+      clientAmsNetId: '10.211.55.2.1.1',
+      clientAdsPort: 32750,
+      retryInterval: 10000,
     },
     points: [
       {
@@ -73,6 +78,22 @@ describe('ADS south', () => {
 
     expect(adsSouth.connected)
       .toBeTruthy()
+
+    expect(adsSouth.reconnectTimeout).toBe(null)
+  })
+
+  it('should retry to connect in case of failure', async () => {
+    const adsSouth = new ADS(adsConfig, engine)
+    adsSouth.client = { connect: () => new Promise((resolve, reject) => reject()) }
+    await adsSouth.connectToAdsServer()
+
+    expect(adsSouth.connected)
+      .toBeFalsy()
+
+    expect(adsSouth.logger.error)
+      .toBeCalledTimes(1)
+
+    expect(adsSouth.reconnectTimeout).not.toBe(null)
   })
 
   it('should properly onScan', async () => {
@@ -112,16 +133,19 @@ describe('ADS south', () => {
       .toBeCalledTimes(2)
   })
 
-  it('should properly disconnect', async () => {
+  it('should properly disconnect and clearTimeout', async () => {
     const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
     adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => resolve()))
 
+    adsSouth.reconnectTimeout = true
     await adsSouth.disconnect()
 
     expect(adsSouth.connected)
       .toBeFalsy()
+
+    expect(clearTimeout).toHaveBeenCalledTimes(1)
 
     await adsSouth.onScan()
 
