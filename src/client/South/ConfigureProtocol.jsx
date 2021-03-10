@@ -5,9 +5,10 @@ import { ConfigContext } from '../context/configContext.jsx'
 import SouthForm from './Form/SouthForm.jsx'
 
 const ConfigureProtocol = () => {
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig, liveConfig } = React.useContext(ConfigContext)
   const dataSources = newConfig?.south?.dataSources // array of all defined dataSources
   const { dataSourceId } = useParams() // the dataSourceId passed in the url
+  const lastCompletedDate = liveConfig?.find((c) => c.name === dataSourceId)
   const dataSourceIndex = dataSources?.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
 
   const onChange = (name, value, validity) => {
@@ -19,6 +20,7 @@ const ConfigureProtocol = () => {
       dataSource={dataSources[dataSourceIndex]}
       dataSourceIndex={dataSourceIndex}
       onChange={onChange}
+      lastCompletedAt={lastCompletedDate?.lastCompletedAt}
     />
   ) : (
     <div className="spinner-container">
