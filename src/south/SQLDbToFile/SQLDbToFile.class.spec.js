@@ -58,6 +58,29 @@ describe('sql-db-to-file', () => {
     expect(sqlSouth.lastCompletedAt).toEqual('2020-08-07T06:48:12.852Z')
   })
 
+  it('should properly connect and set lastCompletedAt from startDate', async () => {
+    const tempConfig = { ...sqlConfig }
+    tempConfig.SQLDbToFile.startDate = '2010-01-01T08:00:00.000Z'
+    const tempSqlSouth = new SQLDbToFile(tempConfig, engine)
+
+    await tempSqlSouth.connect()
+
+    expect(tempSqlSouth.lastCompletedAt).toEqual('2010-01-01T08:00:00.000Z')
+  })
+
+  it('should trigger an error on connection if timezone is invalid and create folder', async () => {
+    jest.spyOn(fs, 'existsSync').mockImplementation(() => false)
+    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => true)
+
+    const badConfig = { ...sqlConfig }
+    badConfig.SQLDbToFile.timezone = undefined
+    const badSqlSouth = new SQLDbToFile(badConfig, engine)
+
+    expect(badSqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone supplied: undefined')
+
+    expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
+  })
+
   it('should properly connect and set lastCompletedAt now', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
@@ -83,14 +106,18 @@ describe('sql-db-to-file', () => {
   })
 
   it('should interact with MS SQL server if driver is mssql', async () => {
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
     sqlSouth.driver = 'mssql'
-
-    const request = jest.fn()
+    const query = jest.fn(() => ({ recordsets: [[{ timestamp: new Date('2020-12-25T00:00:00.000Z') }]] }))
+    const input = jest.fn(() => ({ query }))
+    const request = jest.fn(() => ({ input }))
     const connect = jest.fn(() => ({ request }))
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
     jest.spyOn(mssql, 'close')
 
     await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.lastCompletedAt).toBe('2020-12-25T00:00:00.000Z')
 
     const expectedConfig = {
       server: sqlConfig.SQLDbToFile.host,
@@ -106,13 +133,62 @@ describe('sql-db-to-file', () => {
     expect(connect).toBeCalledTimes(1)
     expect(request).toBeCalledTimes(1)
     expect(mssql.close).toHaveBeenCalledTimes(1)
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
+  })
+
+  it('should interact with MS SQL server and not set lastCompletedAt', async () => {
+    sqlSouth.driver = 'mssql'
+    sqlSouth.lastCompletedAt = undefined
+    sqlSouth.domain = 'TestDomain'
+    const query = jest.fn(() => ({ recordsets: [[{ timestamp: 'not a timestamp' }]] }))
+    const input = jest.fn(() => ({ query }))
+    const request = jest.fn(() => ({ input }))
+    const connect = jest.fn(() => ({ request }))
+    jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
+    jest.spyOn(mssql, 'close')
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    const expectedConfig = {
+      server: sqlConfig.SQLDbToFile.host,
+      port: sqlConfig.SQLDbToFile.port,
+      user: sqlConfig.SQLDbToFile.username,
+      password: sqlConfig.SQLDbToFile.password,
+      database: sqlConfig.SQLDbToFile.database,
+      connectionTimeout: sqlConfig.SQLDbToFile.connectionTimeout,
+      requestTimeout: sqlConfig.SQLDbToFile.requestTimeout,
+      options: { encrypt: sqlConfig.SQLDbToFile.encryption },
+      domain: 'TestDomain',
+    }
+    expect(mssql.ConnectionPool).toHaveBeenCalledWith(expectedConfig)
+
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('lastCompletedAt not used')
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
+  })
+
+  it('should interact with MS SQL server with no LastCompletedDate and catch error', async () => {
+    sqlSouth.driver = 'mssql'
+    sqlSouth.containsLastCompletedDate = false
+    const query = jest.fn(() => { throw new Error('request error') })
+    const request = jest.fn(() => ({ query }))
+    const connect = jest.fn(() => ({ request }))
+    jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
+    jest.spyOn(mssql, 'close')
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('request error'))
+    sqlSouth.containsLastCompletedDate = true
   })
 
   it('should interact with MySQL server if driver is mysql', async () => {
     sqlSouth.driver = 'mysql'
 
     const connection = {
-      execute: jest.fn(),
+      execute: jest.fn(() => ([{
+        value: 75.2,
+        timestamp: '2019-10-03T14:36:38.590Z',
+      }])),
       end: jest.fn(),
     }
     jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
@@ -136,6 +212,24 @@ describe('sql-db-to-file', () => {
     expect(mysql.createConnection).toHaveBeenCalledWith(expectedConfig)
     expect(connection.execute).toBeCalledWith(expectedExecute, expectedExecuteParams)
     expect(connection.end).toBeCalledTimes(1)
+    // eslint-disable-next-line max-len
+    expect(sqlSouth.logger.debug).toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ?" with LastCompletedDate')
+  })
+
+  it('should interact with MySQL server and catch request error', async () => {
+    sqlSouth.driver = 'mysql'
+
+    const connection = {
+      execute: jest.fn(() => {
+        throw new Error('execute error')
+      }),
+      end: jest.fn(),
+    }
+    jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
   })
 
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
@@ -144,7 +238,12 @@ describe('sql-db-to-file', () => {
     types.setTypeParser = jest.fn()
     const client = {
       connect: jest.fn(),
-      query: jest.fn(),
+      query: jest.fn(() => ({
+        rows: [{
+          value: 75.2,
+          timestamp: '2019-10-03T14:36:38.590Z',
+        }],
+      })),
       end: jest.fn(),
     }
     Client.mockReturnValue(client)
@@ -168,12 +267,35 @@ describe('sql-db-to-file', () => {
     expect(client.end).toBeCalledTimes(1)
   })
 
+  it('should interact with PostgreSQL server and catch request error', async () => {
+    sqlSouth.driver = 'postgresql'
+
+    types.setTypeParser = jest.fn()
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn(() => {
+        throw new Error('query error')
+      }),
+      end: jest.fn(),
+    }
+    Client.mockReturnValue(client)
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toBeCalledWith(new Error('query error'))
+  })
+
   it('should interact with Oracle server if driver is oracle', async () => {
     sqlSouth.driver = 'oracle'
 
     const connection = {
       callTimeout: 0,
-      execute: jest.fn(),
+      execute: jest.fn(() => ({
+        rows: [{
+          value: 75.2,
+          timestamp: '2019-10-03T14:36:38.590Z',
+        }],
+      })),
       close: jest.fn(),
     }
     jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
@@ -190,6 +312,38 @@ describe('sql-db-to-file', () => {
     expect(oracledb.getConnection).toHaveBeenCalledWith(expectedConfig)
     expect(connection.execute).toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(connection.close).toBeCalledTimes(1)
+  })
+
+  it('should interact with Oracle server and catch request error', async () => {
+    sqlSouth.driver = 'oracle'
+
+    const connection = {
+      callTimeout: 0,
+      execute: jest.fn(() => {
+        throw new Error('execute error')
+      }),
+      close: jest.fn(),
+    }
+    jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
+  })
+
+  it('should trigger an error and catch it', async () => {
+    sqlSouth.driver = 'mssql'
+
+    const query = jest.fn(() => ({ recordsets: [[{ timestamp: new Date('2020-12-25T00:00:00.000Z') }]] }))
+    const input = jest.fn(() => ({ query }))
+    const request = jest.fn(() => ({ input }))
+    const connect = jest.fn(() => ({ request }))
+    jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
+    jest.spyOn(mssql, 'close').mockImplementation(() => { throw new Error('test') })
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('test'))
   })
 
   it('should log an error if invalid driver is specified', async () => {
@@ -268,6 +422,45 @@ describe('sql-db-to-file', () => {
     await sqlSouth.decompress(targetGzip, decompressedCsv)
     const targetBuffer = fs.readFileSync(decompressedCsv)
     expect(targetBuffer.toString()).toEqual(csvContent)
+
+    sqlSouth.compression = false
+    fs.rmdirSync(tmpFolder, { recursive: true })
+    global.Date = RealDate
+  })
+
+  it('should manage fs unlink error and catch error', async () => {
+    const RealDate = Date
+    global.Date = jest.fn(() => new RealDate(nowDateString))
+
+    sqlSouth.driver = 'mysql'
+
+    const rows = [{
+      value: 75.2,
+      timestamp: '2019-10-03T14:36:38.590Z',
+    }]
+    const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
+    sqlSouth.getDataFromMySQL = () => rows
+    csv.unparse.mockReturnValue(csvContent)
+    jest.spyOn(fs, 'writeFileSync')
+    jest.spyOn(fs, 'unlink')
+    const mError = new Error('unlink Error')
+    fs.unlink.mockImplementationOnce((filename, callback) => {
+      callback(mError)
+    })
+
+    engine.addFile.mockImplementationOnce(() => {
+      throw Error('add file error')
+    })
+
+    const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    fs.mkdirSync(tmpFolder, { recursive: true })
+    sqlSouth.compression = true
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('unlink Error'))
+    expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('add file error'))
 
     sqlSouth.compression = false
     fs.rmdirSync(tmpFolder, { recursive: true })
