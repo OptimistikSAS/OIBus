@@ -56,6 +56,7 @@ const ConfigProvider = ({ children }) => {
   const [activeConfig, setActiveConfig] = React.useState(null)
   const [apiList, setApiList] = React.useState()
   const [protocolList, setProtocolList] = React.useState()
+  const [liveConfig, setLiveConfig] = React.useState([])
   // context for sorting south/north list
   const [sortNorthBy, setSortNorthBy] = React.useState()
   const [isNorthAscending, setIsNorthAscending] = React.useState()
@@ -71,6 +72,22 @@ const ConfigProvider = ({ children }) => {
     isSouthAscending,
     setIsSouthAscending,
   }
+
+  /**
+   * Acquire the list of LiveConfig
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    const call = async () => {
+      try {
+        const { liveConfig: newLiveConfig } = await apis.getLiveConfig()
+        setLiveConfig(newLiveConfig)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    call()
+  }, [])
 
   /**
    * Acquire the list of API
@@ -130,7 +147,7 @@ const ConfigProvider = ({ children }) => {
    */
   return (
     <ConfigContext.Provider
-      value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort }}
+      value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort, liveConfig }}
     >
       {children}
     </ConfigContext.Provider>

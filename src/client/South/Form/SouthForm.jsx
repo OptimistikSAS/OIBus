@@ -2,12 +2,12 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
-import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel, OIbHistorians } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
 
-const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
+const SouthForm = ({ dataSource, dataSourceIndex, lastCompletedAt, onChange }) => {
   const { protocol, dataSourceId } = dataSource
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -68,6 +68,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         value={dataSource.logParameters}
         onChange={onChange}
       />
+      {lastCompletedAt && <OIbHistorians lastCompletedAt={lastCompletedAt} />}
       <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
     </Form>
   )
@@ -77,6 +78,9 @@ SouthForm.propTypes = {
   dataSource: PropTypes.object.isRequired,
   dataSourceIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
+  lastCompletedAt: PropTypes.object,
 }
+
+SouthForm.defaultProps = { lastCompletedAt: null }
 
 export default SouthForm
