@@ -5,21 +5,6 @@ const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
- * Read point value according to it's data type (UInt16, UInt32, etc)
- * @param {Object} response Response of the modbus request
- * @param {Object} point The point to read
- * @param {Number} position Position of the point in the response
- * @return {Number} Value stored at the specified address
- */
-const readRegisterValue = (response, point, position) => {
-  if (response.body.constructor.name === 'ReadCoilsResponseBody' || response.body.constructor.name === 'ReadDiscreteInputsResponseBody') {
-    return response.body.valuesAsArray[position]
-  }
-  const funcName = `read${point.dataType}BE`
-  return response.body.valuesAsBuffer[funcName](position * 2)
-}
-
-/**
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
@@ -65,6 +50,24 @@ class Modbus extends ProtocolHandler {
   }
 
   /**
+   * Read point value according to it's data type (UInt16, UInt32, etc)
+   * @param {Object} response Response of the modbus request
+   * @param {Object} point The point to read
+   * @param {Number} position Position of the point in the response
+   * @return {Number} Value stored at the specified address
+   */
+  readRegisterValue(response, point, position) {
+    if (response.body.constructor.name === 'ReadCoilsResponseBody' || response.body.constructor.name === 'ReadDiscreteInputsResponseBody') {
+      return response.body.valuesAsArray[position]
+    }
+    const endianness = this.dataSource.Modbus.endianness === 'Big Endian' ? 'BE' : 'LE'
+    const funcName = `read${point.dataType}${endianness}`
+    /* Here, the position must be multiplied by 2 because the jsmodbus library is set to read addresses values on 16 bits (2 bytes),
+      but in the valuesAsBuffer field each cell of the array contains 8 bits (1 byte) */
+    return response.body.valuesAsBuffer[funcName](position * 2)
+  }
+
+  /**
    * Dynamically call the right function based on the given name
    * @param {String} funcName - Name of the function to run
    * @param {Object} infos - Information about the group of addresses (first address of the group, size)
@@ -83,7 +86,7 @@ class Modbus extends ProtocolHandler {
               {
                 pointId: point.pointId,
                 timestamp,
-                data: { value: JSON.stringify(readRegisterValue(response, point, position)) },
+                data: { value: JSON.stringify(this.readRegisterValue(response, point, position)) },
               },
             ])
           })
