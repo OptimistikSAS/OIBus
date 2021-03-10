@@ -50,6 +50,7 @@ describe('Modbus south', () => {
       host: '127.0.0.1',
       slaveId: 1,
       addressOffset: 'Modbus',
+      endianness: 'Big Endian',
     },
     points: [
       {
@@ -101,6 +102,7 @@ describe('Modbus south', () => {
       host: '127.0.0.1',
       slaveId: 1,
       addressOffset: 'JBus',
+      endianness: 'Big Endian',
     },
     points: [
       {

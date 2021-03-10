@@ -5583,6 +5583,23 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
                       Coil 156 (0x9C), enter 0x00009C for an extended Modicon Notation or enter 0x9C or 0x0009C for a standard Modicon Notation
                     </li>
                   </ul>
+                  <p>
+                    For each point you can specify extra configuration :
+                  </p>
+                  <ul>
+                    <li>
+                      addressOffset : Address offset to be applied for all points during requests (0 for the traditionnal Modbus protocol and 1 when using JBus)
+                    </li>
+                    <li>
+                      modbusType : Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)
+                    </li>
+                    <li>
+                      dataType : HoldingRegisters and inputRegisters can have one of the above types. Default type is UInt16. This field does not apply for coils and discreteInputs.
+                    </li>
+                    <li>
+                      endianness : Endianness of the data to read
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -5693,6 +5710,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
       <div
         class="col-md-2"
       />
@@ -6237,6 +6257,23 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
                       Coil 156 (0x9C), enter 0x00009C for an extended Modicon Notation or enter 0x9C or 0x0009C for a standard Modicon Notation
                     </li>
                   </ul>
+                  <p>
+                    For each point you can specify extra configuration :
+                  </p>
+                  <ul>
+                    <li>
+                      addressOffset : Address offset to be applied for all points during requests (0 for the traditionnal Modbus protocol and 1 when using JBus)
+                    </li>
+                    <li>
+                      modbusType : Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)
+                    </li>
+                    <li>
+                      dataType : HoldingRegisters and inputRegisters can have one of the above types. Default type is UInt16. This field does not apply for coils and discreteInputs.
+                    </li>
+                    <li>
+                      endianness : Endianness of the data to read
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -6347,6 +6384,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
       <div
         class="col-md-2"
       />
