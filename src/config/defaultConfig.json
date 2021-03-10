@@ -22,6 +22,9 @@
       "archiveMode": "archive",
       "archiveFolder": "./cache/archived/"
     },
+    "bulk": {
+      "bulkFolder": "./bulk"
+    },
     "scanModes": [
       {
         "scanMode": "everySecond",
