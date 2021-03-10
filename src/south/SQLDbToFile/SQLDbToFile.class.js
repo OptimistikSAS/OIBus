@@ -42,6 +42,7 @@ class SQLDbToFile extends ProtocolHandler {
       timezone,
       dateFormat,
       compression,
+      startDate,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -62,6 +63,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.delimiter = delimiter
     this.dateFormat = dateFormat
     this.compression = compression
+    this.startDate = startDate // "startDate" is currently a "hidden" parameter of oibus.json
 
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
@@ -82,7 +84,7 @@ class SQLDbToFile extends ProtocolHandler {
     await super.connect()
     this.lastCompletedAt = await this.getConfig('lastCompletedAt')
     if (!this.lastCompletedAt) {
-      this.lastCompletedAt = new Date().toISOString()
+      this.lastCompletedAt = this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString()
     }
   }
 
@@ -269,18 +271,19 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     types.setTypeParser(1114, (str) => new Date(`${str}Z`))
-    const client = new Client(config)
+    let connexion = null
     let data = []
     try {
-      await client.connect()
+      connexion = new Client(config)
+      await connexion.connect()
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
-      const { rows } = await client.query(adaptedQuery, params)
+      const { rows } = await connexion.query(adaptedQuery, params)
       data = rows
     } catch (error) {
       this.logger.error(error)
     } finally {
-      if (client) {
-        await client.end()
+      if (connexion) {
+        await connexion.end()
       }
     }
 
@@ -301,7 +304,7 @@ class SQLDbToFile extends ProtocolHandler {
       connectString: `${this.host}:${this.port}/${this.database}`,
     }
 
-    let connection
+    let connection = null
     let data = []
     try {
       process.env.ORA_SDTZ = 'UTC'
@@ -315,11 +318,7 @@ class SQLDbToFile extends ProtocolHandler {
       this.logger.error(error)
     } finally {
       if (connection) {
-        try {
-          await connection.close()
-        } catch (error) {
-          this.logger.error(error)
-        }
+        await connection.close()
       }
     }
 
