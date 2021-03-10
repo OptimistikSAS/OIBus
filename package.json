@@ -33,12 +33,11 @@
     "firefox esr"
   ],
   "dependencies": {
-    "@babel/runtime": "7.13.2",
     "@fortawesome/fontawesome-free": "5.15.2",
     "@koa/cors": "3.1.0",
     "@koa/multer": "3.0.0",
     "@koa/router": "10.0.0",
-    "aws-sdk": "2.849.0",
+    "aws-sdk": "2.853.0",
     "axios": "0.21.1",
     "basic-auth": "2.0.1",
     "bootstrap-less-port": "2.3.1",
@@ -97,13 +96,13 @@
     "babel-jest": "26.6.3",
     "babel-loader": "8.2.2",
     "babel-polyfill": "6.26.0",
-    "css-loader": "5.0.2",
+    "css-loader": "5.1.0",
     "esdoc": "1.1.0",
     "esdoc-ecmascript-proposal-plugin": "1.0.0",
     "esdoc-exclude-source-plugin": "1.0.0",
     "esdoc-node": "1.0.5",
     "esdoc-standard-plugin": "1.0.0",
-    "eslint": "7.20.0",
+    "eslint": "7.21.0",
     "eslint-config-airbnb": "18.2.1",
     "eslint-config-react": "1.1.7",
     "eslint-loader": "4.0.2",
@@ -128,7 +127,7 @@
     "standard-version": "9.1.1",
     "style-loader": "2.0.0",
     "url-loader": "4.1.1",
-    "webpack": "5.24.0",
+    "webpack": "5.24.2",
     "webpack-cli": "4.5.0"
   },
   "jest": {
