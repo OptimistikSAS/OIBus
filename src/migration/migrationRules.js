@@ -372,4 +372,14 @@ module.exports = {
       }
     })
   },
+  26: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'endianness')) {
+          logger.info('Add endianness field to Modbus')
+          dataSource.Modbus.endianness = 'Big Endian'
+        }
+      }
+    })
+  },
 }

@@ -30,6 +30,20 @@ schema.form = {
           <li>Holding Register 16001 (0x3E81), enter 403E81 for an extended Modicon Notation or enter 43E81 for a standard Modicon Notation.</li>
           <li>Coil 156 (0x9C), enter 0x00009C for an extended Modicon Notation or enter 0x9C or 0x0009C for a standard Modicon Notation</li>
         </ul>
+
+        <p>For each point you can specify extra configuration :</p>
+        <ul>
+          <li>
+            addressOffset : Address offset to be applied for all points during requests
+            (0 for the traditionnal Modbus protocol and 1 when using JBus)
+          </li>
+          <li>modbusType : Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)</li>
+          <li>
+            dataType : HoldingRegisters and inputRegisters can have one of the above types.
+            Default type is UInt16. This field does not apply for coils and discreteInputs.
+          </li>
+          <li>endianness : Endianness of the data to read</li>
+        </ul>
       </div>
     ),
   },
@@ -60,7 +74,14 @@ schema.form = {
     options: ['Modbus', 'JBus'],
     label: 'Address Offset',
     defaultValue: 'Modbus',
-    help: <div>Address offset to be applied for all points during requests (0 for the traditionnal Modbus protocol and 1 when using JBus)</div>,
+  },
+  endianness: {
+    type: 'OIbSelect',
+    md: 2,
+    newRow: false,
+    options: ['Big Endian', 'Little Endian'],
+    label: 'Endianness',
+    defaultValue: 'Big Endian',
   },
 }
 
@@ -70,32 +91,22 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  modbusType: {
-    type: 'OIbSelect',
-    newRow: false,
-    options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
-    label: 'Modbus type',
-    defaultValue: 'holdingRegister',
-    help: <div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)</div>,
-  },
-  dataType: {
-    type: 'OIbSelect',
-    newRow: false,
-    options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
-    label: 'Data type',
-    defaultValue: 'Uint16',
-    help: (
-      <div>
-        In the case of a value from a holdingRegister or an inputRegister, what is the type of the data
-        (Is it an integer or a decimal number, on how many bits the value is stored and is the value signed or not.).
-        By default for these registers the value is stored on a UInt16
-      </div>
-    ),
-  },
   address: {
     type: 'OIbText',
     defaultValue: '',
     valid: combinedValidations([isHexaOrDecimal(), notEmpty()]),
+  },
+  modbusType: {
+    type: 'OIbSelect',
+    options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
+    label: 'Modbus type',
+    defaultValue: 'holdingRegister',
+  },
+  dataType: {
+    type: 'OIbSelect',
+    options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
+    label: 'Data type',
+    defaultValue: 'Uint16',
   },
   scanMode: {
     type: 'OIbScanMode',
