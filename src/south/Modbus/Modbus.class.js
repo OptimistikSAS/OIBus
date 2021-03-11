@@ -124,7 +124,7 @@ class Modbus extends ProtocolHandler {
               {
                 pointId: point.pointId,
                 timestamp,
-                data: { value: JSON.stringify(data) },
+                data: { value: JSON.stringify(parseFloat((data * point.multiplierCoefficient).toFixed(5))) },
               },
             ])
           })
