@@ -5,6 +5,39 @@ const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
+ * Swap Bytes (8 bits) in Words (16 bits)
+ * Example : 0101 0001 => 0001 0101
+ * @param {Number} data on which to apply the swap
+ * @return {Number} Swapped data
+ */
+const swapBytesinWords = (data) => {
+  const res = (data & 0x00FF00FF00FF00FF) << 8 | (data & 0xFF00FF00FF00FF00) >> 8 // eslint-disable-line no-bitwise, no-mixed-operators
+  return res
+}
+
+/**
+ * Swap Words (16 bits) in DWords (32 bits)
+ * Example : 0101 0001 1110 0110 => 1110 0110 0101 0001
+ * @param {Number} data on which to apply the swap
+ * @return {Number} Swapped data
+ */
+const swapWordsInDWords = (data) => {
+  const res = (data & 0x0000FFFF0000FFFF) << 16 | (data & 0xFFFF0000FFFF0000) >> 16 // eslint-disable-line no-bitwise, no-mixed-operators
+  return res
+}
+
+/**
+ * Swap DWords (32 bits) in 64 bits
+ * Example : 0101 0001 1110 0110 0111 1001 1100 0011 => 0111 1001 1100 0011 1110 0110 0101 0001
+ * @param {Number} data on which to apply the swap
+ * @return {Number} Swapped data
+ */
+const swapDWords = (data) => {
+  const res = (data & 0x00000000FFFFFFFF) << 32 | (data & 0xFFFFFFFF00000000) >> 32 // eslint-disable-line no-bitwise, no-mixed-operators
+  return res
+}
+
+/**
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
@@ -66,6 +99,25 @@ class Modbus extends ProtocolHandler {
   }
 
   /**
+   * Swap retreive data according to the modbus datasource configuration
+   * @param {Number} data Retreived data
+   * @return {Number} Swapped data
+   */
+  swapData(data) {
+    let res = data
+    if (this.dataSource.Modbus.swapBytesinWords) {
+      res = swapBytesinWords(res)
+    }
+    if (this.dataSource.Modbus.swapWordsInDWords) {
+      res = swapWordsInDWords(res)
+    }
+    if (this.dataSource.Modbus.swapDWords) {
+      res = swapDWords(res)
+    }
+    return res
+  }
+
+  /**
    * Dynamically call the right function based on the given name
    * @param {String} funcName - Name of the function to run
    * @param {Object} infos - Information about the group of addresses (first address of the group, size)
@@ -79,12 +131,14 @@ class Modbus extends ProtocolHandler {
           const timestamp = new Date().toISOString()
           points.forEach((point) => {
             const position = point.address - startAddress - 1
+            let data = this.readRegisterValue(response, point, position)
+            data = this.swapData(data)
             /** @todo: below should send by batch instead of single points */
             this.addValues([
               {
                 pointId: point.pointId,
                 timestamp,
-                data: { value: JSON.stringify(this.readRegisterValue(response, point, position)) },
+                data: { value: JSON.stringify(data) },
               },
             ])
           })
