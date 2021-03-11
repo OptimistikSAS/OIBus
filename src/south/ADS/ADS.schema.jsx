@@ -1,5 +1,11 @@
 import React from 'react'
-import { inRange, optional, notEmpty, minValue, isAdsNetId } from '../../services/validation.service'
+import { inRange, optional, notEmpty, minValue } from '../../services/validation.service'
+
+// eslint-disable-next-line max-len
+const adsNetId = /^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$/
+const isAdsNetId = (name = 'Value') => (val) => (
+  adsNetId.test(val) ? null : `${name} should be a valid ads net ip`
+)
 
 const schema = { name: 'ADS' }
 schema.form = {
@@ -81,15 +87,72 @@ schema.form = {
     defaultValue: 10000,
     help: <div>Retry Interval (ms)</div>,
   },
+
+  AdsDataSettings: {
+    type: 'OIbTitle',
+    children: (
+      <div>
+        <ul>
+          <li>
+            <b>PLC name:</b>
+            You can add a prefix to your points ID by mentioning your PLC name. To separate this name from your points
+            ID, you can add a separator.
+            {' '}
+            <br />
+            For example, if you have a point ID TEST.MY_INTEGER and that I want to add something in front of it
+            to better identify the data, you can add MY_PLC. in front of your point (dot included).
+            That will give you MY_PLC.TEST.MY_INTEGER
+            <br />
+            Note that the PLC name is not used to request the point on the PLC, but is added to the pointId that will be send to your north connector.
+          </li>
+          <li>
+            <b>Enumeration value:</b>
+            In case of enumeration data, tell OIBus how to take into account the type of the value: text or integer.
+            Here is an Enumeration example :
+            <ul>
+              <li>Disabled: 0</li>
+              <li>Starting: 50</li>
+              <li>Running: 100</li>
+              <li>Stopping: 200</li>
+            </ul>
+            The Text option will take the following values : Disabled, Starting, Running or Stopping.
+            The Integer option will take the following values : 0, 50, 100 or 200.
+          </li>
+          <li>
+            <b>Boolean value:</b>
+            In case of boolean data, tell OIBus how to take into account the type of the value: text or integer.
+            <ul>
+              <li>false or 0</li>
+              <li>true or 1</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  plcName: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: optional(),
+    help: <div>The name of the PLC that will be added to the points ID as prefix.</div>,
+  },
+  enumAsText: {
+    defaultValue: 'Integer',
+    type: 'OIbSelect',
+    options: ['Text', 'Integer'],
+    label: 'Enumeration value',
+  },
+  boolAsText: {
+    newRow: false,
+    defaultValue: 'Integer',
+    type: 'OIbSelect',
+    options: ['Text', 'Integer'],
+    label: 'Boolean value',
+  },
 }
 
 schema.points = {
   pointId: {
-    type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: '',
-  },
-  address: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
