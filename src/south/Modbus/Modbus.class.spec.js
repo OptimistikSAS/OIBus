@@ -51,6 +51,9 @@ describe('Modbus south', () => {
       slaveId: 1,
       addressOffset: 'Modbus',
       endianness: 'Big Endian',
+      swapBytesinWords: false,
+      swapWordsInDWords: false,
+      swapDWords: false,
     },
     points: [
       {
@@ -103,6 +106,9 @@ describe('Modbus south', () => {
       slaveId: 1,
       addressOffset: 'JBus',
       endianness: 'Big Endian',
+      swapBytesinWords: false,
+      swapWordsInDWords: false,
+      swapDWords: false,
     },
     points: [
       {

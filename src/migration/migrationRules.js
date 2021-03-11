@@ -382,4 +382,22 @@ module.exports = {
       }
     })
   },
+  27: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapBytesinWords')) {
+          logger.info('Add swapBytesinWords field to Modbus')
+          dataSource.Modbus.swapBytesinWords = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapWordsInDWords')) {
+          logger.info('Add swapWordsInDWords field to Modbus')
+          dataSource.Modbus.swapWordsInDWords = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapDWords')) {
+          logger.info('Add swapDWords field to Modbus')
+          dataSource.Modbus.swapDWords = false
+        }
+      }
+    })
+  },
 }
