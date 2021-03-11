@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/OptimistikSAS/OIBus/compare/v1.0.1...v1.1.0) (2021-03-11)
+
+
+### Features
+
+* **folderscanner:** improve folderscanner help and log messages ([#1114](https://github.com/OptimistikSAS/OIBus/issues/1114)) ([d2fa2b7](https://github.com/OptimistikSAS/OIBus/commit/d2fa2b7cc61bb720d166c44c4e84694243c9fd75))
+* **north-csvToHttp:** add getOnlyValidMappingValue ([dae8a7f](https://github.com/OptimistikSAS/OIBus/commit/dae8a7f1f2c21d1f58fc20fcec45db8228251b8d))
+* **north-csvToHttp:** enable template strings in inputs ([353a0bb](https://github.com/OptimistikSAS/OIBus/commit/353a0bbc58bddd3de5fcc6a0fa3eff012e49c02e))
+* **north-csvToHttp:** improve documentation, test and refactor code ([437883f](https://github.com/OptimistikSAS/OIBus/commit/437883f6dc3ef5d6811598c973537e6dc0c0ce2d))
+* **OPCUA:** allow maxNode and timeout ([d0fc5ed](https://github.com/OptimistikSAS/OIBus/commit/d0fc5edaa7a1a4c627ab94044d55b078690f1529))
+* **south-mqtt:** [#1021](https://github.com/OptimistikSAS/OIBus/issues/1021) - Add option to use persistent connection ([2e30b2c](https://github.com/OptimistikSAS/OIBus/commit/2e30b2c78392ea2f59cc64ccfbfb1f96eb431cc4))
+* **south-mqtt:** On South MQTT config page Persistent checkbox is visible/enabled depending on Qos value. ([22bb630](https://github.com/OptimistikSAS/OIBus/commit/22bb63000e60a5f6098aa8c2ccea09242ab060e5))
+* **south-opcua:** Add configurable delay between read interval iterations ([bc42465](https://github.com/OptimistikSAS/OIBus/commit/bc42465b8b9207b5b32ad1df2fc9e157b4d3c519))
+* **south-opcua:** Add configurable delay between read interval iterations ([45305f9](https://github.com/OptimistikSAS/OIBus/commit/45305f9f0a87ca87d7358c69494649dd8e91df49))
+* **south-opcua:** opcua user/pass authentication ([6480585](https://github.com/OptimistikSAS/OIBus/commit/648058583396f7796ab50f3965149c399eb7e6d0))
+* **south-opcua:** Rename OPCUA to OPCUA_HA ([da8a5e7](https://github.com/OptimistikSAS/OIBus/commit/da8a5e72225d09ca38d6c044b902d7c3c37f446f))
+* **south-opcua-da:** Add UI ([32acdec](https://github.com/OptimistikSAS/OIBus/commit/32acdecf8fb6d7c73208491e2adc061109965be5))
+* **south-opcua-da:** basic working skeleton ([d4add31](https://github.com/OptimistikSAS/OIBus/commit/d4add31fa381a87efb341b680faf939385000018))
+* **south-opcua-da:** Unit tests ([eb1405d](https://github.com/OptimistikSAS/OIBus/commit/eb1405deaf4e5f543347d4600af70e5aa8619c08))
+* **south-opcua-ha:** Fix UI ([1307bbd](https://github.com/OptimistikSAS/OIBus/commit/1307bbd0b67429b037cf6492544ed1b544296fda))
+* **south-sql:** add startDate to initiate LastCompletedDate from config file and tests improvements ([b2a6707](https://github.com/OptimistikSAS/OIBus/commit/b2a670746beeb0e4951358f385a3f96c17dce8c3))
+
+
+### Bug Fixes
+
+* **deps:** update babel runtime to fix client failure ([1ba165e](https://github.com/OptimistikSAS/OIBus/commit/1ba165e89bf9931d718f420d8747e729665bd2d7))
+* **deps:** update dependency aws-sdk to v2.838.0 ([cc797e8](https://github.com/OptimistikSAS/OIBus/commit/cc797e85bc1515fc5023f4aa87cd771bf2ec7e9d))
+* **deps:** update dependency aws-sdk to v2.840.0 ([6da8029](https://github.com/OptimistikSAS/OIBus/commit/6da802975cbec3316d30bbecab7d40ff662cda2d))
+* **deps:** update dependency aws-sdk to v2.845.0 ([833e8ca](https://github.com/OptimistikSAS/OIBus/commit/833e8cacce5cfe3ced208f6ab1bfd5055db29ddc))
+* **deps:** update dependency aws-sdk to v2.849.0 ([9f4bffb](https://github.com/OptimistikSAS/OIBus/commit/9f4bffbaa526e8aab80c9f7f9a898a0146f12aeb))
+* **deps:** update dependency aws-sdk to v2.853.0 ([195097a](https://github.com/OptimistikSAS/OIBus/commit/195097a9890481580ef2d58fcb56aa188d003321))
+* **deps:** update dependency aws-sdk to v2.859.0 ([53a08c1](https://github.com/OptimistikSAS/OIBus/commit/53a08c1ee8cae51f3c0dcb496b779fcea4865aa8))
+* **deps:** update dependency form-data to v4 ([54d1bfb](https://github.com/OptimistikSAS/OIBus/commit/54d1bfbaf5b814253b8fb2ce84c99c19db20e337))
+* **deps:** update dependency moment-timezone to v0.5.33 ([9a26973](https://github.com/OptimistikSAS/OIBus/commit/9a269732ff842cfad97fb56952e5e77dd0612510))
+* **deps:** update dependency mongodb to v3.6.4 ([e4fb5b5](https://github.com/OptimistikSAS/OIBus/commit/e4fb5b59e871e6e29d1f9b7b28ca47644bf4fc2c))
+* **deps:** update dependency node-opcua to v2.32.0 ([48af14d](https://github.com/OptimistikSAS/OIBus/commit/48af14d1a5a70bd4b271ad147f1641e5107c6085))
+* **deps:** update dependency node-opcua to v2.33.0 ([8c9a0ec](https://github.com/OptimistikSAS/OIBus/commit/8c9a0ec041943472232d9199d83ca2bab46cbf33))
+* **deps:** update dependency node-opcua to v2.36.0 ([145a7f2](https://github.com/OptimistikSAS/OIBus/commit/145a7f24b41e29a98713476b5747172140c720d1))
+* **deps:** update dependency react-icons to v4.2.0 ([5f3a43c](https://github.com/OptimistikSAS/OIBus/commit/5f3a43c2f11f4d9dbaf49674688b7228e2808129))
+* **deps:** update dependency react-json-view to v1.21.1 ([1f4f89f](https://github.com/OptimistikSAS/OIBus/commit/1f4f89fa4226ce4e1cd40ba994aad43ca65e8611))
+* **deps:** update dependency sqlite3 to v5.0.2 ([f47b32d](https://github.com/OptimistikSAS/OIBus/commit/f47b32d6eff3a86d25f747bdbfa546457c3bcc98))
+* **deps:** update dependency timexe to v1.0.3 ([e6b8a93](https://github.com/OptimistikSAS/OIBus/commit/e6b8a93e789de3acf207b4179788cb745391e781))
+* **FileWriter:** add debug traces ([cad97dd](https://github.com/OptimistikSAS/OIBus/commit/cad97dd5b5ab345c8285b781f513ff9e45811740))
+* **OPCUA:** do not ignore read error ([4456e4c](https://github.com/OptimistikSAS/OIBus/commit/4456e4c17848cf3a2661a9adc705bb8d4fb5d09e))
+* **OPCUA:** make timeout and numValuesToRead configurable ([1dcb4b6](https://github.com/OptimistikSAS/OIBus/commit/1dcb4b6d1009021fad68ae736250beb59c8a8c50))
+* **OPCUA:** release continuationPoints ([d658963](https://github.com/OptimistikSAS/OIBus/commit/d65896313417d6bdef7f0bd7e8bf91b258f8b66f))
+* **south-mqtt:** [#1050](https://github.com/OptimistikSAS/OIBus/issues/1050) - Make keepalive, connectPeriod and connectTimeout configurable ([76bb3c1](https://github.com/OptimistikSAS/OIBus/commit/76bb3c17df19e46cf1cf451a3d858ab10d500334))
+* **south-opcua:** add help for opcua settings ([552978a](https://github.com/OptimistikSAS/OIBus/commit/552978a8f2021fe29ec5c30b4dc0f6a4fd56264f))
+* **validation:** fix issue when string was empty ([d3354b6](https://github.com/OptimistikSAS/OIBus/commit/d3354b6dd9573db8f9ca5047bcdfd16ded110faf))
+
 ### [1.0.1](https://github.com/OptimistikSAS/OIBus/compare/v1.0.0...v1.0.1) (2021-01-20)
 
 ## [1.0.0](https://github.com/OptimistikSAS/OIBus/compare/v0.8.1...v1.0.0) (2021-01-20)
