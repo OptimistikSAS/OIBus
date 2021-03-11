@@ -5599,6 +5599,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
                     <li>
                       endianness : Endianness of the data to read
                     </li>
+                    <li>
+                      multiplierCoefficient : Multiply retreived data by a coefficient. Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -6278,6 +6281,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
                     </li>
                     <li>
                       endianness : Endianness of the data to read
+                    </li>
+                    <li>
+                      multiplierCoefficient : Multiply retreived data by a coefficient. Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value
                     </li>
                   </ul>
                 </div>
