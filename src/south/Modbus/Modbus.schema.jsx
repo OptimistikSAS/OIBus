@@ -43,6 +43,10 @@ schema.form = {
             Default type is UInt16. This field does not apply for coils and discreteInputs.
           </li>
           <li>endianness : Endianness of the data to read</li>
+          <li>
+            multiplierCoefficient : Multiply retreived data by a coefficient.
+            Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value
+          </li>
         </ul>
       </div>
     ),
@@ -121,6 +125,12 @@ schema.points = {
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
     label: 'Data type',
     defaultValue: 'Uint16',
+  },
+  multiplierCoefficient: {
+    type: 'OIbText',
+    label: 'Multiplier Coefficient',
+    valid: combinedValidations([notEmpty(), inRange(-1000, 1000)]),
+    defaultValue: 1,
   },
   scanMode: {
     type: 'OIbScanMode',

@@ -396,4 +396,16 @@ module.exports = {
       }
     })
   },
+  28: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'Modbus') {
+        dataSource.points.forEach((point) => {
+          if (!Object.prototype.hasOwnProperty.call(point, 'multiplierCoefficient')) {
+            logger.info('Add multiplierCoefficient field to Modbus points')
+            point.multiplierCoefficient = 1
+          }
+        })
+      }
+    })
+  },
 }
