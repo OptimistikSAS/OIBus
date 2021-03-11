@@ -1009,7 +1009,7 @@ exports[`South check South 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -2174,7 +2174,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -3339,7 +3339,7 @@ exports[`South check delete first dataSource 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -4504,7 +4504,7 @@ exports[`South check duplicate first dataSource 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -5669,7 +5669,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -6834,7 +6834,7 @@ exports[`South check edit first dataSource id 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -8019,7 +8019,7 @@ exports[`South check open edit first application 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -9198,7 +9198,7 @@ exports[`South check press edit first dataSource id 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -10363,7 +10363,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>
@@ -11528,7 +11528,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
               class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
               type="button"
             >
-              Points (8)
+              Points (7)
             </button>
           </td>
           <td>

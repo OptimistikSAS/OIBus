@@ -442,7 +442,7 @@ exports[`Overview display overview based on config 1`] = `
             class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
             type="button"
           >
-            Points (8)
+            Points (7)
           </button>
         </div>
       </div>
