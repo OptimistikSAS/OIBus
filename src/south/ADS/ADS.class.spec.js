@@ -1,7 +1,7 @@
 const ads = require('ads-client')
 const ADS = require('./ADS.class')
-const config = require('../../config/defaultConfig.json')
 const databaseService = require('../../services/database.service')
+const config = require('../../../tests/testConfig').default
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -21,6 +21,426 @@ const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 
+// Global variable used to simulate ADS library returned values
+const GVLTestINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'INT',
+    size: 2,
+    offset: 0,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    comment: '',
+    attributes: [{ name: 'DisplayMinValue', value: '#x8000' }, { name: 'DisplayMaxValue', value: '#x7fff' }],
+    rpcMethods: [],
+    arrayData: [],
+    subItems: [],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385044,
+    size: 2,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 16,
+    typeLength: 3,
+    commentLength: 0,
+    name: 'GVL_Test.TestINT',
+    type: 'INT',
+    comment: '',
+    arrayData: [],
+    typeGuid: '95190718000000000000000000000006',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0, 0, 0] },
+  },
+}
+const GVLTestENUM = {
+  value: { name: 'Running', value: 100 },
+  type: {
+    name: '',
+    type: 'INT',
+    size: 2,
+    offset: 0,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    comment: '',
+    attributes: [{ name: 'DisplayMinValue', value: '#x8000' }, { name: 'DisplayMaxValue', value: '#x7fff' }],
+    rpcMethods: [],
+    arrayData: [],
+    subItems: [],
+    enumInfo: [{ name: 'Disabled', value: 0 }, { name: 'Starting', value: 50 }, {
+      name: 'Running',
+      value: 100,
+    }, { name: 'Stopping', value: 200 }],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385198,
+    size: 2,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 17,
+    typeLength: 10,
+    commentLength: 0,
+    name: 'GVL_Test.TestENUM',
+    type: 'E_TestEnum',
+    comment: '',
+    arrayData: [],
+    typeGuid: '853bb1203c0bb9c43bc95d289d79ee1a',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0, 0, 0] },
+  },
+}
+const GVLTestSTRING = {
+  value: 'Hello this is a test string',
+  type: {
+    name: '',
+    type: 'STRING(80)',
+    size: 81,
+    offset: 0,
+    adsDataType: 30,
+    adsDataTypeStr: 'ADST_STRING',
+    comment: '',
+    attributes: [],
+    rpcMethods: [],
+    arrayData: [],
+    subItems: [],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385046,
+    size: 81,
+    adsDataType: 30,
+    adsDataTypeStr: 'ADST_STRING',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 19,
+    typeLength: 10,
+    commentLength: 0,
+    name: 'GVL_Test.TestSTRING',
+    type: 'STRING(80)',
+    comment: '',
+    arrayData: [],
+    typeGuid: '95190718000000000000000100000050',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0] },
+  },
+}
+const GVLTestARRAY = {
+  value: [0, 10, 200, 3000, 4000],
+  type: {
+    name: '',
+    type: 'INT',
+    size: 2,
+    offset: 0,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    comment: '',
+    attributes: [{ name: 'DisplayMinValue', value: '#x8000' }, { name: 'DisplayMaxValue', value: '#x7fff' }],
+    rpcMethods: [],
+    arrayData: [{ startIndex: 0, length: 5 }],
+    subItems: [],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385188,
+    size: 10,
+    adsDataType: 2,
+    adsDataTypeStr: 'ADST_INT16',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 18,
+    typeLength: 19,
+    commentLength: 0,
+    name: 'GVL_Test.TestARRAY',
+    type: 'ARRAY [0..4] OF INT',
+    comment: '',
+    arrayData: [],
+    typeGuid: '604d5ea97c593f2a8e4aa0564cc93a32',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0] },
+  },
+}
+const GVLTestTimer = {
+  value: { IN: false, PT: 2500, Q: false, ET: 0, M: false, StartTime: 0 },
+  type: {
+    name: '',
+    type: 'Tc2_Standard.TON',
+    size: 32,
+    offset: 0,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    comment: '',
+    attributes: [],
+    rpcMethods: [],
+    arrayData: [],
+    subItems: [{
+      name: 'IN',
+      type: 'BOOL',
+      size: 1,
+      offset: 8,
+      adsDataType: 33,
+      adsDataTypeStr: 'ADST_BIT',
+      comment: ' starts timer with rising edge, resets timer with falling edge ',
+      attributes: [{ name: 'DisplayMinValue', value: '0' }, { name: 'DisplayMaxValue', value: '1' }],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'PT',
+      type: 'TIME',
+      size: 4,
+      offset: 12,
+      adsDataType: 19,
+      adsDataTypeStr: 'ADST_UINT32',
+      comment: ' time to pass, before Q is set ',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'Q',
+      type: 'BOOL',
+      size: 1,
+      offset: 16,
+      adsDataType: 33,
+      adsDataTypeStr: 'ADST_BIT',
+      comment: ' gets TRUE, delay time (PT) after a rising edge at IN ',
+      attributes: [{ name: 'DisplayMinValue', value: '0' }, { name: 'DisplayMaxValue', value: '1' }],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'ET',
+      type: 'TIME',
+      size: 4,
+      offset: 20,
+      adsDataType: 19,
+      adsDataTypeStr: 'ADST_UINT32',
+      comment: ' elapsed time ',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'M',
+      type: 'BOOL',
+      size: 1,
+      offset: 24,
+      adsDataType: 33,
+      adsDataTypeStr: 'ADST_BIT',
+      comment: '',
+      attributes: [{ name: 'DisplayMinValue', value: '0' }, { name: 'DisplayMaxValue', value: '1' }],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'StartTime',
+      type: 'TIME',
+      size: 4,
+      offset: 28,
+      adsDataType: 19,
+      adsDataTypeStr: 'ADST_UINT32',
+      comment: '',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385504,
+    size: 32,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 18,
+    typeLength: 16,
+    commentLength: 0,
+    name: 'GVL_Test.TestTimer',
+    type: 'Tc2_Standard.TON',
+    comment: '',
+    arrayData: [],
+    typeGuid: '999e6d563f3ae1d8b38117896beeb42b',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0, 0, 0, 0] },
+  },
+}
+const GVLExampleSTRUCT = {
+  value: { SomeText: 'Hello ads-client', SomeReal: 3.1415927410125732, SomeDate: '2020-04-13T12:25:33.000Z' },
+  type: {
+    name: '',
+    type: 'ST_Example',
+    size: 60,
+    offset: 0,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    comment: '',
+    attributes: [],
+    rpcMethods: [],
+    arrayData: [],
+    subItems: [{
+      name: 'SomeText',
+      type: 'STRING(50)',
+      size: 51,
+      offset: 0,
+      adsDataType: 30,
+      adsDataTypeStr: 'ADST_STRING',
+      comment: '',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'SomeReal',
+      type: 'REAL',
+      size: 4,
+      offset: 52,
+      adsDataType: 4,
+      adsDataTypeStr: 'ADST_REAL32',
+      comment: '',
+      attributes: [{ name: 'DisplayMinValue', value: '-10000' }, { name: 'DisplayMaxValue', value: '10000' }],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'SomeDate',
+      type: 'DATE_AND_TIME',
+      size: 4,
+      offset: 56,
+      adsDataType: 19,
+      adsDataTypeStr: 'ADST_UINT32',
+      comment: '',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385128,
+    size: 60,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 22,
+    typeLength: 10,
+    commentLength: 0,
+    name: 'GVL_Test.ExampleSTRUCT',
+    type: 'ST_Example',
+    comment: '',
+    arrayData: [],
+    typeGuid: 'e13aa365c6331920e28111f564fc0798',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0, 0, 0, 0, 0, 0] },
+  },
+}
+const GVLTestARRAY2 = {
+  value: [{
+    SomeText: 'Just for demo purposes',
+    SomeReal: 3.1415927410125732,
+    SomeDate: '2020-04-13T12:25:33.000Z',
+  }, {
+    SomeText: 'Hello ads-client',
+    SomeReal: 3.1415927410125732,
+    SomeDate: '2020-04-13T12:25:33.000Z',
+  }, {
+    SomeText: 'Hello ads-client',
+    SomeReal: 3.1415927410125732,
+    SomeDate: '2020-04-13T12:25:33.000Z',
+  }, {
+    SomeText: 'Hello ads-client',
+    SomeReal: 3.1415927410125732,
+    SomeDate: '2020-04-13T12:25:33.000Z',
+  }, { SomeText: 'Hello ads-client', SomeReal: 3.1415927410125732, SomeDate: '2020-04-13T12:25:33.000Z' }],
+  type: {
+    name: '',
+    type: 'ST_Example',
+    size: 60,
+    offset: 0,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    comment: '',
+    attributes: [],
+    rpcMethods: [],
+    arrayData: [{ startIndex: 0, length: 5 }],
+    subItems: [{
+      name: 'SomeText',
+      type: 'STRING(50)',
+      size: 51,
+      offset: 0,
+      adsDataType: 30,
+      adsDataTypeStr: 'ADST_STRING',
+      comment: '',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'SomeReal',
+      type: 'REAL',
+      size: 4,
+      offset: 52,
+      adsDataType: 4,
+      adsDataTypeStr: 'ADST_REAL32',
+      comment: '',
+      attributes: [{ name: 'DisplayMinValue', value: '-10000' }, { name: 'DisplayMaxValue', value: '10000' }],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }, {
+      name: 'SomeDate',
+      type: 'DATE_AND_TIME',
+      size: 4,
+      offset: 56,
+      adsDataType: 19,
+      adsDataTypeStr: 'ADST_UINT32',
+      comment: '',
+      attributes: [],
+      rpcMethods: [],
+      arrayData: [],
+      subItems: [],
+    }],
+  },
+  symbol: {
+    indexGroup: 16448,
+    indexOffset: 385200,
+    size: 300,
+    adsDataType: 65,
+    adsDataTypeStr: 'ADST_BIGTYPE',
+    flags: 8,
+    flagsStr: ['TypeGuid'],
+    arrayDimension: 0,
+    nameLength: 19,
+    typeLength: 26,
+    commentLength: 0,
+    name: 'GVL_Test.TestARRAY2',
+    type: 'ARRAY [0..4] OF ST_Example',
+    comment: '',
+    arrayData: [],
+    typeGuid: '146efad4ba6a260a6ccbb1a328353dac',
+    attributes: [],
+    reserved: { type: 'Buffer', data: [0, 0] },
+  },
+}
+const nowDateString = '2020-02-02T02:02:02.222Z'
+// End of global variables
+
 beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
@@ -34,32 +454,7 @@ beforeEach(() => {
 })
 
 describe('ADS south', () => {
-  const adsConfig = {
-    dataSourceId: 'ADS',
-    protocol: 'ADS',
-    enabled: true,
-    ADS: {
-      netId: '127.0.0.1.1.1',
-      port: 851,
-      routerAddress: '10.211.55.3',
-      routerTcpPort: 48898,
-      clientAmsNetId: '10.211.55.2.1.1',
-      clientAdsPort: 32750,
-      retryInterval: 10000,
-    },
-    points: [
-      {
-        pointId: 'EtatBB2T0',
-        address: 'Etat.BB2T0',
-        scanMode: 'every10Seconds',
-      },
-      {
-        pointId: 'EtatBB2T1',
-        address: 'Etat.BB2T1',
-        scanMode: 'every10Seconds',
-      },
-    ],
-  }
+  const adsConfig = config.south.dataSources[9]
 
   it('should be properly initialized', () => {
     const adsSouth = new ADS(adsConfig, engine)
@@ -96,19 +491,74 @@ describe('ADS south', () => {
     expect(adsSouth.reconnectTimeout).not.toBe(null)
   })
 
-  it('should properly onScan', async () => {
+  it('should properly read onScan', async () => {
+    const RealDate = Date
+    global.Date = jest.fn(() => new RealDate(nowDateString))
+
     const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
-    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve) => resolve([])))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestENUM)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSTRING)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
+
     await adsSouth.onScan('every10Seconds')
 
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestENUM')
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestINT')
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestSTRING')
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY')
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY2')
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestTimer')
+
     expect(adsSouth.client.readSymbol)
-      .toBeCalledWith('Etat.BB2T0') // see the optimizedScanModes to get the startAddress and range
-    expect(adsSouth.client.readSymbol)
-      .toBeCalledTimes(2) // two points are set in the config
+      .toBeCalledTimes(6) // two points are set in the config with every10Seconds scan mode
     expect(adsSouth.logger.error)
       .toBeCalledTimes(0)
+
+    // Test boolean value as integer
+    expect(engine.addValues)
+      .toHaveBeenCalledWith(
+        'ADS - Test',
+        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: '0' } }],
+      )
+    // Test enum value as text
+    expect(engine.addValues).toHaveBeenCalledWith(
+      'ADS - Test',
+      [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: 'Running' } }],
+    )
+
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
+
+    await adsSouth.onScan('everySecond')
+
+    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
+    expect(adsSouth.logger.error)
+      .toBeCalledTimes(0)
+
+    adsSouth.boolAsText = 'Text'
+    adsSouth.enumAsText = 'Integer'
+
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestENUM)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSTRING)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
+    await adsSouth.onScan('every10Seconds')
+
+    // Test boolean value as text
+    expect(engine.addValues).toHaveBeenCalledWith(
+      'ADS - Test',
+      [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: 'false' } }],
+    )
+    // Test enum value as integer
+    expect(engine.addValues).toHaveBeenCalledWith('ADS - Test',
+      [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: '100' } }])
+    global.Date = RealDate
   })
 
   it('should not read when no point', async () => {
@@ -130,7 +580,7 @@ describe('ADS south', () => {
     await adsSouth.onScan('every10Seconds')
 
     expect(adsSouth.logger.error)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(6)
   })
 
   it('should properly disconnect and clearTimeout', async () => {

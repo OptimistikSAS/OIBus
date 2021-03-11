@@ -15,7 +15,18 @@ class ADS extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    const { netId, port, clientAmsNetId, clientAdsPort, routerAddress, routerTcpPort, retryInterval } = this.dataSource.ADS
+    const {
+      netId,
+      port,
+      clientAmsNetId,
+      clientAdsPort,
+      routerAddress,
+      routerTcpPort,
+      retryInterval,
+      plcName,
+      enumAsText,
+      boolAsText,
+    } = this.dataSource.ADS
     this.connected = false
     this.netId = netId
     this.port = port
@@ -24,13 +35,92 @@ class ADS extends ProtocolHandler {
     this.routerAddress = routerAddress
     this.routerTcpPort = routerTcpPort
     this.retryInterval = retryInterval
+    this.plcName = plcName
+    this.boolAsText = boolAsText
+    this.enumAsText = enumAsText
   }
 
-  /**
-   * Runs right instructions based on a given scanMode
-   * @param {String} scanMode - Cron time
-   * @return {void}
-   */
+  parseValues(nodeId, dataType, valueToParse, timestamp, subItems, enumInfo) {
+    let valueToAdd = null
+    /**
+     * Source of the following data types:
+     * https://infosys.beckhoff.com/english.php?content=../content/1033/tcplccontrol/html/tcplcctrl_plc_data_types_overview.htm&id
+     * Used by TwinCAT PLC Control
+     */
+    switch (dataType) {
+      case 'BOOL':
+        if (this.boolAsText === 'Text') {
+          valueToAdd = JSON.stringify(valueToParse)
+        } else {
+          valueToAdd = valueToParse ? '1' : '0'
+        }
+        break
+      case 'BYTE':
+      case 'WORD':
+      case 'DWORD':
+      case 'SINT':
+      case 'USINT':
+      case 'INT':
+      case 'UINT':
+      case 'DINT':
+      case 'UDINT':
+      case 'LINT':
+      case 'ULINT':
+      case 'TIME': // TIME and TIME_OF_DAY are parsed as numbers
+      case 'TIME_OF_DAY':
+        valueToAdd = JSON.stringify(parseInt(valueToParse, 10))
+        break
+      case 'REAL':
+      case 'LREAL':
+        valueToAdd = JSON.stringify(parseFloat(valueToParse))
+        break
+      case 'STRING':
+      case dataType.match(/^STRING\([0-9]*\)$/)?.input: // Example: STRING(35)
+        valueToAdd = valueToParse
+        break
+      case 'DATE':
+      case 'DATE_AND_TIME':
+        valueToAdd = new Date(valueToParse).toISOString()
+        break
+      case dataType.match(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s.*$/)?.input: // Example: ARRAY [0..4] OF INT
+        valueToParse.forEach((element, index) => {
+          this.parseValues(
+            `${nodeId}.${index}`,
+            dataType.split(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s/)[1],
+            element,
+            timestamp,
+            subItems,
+            enumInfo,
+          )
+        })
+        break
+      default:
+        if (subItems?.length > 0) { // It is an ADS structure object (as json)
+          subItems.forEach((subItem) => {
+            this.parseValues(`${nodeId}.${subItem.name}`, subItem.type, valueToParse[subItem.name], timestamp, subItem.subItems, subItem.enumInfo)
+          })
+        } else if (enumInfo?.length > 0) { // It is an ADS Enum object
+          if (this.enumAsText === 'Text') {
+            valueToAdd = valueToParse.name
+          } else {
+            valueToAdd = JSON.stringify(valueToParse.value)
+          }
+        } else {
+          this.logger.warn(`dataType ${dataType} not supported yet for point ${nodeId}. Value was ${JSON.stringify(valueToParse)}`)
+        }
+        break
+    }
+    if (valueToAdd !== null) {
+      this.addValues([
+        {
+          pointId: nodeId,
+          timestamp,
+          data: { value: valueToAdd },
+        },
+      ])
+    }
+  }
+
   /**
    * On scan.
    * @param {String} scanMode - The scan mode
@@ -49,15 +139,17 @@ class ADS extends ProtocolHandler {
     }
 
     await nodesToRead.forEach((node) => {
-      this.client.readSymbol(node.address)
+      this.client.readSymbol(node.pointId)
         .then((nodeResult) => {
-          this.addValues([
-            {
-              pointId: node.pointId,
-              timestamp: new Date().toISOString(),
-              data: { value: JSON.stringify(nodeResult.value) },
-            },
-          ])
+          const timestamp = new Date().toISOString()
+          this.parseValues(
+            `${this.plcName}${node.pointId}`,
+            nodeResult.symbol?.type,
+            nodeResult.value,
+            timestamp,
+            nodeResult.type?.subItems,
+            nodeResult.type?.enumInfo,
+          )
         })
         .catch((error) => {
           this.logger.error(`on Scan ${scanMode}:${error.stack}`)

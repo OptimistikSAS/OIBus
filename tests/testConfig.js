@@ -268,13 +268,11 @@ const testConfig = {
           clientAmsNetId: '10.211.55.2.1.1',
           routerAddress: '10.211.55.3',
           retryInterval: 10000,
+          plcName: 'PLC_TEST.',
+          boolAsText: 'Integer',
+          enumAsText: 'Text',
         },
         points: [
-          {
-            pointId: 'MAIN.TestIntTask',
-            address: 'MAIN.TestIntTask',
-            scanMode: 'every10Seconds',
-          },
           {
             pointId: 'GVL_Test.TestENUM',
             address: 'GVL_Test.TestENUM',
