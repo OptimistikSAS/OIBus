@@ -11,7 +11,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * @return {Number} Swapped data
  */
 const swapBytesinWords = (data) => {
-  const res = (data & 0x00FF00FF00FF00FF) << 8 | (data & 0xFF00FF00FF00FF00) >> 8 // eslint-disable-line no-bitwise, no-mixed-operators
+  const res = (data & 0x00FF00FF) << 8 | (data & 0xFF00FF00) >> 8 // eslint-disable-line no-bitwise, no-mixed-operators
   return res
 }
 
@@ -22,18 +22,7 @@ const swapBytesinWords = (data) => {
  * @return {Number} Swapped data
  */
 const swapWordsInDWords = (data) => {
-  const res = (data & 0x0000FFFF0000FFFF) << 16 | (data & 0xFFFF0000FFFF0000) >> 16 // eslint-disable-line no-bitwise, no-mixed-operators
-  return res
-}
-
-/**
- * Swap DWords (32 bits) in 64 bits
- * Example : 0101 0001 1110 0110 0111 1001 1100 0011 => 0111 1001 1100 0011 1110 0110 0101 0001
- * @param {Number} data on which to apply the swap
- * @return {Number} Swapped data
- */
-const swapDWords = (data) => {
-  const res = (data & 0x00000000FFFFFFFF) << 32 | (data & 0xFFFFFFFF00000000) >> 32 // eslint-disable-line no-bitwise, no-mixed-operators
+  const res = (data & 0x0000FFFF) << 16 | (data & 0xFFFF0000) >> 16 // eslint-disable-line no-bitwise, no-mixed-operators
   return res
 }
 
@@ -107,14 +96,11 @@ class Modbus extends ProtocolHandler {
    */
   swapData(data) {
     let res = data
-    if (this.dataSource.Modbus.swapBytesinWords) {
-      res = swapBytesinWords(res)
-    }
     if (this.dataSource.Modbus.swapWordsInDWords) {
       res = swapWordsInDWords(res)
     }
-    if (this.dataSource.Modbus.swapDWords) {
-      res = swapDWords(res)
+    if (this.dataSource.Modbus.swapBytesinWords) {
+      res = swapBytesinWords(res)
     }
     return res
   }
