@@ -4507,9 +4507,6 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       <div
         class="col-md-1"
       />
-      <div
-        class="col-md-1"
-      />
     </div>
   </form>
 </div>
@@ -5177,9 +5174,6 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
       />
       <div
         class="col-md-2"
-      />
-      <div
-        class="col-md-1"
       />
       <div
         class="col-md-1"
