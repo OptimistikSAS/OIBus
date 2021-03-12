@@ -97,13 +97,6 @@ schema.form = {
     label: 'Swap Words (16 bits) in groups of 32 bits ?',
     defaultValue: false,
   },
-  swapDWords: {
-    type: 'OIbCheckBox',
-    md: 1,
-    newRow: false,
-    label: 'Swap DWords (32 bits) in groups of 64 bits ?',
-    defaultValue: false,
-  },
 }
 
 schema.points = {

@@ -393,10 +393,6 @@ module.exports = {
           logger.info('Add swapWordsInDWords field to Modbus')
           dataSource.Modbus.swapWordsInDWords = false
         }
-        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapDWords')) {
-          logger.info('Add swapDWords field to Modbus')
-          dataSource.Modbus.swapDWords = false
-        }
       }
     })
   },

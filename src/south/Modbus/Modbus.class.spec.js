@@ -53,7 +53,6 @@ describe('Modbus south', () => {
       endianness: 'Big Endian',
       swapBytesinWords: false,
       swapWordsInDWords: false,
-      swapDWords: false,
     },
     points: [
       {
@@ -108,7 +107,6 @@ describe('Modbus south', () => {
       endianness: 'Big Endian',
       swapBytesinWords: false,
       swapWordsInDWords: false,
-      swapDWords: false,
     },
     points: [
       {
@@ -149,6 +147,106 @@ describe('Modbus south', () => {
         ],
       },
     },
+  }
+
+  const modbusConfigAddressSwapDataAll = {
+    dataSourceId: 'Modbus',
+    protocol: 'Modbus',
+    enabled: true,
+    Modbus: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'JBus',
+      endianness: 'Big Endian',
+      swapBytesinWords: true,
+      swapWordsInDWords: true,
+    },
+    points: [
+      {
+        pointId: 'EtatBB2T0',
+        modbusType: 'holdingRegister',
+        dataType: 'Int32',
+        address: '0x72',
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+    ],
+  }
+
+  const modbusConfigAddressSwapData16 = {
+    dataSourceId: 'Modbus',
+    protocol: 'Modbus',
+    enabled: true,
+    Modbus: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'JBus',
+      endianness: 'Big Endian',
+      swapBytesinWords: true,
+      swapWordsInDWords: false,
+    },
+    points: [
+      {
+        pointId: 'EtatBB2T0',
+        modbusType: 'holdingRegister',
+        dataType: 'Int32',
+        address: '0x72',
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+    ],
+  }
+
+  const modbusConfigAddressSwapData32 = {
+    dataSourceId: 'Modbus',
+    protocol: 'Modbus',
+    enabled: true,
+    Modbus: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'JBus',
+      endianness: 'Big Endian',
+      swapBytesinWords: false,
+      swapWordsInDWords: true,
+    },
+    points: [
+      {
+        pointId: 'EtatBB2T0',
+        modbusType: 'holdingRegister',
+        dataType: 'Int32',
+        address: '0x72',
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+    ],
+  }
+
+  const modbusConfigAddressSwapDataNo = {
+    dataSourceId: 'Modbus',
+    protocol: 'Modbus',
+    enabled: true,
+    Modbus: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'JBus',
+      endianness: 'Big Endian',
+      swapBytesinWords: false,
+      swapWordsInDWords: false,
+    },
+    points: [
+      {
+        pointId: 'EtatBB2T0',
+        modbusType: 'holdingRegister',
+        dataType: 'Int32',
+        address: '0x72',
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+    ],
   }
 
   it('should be properly initialized', () => {
@@ -193,6 +291,28 @@ describe('Modbus south', () => {
       .toBeCalledWith(15984, 32) // see the optimizedScanModes to get the startAddress and range
     expect(modbusSouth.modbusClient.readHoldingRegisters)
       .toBeCalledTimes(1) // addresses are in the same group, so it makes one call
+  })
+
+  it('should properly swap data', async () => {
+    let modbusSouth = new Modbus(modbusConfigAddressSwapDataAll, engine)
+    await modbusSouth.connect()
+    let data = modbusSouth.swapData(432406529)
+    expect(data).toEqual(16827929)
+
+    modbusSouth = new Modbus(modbusConfigAddressSwapData16, engine)
+    await modbusSouth.connect()
+    data = modbusSouth.swapData(432406529)
+    expect(data).toEqual(-971439872)
+
+    modbusSouth = new Modbus(modbusConfigAddressSwapData32, engine)
+    await modbusSouth.connect()
+    data = modbusSouth.swapData(432406529)
+    expect(data).toEqual(72134)
+
+    modbusSouth = new Modbus(modbusConfigAddressSwapDataNo, engine)
+    await modbusSouth.connect()
+    data = modbusSouth.swapData(432406529)
+    expect(data).toEqual(432406529)
   })
 
   it('should properly disconnect', async () => {
