@@ -471,23 +471,13 @@ class Engine {
   }
 
   /**
-   * Get the live configuration.
-   * @returns {object} - The live configuration
+   * Get live status for a given South.
+   * @param {string} dataSourceId - The dataSourceId
+   * @returns {object} - The live status
    */
-  getLiveConfiguration() {
-    const liveConfiguration = []
-    Object.entries(this.activeProtocols)
-      .forEach(([protocolId, protocol]) => {
-        if (protocol.canHandleHistory) {
-          const lastCompletedAt = protocol instanceof protocolList.SQLDbToFile
-            ? { general: new Date(protocol.lastCompletedAt).getTime() } : protocol.lastCompletedAt
-          liveConfiguration.push({
-            name: protocolId,
-            lastCompletedAt,
-          })
-        }
-      })
-    return liveConfiguration
+  getStatusForSouth(dataSourceId) {
+    const south = this.activeProtocols[dataSourceId]
+    return south ? south.getStatus() : {}
   }
 }
 
