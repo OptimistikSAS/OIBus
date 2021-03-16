@@ -22,6 +22,61 @@ engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 
 // Global variable used to simulate ADS library returned values
+const GVLTestByte = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'BYTE',
+  },
+  symbol: {
+    name: 'GVL_Test.TestByte',
+    type: 'BYTE',
+  },
+}
+const GVLTestWord = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'WORD',
+  },
+  symbol: {
+    name: 'GVL_Test.TestWord',
+    type: 'WORD',
+  },
+}
+const GVLTestDWord = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'DWORD',
+  },
+  symbol: {
+    name: 'GVL_Test.TestDWord',
+    type: 'DWORD',
+  },
+}
+const GVLTestSINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'SINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestSINT',
+    type: 'SINT',
+  },
+}
+const GVLTestUSINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'USINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestUSINT',
+    type: 'USINT',
+  },
+}
 const GVLTestINT = {
   value: 1234,
   type: {
@@ -56,6 +111,127 @@ const GVLTestINT = {
     typeGuid: '95190718000000000000000000000006',
     attributes: [],
     reserved: { type: 'Buffer', data: [0, 0, 0, 0] },
+  },
+}
+const GVLTestUINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'UINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestUINT',
+    type: 'UINT',
+  },
+}
+const GVLTestDINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'DINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestDINT',
+    type: 'DINT',
+  },
+}
+const GVLTestUDINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'UDINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestUDINT',
+    type: 'UDINT',
+  },
+}
+const GVLTestLINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'LINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestLINT',
+    type: 'LINT',
+  },
+}
+const GVLTestULINT = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'ULINT',
+  },
+  symbol: {
+    name: 'GVL_Test.TestULINT',
+    type: 'ULINT',
+  },
+}
+const GVLTestTIME = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'TIME',
+  },
+  symbol: {
+    name: 'GVL_Test.TestTIME',
+    type: 'TIME',
+  },
+}
+const GVLTestTimeOfDay = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'TIME_OF_DAY',
+  },
+  symbol: {
+    name: 'GVL_Test.TestTIME_OF_DAY',
+    type: 'TIME_OF_DAY',
+  },
+}
+const GVLTestREAL = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'REAL',
+  },
+  symbol: {
+    name: 'GVL_Test.TestREAL',
+    type: 'REAL',
+  },
+}
+const GVLTestLREAL = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'LREAL',
+  },
+  symbol: {
+    name: 'GVL_Test.TestLREAL',
+    type: 'LREAL',
+  },
+}
+const GVLTestDATE = {
+  value: '2020-02-02',
+  type: {
+    name: '',
+    type: 'DATE',
+  },
+  symbol: {
+    name: 'GVL_Test.TestDATE',
+    type: 'DATE',
+  },
+}
+const GVLTestDateAndTime = {
+  value: '2020-02-02 02:02:02.222',
+  type: {
+    name: '',
+    type: 'DATE_AND_TIME',
+  },
+  symbol: {
+    name: 'GVL_Test.TestDATE_AND_TIME',
+    type: 'DATE_AND_TIME',
   },
 }
 const GVLTestENUM = {
@@ -102,7 +278,7 @@ const GVLTestSTRING = {
   value: 'Hello this is a test string',
   type: {
     name: '',
-    type: 'STRING(80)',
+    type: 'STRING',
     size: 81,
     offset: 0,
     adsDataType: 30,
@@ -126,7 +302,7 @@ const GVLTestSTRING = {
     typeLength: 10,
     commentLength: 0,
     name: 'GVL_Test.TestSTRING',
-    type: 'STRING(80)',
+    type: 'STRING',
     comment: '',
     arrayData: [],
     typeGuid: '95190718000000000000000100000050',
@@ -171,7 +347,7 @@ const GVLTestARRAY = {
   },
 }
 const GVLTestTimer = {
-  value: { IN: false, PT: 2500, Q: false, ET: 0, M: false, StartTime: 0 },
+  value: { IN: false, PT: 2500, Q: false, ET: 0, M: true, StartTime: 0 },
   type: {
     name: '',
     type: 'Tc2_Standard.TON',
@@ -438,6 +614,17 @@ const GVLTestARRAY2 = {
     reserved: { type: 'Buffer', data: [0, 0] },
   },
 }
+const GVLTestBadType = {
+  value: 1234,
+  type: {
+    name: '',
+    type: 'BAD_TYPE',
+  },
+  symbol: {
+    name: 'GVL_Test.TestBadType',
+    type: 'BAD_TYPE',
+  },
+}
 const nowDateString = '2020-02-02T02:02:02.222Z'
 // End of global variables
 
@@ -525,6 +712,11 @@ describe('ADS south', () => {
         'ADS - Test',
         [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: '0' } }],
       )
+    expect(engine.addValues)
+      .toHaveBeenCalledWith(
+        'ADS - Test',
+        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.M', timestamp: nowDateString, data: { value: '1' } }],
+      )
     // Test enum value as text
     expect(engine.addValues).toHaveBeenCalledWith(
       'ADS - Test',
@@ -538,6 +730,25 @@ describe('ADS south', () => {
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
     expect(adsSouth.logger.error)
       .toBeCalledTimes(0)
+    // The SomeText field is not called because not specified in the structure filtering config
+    expect(engine.addValues)
+      .not.toHaveBeenCalledWith(
+        'ADS - Test',
+        [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
+      )
+
+    adsSouth.structureFiltering = [
+      {
+        name: 'Tc2_Standard.TON',
+        fields: '*',
+      },
+    ]
+
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
+    await adsSouth.onScan('everySecond')
+
+    expect(adsSouth.logger.debug)
+      .toHaveBeenCalledWith('Data Structure ST_Example not parsed for data PLC_TEST.GVL_Test.ExampleSTRUCT. To parse it, please specify it in the connector settings.') // eslint-disable-line max-len
 
     adsSouth.boolAsText = 'Text'
     adsSouth.enumAsText = 'Integer'
@@ -555,9 +766,44 @@ describe('ADS south', () => {
       'ADS - Test',
       [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: 'false' } }],
     )
+    expect(engine.addValues)
+      .toHaveBeenCalledWith(
+        'ADS - Test',
+        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.M', timestamp: nowDateString, data: { value: 'true' } }],
+      )
     // Test enum value as integer
     expect(engine.addValues).toHaveBeenCalledWith('ADS - Test',
       [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: '100' } }])
+
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestBadType)))
+    await adsSouth.onScan('every1Hour')
+    expect(adsSouth.logger.warn)
+      .toHaveBeenCalledWith('dataType BAD_TYPE not supported yet for point PLC_TEST.GVL_Test.TestBadType. Value was 1234')
+
+    // Tests other data types
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestByte)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestWord)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDWord)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUSINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUDINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestLINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestULINT)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTIME)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimeOfDay)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestREAL)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestLREAL)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDATE)))
+      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDateAndTime)))
+
+    engine.addValues.mockClear()
+    await adsSouth.onScan('every3Hours')
+
+    expect(engine.addValues)
+      .toHaveBeenCalledTimes(16)
+
     global.Date = RealDate
   })
 

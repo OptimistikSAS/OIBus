@@ -271,42 +271,113 @@ const testConfig = {
           plcName: 'PLC_TEST.',
           boolAsText: 'Integer',
           enumAsText: 'Text',
+          structureFiltering: [
+            {
+              name: 'ST_Example',
+              fields: 'SomeReal,SomeDate',
+            },
+            {
+              name: 'Tc2_Standard.TON',
+              fields: '*',
+            },
+          ],
         },
         points: [
           {
             pointId: 'GVL_Test.TestENUM',
-            address: 'GVL_Test.TestENUM',
             scanMode: 'every10Seconds',
           },
           {
             pointId: 'GVL_Test.TestINT',
-            address: 'GVL_Test.TestINT',
             scanMode: 'every10Seconds',
           },
           {
             pointId: 'GVL_Test.TestSTRING',
-            address: 'GVL_Test.TestSTRING',
             scanMode: 'every10Seconds',
           },
           {
             pointId: 'GVL_Test.ExampleSTRUCT',
-            address: 'GVL_Test.ExampleSTRUCT',
             scanMode: 'everySecond',
           },
           {
             pointId: 'GVL_Test.TestARRAY',
-            address: 'GVL_Test.TestARRAY',
             scanMode: 'every10Seconds',
           },
           {
             pointId: 'GVL_Test.TestARRAY2',
-            address: 'GVL_Test.TestARRAY2',
             scanMode: 'every10Seconds',
           },
           {
             pointId: 'GVL_Test.TestTimer',
-            address: 'GVL_Test.TestTimer',
             scanMode: 'every10Seconds',
+          },
+          {
+            pointId: 'GVL_Test.TestBadType',
+            scanMode: 'every1Hour',
+          },
+          {
+            pointId: 'GVL_Test.TestByte',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestWord',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestDWord',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestSINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestUSINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestUINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestDINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestUDINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestLINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestULINT',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestTIME',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestTIME_OF_DAY',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestREAL',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestLREAL',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestDATE',
+            scanMode: 'every3Hours',
+          },
+          {
+            pointId: 'GVL_Test.TestDATE_AND_TIME',
+            scanMode: 'every3Hours',
           },
         ],
       },
