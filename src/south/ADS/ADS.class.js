@@ -26,6 +26,7 @@ class ADS extends ProtocolHandler {
       plcName,
       enumAsText,
       boolAsText,
+      structureFiltering,
     } = this.dataSource.ADS
     this.connected = false
     this.netId = netId
@@ -38,6 +39,7 @@ class ADS extends ProtocolHandler {
     this.plcName = plcName
     this.boolAsText = boolAsText
     this.enumAsText = enumAsText
+    this.structureFiltering = structureFiltering
   }
 
   parseValues(nodeId, dataType, valueToParse, timestamp, subItems, enumInfo) {
@@ -96,9 +98,19 @@ class ADS extends ProtocolHandler {
         break
       default:
         if (subItems?.length > 0) { // It is an ADS structure object (as json)
-          subItems.forEach((subItem) => {
-            this.parseValues(`${nodeId}.${subItem.name}`, subItem.type, valueToParse[subItem.name], timestamp, subItem.subItems, subItem.enumInfo)
-          })
+          const structure = this.structureFiltering.find((element) => element.name === dataType)
+          if (structure) {
+            subItems.filter((item) => structure.fields === '*' || structure.fields.split(',').includes(item.name)).forEach((subItem) => {
+              this.parseValues(`${nodeId}.${subItem.name}`,
+                subItem.type,
+                valueToParse[subItem.name],
+                timestamp,
+                subItem.subItems,
+                subItem.enumInfo)
+            })
+          } else {
+            this.logger.debug(`Data Structure ${dataType} not parsed for data ${nodeId}. To parse it, please specify it in the connector settings.`)
+          }
         } else if (enumInfo?.length > 0) { // It is an ADS Enum object
           if (this.enumAsText === 'Text') {
             valueToAdd = valueToParse.name
