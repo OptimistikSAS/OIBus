@@ -149,6 +149,35 @@ schema.form = {
     options: ['Text', 'Integer'],
     label: 'Boolean value',
   },
+  AdsStructures: {
+    type: 'OIbTitle',
+    children: (
+      <div>
+        Only specified structures will be taken into account. To take all fields of a structure, you can use the wildcard *.
+        To take some of the fields only, specify them (case sensitive), separated by commas.
+        For example, E_ANA is the name of the structure, and the fields to take are : Mesure,a,b
+      </div>
+    ),
+  },
+  structureFiltering: {
+    type: 'OIbTable',
+    rows: {
+      name: {
+        type: 'OIbText',
+        newRow: false,
+        label: 'Name',
+        valid: notEmpty(),
+        defaultValue: '',
+      },
+      fields: {
+        type: 'OIbText',
+        newRow: false,
+        label: 'Fields',
+        valid: notEmpty(),
+        defaultValue: '',
+      },
+    },
+  },
 }
 
 schema.points = {
