@@ -88,6 +88,8 @@ class ProtocolHandler {
    * @return {void}
    */
   addFile(filePath, preserveFiles) {
+    this.lastAddFileAt = new Date().getTime()
+    this.addFileCount += 1
     this.engine.addFile(this.dataSource.dataSourceId, filePath, preserveFiles)
   }
 
@@ -173,6 +175,16 @@ class ProtocolHandler {
     return new Promise((resolve) => {
       setTimeout(resolve, timeout)
     })
+  }
+
+  /**
+   * Get live status.
+   * @returns {object} - The live status
+   */
+  getStatus() {
+    const { dataSourceId } = this.dataSource
+    this.logger.error(`Data source ${dataSourceId} should surcharge getStatus()`)
+    return {}
   }
 }
 
