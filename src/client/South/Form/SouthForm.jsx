@@ -1,14 +1,16 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
-import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel, OIbHistorians } from '../../components/OIbForm'
+import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
+import StatusButton from '../StatusButton.jsx'
 
-const SouthForm = ({ dataSource, dataSourceIndex, lastCompletedAt, onChange }) => {
+const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { protocol, dataSourceId } = dataSource
+  const history = useHistory()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
   if (!dataSource.points) {
@@ -17,6 +19,16 @@ const SouthForm = ({ dataSource, dataSourceIndex, lastCompletedAt, onChange }) =
   // load the proper schema based on the protocol name.
   const schema = ProtocolSchemas[protocol]
   const prefix = `south.dataSources.${dataSourceIndex}`
+
+  /**
+   * Redirects the user to the datasource's live page
+   * @return {void}
+   */
+  const handleStatus = () => {
+    const pathname = `/south/${dataSourceId}/live`
+    history.push({ pathname })
+  }
+
   return (
     <Form>
       <Row>
@@ -34,6 +46,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, lastCompletedAt, onChange }) =
           </Breadcrumb>
         </Col>
         <Col md={2}>
+          <StatusButton handler={handleStatus} />
           <PointsButton dataSource={dataSource} />
         </Col>
       </Row>
@@ -68,7 +81,6 @@ const SouthForm = ({ dataSource, dataSourceIndex, lastCompletedAt, onChange }) =
         value={dataSource.logParameters}
         onChange={onChange}
       />
-      {lastCompletedAt && <OIbHistorians lastCompletedAt={lastCompletedAt} />}
       <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
     </Form>
   )
@@ -78,9 +90,6 @@ SouthForm.propTypes = {
   dataSource: PropTypes.object.isRequired,
   dataSourceIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
-  lastCompletedAt: PropTypes.object,
 }
-
-SouthForm.defaultProps = { lastCompletedAt: null }
 
 export default SouthForm

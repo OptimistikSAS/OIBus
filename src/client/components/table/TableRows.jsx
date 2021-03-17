@@ -1,8 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { FaTrashAlt, FaCog, FaCopy } from 'react-icons/fa'
+import StatusButton from '../../South/StatusButton.jsx'
 
-const TableRows = ({ rows, handleEdit, handleDelete, handleDuplicate }) => (
+const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate }) => (
   <tbody>
     {rows.map((row, index) => (
       <tr key={row[0].name}>
@@ -28,6 +29,9 @@ const TableRows = ({ rows, handleEdit, handleDelete, handleDuplicate }) => (
               }}
             />
           )}
+          {handleStatus && (
+            <StatusButton handler={() => handleStatus(index)} />
+          )}
           {handleDuplicate && (
             <FaCopy
               className="oi-icon"
@@ -46,10 +50,11 @@ const TableRows = ({ rows, handleEdit, handleDelete, handleDuplicate }) => (
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   handleEdit: PropTypes.func,
+  handleStatus: PropTypes.func,
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
 }
 
-TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleDuplicate: null }
+TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleStatus: null, handleDuplicate: null }
 
 export default TableRows

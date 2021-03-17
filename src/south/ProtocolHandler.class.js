@@ -48,6 +48,10 @@ class ProtocolHandler {
     const { logParameters } = this.dataSource
     this.logger = new Logger()
     this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
+
+    this.lastOnScanAt = null
+    this.lastAddFileAt = null
+    this.addFileCount = 0
   }
 
   async connect() {
@@ -58,8 +62,8 @@ class ProtocolHandler {
   }
 
   onScan(scanMode) {
-    const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
+    this.logger.debug(`FolderScanner activated on scanMode: ${scanMode}.`)
+    this.lastOnScanAt = new Date().getTime()
   }
 
   listen() {
@@ -182,9 +186,12 @@ class ProtocolHandler {
    * @returns {object} - The live status
    */
   getStatus() {
-    const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge getStatus()`)
-    return {}
+    const status = { 'Last scan time': this.lastOnScanAt ? new Date(this.lastOnScanAt).toLocaleString() : 'Never' }
+    if (this.handlesFiles) {
+      status['Last file added time'] = this.lastAddFileAt ? new Date(this.lastAddFileAt).toLocaleString() : 'Never'
+      status['Number of files added'] = this.addFileCount
+    }
+    return status
   }
 }
 

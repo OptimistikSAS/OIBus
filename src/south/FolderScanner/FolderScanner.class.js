@@ -26,9 +26,7 @@ class FolderScanner extends ProtocolHandler {
     this.regex = new RegExp(regex)
     this.compression = compression
 
-    this.lastOnScanAt = null
-    this.lastAddFileAt = null
-    this.addFileCount = 0
+    this.handlesFiles = true
   }
 
   /**
@@ -37,8 +35,8 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   async onScan(scanMode) {
-    this.logger.debug(`FolderScanner activated on scanMode: ${scanMode}.`)
-    this.lastOnScanAt = new Date().getTime()
+    super.onScan(scanMode)
+
     // Check if input folder exists
     try {
       // eslint-disable-next-line no-bitwise
@@ -129,18 +127,6 @@ class FolderScanner extends ProtocolHandler {
       const stats = fs.statSync(path.join(this.inputFolder, filename))
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
       await this.setConfig(filename, `${stats.mtimeMs}`)
-    }
-  }
-
-  /**
-   * Get live status.
-   * @returns {object} - The live status
-   */
-  getStatus() {
-    return {
-      lastOnScanAt: this.lastOnScanAt,
-      lastAddFileAt: this.lastAddFileAt,
-      addFileCount: this.addFileCount,
     }
   }
 }

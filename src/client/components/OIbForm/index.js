@@ -12,7 +12,6 @@ import OIbAuthentication from './OIbAuthentication.jsx'
 import OIbTimezone from './OIbTimezone.jsx'
 import OIbCron from './OIbCron.jsx'
 import OIbLogLevel from './OIbLogLevel.jsx'
-import OIbHistorians from './OIbHistorians.jsx'
 
 export {
   OIbCheckBox,
@@ -29,5 +28,4 @@ export {
   OIbTimezone,
   OIbCron,
   OIbLogLevel,
-  OIbHistorians,
 }

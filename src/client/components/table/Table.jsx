@@ -14,6 +14,7 @@ const Table = ({
   handleAdd,
   handleDelete,
   handleEdit,
+  handleStatus,
   handleDuplicate,
   handleSort,
 }) => (
@@ -27,7 +28,7 @@ const Table = ({
       handleDelete={handleDelete}
       handleSort={handleSort}
     />
-    <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} handleDuplicate={handleDuplicate} />
+    <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} handleStatus={handleStatus} handleDuplicate={handleDuplicate} />
   </BsTable>
 )
 
@@ -38,6 +39,7 @@ Table.propTypes = {
   isAscending: PropTypes.bool,
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
   handleEdit: PropTypes.func,
+  handleStatus: PropTypes.func,
   handleAdd: PropTypes.func,
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
@@ -51,6 +53,7 @@ Table.defaultProps = {
   handleAdd: null,
   handleDelete: null,
   handleEdit: null,
+  handleStatus: null,
   handleDuplicate: null,
   handleSort: null,
 }
