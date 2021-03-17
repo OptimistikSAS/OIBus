@@ -4,6 +4,7 @@ const multer = require('@koa/multer')
 const configController = require('../controllers/configController')
 const logController = require('../controllers/logController')
 const engineController = require('../controllers/engineController')
+const bulkController = require('../controllers/bulkController')
 
 const router = new Router()
 
@@ -28,5 +29,9 @@ router.get('/reload', engineController.reload)
 router.get('/shutdown', engineController.shutdown)
 
 router.get('/logs', logController.getLogs)
+
+router.post('/bulk', bulkController.createBulk)
+router.get('/bulk', bulkController.getBulks)
+router.put('/bulk/:bulkId', bulkController.updateBulk)
 
 module.exports = router
