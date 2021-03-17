@@ -371,8 +371,8 @@ module.exports = {
         }
       }
     })
-    logger.info('Add bulk settings to Engine')
-    config.engine.bulk = { bulkFolder: './bulk' }
+    logger.info('Add HistoryQuery setting to Engine')
+    config.engine.historyQuery = { folder: './historyQuery' }
   },
   23: (config) => {
     config.south.dataSources.forEach((dataSource) => {

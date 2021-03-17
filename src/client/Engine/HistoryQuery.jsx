@@ -4,12 +4,12 @@ import { Col, Row } from 'reactstrap'
 import { OIbText, OIbTitle } from '../components/OIbForm'
 import validation from './Engine.validation'
 
-const Bulk = ({ onChange, bulk }) => (
+const HistoryQuery = ({ onChange, historyQuery }) => (
   <>
-    <OIbTitle label="Bulk parameters">
+    <OIbTitle label="HistoryQuery parameters">
       <>
         <p>
-          Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA.
+          HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA.
           The export data is stored using CSV files in the specified folder.
           When the export is finished the data will be sent to North applications capable of handling those data.
         </p>
@@ -18,11 +18,11 @@ const Bulk = ({ onChange, bulk }) => (
     <Row>
       <Col md={4}>
         <OIbText
-          label="Bulk Folder"
-          name="engine.bulk.bulkFolder"
-          value={bulk.bulkFolder}
-          defaultValue="./bulk"
-          valid={validation.engine.bulk.bulkFolder}
+          label="HistoryQuery Folder"
+          name="engine.historyQuery.folder"
+          value={historyQuery.folder}
+          defaultValue="./historyQuery"
+          valid={validation.engine.historyQuery.folder}
           help={<div>Where to store the exported data</div>}
           onChange={onChange}
         />
@@ -30,9 +30,9 @@ const Bulk = ({ onChange, bulk }) => (
     </Row>
   </>
 )
-Bulk.propTypes = {
+HistoryQuery.propTypes = {
   onChange: PropTypes.func.isRequired,
-  bulk: PropTypes.object.isRequired,
+  historyQuery: PropTypes.object.isRequired,
 }
 
-export default Bulk
+export default HistoryQuery

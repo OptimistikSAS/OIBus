@@ -1,4 +1,4 @@
-const Engine = require('./Engine.class')
+const OIBusEngine = require('./OIBusEngine.class')
 const Logger = require('./Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const config = require('../config/defaultConfig.json')
@@ -34,7 +34,7 @@ beforeEach(() => {
   jest.useFakeTimers()
 })
 
-const engine = new Engine('../config/defaultConfig.json', false)
+const engine = new OIBusEngine('../config/defaultConfig.json', false)
 
 describe('Engine', () => {
   it('should be properly initialized', () => {

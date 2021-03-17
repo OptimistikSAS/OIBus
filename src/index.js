@@ -5,7 +5,8 @@ const VERSION = require('../package.json').version
 
 const migrationService = require('./migration/migration.service')
 const ConfigService = require('./services/config.service.class')
-const Engine = require('./engine/Engine.class')
+const OIBusEngine = require('./engine/OIBusEngine.class')
+const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/Logger.class')
 
 const MAX_RESTART_COUNT = 3
@@ -47,6 +48,16 @@ if (cluster.isMaster) {
   cluster.on('message', (_worker, msg) => {
     switch (msg.type) {
       case 'shutdown':
+        Object.keys(cluster.workers).forEach((id) => {
+          cluster.workers[id].send({ type: 'shutdown' })
+        })
+        break
+      case 'reload':
+        Object.keys(cluster.workers).forEach((id) => {
+          cluster.workers[id].send({ type: 'reload' })
+        })
+        break
+      case 'shutdown-ready':
         process.exit()
         break
       default:
@@ -61,15 +72,40 @@ if (cluster.isMaster) {
   migrationService.migrate(configFile)
 
   // this condition is reached only for a worker (i.e. not master)
-  // so this is here where we execute the OIBus Engine
-  const engine = new Engine(configFile, check)
-  engine.start(process.env.SAFE_MODE === 'true')
+  // so this is here where we execute the OIBusEngine and HistoryQueryEngine
+  const oibusEngine = new OIBusEngine(configFile)
+  oibusEngine.start(process.env.SAFE_MODE === 'true')
+
+  const historyQueryEngine = new HistoryQueryEngine(configFile, check)
+  historyQueryEngine.start(process.env.SAFE_MODE === 'true')
 
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {
     logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-    engine.stop().then(() => {
-      process.exit()
-    })
+    const stopAll = [oibusEngine.stop(), historyQueryEngine.stop()]
+    Promise.allSettled(stopAll)
+      .then(() => {
+        process.exit()
+      })
+  })
+
+  // Receive messages from the master process.
+  process.on('message', (msg) => {
+    switch (msg.type) {
+      case 'reload':
+        Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
+          .then(() => {
+            process.exit()
+          })
+        break
+      case 'shutdown':
+        Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
+          .then(() => {
+            process.send({ type: 'shutdown-ready' })
+          })
+        break
+      default:
+        logger.warn(`Unknown message type received from Master: ${msg.type}`)
+    }
   })
 }
