@@ -4,51 +4,25 @@ const os = require('os')
 
 const moment = require('moment-timezone')
 
-const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
 
-// South classes
-const protocolList = {}
-protocolList.ADS = require('../south/ADS/ADS.class')
-protocolList.Modbus = require('../south/Modbus/Modbus.class')
-protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
-protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
-protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
-protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
-protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
-
-// North classes
-const apiList = {}
-apiList.Console = require('../north/console/Console.class')
-apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
-apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
-apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
-apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
-apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
-apiList.MongoDB = require('../north/mongodb/MongoDB.class')
-apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
-apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
-apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
-apiList.FileWriter = require('../north/filewriter/FileWriter.class')
+const ProtocolFactory = require('../south/ProtocolFactory.class')
+const ApiFactory = require('../north/ApiFactory.class')
 
 // Engine classes
+const BaseEngine = require('./BaseEngine.class')
 const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
-const ConfigService = require('../services/config.service.class')
-const Logger = require('./Logger.class')
 const HealthSignal = require('./HealthSignal.class')
-const EncryptionService = require('../services/EncryptionService.class')
-const { createRequestService } = require('../services/request')
 
 /**
  *
  * at startup, handles initialization of applications, protocols and config.
- * @class Engine
+ * @class OIBusEngine
  */
-class Engine {
+class OIBusEngine extends BaseEngine {
   /**
-   * Constructor for Engine
+   * Constructor for OIBusEngine
    * Reads the config file and create the corresponding Object.
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
@@ -57,25 +31,13 @@ class Engine {
    * @param {boolean} check - the engine will display the version and quit
    */
   constructor(configFile, check) {
-    this.version = VERSION
-
-    this.configService = new ConfigService(this, configFile)
-    const { engineConfig } = this.configService.getConfig()
-
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
-    // Configure the logger
-    this.logger = Logger.getDefaultLogger()
-    this.logger.setEncryptionService(this.encryptionService)
-    this.logger.changeParameters(engineConfig, {})
+    super(configFile)
 
     // Configure the Cache
     this.cache = new Cache(this)
     this.cache.initialize()
 
+    const { engineConfig } = this.configService.getConfig()
     this.logger.info(`
     Starting Engine ${this.version}
     architecture: ${process.arch}
@@ -84,9 +46,6 @@ class Engine {
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
-
-    // Request service
-    this.requestService = createRequestService(this)
 
     // Will only contain protocols/application used
     // based on the config file
@@ -193,11 +152,11 @@ class Engine {
     // 2. start Protocol for each data sources
     southConfig.dataSources.forEach((dataSource) => {
       const { protocol, enabled, dataSourceId } = dataSource
-      // select the correct Handler
-      const ProtocolHandler = protocolList[protocol]
       if (enabled) {
-        if (ProtocolHandler) {
-          this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
+        // Initiate the correct Protocol
+        const south = ProtocolFactory.create(protocol, dataSource, this)
+        if (south) {
+          this.activeProtocols[dataSourceId] = south
           this.activeProtocols[dataSourceId].connect()
         } else {
           this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
@@ -209,10 +168,11 @@ class Engine {
     northConfig.applications.forEach((application) => {
       const { api, enabled, applicationId } = application
       // select the right api handler
-      const ApiHandler = apiList[api]
       if (enabled) {
-        if (ApiHandler) {
-          this.activeApis[applicationId] = new ApiHandler(application, this)
+        // Initiate the correct API
+        const north = ApiFactory.create(api, application, this)
+        if (north) {
+          this.activeApis[applicationId] = north
           this.activeApis[applicationId].connect()
         } else {
           this.logger.error(`API for ${applicationId} is not found : ${api}`)
@@ -294,7 +254,7 @@ class Engine {
 
   /**
    * Gracefully stop every Timer, Protocol and Application
-   * @return {void}
+   * @return {Promise<void>} - The stop promise
    */
   async stop() {
     const { engineConfig } = this.configService.getConfig()
@@ -339,10 +299,9 @@ class Engine {
   async reload(timeout) {
     this.logger.warn('Reloading OIBus')
 
-    await this.stop()
-
     setTimeout(() => {
-      process.exit(0)
+      // Ask the Master Cluster to reload
+      process.send({ type: 'reload' })
     }, timeout)
   }
 
@@ -353,7 +312,6 @@ class Engine {
    */
   async shutdown(timeout) {
     this.logger.warn('Shutting down OIBus')
-    await this.stop()
     setTimeout(() => {
       // Ask the Master Cluster to shutdown
       this.logger.warn('Request process shutdown')
@@ -368,7 +326,7 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.keys(apiList)
+    return ApiFactory.getNorthList()
   }
 
   /**
@@ -378,7 +336,7 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.keys(protocolList)
+    return ProtocolFactory.getSouthList()
   }
 
   /**
@@ -488,4 +446,4 @@ class Engine {
   }
 }
 
-module.exports = Engine
+module.exports = OIBusEngine

@@ -3,7 +3,7 @@ const OIAnalytics = require('./OIAnalytics.class')
 const config = require('../../../tests/testConfig').default
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.createMockFromModule('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 

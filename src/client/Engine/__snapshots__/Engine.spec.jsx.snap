@@ -2084,7 +2084,7 @@ exports[`Engine check Engine 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -2122,7 +2122,7 @@ exports[`Engine check Engine 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -2139,17 +2139,17 @@ exports[`Engine check Engine 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
@@ -5454,7 +5454,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -5492,7 +5492,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -5509,17 +5509,17 @@ exports[`Engine check Engine when config has no proxies 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
@@ -8452,7 +8452,7 @@ exports[`Engine check change engineName 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -8490,7 +8490,7 @@ exports[`Engine check change engineName 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -8507,17 +8507,17 @@ exports[`Engine check change engineName 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
@@ -11822,7 +11822,7 @@ exports[`Engine check change password 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -11860,7 +11860,7 @@ exports[`Engine check change password 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -11877,17 +11877,17 @@ exports[`Engine check change password 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
@@ -15192,7 +15192,7 @@ exports[`Engine check change port 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -15230,7 +15230,7 @@ exports[`Engine check change port 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -15247,17 +15247,17 @@ exports[`Engine check change port 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
@@ -18562,7 +18562,7 @@ exports[`Engine check change user 1`] = `
       class="row"
     >
       <h5>
-        Bulk parameters
+        HistoryQuery parameters
         <button
           aria-label="Close"
           class="close"
@@ -18600,7 +18600,7 @@ exports[`Engine check change user 1`] = `
             class="col"
           >
             <p>
-              Bulk requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
+              HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA. The export data is stored using CSV files in the specified folder. When the export is finished the data will be sent to North applications capable of handling those data.
             </p>
           </div>
         </div>
@@ -18617,17 +18617,17 @@ exports[`Engine check change user 1`] = `
         >
           <label
             class=""
-            for="engine.bulk.bulkFolder"
+            for="engine.historyQuery.folder"
           >
-            Bulk Folder
+            HistoryQuery Folder
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.bulk.bulkFolder"
-            name="engine.bulk.bulkFolder"
+            id="engine.historyQuery.folder"
+            name="engine.historyQuery.folder"
             type="text"
-            value="./bulk"
+            value="./historyQuery"
           />
           <div
             class="invalid-feedback"
