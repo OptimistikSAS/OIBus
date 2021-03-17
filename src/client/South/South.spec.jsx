@@ -95,7 +95,7 @@ describe('South', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[4]
-    const duplicateButton = firstApplicationButtons.querySelectorAll('path')[2]
+    const duplicateButton = firstApplicationButtons.querySelectorAll('path')[3]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[0]
     const newName = `${dataSource.dataSourceId} copy`
@@ -117,7 +117,7 @@ describe('South', () => {
       )
     })
     const thirdApplicationButtons = document.querySelectorAll('td')[14]
-    const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[2]
+    const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[3]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[2]
     const newName = `${dataSource.dataSourceId} copy2`

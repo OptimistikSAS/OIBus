@@ -13,6 +13,7 @@ import North from './North/North.jsx'
 import Engine from './Engine/Engine.jsx'
 import ConfigureApi from './North/ConfigureApi.jsx'
 import ConfigureProtocol from './South/ConfigureProtocol.jsx'
+import SouthStatus from './South/SouthStatus.jsx'
 import ConfigurePoints from './South/ConfigurePoints.jsx'
 import Logs from './Logs/Logs.jsx'
 import About from './About/About.jsx'
@@ -34,6 +35,7 @@ const Main = () => (
               <Route exact path="/engine" component={Engine} />
               <Route exact path="/south" component={South} />
               <Route exact path="/south/:dataSourceId" component={ConfigureProtocol} />
+              <Route exact path="/south/:dataSourceId/live" component={SouthStatus} />
               <Route exact path="/south/:dataSourceId/points" component={ConfigurePoints} />
               <Route exact path="/north" component={North} />
               <Route exact path="/north/:applicationId" component={ConfigureApi} />

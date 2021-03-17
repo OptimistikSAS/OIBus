@@ -134,6 +134,18 @@ const South = () => {
     })
   }
 
+  /**
+   * Handles the status of dataSource and redirects the
+   * user to the selected south datasource's live page
+   * @param {integer} position The id to open
+   * @return {void}
+   */
+  const handleStatus = (position) => {
+    const dataSource = sortableDataSources[position]
+    const pathname = `/south/${dataSource.dataSourceId}/live`
+    history.push({ pathname })
+  }
+
   const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
   const sortableProperties = ['dataSourceId', 'enabled', 'protocol']
   const tableRows = sortableDataSources?.map((dataSource) => [
@@ -184,6 +196,7 @@ const South = () => {
         handleEdit={handleEdit}
         handleDelete={handleDelete}
         handleDuplicate={handleDuplicate}
+        handleStatus={handleStatus}
         handleSort={handleSort}
       />
       <NewDataSourceRow protocolList={protocolList} addDataSource={addDataSource} />
