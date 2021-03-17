@@ -19,7 +19,7 @@ jest.mock('fs/promises', () => ({
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
