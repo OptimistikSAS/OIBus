@@ -1,4 +1,4 @@
-const Engine = require('./Engine.class')
+const OIBusEngine = require('./OIBusEngine.class')
 const Logger = require('./logger/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const config = require('../config/defaultConfig.json')
@@ -39,6 +39,8 @@ beforeEach(async () => {
   engine = new Engine('../config/defaultConfig.json', false)
   await engine.initEngineServices(config.engine)
 })
+
+const engine = new OIBusEngine('../config/defaultConfig.json', false)
 
 describe('Engine', () => {
   it('should be properly initialized', () => {

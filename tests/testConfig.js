@@ -36,7 +36,7 @@ const testConfig = {
         retentionDuration: 720,
       },
     },
-    bulk: { bulkFolder: './bulk' },
+    historyQuery: { folder: './historyQuery' },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },
