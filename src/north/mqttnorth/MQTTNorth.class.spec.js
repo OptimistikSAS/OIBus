@@ -15,7 +15,7 @@ jest.mock('../../engine/logger/Logger.class')
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.engineName = 'Test MQTT'
 engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }

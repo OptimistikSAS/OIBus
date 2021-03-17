@@ -41,8 +41,8 @@
         "retentionDuration": 720
       }
     },
-    "bulk": {
-      "bulkFolder": "./bulk"
+    "historyQuery": {
+      "folder": "./historyQuery"
     },
     "scanModes": [
       {

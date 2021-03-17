@@ -12,7 +12,7 @@ Logger.getDefaultLogger = () => new Logger()
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.decryptPassword = (password) => password
 engine.eventEmitters = {}

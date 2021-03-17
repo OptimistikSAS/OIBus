@@ -37,7 +37,7 @@ jest.mock('net', () => {
 jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
