@@ -214,6 +214,7 @@ const testConfig = {
           password: 'popopopopopopopopo',
           connectionTimeout: 1000,
           requestTimeout: 1000,
+          databasePath: './test.db',
           host: '192.168.0.11',
           driver: 'mssql',
           username: 'oibus_user',

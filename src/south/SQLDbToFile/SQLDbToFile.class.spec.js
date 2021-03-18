@@ -5,6 +5,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
+const sqlite = require('sqlite')
 const csv = require('papaparse')
 
 const SQLDbToFile = require('./SQLDbToFile.class')
@@ -74,6 +75,7 @@ describe('sql-db-to-file', () => {
 
     const badConfig = { ...sqlConfig }
     badConfig.SQLDbToFile.timezone = undefined
+    badConfig.SQLDbToFile.databasePath = undefined
     const badSqlSouth = new SQLDbToFile(badConfig, engine)
 
     expect(badSqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone supplied: undefined')
@@ -183,7 +185,7 @@ describe('sql-db-to-file', () => {
 
   it('should interact with MySQL server if driver is mysql', async () => {
     sqlSouth.driver = 'mysql'
-
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
     const connection = {
       execute: jest.fn(() => ([{
         value: 75.2,
@@ -214,6 +216,17 @@ describe('sql-db-to-file', () => {
     expect(connection.end).toBeCalledTimes(1)
     // eslint-disable-next-line max-len
     expect(sqlSouth.logger.debug).toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ?" with LastCompletedDate')
+
+    sqlSouth.containsLastCompletedDate = false
+    mysql.createConnection.mockClear()
+    connection.execute.mockClear()
+    connection.end.mockClear()
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(mysql.createConnection).toHaveBeenCalledWith(expectedConfig)
+    // expect(connection.execute).toBeCalledWith(expectedExecute, expectedExecuteParams)
+    expect(connection.execute).toBeCalledTimes(1)
+    expect(connection.end).toBeCalledTimes(1)
+    sqlSouth.containsLastCompletedDate = true
   })
 
   it('should interact with MySQL server and catch request error', async () => {
@@ -225,16 +238,21 @@ describe('sql-db-to-file', () => {
       }),
       end: jest.fn(),
     }
-    jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
+    jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => connection)
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
+
+    sqlSouth.logger.error.mockClear()
+    jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => null)
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot read property \'execute\' of null'))
   })
 
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
     sqlSouth.driver = 'postgresql'
-
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
     types.setTypeParser = jest.fn()
     const client = {
       connect: jest.fn(),
@@ -265,6 +283,16 @@ describe('sql-db-to-file', () => {
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(client.end).toBeCalledTimes(1)
+
+    sqlSouth.containsLastCompletedDate = false
+    client.connect.mockClear()
+    client.query.mockClear()
+    client.end.mockClear()
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(client.connect).toBeCalledTimes(1)
+    expect(client.query).toBeCalledTimes(1)
+    expect(client.end).toBeCalledTimes(1)
+    sqlSouth.containsLastCompletedDate = true
   })
 
   it('should interact with PostgreSQL server and catch request error', async () => {
@@ -278,16 +306,31 @@ describe('sql-db-to-file', () => {
       }),
       end: jest.fn(),
     }
-    Client.mockReturnValue(client)
+    Client.mockReturnValueOnce(client)
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('query error'))
   })
 
+  it('should interact with PostgreSQL server and not end connection if it is null', async () => {
+    sqlSouth.driver = 'postgresql'
+
+    types.setTypeParser = jest.fn()
+
+    jest.mock('pg', () => ({
+      Client: jest.fn(() => null),
+      types: jest.fn(),
+    }))
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toBeCalledTimes(2)
+  })
+
   it('should interact with Oracle server if driver is oracle', async () => {
     sqlSouth.driver = 'oracle'
-
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
     const connection = {
       callTimeout: 0,
       execute: jest.fn(() => ({
@@ -312,6 +355,16 @@ describe('sql-db-to-file', () => {
     expect(oracledb.getConnection).toHaveBeenCalledWith(expectedConfig)
     expect(connection.execute).toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(connection.close).toBeCalledTimes(1)
+
+    sqlSouth.containsLastCompletedDate = false
+    connection.execute.mockClear()
+    connection.close.mockClear()
+    oracledb.getConnection.mockClear()
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(oracledb.getConnection).toBeCalledTimes(1)
+    expect(connection.execute).toBeCalledTimes(1)
+    expect(connection.close).toBeCalledTimes(1)
+    sqlSouth.containsLastCompletedDate = true
   })
 
   it('should interact with Oracle server and catch request error', async () => {
@@ -324,11 +377,54 @@ describe('sql-db-to-file', () => {
       }),
       close: jest.fn(),
     }
-    jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
+    jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => connection)
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
+
+    sqlSouth.logger.error.mockClear()
+    jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => null)
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot set property \'callTimeout\' of null'))
+  })
+
+  it('should interact with SQLite database server if driver is sqlite', async () => {
+    sqlSouth.driver = 'sqlite'
+
+    const finalize = jest.fn()
+    const all = jest.fn(() => ([{ id: 1, res: 'one result' }]))
+    const prepare = jest.fn(() => ({ all, finalize }))
+    const close = jest.fn()
+    const database = {
+      prepare,
+      close,
+    }
+    jest.spyOn(sqlite, 'open').mockResolvedValue(database)
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(database.prepare).toBeCalledTimes(1)
+    expect(database.close).toBeCalledTimes(1)
+
+    sqlSouth.containsLastCompletedDate = false
+    database.close.mockClear()
+    database.prepare.mockClear()
+    await sqlSouth.onScan(sqlConfig.scanMode)
+    expect(database.prepare).toBeCalledTimes(1)
+    expect(database.close).toBeCalledTimes(1)
+    sqlSouth.containsLastCompletedDate = true
+  })
+
+  it('should interact with SQLite database and catch request error', async () => {
+    sqlSouth.driver = 'sqlite'
+
+    jest.spyOn(sqlite, 'open').mockImplementation(() => {
+      throw new Error('test')
+    })
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(sqlSouth.logger.error).toBeCalledWith(new Error('test'))
   })
 
   it('should trigger an error and catch it', async () => {

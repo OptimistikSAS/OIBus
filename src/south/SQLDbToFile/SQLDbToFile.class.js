@@ -1,13 +1,13 @@
 const fs = require('fs')
 const path = require('path')
-
+const sqlite = require('sqlite')
+const sqlite3 = require('sqlite3')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const oracledb = require('oracledb')
 const csv = require('papaparse')
 const moment = require('moment-timezone')
-
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
@@ -26,6 +26,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     const {
       driver,
+      databasePath,
       host,
       port,
       username,
@@ -47,6 +48,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     this.preserveFiles = false
     this.driver = driver
+    this.databasePath = databasePath ? path.resolve(databasePath) : null
     this.host = host
     this.port = port
     this.username = username
@@ -116,6 +118,9 @@ class SQLDbToFile extends ProtocolHandler {
           break
         case 'oracle':
           result = await this.getDataFromOracle()
+          break
+        case 'sqlite':
+          result = await this.getDataFromSqlite()
           break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
@@ -274,19 +279,19 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     types.setTypeParser(1114, (str) => new Date(`${str}Z`))
-    let connexion = null
+    let connection = null
     let data = []
     try {
-      connexion = new Client(config)
-      await connexion.connect()
+      connection = new Client(config)
+      await connection.connect()
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
-      const { rows } = await connexion.query(adaptedQuery, params)
+      const { rows } = await connection.query(adaptedQuery, params)
       data = rows
     } catch (error) {
       this.logger.error(error)
     } finally {
-      if (connexion) {
-        await connexion.end()
+      if (connection) {
+        await connection.end()
       }
     }
 
@@ -322,6 +327,33 @@ class SQLDbToFile extends ProtocolHandler {
     } finally {
       if (connection) {
         await connection.close()
+      }
+    }
+
+    return data
+  }
+
+  /**
+   * Get new entries from local SQLite db file
+   * @returns {void}
+   */
+  async getDataFromSqlite() {
+    const adaptedQuery = this.query.replace('@LastCompletedDate', '?')
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+
+    let database = null
+    let data = []
+    try {
+      database = await sqlite.open({ filename: this.databasePath, driver: sqlite3.Database })
+      const stmt = await database.prepare(adaptedQuery)
+      const preparedParameters = this.containsLastCompletedDate ? { '@LastCompletedDate': new Date(this.lastCompletedAt) } : {}
+      data = await stmt.all(preparedParameters)
+      await stmt.finalize()
+    } catch (error) {
+      this.logger.error(error)
+    } finally {
+      if (database) {
+        await database.close()
       }
     }
 
