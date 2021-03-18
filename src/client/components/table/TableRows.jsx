@@ -30,7 +30,7 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
             />
           )}
           {handleStatus && (
-            <StatusButton handler={() => handleStatus(index)} />
+            <StatusButton handler={() => handleStatus(index)} isIcon />
           )}
           {handleDuplicate && (
             <FaCopy

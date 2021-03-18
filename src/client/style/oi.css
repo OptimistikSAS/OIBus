@@ -361,6 +361,12 @@ h3 {
  opacity: 0.5;
 }
 
+.oi-status-button {
+  height: 16px;
+  padding-top: 1px;
+  margin-top: 3px;
+  margin-right: 5px;
+}
 
 .breadcrumb {
   background-color: inherit;
