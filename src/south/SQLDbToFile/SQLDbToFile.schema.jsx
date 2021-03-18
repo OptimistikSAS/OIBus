@@ -47,6 +47,20 @@ schema.form = {
       </>
     ),
   },
+  driver: {
+    type: 'OIbSelect',
+    md: 2,
+    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite'],
+    label: 'SQL Driver',
+    defaultValue: 'mssql',
+    help: <div>Driver SQL</div>,
+  },
+  databasePath: {
+    type: 'OIbText',
+    defaultValue: './test.db',
+    valid: optional(),
+    help: <div>The path of the SQLite database</div>,
+  },
   host: {
     type: 'OIbText',
     defaultValue: 'localhost',
@@ -64,17 +78,9 @@ schema.form = {
   database: {
     type: 'OIbText',
     defaultValue: 'db',
+    md: 3,
     valid: notEmpty(),
     help: <div>Name of the SQL database (SID or Service Name for Oracle)</div>,
-  },
-  driver: {
-    type: 'OIbSelect',
-    newRow: false,
-    md: 2,
-    options: ['mssql', 'mysql', 'postgresql', 'oracle'],
-    label: 'SQL Driver',
-    defaultValue: 'mssql',
-    help: <div>Driver SQL</div>,
   },
   username: {
     type: 'OIbText',

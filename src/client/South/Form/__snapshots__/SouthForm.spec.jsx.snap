@@ -6851,6 +6851,102 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       class="row"
     >
       <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.driver"
+          >
+            SQL Driver
+          </label>
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.driver"
+            name="south.dataSources.0.SQLDbToFile.driver"
+          >
+            <option
+              value="mssql"
+            >
+              mssql
+            </option>
+            <option
+              value="mysql"
+            >
+              mysql
+            </option>
+            <option
+              value="postgresql"
+            >
+              postgresql
+            </option>
+            <option
+              value="oracle"
+            >
+              oracle
+            </option>
+            <option
+              value="sqlite"
+            >
+              sqlite
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Driver SQL
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.databasePath"
+          >
+            Database path
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.databasePath"
+            name="south.dataSources.0.SQLDbToFile.databasePath"
+            type="text"
+            value="./test.db"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The path of the SQLite database
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
         class="col-md-4"
       >
         <div
@@ -6919,7 +7015,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       class="row"
     >
       <div
-        class="col-md-4"
+        class="col-md-3"
       >
         <div
           class="form-group"
@@ -6946,57 +7042,6 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <div>
               Name of the SQL database (SID or Service Name for Oracle)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.SQLDbToFile.driver"
-          >
-            SQL Driver
-          </label>
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.SQLDbToFile.driver"
-            name="south.dataSources.0.SQLDbToFile.driver"
-          >
-            <option
-              value="mssql"
-            >
-              mssql
-            </option>
-            <option
-              value="mysql"
-            >
-              mysql
-            </option>
-            <option
-              value="postgresql"
-            >
-              postgresql
-            </option>
-            <option
-              value="oracle"
-            >
-              oracle
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Driver SQL
             </div>
           </small>
         </div>
