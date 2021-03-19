@@ -58,6 +58,8 @@ class MQTT extends ProtocolHandler {
     this.timeStampOrigin = timeStampOrigin
     this.timeStampPath = timestampPath
     this.timeStampFormat = timeStampFormat
+
+    this.handlesPoints = true
   }
 
   /**

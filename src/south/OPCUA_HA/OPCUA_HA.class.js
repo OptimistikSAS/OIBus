@@ -36,6 +36,7 @@ class OPCUA_HA extends ProtocolHandler {
     this.reconnectTimeout = null
 
     this.canHandleHistory = true
+    this.handlesPoints = true
   }
 
   /**

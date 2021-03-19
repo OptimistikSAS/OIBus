@@ -40,6 +40,7 @@ class OPCHDA extends ProtocolHandler {
     })
 
     this.canHandleHistory = true
+    this.handlesPoints = true
   }
 
   /**

@@ -26,6 +26,8 @@ class OPCUA_DA extends ProtocolHandler {
     this.password = this.encryptionService.decryptText(password)
     this.retryInterval = retryInterval // retry interval before trying to connect again
     this.reconnectTimeout = null
+
+    this.handlesPoints = true
   }
 
   /**
