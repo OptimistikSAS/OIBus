@@ -84,7 +84,8 @@ class ProtocolHandler {
    * @return {void}
    */
   addValues(values) {
-
+    this.lastAddPointsAt = new Date().getTime()
+    this.addPointsCount += values.length
     this.engine.addValues(this.dataSource.dataSourceId, values)
   }
 
