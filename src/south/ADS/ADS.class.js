@@ -40,6 +40,8 @@ class ADS extends ProtocolHandler {
     this.boolAsText = boolAsText
     this.enumAsText = enumAsText
     this.structureFiltering = structureFiltering
+
+    this.handlesPoints = true
   }
 
   parseValues(nodeId, dataType, valueToParse, timestamp, subItems, enumInfo) {

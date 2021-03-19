@@ -52,6 +52,8 @@ class ProtocolHandler {
     this.lastOnScanAt = null
     this.lastAddFileAt = null
     this.addFileCount = 0
+    this.lastAddPointsAt = null
+    this.addPointsCount = 0
   }
 
   async connect() {
@@ -82,6 +84,7 @@ class ProtocolHandler {
    * @return {void}
    */
   addValues(values) {
+
     this.engine.addValues(this.dataSource.dataSourceId, values)
   }
 
@@ -190,6 +193,23 @@ class ProtocolHandler {
     if (this.handlesFiles) {
       status['Last file added time'] = this.lastAddFileAt ? new Date(this.lastAddFileAt).toLocaleString() : 'Never'
       status['Number of files added'] = this.addFileCount
+    }
+    if (this.handlesPoints) {
+      status['Last values added time'] = this.lastAddPointsAt ? new Date(this.lastAddPointsAt).toLocaleString() : 'Never'
+      status['Number of values added'] = this.addPointsCount
+    }
+    if (this.canHandleHistory) {
+      if (this.lastCompletedAt) {
+        if (typeof this.lastCompletedAt === 'object') {
+          Object.entries(this.lastCompletedAt).forEach(([key, value]) => {
+            status[`Last completed at - ${key}`] = new Date(value).toLocaleString()
+          })
+        } else {
+          status['Last completed at'] = new Date(this.lastCompletedAt).toLocaleString()
+        }
+      } else {
+        status['Last completed at'] = 'Never'
+      }
     }
     return status
   }

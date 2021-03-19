@@ -80,6 +80,7 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     this.canHandleHistory = true
+    this.handlesFiles = true
   }
 
   async connect() {
