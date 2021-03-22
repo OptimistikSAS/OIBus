@@ -78,7 +78,7 @@ class OPCHDA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    */
-  onScan(scanMode) {
+  onScanImplementation(scanMode) {
     this.sendReadMessage(scanMode)
   }
 

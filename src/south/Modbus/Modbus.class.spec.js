@@ -113,7 +113,7 @@ describe('Modbus south', () => {
     await modbusSouth.connect()
     modbusSouth.modbusClient = { readHoldingRegisters: jest.fn() }
     modbusSouth.modbusClient.readHoldingRegisters.mockReturnValue(Promise.resolve([]))
-    await modbusSouth.onScan('every10Seconds')
+    await modbusSouth.onScanImplementation('every10Seconds')
 
     expect(modbusSouth.modbusClient.readHoldingRegisters)
       .toBeCalledWith(15984, 32) // see the optimizedScanModes to get the startAddress and range
@@ -135,7 +135,7 @@ describe('Modbus south', () => {
     expect(modbusSouth.connected)
       .toBeFalsy()
 
-    await modbusSouth.onScan()
+    await modbusSouth.onScanImplementation()
 
     expect(modbusSouth.modbusFunction)
       .not

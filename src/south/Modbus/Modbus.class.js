@@ -28,7 +28,7 @@ class Modbus extends ProtocolHandler {
    * @param {String} scanMode - Cron time
    * @return {void}
    */
-  onScan(scanMode) {
+  onScanImplementation(scanMode) {
     const { connected, optimizedScanModes } = this
     const scanGroup = optimizedScanModes[scanMode]
 

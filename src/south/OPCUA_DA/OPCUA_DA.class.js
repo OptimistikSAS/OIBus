@@ -66,7 +66,7 @@ class OPCUA_DA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    */
-  async onScan(scanMode) {
+  async onScanImplementation(scanMode) {
     if (!this.connected) {
       this.logger.silly(`onScan ignored: connected: ${this.connected}`)
       return

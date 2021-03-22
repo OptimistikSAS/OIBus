@@ -63,9 +63,16 @@ class ProtocolHandler {
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
+  onScanImplementation(scanMode) {
+    const { dataSourceId } = this.dataSource
+    this.logger.error(`Data source ${dataSourceId} should surcharge onScanImplementation(${scanMode})`)
+  }
+
   onScan(scanMode) {
-    this.logger.debug(`FolderScanner activated on scanMode: ${scanMode}.`)
+    this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
     this.lastOnScanAt = new Date().getTime()
+
+    this.onScanImplementation(scanMode)
   }
 
   listen() {

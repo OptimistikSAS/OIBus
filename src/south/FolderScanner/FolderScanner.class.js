@@ -31,12 +31,10 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} scanMode - The scan mode
+   * @param {*} _scanMode - The scan mode
    * @return {void}
    */
-  async onScan(scanMode) {
-    super.onScan(scanMode)
-
+  async onScanImplementation(_scanMode) {
     // Check if input folder exists
     try {
       // eslint-disable-next-line no-bitwise
