@@ -99,7 +99,7 @@ describe('sql-db-to-file', () => {
     const { timezone } = sqlSouth
     sqlSouth.timezone = undefined
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone')
     sqlSouth.timezone = timezone
@@ -115,7 +115,7 @@ describe('sql-db-to-file', () => {
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
     jest.spyOn(mssql, 'close')
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.lastCompletedAt).toBe('2020-12-25T00:00:00.000Z')
 
@@ -147,7 +147,7 @@ describe('sql-db-to-file', () => {
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
     jest.spyOn(mssql, 'close')
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const expectedConfig = {
       server: sqlConfig.SQLDbToFile.host,
@@ -175,7 +175,7 @@ describe('sql-db-to-file', () => {
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
     jest.spyOn(mssql, 'close')
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('request error'))
     sqlSouth.containsLastCompletedDate = true
@@ -193,7 +193,7 @@ describe('sql-db-to-file', () => {
     }
     jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const expectedConfig = {
       host: sqlConfig.SQLDbToFile.host,
@@ -227,7 +227,7 @@ describe('sql-db-to-file', () => {
     }
     jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
   })
@@ -248,7 +248,7 @@ describe('sql-db-to-file', () => {
     }
     Client.mockReturnValue(client)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const expectedConfig = {
       host: sqlConfig.SQLDbToFile.host,
@@ -280,7 +280,7 @@ describe('sql-db-to-file', () => {
     }
     Client.mockReturnValue(client)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('query error'))
   })
@@ -300,7 +300,7 @@ describe('sql-db-to-file', () => {
     }
     jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const expectedConfig = {
       user: sqlConfig.SQLDbToFile.username,
@@ -326,7 +326,7 @@ describe('sql-db-to-file', () => {
     }
     jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('execute error'))
   })
@@ -341,7 +341,7 @@ describe('sql-db-to-file', () => {
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
     jest.spyOn(mssql, 'close').mockImplementation(() => { throw new Error('test') })
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('test'))
   })
@@ -349,7 +349,7 @@ describe('sql-db-to-file', () => {
   it('should log an error if invalid driver is specified', async () => {
     sqlSouth.driver = 'invalid'
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith('Driver invalid not supported by SQLDbToFile')
   })
@@ -359,7 +359,7 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.getDataFromMySQL = () => []
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(engine.addFile).not.toBeCalled()
   })
@@ -379,7 +379,7 @@ describe('sql-db-to-file', () => {
     csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
@@ -413,7 +413,7 @@ describe('sql-db-to-file', () => {
     const decompressedCsv = path.join(tmpFolder, 'decompressed.csv')
     sqlSouth.compression = true
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
@@ -457,7 +457,7 @@ describe('sql-db-to-file', () => {
     fs.mkdirSync(tmpFolder, { recursive: true })
     sqlSouth.compression = true
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('unlink Error'))
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('add file error'))

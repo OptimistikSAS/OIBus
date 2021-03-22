@@ -208,7 +208,7 @@ class OPCUA_HA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    */
-  async onScan(scanMode) {
+  async onScanImplementation(scanMode) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
 
     if (!scanGroup) {
