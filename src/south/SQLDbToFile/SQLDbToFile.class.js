@@ -219,7 +219,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromMySQL() {
-    const adaptedQuery = this.query.replace('@LastCompletedDate', '?')
+    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '?')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
@@ -258,7 +258,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromPostgreSQL() {
-    const adaptedQuery = this.query.replace('@LastCompletedDate', '$1')
+    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '$1')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
@@ -295,7 +295,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromOracle() {
-    const adaptedQuery = this.query.replace('@LastCompletedDate', ':date1')
+    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, ':date1')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     const config = {
