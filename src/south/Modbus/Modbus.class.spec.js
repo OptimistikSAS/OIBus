@@ -23,6 +23,11 @@ jest.mock('net', () => {
     on() {
       jest.fn()
     }
+
+    // eslint-disable-next-line class-methods-use-this
+    emit(err) {
+      jest.fn(() => err)
+    }
   }
 
   return { Socket }
@@ -56,20 +61,47 @@ describe('Modbus south', () => {
     },
     points: [
       {
-        pointId: 'EtatBB2T0',
+        pointId: 'HoldingRegister',
         modbusType: 'holdingRegister',
         dataType: 'UInt16',
-        address: '0x3E80',
+        address: '0x4E80',
         multiplierCoefficient: 1,
         type: 'number',
         scanMode: 'every10Seconds',
       },
       {
-        pointId: 'EtatBB2T1',
+        pointId: 'HoldingRegister2',
         modbusType: 'holdingRegister',
+        dataType: 'UInt16',
+        address: '0x4E81',
+        multiplierCoefficient: 1,
+        type: 'number',
+        scanMode: 'every10Seconds',
+      },
+      {
+        pointId: 'InputRegister',
+        modbusType: 'inputRegister',
         dataType: 'UInt16',
         scanMode: 'every10Seconds',
         address: '0x3E81',
+        multiplierCoefficient: 1,
+        type: 'number',
+      },
+      {
+        pointId: 'DiscreteInput',
+        modbusType: 'discreteInput',
+        dataType: 'UInt16',
+        scanMode: 'every10Seconds',
+        address: '0x1E82',
+        multiplierCoefficient: 1,
+        type: 'number',
+      },
+      {
+        pointId: 'Coil',
+        modbusType: 'coil',
+        dataType: 'UInt16',
+        scanMode: 'every10Seconds',
+        address: '0x0E83',
         multiplierCoefficient: 1,
         type: 'number',
       },
@@ -78,24 +110,58 @@ describe('Modbus south', () => {
 
   const optimizedScanModes = {
     every10Seconds: {
-      holdingRegister: {
-        '15984-16016': [
+      coil: {
+        '3712-3728': [
           {
-            pointId: 'EtatBB2T0',
+            address: 3715,
             dataType: 'UInt16',
-            address: 16000,
             multiplierCoefficient: 1,
-            type: 'number',
+            pointId: 'Coil',
+            type: 'boolean',
           },
+        ],
+      },
+      discreteInput: {
+        '7808-7824': [
           {
-            pointId: 'EtatBB2T1',
+            address: 7810,
             dataType: 'UInt16',
-            address: 16001,
             multiplierCoefficient: 1,
+            pointId: 'DiscreteInput',
             type: 'number',
           },
         ],
       },
+      holdingRegister: {
+        '20080-20112': [
+          {
+            address: 20096,
+            dataType: 'UInt16',
+            multiplierCoefficient: 1,
+            pointId: 'HoldingRegister',
+            type: 'number',
+          },
+          {
+            address: 20097,
+            dataType: 'UInt16',
+            multiplierCoefficient: 1,
+            pointId: 'HoldingRegister2',
+            type: 'number',
+          },
+        ],
+      },
+      inputRegister: {
+        '16000-16016': [
+          {
+            address: 16001,
+            dataType: 'UInt16',
+            multiplierCoefficient: 1,
+            pointId: 'InputRegister',
+            type: 'number',
+          },
+        ],
+      },
+
     },
   }
 
@@ -291,12 +357,20 @@ describe('Modbus south', () => {
     const modbusSouth = new Modbus(modbusConfig, engine)
 
     await modbusSouth.connect()
-    modbusSouth.modbusClient = { readHoldingRegisters: jest.fn() }
+    modbusSouth.modbusClient = {
+      readHoldingRegisters: jest.fn(),
+      readInputRegisters: jest.fn(),
+      readDiscreteInputs: jest.fn(),
+      readCoils: jest.fn(),
+    }
     modbusSouth.modbusClient.readHoldingRegisters.mockReturnValue(Promise.resolve([]))
+    modbusSouth.modbusClient.readInputRegisters.mockReturnValue(Promise.resolve([]))
+    modbusSouth.modbusClient.readDiscreteInputs.mockReturnValue(Promise.resolve([]))
+    modbusSouth.modbusClient.readCoils.mockReturnValue(Promise.resolve([]))
     await modbusSouth.onScanImplementation('every10Seconds')
 
     expect(modbusSouth.modbusClient.readHoldingRegisters)
-      .toBeCalledWith(15984, 32) // see the optimizedScanModes to get the startAddress and range
+      .toBeCalledWith(20080, 32) // see the optimizedScanModes to get the startAddress and range
     expect(modbusSouth.modbusClient.readHoldingRegisters)
       .toBeCalledTimes(1) // addresses are in the same group, so it makes one call
   })
@@ -330,6 +404,8 @@ describe('Modbus south', () => {
     modbusSouth.connected = true
     modbusSouth.socket = { end: jest.fn() }
     modbusSouth.modbusFunction = jest.fn()
+
+    modbusSouth.reconnectTimeout = setTimeout(null, 1000)
 
     await modbusSouth.disconnect()
     expect(modbusSouth.socket.end)
