@@ -39,9 +39,13 @@ class Modbus extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-    this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, this.dataSource.Modbus.addressOffset, this.logger)
-    this.connected = false
+    const { addressOffset, retryInterval } = this.dataSource.Modbus
 
+    this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, addressOffset, this.logger)
+    this.connected = false
+    this.reconnectTimeout = null
+
+    this.retryInterval = retryInterval // retry interval before trying to connect again
     this.handlesPoints = true
   }
 
@@ -133,6 +137,10 @@ class Modbus extends ProtocolHandler {
         })
         .catch((error) => {
           this.logger.error(`Modbus onScan error: for ${startAddress} and ${rangeSize}, ${funcName} error : ${JSON.stringify(error)}`)
+          if (error && error.err === 'Offline') {
+            this.disconnect()
+            this.reconnectTimeout = setTimeout(this.connectorToModbusServer.bind(this), this.retryInterval)
+          }
         })
     } else {
       this.logger.error(`Modbus function name ${funcName} not recognized`)
@@ -145,6 +153,25 @@ class Modbus extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
+    await this.connectorToModbusServer()
+  }
+
+  /**
+   * Close the connection
+   * @return {void}
+   */
+  disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+    }
+    if (this.connected) {
+      this.socket.end()
+      this.connected = false
+    }
+  }
+
+  async connectorToModbusServer() {
+    this.reconnectTimeout = null
     this.socket = new net.Socket()
     const { host, port, slaveId } = this.dataSource.Modbus
     this.modbusClient = new jsmodbus.client.TCP(this.socket, slaveId)
@@ -156,18 +183,9 @@ class Modbus extends ProtocolHandler {
     )
     this.socket.on('error', (error) => {
       this.logger.error(`Modbus connect error: ${JSON.stringify(error)}`)
+      this.disconnect()
+      this.reconnectTimeout = setTimeout(this.connectorToModbusServer.bind(this), this.retryInterval)
     })
-  }
-
-  /**
-   * Close the connection
-   * @return {void}
-   */
-  disconnect() {
-    if (this.connected) {
-      this.socket.end()
-      this.connected = false
-    }
   }
 }
 

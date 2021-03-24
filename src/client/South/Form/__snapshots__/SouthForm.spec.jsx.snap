@@ -5713,6 +5713,48 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.Modbus.retryInterval"
+          >
+            Retry interval
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.Modbus.retryInterval"
+            name="south.dataSources.0.Modbus.retryInterval"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value should not greater than 1000
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Retry Interval (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-2"
       />
@@ -6396,6 +6438,48 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.Modbus.retryInterval"
+          >
+            Retry interval
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.Modbus.retryInterval"
+            name="south.dataSources.0.Modbus.retryInterval"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value should not greater than 1000
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Retry Interval (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-2"
       />
