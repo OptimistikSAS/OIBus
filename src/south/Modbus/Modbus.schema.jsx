@@ -1,5 +1,11 @@
 import React from 'react'
-import { inRange, isHost, notEmpty, isHexaOrDecimal, combinedValidations } from '../../services/validation.service'
+import {
+  inRange,
+  isHost,
+  notEmpty,
+  isHexaOrDecimal,
+  combinedValidations, minValue,
+} from '../../services/validation.service'
 
 const schema = { name: 'Modbus' }
 schema.form = {
@@ -71,10 +77,18 @@ schema.form = {
     defaultValue: 1,
     help: <div>Slave ID of the Modbus source</div>,
   },
+  retryInterval: {
+    type: 'OIbInteger',
+    newRow: true,
+    md: 2,
+    valid: minValue(1000),
+    defaultValue: 10000,
+    help: <div>Retry Interval (ms)</div>,
+  },
   addressOffset: {
     type: 'OIbSelect',
     md: 2,
-    newRow: false,
+    newRow: true,
     options: ['Modbus', 'JBus'],
     label: 'Address Offset',
     defaultValue: 'Modbus',
