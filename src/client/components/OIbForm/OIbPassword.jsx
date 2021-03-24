@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input, InputGroup, InputGroupAddon } from 'reactstrap'
 import { FaEyeSlash, FaEye } from 'react-icons/fa'
 
-const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }) => {
+const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue, hidden }) => {
   const PREFIX = '{{notEncrypted}}'
   const [edited, setEdited] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
@@ -40,6 +40,7 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue }
       }
     }
   }
+  if (hidden) return null
   // if value is null, no need to render
   if (value === null) return null
   // if the password has not be edited, it contains the encrypted version that should not be checked
@@ -79,8 +80,9 @@ OIbPassword.propTypes = {
   value: PropTypes.string,
   defaultValue: PropTypes.string,
   valid: PropTypes.func,
+  hidden: PropTypes.bool,
 }
 
-OIbPassword.defaultProps = { valid: () => null, label: null, help: null, value: null, defaultValue: '' }
+OIbPassword.defaultProps = { valid: () => null, label: null, help: null, value: null, defaultValue: '', hidden: false }
 
 export default OIbPassword

@@ -104,7 +104,6 @@ schema.form = {
     md: 3,
   },
   encryption: {
-    newRow: false,
     type: 'OIbCheckBox',
     label: 'Encryption?',
     defaultValue: true,
@@ -176,5 +175,17 @@ schema.form = {
   },
 }
 schema.points = null
+
+schema.withDriver = (driver) => {
+  schema.form.domain.hidden = driver !== 'mssql'
+  schema.form.databasePath.hidden = driver !== 'sqlite'
+  schema.form.host.hidden = driver === 'sqlite'
+  schema.form.port.hidden = driver === 'sqlite'
+  schema.form.username.hidden = driver === 'sqlite'
+  schema.form.password.hidden = driver === 'sqlite'
+  schema.form.requestTimeout.hidden = driver === 'sqlite'
+  schema.form.connectionTimeout.hidden = driver === 'sqlite'
+  return schema
+}
 
 export default schema

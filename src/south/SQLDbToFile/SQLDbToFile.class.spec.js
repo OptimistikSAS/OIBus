@@ -221,7 +221,7 @@ describe('sql-db-to-file', () => {
     mysql.createConnection.mockClear()
     connection.execute.mockClear()
     connection.end.mockClear()
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(mysql.createConnection).toHaveBeenCalledWith(expectedConfig)
     // expect(connection.execute).toBeCalledWith(expectedExecute, expectedExecuteParams)
     expect(connection.execute).toBeCalledTimes(1)
@@ -246,7 +246,7 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.logger.error.mockClear()
     jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => null)
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot read property \'execute\' of null'))
   })
 
@@ -288,7 +288,7 @@ describe('sql-db-to-file', () => {
     client.connect.mockClear()
     client.query.mockClear()
     client.end.mockClear()
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledTimes(1)
     expect(client.end).toBeCalledTimes(1)
@@ -323,7 +323,7 @@ describe('sql-db-to-file', () => {
       types: jest.fn(),
     }))
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledTimes(2)
   })
@@ -360,7 +360,7 @@ describe('sql-db-to-file', () => {
     connection.execute.mockClear()
     connection.close.mockClear()
     oracledb.getConnection.mockClear()
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(oracledb.getConnection).toBeCalledTimes(1)
     expect(connection.execute).toBeCalledTimes(1)
     expect(connection.close).toBeCalledTimes(1)
@@ -385,7 +385,7 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.logger.error.mockClear()
     jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => null)
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot set property \'callTimeout\' of null'))
   })
 
@@ -401,7 +401,7 @@ describe('sql-db-to-file', () => {
       close,
     }
     jest.spyOn(sqlite, 'open').mockResolvedValue(database)
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(database.prepare).toBeCalledTimes(1)
     expect(database.close).toBeCalledTimes(1)
@@ -409,7 +409,7 @@ describe('sql-db-to-file', () => {
     sqlSouth.containsLastCompletedDate = false
     database.close.mockClear()
     database.prepare.mockClear()
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
     expect(database.prepare).toBeCalledTimes(1)
     expect(database.close).toBeCalledTimes(1)
     sqlSouth.containsLastCompletedDate = true
@@ -422,7 +422,7 @@ describe('sql-db-to-file', () => {
       throw new Error('test')
     })
 
-    await sqlSouth.onScan(sqlConfig.scanMode)
+    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toBeCalledWith(new Error('test'))
   })

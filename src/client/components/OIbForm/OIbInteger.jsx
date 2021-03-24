@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue }) => {
+const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue, hidden }) => {
   // if no value was found, load the context with the default value
   // (this will cause a rerender with the correct value)
   React.useLayoutEffect(() => {
@@ -16,6 +16,7 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue })
   }
   // if no label, we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
+  if (hidden) return null
   const validCheck = valid(value)
   return (
     <FormGroup style={style}>
@@ -42,12 +43,14 @@ OIbInteger.propTypes = {
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   defaultValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   valid: PropTypes.func,
+  hidden: PropTypes.bool,
 }
 OIbInteger.defaultProps = {
   valid: () => null,
   label: null,
   help: null,
   value: null,
+  hidden: false,
 }
 
 export default OIbInteger

@@ -6912,36 +6912,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
     >
       <div
         class="col-md-4"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="south.dataSources.0.SQLDbToFile.databasePath"
-          >
-            Database path
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="south.dataSources.0.SQLDbToFile.databasePath"
-            name="south.dataSources.0.SQLDbToFile.databasePath"
-            type="text"
-            value="./test.db"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              The path of the SQLite database
-            </div>
-          </small>
-        </div>
-      </div>
+      />
     </div>
     <div
       class="row"
@@ -7108,6 +7079,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       <div
         class="col-md-3"
       />
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-2"
       />
