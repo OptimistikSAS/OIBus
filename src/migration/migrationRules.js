@@ -325,66 +325,38 @@ module.exports = {
   22: (config) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'Modbus') {
-        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'slaveId')) {
-          logger.info('Add slaveId field to Modbus')
-          dataSource.Modbus.slaveId = 1
+        const modbusTypes = {
+          1: 'coil',
+          2: 'discreteInput',
+          3: 'inputRegister',
+          4: 'holdingRegister',
         }
-      }
-    })
-  },
-  23: (config) => {
-    const modbusTypes = {
-      1: 'coil',
-      2: 'discreteInput',
-      3: 'inputRegister',
-      4: 'holdingRegister',
-    }
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
         dataSource.points.forEach((point) => {
           if (!Object.prototype.hasOwnProperty.call(point, 'modbusType')) {
             point.modbusType = modbusTypes[point.address.charAt(0)]
             point.address = `0x${point.address.slice(1)}`
           }
-        })
-      }
-    })
-  },
-  24: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
-        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'adressOffset')) {
-          logger.info('Add addressOffset field to Modbus')
-          dataSource.Modbus.addressOffset = 'Modbus'
-        }
-      }
-    })
-  },
-  25: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
-        dataSource.points.forEach((point) => {
           if (!Object.prototype.hasOwnProperty.call(point, 'dataType')) {
             logger.info('Add dataType field to Modbus points')
             point.dataType = 'UInt16'
           }
+          if (!Object.prototype.hasOwnProperty.call(point, 'multiplierCoefficient')) {
+            logger.info('Add multiplierCoefficient field to Modbus points')
+            point.multiplierCoefficient = 1
+          }
         })
-      }
-    })
-  },
-  26: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'slaveId')) {
+          logger.info('Add slaveId field to Modbus')
+          dataSource.Modbus.slaveId = 1
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'adressOffset')) {
+          logger.info('Add addressOffset field to Modbus')
+          dataSource.Modbus.addressOffset = 'Modbus'
+        }
         if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'endianness')) {
           logger.info('Add endianness field to Modbus')
           dataSource.Modbus.endianness = 'Big Endian'
         }
-      }
-    })
-  },
-  27: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapBytesinWords')) {
           logger.info('Add swapBytesinWords field to Modbus')
           dataSource.Modbus.swapBytesinWords = false
@@ -393,18 +365,10 @@ module.exports = {
           logger.info('Add swapWordsInDWords field to Modbus')
           dataSource.Modbus.swapWordsInDWords = false
         }
-      }
-    })
-  },
-  28: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'Modbus') {
-        dataSource.points.forEach((point) => {
-          if (!Object.prototype.hasOwnProperty.call(point, 'multiplierCoefficient')) {
-            logger.info('Add multiplierCoefficient field to Modbus points')
-            point.multiplierCoefficient = 1
-          }
-        })
+        if (!Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'retryInterval')) {
+          logger.info('Add retryInterval field to Modbus')
+          dataSource.Modbus.retryInterval = 10000
+        }
       }
     })
   },
