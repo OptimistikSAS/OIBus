@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inline, disabled }) => {
+const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inline, disabled, hidden }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
@@ -16,6 +16,7 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
   if (inline && style) {
     style.display = 'inline-block'
   }
+  if (hidden) return null
   const validCheck = valid(value)
   // if value is null, no need to render
   if (value === null) return null
@@ -47,6 +48,7 @@ OIbText.propTypes = {
   valid: PropTypes.func,
   inline: PropTypes.bool,
   disabled: PropTypes.bool,
+  hidden: PropTypes.bool,
 }
 OIbText.defaultProps = {
   valid: () => null,
@@ -56,6 +58,7 @@ OIbText.defaultProps = {
   defaultValue: '',
   inline: false,
   disabled: false,
+  hidden: false,
 }
 
 export default OIbText
