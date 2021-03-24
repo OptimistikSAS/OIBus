@@ -100,7 +100,7 @@ class ADS extends ProtocolHandler {
         break
       default:
         if (subItems?.length > 0) { // It is an ADS structure object (as json)
-          const structure = this.structureFiltering.find((element) => element.name === dataType)
+          const structure = this.structureFiltering?.find((element) => element.name === dataType)
           if (structure) {
             subItems.filter((item) => structure.fields === '*' || structure.fields.split(',').includes(item.name)).forEach((subItem) => {
               this.parseValues(`${nodeId}.${subItem.name}`,
