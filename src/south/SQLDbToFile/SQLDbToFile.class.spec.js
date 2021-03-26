@@ -391,9 +391,10 @@ describe('sql-db-to-file', () => {
 
   it('should interact with SQLite database server if driver is sqlite', async () => {
     sqlSouth.driver = 'sqlite'
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
 
     const finalize = jest.fn()
-    const all = jest.fn(() => ([{ id: 1, res: 'one result' }]))
+    const all = jest.fn(() => ([{ id: 1, res: 'one result', timestamp: '2020-12-25T00:00:00.000Z' }]))
     const prepare = jest.fn(() => ({ all, finalize }))
     const close = jest.fn()
     const database = {
@@ -405,6 +406,8 @@ describe('sql-db-to-file', () => {
 
     expect(database.prepare).toBeCalledTimes(1)
     expect(database.close).toBeCalledTimes(1)
+
+    expect(sqlSouth.lastCompletedAt).toBe('2020-12-25T00:00:00.000Z')
 
     sqlSouth.containsLastCompletedDate = false
     database.close.mockClear()

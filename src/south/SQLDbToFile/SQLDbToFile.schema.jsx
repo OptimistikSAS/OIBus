@@ -179,6 +179,7 @@ schema.points = null
 schema.withDriver = (driver) => {
   schema.form.domain.hidden = driver !== 'mssql'
   schema.form.databasePath.hidden = driver !== 'sqlite'
+  schema.form.database.hidden = driver === 'sqlite'
   schema.form.host.hidden = driver === 'sqlite'
   schema.form.port.hidden = driver === 'sqlite'
   schema.form.username.hidden = driver === 'sqlite'
