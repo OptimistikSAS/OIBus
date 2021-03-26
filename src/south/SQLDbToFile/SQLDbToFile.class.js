@@ -94,6 +94,26 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   /**
+   * Function used to parse an entry and update the lastCompletedAt if needed
+   * @param {*} entry - on sql result item
+   * @return {void}
+   */
+  checkLastCompletedAt(entry) {
+    if (entry[this.timeColumn] && (entry[this.timeColumn] instanceof Date) && (entry[this.timeColumn] > new Date(this.lastCompletedAt))) {
+      this.lastCompletedAt = entry[this.timeColumn].toISOString()
+    } else if (entry[this.timeColumn]) {
+      const entryDate = new Date(entry[this.timeColumn])
+      if (entryDate.toString() !== 'Invalid Date') {
+        // We need to take back the js added timezone since it is not in the original string coming from the database
+        const entryDateWithouthTimezonOffset = new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000)
+        if (entryDateWithouthTimezonOffset > new Date(this.lastCompletedAt)) {
+          this.lastCompletedAt = entryDateWithouthTimezonOffset.toISOString()
+        }
+      }
+    }
+  }
+
+  /**
    * Get entries from the database since the last query completion, write them into a CSV file and send to the Engine.
    * @param {*} _scanMode - The scan mode
    * @return {void}
@@ -134,9 +154,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     if (result.length > 0) {
       result.forEach((entry) => {
-        if (entry[this.timeColumn] && (entry[this.timeColumn] instanceof Date) && (entry[this.timeColumn] > new Date(this.lastCompletedAt))) {
-          this.lastCompletedAt = entry[this.timeColumn].toISOString()
-        }
+        this.checkLastCompletedAt(entry)
       })
       if (this.lastCompletedAt) {
         this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
@@ -338,7 +356,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromSqlite() {
-    const adaptedQuery = this.query.replace('@LastCompletedDate', '?')
+    const adaptedQuery = this.query
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
     let database = null
