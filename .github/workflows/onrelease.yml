@@ -23,6 +23,10 @@ jobs:
         with:
           node-version: 14
 
+      - name: Use npm 7.6.1
+        run: |
+          npm install -g npm@7.6.1
+
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         id: pkg
         run: |
@@ -43,4 +47,4 @@ jobs:
               release_id: context.payload.release.id,
               name: '${{ matrix.config['archiveName'] }}',
               data: fs.readFileSync('./dist/oibus.zip')
-            })        
+            })

@@ -12,6 +12,9 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 14.x
+    - name: Use npm 7.6.1
+      run: |
+        npm install -g npm@7.6.1
     - name: npm install, build, and test
       run: |
         npm ci
@@ -19,4 +22,4 @@ jobs:
         npm run lint
         npm run build-client
         npm run build-linux
-   
+
