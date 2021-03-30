@@ -95,22 +95,34 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Function used to parse an entry and update the lastCompletedAt if needed
-   * @param {*} entry - on sql result item
-   * @return {void}
+   * @param {*} entryList - on sql result item
+   * @return {string} date - the updated date in iso string format
    */
-  checkLastCompletedAt(entry) {
-    if (entry[this.timeColumn] && (entry[this.timeColumn] instanceof Date) && (entry[this.timeColumn] > new Date(this.lastCompletedAt))) {
-      this.lastCompletedAt = entry[this.timeColumn].toISOString()
-    } else if (entry[this.timeColumn]) {
-      const entryDate = new Date(entry[this.timeColumn])
-      if (entryDate.toString() !== 'Invalid Date') {
-        // We need to take back the js added timezone since it is not in the original string coming from the database
-        const entryDateWithouthTimezonOffset = new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000)
-        if (entryDateWithouthTimezonOffset > new Date(this.lastCompletedAt)) {
-          this.lastCompletedAt = entryDateWithouthTimezonOffset.toISOString()
+  setLastCompletedAt(entryList) {
+    let newLastCompletedAt = this.lastCompletedAt
+    entryList.forEach((entry) => {
+      if (entry[this.timeColumn] instanceof Date && entry[this.timeColumn] > new Date(newLastCompletedAt)) {
+        newLastCompletedAt = entry[this.timeColumn].toISOString()
+      } else if (entry[this.timeColumn]) {
+        const entryDate = new Date(entry[this.timeColumn])
+        if (entryDate.toString() !== 'Invalid Date') {
+          // When of type string, We need to take back the js added timezone since it is not in the original string coming from the database
+          // When of type number, no need to take back the timezone offset because it represents the number of seconds from 01/01/1970
+          // eslint-disable-next-line max-len
+          const entryDateWithoutTimezoneOffset = typeof entry[this.timeColumn] === 'string' ? new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000) : entryDate
+          if (entryDateWithoutTimezoneOffset > new Date(newLastCompletedAt)) {
+            newLastCompletedAt = entryDateWithoutTimezoneOffset.toISOString()
+          }
         }
       }
+    })
+
+    if (newLastCompletedAt !== this.lastCompletedAt) {
+      this.logger.debug(`Updating lastCompletedAt to ${newLastCompletedAt}`)
+    } else {
+      this.logger.debug('lastCompletedAt not used')
     }
+    return newLastCompletedAt
   }
 
   /**
@@ -153,14 +165,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      result.forEach((entry) => {
-        this.checkLastCompletedAt(entry)
-      })
-      if (this.lastCompletedAt) {
-        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt}`)
-      } else {
-        this.logger.debug('lastCompletedAt not used')
-      }
+      this.lastCompletedAt = this.setLastCompletedAt(result)
       await this.setConfig('lastCompletedAt', this.lastCompletedAt)
       const csvContent = await this.generateCSV(result)
       if (csvContent) {

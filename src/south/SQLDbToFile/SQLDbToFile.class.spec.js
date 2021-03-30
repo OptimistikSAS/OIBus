@@ -97,6 +97,41 @@ describe('sql-db-to-file', () => {
     global.Date = RealDate
   })
 
+  it('should properly update lastCompletedAt', () => {
+    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.000Z'
+    const entryList1 = [
+      { timestamp: '2021-03-30 10:30:00.150' },
+      { timestamp: '2021-03-30 11:30:00.150' },
+      { timestamp: '2021-03-30 12:30:00.150' },
+    ]
+    const entryList2 = [
+      { timestamp: 1617107400000 }, // '2021-03-30 12:30:00'
+      { timestamp: 1617103800000 }, // '2021-03-30 11:30:00'
+      { timestamp: 1617100200000 }, // '2021-03-30 10:30:00'
+    ]
+    const entryList3 = [
+      { timestamp: new Date(1617193800000) }, // '2021-03-31 12:30:00'
+      { timestamp: new Date(1617186600000) }, // '2021-03-31 10:30:00'
+      { timestamp: new Date(1617190200000) }, //  '2021-03-31 11:30:00'
+    ]
+    const entryList4 = [{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }] // no timestamp
+
+    sqlSouth.setLastCompletedAt(entryList1) // with string format
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('Updating lastCompletedAt to 2021-03-30T12:30:00.150Z')
+    sqlSouth.logger.debug.mockClear()
+
+    sqlSouth.setLastCompletedAt(entryList2) // with number format - no ms
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('Updating lastCompletedAt to 2021-03-30T12:30:00.000Z')
+    sqlSouth.logger.debug.mockClear()
+
+    sqlSouth.setLastCompletedAt(entryList3) // with date format
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('Updating lastCompletedAt to 2021-03-31T12:30:00.000Z')
+    sqlSouth.logger.debug.mockClear()
+
+    sqlSouth.setLastCompletedAt(entryList4) // without timestamp
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('lastCompletedAt not used')
+  })
+
   it('should quit onScan if timezone is invalid', async () => {
     const { timezone } = sqlSouth
     sqlSouth.timezone = undefined
