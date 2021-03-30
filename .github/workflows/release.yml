@@ -17,6 +17,10 @@ jobs:
         with:
           node-version: 14
 
+      - name: Use npm 7.6.1
+        run: |
+          npm install -g npm@7.6.1
+
       - name: Bump version
         id: standard-version
         run: |
