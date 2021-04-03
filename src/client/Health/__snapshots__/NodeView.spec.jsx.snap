@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Health display NodeView page based on config 1`] = `
+<div>
+  <div
+    class="container"
+  >
+    <div
+      class="row"
+    >
+      <div
+        style="height: 500px; width: 1240px;"
+      >
+        ReactFlow
+      </div>
+    </div>
+  </div>
+</div>
+`;

@@ -10,6 +10,10 @@ import Health from './Health.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
+// ReacFlow does not seem to be working with jest.
+// so we have to mock this component
+jest.mock('../../../node_modules/react-flow-renderer/dist/ReactFlow.js', () => () => 'ReactFlow')
+
 let container
 
 beforeEach(() => {
