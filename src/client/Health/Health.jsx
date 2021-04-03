@@ -5,7 +5,7 @@ import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
-import Overview from './Overview.jsx'
+import NodeView from './NodeView.jsx'
 import utils from '../helpers/utils'
 
 const Health = () => {
@@ -139,7 +139,7 @@ const Health = () => {
           </span>
         </Label>
       </Row>
-      <Overview status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
+      <NodeView status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
       <Row>
         <Label>
           <span>
