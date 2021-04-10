@@ -53,7 +53,7 @@
     "koa-logger": "3.2.1",
     "koa-respond": "2.1.0",
     "koa-send": "5.0.1",
-    "micromatch": "4.0.2",
+    "micromatch": "4.0.4",
     "minimist": "1.2.5",
     "moment-timezone": "0.5.33",
     "mongodb": "3.6.5",
