@@ -372,4 +372,19 @@ module.exports = {
       }
     })
   },
+  23: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'FolderScanner') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'ignoreModifiedDate')) {
+          logger.info('Add ignoreModifiedDate field to FolderScanner')
+          dataSource.FolderScanner.ignoreModifiedDate = false
+        }
+        if (Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'preserve')) {
+          logger.info('Rename preserve field into preserveFiles in FolderScanner')
+          dataSource.FolderScanner.preserveFiles = dataSource.FolderScanner.preserve
+          delete dataSource.FolderScanner.preserve
+        }
+      }
+    })
+  },
 }
