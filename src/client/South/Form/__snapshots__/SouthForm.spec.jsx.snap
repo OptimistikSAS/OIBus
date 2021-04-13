@@ -1737,6 +1737,9 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
                     If Preserve File is checked the files will be left intact, otherwise they will be removed from the input folder.
                   </li>
                   <li>
+                    If Ignore Modified Date is checked the last edited time of the file will be ignored when the file is preserved. This implies that a file will be sent at each scan of the folder
+                  </li>
+                  <li>
                     The Minimum Age option is used to specify the time since the file was last modified. It is used to prevent handling files that are still populated.
                   </li>
                   <li>
@@ -1801,8 +1804,27 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             <input
               checked=""
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.preserve"
-              name="south.dataSources.0.FolderScanner.preserve"
+              id="south.dataSources.0.FolderScanner.preserveFiles"
+              name="south.dataSources.0.FolderScanner.preserveFiles"
+              type="checkbox"
+            />
+          </label>
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            Ignore modified date
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
               type="checkbox"
             />
           </label>

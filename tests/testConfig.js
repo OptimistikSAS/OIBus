@@ -195,7 +195,8 @@ const testConfig = {
         protocol: 'FolderScanner',
         enabled: true,
         FolderScanner: {
-          preserve: true,
+          preserveFiles: true,
+          ignoreModifiedDate: false,
           minAge: 0,
           inputFolder: './input/',
           scanMode: 'every5Second',

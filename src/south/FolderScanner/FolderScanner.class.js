@@ -17,11 +17,11 @@ class FolderScanner extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    /** @todo migration for preserve to be added */
-    const { inputFolder, preserve: preserveFiles, minAge, regex, compression } = this.dataSource.FolderScanner
+    const { inputFolder, preserveFiles, ignoreModifiedDate, minAge, regex, compression } = this.dataSource.FolderScanner
 
     this.inputFolder = path.resolve(inputFolder)
     this.preserveFiles = preserveFiles
+    this.ignoreModifiedDate = ignoreModifiedDate
     this.minAge = minAge
     this.regex = new RegExp(regex)
     this.compression = compression
@@ -85,6 +85,7 @@ class FolderScanner extends ProtocolHandler {
     this.logger.silly(`checkConditions: ${filename} match age`)
     // check if the file was already sent (if preserveFiles is true)
     if (this.preserveFiles) {
+      if (this.ignoreModifiedDate) return true
       const modifyTime = await this.getConfig(filename)
       if (parseFloat(modifyTime) >= stats.mtimeMs) return false
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)

@@ -30,6 +30,10 @@ schema.form = {
             If Preserve File is checked the files will be left intact, otherwise they will be removed from the input folder.
           </li>
           <li>
+            If Ignore Modified Date is checked the last edited time of the file will be ignored when the file is preserved.
+            This implies that a file will be sent at each scan of the folder
+          </li>
+          <li>
             The Minimum Age option is used to specify the time since the file was last modified.
             It is used to prevent handling files that are still populated.
           </li>
@@ -46,10 +50,16 @@ schema.form = {
     defaultValue: './input/',
     help: <div>Path to folder such as: c:/input/</div>,
   },
-  preserve: {
+  preserveFiles: {
     type: 'OIbCheckBox',
     label: 'Preserve File?',
     defaultValue: true,
+  },
+  ignoreModifiedDate: {
+    type: 'OIbCheckBox',
+    label: 'Ignore modified date',
+    defaultValue: false,
+    newRow: false,
   },
   minAge: {
     type: 'OIbInteger',
