@@ -33,7 +33,7 @@ jest.mock('../../engine/Logger.class')
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.genMockFromModule('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
 
