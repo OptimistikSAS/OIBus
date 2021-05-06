@@ -27,7 +27,7 @@ describe('Console north', () => {
     const consoleNorth = new Console({ Console: {} }, engine)
 
     expect(consoleNorth.canHandleFiles).toBeTruthy()
-    expect(consoleNorth.canHandleFiles).toBeTruthy()
+    expect(consoleNorth.canHandleValues).toBeTruthy()
     expect(consoleNorth.verbose).toBeFalsy()
   })
 
