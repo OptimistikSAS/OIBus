@@ -4,8 +4,10 @@ import { Table as BsTable } from 'reactstrap'
 
 import TableHeader from './TableHeader.jsx'
 import TableRows from './TableRows.jsx'
+import OIbTitle from '../OIbForm/OIbTitle.jsx'
 
 const Table = ({
+  help,
   headers,
   sortableProperties,
   sortBy,
@@ -18,21 +20,31 @@ const Table = ({
   handleDuplicate,
   handleSort,
 }) => (
-  <BsTable striped hover size="sm">
-    <TableHeader
-      headers={headers}
-      sortableProperties={sortableProperties}
-      sortBy={sortBy}
-      isAscending={isAscending}
-      handleAdd={handleAdd}
-      handleDelete={handleDelete}
-      handleSort={handleSort}
-    />
-    <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} handleStatus={handleStatus} handleDuplicate={handleDuplicate} />
-  </BsTable>
+  <>
+    {help && (
+      <OIbTitle label="Table help">
+        <>
+          {help.map((e) => e)}
+        </>
+      </OIbTitle>
+    )}
+    <BsTable striped hover size="sm">
+      <TableHeader
+        headers={headers}
+        sortableProperties={sortableProperties}
+        sortBy={sortBy}
+        isAscending={isAscending}
+        handleAdd={handleAdd}
+        handleDelete={handleDelete}
+        handleSort={handleSort}
+      />
+      <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} handleStatus={handleStatus} handleDuplicate={handleDuplicate} />
+    </BsTable>
+  </>
 )
 
 Table.propTypes = {
+  help: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])),
   headers: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
   sortableProperties: PropTypes.arrayOf(PropTypes.string),
   sortBy: PropTypes.string,
@@ -47,6 +59,7 @@ Table.propTypes = {
 }
 
 Table.defaultProps = {
+  help: null,
   sortableProperties: null,
   sortBy: null,
   isAscending: null,
