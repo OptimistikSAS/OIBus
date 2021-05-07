@@ -142,12 +142,12 @@ const ConfigurePoints = () => {
   const ProtocolSchema = ProtocolSchemas[protocol]
   // configure help if exists
   const pointsWithHelp = Object.entries(ProtocolSchema.points).filter(([name, value]) => name && value.help)
-  const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
+  const tableHelps = pointsWithHelp.length > 0 ? pointsWithHelp.map(([name, value]) => (
     <div key={name}>
       <b>{`${value.label || humanizeString(name)}: `}</b>
       {value.help}
     </div>
-  ))
+  )) : null
   // configure table header and rows
   const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
   // filter
