@@ -140,6 +140,14 @@ const ConfigurePoints = () => {
   }
 
   const ProtocolSchema = ProtocolSchemas[protocol]
+  // configure help if exists
+  const pointsWithHelp = Object.entries(ProtocolSchema.points).filter(([name, value]) => name && value.help)
+  const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
+    <div key={name}>
+      <b>{`${value.label || humanizeString(name)}: `}</b>
+      {value.help}
+    </div>
+  ))
   // configure table header and rows
   const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
   // filter
@@ -159,6 +167,7 @@ const ConfigurePoints = () => {
     const Control = Controls[type]
     rest.value = point[key]
     rest.label = null // remove field title in table rows
+    rest.help = null // remove help in table rows
     const name = `points.${index}.${key}`
     return (
       /* eslint-disable-next-line react/jsx-props-no-spreading */
@@ -189,7 +198,7 @@ const ConfigurePoints = () => {
         help={<div>Type any points related data</div>}
         onChange={(_name, val) => updateFilterText(val)}
       />
-      <Table headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
+      <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
       {filteredPoints.length && (
         <TablePagination
           maxToDisplay={MAX_PAGINATION_DISPLAY}
