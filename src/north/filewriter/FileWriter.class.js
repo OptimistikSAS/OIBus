@@ -1,4 +1,4 @@
-const fs = require('fs/promises')
+const fs = require('fs')
 const path = require('path')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -50,15 +50,14 @@ class FileWriter extends ApiHandler {
    * @param {String} filePath - The path of the file
    * @return {Promise} - The send status
    */
-  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
-    const stats = fs.statSync(filePath)
-    this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
-    const extension = path.extname(filePath)
-    let fileName = path.basename(filePath, extension)
-    fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
     try {
-      await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
+      const stats = fs.statSync(filePath)
+      this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
+      const extension = path.extname(filePath)
+      let fileName = path.basename(filePath, extension)
+      fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
+      fs.copyFileSync(filePath, path.join(this.outputFolder, fileName))
       this.logger.debug(`FileWriter copied file ${fileName}`)
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
