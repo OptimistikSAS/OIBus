@@ -22,8 +22,8 @@
       "archiveMode": "archive",
       "archiveFolder": "./cache/archived/"
     },
-    "bulk": {
-      "bulkFolder": "./bulk"
+    "historyQuery": {
+      "folder": "./historyQuery"
     },
     "scanModes": [
       {

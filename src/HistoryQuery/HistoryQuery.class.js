@@ -1,6 +1,6 @@
 const ProtocolFactory = require('../south/ProtocolFactory.class')
 
-class Bulk {
+class HistoryQuery {
   static STATUS_PENDING = 'pending';
 
   static STATUS_EXPORTING = 'exporting';
@@ -9,10 +9,10 @@ class Bulk {
 
   static STATUS_FINISHED = 'finished';
 
-  constructor(engine, logger, bulkFolder, startTimestamp, endTimestamp, filenamePattern, dataSource, status) {
+  constructor(engine, logger, folder, startTimestamp, endTimestamp, filenamePattern, dataSource, status) {
     this.engine = engine
     this.logger = logger
-    this.bulkFolder = bulkFolder
+    this.folder = folder
     this.dataSource = dataSource
     this.startTimestamp = startTimestamp
     this.endTimestamp = endTimestamp
@@ -22,17 +22,17 @@ class Bulk {
 
   start() {
     switch (this.status) {
-      case Bulk.STATUS_PENDING:
+      case HistoryQuery.STATUS_PENDING:
         this.startExport()
         break
-      case Bulk.STATUS_EXPORTING:
+      case HistoryQuery.STATUS_EXPORTING:
         break
-      case Bulk.STATUS_IMPORTING:
+      case HistoryQuery.STATUS_IMPORTING:
         break
-      case Bulk.STATUS_FINISHED:
+      case HistoryQuery.STATUS_FINISHED:
         break
       default:
-        this.logger.error(`Invalid bulk status: ${this.status}`)
+        this.logger.error(`Invalid historyQuery status: ${this.status}`)
     }
   }
 
@@ -47,7 +47,7 @@ class Bulk {
     if (this.south) {
       await this.south.connect()
 
-      this.status = Bulk.STATUS_EXPORTING
+      this.status = HistoryQuery.STATUS_EXPORTING
     }
   }
 
@@ -57,4 +57,4 @@ class Bulk {
   }
 }
 
-module.exports = Bulk
+module.exports = HistoryQuery
