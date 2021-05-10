@@ -8,7 +8,7 @@ import Logging from './Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
-import Bulk from './Bulk.jsx'
+import HistoryQuery from './HistoryQuery.jsx'
 import AliveSignal from './AliveSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
 import ExternalSources from './ExternalSources.jsx'
@@ -115,7 +115,7 @@ const Engine = () => {
         <Logging onChange={onChange} logParameters={newConfig.engine.logParameters} />
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
-        <Bulk onChange={onChange} bulk={newConfig.engine.bulk} />
+        <HistoryQuery onChange={onChange} historyQuery={newConfig.engine.historyQuery} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
         <AliveSignal onChange={onChange} aliveSignal={newConfig.engine.aliveSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />

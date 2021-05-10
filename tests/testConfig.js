@@ -16,7 +16,7 @@ const testConfig = {
       sqliteMaxFileSize: 50000000,
     },
     caching: { cacheFolder: './cache', archiveMode: 'delete', archiveFolder: './cache/archived/' },
-    bulk: { bulkFolder: './bulk' },
+    historyQuery: { folder: './historyQuery' },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },

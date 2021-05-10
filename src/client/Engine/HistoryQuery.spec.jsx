@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import testConfig from '../../../tests/testConfig'
-import Bulk from './Bulk.jsx'
+import HistoryQuery from './HistoryQuery.jsx'
 
 const onChange = jest.fn()
 
@@ -22,25 +22,25 @@ afterEach(() => {
   container = null
 })
 
-describe('Bulk', () => {
-  test('check Bulk', () => {
+describe('HistoryQuery', () => {
+  test('check HistoryQuery', () => {
     act(() => {
-      ReactDOM.render(<Bulk
-        bulk={testConfig.engine.bulk}
+      ReactDOM.render(<HistoryQuery
+        historyQuery={testConfig.engine.historyQuery}
         onChange={() => (1)}
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check change bulkFolder', () => {
+  test('check change folder', () => {
     act(() => {
-      ReactDOM.render(<Bulk
-        bulk={testConfig.engine.bulk}
+      ReactDOM.render(<HistoryQuery
+        historyQuery={testConfig.engine.historyQuery}
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.bulk.bulkFolder'), { target: { value: './newFolder' } })
-    expect(onChange).toBeCalledWith('engine.bulk.bulkFolder', './newFolder', null)
+    Simulate.change(document.getElementById('engine.historyQuery.folder'), { target: { value: './newFolder' } })
+    expect(onChange).toBeCalledWith('engine.historyQuery.folder', './newFolder', null)
     expect(container).toMatchSnapshot()
   })
 })

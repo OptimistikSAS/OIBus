@@ -18,10 +18,10 @@ class Engine extends BaseEngine {
     super(configFile)
 
     const { engineConfig } = this.configService.getConfig()
-    const { bulk: { bulkFolder } } = engineConfig
-    this.bulkFolder = bulkFolder
+    const { historyQuery: { folder } } = engineConfig
+    this.folder = folder
 
-    this.bulks = []
+    this.historyQueries = []
   }
 
   /**
@@ -55,7 +55,6 @@ class Engine extends BaseEngine {
    * @return {void}
    */
   async start(safeMode = false) {
-    // this.bulkConfigs = await this.bulkDatabaseService.getBulks()
     this.logger.warn(`start() should be surcharged ${safeMode}`)
   }
 

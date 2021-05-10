@@ -6,7 +6,7 @@ const VERSION = require('../package.json').version
 const migrationService = require('./migration/migration.service')
 const ConfigService = require('./services/config.service.class')
 const OIBusEngine = require('./engine/OIBusEngine.class')
-const BulkEngine = require('./bulk/BulkEngine.class')
+const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/Logger.class')
 
 const MAX_RESTART_COUNT = 3
@@ -72,17 +72,17 @@ if (cluster.isMaster) {
   migrationService.migrate(configFile)
 
   // this condition is reached only for a worker (i.e. not master)
-  // so this is here where we execute the OIBusEngine and BulkEngine
+  // so this is here where we execute the OIBusEngine and HistoryQueryEngine
   const oibusEngine = new OIBusEngine(configFile)
   oibusEngine.start(process.env.SAFE_MODE === 'true')
 
-  const bulkEngine = new BulkEngine(configFile)
-  bulkEngine.start(process.env.SAFE_MODE === 'true')
+  const historyQueryEngine = new HistoryQueryEngine(configFile)
+  historyQueryEngine.start(process.env.SAFE_MODE === 'true')
 
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', () => {
     logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-    const stopAll = [oibusEngine.stop(), bulkEngine.stop()]
+    const stopAll = [oibusEngine.stop(), historyQueryEngine.stop()]
     Promise.allSettled(stopAll)
       .then(() => {
         process.exit()
@@ -93,13 +93,13 @@ if (cluster.isMaster) {
   process.on('message', (msg) => {
     switch (msg.type) {
       case 'reload':
-        Promise.allSettled([oibusEngine.stop(), bulkEngine.stop()])
+        Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
           .then(() => {
             process.exit()
           })
         break
       case 'shutdown':
-        Promise.allSettled([oibusEngine.stop(), bulkEngine.stop()])
+        Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
           .then(() => {
             process.send({ type: 'shutdown-ready' })
           })
