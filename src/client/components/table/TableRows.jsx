@@ -8,7 +8,7 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
     {rows.map((row, index) => (
       <tr key={row[0].name}>
         {row.map((field) => (
-          <td key={field.name}>{field.value}</td>
+          <td key={field.name} style={{ width: field.value.props?.width ?? '' }}>{field.value}</td>
         ))}
         <td>
           {handleDelete && (
