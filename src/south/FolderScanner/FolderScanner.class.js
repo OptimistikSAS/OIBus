@@ -55,8 +55,12 @@ class FolderScanner extends ProtocolHandler {
           // eslint-disable-next-line no-await-in-loop
           const matchConditions = await this.checkConditions(file)
           if (matchConditions) {
-            // eslint-disable-next-line no-await-in-loop
-            await this.sendFile(file)
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              await this.sendFile(file)
+            } catch (sendFileError) {
+              this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+            }
           }
         }
       } else {
