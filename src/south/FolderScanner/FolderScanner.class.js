@@ -55,6 +55,8 @@ class FolderScanner extends ProtocolHandler {
           // eslint-disable-next-line no-await-in-loop
           const matchConditions = await this.checkConditions(file)
           if (matchConditions) {
+            // local try catch in case an error occurs on a file
+            // if so, the loop goes on with the other files
             try {
               // eslint-disable-next-line no-await-in-loop
               await this.sendFile(file)

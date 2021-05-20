@@ -54,6 +54,7 @@ class ProtocolHandler {
     this.addFileCount = 0
     this.lastAddPointsAt = null
     this.addPointsCount = 0
+    this.currentlyOnScan = false
   }
 
   async connect() {
@@ -68,11 +69,20 @@ class ProtocolHandler {
     this.logger.error(`Data source ${dataSourceId} should surcharge onScanImplementation(${scanMode})`)
   }
 
-  onScan(scanMode) {
-    this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
-    this.lastOnScanAt = new Date().getTime()
-
-    this.onScanImplementation(scanMode)
+  async onScan(scanMode) {
+    if (this.currentlyOnScan) {
+      this.logger.debug(`${this.constructor.name} already activated on scanMode: ${scanMode}. Skipping it.`)
+    } else {
+      this.currentlyOnScan = true
+      this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
+      this.lastOnScanAt = new Date().getTime()
+      try {
+        await this.onScanImplementation(scanMode)
+      } catch (error) {
+        this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
+      }
+      this.currentlyOnScan = false
+    }
   }
 
   listen() {
