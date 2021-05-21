@@ -7079,6 +7079,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                      More info
                   </a>
                 </p>
+                <p>
+                  Note for all SQL connections with username: To avoid accidental data deletion/alteration the SQL user should have only readonly access to the database.
+                </p>
               </div>
             </div>
           </div>
@@ -7282,6 +7285,13 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           <div
             class="invalid-feedback"
           />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              (Preferably with only readonly access to the database)
+            </div>
+          </small>
         </div>
       </div>
       <div
