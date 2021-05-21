@@ -44,6 +44,10 @@ schema.form = {
           Oracle Client libraries must be installed and configured separated.
           <a href="https://oracle.github.io/node-oracledb/INSTALL.html" target="_blank" rel="noopener noreferrer"> More info</a>
         </p>
+        <p>
+          Note for all SQL connections with username:
+          To avoid accidental data deletion/alteration the SQL user should have only readonly access to the database.
+        </p>
       </>
     ),
   },
@@ -86,6 +90,7 @@ schema.form = {
     type: 'OIbText',
     defaultValue: '',
     valid: notEmpty(),
+    help: <div>(Preferably with only readonly access to the database)</div>,
     md: 3,
   },
   password: {
