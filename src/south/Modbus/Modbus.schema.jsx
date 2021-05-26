@@ -37,20 +37,17 @@ schema.form = {
           <li>Coil 156 (0x9C), enter 0x00009C for an extended Modicon Notation or enter 0x9C or 0x0009C for a standard Modicon Notation</li>
         </ul>
 
-        <p>For each point you can specify extra configuration :</p>
+        <p>The following settings apply to every points:</p>
         <ul>
           <li>
             addressOffset : Address offset to be applied for all points during requests
-            (0 for the traditionnal Modbus protocol and 1 when using JBus)
-          </li>
-          <li>modbusType : Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister)</li>
-          <li>
-            dataType : HoldingRegisters and inputRegisters can have one of the above types.
-            Default type is UInt16. This field does not apply for coils and discreteInputs.
+            (0 for the traditional Modbus protocol and 1 when using JBus)
           </li>
           <li>endianness : Endianness of the data to read</li>
+          <li>Bytes swap : should reverse 16 bits data by group of 8 bits</li>
+          <li>Words swap : should reverse 32 bits data by group of 16 bits</li>
           <li>
-            multiplierCoefficient : Multiply retreived data by a coefficient.
+            multiplierCoefficient :
             Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value
           </li>
         </ul>
@@ -122,29 +119,38 @@ schema.points = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
+    help: 'The id of the data. This id can then be used by another application where the data is sent by a north connector.',
   },
   address: {
     type: 'OIbText',
     defaultValue: '',
     valid: combinedValidations([isHexaOrDecimal(), notEmpty()]),
+    help: 'The address must be in hexadecimal form, without the type number in front. '
+      + 'For example, holdingRegister 400001 must be written 0x00001. '
+      + 'The number "4" mst not be written since it will be infer from the modbus data typ field.',
   },
   modbusType: {
     type: 'OIbSelect',
     options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
     label: 'Modbus type',
     defaultValue: 'holdingRegister',
+    help: 'Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).',
   },
   dataType: {
     type: 'OIbSelect',
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
     label: 'Data type',
     defaultValue: 'Uint16',
+    help: 'HoldingRegisters and inputRegisters can have one of the above types.'
+      + 'Default type is UInt16. This field does not apply for coils and discreteInputs.',
   },
   multiplierCoefficient: {
     type: 'OIbText',
     label: 'Multiplier Coefficient',
     valid: combinedValidations([notEmpty(), inRange(-1000, 1000)]),
     defaultValue: 1,
+    help: 'Multiply retrieved data by a coefficient\n'
+      + 'Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value.',
   },
   scanMode: {
     type: 'OIbScanMode',
