@@ -407,6 +407,17 @@ h3 {
   min-height: 38px;
 }
 
+.oi-safe-mode {
+  min-height: 38px;
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
 .tight {
   padding-right: 5px;
   padding-left: 5px;
