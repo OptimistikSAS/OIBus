@@ -11,13 +11,13 @@ const colors = {
   border: {
     enabled: '1px solid #2ea948',
     disabled: '1px solid #eaecef',
-    danger: '1px solid #dc3545',
+    warning: '1px solid #ffc107',
     success: '1px solid #2ea948',
   },
   background: {
     enabled: '#e1ffe15c',
     disabled: '#eaecef5c',
-    danger: '#FFC0CB',
+    warning: '#fdfd96',
     success: '#e1ffe15c',
   },
 }
@@ -113,15 +113,15 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         label: (
           <div className="oi-box">
             <Link to="/engine">
-              <div className={`text-${engine?.safeMode ? 'danger' : 'success'} center`}>
-                {`Engine ${status?.version}`}
+              <div className={`text-${engine?.safeMode ? 'warning oi-safe-mode' : 'success'} center`}>
+                {`Engine ${status?.version}${engine?.safeMode ? ' - Safe mode warning' : ''}`}
               </div>
             </Link>
             <Modal show={false} title="Server restart" body="Confirm restart?">
               {(confirm) => (
                 <Button
                   className="inline-button autosize oi-restart-button"
-                  color={engine?.safeMode ? 'danger' : 'success'}
+                  color={engine?.safeMode ? 'warning' : 'success'}
                   onClick={confirm(onRestart)}
                   size="sm"
                   outline
@@ -134,7 +134,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
               {(confirm) => (
                 <Button
                   className="inline-button autosize oi-shutdown-button"
-                  color={engine?.safeMode ? 'danger' : 'success'}
+                  color={engine?.safeMode ? 'warning' : 'success'}
                   onClick={confirm(onShutdown)}
                   size="sm"
                   outline
@@ -150,9 +150,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       targetPosition: 'bottom',
       sourcePosition: 'top',
       style: {
-        background: colors.background[engine?.safeMode ? 'danger' : 'success'],
+        background: colors.background[engine?.safeMode ? 'warning' : 'success'],
         color: 'black',
-        border: colors.border[engine?.safeMode ? 'danger' : 'success'],
+        border: colors.border[engine?.safeMode ? 'warning' : 'success'],
         width: 1080,
       },
     },
@@ -178,31 +178,6 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         background: colors.background[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
         border: colors.border[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
         width: 100,
-      },
-    },
-    {
-      id: 'safeMode',
-      type: 'input',
-      sourcePosition: 'left',
-      data: {
-        label: (
-          <Link to="/engine">
-            <div
-              className="oi-box d-flex align-items-center text-danger"
-            >
-              <div className="oi-safe-mode d-flex align-items-center">
-                Safe mode warning
-              </div>
-            </div>
-          </Link>
-        ),
-      },
-      position: { x: 1200, y: 125 },
-      style: {
-        background: colors.background.danger,
-        border: colors.border.danger,
-        width: 150,
-        visibility: engine?.safeMode ? 'visible' : 'hidden',
       },
     },
     ...southNodes,

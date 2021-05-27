@@ -24,6 +24,7 @@ const TopHeader = () => {
   }
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
+  const engine = activeConfig?.engine
   const engineName = activeConfig ? activeConfig.engine.engineName : ''
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>
@@ -34,7 +35,8 @@ const TopHeader = () => {
       <Collapse isOpen={isOpen} navbar>
         <Nav navbar>
           <NavItem className="oi-navitem" active={isActive('engine')} tag={Link} to="/engine">
-            Engine
+            {'Engine '}
+            {engine?.safeMode ? <Badge className="oi-safe-mode" color="warning" pill>Safe mode</Badge> : null}
           </NavItem>
           <NavItem className="oi-navitem" active={isActive('north')} tag={Link} to="/north">
             North
