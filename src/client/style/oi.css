@@ -408,7 +408,6 @@ h3 {
 }
 
 .oi-safe-mode {
-  min-height: 38px;
   animation: blinker 1s linear infinite;
 }
 
