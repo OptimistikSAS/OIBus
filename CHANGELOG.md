@@ -2,6 +2,72 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/OptimistikSAS/OIBus/compare/v1.1.0...v1.2.0) (2021-06-02)
+
+
+### Features
+
+* **columns:** column width percent can be determined from the schema.points ([ab2fb40](https://github.com/OptimistikSAS/OIBus/commit/ab2fb404370890e9364c2f8903921825eb7564e7))
+* **engine:** Added safe mode status warning on navbar and overview screen. ([abb97a0](https://github.com/OptimistikSAS/OIBus/commit/abb97a02e58c2b1f9c5fbf4414916a38fd93ea63))
+* **home-ui:** show blocks with node view ([4348fbb](https://github.com/OptimistikSAS/OIBus/commit/4348fbb217385f7f6d522c74ecd7f2a2e4ca19a4))
+* **overview:** Safe mode status warning. ([94fb4db](https://github.com/OptimistikSAS/OIBus/commit/94fb4db98b43ad525d4cf64c73e7db08323da55c))
+* **points:** added table help section on south points and removed help for individual rows ([e097a35](https://github.com/OptimistikSAS/OIBus/commit/e097a35a98b4f54be0a569168d881da32482c3af))
+* **south-ads:** add south handler for ads protocol with limited settings ([c77dbf9](https://github.com/OptimistikSAS/OIBus/commit/c77dbf9392be5f21b887f61348b4ad633bac3ca7))
+* **south-ads:** improve tests for ads ([d78382a](https://github.com/OptimistikSAS/OIBus/commit/d78382ad595740f27dc25d0ba8c489f2d3fdf78a))
+* **south-ads:** manage different data types automatically and add an optional prefix in front of the pointID ([34d329e](https://github.com/OptimistikSAS/OIBus/commit/34d329ee434b49aa50d902830b09f0a4f2354ca7))
+* **south-ads:** manage distant connections ([9ef6872](https://github.com/OptimistikSAS/OIBus/commit/9ef687208be82bf198c84cbb0f2f23e48885fc62))
+* **south-ads:** structure filter ([7203c85](https://github.com/OptimistikSAS/OIBus/commit/7203c85f82873bb0b13d6b55f9bd70a4b03a711c))
+* **south-folderScanner:** ignored modified time files of folder scanner when preserved ([43cc91d](https://github.com/OptimistikSAS/OIBus/commit/43cc91d4b934975a7ee7abf1aef5fb2e6ee232be))
+* **south-live:** Changed live screen icon to “Status” button on protocol settings screen. ([7c666f6](https://github.com/OptimistikSAS/OIBus/commit/7c666f60af0d1d31df259f8e3b8f4a3954cd20cd))
+* **south-live:** Removed Last completed At from Configure Protocol setting screen. Created a Live screen for live info for each Protocol. ([18260a6](https://github.com/OptimistikSAS/OIBus/commit/18260a6adc62e9378fbc455a530e81f54786f61a))
+* **south-live:** Show points and lastCompletedAt related info ([6bb82ab](https://github.com/OptimistikSAS/OIBus/commit/6bb82ab4b7acf4045e58f194f1a6c411c6f98f4d))
+* **south-live:** Update points related information on addValues() call ([69d9984](https://github.com/OptimistikSAS/OIBus/commit/69d9984adb706cad7a1de75450985298699c9185))
+* **south-live:** Use onScanImplementation() ([3e431d7](https://github.com/OptimistikSAS/OIBus/commit/3e431d7e2d9c82f8dc8e3601f96e0f2224fed2e6))
+* **south-live-stat:** Simple version for live stat ([33f7116](https://github.com/OptimistikSAS/OIBus/commit/33f7116d16c40bb7048c64c6639fcea2a3eca602))
+* **south-modbus:** Add multiplier coefficient for retreived data ([ffe92de](https://github.com/OptimistikSAS/OIBus/commit/ffe92debe5bf0d6f101fc398290c77457e74f54c))
+* **south-modbus:** Add possibility to do swapping operation ([5474675](https://github.com/OptimistikSAS/OIBus/commit/54746751d8de5ae80f2bfcf9193a9c43d46ee39f))
+* **south-modbus:** Add possibility to specify endianness and reorganize UI for points configuration ([f0ccdc5](https://github.com/OptimistikSAS/OIBus/commit/f0ccdc58a8156e0b51780d2f0884a17548f9d9b5))
+* **south-modbus:** Add possibility to specify the data type of a point. Integer or Decimal, Signed or Unsigned and on how many bits the value is stored ([ad6135c](https://github.com/OptimistikSAS/OIBus/commit/ad6135c30b065138bb675a0505bec38d8eb2fd7f))
+* **south-modbus:** Added option to choose which slave id to use during modbus request ([08cc359](https://github.com/OptimistikSAS/OIBus/commit/08cc359d2cf338d8df182e0da4e730299dca589c))
+* **south-modbus:** Added the possibility to define an offset address for all points ([eea65ed](https://github.com/OptimistikSAS/OIBus/commit/eea65ed16187164fd008019d249dcae551f460e0))
+* **south-modbus:** Change addressOffset config field to display Modbus/Jbus instead of 0/-1 for better readability ([4d04ff9](https://github.com/OptimistikSAS/OIBus/commit/4d04ff919fc787c0d5888da28fb68cfe45fa1969))
+* **south-modbus:** improve Modbus help ([6aab5fd](https://github.com/OptimistikSAS/OIBus/commit/6aab5fde1f85d0cacc65075d8e82a5cee28e47d2))
+* **south-modbus:** manage reconnection and retry on connection failure ([2df4243](https://github.com/OptimistikSAS/OIBus/commit/2df42432c9e8e0fa3d42a04ec291f8083afbe37d))
+* **south-modbus:** Use two different fields for modbus points: 1 for modbusType (Register) and the other for the point address in the register ([2096beb](https://github.com/OptimistikSAS/OIBus/commit/2096bebdcc39be7251afe6d87a40430e61d35d12))
+* **south-sqldbtofile:** add sqlite driver for local sqlite db file ([189a8ec](https://github.com/OptimistikSAS/OIBus/commit/189a8ecaff2132334922015960ac79de00861ca6))
+* **south-sqldbtofile:** changing settings depending on driver ([5588c2a](https://github.com/OptimistikSAS/OIBus/commit/5588c2a1e56023f750ce5e16391451e4a18bdcf6))
+* **south-ui:** Added Last completed At on Configure Protocol setting page where historian support is available. ([35f6452](https://github.com/OptimistikSAS/OIBus/commit/35f6452f64b21a7684c11d9bc03885f01720ed29))
+* **south-ui:** Show lastCompletedAt ([518d144](https://github.com/OptimistikSAS/OIBus/commit/518d1442bddaf8c2744ea4b54a61ddbb05bc6a6b))
+
+
+### Bug Fixes
+
+* **ads:** manage null structure filtering ([32f07ea](https://github.com/OptimistikSAS/OIBus/commit/32f07ea0f3121b65b5c44be5532ca87f7ce1d684))
+* **Console:** a test was duplicated ([4476cf3](https://github.com/OptimistikSAS/OIBus/commit/4476cf3086d9de854bff44dbf104a2cbe191bd5e))
+* **deps:** downgrade pkg dependency to fix win build ([89a573d](https://github.com/OptimistikSAS/OIBus/commit/89a573d4d2c657a669e07d90e8400fb62d72e7c2))
+* **deps:** update dependency @fortawesome/fontawesome-free to v5.15.3 ([2f25fdc](https://github.com/OptimistikSAS/OIBus/commit/2f25fdc915ac530fd1ac6b800590c5593a5c6fd2))
+* **deps:** update dependency aws-sdk to v2.863.0 ([2905a65](https://github.com/OptimistikSAS/OIBus/commit/2905a65d75b21a25ce3b9d3eb13b5e737f39830b))
+* **deps:** update dependency aws-sdk to v2.869.0 ([e8be2f0](https://github.com/OptimistikSAS/OIBus/commit/e8be2f0cbe7767cfeefcc22d99817f08381fa3df))
+* **deps:** update dependency aws-sdk to v2.875.0 ([fa50df1](https://github.com/OptimistikSAS/OIBus/commit/fa50df17ad0e3d93e4845d0a1d752498fd12f2e2))
+* **deps:** update dependency aws-sdk to v2.880.0 ([b6e19cf](https://github.com/OptimistikSAS/OIBus/commit/b6e19cf2593f3a2e0abcd52632fbb3bb6b19ab7f))
+* **deps:** update dependency koa-helmet to v6.1.0 ([593c380](https://github.com/OptimistikSAS/OIBus/commit/593c380f8a65be902cab561d618f6569a16d809d))
+* **deps:** update dependency mongodb to v3.6.5 ([406155d](https://github.com/OptimistikSAS/OIBus/commit/406155dfab7ecd46975e2053e2d44657013cebf1))
+* **deps:** update dependency react-json-view to v1.21.3 ([f613269](https://github.com/OptimistikSAS/OIBus/commit/f61326936b6d4bbd3b25bc10689abdafd3e3a674))
+* **deps:** update dependency timexe to v1.0.4 ([2994624](https://github.com/OptimistikSAS/OIBus/commit/29946248a5a87cc8b38a656e5f7d10edcc640b3f))
+* **deps:** update react monorepo to v17.0.2 ([f2743ba](https://github.com/OptimistikSAS/OIBus/commit/f2743ba9187230bdc03c6c63222c3ddff5b35734))
+* **engine:** forbid to run a on scan function when the previous one is not over ([7f2a115](https://github.com/OptimistikSAS/OIBus/commit/7f2a11541e8110b7f294901a0bd11a831ea90130))
+* **FileWriter:** fix handling files ([6bd55b8](https://github.com/OptimistikSAS/OIBus/commit/6bd55b8b231b7a3353ac75cd283b5b00e08ea9d9))
+* **points-help:** fixed incorrect value for help section if no help text is provided. ([08d2178](https://github.com/OptimistikSAS/OIBus/commit/08d21786a228217274ee41ab91b336a3f8ce6e0a))
+* **safe-mode:** improve safe mode display to make text more visible ([f0c372a](https://github.com/OptimistikSAS/OIBus/commit/f0c372af45f45db6a4d20a222aa7d2836cf9ad2e))
+* **south-folderScanner:** add try catch per file ([e5b7f24](https://github.com/OptimistikSAS/OIBus/commit/e5b7f243e054c141db65b3533670347f425e503d))
+* **south-modbus:** regroup all modbus migrations ([b0a0424](https://github.com/OptimistikSAS/OIBus/commit/b0a04240099ff9d8245eff5a4fab89ec8b47e8ee))
+* **south-modbus:** Removed 64 bits swap support because of poor JS 64 bits implementation & add unit tests ([cedf632](https://github.com/OptimistikSAS/OIBus/commit/cedf632c62275dc3eeae672975f5a83225e49f40))
+* **south-sql:** replace all occurrence of a request variable in sql connector ([1610b32](https://github.com/OptimistikSAS/OIBus/commit/1610b32b3209e1752603eaac5146578a710d3ea1))
+* **south-sqldbtofile:** fix @LastCompletedDate usage in sqlite ([e2eecc7](https://github.com/OptimistikSAS/OIBus/commit/e2eecc77b871a6ae57129c268674eb2ba34f1ec1))
+* **south-sqldbtofile:** fix @LastCompletedDate usage in sqlite with string or integer date format ([029b334](https://github.com/OptimistikSAS/OIBus/commit/029b3341eae788387d7e5bdc730bbadd0d421ba5))
+* **south-sqldbtofile:** Fix tests ([159093e](https://github.com/OptimistikSAS/OIBus/commit/159093eacdbab41fd5e4bf480c71679ab9b1a560))
+* **south-sqldbtofile:** Update documentation for readonly user access ([599ba4c](https://github.com/OptimistikSAS/OIBus/commit/599ba4cd8ae312801ea3a2964a33f36ac6fc09d6))
+
 ## [1.1.0](https://github.com/OptimistikSAS/OIBus/compare/v1.0.1...v1.1.0) (2021-03-11)
 
 
