@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/OptimistikSAS/OIBus/compare/v1.2.0...v1.2.1) (2021-06-02)
+
+
+### Bug Fixes
+
+* **south-sql:** trust server certificate ([5a83d81](https://github.com/OptimistikSAS/OIBus/commit/5a83d813016b3b091251a245499f570608f2fdbb))
+
 ## [1.2.0](https://github.com/OptimistikSAS/OIBus/compare/v1.1.0...v1.2.0) (2021-06-02)
 
 
