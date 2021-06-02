@@ -164,7 +164,7 @@ describe('sql-db-to-file', () => {
       database: sqlConfig.SQLDbToFile.database,
       connectionTimeout: sqlConfig.SQLDbToFile.connectionTimeout,
       requestTimeout: sqlConfig.SQLDbToFile.requestTimeout,
-      options: { encrypt: sqlConfig.SQLDbToFile.encryption },
+      options: { encrypt: sqlConfig.SQLDbToFile.encryption, trustServerCertificate: true },
     }
     expect(mssql.ConnectionPool).toHaveBeenCalledWith(expectedConfig)
     expect(connect).toBeCalledTimes(1)
@@ -194,7 +194,7 @@ describe('sql-db-to-file', () => {
       database: sqlConfig.SQLDbToFile.database,
       connectionTimeout: sqlConfig.SQLDbToFile.connectionTimeout,
       requestTimeout: sqlConfig.SQLDbToFile.requestTimeout,
-      options: { encrypt: sqlConfig.SQLDbToFile.encryption },
+      options: { encrypt: sqlConfig.SQLDbToFile.encryption, trustServerCertificate: true },
       domain: 'TestDomain',
     }
     expect(mssql.ConnectionPool).toHaveBeenCalledWith(expectedConfig)
