@@ -17,7 +17,7 @@ const colors = {
   background: {
     enabled: '#e1ffe15c',
     disabled: '#eaecef5c',
-    warning: '#fdfd96',
+    warning: '#eaecef5c',
     success: '#e1ffe15c',
   },
 }
