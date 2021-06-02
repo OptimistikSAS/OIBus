@@ -413,7 +413,7 @@ h3 {
 
 @keyframes blinker {
   50% {
-    opacity: 0;
+    opacity: 0.35;
   }
 }
 
@@ -423,7 +423,7 @@ h3 {
 }
 
 .col .table td .oi-icon,
-.col-md-4 .table td .oi-icon, 
+.col-md-4 .table td .oi-icon,
 .col-md-6:not(.north) .table td .oi-icon,
 .col-md-8:not(.south) .table td .oi-icon,
 .points .table td .oi-icon {
