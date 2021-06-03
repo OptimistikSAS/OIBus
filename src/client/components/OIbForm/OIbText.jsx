@@ -4,7 +4,7 @@ import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inline, disabled, hidden }) => {
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultValue)
+    if (value === null) onChange(name, defaultValue, valid(defaultValue))
   }, [value])
   const handleChange = (event) => {
     const { target } = event

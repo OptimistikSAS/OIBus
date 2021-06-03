@@ -11,6 +11,7 @@ import { ConfigContext } from '../context/configContext.jsx'
 import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
 import utils from '../helpers/utils'
+import validation from './Form/South.validation'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -168,6 +169,16 @@ const ConfigurePoints = () => {
     rest.value = point[key]
     rest.label = null // remove field title in table rows
     rest.help = null // remove help in table rows
+    // check if must be unique and extend already existing validation with isUnique check
+    if (ProtocolSchema.points[key].unique) {
+      const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
+      const pointIds = points.filter((_, i) => i !== indexOffset + index).map((p) => p[key])
+      const oldValid = rest.valid.bind({})
+      rest.valid = (val) => {
+        const result = oldValid(val) || validation.points.isUnique(val, pointIds)
+        return result
+      }
+    }
     const name = `points.${index}.${key}`
     return (
       /* eslint-disable-next-line react/jsx-props-no-spreading */

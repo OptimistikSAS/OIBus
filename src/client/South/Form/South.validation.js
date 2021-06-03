@@ -29,6 +29,15 @@ const validation = {
       return error
     },
   },
+  points: {
+    isUnique: (val, excludedList) => {
+      let error = null
+      if (excludedList.includes(val)) {
+        error = 'Id already exists'
+      }
+      return error
+    },
+  },
 }
 
 export default validation

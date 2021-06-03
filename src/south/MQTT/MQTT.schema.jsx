@@ -226,6 +226,7 @@ schema.points = {
   pointId: {
     type: 'OIbText',
     valid: notEmpty(),
+    unique: true,
     defaultValue: '',
   },
   scanMode: {
