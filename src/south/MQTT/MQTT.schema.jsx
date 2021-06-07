@@ -228,6 +228,19 @@ schema.points = {
     valid: notEmpty(),
     unique: true,
     defaultValue: '',
+    help: (
+      <ul>
+        <li>
+          Point Id should be unique and it must be checked manually in case of wildcards(# or +)
+        </li>
+        <li>
+          Ex.
+          <b> point.# </b>
+          covers
+          <b> point.id</b>
+        </li>
+      </ul>
+    ),
   },
   scanMode: {
     type: 'OIbText',
