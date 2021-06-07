@@ -7,6 +7,10 @@ import OIbTable from './OIbTable.jsx'
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
 
+jest.mock('react-router-dom', () => (
+  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
+))
+
 let container
 beforeEach(() => {
   container = document.createElement('div')

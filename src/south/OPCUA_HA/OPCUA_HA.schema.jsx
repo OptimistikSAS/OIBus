@@ -151,7 +151,18 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
   },
-  scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
+  scanMode: {
+    type: 'OIbScanMode',
+    label: 'Scan Mode',
+    help: (
+      <div>
+        <ul>
+          <li>Only scan modes set in scan groups are displayed</li>
+          <li>A new scan group must be added to be able to select other scan modes</li>
+        </ul>
+      </div>
+    ),
+  },
 }
 
 export default schema
