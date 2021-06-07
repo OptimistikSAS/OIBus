@@ -171,7 +171,7 @@ const ConfigurePoints = () => {
     const name = `points.${index}.${key}`
     return (
       /* eslint-disable-next-line react/jsx-props-no-spreading */
-      { name, value: <Control onChange={onChange} name={name} point {...rest} /> }
+      { name, value: <Control onChange={onChange} name={name} {...rest} /> }
     )
   }))
 
