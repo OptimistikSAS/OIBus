@@ -4,14 +4,15 @@ import { useParams } from 'react-router-dom'
 import { FormGroup, FormText, Label, Input, FormFeedback } from 'reactstrap'
 import { ConfigContext } from '../../context/configContext.jsx'
 
-const OIbScanMode = ({ label, help, valid, value, name, onChange, point }) => {
+const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const scanModes = newConfig?.engine?.scanModes ?? [] // scan modes defined in engine
   const { dataSourceId } = useParams()
   const dataSource = newConfig?.south.dataSources.find((d) => d.dataSourceId === dataSourceId)
   const scanGroups = dataSource ? dataSource[dataSource.protocol]?.scanGroups : null
   // Scan Group protocols should only allow scan modes set in a scan group as option
-  const options = scanGroups !== undefined && point
+  const isPointConfig = name.startsWith('points.')
+  const options = scanGroups !== undefined && isPointConfig
     ? scanGroups.map((e) => e.scanMode)
     : scanModes.map((e) => e.scanMode)
   if (options === null || options.length === 0) {
@@ -63,8 +64,7 @@ OIbScanMode.propTypes = {
   valid: PropTypes.func,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string,
-  point: PropTypes.bool,
 }
-OIbScanMode.defaultProps = { label: null, help: null, valid: () => null, value: '', point: false }
+OIbScanMode.defaultProps = { label: null, help: null, valid: () => null, value: '' }
 
 export default OIbScanMode
