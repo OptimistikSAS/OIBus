@@ -654,6 +654,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                 >
                   API Key
                 </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -1758,6 +1763,11 @@ exports[`ConfigureApi check update 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div

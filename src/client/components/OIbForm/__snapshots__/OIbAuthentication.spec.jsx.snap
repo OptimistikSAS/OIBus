@@ -203,6 +203,11 @@ exports[`OIbAuthentication check Authentication with "custom" mode (headerName/s
           >
             API Key
           </option>
+          <option
+            value="Bearer"
+          >
+            Bearer
+          </option>
         </select>
         <div
           class="invalid-feedback"
@@ -357,6 +362,11 @@ exports[`OIbAuthentication check Authentication with default mode (user/password
             value="API Key"
           >
             API Key
+          </option>
+          <option
+            value="Bearer"
+          >
+            Bearer
           </option>
         </select>
         <div

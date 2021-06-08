@@ -30,29 +30,13 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
     username: notEmpty(),
     password: hasLengthBetween(0, 256),
     key: notEmpty(),
+    token: notEmpty(),
   }
-  return [
-    <OIbTitle label={label} key="title">
-      <div>
-        <p>Authentication parameters</p>
-        <p>Please fill the user and password to connect this application</p>
-      </div>
-    </OIbTitle>,
-    mode === 'user' ? (
-      [
-        <Row key="type">
-          <Col md="2">
-            <OIbSelect
-              label="Type"
-              onChange={changeAuthType}
-              value={value.type}
-              options={['Basic', 'API Key']}
-              defaultValue="Basic"
-              name="type"
-            />
-          </Col>
-        </Row>,
-        authMode === 'Basic' ? (
+
+  const renderUserType = (auth) => {
+    switch (auth) {
+      case 'Basic':
+        return (
           <Row key="user">
             <Col md="4">
               <OIbText
@@ -73,7 +57,9 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
               />
             </Col>
           </Row>
-        ) : (
+        )
+      case 'API Key':
+        return (
           <Row key="user">
             <Col md="4">
               <OIbText
@@ -94,7 +80,48 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
               />
             </Col>
           </Row>
-        ),
+        )
+      case 'Bearer':
+        return (
+          <Row key="user">
+            <Col md="4">
+              <OIbPassword
+                label="Token"
+                onChange={handleChange}
+                value={value.token}
+                valid={validation.token}
+                name="token"
+              />
+            </Col>
+          </Row>
+        )
+      default:
+        return (<></>)
+    }
+  }
+
+  return [
+    <OIbTitle label={label} key="title">
+      <div>
+        <p>Authentication parameters</p>
+        <p>Please fill the user and password to connect this application</p>
+      </div>
+    </OIbTitle>,
+    mode === 'user' ? (
+      [
+        <Row key="type">
+          <Col md="2">
+            <OIbSelect
+              label="Type"
+              onChange={changeAuthType}
+              value={value.type}
+              options={['Basic', 'API Key', 'Bearer']}
+              defaultValue="Basic"
+              name="type"
+            />
+          </Col>
+        </Row>,
+        renderUserType(authMode),
       ]
     ) : (
       <Row key="accessKey">

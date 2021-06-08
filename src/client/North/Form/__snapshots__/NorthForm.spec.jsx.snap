@@ -682,6 +682,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                 >
                   API Key
                 </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -2137,6 +2142,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div
@@ -6766,6 +6776,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div
