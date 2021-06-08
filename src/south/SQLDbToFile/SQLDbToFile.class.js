@@ -58,6 +58,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.encryption = encryption
     this.query = query
     this.containsLastCompletedDate = query.includes('@LastCompletedDate')
+    this.readUntilAt = dataSource.readUntilAt
     this.connectionTimeout = connectionTimeout
     this.timeColumn = timeColumn
     this.requestTimeout = requestTimeout
@@ -136,6 +137,11 @@ class SQLDbToFile extends ProtocolHandler {
       return
     }
 
+    if (this.readUntilAt && new Date(this.lastCompletedAt).getTime() >= this.readUntilAt) {
+      this.engine.readIntervalEndReached(this.dataSource.dataSourceId)
+      return
+    }
+
     let result = []
     try {
       switch (this.driver) {
@@ -167,6 +173,11 @@ class SQLDbToFile extends ProtocolHandler {
     if (result.length > 0) {
       this.lastCompletedAt = this.setLastCompletedAt(result)
       await this.setConfig('lastCompletedAt', this.lastCompletedAt)
+      // Filter out newer values if this.readUntilAt is set
+      if (this.readUntilAt) {
+        // eslint-disable-next-line max-len
+        result = result.filter((entry) => entry[this.timeColumn] && (entry[this.timeColumn] instanceof Date) && (entry[this.timeColumn].getTime() <= this.readUntilAt))
+      }
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
@@ -203,7 +214,7 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from MSSQL database.
-   * @returns {void}
+   * @returns {object[]} - The data
    */
   async getDataFromMSSQL() {
     const adaptedQuery = this.query
@@ -247,7 +258,7 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from MySQL database.
-   * @returns {void}
+   * @returns {object[]} - The data
    */
   async getDataFromMySQL() {
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '?')
@@ -286,7 +297,7 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from PostgreSQL database.
-   * @returns {void}
+   * @returns {object[]} - The data
    */
   async getDataFromPostgreSQL() {
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '$1')
@@ -323,7 +334,7 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from Oracle database.
-   * @returns {void}
+   * @returns {object[]} - The data
    */
   async getDataFromOracle() {
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, ':date1')

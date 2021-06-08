@@ -22,7 +22,9 @@ class OPCHDA extends ProtocolHandler {
     this.agentConnected = false
     this.agentReady = false
     this.lastCompletedAt = {}
+    this.readUntilAt = dataSource.readUntilAt
     this.ongoingReads = {}
+    this.finishedReads = {}
     this.receivedLog = ''
     this.reconnectTimeout = null
 
@@ -32,6 +34,7 @@ class OPCHDA extends ProtocolHandler {
         .map((point) => point.pointId)
       this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
       this.ongoingReads[scanGroup.scanMode] = false
+      this.finishedReads[scanGroup.scanMode] = false
       return {
         name: scanGroup.scanMode,
         ...scanGroup,
@@ -213,7 +216,12 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendReadMessage(scanMode) {
-    if (!this.ongoingReads[scanMode] && this.agentReady) {
+    this.finishedReads[scanMode] = this.readUntilAt && this.lastCompletedAt[scanMode] >= this.readUntilAt
+    if (Object.values(this.finishedReads).every(Boolean)) {
+      this.engine.readIntervalEndReached(this.dataSource.dataSourceId)
+    }
+
+    if (!this.ongoingReads[scanMode] && this.agentReady && !this.finishedReads[scanMode]) {
       const message = {
         Request: 'Read',
         TransactionId: this.generateTransactionId(),
@@ -224,7 +232,11 @@ class OPCHDA extends ProtocolHandler {
       }
       this.sendMessage(message)
     } else {
-      this.logger.silly(`sendReadMessage(${scanMode}) skipped, agent ready: ${this.agentReady}/ongoing ${this.ongoingReads[scanMode]}`)
+      this.logger.silly(`
+      sendReadMessage(${scanMode}) skipped:
+        - agent ready: ${this.agentReady}
+        - ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}
+        - finishedReads[${scanMode}]: ${this.finishedReads[scanMode]}`)
     }
   }
 
@@ -313,7 +325,7 @@ class OPCHDA extends ProtocolHandler {
 
           // eslint-disable-next-line no-case-declarations
           const values = messageObject.Content.Points.map((point) => {
-            if (point.Timestamp != null && point.Value != null) {
+            if (point.Timestamp != null && point.Value != null && (!this.readUntilAt || new Date(point.Timestamp).getTime() <= this.readUntilAt)) {
               return {
                 pointId: point.ItemId,
                 timestamp: new Date(point.Timestamp).toISOString(),

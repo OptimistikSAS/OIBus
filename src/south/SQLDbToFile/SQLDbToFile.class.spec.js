@@ -37,6 +37,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.genMockFromModule('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
+engine.readIntervalEndReached = jest.fn()
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -140,6 +141,15 @@ describe('sql-db-to-file', () => {
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone')
     sqlSouth.timezone = timezone
+  })
+
+  it('should quit onScan and call engine.readIntervalEndReached() if scan readUntilAt is set and reached', async () => {
+    sqlSouth.readUntilAt = new Date('2002-02-02T02:02:02.222Z').getTime()
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    expect(engine.readIntervalEndReached).toBeCalledWith(sqlConfig.dataSourceId)
+    sqlSouth.readUntilAt = undefined
   })
 
   it('should interact with MS SQL server if driver is mssql', async () => {
@@ -609,5 +619,32 @@ describe('sql-db-to-file', () => {
     )
     const expected = '2019-01-01 00:00:00'
     expect(actual).toBe(expected)
+  })
+
+  it('should filter out newer values if readUntilAt is set', async () => {
+    sqlSouth.driver = 'mysql'
+    const rows = [
+      {
+        value: 75.2,
+        timestamp: new Date('2019-10-03T14:36:38.590Z'),
+      },
+      {
+        value: 75.3,
+        timestamp: new Date('2019-10-03T16:36:38.590Z'),
+      },
+    ]
+    sqlSouth.getDataFromMySQL = () => rows
+    sqlSouth.readUntilAt = new Date('2019-10-03T15:30:38.590Z').getTime()
+    sqlSouth.lastCompletedAt = '2019-10-03T15:00:38.590Z'
+    sqlSouth.generateCSV = jest.fn()
+
+    await sqlSouth.onScan(sqlConfig.scanMode)
+
+    const expectedValues = [{
+      value: 75.2,
+      timestamp: new Date('2019-10-03T14:36:38.590Z'),
+    }]
+    expect(sqlSouth.generateCSV).toBeCalledWith(expectedValues)
+    sqlSouth.readUntilAt = undefined
   })
 })

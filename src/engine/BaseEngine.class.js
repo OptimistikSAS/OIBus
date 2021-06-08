@@ -51,6 +51,15 @@ class BaseEngine {
   }
 
   /**
+   * Notify the BaseEngine that the end of the specified read interval was reached.
+   * @param {string} dataSourceId - The South generating the value
+   * @return {void}
+   */
+  async readIntervalEndReached(dataSourceId) {
+    this.logger.warn(`readIntervalEndReached() should be surcharged ${dataSourceId}`)
+  }
+
+  /**
    * Add a new File from an data source to the BaseEngine.
    * The BaseEngine will forward the File to the Cache.
    * @param {string} dataSourceId - The South generating the file

@@ -21,7 +21,7 @@ class Engine extends BaseEngine {
     const { historyQuery: { folder } } = engineConfig
     this.folder = folder
 
-    this.historyQueries = []
+    this.historyQuery = null
   }
 
   /**
@@ -33,6 +33,16 @@ class Engine extends BaseEngine {
    */
   async addValues(dataSourceId, values) {
     this.logger.warn(`addValues() should be surcharged ${dataSourceId} ${values}`)
+  }
+
+  /**
+   * Notify the Engine that the end of the specified read interval was reached.
+   * The Engine will jump to the next HistoryQuery.
+   * @param {string} _dataSourceId - The South generating the value
+   * @return {void}
+   */
+  async readIntervalEndReached(_dataSourceId) {
+    await this.historyQuery.stop()
   }
 
   /**

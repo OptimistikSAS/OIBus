@@ -32,7 +32,9 @@ class OPCUA_HA extends ProtocolHandler {
     this.maxReturnValues = maxReturnValues
     this.readTimeout = readTimeout
     this.lastCompletedAt = {}
+    this.readUntilAt = dataSource.readUntilAt
     this.ongoingReads = {}
+    this.finishedReads = {}
     this.reconnectTimeout = null
 
     this.canHandleHistory = true
@@ -55,6 +57,7 @@ class OPCUA_HA extends ProtocolHandler {
           .map((point) => point.nodeId)
         this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
         this.ongoingReads[scanGroup.scanMode] = false
+        this.finishedReads[scanGroup.scanMode] = false
         return {
           name: scanGroup.scanMode,
           ...scanGroup,
@@ -99,10 +102,17 @@ class OPCUA_HA extends ProtocolHandler {
       // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
       // Reading from 1583914010001 returns values with timestamp 1583914010000
       // Filter out values with timestamp smaller than startTime
-      const newerValues = dataValue.filter((value) => {
+      let newerValues = dataValue.filter((value) => {
         const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
         return selectedTimestamp.getTime() >= opcStartTime.getTime()
       })
+      // Filter out newer values if this.readUntilAt is set
+      if (this.readUntilAt) {
+        newerValues = dataValue.filter((value) => {
+          const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
+          return selectedTimestamp.getTime() <= this.readUntilAt
+        })
+      }
       values.push(...newerValues.map((value) => {
         const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
         const selectedTime = selectedTimestamp.getTime()
@@ -216,8 +226,17 @@ class OPCUA_HA extends ProtocolHandler {
       return
     }
 
-    if (!this.connected || this.ongoingReads[scanMode]) {
-      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+    this.finishedReads[scanMode] = this.readUntilAt && this.lastCompletedAt[scanMode] >= this.readUntilAt
+    if (Object.values(this.finishedReads).every(Boolean)) {
+      this.engine.readIntervalEndReached(this.dataSource.dataSourceId)
+    }
+
+    if (!this.connected || this.ongoingReads[scanMode] || this.finishedReads[scanMode]) {
+      this.logger.silly(`
+      onScan ignored:
+        - connected: ${this.connected}
+        - ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}
+        - finishedReads[${scanMode}]: ${this.finishedReads[scanMode]}`)
       return
     }
 

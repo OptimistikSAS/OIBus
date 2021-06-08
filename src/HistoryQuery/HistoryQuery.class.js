@@ -14,6 +14,7 @@ class HistoryQuery {
     this.logger = logger
     this.folder = folder
     this.dataSource = dataSource
+    this.dataSource.readUntilAt = endTimestamp
     this.startTimestamp = startTimestamp
     this.endTimestamp = endTimestamp
     this.filenamePattern = filenamePattern
@@ -23,11 +24,13 @@ class HistoryQuery {
   start() {
     switch (this.status) {
       case HistoryQuery.STATUS_PENDING:
-        this.startExport()
+        this.exportFromSouth()
         break
       case HistoryQuery.STATUS_EXPORTING:
+        this.exportFromSouth()
         break
       case HistoryQuery.STATUS_IMPORTING:
+        this.importToNorth()
         break
       case HistoryQuery.STATUS_FINISHED:
         break
@@ -42,13 +45,17 @@ class HistoryQuery {
     }
   }
 
-  async startExport() {
+  async exportFromSouth() {
     this.south = this.initSouth()
     if (this.south) {
       await this.south.connect()
 
       this.status = HistoryQuery.STATUS_EXPORTING
     }
+  }
+
+  async importToNorth() {
+    this.logger('ToDo')
   }
 
   initSouth() {

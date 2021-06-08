@@ -29,6 +29,7 @@ jest.mock('../../engine/Logger.class')
 // Mock engine
 const engine = jest.genMockFromModule('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.readIntervalEndReached = jest.fn()
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -294,6 +295,22 @@ describe('OPCUA-HA south', () => {
     expect(opcuaSouth.session.readHistoryValue)
       .not
       .toBeCalled()
+  })
+
+  it('should quit onScan and call engine.readIntervalEndReached() if scan readUntilAt is set and reached', async () => {
+    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    const testOpcuaConfig = {
+      ...opcuaConfig,
+      readUntilAt: new Date('2002-02-02T02:02:02.222Z').getTime(),
+    }
+    const opcuaSouth = new OPCUA_HA(testOpcuaConfig, engine)
+    await opcuaSouth.connect()
+    opcuaSouth.connected = true
+    opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode] = false
+    opcuaSouth.session = { readHistoryValue: jest.fn() }
+    await opcuaSouth.onScan(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+
+    expect(engine.readIntervalEndReached).toBeCalledWith(opcuaConfig.dataSourceId)
   })
 
   it('should in onScan call readHistoryValue once if maxReadInterval is bigger than the read interval', async () => {
