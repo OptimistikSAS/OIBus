@@ -76,7 +76,7 @@ class EncryptionService {
         Object.entries(configEntry).forEach(([key, value]) => {
           if (typeof value === 'object') {
             this.encryptSecrets(value)
-          } else if (['password', 'secretKey'].includes(key) && value.startsWith('{{notEncrypted}}')) {
+          } else if (['password', 'secretKey', 'token'].includes(key) && value.startsWith('{{notEncrypted}}')) {
             configEntry[key] = this.encryptText(value.replace('{{notEncrypted}}', ''))
           }
         })
