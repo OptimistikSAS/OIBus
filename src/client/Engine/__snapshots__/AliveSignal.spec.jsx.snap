@@ -341,6 +341,11 @@ exports[`AliveSignal check AliveSignal 1`] = `
               >
                 API Key
               </option>
+              <option
+                value="Bearer"
+              >
+                Bearer
+              </option>
             </select>
             <div
               class="invalid-feedback"
@@ -752,6 +757,11 @@ exports[`AliveSignal check change aliveSignal to false 1`] = `
                 value="API Key"
               >
                 API Key
+              </option>
+              <option
+                value="Bearer"
+              >
+                Bearer
               </option>
             </select>
             <div

@@ -2578,6 +2578,11 @@ exports[`Engine check Engine 1`] = `
                 >
                   API Key
                 </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -5226,6 +5231,11 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div
@@ -8183,6 +8193,11 @@ exports[`Engine check change engineName 1`] = `
                 >
                   API Key
                 </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -11118,6 +11133,11 @@ exports[`Engine check change password 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div
@@ -14055,6 +14075,11 @@ exports[`Engine check change port 1`] = `
                 >
                   API Key
                 </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
+                </option>
               </select>
               <div
                 class="invalid-feedback"
@@ -16990,6 +17015,11 @@ exports[`Engine check change user 1`] = `
                   value="API Key"
                 >
                   API Key
+                </option>
+                <option
+                  value="Bearer"
+                >
+                  Bearer
                 </option>
               </select>
               <div
