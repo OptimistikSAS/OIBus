@@ -80,6 +80,26 @@ describe('RequestFactory', () => {
     expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
   })
 
+  it('should properly generate Bearer token authentication header', async () => {
+    baseRequest.sendImplementation = jest.fn()
+
+    const requestUrl = 'https://www.example.com'
+    const method = 'POST'
+    const authentication = {
+      type: 'Bearer',
+      token: 'token',
+    }
+    const proxy = null
+    const data = ''
+
+    const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
+
+    const expectedHeader = { Authorization: 'Bearer token' }
+    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
+  })
+
   it('should throw error on invalid authentication type', async () => {
     baseRequest.sendImplementation = jest.fn()
 
