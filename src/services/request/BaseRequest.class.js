@@ -90,6 +90,10 @@ class BaseRequest {
           headers[authentication.key] = this.engine.encryptionService.decryptText(authentication.secretKey)
           break
         }
+        case 'Bearer': {
+          headers.Authorization = `Bearer ${this.engine.encryptionService.decryptText(authentication.token)}`
+          break
+        }
         default: throw ApiHandler.STATUS.LOGIC_ERROR
       }
     }
