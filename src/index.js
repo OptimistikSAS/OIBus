@@ -54,7 +54,7 @@ if (cluster.isMaster) {
     }
   })
 } else {
-  const configFile = ConfigService.getConfigFile(logger)
+  const { configFile, check } = ConfigService.getCommandLineArguments(logger)
   process.chdir(path.parse(configFile).dir)
 
   // Migrate config file, if needed
@@ -62,7 +62,7 @@ if (cluster.isMaster) {
 
   // this condition is reached only for a worker (i.e. not master)
   // so this is here where we execute the OIBus Engine
-  const engine = new Engine(configFile)
+  const engine = new Engine(configFile, check)
   engine.start(process.env.SAFE_MODE === 'true')
 
   // Catch Ctrl+C and properly stop the Engine

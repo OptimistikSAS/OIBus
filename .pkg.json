@@ -2,6 +2,8 @@
     "pkg": {
     "assets": [
       "build/**/*",
+      "node_modules/sqlite3/**/*.node",
+      "node_modules/oracledb/**/*.node",     
       "src/config/*"
     ]
   }
