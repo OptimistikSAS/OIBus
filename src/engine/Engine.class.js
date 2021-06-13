@@ -54,8 +54,9 @@ class Engine {
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {string} configFile - The config file
+   * @param {boolean} check - the engine will display the version and quit
    */
-  constructor(configFile) {
+  constructor(configFile, check) {
     this.version = VERSION
 
     this.configService = new ConfigService(this, configFile)
@@ -97,6 +98,7 @@ class Engine {
     this.addValuesCount = 0
     this.addFileCount = 0
     this.forwardedAliveSignalMessages = 0
+    this.check = check
   }
 
   /**
@@ -176,11 +178,17 @@ class Engine {
     const server = new Server(this)
     server.listen()
 
+    // if OIBus is called with --checked, it will exit immediately
+    // this check is typically done in the CI mode.
+    if (this.check) {
+      this.logger.info('check mode => OIBus is stopping')
+      await this.shutdown(500)
+      return
+    }
     if (engineConfig.safeMode || safeMode) {
       this.logger.warn('Starting in safe mode!')
       return
     }
-
     // 2. start Protocol for each data sources
     southConfig.dataSources.forEach((dataSource) => {
       const { protocol, enabled, dataSourceId } = dataSource
@@ -290,7 +298,7 @@ class Engine {
   async stop() {
     const { engineConfig } = this.configService.getConfig()
 
-    if (engineConfig.safeMode) {
+    if (engineConfig.safeMode || this.check) {
       return
     }
 
@@ -344,11 +352,10 @@ class Engine {
    */
   async shutdown(timeout) {
     this.logger.warn('Shutting down OIBus')
-
     await this.stop()
-
     setTimeout(() => {
       // Ask the Master Cluster to shutdown
+      this.logger.warn('Request process shutdown')
       process.send({ type: 'shutdown' })
     }, timeout)
   }

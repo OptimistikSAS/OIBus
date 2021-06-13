@@ -40,14 +40,13 @@ class ConfigService {
    * @param {Object} logger - The logger
    * @returns {string} - the config file
    */
-  static getConfigFile(logger) {
+  static getCommandLineArguments(logger) {
     const args = minimist(process.argv.slice(2))
-    let { config } = args
+    const { config, check } = args
     if (!config) {
       logger.error('No config file specified, example: --config ./config/config.json')
-      config = './oibus.json'
     }
-    return path.resolve(config)
+    return { configFile: path.resolve(config ?? './oibus.json'), check }
   }
 
   /**

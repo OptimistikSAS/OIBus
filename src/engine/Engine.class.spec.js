@@ -34,7 +34,7 @@ beforeEach(() => {
   jest.useFakeTimers()
 })
 
-const engine = new Engine('../config/defaultConfig.json')
+const engine = new Engine('../config/defaultConfig.json', false)
 
 describe('Engine', () => {
   it('should be properly initialized', () => {
