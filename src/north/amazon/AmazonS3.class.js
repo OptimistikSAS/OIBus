@@ -1,5 +1,6 @@
 const fs = require('fs')
 const url = require('url')
+const path = require('path')
 
 const AWS = require('aws-sdk')
 const ProxyAgent = require('proxy-agent')
@@ -59,7 +60,7 @@ class AmazonS3 extends ApiHandler {
     const params = {
       Bucket: this.bucket,
       Body: fs.createReadStream(filePath),
-      Key: `${this.folder}/${ApiHandler.getFilenameWithoutTimestamp(filePath)}`,
+      Key: `${this.folder}/${this.getFilenameWithoutTimestamp(filePath)}`,
     }
 
     try {
@@ -70,6 +71,18 @@ class AmazonS3 extends ApiHandler {
     }
 
     return ApiHandler.STATUS.SUCCESS
+  }
+
+  /**
+   * Get filename without timestamp from file path.
+   * @param {string} filePath - The file path
+   * @returns {string} - The filename
+   */
+  /* eslint-disable-next-line class-methods-use-this */
+  getFilenameWithoutTimestamp(filePath) {
+    const { name, ext } = path.parse(filePath)
+    const filename = name.substr(0, name.lastIndexOf('-'))
+    return `${filename}${ext}`
   }
 }
 
