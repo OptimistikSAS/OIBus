@@ -1,4 +1,5 @@
 const protocolList = {}
+protocolList.ADS = require('./ADS/ADS.class')
 protocolList.Modbus = require('./Modbus/Modbus.class')
 protocolList.OPCUA_HA = require('./OPCUA_HA/OPCUA_HA.class')
 protocolList.OPCUA_DA = require('./OPCUA_DA/OPCUA_DA.class')

@@ -2,6 +2,8 @@ const fs = require('fs')
 const zlib = require('zlib')
 const EventEmitter = require('events')
 
+const moment = require('moment-timezone')
+
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/logger/Logger.class')
@@ -37,8 +39,10 @@ class ProtocolHandler {
    * @constructor
    * @param {*} dataSource - The data source
    * @param {Engine} engine - The engine
+   * @param {object} supportedModes - The supported modes
+   * @return {void}
    */
-  constructor(dataSource, engine) {
+  constructor(dataSource, engine, supportedModes) {
     this.dataSource = dataSource
     this.engine = engine
     this.encryptionService = EncryptionService.getInstance()
@@ -47,6 +51,13 @@ class ProtocolHandler {
     this.engineConfig = engineConfig
 
     this.logger = engine.logger
+
+    if (supportedModes) {
+      const { supportListen } = supportedModes
+      if (supportListen && typeof this.listen !== 'function') {
+        this.logger.error(`${this.constructor.name} should implement the listen() method.`)
+      }
+    }
 
     this.lastOnScanAt = null
     this.lastAddFileAt = null
@@ -132,11 +143,6 @@ class ProtocolHandler {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
     }
     this.currentlyOnScan[scanMode] = false
-  }
-
-  listen() {
-    const { name } = this.dataSource
-    this.logger.error(`Data source ${name} should surcharge listen()`)
   }
 
   disconnect() {
@@ -323,6 +329,41 @@ class ProtocolHandler {
       }
     }
     return status
+  }
+
+  /**
+   * Get timestamp.
+   * @param {string} elementTimestamp - The element timestamp
+   * @param {string} timestampOrigin - The timestamp origin
+   * @param {string} timestampFormat - The timestamp format
+   * @param {string} timezone - The timezone
+   * @return {string} - The timestamp
+   */
+  getTimestamp(elementTimestamp, timestampOrigin, timestampFormat, timezone) {
+    let timestamp = new Date().toISOString()
+
+    if (timestampOrigin === 'payload') {
+      if (timezone && elementTimestamp) {
+        timestamp = ProtocolHandler.generateDateWithTimezone(elementTimestamp, timezone, timestampFormat)
+      } else {
+        this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
+      }
+    }
+
+    return timestamp
+  }
+
+  /**
+   * Generate date based on the configured format taking into account the timezone configuration.
+   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
+   * @param {string} date - The date to parse and format
+   * @param {string} timezone - The timezone to use to replace the timezone of the date
+   * @param {string} dateFormat - The format of the date
+   * @returns {string} - The formatted date with timezone
+   */
+  static generateDateWithTimezone(date, timezone, dateFormat) {
+    const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
   }
 }
 
