@@ -4,7 +4,7 @@ const BaseRequest = require('./BaseRequest.class')
 const ApiHandler = require('../../north/ApiHandler.class')
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
 engine.logger = { silly: jest.fn(), error: jest.fn() }
