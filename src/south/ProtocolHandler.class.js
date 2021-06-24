@@ -1,6 +1,8 @@
 const fs = require('fs')
 const zlib = require('zlib')
 
+const moment = require('moment-timezone')
+
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/Logger.class')
@@ -60,11 +62,6 @@ class ProtocolHandler {
   onScan(scanMode) {
     const { dataSourceId } = this.dataSource
     this.logger.error(`Data source ${dataSourceId} should surcharge onScan(${scanMode})`)
-  }
-
-  listen() {
-    const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge listen()`)
   }
 
   disconnect() {
@@ -173,6 +170,71 @@ class ProtocolHandler {
     return new Promise((resolve) => {
       setTimeout(resolve, timeout)
     })
+  }
+
+  /**
+   * Get live status.
+   * @returns {object} - The live status
+   */
+  getStatus() {
+    const status = { 'Last scan time': this.lastOnScanAt ? new Date(this.lastOnScanAt).toLocaleString() : 'Never' }
+    if (this.handlesFiles) {
+      status['Last file added time'] = this.lastAddFileAt ? new Date(this.lastAddFileAt).toLocaleString() : 'Never'
+      status['Number of files added'] = this.addFileCount
+    }
+    if (this.handlesPoints) {
+      status['Last values added time'] = this.lastAddPointsAt ? new Date(this.lastAddPointsAt).toLocaleString() : 'Never'
+      status['Number of values added'] = this.addPointsCount
+    }
+    if (this.canHandleHistory) {
+      if (this.lastCompletedAt) {
+        if (typeof this.lastCompletedAt === 'object') {
+          Object.entries(this.lastCompletedAt).forEach(([key, value]) => {
+            status[`Last completed at - ${key}`] = new Date(value).toLocaleString()
+          })
+        } else {
+          status['Last completed at'] = new Date(this.lastCompletedAt).toLocaleString()
+        }
+      } else {
+        status['Last completed at'] = 'Never'
+      }
+    }
+    return status
+  }
+
+  /**
+   * Get timestamp.
+   * @param {string} elementTimestamp - The element timestamp
+   * @param {string} timestampOrigin - The timestamp origin
+   * @param {string} timestampFormat - The timestamp format
+   * @param {string} timezone - The timezone
+   * @return {string} - The timestamp
+   */
+  getTimestamp(elementTimestamp, timestampOrigin, timestampFormat, timezone) {
+    let timestamp = new Date().toISOString()
+
+    if (timestampOrigin === 'payload') {
+      if (timezone && elementTimestamp) {
+        timestamp = ProtocolHandler.generateDateWithTimezone(elementTimestamp, timezone, timestampFormat)
+      } else {
+        this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
+      }
+    }
+
+    return timestamp
+  }
+
+  /**
+   * Generate date based on the configured format taking into account the timezone configuration.
+   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
+   * @param {string} date - The date to parse and format
+   * @param {string} timezone - The timezone to use to replace the timezone of the date
+   * @param {string} dateFormat - The format of the date
+   * @returns {string} - The formatted date with timezone
+   */
+  static generateDateWithTimezone(date, timezone, dateFormat) {
+    const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
   }
 }
 

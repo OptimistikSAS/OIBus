@@ -322,92 +322,6 @@ describe('MQTT south', () => {
       .toBeCalledWith(true)
   })
 
-  it('should properly return timestamp when timeStampOrigin is oibus', () => {
-    const nowDateString = '2020-02-02T02:02:02.222Z'
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
-
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
-    mqttSouth.timeStampOrigin = 'oibus'
-    const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
-
-    const timestamp = mqttSouth.getTimestamp({
-      value: 666.666,
-      quality: true,
-      timestamp: '2020-02-02 02:02:02',
-    })
-
-    expect(mockGenerateDateWithTimezone)
-      .not
-      .toBeCalled()
-    expect(mqttSouth.logger.error)
-      .not
-      .toBeCalled()
-    expect(timestamp)
-      .toEqual(nowDateString)
-
-    mockGenerateDateWithTimezone.mockRestore()
-    global.Date = RealDate
-  })
-
-  it('should properly return timestamp when timeStampOrigin is payload and timestamp field is present', () => {
-    const timestamp = '2020-02-02 02:02:02'
-
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
-    mqttSouth.timeStampOrigin = 'payload'
-    const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
-    const data = {
-      value: 666.666,
-      quality: true,
-      timestamp,
-    }
-
-    mqttSouth.getTimestamp(timestamp)
-
-    expect(mockGenerateDateWithTimezone)
-      .toBeCalledWith(data.timestamp, mqttSouth.timezone, mqttSouth.timeStampFormat)
-    expect(mqttSouth.logger.error)
-      .not
-      .toBeCalled()
-
-    mockGenerateDateWithTimezone.mockRestore()
-  })
-
-  it('should properly return timestamp when timeStampOrigin is payload but timezone is not properly set', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
-    mqttSouth.timeStampOrigin = 'payload'
-    mqttSouth.timezone = undefined
-    const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
-    mqttSouth.getTimestamp('2020-02-02 02:02:02')
-
-    expect(mockGenerateDateWithTimezone)
-      .not
-      .toBeCalled()
-    expect(mqttSouth.logger.error)
-      .toBeCalledWith('Invalid timezone specified or the timestamp key is missing in the payload')
-
-    mockGenerateDateWithTimezone.mockRestore()
-  })
-
-  it('should properly return timestamp when timeStampOrigin is payload but the timestamp field is missing', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
-    mqttSouth.timeStampOrigin = 'payload'
-    const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
-    mqttSouth.getTimestamp(null)
-
-    expect(mockGenerateDateWithTimezone)
-      .not
-      .toBeCalled()
-    expect(mqttSouth.logger.error)
-      .toBeCalledWith('Invalid timezone specified or the timestamp key is missing in the payload')
-
-    mockGenerateDateWithTimezone.mockRestore()
-  })
-
   it('should properly get pointId without wildcards', () => {
     const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.nodeIdPath = null
@@ -595,16 +509,5 @@ describe('MQTT south', () => {
       .toBeCalledWith(
         `t1/t2/t3 should be subscribed only once but it has the following subscriptions: ${JSON.stringify(mqttSouth.dataSource.points)}`,
       )
-  })
-
-  it('should format date properly', () => {
-    const actual = MQTT.generateDateWithTimezone(
-      '2020-02-22 22:22:22.666',
-      'Europe/Paris',
-      'YYYY-MM-DD HH:mm:ss.SSS',
-    )
-    const expected = '2020-02-22T21:22:22.666Z'
-    expect(actual)
-      .toBe(expected)
   })
 })
