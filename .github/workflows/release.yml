@@ -2,15 +2,50 @@ name: release
 on:
   workflow_dispatch:
 jobs:
-  release-master:
-    name: 'Release master'
+  build-all:
+    name: 'Publish'
+    runs-on: ${{ matrix.config['os'] }}
+    strategy:
+      matrix:
+        config:
+          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip',    zip: 'zip -r'     }
+          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
+          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip',    zip: 'zip -r'     }
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Use npm 7.6.1
+        run: |
+          npm install -g npm@7.6.1
+
+      - name: Package OIBus for ${{ matrix.config['platform'] }}
+        id: pkg
+        run: |
+          npm ci
+          npm run build-${{ matrix.config['platform'] }}
+          cd dist/${{ matrix.config['platform'] }}
+          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
+
+      - name: Upload ${{ matrix.config['archiveName'] }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config['archiveName'] }}
+          path: ./dist/${{ matrix.config['archiveName'] }}
+
+  release:
+    name: 'Release'
+    needs: build-all
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout master
+      - name: Checkout
         uses: actions/checkout@v2
-        with:
-          ref: master
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
@@ -26,24 +61,36 @@ jobs:
         run: |
           git config --global user.name 'optimistik-actions'
           git config --global user.email 'optimistiksas@users.noreply.github.com'
+          VERSION_ARGS=""
+          BRANCH=$(git branch --show-current| tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' ) # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r)
+          if [ "$BRANCH" != master ]; then
+            VERSION_ARGS="--prerelease ${BRANCH}"
+          fi
           npm ci
-          npm run release
+          npm run bump -- $VERSION_ARGS
           echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
 
-      - name: Create github release
-        id: create-release
-        uses: actions/github-script@v4
+      - name: Download all builds
+        id: download
+        uses: actions/download-artifact@v2
         with:
-          github-token: ${{secrets.REPO_ACCESS_TOKEN}} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
-          script: |
-            var fs = require('fs');
-            var changelog = fs.readFileSync('./CHANGELOG.md');
-            const release = await github.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `${{ steps.standard-version.outputs.version-tag }}`,
-              name: `${{ steps.standard-version.outputs.version-tag }}`,
-              body: `${changelog}`,
-              prerelease: false
-            });
-            return release.data
+          path: artifacts
+
+      - name: List files
+        run: |
+          ls -alR ${{steps.download.outputs.download-path}}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.standard-version.outputs.version-tag }}
+          name: ${{ steps.standard-version.outputs.version-tag }}
+          body_path: CHANGELOG.md
+          prerelease: false
+          files: |
+            ${{steps.download.outputs.download-path}}/OIBus-macos.zip/OIBus-macos.zip
+            ${{steps.download.outputs.download-path}}/OIBus-win32x64.zip/OIBus-win32x64.zip
+            ${{steps.download.outputs.download-path}}/OIBus-linux.zip/OIBus-linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

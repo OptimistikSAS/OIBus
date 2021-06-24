@@ -23,7 +23,8 @@
     "lint": "eslint src --ext .jsx --ext .js",
     "version": "npm run build && gulp build-archives",
     "postversion": "git push && git push --tags",
-    "release": "standard-version -i CHANGELOG.md && git push --follow-tags origin"
+    "bump": "standard-version -i CHANGELOG.md",
+    "postbump": "git push --follow-tags origin"
   },
   "keywords": [
     "Optimistik"
