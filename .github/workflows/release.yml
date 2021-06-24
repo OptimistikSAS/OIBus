@@ -3,14 +3,14 @@ on:
   workflow_dispatch:
 jobs:
   build-all:
-    name: 'Publish'
+    name: 'Build'
     runs-on: ${{ matrix.config['os'] }}
     strategy:
       matrix:
         config:
           - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip',    zip: 'zip -r'     }
-          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
           - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip',    zip: 'zip -r'     }
+          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -27,10 +27,13 @@ jobs:
 
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         id: pkg
+        shell: pwsh
         run: |
           npm ci
           npm run build-${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
+          dir
+          ./oibus --config ../../tests/oibus.json --check true
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
 
       - name: Upload ${{ matrix.config['archiveName'] }}
