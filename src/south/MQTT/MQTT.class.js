@@ -14,7 +14,7 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: true, supportLastPoint: false, supportHistory: false })
 
     const {
       url,
@@ -85,6 +85,20 @@ class MQTT extends ProtocolHandler {
   }
 
   /**
+   * The listen method implements the subscription for the points.
+   * @param {object} data - The data required to configure listening
+   * @param {array} data.pointlist - The list of points to subscribe for
+   * @returns {void}
+   */
+  listen(data) {
+    data.pointList.forEach((point) => {
+      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this, point))
+    })
+
+    this.client.on('message', this.handleMessageEvent.bind(this))
+  }
+
+  /**
    * Handle connection error event.
    * @param {object} error - The error
    * @return {void}
@@ -100,11 +114,7 @@ class MQTT extends ProtocolHandler {
   handleConnectEvent() {
     this.logger.info(`Connected to ${this.url}`)
 
-    this.dataSource.points.forEach((point) => {
-      this.client.subscribe(point.topic, { qos: this.qos }, this.subscribeCallback.bind(this, point))
-    })
-
-    this.client.on('message', this.handleMessageEvent.bind(this))
+    this.listen({ pointList: this.dataSource.points })
   }
 
   /**
@@ -130,7 +140,7 @@ class MQTT extends ProtocolHandler {
   formatValue(data, topic) {
     const dataNodeId = this.getPointId(topic, data)
     if (dataNodeId) {
-      const dataTimestamp = this.getTimestamp(data[this.timeStampPath])
+      const dataTimestamp = this.getTimestamp(data[this.timeStampPath], this.timeStampOrigin, this.timeStampFormat, this.timezone)
       const dataValue = data[this.valuePath]
       const dataQuality = data[this.qualityPath]
       delete data[this.timeStampPath] // delete fields to avoid duplicates in the returned object
@@ -147,7 +157,7 @@ class MQTT extends ProtocolHandler {
         },
       }
     }
-    this.logger.error(`PointId cant be determined. The followingvalue ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
+    this.logger.error(`PointId can't be determined. The following value ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
     return null
   }
 
@@ -177,25 +187,6 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
-  }
-
-  /**
-   * Get timestamp.
-   * @param {string} elementTimestamp - The element timestamp
-   * @return {string} - The timestamp
-   */
-  getTimestamp(elementTimestamp) {
-    let timestamp = new Date().toISOString()
-
-    if (this.timeStampOrigin === 'payload') {
-      if (this.timezone && elementTimestamp) {
-        timestamp = MQTT.generateDateWithTimezone(elementTimestamp, this.timezone, this.timeStampFormat)
-      } else {
-        this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
-      }
-    }
-
-    return timestamp
   }
 
   /**
@@ -239,21 +230,6 @@ class MQTT extends ProtocolHandler {
     }
 
     return pointId
-  }
-
-  /**
-   * Generate date based on the configured format taking into account the timezone configuration.
-   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
-   * @param {string} date - The date to parse and format
-   * @param {string} timezone - The timezone to use to replace the timezone of the date
-   * @param {string} dateFormat - The format of the date
-   * @returns {string} - The formatted date with timezone
-   */
-  static generateDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date, dateFormat)
-      .format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone)
-      .toISOString()
   }
 }
 
