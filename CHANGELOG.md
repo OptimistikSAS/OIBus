@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 1.2.3 (2021-06-25)
+
+
+### Bug Fixes
+
+* **release:** need personal access token to propagate event ([c6832c5](https://github.com/OptimistikSAS/OIBus/commit/c6832c5f6506de1b136e08cfe4860138eb828e5a))
+
 ### 1.2.2 (2021-06-24)
 
 ### [1.2.1](https://github.com/OptimistikSAS/OIBus/compare/v1.2.0...v1.2.1) (2021-06-02)
