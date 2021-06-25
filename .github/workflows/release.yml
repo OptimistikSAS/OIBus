@@ -73,16 +73,6 @@ jobs:
           npm run bump -- $VERSION_ARGS
           echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
 
-      - name: Download all builds
-        id: download
-        uses: actions/download-artifact@v2
-        with:
-          path: artifacts
-
-      - name: List files
-        run: |
-          ls -alR ${{steps.download.outputs.download-path}}
-
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -90,10 +80,6 @@ jobs:
           name: ${{ steps.standard-version.outputs.version-tag }}
           body_path: CHANGELOG.md
           prerelease: false
-          files: |
-            ${{steps.download.outputs.download-path}}/OIBus-macos.zip/OIBus-macos.zip
-            ${{steps.download.outputs.download-path}}/OIBus-win32x64.zip/OIBus-win32x64.zip
-            ${{steps.download.outputs.download-path}}/OIBus-linux.zip/OIBus-linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
