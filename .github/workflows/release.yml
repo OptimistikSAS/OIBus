@@ -81,5 +81,5 @@ jobs:
           body_path: CHANGELOG.md
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN}} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
 
