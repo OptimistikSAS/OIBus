@@ -3,9 +3,9 @@ const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
 
-const ListenProtocolHandler = require('../ListenProtocolHandler.class')
+const ProtocolHandler = require('../ProtocolHandler.class')
 
-class MQTT extends ListenProtocolHandler {
+class MQTT extends ProtocolHandler {
   /**
    * Constructor for MQTT
    * @constructor
@@ -14,7 +14,7 @@ class MQTT extends ListenProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: true, supportLastPoint: false, supportHistory: false })
 
     const {
       url,
@@ -58,6 +58,8 @@ class MQTT extends ListenProtocolHandler {
     this.timeStampOrigin = timeStampOrigin
     this.timeStampPath = timestampPath
     this.timeStampFormat = timeStampFormat
+
+    this.handlesPoints = true
   }
 
   /**

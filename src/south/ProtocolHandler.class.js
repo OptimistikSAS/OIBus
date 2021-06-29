@@ -37,9 +37,10 @@ class ProtocolHandler {
    * @constructor
    * @param {*} dataSource - The data source
    * @param {Engine} engine - The engine
+   * @param {object} supportedModes - The supported modes
    * @return {void}
    */
-  constructor(dataSource, engine) {
+  constructor(dataSource, engine, supportedModes) {
     this.dataSource = dataSource
     this.engine = engine
     this.encryptionService = EncryptionService.getInstance()
@@ -50,6 +51,13 @@ class ProtocolHandler {
     const { logParameters } = this.dataSource
     this.logger = new Logger()
     this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
+
+    if (supportedModes) {
+      const { supportListen } = supportedModes
+      if (supportListen && typeof this.listen !== 'function') {
+        this.logger.error(`${this.constructor.name} should implement the listen() method.`)
+      }
+    }
   }
 
   async connect() {
