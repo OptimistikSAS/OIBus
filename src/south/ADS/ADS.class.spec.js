@@ -692,7 +692,7 @@ describe('ADS south', () => {
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
 
-    await adsSouth.onScanImplementation('every10Seconds')
+    await adsSouth.lastPointQuery('every10Seconds')
 
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestENUM')
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestINT')
@@ -725,7 +725,7 @@ describe('ADS south', () => {
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
 
-    await adsSouth.onScanImplementation('everySecond')
+    await adsSouth.lastPointQuery('everySecond')
 
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
     expect(adsSouth.logger.error)
@@ -745,7 +745,7 @@ describe('ADS south', () => {
     ]
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
-    await adsSouth.onScanImplementation('everySecond')
+    await adsSouth.lastPointQuery('everySecond')
 
     expect(adsSouth.logger.debug)
       .toHaveBeenCalledWith('Data Structure ST_Example not parsed for data PLC_TEST.GVL_Test.ExampleSTRUCT. To parse it, please specify it in the connector settings.') // eslint-disable-line max-len
@@ -759,7 +759,7 @@ describe('ADS south', () => {
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY)))
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
-    await adsSouth.onScanImplementation('every10Seconds')
+    await adsSouth.lastPointQuery('every10Seconds')
 
     // Test boolean value as text
     expect(engine.addValues).toHaveBeenCalledWith(
@@ -776,7 +776,7 @@ describe('ADS south', () => {
       [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: '100' } }])
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestBadType)))
-    await adsSouth.onScanImplementation('every1Hour')
+    await adsSouth.lastPointQuery('every1Hour')
     expect(adsSouth.logger.warn)
       .toHaveBeenCalledWith('dataType BAD_TYPE not supported yet for point PLC_TEST.GVL_Test.TestBadType. Value was 1234')
 
@@ -799,7 +799,7 @@ describe('ADS south', () => {
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDateAndTime)))
 
     engine.addValues.mockClear()
-    await adsSouth.onScanImplementation('every3Hours')
+    await adsSouth.lastPointQuery('every3Hours')
 
     expect(engine.addValues)
       .toHaveBeenCalledTimes(16)
@@ -811,7 +811,7 @@ describe('ADS south', () => {
     const adsSouth = new ADS(adsConfig, engine)
 
     await adsSouth.connect()
-    await adsSouth.onScanImplementation('every5Seconds')
+    await adsSouth.lastPointQuery('every5Seconds')
     // no point for every5Seconds
     expect(adsSouth.client.readSymbol)
       .toBeCalledTimes(0)
@@ -823,7 +823,7 @@ describe('ADS south', () => {
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
     adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => reject(new Error('test'))))
-    await adsSouth.onScanImplementation('every10Seconds')
+    await adsSouth.lastPointQuery('every10Seconds')
 
     expect(adsSouth.logger.error)
       .toBeCalledTimes(6)
@@ -843,7 +843,7 @@ describe('ADS south', () => {
 
     expect(clearTimeout).toHaveBeenCalledTimes(1)
 
-    await adsSouth.onScanImplementation()
+    await adsSouth.lastPointQuery()
 
     expect(adsSouth.client.readSymbol)
       .not
