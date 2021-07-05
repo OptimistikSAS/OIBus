@@ -18,7 +18,7 @@ class Modbus extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
     const { addressOffset, retryInterval } = this.dataSource.Modbus
 
     this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, addressOffset, this.logger)
@@ -34,7 +34,7 @@ class Modbus extends ProtocolHandler {
    * @param {String} scanMode - Cron time
    * @return {void}
    */
-  onScanImplementation(scanMode) {
+  lastPointQuery(scanMode) {
     const { connected, optimizedScanModes } = this
     const scanGroup = optimizedScanModes[scanMode]
 

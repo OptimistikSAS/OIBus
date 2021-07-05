@@ -19,7 +19,7 @@ class OPCUA_DA extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
 
     const { url, username, password, retryInterval } = dataSource.OPCUA_DA
 
@@ -68,7 +68,7 @@ class OPCUA_DA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    */
-  async onScanImplementation(scanMode) {
+  async lastPointQuery(scanMode) {
     if (!this.connected) {
       this.logger.silly(`onScan ignored: connected: ${this.connected}`)
       return

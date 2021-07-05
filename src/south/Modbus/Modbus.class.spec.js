@@ -267,7 +267,7 @@ describe('Modbus south', () => {
     modbusSouth.modbusClient.readInputRegisters.mockReturnValue(Promise.resolve([]))
     modbusSouth.modbusClient.readDiscreteInputs.mockReturnValue(Promise.resolve([]))
     modbusSouth.modbusClient.readCoils.mockReturnValue(Promise.resolve([]))
-    await modbusSouth.onScanImplementation('every10Seconds')
+    await modbusSouth.lastPointQuery('every10Seconds')
 
     expect(modbusSouth.modbusClient.readHoldingRegisters)
       .toBeCalledWith(20080, 32) // see the optimizedScanModes to get the startAddress and range
@@ -291,7 +291,7 @@ describe('Modbus south', () => {
     expect(modbusSouth.connected)
       .toBeFalsy()
 
-    await modbusSouth.onScanImplementation()
+    await modbusSouth.lastPointQuery()
 
     expect(modbusSouth.modbusFunction)
       .not
