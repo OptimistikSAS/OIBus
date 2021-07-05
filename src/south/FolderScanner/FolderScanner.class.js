@@ -17,7 +17,7 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
 
     const { inputFolder, preserveFiles, ignoreModifiedDate, minAge, regex, compression } = this.dataSource.FolderScanner
 
@@ -29,6 +29,53 @@ class FolderScanner extends ProtocolHandler {
     this.compression = compression
 
     this.handlesFiles = true
+  }
+
+  /**
+   * Read the raw file and rewrite it to another file in the folder archive
+   * @param {*} _scanMode - The scan mode
+   * @return {void}
+   */
+  async lastPointQuery(_scanMode) {
+    // List files in the inputFolder
+    let files = []
+    try {
+      this.logger.silly(`Reading ${this.inputFolder} directory`)
+      files = await fs.readdir(this.inputFolder)
+    } catch (error) {
+      this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
+      return
+    }
+
+    if (files.length === 0) {
+      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${_scanMode})`)
+      return
+    }
+    // filters file that don't match the regex
+    const filteredFiles = files.filter((file) => file.match(this.regex))
+    if (filteredFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${_scanMode})is empty.`)
+      return
+    }
+    // filters file that may still currently modified (based on last modifcation date)
+    const promisesResults = await Promise.allSettled(filteredFiles.map(this.checkAge.bind(this)))
+    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index].value)
+    if (matchedFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${_scanMode}).`)
+      return
+    }
+    // the files remaining after these checks need to be sent to the bus
+    this.logger.silly(`Sending ${matchedFiles.length} files`)
+    // eslint-disable-next-line no-restricted-syntax
+    for (const file of matchedFiles) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await this.sendFile(file)
+      } catch (sendFileError) {
+        this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+      }
+    }
+    this.logger.silly('Leaving onscan method')
   }
 
   /**
@@ -52,53 +99,6 @@ class FolderScanner extends ProtocolHandler {
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
-  }
-
-  /**
-   * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} scanMode - The scan mode
-   * @return {void}
-   */
-  async onScanImplementation(scanMode) {
-    // List files in the inputFolder
-    let files = []
-    try {
-      this.logger.silly(`Reading ${this.inputFolder} directory`)
-      files = await fs.readdir(this.inputFolder)
-    } catch (error) {
-      this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
-      return
-    }
-
-    if (files.length === 0) {
-      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${scanMode})`)
-      return
-    }
-    // filters file that don't match the regex
-    const filteredFiles = files.filter((file) => file.match(this.regex))
-    if (filteredFiles.length === 0) {
-      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${scanMode})is empty.`)
-      return
-    }
-    // filters file that may still currently modified (based on last modifcation date)
-    const promisesResults = await Promise.allSettled(filteredFiles.map(this.checkAge.bind(this)))
-    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index].value)
-    if (matchedFiles.length === 0) {
-      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${scanMode}).`)
-      return
-    }
-    // the files remaining after these checks need to be sent to the bus
-    this.logger.silly(`Sending ${matchedFiles.length} files`)
-    // eslint-disable-next-line no-restricted-syntax
-    for (const file of matchedFiles) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        await this.sendFile(file)
-      } catch (sendFileError) {
-        this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
-      }
-    }
-    this.logger.silly('Leaving onscan method')
   }
 
   /**
