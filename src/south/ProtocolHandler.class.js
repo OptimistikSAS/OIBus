@@ -47,15 +47,19 @@ class ProtocolHandler {
     this.compressionLevel = 9
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
+    this.supportedModes = supportedModes
 
     const { logParameters } = this.dataSource
     this.logger = new Logger()
     this.logger.changeParameters(this.engineConfig, logParameters)
 
-    if (supportedModes) {
-      const { supportListen } = supportedModes
+    if (this.supportedModes) {
+      const { supportListen, supportLastPoint } = this.supportedModes
       if (supportListen && typeof this.listen !== 'function') {
         this.logger.error(`${this.constructor.name} should implement the listen() method.`)
+      }
+      if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
+        this.logger.error(`${this.constructor.name} should implement the lastPointQuery() method.`)
       }
     }
 
@@ -89,7 +93,11 @@ class ProtocolHandler {
       this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
       this.lastOnScanAt = new Date().getTime()
       try {
-        await this.onScanImplementation(scanMode)
+        if (this.supportedModes?.supportLastPoint) {
+          await this.lastPointQuery(scanMode)
+        } else {
+          await this.onScanImplementation(scanMode)
+        }
       } catch (error) {
         this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
       }
