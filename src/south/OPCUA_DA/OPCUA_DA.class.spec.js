@@ -192,7 +192,7 @@ describe('OPCUA-DA south', () => {
     await opcuaSouth.connect()
     await opcuaSouth.disconnect()
     opcuaSouth.session = { readHistoryValue: jest.fn() }
-    await opcuaSouth.onScanImplementation(opcuaConfig.points[0].scanMode)
+    await opcuaSouth.lastPointQuery(opcuaConfig.points[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
       .not
@@ -234,7 +234,7 @@ describe('OPCUA-DA south', () => {
         }]),
     }
     opcuaSouth.addValues = jest.fn()
-    await opcuaSouth.onScanImplementation(opcuaConfig.points[0].scanMode)
+    await opcuaSouth.lastPointQuery(opcuaConfig.points[0].scanMode)
 
     expect(opcuaSouth.session.readVariableValue)
       .toBeCalledWith(['ns=3;s=Random'])
