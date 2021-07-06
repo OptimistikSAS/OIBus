@@ -19,7 +19,7 @@ class OPCUA_DA extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
 
     const {
       url,
