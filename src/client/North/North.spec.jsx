@@ -70,7 +70,7 @@ describe('North', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[3]
-    Simulate.click(firstApplicationButtons.querySelector('path'))
+    Simulate.click(firstApplicationButtons.querySelectorAll('path')[1])
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'north.applications.0',
@@ -84,7 +84,7 @@ describe('North', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[3]
-    Simulate.click(firstApplicationButtons.querySelectorAll('path')[1])
+    Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].applicationId}` })
     expect(container).toMatchSnapshot()
   })

@@ -11,15 +11,6 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
           <td key={field.name} style={{ width: field.value.props?.width ?? '' }}>{field.value}</td>
         ))}
         <td>
-          {handleDelete && (
-            <FaTrashAlt
-              className="oi-icon"
-              onClick={(e) => {
-                e.preventDefault()
-                handleDelete(index)
-              }}
-            />
-          )}
           {handleEdit && (
             <FaCog
               className="oi-icon"
@@ -41,6 +32,16 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
               }}
             />
           )}
+          {handleDelete && (
+            <FaTrashAlt
+              className="oi-icon"
+              onClick={(e) => {
+                e.preventDefault()
+                handleDelete(index)
+              }}
+            />
+          )}
+
         </td>
       </tr>
     ))}

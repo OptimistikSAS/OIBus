@@ -70,7 +70,7 @@ describe('South', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[4]
-    Simulate.click(firstApplicationButtons.querySelector('path'))
+    Simulate.click(firstApplicationButtons.querySelectorAll('path')[3])
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'south.dataSources.0',
@@ -84,7 +84,7 @@ describe('South', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[4]
-    Simulate.click(firstApplicationButtons.querySelectorAll('path')[1])
+    Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].dataSourceId}` })
     expect(container).toMatchSnapshot()
   })
@@ -95,7 +95,7 @@ describe('South', () => {
       )
     })
     const firstApplicationButtons = document.querySelectorAll('td')[4]
-    const duplicateButton = firstApplicationButtons.querySelectorAll('path')[3]
+    const duplicateButton = firstApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[0]
     const newName = `${dataSource.dataSourceId} copy`
@@ -117,7 +117,7 @@ describe('South', () => {
       )
     })
     const thirdApplicationButtons = document.querySelectorAll('td')[14]
-    const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[3]
+    const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[2]
     const newName = `${dataSource.dataSourceId} copy2`
