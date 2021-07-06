@@ -57,6 +57,7 @@ schema.form = {
     type: 'OIbInteger',
     newRow: false,
     valid: inRange(1, 65535),
+    defaultValue: 1883,
   },
   username: {
     type: 'OIbText',
