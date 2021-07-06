@@ -39,8 +39,8 @@ describe('folder-scanner', () => {
     jest.spyOn(fs, 'readdirSync').mockImplementationOnce(() => {
       throw new Error('test')
     })
-    await folderScanner.lastPointQuery('xxx')
-    folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
+    folderScanner.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
@@ -50,7 +50,7 @@ describe('folder-scanner', () => {
   })
   it('onScan: should exit if folder is empty', async () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve([]))
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
@@ -58,7 +58,7 @@ describe('folder-scanner', () => {
   })
   it('onScan: should exit if file does not match regex', async () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['badfile']))
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
@@ -66,7 +66,7 @@ describe('folder-scanner', () => {
   it('onScan: should exit if file is not old enough', async () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() + 666 }))
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
@@ -76,7 +76,7 @@ describe('folder-scanner', () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime())
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     // flush promises see https://stackoverflow.com/a/51045733/6763331
     // need because addFile is in async loop and can happen after onScan.
     await new Promise(setImmediate)
@@ -88,7 +88,7 @@ describe('folder-scanner', () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     folderScanner.preserveFiles = false
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(engine.addFile).toHaveBeenCalledWith(
       folderScanner.dataSource.id,
@@ -102,7 +102,7 @@ describe('folder-scanner', () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     // flush promises see https://stackoverflow.com/a/51045733/6763331
     // need because addFile is in async loop and can happen after onScan.
     await new Promise(setImmediate)
@@ -120,7 +120,7 @@ describe('folder-scanner', () => {
     jest.spyOn(fs.promises, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
     // flush promises see https://stackoverflow.com/a/51045733/6763331
     // need because addFile is in async loop and can happen after onScan.
     await new Promise(setImmediate)
@@ -145,7 +145,7 @@ describe('folder-scanner', () => {
     folderScanner.preserveFiles = false
     folderScanner.compression = true
 
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.id, targetGzip, false)
@@ -171,7 +171,7 @@ describe('folder-scanner', () => {
     fs.mkdirSync(folderScanner.inputFolder, { recursive: true })
     fs.copyFileSync(referenceCsv, targetCsv)
 
-    await folderScanner.lastPointQuery('xxx')
+    await folderScanner.fileQuery('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.id, targetGzip, false)

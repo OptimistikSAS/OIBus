@@ -16,7 +16,7 @@ class ADS extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
 
     const {
       netId,

@@ -18,7 +18,7 @@ class Modbus extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
+    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
     const { addressOffset, retryInterval } = this.dataSource.Modbus
 
     this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, addressOffset, this.logger)

@@ -54,12 +54,15 @@ class ProtocolHandler {
     this.logger.changeParameters(this.engineConfig, logParameters)
 
     if (this.supportedModes) {
-      const { supportListen, supportLastPoint } = this.supportedModes
+      const { supportListen, supportLastPoint, supportFile } = this.supportedModes
       if (supportListen && typeof this.listen !== 'function') {
         this.logger.error(`${this.constructor.name} should implement the listen() method.`)
       }
       if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
         this.logger.error(`${this.constructor.name} should implement the lastPointQuery() method.`)
+      }
+      if (supportFile && typeof this.fileQuery !== 'function') {
+        this.logger.error(`${this.constructor.name} should implement the fileQuery() method.`)
       }
     }
 
@@ -90,10 +93,15 @@ class ProtocolHandler {
     this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
     this.lastOnScanAt = new Date().getTime()
     try {
-      if (this.supportedModes?.supportLastPoint) {
-          await this.lastPointQuery(scanMode)
-        } else {
-          await this.onScanImplementation(scanMode)
+      switch (true) {
+          case this.supportedModes?.supportLastPoint:
+            await this.lastPointQuery(scanMode)
+            break
+          case this.supportedModes?.supportFile:
+            await this.fileQuery()
+            break
+          default:
+            await this.onScanImplementation(scanMode)
         }
     } catch (error) {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
