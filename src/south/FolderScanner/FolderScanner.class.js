@@ -15,7 +15,7 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportHistory: false })
+    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: true, supportHistory: false })
 
     const { inputFolder, preserveFiles, ignoreModifiedDate, minAge, regex, compression } = this.dataSource.FolderScanner
 
@@ -31,10 +31,9 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} _scanMode - The scan mode
    * @return {void}
    */
-  async lastPointQuery(_scanMode) {
+  async fileQuery() {
     // Check if input folder exists
     try {
       // eslint-disable-next-line no-bitwise
