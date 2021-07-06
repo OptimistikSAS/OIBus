@@ -16,7 +16,7 @@ const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
     ? scanGroups.map((e) => e.scanMode)
     : scanModes.map((e) => e.scanMode)
   if (options === null || options.length === 0) {
-    options.push(['']) // empty string if no scan mode on engine
+    options.push('') // empty string if no scan mode on engine
   }
   const defaultValue = options[0]
   let validCheck = valid(value, name, newConfig)
