@@ -33,9 +33,10 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
+   * @param {string} _scanMode - The scan mode
    * @return {void}
    */
-  async fileQuery() {
+  async fileQuery(_scanMode) {
     // List files in the inputFolder
     let files = []
     try {
