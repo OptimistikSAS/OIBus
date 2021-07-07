@@ -99,7 +99,7 @@ class ProtocolHandler {
             await this.lastPointQuery(scanMode)
             break
           case this.supportedModes?.supportFile:
-            await this.fileQuery()
+            await this.fileQuery(scanMode)
             break
           default:
             await this.onScanImplementation(scanMode)
