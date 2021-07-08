@@ -22,7 +22,7 @@ const AliveSignal = ({ onChange, aliveSignal }) => (
     <Row>
       <Col md={3}>
         <OIbCheckBox
-          label="Enabled"
+          label={aliveSignal.enabled ? 'Enabled' : 'Disabled'}
           name="engine.aliveSignal.enabled"
           value={aliveSignal.enabled}
           defaultValue={false}
