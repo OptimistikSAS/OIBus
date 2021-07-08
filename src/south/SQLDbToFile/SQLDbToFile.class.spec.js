@@ -48,6 +48,7 @@ describe('sql-db-to-file', () => {
   const sqlConfig = config.south.dataSources[7]
   const sqlSouth = new SQLDbToFile(sqlConfig, engine)
   const nowDateString = '2020-02-02T02:02:02.222Z'
+  const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
 
   it('should properly connect and set lastCompletedAt from database', async () => {
     databaseService.getConfig.mockReturnValue('2020-08-07T06:48:12.852Z')
@@ -99,6 +100,8 @@ describe('sql-db-to-file', () => {
 
   it('should properly update lastCompletedAt', () => {
     sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.000Z'
+    sqlSouth.timezone = 'UTC'
+
     const entryList1 = [
       { timestamp: '2021-03-30 10:30:00.150' },
       { timestamp: '2021-03-30 11:30:00.150' },
@@ -206,7 +209,9 @@ describe('sql-db-to-file', () => {
   it('should interact with MS SQL server with no LastCompletedDate and catch error', async () => {
     sqlSouth.driver = 'mssql'
     sqlSouth.containsLastCompletedDate = false
-    const query = jest.fn(() => { throw new Error('request error') })
+    const query = jest.fn(() => {
+      throw new Error('request error')
+    })
     const request = jest.fn(() => ({ query }))
     const connect = jest.fn(() => ({ request }))
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
@@ -473,7 +478,9 @@ describe('sql-db-to-file', () => {
     const request = jest.fn(() => ({ input }))
     const connect = jest.fn(() => ({ request }))
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }))
-    jest.spyOn(mssql, 'close').mockImplementation(() => { throw new Error('test') })
+    jest.spyOn(mssql, 'close').mockImplementation(() => {
+      throw new Error('test')
+    })
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
@@ -500,7 +507,7 @@ describe('sql-db-to-file', () => {
 
   it('should send uncompressed file when the result is not empty and compression is false', async () => {
     const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
+    global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs)
 
     sqlSouth.driver = 'mysql'
 
@@ -526,7 +533,7 @@ describe('sql-db-to-file', () => {
 
   it('should send compressed file when the result is not empty and compression is true', async () => {
     const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
+    global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs)
 
     sqlSouth.driver = 'mysql'
 
@@ -563,9 +570,6 @@ describe('sql-db-to-file', () => {
   })
 
   it('should manage fs unlink error and catch error', async () => {
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
-
     sqlSouth.driver = 'mysql'
 
     const rows = [{
@@ -598,13 +602,12 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.compression = false
     fs.rmdirSync(tmpFolder, { recursive: true })
-    global.Date = RealDate
   })
 
   it('should format date properly', () => {
     const actual = SQLDbToFile.formatDateWithTimezone(
-      new Date('2019-01-01 00:00:00Z'),
-      'Europe/Paris',
+      new Date('2019-01-01T00:00:00Z'),
+      'UTC',
       'YYYY-MM-DD HH:mm:ss',
     )
     const expected = '2019-01-01 00:00:00'

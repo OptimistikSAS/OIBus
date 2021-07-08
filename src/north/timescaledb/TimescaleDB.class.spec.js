@@ -27,7 +27,7 @@ describe('TimescaleDB north', () => {
   const timescaleDbConfig = config.north.applications[4]
   const timescaleDbNorth = new InfluxDB(timescaleDbConfig, engine)
 
-  const timestamp = new Date('2020-02-29 12:12:12').toISOString()
+  const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
   const values = [
     {
       pointId: 'ANA/BL1RCP05',
