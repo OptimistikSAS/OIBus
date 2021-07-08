@@ -49,7 +49,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           </Breadcrumb>
         </Col>
         <Col md={2}>
-          <StatusButton handler={handleStatus} />
+          <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
           <PointsButton dataSource={dataSource} />
         </Col>
       </Row>
@@ -65,7 +65,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         <Col md={4}>
           <OIbCheckBox
             name={`${prefix}.enabled`}
-            label="Enabled"
+            label={dataSource.enabled ? 'Enabled' : 'Disabled'}
             defaultValue={false}
             value={dataSource.enabled}
             help={<div>Enable this application</div>}
