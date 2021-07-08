@@ -98,21 +98,20 @@ class SQLDbToFile extends ProtocolHandler {
    * @param {*} entryList - on sql result item
    * @return {string} date - the updated date in iso string format
    */
+  /**
+   * Function used to parse an entry and update the lastCompletedAt if needed
+   * @param {*} entryList - on sql result item
+   * @return {string} date - the updated date in iso string format
+   */
   setLastCompletedAt(entryList) {
     let newLastCompletedAt = this.lastCompletedAt
     entryList.forEach((entry) => {
       if (entry[this.timeColumn] instanceof Date && entry[this.timeColumn] > new Date(newLastCompletedAt)) {
         newLastCompletedAt = entry[this.timeColumn].toISOString()
-      } else if (entry[this.timeColumn]) {
-        const entryDate = new Date(entry[this.timeColumn])
-        if (entryDate.toString() !== 'Invalid Date') {
-          // When of type string, We need to take back the js added timezone since it is not in the original string coming from the database
-          // When of type number, no need to take back the timezone offset because it represents the number of seconds from 01/01/1970
-          // eslint-disable-next-line max-len
-          const entryDateWithoutTimezoneOffset = typeof entry[this.timeColumn] === 'string' ? new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000) : entryDate
-          if (entryDateWithoutTimezoneOffset > new Date(newLastCompletedAt)) {
-            newLastCompletedAt = entryDateWithoutTimezoneOffset.toISOString()
-          }
+      } else if (entry[this.timeColumn] && new Date(entry[this.timeColumn]).toString() !== 'Invalid Date') {
+        const entryDate = new Date(moment.tz(entry[this.timeColumn], this.timezone).tz('UTC').toISOString())
+        if (entryDate > new Date(newLastCompletedAt)) {
+          newLastCompletedAt = entryDate.toISOString()
         }
       }
     })
