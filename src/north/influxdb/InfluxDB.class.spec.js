@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 describe('InfluxDB north', () => {
-  const timestamp = new Date('2020-02-29 12:12:12').toISOString()
+  const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
   const influxDbConfig = {
     password: 'password',
     user: 'user',
