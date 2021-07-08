@@ -4616,7 +4616,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             id="south.dataSources.0.OPCHDA.agentFilename"
             name="south.dataSources.0.OPCHDA.agentFilename"
             type="text"
-            value=".\\\\deps\\\\win\\\\HdaAgent\\\\HdaAgent.exe"
+            value="./deps/win/HdaAgent/HdaAgent.exe"
           />
           <div
             class="invalid-feedback"
