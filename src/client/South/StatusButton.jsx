@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
 import { FaInfoCircle } from 'react-icons/fa'
 
-const StatusButton = ({ handler, isIcon }) => (
+const StatusButton = ({ handler, isIcon, enabled }) => (
   <>
     {isIcon ? (
       <FaInfoCircle
@@ -16,7 +16,7 @@ const StatusButton = ({ handler, isIcon }) => (
     ) : (
       <Button
         className="inline-button autosize oi-status-button"
-        color="success"
+        color={enabled ? 'success' : 'secondary'}
         onClick={handler}
         size="sm"
         outline
@@ -27,7 +27,7 @@ const StatusButton = ({ handler, isIcon }) => (
   </>
 )
 
-StatusButton.propTypes = { handler: PropTypes.func.isRequired, isIcon: PropTypes.bool }
-StatusButton.defaultProps = { isIcon: false }
+StatusButton.propTypes = { handler: PropTypes.func.isRequired, isIcon: PropTypes.bool, enabled: PropTypes.bool }
+StatusButton.defaultProps = { isIcon: false, enabled: false }
 
 export default StatusButton
