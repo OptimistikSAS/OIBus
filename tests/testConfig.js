@@ -241,7 +241,7 @@ const testConfig = {
         OPCHDA: {
           tcpPort: 3333,
           retryInterval: 10000,
-          agentFilename: '.\\deps\\win\\HdaAgent\\HdaAgent.exe',
+          agentFilename: './deps/win/HdaAgent/HdaAgent.exe',
           logLevel: 'debug',
           host: 'opcserver',
           serverName: 'Matrikon.OPC.Simulation',
