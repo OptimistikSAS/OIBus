@@ -43,7 +43,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -132,7 +132,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               class="custom-control-label"
               for="south.dataSources.8.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -1693,7 +1693,7 @@ exports[`ConfigureProtocol check update 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -1782,7 +1782,7 @@ exports[`ConfigureProtocol check update 1`] = `
               class="custom-control-label"
               for="south.dataSources.8.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>

@@ -1966,7 +1966,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -2055,7 +2055,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -3482,7 +3482,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -3571,7 +3571,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -5112,7 +5112,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -5201,7 +5201,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -5837,7 +5837,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -5926,7 +5926,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -6562,7 +6562,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -6651,7 +6651,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -8127,7 +8127,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -8216,7 +8216,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -9168,7 +9168,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -9257,7 +9257,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -9996,7 +9996,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
@@ -10085,7 +10085,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="custom-control-label"
               for="south.dataSources.0.enabled"
             >
-              Enabled
+              Disabled
             </label>
           </div>
         </div>
@@ -10822,7 +10822,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         class="col-md-2"
       >
         <button
-          class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Status
