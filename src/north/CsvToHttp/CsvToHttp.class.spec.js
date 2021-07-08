@@ -114,7 +114,7 @@ describe('CsvToHttp', () => {
     expect(typeof response.value).toEqual(expectedType)
     expect(response.value).toEqual(new Date('1998-07-12T00:00:00.000Z'))
 
-    response = CsvToHttp.convertToCorrectType('1998-07-12 21:00:00', 'date (ISO)')
+    response = CsvToHttp.convertToCorrectType('1998-07-12T21:00:00Z', 'date (ISO)')
     expectedType = 'object'
     expect(typeof response.value).toEqual(expectedType)
     expect(response.value).toEqual(new Date('1998-07-12T21:00:00.000Z'))
