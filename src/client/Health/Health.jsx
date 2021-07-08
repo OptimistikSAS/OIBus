@@ -125,28 +125,28 @@ const Health = () => {
 
   return (
     <>
-      <Breadcrumb tag="h5">
+      <Breadcrumb tag="h4">
         <BreadcrumbItem active tag="span">
           Home
         </BreadcrumbItem>
       </Breadcrumb>
       <Row>
         <Label>
-          <span>
+          <h6>
             {`${engineName} overview`}
             &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
-          </span>
+          </h6>
         </Label>
       </Row>
       <NodeView status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
       <Row>
         <Label>
-          <span>
+          <h6>
             {`${engineName} health status`}
             &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
-          </span>
+          </h6>
         </Label>
       </Row>
       <Row>
