@@ -5,10 +5,11 @@ const sqlite3 = require('sqlite3')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
-const oracledb = require('oracledb')
 const csv = require('papaparse')
 const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
+
+let oracledb
 
 /**
  * Class SQLDbToFile
@@ -23,6 +24,9 @@ class SQLDbToFile extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
+
+    // eslint-disable-next-line global-require
+    if (!engine.m1) oracledb = require('oracledb')
 
     const {
       driver,
@@ -325,6 +329,10 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {void}
    */
   async getDataFromOracle() {
+    if (this.engine.m1) {
+      this.logger.error('Oracle not supported on apple m1')
+      return []
+    }
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, ':date1')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 

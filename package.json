@@ -6,6 +6,7 @@
   "license": "EUPL",
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
+    "start-m1": "node src/index.js --config ./tests/oibus.json --m1 true",
     "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
     "start-win": ".\\dist\\win\\oibus.exe --config .\\tests\\oibus.json",
     "start-linux": "./dist/linux/oibus --config ./tests/oibus.json",
