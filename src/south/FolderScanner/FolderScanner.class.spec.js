@@ -34,6 +34,9 @@ describe('folder-scanner', () => {
     jest.spyOn(fs, 'accessSync').mockImplementationOnce(() => {
       throw new Error('test')
     })
+    jest.spyOn(fs, 'readdirSync').mockImplementationOnce(() => {
+      throw new Error('test')
+    })
     folderScanner.onScanImplementation('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledTimes(0)
