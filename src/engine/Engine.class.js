@@ -55,8 +55,9 @@ class Engine {
    * @constructor
    * @param {string} configFile - The config file
    * @param {boolean} check - the engine will display the version and quit
+   * @param {boolean} m1 - allows oibus to run an apple-m1 processor (because of oracledb node_module)
    */
-  constructor(configFile, check) {
+  constructor(configFile, check, m1) {
     this.version = VERSION
 
     this.configService = new ConfigService(this, configFile)
@@ -99,6 +100,7 @@ class Engine {
     this.addFileCount = 0
     this.forwardedAliveSignalMessages = 0
     this.check = check
+    this.m1 = m1
   }
 
   /**
