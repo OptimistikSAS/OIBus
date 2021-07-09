@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Row, Container, Button } from 'reactstrap'
+import { Row, Container, Button, UncontrolledTooltip } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import ReactFlow from 'react-flow-renderer'
 import { ConfigContext } from '../context/configContext.jsx'
@@ -42,9 +42,14 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
+          <div id={`north-${index}`} className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
             <Link to={`/north/${application.applicationId}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{application.applicationId}</div>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {application.applicationId}
+              </div>
+              <UncontrolledTooltip placement="top" target={`north-${index}`} innerClassName="oi-pop">
+                {application.applicationId}
+              </UncontrolledTooltip>
               <div>{`(${application.api})`}</div>
             </Link>
           </div>),
@@ -77,9 +82,14 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
+          <div id={`south-${index}`} className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
             <Link to={`/south/${dataSource.dataSourceId}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{dataSource.dataSourceId}</div>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {dataSource.dataSourceId}
+              </div>
+              <UncontrolledTooltip placement="top" target={`south-${index}`} innerClassName="oi-pop">
+                {dataSource.dataSourceId}
+              </UncontrolledTooltip>
               <div>{`(${dataSource.protocol})`}</div>
             </Link>
             <PointsButton dataSource={dataSource} />
