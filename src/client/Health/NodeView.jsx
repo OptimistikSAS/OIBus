@@ -44,7 +44,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         label: (
           <div className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
             <Link to={`/north/${application.applicationId}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{application.applicationId}</div>
+              <div id="overlay">{application.applicationId}</div>
               <div>{`(${application.api})`}</div>
             </Link>
           </div>),
@@ -79,7 +79,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         label: (
           <div className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
             <Link to={`/south/${dataSource.dataSourceId}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{dataSource.dataSourceId}</div>
+              <div id="overlay">{dataSource.dataSourceId}</div>
               <div>{`(${dataSource.protocol})`}</div>
             </Link>
             <PointsButton dataSource={dataSource} />

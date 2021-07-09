@@ -429,3 +429,12 @@ h3 {
 .points .table td .oi-icon {
   margin-top: 9px;
 }
+
+#overlay:hover {
+  overflow: visible;
+	}
+
+#overlay {
+  overflow: hidden;
+  text-overflow: ellipsis;
+    }
