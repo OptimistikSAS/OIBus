@@ -429,3 +429,21 @@ h3 {
 .points .table td .oi-icon {
   margin-top: 9px;
 }
+
+.oi-pop{
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  min-height: 50px;
+  line-height: 15px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  padding: 18px 5px;
+  color: #333333;
+  background-color: #fff;
+  border-radius: 0.4rem;
+  box-shadow: 0 0.5rem 1rem rgb(128 128 128) !important;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
