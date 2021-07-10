@@ -60,7 +60,7 @@
     "micromatch": "4.0.4",
     "minimist": "1.2.5",
     "moment-timezone": "0.5.33",
-    "mongodb": "3.6.9",
+    "mongodb": "3.6.10",
     "mqtt": "4.2.8",
     "mqtt-wildcard": "3.0.9",
     "mssql": "7.1.3",
