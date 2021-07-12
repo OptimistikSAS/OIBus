@@ -422,6 +422,9 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -1532,6 +1535,9 @@ exports[`ConfigureApi check update 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"

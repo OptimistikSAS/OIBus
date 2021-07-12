@@ -387,4 +387,27 @@ module.exports = {
       }
     })
   },
+  24: (config) => {
+    const newLogParameters = {
+      consoleLog: { level: config.engine.logParameters.consoleLevel },
+      fileLog: {
+        level: config.engine.logParameters.fileLevel,
+        fileName: config.engine.logParameters.filename,
+        maxSize: config.engine.logParameters.maxsize,
+        numberOfFiles: config.engine.logParameters.maxFiles,
+        tailable: config.engine.logParameters.tailable,
+      },
+      sqliteLog: {
+        level: config.engine.logParameters.sqliteLevel,
+        fileName: config.engine.logParameters.sqliteFilename,
+        maxSize: config.engine.logParameters.sqliteMaxFileSize,
+      },
+      lokiLog: {
+        level: 'none',
+        host: '',
+        interval: 60,
+      },
+    }
+    config.engine.logParameters = newLogParameters
+  },
 }

@@ -5,15 +5,23 @@ const testConfig = {
     password: '23423423',
     filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
     logParameters: {
-      consoleLevel: 'debug',
-      fileLevel: 'error',
-      filename: './logs/journal.log',
-      maxsize: 1000000,
-      maxFiles: 5,
-      tailable: true,
-      sqliteLevel: 'error',
-      sqliteFilename: './logs/journal.db',
-      sqliteMaxFileSize: 50000000,
+      consoleLog: { level: 'debug' },
+      fileLog: {
+        level: 'error',
+        fileName: './logs/journal.log',
+        maxSize: 1000000,
+        numberOfFiles: 5,
+        tailable: true,
+      },
+      sqliteLog: {
+        level: 'error',
+        fileName: './logs/journal.db',
+        maxSize: 50000000,
+      },
+      lokiLog: {
+        level: 'debug',
+        host: 'localhost:3100',
+      },
     },
     caching: { cacheFolder: './cache', archiveMode: 'delete', archiveFolder: './cache/archived/' },
     scanModes: [

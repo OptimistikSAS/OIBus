@@ -442,6 +442,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -2092,6 +2095,9 @@ exports[`ConfigureProtocol check update 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
