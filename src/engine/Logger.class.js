@@ -1,6 +1,7 @@
 const path = require('path')
 
 const { createLogger, format, transports } = require('winston')
+const LokiTransport = require('winston-loki')
 
 const SqliteTransport = require('./SqliteWinstonTransport.class')
 
@@ -31,16 +32,44 @@ class Logger {
     return Logger.instance
   }
 
-  changeParameters(baseParameters, specificParameters = {}) {
+  changeParameters(engineName, baseParameters, specificParameters = {}) {
     const logParameters = {
       ...baseParameters,
       ...this.removeDefaultSettings(specificParameters),
     }
 
-    const { consoleLevel, fileLevel, filename, maxFiles, maxsize, tailable, sqliteLevel, sqliteFilename, sqliteMaxFileSize } = logParameters
-    this.logger.level = consoleLevel
-    this.logger.add(new transports.File({ filename, level: fileLevel, maxsize, maxFiles, tailable, handleExceptions: true }))
-    this.logger.add(new SqliteTransport({ filename: sqliteFilename, level: sqliteLevel, maxFileSize: sqliteMaxFileSize, handleExceptions: true }))
+    const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
+    this.logger.level = consoleLog.level
+    if (fileLog.level !== 'none') {
+      this.logger.add(new transports.File({
+        filename: fileLog.fileName,
+        level: fileLog.level,
+        maxsize: fileLog.maxSize,
+        maxFiles: fileLog.numberOfFiles,
+        tailable: fileLog.tailable,
+        handleExceptions: true,
+      }))
+    }
+
+    if (sqliteLog.level !== 'none') {
+      this.logger.add(new SqliteTransport({
+        fileName: sqliteLog.fileName,
+        level: sqliteLog.level,
+        maxFileSize: sqliteLog.maxSize,
+        handleExceptions: true,
+      }))
+    }
+
+    if (lokiLog.level !== 'none') {
+      this.logger.add(new LokiTransport({
+        host: lokiLog.host,
+        json: true,
+        batching: true,
+        replaceTimestamp: true,
+        interval: lokiLog.interval,
+        labels: { oibus: engineName },
+      }))
+    }
   }
 
   info(message) {

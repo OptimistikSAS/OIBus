@@ -422,6 +422,9 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -1913,6 +1916,9 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -2973,6 +2979,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -3833,6 +3842,9 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -4913,6 +4925,9 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -5753,6 +5768,9 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -6545,6 +6563,9 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -7636,6 +7657,9 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"
@@ -8608,6 +8632,9 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           />
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
     <div
       class="row"

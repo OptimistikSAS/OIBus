@@ -19,9 +19,9 @@ class SqliteTransport extends TransportStream {
     // Expose the name of this Transport on the prototype.
     this.name = options.name || 'sqlite'
     this.database = null
-    this.filename = options.filename || ':memory:'
+    this.fileName = options.fileName || ':memory:'
     this.tableName = options.tableName || 'logs'
-    this.maxFileSize = options.maxFileSize || DEFAULT_MAX_FILE_SIZE
+    this.maxFileSize = options.maxSize || DEFAULT_MAX_FILE_SIZE
   }
 
   /**
@@ -39,7 +39,7 @@ class SqliteTransport extends TransportStream {
     }
     await this.addLog(payload.timestamp, payload.level, payload.source, payload.message)
 
-    const logFile = fs.statSync(this.filename)
+    const logFile = fs.statSync(this.fileName)
     if (logFile.size > this.maxFileSize) {
       await this.deleteOldLogs()
     }
@@ -52,7 +52,7 @@ class SqliteTransport extends TransportStream {
    * @return {void}
    */
   async createLogsDatabase() {
-    this.database = await sqlite.open({ filename: this.filename, driver: sqlite3.cached.Database })
+    this.database = await sqlite.open({ filename: this.fileName, driver: sqlite3.cached.Database })
 
     const query = `CREATE TABLE IF NOT EXISTS ${LOGS_TABLE_NAME} (
                     id INTEGER PRIMARY KEY, 
