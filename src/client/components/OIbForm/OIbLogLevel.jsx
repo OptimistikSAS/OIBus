@@ -40,6 +40,16 @@ const OIbLogLevel = ({ name, value, onChange, logOptions, help }) => (
           name={`${name}.sqliteLevel`}
         />
       </Col>
+      <Col md="2">
+        <OIbSelect
+          label="Loki level"
+          onChange={onChange}
+          value={value.lokiLevel}
+          options={logOptions}
+          defaultValue="engine"
+          name={`${name}.lokiLevel`}
+        />
+      </Col>
     </Row>
   </>
 )
