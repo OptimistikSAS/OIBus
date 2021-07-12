@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ConsoleLogging check ConsoleLogging 1`] = `
+<div>
+  <div>
+    <h6>
+      Console
+    </h6>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.consoleLog.level"
+          >
+            Level
+          </label>
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.consoleLog.level"
+            name="engine.logParameters.consoleLog.level"
+          >
+            <option
+              value="none"
+            >
+              none
+            </option>
+            <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
+              value="debug"
+            >
+              debug
+            </option>
+            <option
+              value="info"
+            >
+              info
+            </option>
+            <option
+              value="warning"
+            >
+              warning
+            </option>
+            <option
+              value="error"
+            >
+              error
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The level for the Console log
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ConsoleLogging check change console level to "warning" 1`] = `
+<div>
+  <div>
+    <h6>
+      Console
+    </h6>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.consoleLog.level"
+          >
+            Level
+          </label>
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.consoleLog.level"
+            name="engine.logParameters.consoleLog.level"
+          >
+            <option
+              value="none"
+            >
+              none
+            </option>
+            <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
+              value="debug"
+            >
+              debug
+            </option>
+            <option
+              value="info"
+            >
+              info
+            </option>
+            <option
+              value="warning"
+            >
+              warning
+            </option>
+            <option
+              value="error"
+            >
+              error
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The level for the Console log
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

@@ -64,7 +64,7 @@ class Engine {
 
     // Configure the logger
     this.logger = Logger.getDefaultLogger()
-    this.logger.changeParameters(engineConfig.logParameters)
+    this.logger.changeParameters(engineConfig.engineName, engineConfig.logParameters)
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -439,7 +439,7 @@ class Engine {
     const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
 
     const { engineConfig } = this.configService.getConfig()
-    const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteFilename)
+    const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteLog.fileName)
 
     const processUptime = 1000 * 1000 * process.uptime()
     const processCpuUsage = process.cpuUsage()
