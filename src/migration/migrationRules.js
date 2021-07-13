@@ -406,6 +406,7 @@ module.exports = {
         level: 'none',
         host: '',
         interval: 60,
+        identifier: 'oibus',
       },
     }
     config.engine.logParameters = newLogParameters
