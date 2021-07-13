@@ -39,7 +39,7 @@ describe('ConsoleLogging', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.consoleLog.level'), { target: { value: 'warning', selectedIndex: 4 } })
+    Simulate.change(document.getElementById('engine.logParameters.consoleLog.level'), { target: { value: 'warning', selectedIndex: 3 } })
     expect(onChange).toBeCalledWith('engine.logParameters.consoleLog.level', 'warning', null, null)
     expect(container).toMatchSnapshot()
   })
