@@ -639,11 +639,6 @@ exports[`Engine check Engine 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -1149,6 +1144,9 @@ exports[`Engine check Engine 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>
@@ -3763,11 +3761,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -4273,6 +4266,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>
@@ -6620,11 +6616,6 @@ exports[`Engine check change engineName 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -7130,6 +7121,9 @@ exports[`Engine check change engineName 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>
@@ -9744,11 +9738,6 @@ exports[`Engine check change password 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -10254,6 +10243,9 @@ exports[`Engine check change password 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>
@@ -12868,11 +12860,6 @@ exports[`Engine check change port 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -13378,6 +13365,9 @@ exports[`Engine check change port 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>
@@ -15992,11 +15982,6 @@ exports[`Engine check change user 1`] = `
                 name="engine.logParameters.consoleLog.level"
               >
                 <option
-                  value="none"
-                >
-                  none
-                </option>
-                <option
                   value="silly"
                 >
                   silly
@@ -16502,6 +16487,9 @@ exports[`Engine check change user 1`] = `
               </small>
             </div>
           </div>
+          <div
+            class="col-md-2"
+          />
         </div>
       </div>
     </div>

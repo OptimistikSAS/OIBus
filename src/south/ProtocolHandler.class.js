@@ -47,7 +47,7 @@ class ProtocolHandler {
 
     const { logParameters } = this.dataSource
     this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.engineName, this.engineConfig.logParameters, logParameters)
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
 
     this.lastOnScanAt = null
     this.lastAddFileAt = null
