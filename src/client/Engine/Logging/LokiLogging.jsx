@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import { minValue, optional } from '../../../services/validation.service'
+import { minValue, notEmpty, optional } from '../../../services/validation.service'
 
 const schema = { name: 'LokiLogging' }
 schema.form = {
@@ -27,6 +27,14 @@ schema.form = {
     valid: minValue(10),
     defaultValue: 60,
     help: <div>Interval between batch of logs (in s)</div>,
+  },
+  identifier: {
+    type: 'OIbText',
+    newRow: false,
+    md: 2,
+    valid: notEmpty(),
+    defaultValue: 60,
+    help: <div>Used to identify the origin of the log</div>,
   },
 }
 

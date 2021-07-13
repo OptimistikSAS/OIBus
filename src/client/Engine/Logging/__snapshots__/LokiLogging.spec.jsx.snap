@@ -140,6 +140,9 @@ exports[`LokiLogging check LokiLogging 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
   </div>
 </div>
@@ -285,6 +288,9 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
   </div>
 </div>
@@ -430,6 +436,9 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
   </div>
 </div>
@@ -575,6 +584,9 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      />
     </div>
   </div>
 </div>

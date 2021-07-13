@@ -32,7 +32,7 @@ class Logger {
     return Logger.instance
   }
 
-  changeParameters(engineName, baseParameters, specificParameters = {}) {
+  changeParameters(baseParameters, specificParameters = {}) {
     const logParameters = {
       ...baseParameters,
       ...this.removeDefaultSettings(specificParameters),
@@ -67,7 +67,7 @@ class Logger {
         batching: true,
         replaceTimestamp: true,
         interval: lokiLog.interval,
-        labels: { oibus: engineName },
+        labels: { oibus: lokiLog.identifier },
       }))
     }
   }
