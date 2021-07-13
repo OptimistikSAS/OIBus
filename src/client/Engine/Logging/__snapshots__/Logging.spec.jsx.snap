@@ -171,11 +171,6 @@ exports[`Logging check Logging 1`] = `
               name="engine.logParameters.consoleLog.level"
             >
               <option
-                value="none"
-              >
-                none
-              </option>
-              <option
                 value="silly"
               >
                 silly
@@ -681,6 +676,9 @@ exports[`Logging check Logging 1`] = `
             </small>
           </div>
         </div>
+        <div
+          class="col-md-2"
+        />
       </div>
     </div>
   </div>

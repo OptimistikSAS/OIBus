@@ -28,11 +28,6 @@ exports[`ConsoleLogging check ConsoleLogging 1`] = `
             name="engine.logParameters.consoleLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -102,11 +97,6 @@ exports[`ConsoleLogging check change console level to "warning" 1`] = `
             id="engine.logParameters.consoleLog.level"
             name="engine.logParameters.consoleLog.level"
           >
-            <option
-              value="none"
-            >
-              none
-            </option>
             <option
               value="silly"
             >
