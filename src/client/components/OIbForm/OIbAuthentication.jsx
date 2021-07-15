@@ -1,16 +1,15 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Row, Col } from 'reactstrap'
+import { Col, Row } from 'reactstrap'
 
 import OIbText from './OIbText.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
-import OIbTitle from './OIbTitle.jsx'
-import { notEmpty, hasLengthBetween } from '../../../services/validation.service'
+import { hasLengthBetween, notEmpty } from '../../../services/validation.service'
 
 /*
-  OIBAuthentication is a form reused in several places. Can manage user/password (default)
-  or accessKey/secretKey as well as authentication type.
+  OIBAuthentication is a form reused in several places.
+  Can manage Bearer token, basic auth and custom api key authentication methods
 */
 const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
   const [authMode, setAuthMode] = useState(value.type)
@@ -25,7 +24,6 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
   }
 
   const validation = {
-    accessKey: notEmpty(),
     secretKey: hasLengthBetween(0, 256),
     username: notEmpty(),
     password: hasLengthBetween(0, 256),
@@ -72,7 +70,7 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
             </Col>
             <Col md="4">
               <OIbPassword
-                label="Value"
+                label="Secret"
                 onChange={handleChange}
                 value={value.secretKey}
                 valid={validation.secretKey}
@@ -101,13 +99,10 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
   }
 
   return [
-    <OIbTitle label={label} key="title">
-      <div>
-        <p>Authentication parameters</p>
-        <p>Please fill the user and password to connect this application</p>
-      </div>
-    </OIbTitle>,
-    mode === 'user' ? (
+    <h6 key="title">
+      {label}
+    </h6>,
+    mode ? renderUserType(mode) : (
       [
         <Row key="type">
           <Col md="2">
@@ -123,27 +118,6 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
         </Row>,
         renderUserType(authMode),
       ]
-    ) : (
-      <Row key="accessKey">
-        <Col md="4">
-          <OIbText
-            label="Access Key"
-            onChange={handleChange}
-            value={value.accessKey}
-            valid={validation.accessKey}
-            name="accessKey"
-          />
-        </Col>
-        <Col md="4">
-          <OIbPassword
-            label="Secret Key"
-            onChange={handleChange}
-            value={value.secretKey}
-            valid={validation.secretKey}
-            name="secretKey"
-          />
-        </Col>
-      </Row>
     ),
   ]
 }
@@ -152,13 +126,13 @@ OIbAuthentication.propTypes = {
   onChange: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
   value: PropTypes.object,
-  mode: PropTypes.oneOf(['accessKey', 'user']),
+  mode: PropTypes.oneOf(['Basic', 'API Key', 'Bearer']),
   label: PropTypes.string,
 }
 
 OIbAuthentication.defaultProps = {
-  value: { type: 'Basic', username: '', password: '', key: '', accessKey: '', secretKey: '' },
-  mode: 'user',
+  value: { type: 'Basic', username: '', password: '', key: '', secretKey: '' },
+  mode: null,
   label: 'Authentication',
 }
 
