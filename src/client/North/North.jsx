@@ -99,6 +99,26 @@ const North = () => {
   }
 
   /**
+   * Copy the chosen application
+   * @param {integer} position The id to copy
+   * @returns {void}
+   */
+  const handleDuplicate = (position) => {
+    const application = applications[sortableApplications[position].index]
+    const newName = `${application.applicationId} copy`
+    const countCopies = applications.filter((e) => e.applicationId.startsWith(newName)).length
+    dispatchNewConfig({
+      type: 'addRow',
+      name: 'north.applications',
+      value: {
+        ...application,
+        applicationId: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
+        enabled: false,
+      },
+    })
+  }
+
+  /**
   * Sort applications list
   * @param {string} property to be used for sorting
   * @param {bool} ascending flag for ascending/descending
@@ -150,6 +170,7 @@ const North = () => {
         rows={tableRows}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
+        handleDuplicate={handleDuplicate}
         handleSort={handleSort}
       />
       <NewApplicationRow apiList={apiList} addApplication={addApplication} />
