@@ -37,7 +37,7 @@ const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
-const AliveSignal = require('./AliveSignal.class')
+const HealthSignal = require('./HealthSignal.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const { createRequestService } = require('../services/request')
 
@@ -97,7 +97,7 @@ class Engine {
     this.addValuesMessages = 0
     this.addValuesCount = 0
     this.addFileCount = 0
-    this.forwardedAliveSignalMessages = 0
+    this.forwardedHealthSignalMessages = 0
     this.check = check
   }
 
@@ -284,9 +284,9 @@ class Engine {
       }
     })
 
-    // 7. Start AliveSignal
-    this.aliveSignal = new AliveSignal(this)
-    this.aliveSignal.start()
+    // 7. Start HealthSignal
+    this.healthSignal = new HealthSignal(this)
+    this.healthSignal.start()
 
     this.logger.info('OIBus started')
   }
@@ -302,8 +302,8 @@ class Engine {
       return
     }
 
-    // Stop AliveSignal
-    this.aliveSignal.stop()
+    // Stop HealthSignal
+    this.healthSignal.stop()
 
     // Stop timers
     this.jobs.forEach((id) => {
@@ -468,7 +468,7 @@ class Engine {
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
       addFileCount: this.addFileCount,
-      forwardedAliveSignalMessages: this.forwardedAliveSignalMessages,
+      forwardedHealthSignalMessages: this.forwardedHealthSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,
       filesErrorCount,
