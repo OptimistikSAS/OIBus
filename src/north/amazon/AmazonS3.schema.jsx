@@ -16,7 +16,7 @@ schema.form = {
   },
   authentication: {
     type: 'OIbAuthentication',
-    mode: 'accessKey',
+    mode: 'API Key',
   },
   networkSection: {
     type: 'OIbTitle',

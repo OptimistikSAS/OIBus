@@ -4,6 +4,7 @@ const testConfig = {
     user: 'admin',
     password: '23423423',
     filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
+    safeMode: false,
     logParameters: {
       consoleLog: { level: 'debug' },
       fileLog: {
@@ -49,18 +50,24 @@ const testConfig = {
       },
     ],
     engineName: 'OIBus',
-    aliveSignal: {
-      enabled: true,
-      host: 'https://hostname',
-      endpoint: '/api/optimistik/oibus/info',
-      authentication: {
-        type: 'Basic',
-        username: 'username',
-        password: 'password',
+    healthSignal: {
+      logging: {
+        enabled: true,
+        frequency: 3600,
       },
-      id: 'OIBus-test',
-      frequency: 300,
-      proxy: '',
+      http: {
+        enabled: true,
+        host: 'https://hostname',
+        endpoint: '/api/optimistik/oibus/info',
+        authentication: {
+          type: 'Basic',
+          username: 'username',
+          password: 'password',
+        },
+        id: 'OIBus-test',
+        frequency: 300,
+        proxy: '',
+      },
     },
     httpRequest: {
       stack: 'fetch',
@@ -229,7 +236,7 @@ const testConfig = {
           username: 'oibus_user',
           database: 'oibus',
           query:
-              'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @LastCompletedDate',
+            'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @LastCompletedDate',
           delimiter: ',',
           filename: 'sql-@date.csv',
           scanMode: 'everySecond',

@@ -27,7 +27,7 @@ class AmazonS3 extends ApiHandler {
     this.folder = folder
 
     AWS.config.update({
-      accessKeyId: authentication.accessKey,
+      accessKeyId: authentication.key,
       secretAccessKey: this.encryptionService.decryptText(authentication.secretKey),
     })
 
