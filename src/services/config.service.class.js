@@ -42,11 +42,11 @@ class ConfigService {
    */
   static getCommandLineArguments(logger) {
     const args = minimist(process.argv.slice(2))
-    const { config, check, m1 } = args
+    const { config, check } = args
     if (!config) {
       logger.error('No config file specified, example: --config ./config/config.json')
     }
-    return { configFile: path.resolve(config ?? './oibus.json'), check, m1 }
+    return { configFile: path.resolve(config ?? './oibus.json'), check }
   }
 
   /**
