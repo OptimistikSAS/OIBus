@@ -10,6 +10,12 @@ const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 let oracledb
+try {
+  // eslint-disable-next-line global-require,import/no-unresolved
+  oracledb = require('oracledb')
+} catch {
+  console.error('Could not load node oracledb')
+}
 
 /**
  * Class SQLDbToFile
@@ -24,9 +30,6 @@ class SQLDbToFile extends ProtocolHandler {
    */
   constructor(dataSource, engine) {
     super(dataSource, engine)
-
-    // eslint-disable-next-line global-require
-    if (!engine.m1) oracledb = require('oracledb')
 
     const {
       driver,

@@ -4,7 +4,14 @@ const path = require('path')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
-const oracledb = require('oracledb')
+
+let oracledb
+try {
+  // eslint-disable-next-line no-undef,global-require,import/no-unresolved
+  oracledb = require('oracledb')
+} catch (e) {
+  console.error('node-oracledb could not be loaded. Skipping oracle tests')
+}
 const sqlite = require('sqlite')
 const csv = require('papaparse')
 
@@ -369,6 +376,7 @@ describe('sql-db-to-file', () => {
   })
 
   it('should interact with Oracle server if driver is oracle', async () => {
+    if (!oracledb) return
     sqlSouth.driver = 'oracle'
     sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.222Z'
     const connection = {
@@ -408,6 +416,7 @@ describe('sql-db-to-file', () => {
   })
 
   it('should interact with Oracle server and catch request error', async () => {
+    if (!oracledb) return
     sqlSouth.driver = 'oracle'
 
     const connection = {
