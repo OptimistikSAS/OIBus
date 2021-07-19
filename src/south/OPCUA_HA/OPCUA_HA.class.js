@@ -19,7 +19,7 @@ class OPCUA_HA extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
     const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay, maxReturnValues, readTimeout } = dataSource.OPCUA_HA
 
@@ -31,8 +31,6 @@ class OPCUA_HA extends ProtocolHandler {
     this.readIntervalDelay = readIntervalDelay
     this.maxReturnValues = maxReturnValues
     this.readTimeout = readTimeout
-    this.lastCompletedAt = {}
-    this.ongoingReads = {}
     this.reconnectTimeout = null
 
     this.canHandleHistory = true
@@ -46,41 +44,6 @@ class OPCUA_HA extends ProtocolHandler {
   async connect() {
     await super.connect()
 
-    if (this.dataSource.OPCUA_HA.scanGroups) {
-      // group all points in their respective scanGroup
-      // each scangroup is also initialized with a default "last completed date" equal to current Time
-      this.scanGroups = this.dataSource.OPCUA_HA.scanGroups.map((scanGroup) => {
-        const points = this.dataSource.points
-          .filter((point) => point.scanMode === scanGroup.scanMode)
-          .map((point) => point.nodeId)
-        this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
-        this.ongoingReads[scanGroup.scanMode] = false
-        return {
-          name: scanGroup.scanMode,
-          ...scanGroup,
-          points,
-        }
-      })
-    } else {
-      this.logger.error('OPCUA_HA scanGroups are not defined. This South driver will not work')
-      this.scanGroups = []
-    }
-
-    // Initialize lastCompletedAt for every scanGroup
-    // "startTime" is currently a "hidden" parameter of oibus.json
-    const { startTime } = this.dataSource
-
-    const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
-    // Disable ESLint check because we need for..of loop to support async calls
-    // eslint-disable-next-line no-restricted-syntax
-    for (const scanGroup of Object.keys(this.lastCompletedAt)) {
-      // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
-      // eslint-disable-next-line no-await-in-loop
-      let lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanGroup}`)
-      lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
-      this.logger.info(`Initializing lastCompletedAt for ${scanGroup} with ${lastCompletedAt}`)
-      this.lastCompletedAt[scanGroup] = lastCompletedAt
-    }
     await this.connectToOpcuaServer()
   }
 
@@ -119,7 +82,7 @@ class OPCUA_HA extends ProtocolHandler {
     })
     // send the packet immediately to the engine
     this.addValues(values)
-    this.lastCompletedAt[scanMode] = maxTimestamp + 1
+    this.lastCompletedAt[scanMode] = new Date(maxTimestamp + 1)
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
@@ -226,7 +189,7 @@ class OPCUA_HA extends ProtocolHandler {
 
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
-      let opcStartTime = new Date(this.lastCompletedAt[scanMode])
+      let opcStartTime = this.lastCompletedAt[scanMode]
       const opcEndTime = new Date()
       let intervalOpcEndTime
       let firstIteration = true
@@ -354,7 +317,7 @@ class OPCUA_HA extends ProtocolHandler {
         // eslint-disable-next-line no-await-in-loop
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
-        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
+        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].getTime())
         this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
 
         opcStartTime = intervalOpcEndTime

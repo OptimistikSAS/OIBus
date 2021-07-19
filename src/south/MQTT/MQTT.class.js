@@ -15,7 +15,7 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: true, supportLastPoint: false, supportHistory: false })
+    super(dataSource, engine, { supportListen: true, supportLastPoint: false, supportFile: false, supportHistory: false })
 
     const {
       url,
