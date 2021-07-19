@@ -15,29 +15,14 @@ class OPCHDA extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
     this.agentReady = false
-    this.lastCompletedAt = {}
-    this.ongoingReads = {}
     this.receivedLog = ''
     this.reconnectTimeout = null
-
-    this.scanGroups = this.dataSource.OPCHDA.scanGroups.map((scanGroup) => {
-      const points = this.dataSource.points
-        .filter((point) => point.scanMode === scanGroup.scanMode)
-        .map((point) => point.pointId)
-      this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
-      this.ongoingReads[scanGroup.scanMode] = false
-      return {
-        name: scanGroup.scanMode,
-        ...scanGroup,
-        points,
-      }
-    })
 
     this.canHandleHistory = true
     this.handlesPoints = true
@@ -50,17 +35,6 @@ class OPCHDA extends ProtocolHandler {
   async connect() {
     if (process.platform === 'win32') {
       await super.connect()
-      // Initialize lastCompletedAt for every scanGroup
-      // "startTime" is currently a "hidden" parameter of oibus.json
-      const { startTime } = this.dataSource
-      const defaultLastCompletedAt = startTime ? new Date(startTime).getTime() : new Date().getTime()
-
-      Object.keys(this.lastCompletedAt).forEach(async (key) => {
-        let lastCompletedAt = await this.getConfig(`lastCompletedAt-${key}`)
-        lastCompletedAt = lastCompletedAt ? parseInt(lastCompletedAt, 10) : defaultLastCompletedAt
-        this.logger.info(`Initializing lastCompletedAt for ${key} with ${lastCompletedAt}`)
-        this.lastCompletedAt[key] = lastCompletedAt
-      })
 
       // Launch Agent
       const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
@@ -219,7 +193,7 @@ class OPCHDA extends ProtocolHandler {
         TransactionId: this.generateTransactionId(),
         Content: {
           Group: scanMode,
-          StartTime: this.lastCompletedAt[scanMode],
+          StartTime: this.lastCompletedAt[scanMode].getTime(),
         },
       }
       this.sendMessage(message)
@@ -329,7 +303,7 @@ class OPCHDA extends ProtocolHandler {
           this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
           await this.setConfig(
             `lastCompletedAt-${messageObject.Content.Group}`,
-            this.lastCompletedAt[messageObject.Content.Group],
+            this.lastCompletedAt[messageObject.Content.Group].getTime(),
           )
           this.logger.silly(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
