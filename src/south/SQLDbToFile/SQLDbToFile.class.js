@@ -31,7 +31,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
     const {
       driver,
@@ -52,7 +52,6 @@ class SQLDbToFile extends ProtocolHandler {
       timezone,
       dateFormat,
       compression,
-      startDate,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -74,7 +73,6 @@ class SQLDbToFile extends ProtocolHandler {
     this.delimiter = delimiter
     this.dateFormat = dateFormat
     this.compression = compression
-    this.startDate = startDate // "startDate" is currently a "hidden" parameter of oibus.json
 
     if (timezone && DateTime.local().setZone(timezone).isValid) {
       this.timezone = timezone
@@ -111,15 +109,11 @@ class SQLDbToFile extends ProtocolHandler {
   /**
    * Function used to parse an entry and update the lastCompletedAt if needed
    * @param {*} entryList - on sql result item
+   * @param {Date} actualLastCompletedAt - The actual last completed date
    * @return {string} date - the updated date in iso string format
    */
-  /**
-   * Function used to parse an entry and update the lastCompletedAt if needed
-   * @param {*} entryList - on sql result item
-   * @return {string} date - the updated date in iso string format
-   */
-  setLastCompletedAt(entryList) {
-    let newLastCompletedAt = this.lastCompletedAt
+  setLastCompletedAt(entryList, actualLastCompletedAt) {
+    let newLastCompletedAt = actualLastCompletedAt
     entryList.forEach((entry) => {
       if (entry[this.timeColumn]) {
         let entryDate
@@ -147,7 +141,7 @@ class SQLDbToFile extends ProtocolHandler {
       }
     })
 
-    if (newLastCompletedAt !== this.lastCompletedAt) {
+    if (newLastCompletedAt !== actualLastCompletedAt) {
       this.logger.debug(`Updating lastCompletedAt to ${newLastCompletedAt}`)
     } else {
       this.logger.debug('lastCompletedAt not used')
@@ -157,32 +151,39 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get entries from the database since the last query completion, write them into a CSV file and send to the Engine.
-   * @param {*} _scanMode - The scan mode
+   * @param {*} scanMode - The scan mode
    * @return {void}
    */
-  async onScanImplementation(_scanMode) {
+  async onScanImplementation(scanMode) {
     if (!this.timezone) {
       this.logger.error('Invalid timezone')
       return
     }
 
+    if (this.ongoingReads[scanMode]) {
+      this.logger.silly(`onScan ignored: ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      return
+    }
+
+    this.ongoingReads[scanMode] = true
+
     let result = []
     try {
       switch (this.driver) {
         case 'mssql':
-          result = await this.getDataFromMSSQL()
+          result = await this.getDataFromMSSQL(this.lastCompletedAt[scanMode])
           break
         case 'mysql':
-          result = await this.getDataFromMySQL()
+          result = await this.getDataFromMySQL(this.lastCompletedAt[scanMode])
           break
         case 'postgresql':
-          result = await this.getDataFromPostgreSQL()
+          result = await this.getDataFromPostgreSQL(this.lastCompletedAt[scanMode])
           break
         case 'oracle':
-          result = await this.getDataFromOracle()
+          result = await this.getDataFromOracle(this.lastCompletedAt[scanMode])
           break
         case 'sqlite':
-          result = await this.getDataFromSqlite()
+          result = await this.getDataFromSqlite(this.lastCompletedAt[scanMode])
           break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
@@ -195,8 +196,8 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      this.lastCompletedAt = this.setLastCompletedAt(result)
-      await this.setConfig('lastCompletedAt', this.lastCompletedAt)
+      this.lastCompletedAt[scanMode] = this.setLastCompletedAt(result, this.lastCompletedAt[scanMode])
+      await this.setConfig(`astCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].getTime())
       this.statusData['Last Completed At '] = new Date().toISOString()
       this.updateStatusDataStream()
       const csvContent = await this.generateCSV(result)
@@ -230,13 +231,16 @@ class SQLDbToFile extends ProtocolHandler {
         }
       }
     }
+
+    this.ongoingReads[scanMode] = false
   }
 
   /**
    * Get new entries from MSSQL database.
+   * @param {Date} lastCompletedAt - The last completed date
    * @returns {void}
    */
-  async getDataFromMSSQL() {
+  async getDataFromMSSQL(lastCompletedAt) {
     const adaptedQuery = this.query
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
@@ -259,7 +263,7 @@ class SQLDbToFile extends ProtocolHandler {
       let result
       if (this.containsLastCompletedDate) {
         result = await pool.request()
-          .input('LastCompletedDate', mssql.DateTimeOffset, new Date(this.lastCompletedAt))
+          .input('LastCompletedDate', mssql.DateTimeOffset, lastCompletedAt)
           .query(adaptedQuery)
       } else {
         result = await pool.request()
@@ -280,9 +284,10 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from MySQL database.
+   * @param {Date} lastCompletedAt - The last completed date
    * @returns {void}
    */
-  async getDataFromMySQL() {
+  async getDataFromMySQL(lastCompletedAt) {
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '?')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
@@ -300,7 +305,7 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       connection = await mysql.createConnection(config)
-      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
+      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
       const [rows] = await connection.execute(
         { sql: adaptedQuery, timeout: this.requestTimeout },
         params,
@@ -321,9 +326,10 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from PostgreSQL database.
+   * @param {Date} lastCompletedAt - The last completed date
    * @returns {void}
    */
-  async getDataFromPostgreSQL() {
+  async getDataFromPostgreSQL(lastCompletedAt) {
     const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '$1')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
@@ -342,7 +348,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = new Client(config)
       await connection.connect()
-      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
+      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
       const { rows } = await connection.query(adaptedQuery, params)
       this.statusData['Last PostgreSQL Request'] = adaptedQuery
       this.updateStatusDataStream()
@@ -360,9 +366,10 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from Oracle database.
+   * @param {Date} lastCompletedAt - The last completed date
    * @returns {void}
    */
-  async getDataFromOracle() {
+  async getDataFromOracle(lastCompletedAt) {
     if (this.engine.m1) {
       this.logger.error('Oracle not supported on apple m1')
       return []
@@ -383,7 +390,7 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
+      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
       const { rows } = await connection.execute(adaptedQuery, params)
       this.statusData['Last Oracle Request'] = adaptedQuery
       this.updateStatusDataStream()
@@ -401,9 +408,10 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from local SQLite db file
+   * @param {Date} lastCompletedAt - The last completed date
    * @returns {void}
    */
-  async getDataFromSqlite() {
+  async getDataFromSqlite(lastCompletedAt) {
     const adaptedQuery = this.query
     this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
 
@@ -412,7 +420,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       database = await sqlite.open({ filename: this.databasePath, driver: sqlite3.Database })
       const stmt = await database.prepare(adaptedQuery)
-      const preparedParameters = this.containsLastCompletedDate ? { '@LastCompletedDate': new Date(this.lastCompletedAt) } : {}
+      const preparedParameters = this.containsLastCompletedDate ? { '@LastCompletedDate': lastCompletedAt } : {}
       data = await stmt.all(preparedParameters)
       await stmt.finalize()
       this.statusData['Last SQlite Request'] = adaptedQuery
