@@ -54,7 +54,10 @@ class ProtocolHandler {
     this.logger.changeParameters(this.engineConfig, logParameters)
 
     if (this.supportedModes) {
-      const { supportListen, supportLastPoint, supportFile } = this.supportedModes
+      const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
+      if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
+        this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
+      }
       if (supportListen && typeof this.listen !== 'function') {
         this.logger.error(`${this.constructor.name} should implement the listen() method.`)
       }
@@ -63,6 +66,36 @@ class ProtocolHandler {
       }
       if (supportFile && typeof this.fileQuery !== 'function') {
         this.logger.error(`${this.constructor.name} should implement the fileQuery() method.`)
+      }
+      if (supportHistory && typeof this.historyQuery !== 'function') {
+        this.logger.error(`${this.constructor.name} should implement the historyQuery() method.`)
+      }
+
+      if (supportHistory) {
+        this.lastCompletedAt = {}
+        this.ongoingReads = {}
+        if (this.dataSource.scanMode) {
+          this.lastCompletedAt[this.dataSource.scanMode] = new Date().getTime()
+          this.ongoingReads[this.dataSource.scanMode] = false
+        } else if (this.dataSource[this.constructor.name].scanGroups) {
+          // Group all points in their respective scanGroup
+          // Each scanGroup is also initialized with a default "last completed date" equal to current Time
+          this.scanGroups = this.dataSource[this.constructor.name].scanGroups.map((scanGroup) => {
+            const points = this.dataSource.points
+              .filter((point) => point.scanMode === scanGroup.scanMode)
+              .map((point) => point.nodeId)
+            this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
+            this.ongoingReads[scanGroup.scanMode] = false
+            return {
+              name: scanGroup.scanMode,
+              ...scanGroup,
+              points,
+            }
+          })
+        } else {
+          this.logger.error(`${this.dataSource.dataSourceId} scanGroups are not defined. This South driver will not work`)
+          this.scanGroups = []
+        }
       }
     }
 
@@ -77,7 +110,24 @@ class ProtocolHandler {
   }
 
   async connect() {
-    const { id, name, protocol } = this.dataSource
+    const { id, name, protocol, startTime } = this.dataSource
+
+    if (this.supportedModes?.supportHistory) {
+      // Initialize lastCompletedAt for every scanMode
+      // "startTime" is currently a "hidden" parameter of oibus.json
+      const defaultLastCompletedAt = startTime ? new Date(startTime) : new Date()
+
+      // Disable ESLint check because we need for..of loop to support async calls
+      // eslint-disable-next-line no-restricted-syntax
+      for (const scanMode of Object.keys(this.lastCompletedAt)) {
+        // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
+        // eslint-disable-next-line no-await-in-loop
+        const lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanMode}`)
+        this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(parseInt(lastCompletedAt, 10)) : defaultLastCompletedAt
+        this.logger.info(`Initializing lastCompletedAt for ${scanMode} with ${this.lastCompletedAt[scanMode]}`)
+      }
+    }
+
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${name} (${id}) started with protocol ${protocol}`)
@@ -93,15 +143,14 @@ class ProtocolHandler {
     this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
     this.lastOnScanAt = new Date().getTime()
     try {
-      switch (true) {
-          case this.supportedModes?.supportLastPoint:
-            await this.lastPointQuery(scanMode)
-            break
-          case this.supportedModes?.supportFile:
-            await this.fileQuery(scanMode)
-            break
-          default:
-            await this.onScanImplementation(scanMode)
+      if (this.supportedModes?.supportLastPoint) {
+          await this.lastPointQuery(scanMode)
+        }
+        if (this.supportedModes?.supportFile) {
+          await this.fileQuery(scanMode)
+        }
+        if (this.supportedModes?.supportHistory) {
+          await this.onScanImplementation(scanMode)
         }
     } catch (error) {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
