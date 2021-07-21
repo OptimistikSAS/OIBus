@@ -1,4 +1,5 @@
 import { isIp, notEmpty, inRange, minLength, isHost, minValue, hasLengthBetween } from '../../services/validation.service'
+import utils from '../helpers/utils'
 
 const validation = {
   engine: {
@@ -25,7 +26,9 @@ const validation = {
         }
         return error
       },
-      cronTime: notEmpty('Cron'),
+      cronTime: (val) => (
+        utils.nextTime(val).length > 0 ? null : 'Cron value should be valid'
+      ),
     },
     caching: {
       cacheFolder: notEmpty('Cache Folder'),

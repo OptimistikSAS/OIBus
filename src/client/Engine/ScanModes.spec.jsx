@@ -116,7 +116,7 @@ describe('ScanModes', () => {
       />, container)
     })
     Simulate.click(document.querySelector('th path'))
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '* * * * * *' } })
     expect(container).toMatchSnapshot()
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString
