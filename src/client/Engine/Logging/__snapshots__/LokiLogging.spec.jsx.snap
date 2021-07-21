@@ -129,7 +129,7 @@ exports[`LokiLogging check LokiLogging 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value should not be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -277,7 +277,7 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value should not be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -425,7 +425,7 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value should not be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -573,7 +573,7 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value should not be greater than 10
           </div>
           <small
             class="form-text text-muted"
