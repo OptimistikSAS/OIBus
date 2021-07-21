@@ -6,7 +6,7 @@ const databaseService = require('../../services/database.service')
 const config = require('../../../tests/testConfig').default
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
 

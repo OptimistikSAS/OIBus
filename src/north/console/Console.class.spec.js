@@ -13,7 +13,7 @@ jest.mock('../../services/database.service', () => {})
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
