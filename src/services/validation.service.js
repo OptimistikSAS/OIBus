@@ -31,8 +31,8 @@ const isHexaOrDecimal = (name = 'Value') => (val) => (
   val?.match(/^0x[a-fA-F0-9]*$/i) !== null || val?.match(/^\d+$/i) !== null ? null : `${name} should be an hexa string (example: 0x3E61) or a decimal`
 )
 const isHexa = (name = 'Value') => (val) => (val?.match(/^[a-f0-9]*$/i) !== null ? null : `${name} should be an hexa string (example: 3E61)`)
-const minValue = (min, name = 'Value') => (val) => (val >= min ? null : `${name} should not greater than ${min}`)
-const maxValue = (max, name = 'Value') => (val) => (val >= max ? null : `${name} should not lower than ${max}`)
+const minValue = (min, name = 'Value') => (val) => (val >= min ? null : `${name} should not be greater than ${min}`)
+const maxValue = (max, name = 'Value') => (val) => (val >= max ? null : `${name} should not be lower than ${max}`)
 const inRange = (min, max, name = 'Value') => (val) => (
   val >= min && val <= max ? null : `${name} should be between ${min} and ${max}`
 )
