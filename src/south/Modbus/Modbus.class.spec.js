@@ -37,7 +37,7 @@ jest.mock('net', () => {
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
@@ -283,7 +283,7 @@ describe('Modbus south', () => {
     modbusSouth.socket = { end: jest.fn() }
     modbusSouth.modbusFunction = jest.fn()
 
-    modbusSouth.reconnectTimeout = setTimeout(null, 1000)
+    modbusSouth.reconnectTimeout = setTimeout(() => {}, 1000)
 
     await modbusSouth.disconnect()
     expect(modbusSouth.socket.end)

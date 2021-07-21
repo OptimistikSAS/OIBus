@@ -7,7 +7,7 @@ const config = require('../../../tests/testConfig').default
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 
