@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import timexe from 'timexe'
 import utils from './utils'
 

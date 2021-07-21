@@ -19,8 +19,15 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+
+// Mock database service used in super constructor
+jest.mock('../../services/database.service', () => ({
+  createConfigDatabase: jest.fn(() => 'configDatabase'),
+  getConfig: jest.fn((_database, _key) => '2020-08-07T06:48:12.852Z'),
+  upsertConfig: jest.fn(),
+}))
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -65,6 +72,7 @@ describe('OPCUA-DA south', () => {
   })
 
   it('should properly connect to OPC UA server without password', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -76,10 +84,9 @@ describe('OPCUA-DA south', () => {
       endpoint_must_exist: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
-      connect: jest.fn(),
-      createSession: jest.fn(),
+      connect: jest.fn().mockReturnValue({}),
+      createSession: jest.fn().mockReturnValue({}),
     })
-
     const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
@@ -91,12 +98,13 @@ describe('OPCUA-DA south', () => {
       .toBeCalledTimes(1)
     expect(opcuaSouth.connected)
       .toBeTruthy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .not
       .toBeCalled()
   })
 
   it('should properly connect to OPC UA server with password', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -132,12 +140,13 @@ describe('OPCUA-DA south', () => {
       .toBeCalledWith(expectedUserIdentity)
     expect(opcuaSouth.connected)
       .toBeTruthy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .not
       .toBeCalled()
   })
 
   it('should properly retry connection to OPC UA server', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -165,7 +174,7 @@ describe('OPCUA-DA south', () => {
       .toBeCalled()
     expect(opcuaSouth.connected)
       .toBeFalsy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .toHaveBeenLastCalledWith(expect.any(Function), opcuaConfig.OPCUA_DA.retryInterval)
   })
 
@@ -235,6 +244,7 @@ describe('OPCUA-DA south', () => {
   })
 
   it('should properly disconnect when trying to connect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
       createSession: jest.fn(),
@@ -248,7 +258,7 @@ describe('OPCUA-DA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout)
+    expect(clearTimeoutSpy)
       .toBeCalled()
     expect(opcuaSouth.session.close)
       .not
@@ -259,6 +269,7 @@ describe('OPCUA-DA south', () => {
   })
 
   it('should properly disconnect when connected', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
       createSession: jest.fn(),
@@ -272,7 +283,7 @@ describe('OPCUA-DA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout)
+    expect(clearTimeoutSpy)
       .not
       .toBeCalled()
     expect(opcuaSouth.session.close)
