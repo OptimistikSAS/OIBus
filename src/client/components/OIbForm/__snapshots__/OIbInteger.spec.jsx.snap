@@ -22,7 +22,7 @@ exports[`OIbInteger check OIbInteger with too small value 1`] = `
     <div
       class="invalid-feedback"
     >
-      Value should not be greater than 100
+      Value must be greater than 100
     </div>
   </div>
 </div>
@@ -76,7 +76,7 @@ exports[`OIbInteger check change 1`] = `
     <div
       class="invalid-feedback"
     >
-      Value should not be greater than 100
+      Value must be greater than 100
     </div>
   </div>
 </div>

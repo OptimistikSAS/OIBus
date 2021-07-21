@@ -8,13 +8,6 @@ const validation = {
     user: notEmpty('User'),
     password: hasLengthBetween(4, 256),
     filter: (val) => isIp('Filter')(val === '*' ? '0.0.0.0' : val.replace(/\*/g, '0')), // replace * with a valid ip before testing
-    logParameters: {
-      filename: notEmpty('Filename'),
-      maxsize: minValue(10000),
-      maxFiles: inRange(1, 10),
-      sqliteFilename: notEmpty('Filename of sqlite db'),
-      sqliteMaxFileSize: minValue(10000),
-    },
     scanModes: {
       scanMode: (val, excludedList) => {
         let error = null
@@ -45,13 +38,9 @@ const validation = {
       http: {
         host: notEmpty('Host'),
         endpoint: notEmpty('Endpoint'),
-        id: notEmpty('Id'),
         frequency: inRange(60, 3600),
       },
-      logging: {
-        id: notEmpty('Id'),
-        frequency: inRange(60, 3600),
-      },
+      logging: { frequency: inRange(60, 3600) },
     },
     httpRequest: {
       timeout: minValue(1),
