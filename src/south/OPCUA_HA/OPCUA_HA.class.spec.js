@@ -27,7 +27,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 
 beforeEach(() => {
@@ -142,6 +142,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should properly connect to OPC UA server without password', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -168,12 +169,13 @@ describe('OPCUA-HA south', () => {
       .toBeCalledTimes(1)
     expect(opcuaSouth.connected)
       .toBeTruthy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .not
       .toBeCalled()
   })
 
   it('should properly connect to OPC UA server with password', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -209,12 +211,13 @@ describe('OPCUA-HA south', () => {
       .toBeCalledWith(expectedUserIdentity)
     expect(opcuaSouth.connected)
       .toBeTruthy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .not
       .toBeCalled()
   })
 
   it('should properly retry connection to OPC UA server', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
       connectionStrategy: {
@@ -242,7 +245,7 @@ describe('OPCUA-HA south', () => {
       .toBeCalled()
     expect(opcuaSouth.connected)
       .toBeFalsy()
-    expect(setTimeout)
+    expect(setTimeoutSpy)
       .toHaveBeenLastCalledWith(expect.any(Function), opcuaConfig.OPCUA_HA.retryInterval)
   })
 
@@ -423,6 +426,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should properly disconnect when trying to connect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
       createSession: jest.fn(),
@@ -436,7 +440,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout)
+    expect(clearTimeoutSpy)
       .toBeCalled()
     expect(opcuaSouth.session.close)
       .not
@@ -447,6 +451,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should properly disconnect when connected', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
       createSession: jest.fn(),
@@ -460,7 +465,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.disconnect()
 
-    expect(clearTimeout)
+    expect(clearTimeoutSpy)
       .not
       .toBeCalled()
     expect(opcuaSouth.session.close)
