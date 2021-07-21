@@ -20,19 +20,19 @@ jest.mock('../../engine/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
-const engine = jest.genMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
 
 beforeEach(() => {
   jest.resetAllMocks()
   jest.clearAllMocks()
+  jest.useFakeTimers()
 })
 
 describe('RequestFactory', () => {
-  const axiosRequest = new AxiosRequest(engine)
-
   it('should properly call axios without proxy for JSON data', async () => {
+    const axiosRequest = new AxiosRequest(engine)
     axiosRequest.generateFormDataBody = jest.fn()
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
@@ -66,6 +66,7 @@ describe('RequestFactory', () => {
   })
 
   it('should properly call axios with proxy for JSON data', async () => {
+    const axiosRequest = new AxiosRequest(engine)
     tunnel.httpsOverHttps = jest.fn().mockReturnValue({})
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
@@ -84,7 +85,7 @@ describe('RequestFactory', () => {
     const timeout = 1000 * 10000
     const mockAxios = jest.fn().mockReturnValue(Promise.resolve())
     axios.create.mockReturnValue(mockAxios)
-
+    jest.spyOn(axiosRequest, 'generateFormDataBody').mockImplementation(() => {})
     const result = await axiosRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
 
     const expectedAxiosCreateOptions1 = {
@@ -121,6 +122,7 @@ describe('RequestFactory', () => {
   })
 
   it('should properly call axios without proxy for form-data', async () => {
+    const axiosRequest = new AxiosRequest(engine)
     const mockedBody = { getHeaders: () => ({ formDataHeader: 'formDataHeader' }) }
     axiosRequest.generateFormDataBody = jest.fn().mockImplementation(() => mockedBody)
     const requestUrl = 'https://www.example.com'
@@ -146,6 +148,7 @@ describe('RequestFactory', () => {
   })
 
   it('should properly handle axios error', async () => {
+    const axiosRequest = new AxiosRequest(engine)
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = {

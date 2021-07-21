@@ -80,36 +80,25 @@ describe('HealthSignal', () => {
     engineConfig.proxies = [proxy]
   })
 
-  it('should properly start when http enabled', () => {
+  it('should properly start when http enabled and call callback function', () => {
     const healthSignal = new HealthSignal(engine)
+    const callback = jest.spyOn(healthSignal, 'sendHttpSignal').mockImplementation(() => ({ }))
     healthSignal.http.enabled = true
     healthSignal.logging.enabled = true
     healthSignal.start()
 
-    expect(setTimeout).toHaveBeenCalledTimes(2)
-    expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * healthSignalConfig.logging.frequency)
+    jest.advanceTimersByTime(1000 * healthSignalConfig.http.frequency)
+    expect(callback).toHaveBeenCalledTimes(1)
   })
 
   it('should properly start when disabled', () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = false
     healthSignal.logging.enabled = false
     healthSignal.start()
 
-    expect(setTimeout).not.toBeCalled()
-  })
-
-  it('should call the http callback function after the scheduled interval', () => {
-    const healthSignal = new HealthSignal(engine)
-    healthSignal.http.enabled = true
-    healthSignal.logging.enabled = false
-    const callback = jest.spyOn(healthSignal, 'sendHttpSignal').mockImplementation(() => ({ }))
-    engine.getStatus.mockReturnValue({ status: 'status' })
-    healthSignal.start()
-
-    jest.advanceTimersByTime(1000 * healthSignalConfig.http.frequency)
-
-    expect(callback).toHaveBeenCalledTimes(1)
+    expect(setTimeoutSpy).not.toBeCalled()
   })
 
   it('should prepare simple status info when verbose is not enabled', async () => {
@@ -136,6 +125,7 @@ describe('HealthSignal', () => {
   })
 
   it('should call RequestService httpSend()', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const status = { status: 'status' }
 
     const healthSignal = new HealthSignal(engine)
@@ -158,24 +148,27 @@ describe('HealthSignal', () => {
       headers,
     )
     expect(healthSignal.logger.debug).toBeCalledWith('Health signal successful')
-    expect(setTimeout).toHaveBeenCalledTimes(1)
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1)
   })
 
   it('should properly stop when enabled', () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = true
     healthSignal.start()
+    healthSignal.httpTimer = () => {}
     healthSignal.stop()
 
-    expect(clearTimeout).toHaveBeenCalledTimes(1)
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
   })
 
   it('should properly stop when disabled', () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = false
     healthSignal.start()
     healthSignal.stop()
 
-    expect(clearTimeout).not.toBeCalled()
+    expect(clearTimeoutSpy).not.toBeCalled()
   })
 })
