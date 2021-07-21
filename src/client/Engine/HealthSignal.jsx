@@ -91,17 +91,6 @@ const HealthSignal = ({ onChange, healthSignal }) => (
           />
         </Col>
         <Col md={2}>
-          <OIbText
-            label="Id"
-            name="engine.healthSignal.http.id"
-            value={healthSignal.http.id}
-            defaultValue="OIBus"
-            valid={validation.engine.healthSignal.http.id}
-            help={<div>Id used to identify OIBus</div>}
-            onChange={onChange}
-          />
-        </Col>
-        <Col md={2}>
           <OIbInteger
             label="Frequency"
             name="engine.healthSignal.http.frequency"

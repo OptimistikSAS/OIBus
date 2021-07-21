@@ -118,7 +118,7 @@ exports[`Engine check Engine 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -1149,7 +1149,7 @@ exports[`Engine check Engine 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -1160,8 +1160,15 @@ exports[`Engine check Engine 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -2665,38 +2672,6 @@ exports[`Engine check Engine 1`] = `
         >
           <label
             class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
             for="engine.healthSignal.http.frequency"
           >
             Frequency
@@ -3286,7 +3261,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -4317,7 +4292,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -4328,8 +4303,15 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -5556,38 +5538,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
         >
           <label
             class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
             for="engine.healthSignal.http.frequency"
           >
             Frequency
@@ -6187,7 +6137,7 @@ exports[`Engine check change engineName 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -7218,7 +7168,7 @@ exports[`Engine check change engineName 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -7229,8 +7179,15 @@ exports[`Engine check change engineName 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -8722,38 +8679,6 @@ exports[`Engine check change engineName 1`] = `
           >
             <div>
               The endpoint send the health signal
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
             </div>
           </small>
         </div>
@@ -9355,7 +9280,7 @@ exports[`Engine check change password 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -10386,7 +10311,7 @@ exports[`Engine check change password 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -10397,8 +10322,15 @@ exports[`Engine check change password 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -11890,38 +11822,6 @@ exports[`Engine check change password 1`] = `
           >
             <div>
               The endpoint send the health signal
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
             </div>
           </small>
         </div>
@@ -12523,7 +12423,7 @@ exports[`Engine check change port 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -13554,7 +13454,7 @@ exports[`Engine check change port 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -13565,8 +13465,15 @@ exports[`Engine check change port 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -15058,38 +14965,6 @@ exports[`Engine check change port 1`] = `
           >
             <div>
               The endpoint send the health signal
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
             </div>
           </small>
         </div>
@@ -15691,7 +15566,7 @@ exports[`Engine check change user 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The name for the OIBus
+              The name to this OIBus used for identification. It must be as much explicit as possible
             </div>
           </small>
         </div>
@@ -16722,7 +16597,7 @@ exports[`Engine check change user 1`] = `
               <div
                 class="invalid-feedback"
               >
-                Value should not be greater than 10
+                Value must be greater than 10
               </div>
               <small
                 class="form-text text-muted"
@@ -16733,8 +16608,15 @@ exports[`Engine check change user 1`] = `
               </small>
             </div>
           </div>
+        </div>
+        <div
+          class="row"
+        >
           <div
-            class="col-md-2"
+            class="col-md-3"
+          />
+          <div
+            class="col-md-3"
           />
         </div>
       </div>
@@ -18226,38 +18108,6 @@ exports[`Engine check change user 1`] = `
           >
             <div>
               The endpoint send the health signal
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="form-group"
-        >
-          <label
-            class=""
-            for="engine.healthSignal.http.id"
-          >
-            Id
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.healthSignal.http.id"
-            name="engine.healthSignal.http.id"
-            type="text"
-            value="OIBus-test"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Id used to identify OIBus
             </div>
           </small>
         </div>

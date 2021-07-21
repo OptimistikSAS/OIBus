@@ -23,6 +23,7 @@ class HealthSignal {
     this.http.proxy = Array.isArray(engineConfig.proxies) && engineConfig.proxies.find(({ name }) => name === this.http.proxy)
     this.httpTimer = null
     this.loggingTimer = null
+    this.engineName = engineConfig.engineName
   }
 
   /**
@@ -61,7 +62,7 @@ class HealthSignal {
     this.logger.silly('sendHttpSignal')
 
     const healthStatus = await this.prepareStatus(this.http.verbose)
-    healthStatus.id = this.http.id
+    healthStatus.id = this.engineName
     try {
       const data = JSON.stringify(healthStatus)
       const headers = { 'Content-Type': 'application/json' }
