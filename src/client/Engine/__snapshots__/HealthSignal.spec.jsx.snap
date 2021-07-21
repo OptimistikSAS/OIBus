@@ -241,38 +241,6 @@ exports[`HealthSignal check HealthSignal 1`] = `
       >
         <label
           class=""
-          for="engine.healthSignal.http.id"
-        >
-          Id
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="engine.healthSignal.http.id"
-          name="engine.healthSignal.http.id"
-          type="text"
-          value="OIBus-test"
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Id used to identify OIBus
-          </div>
-        </small>
-      </div>
-    </div>
-    <div
-      class="col-md-2"
-    >
-      <div
-        class="form-group"
-      >
-        <label
-          class=""
           for="engine.healthSignal.http.frequency"
         >
           Frequency
@@ -688,38 +656,6 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       >
         <label
           class=""
-          for="engine.healthSignal.http.id"
-        >
-          Id
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="engine.healthSignal.http.id"
-          name="engine.healthSignal.http.id"
-          type="text"
-          value="OIBus-test"
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Id used to identify OIBus
-          </div>
-        </small>
-      </div>
-    </div>
-    <div
-      class="col-md-2"
-    >
-      <div
-        class="form-group"
-      >
-        <label
-          class=""
           for="engine.healthSignal.http.frequency"
         >
           Frequency
@@ -1123,38 +1059,6 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
         >
           <div>
             The endpoint send the health signal
-          </div>
-        </small>
-      </div>
-    </div>
-    <div
-      class="col-md-2"
-    >
-      <div
-        class="form-group"
-      >
-        <label
-          class=""
-          for="engine.healthSignal.http.id"
-        >
-          Id
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="engine.healthSignal.http.id"
-          name="engine.healthSignal.http.id"
-          type="text"
-          value="OIBus-test"
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Id used to identify OIBus
           </div>
         </small>
       </div>

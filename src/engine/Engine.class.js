@@ -62,9 +62,15 @@ class Engine {
     this.configService = new ConfigService(this, configFile)
     const { engineConfig } = this.configService.getConfig()
 
+    // Check for private key
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
+
     // Configure the logger
     this.logger = Logger.getDefaultLogger()
-    this.logger.changeParameters(engineConfig.logParameters)
+    this.logger.setEncryptionService(this.encryptionService)
+    this.logger.changeParameters(engineConfig, {})
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -78,11 +84,6 @@ class Engine {
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
-
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
 
     // Request service
     this.requestService = createRequestService(this)
