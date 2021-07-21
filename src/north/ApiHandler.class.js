@@ -44,7 +44,7 @@ class ApiHandler {
 
     const { logParameters } = this.application
     this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
+    this.logger.changeParameters(this.engineConfig, logParameters)
   }
 
   /**

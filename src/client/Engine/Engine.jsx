@@ -60,7 +60,7 @@ const Engine = () => {
               valid={validation.engine.engineName}
               defaultValue="OIBus"
               onChange={onChange}
-              help={<div>The name for the OIBus</div>}
+              help={<div>The name to this OIBus used for identification. It must be as much explicit as possible</div>}
             />
           </Col>
           <Col md={2}>

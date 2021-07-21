@@ -406,7 +406,6 @@ module.exports = {
         level: 'none',
         host: '',
         interval: 60,
-        identifier: 'oibus',
       },
     }
     config.engine.logParameters = newLogParameters
@@ -418,13 +417,14 @@ module.exports = {
       logging: {
         enabled: true,
         frequency: 3600,
+        username: '',
+        password: '',
       },
       http: {
         enabled: config.engine.aliveSignal.enabled,
         host: config.engine.aliveSignal.host,
         endpoint: config.engine.aliveSignal.endpoint,
         authentication: config.engine.aliveSignal.authentication,
-        id: config.engine.aliveSignal.id,
         frequency: config.engine.aliveSignal.frequency,
         proxy: config.engine.aliveSignal.proxy,
       },

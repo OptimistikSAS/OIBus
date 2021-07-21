@@ -23,6 +23,7 @@ class Logger {
         new transports.Console({ format: consoleFormat, handleExceptions: true }),
       ],
     })
+    this.encryptionService = null
   }
 
   static getDefaultLogger() {
@@ -32,8 +33,12 @@ class Logger {
     return Logger.instance
   }
 
-  changeParameters(baseParameters, specificParameters = {}) {
-    const logParameters = { ...baseParameters }
+  setEncryptionService(encryptionService) {
+    this.encryptionService = encryptionService
+  }
+
+  changeParameters(engineConfig, specificParameters = {}) {
+    const logParameters = { ...engineConfig.logParameters }
 
     /**
      * Replacing global log parameters by specific one if not set to engine level
@@ -72,14 +77,15 @@ class Logger {
       }))
     }
 
-    if (lokiLog.level !== 'none') {
+    if (lokiLog.level !== 'none' && this.encryptionService) {
       this.logger.add(new LokiTransport({
         host: lokiLog.host,
         json: true,
         batching: true,
         replaceTimestamp: true,
         interval: lokiLog.interval,
-        labels: { oibus: lokiLog.identifier },
+        basicAuth: lokiLog.username ? `${lokiLog.username}:${this.encryptionService?.decryptText(lokiLog.password)}` : null,
+        labels: { oibus: engineConfig.engineName },
       }))
     }
   }
