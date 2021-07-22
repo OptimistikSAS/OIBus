@@ -469,7 +469,6 @@ class Engine {
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
       addFileCount: this.addFileCount,
-      forwardedHealthSignalMessages: this.forwardedHealthSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,
       filesErrorCount,
