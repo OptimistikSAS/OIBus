@@ -48,6 +48,12 @@ const testConfig = {
         username: 'uii',
         password: 'ppppppppppppp',
       },
+      {
+        name: 'no-auth',
+        protocol: '',
+        host: 'tt',
+        port: 1,
+      },
     ],
     engineName: 'OIBus',
     healthSignal: {
@@ -546,6 +552,27 @@ const testConfig = {
         enabled: true,
         FileWriter: { outputFolder: './output' },
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+        subscribedTo: [],
+      },
+      {
+        applicationId: 'test04',
+        api: 'AmazonS3',
+        enabled: false,
+        AmazonS3: {
+          bucket: 'aef',
+          folder: 'azsdfcv',
+          proxy: '',
+          authentication: {
+            key: 'myAccessKey',
+            secretKey: 'mySecretKey',
+          },
+        },
+        caching: {
+          sendInterval: 10000,
+          retryInterval: 5000,
+          groupCount: 1000,
+          maxSendCount: 10000,
+        },
         subscribedTo: [],
       },
     ],

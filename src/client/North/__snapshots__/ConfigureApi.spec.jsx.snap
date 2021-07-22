@@ -783,6 +783,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             >
               ff
             </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
+            </option>
           </select>
         </div>
       </div>
@@ -1852,6 +1857,11 @@ exports[`ConfigureApi check update 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
         </div>
