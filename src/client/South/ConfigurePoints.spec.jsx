@@ -176,10 +176,6 @@ describe('ConfigurePoints', () => {
       )
     })
     Simulate.click(document.querySelector('td path')) // click on delete icon
-    expect(dispatchNewConfig).toBeCalledWith({
-      type: 'deleteRow',
-      name: 'south.dataSources.8.points.2',
-    })
     expect(container).toMatchSnapshot()
   })
   test('check import points press', () => {
