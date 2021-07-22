@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FaTrashAlt, FaCog, FaCopy } from 'react-icons/fa'
 import StatusButton from '../../South/StatusButton.jsx'
+import Modal from '../Modal.jsx'
 
 const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate }) => (
   <tbody>
@@ -33,15 +34,21 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
             />
           )}
           {handleDelete && (
-            <FaTrashAlt
-              className="oi-icon"
-              onClick={(e) => {
-                e.preventDefault()
-                handleDelete(index)
-              }}
-            />
+            <Modal
+              show={false}
+              title="Delete"
+              body={`Are you sure you want to delete ${row[0].name}?`}
+            >
+              {(confirm) => (
+                <FaTrashAlt
+                  className="oi-icon"
+                  onClick={confirm(() => {
+                    handleDelete(index)
+                  })}
+                />
+              )}
+            </Modal>
           )}
-
         </td>
       </tr>
     ))}

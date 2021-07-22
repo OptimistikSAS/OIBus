@@ -74,6 +74,7 @@ describe('North', () => {
     })
     const firstApplicationButtons = document.querySelectorAll('td')[3]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[2])
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[1])
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'north.applications.0',
