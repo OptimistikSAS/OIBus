@@ -2436,6 +2436,106 @@ exports[`Engine check Engine 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.name"
+                    name="engine.proxies.2.name"
+                    type="text"
+                    value="no-auth"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.protocol"
+                    name="engine.proxies.2.protocol"
+                  >
+                    <option
+                      value="http"
+                    >
+                      http
+                    </option>
+                    <option
+                      value="https"
+                    >
+                      https
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.host"
+                    name="engine.proxies.2.host"
+                    type="text"
+                    value="tt"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.port"
+                    name="engine.proxies.2.port"
+                    type="integer"
+                    value="1"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td />
+              <td />
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -2732,6 +2832,11 @@ exports[`Engine check Engine 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
           <small
@@ -8469,6 +8574,106 @@ exports[`Engine check change engineName 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.name"
+                    name="engine.proxies.2.name"
+                    type="text"
+                    value="no-auth"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.protocol"
+                    name="engine.proxies.2.protocol"
+                  >
+                    <option
+                      value="http"
+                    >
+                      http
+                    </option>
+                    <option
+                      value="https"
+                    >
+                      https
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.host"
+                    name="engine.proxies.2.host"
+                    type="text"
+                    value="tt"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.port"
+                    name="engine.proxies.2.port"
+                    type="integer"
+                    value="1"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td />
+              <td />
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -8765,6 +8970,11 @@ exports[`Engine check change engineName 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
           <small
@@ -11619,6 +11829,106 @@ exports[`Engine check change password 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.name"
+                    name="engine.proxies.2.name"
+                    type="text"
+                    value="no-auth"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.protocol"
+                    name="engine.proxies.2.protocol"
+                  >
+                    <option
+                      value="http"
+                    >
+                      http
+                    </option>
+                    <option
+                      value="https"
+                    >
+                      https
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.host"
+                    name="engine.proxies.2.host"
+                    type="text"
+                    value="tt"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.port"
+                    name="engine.proxies.2.port"
+                    type="integer"
+                    value="1"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td />
+              <td />
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -11915,6 +12225,11 @@ exports[`Engine check change password 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
           <small
@@ -14769,6 +15084,106 @@ exports[`Engine check change port 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.name"
+                    name="engine.proxies.2.name"
+                    type="text"
+                    value="no-auth"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.protocol"
+                    name="engine.proxies.2.protocol"
+                  >
+                    <option
+                      value="http"
+                    >
+                      http
+                    </option>
+                    <option
+                      value="https"
+                    >
+                      https
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.host"
+                    name="engine.proxies.2.host"
+                    type="text"
+                    value="tt"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.port"
+                    name="engine.proxies.2.port"
+                    type="integer"
+                    value="1"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td />
+              <td />
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -15065,6 +15480,11 @@ exports[`Engine check change port 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
           <small
@@ -17919,6 +18339,106 @@ exports[`Engine check change user 1`] = `
                 </svg>
               </td>
             </tr>
+            <tr>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.name"
+                    name="engine.proxies.2.name"
+                    type="text"
+                    value="no-auth"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                >
+                  <select
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.protocol"
+                    name="engine.proxies.2.protocol"
+                  >
+                    <option
+                      value="http"
+                    >
+                      http
+                    </option>
+                    <option
+                      value="https"
+                    >
+                      https
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.host"
+                    name="engine.proxies.2.host"
+                    type="text"
+                    value="tt"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="form-group"
+                  style="margin-bottom: 0px;"
+                >
+                  <input
+                    aria-invalid="false"
+                    class="oi-form-input form-control"
+                    id="engine.proxies.2.port"
+                    name="engine.proxies.2.port"
+                    type="integer"
+                    value="1"
+                  />
+                  <div
+                    class="invalid-feedback"
+                  />
+                </div>
+              </td>
+              <td />
+              <td />
+              <td>
+                <svg
+                  class="oi-icon"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 448 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -18215,6 +18735,11 @@ exports[`Engine check change user 1`] = `
               value="ff"
             >
               ff
+            </option>
+            <option
+              value="no-auth"
+            >
+              no-auth
             </option>
           </select>
           <small
