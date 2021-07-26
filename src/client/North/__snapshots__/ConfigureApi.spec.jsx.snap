@@ -115,6 +115,13 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -1178,6 +1185,13 @@ exports[`ConfigureApi check update 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
