@@ -24,12 +24,12 @@ const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleA
     return (
       <>
         <FaLongArrowAltDown
-          className="oi-icon"
+          className="oi-up-down"
           onClick={() => handleSort(sortableProperties[index], true)}
           style={{ opacity: isSelectedAscending ? 1.0 : 0.5, width: 6, marginLeft: 2 }}
         />
         <FaLongArrowAltUp
-          className="oi-icon"
+          className="oi-up-down"
           onClick={() => handleSort(sortableProperties[index], false)}
           style={{ opacity: isSelectedDescending ? 1.0 : 0.5, width: 6 }}
         />

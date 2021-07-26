@@ -36,7 +36,7 @@ exports[`North check North 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -51,7 +51,7 @@ exports[`North check North 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -71,7 +71,7 @@ exports[`North check North 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -86,7 +86,7 @@ exports[`North check North 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -106,7 +106,7 @@ exports[`North check North 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -121,7 +121,7 @@ exports[`North check North 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -930,7 +930,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -945,7 +945,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -965,7 +965,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -980,7 +980,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1000,7 +1000,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1015,7 +1015,7 @@ exports[`North check add pressed with "new_application" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1824,7 +1824,7 @@ exports[`North check delete first application 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1839,7 +1839,7 @@ exports[`North check delete first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1859,7 +1859,7 @@ exports[`North check delete first application 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1874,7 +1874,7 @@ exports[`North check delete first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1894,7 +1894,7 @@ exports[`North check delete first application 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1909,7 +1909,7 @@ exports[`North check delete first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2718,7 +2718,7 @@ exports[`North check edit first application 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2733,7 +2733,7 @@ exports[`North check edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2753,7 +2753,7 @@ exports[`North check edit first application 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2768,7 +2768,7 @@ exports[`North check edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2788,7 +2788,7 @@ exports[`North check edit first application 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2803,7 +2803,7 @@ exports[`North check edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3632,7 +3632,7 @@ exports[`North check press edit first application id 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3647,7 +3647,7 @@ exports[`North check press edit first application id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3667,7 +3667,7 @@ exports[`North check press edit first application id 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3682,7 +3682,7 @@ exports[`North check press edit first application id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3702,7 +3702,7 @@ exports[`North check press edit first application id 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3717,7 +3717,7 @@ exports[`North check press edit first application id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4540,7 +4540,7 @@ exports[`North check press edit first application id 2`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4555,7 +4555,7 @@ exports[`North check press edit first application id 2`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4575,7 +4575,7 @@ exports[`North check press edit first application id 2`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4590,7 +4590,7 @@ exports[`North check press edit first application id 2`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4610,7 +4610,7 @@ exports[`North check press edit first application id 2`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4625,7 +4625,7 @@ exports[`North check press edit first application id 2`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5434,7 +5434,7 @@ exports[`North check sort pressed on applicationId 1`] = `
           >
             Application ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5449,7 +5449,7 @@ exports[`North check sort pressed on applicationId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5469,7 +5469,7 @@ exports[`North check sort pressed on applicationId 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5484,7 +5484,7 @@ exports[`North check sort pressed on applicationId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5504,7 +5504,7 @@ exports[`North check sort pressed on applicationId 1`] = `
           >
             API
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5519,7 +5519,7 @@ exports[`North check sort pressed on applicationId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"

@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, Label, Input, CustomInput } from 'reactstrap'
+import { FormGroup, Label, FormText, Input, CustomInput } from 'reactstrap'
 
-const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton }) => {
+const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchButton }) => {
   // if no value was found, load the context with the default value
   // (this will cause a rerender with the correct value)
   React.useLayoutEffect(() => {
@@ -26,6 +26,7 @@ const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton 
           checked={value}
           color="secondary"
         />
+        {help && <FormText>{help}</FormText>}
       </FormGroup>
     )
   }
@@ -42,18 +43,20 @@ const OIbCheckBox = ({ label, value, name, onChange, defaultValue, switchButton 
           checked={value}
         />
       </Label>
+      {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
 }
 OIbCheckBox.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
+  help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.bool,
   defaultValue: PropTypes.bool.isRequired,
   switchButton: PropTypes.bool,
 }
 
-OIbCheckBox.defaultProps = { value: null, switchButton: false }
+OIbCheckBox.defaultProps = { value: null, help: null, switchButton: false }
 
 export default OIbCheckBox
