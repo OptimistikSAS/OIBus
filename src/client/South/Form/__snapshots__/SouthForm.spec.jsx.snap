@@ -136,6 +136,13 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -1330,6 +1337,13 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
       <div
@@ -2064,6 +2078,13 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -3583,6 +3604,13 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -5216,6 +5244,13 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -5798,6 +5833,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       <div
         class="col-md-2"
       />
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-1"
       />
@@ -5944,6 +5983,13 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -6526,6 +6572,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
       <div
         class="col-md-2"
       />
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-1"
       />
@@ -6672,6 +6722,13 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
       <div
@@ -8240,6 +8297,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -9284,6 +9348,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -10115,6 +10186,13 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>

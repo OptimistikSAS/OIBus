@@ -135,6 +135,13 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -1788,6 +1795,13 @@ exports[`ConfigureProtocol check update 1`] = `
               Disabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>

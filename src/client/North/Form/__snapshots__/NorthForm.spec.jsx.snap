@@ -115,6 +115,13 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -1609,6 +1616,13 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -2672,6 +2686,13 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -3535,6 +3556,13 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -4618,6 +4646,13 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -5461,6 +5496,13 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -6256,6 +6298,13 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -7350,6 +7399,13 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
               Enabled
             </label>
           </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this application
+            </div>
+          </small>
         </div>
       </div>
     </div>
