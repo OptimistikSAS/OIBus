@@ -101,16 +101,18 @@ schema.form = {
   swapBytesinWords: {
     type: 'OIbCheckBox',
     md: 1,
-    newRow: false,
-    label: 'Swap Bytes (8 bits) in groups of 16 bits ?',
+    newRow: true,
+    label: 'Swap Bytes ?',
     defaultValue: false,
+    help: <div>Swap Bytes (8 bits) in groups of 16 bits?</div>,
   },
   swapWordsInDWords: {
     type: 'OIbCheckBox',
     md: 1,
     newRow: false,
-    label: 'Swap Words (16 bits) in groups of 32 bits ?',
+    label: 'Swap Bytes ?',
     defaultValue: false,
+    help: <div>Swap Bytes (16 bits) in groups of 32 bits?</div>,
   },
 }
 

@@ -36,7 +36,7 @@ exports[`South check South 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -51,7 +51,7 @@ exports[`South check South 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -71,7 +71,7 @@ exports[`South check South 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -86,7 +86,7 @@ exports[`South check South 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -106,7 +106,7 @@ exports[`South check South 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -121,7 +121,7 @@ exports[`South check South 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1341,7 +1341,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1356,7 +1356,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1376,7 +1376,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1391,7 +1391,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1411,7 +1411,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -1426,7 +1426,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2646,7 +2646,7 @@ exports[`South check delete first dataSource 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2661,7 +2661,7 @@ exports[`South check delete first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2681,7 +2681,7 @@ exports[`South check delete first dataSource 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2696,7 +2696,7 @@ exports[`South check delete first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2716,7 +2716,7 @@ exports[`South check delete first dataSource 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -2731,7 +2731,7 @@ exports[`South check delete first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3951,7 +3951,7 @@ exports[`South check duplicate first dataSource 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3966,7 +3966,7 @@ exports[`South check duplicate first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -3986,7 +3986,7 @@ exports[`South check duplicate first dataSource 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4001,7 +4001,7 @@ exports[`South check duplicate first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4021,7 +4021,7 @@ exports[`South check duplicate first dataSource 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -4036,7 +4036,7 @@ exports[`South check duplicate first dataSource 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5256,7 +5256,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5271,7 +5271,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5291,7 +5291,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5306,7 +5306,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5326,7 +5326,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -5341,7 +5341,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6561,7 +6561,7 @@ exports[`South check edit first dataSource id 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6576,7 +6576,7 @@ exports[`South check edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6596,7 +6596,7 @@ exports[`South check edit first dataSource id 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6611,7 +6611,7 @@ exports[`South check edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6631,7 +6631,7 @@ exports[`South check edit first dataSource id 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -6646,7 +6646,7 @@ exports[`South check edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7886,7 +7886,7 @@ exports[`South check open edit first application 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7901,7 +7901,7 @@ exports[`South check open edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7921,7 +7921,7 @@ exports[`South check open edit first application 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7936,7 +7936,7 @@ exports[`South check open edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7956,7 +7956,7 @@ exports[`South check open edit first application 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -7971,7 +7971,7 @@ exports[`South check open edit first application 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9191,7 +9191,7 @@ exports[`South check press edit first dataSource id 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9206,7 +9206,7 @@ exports[`South check press edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9226,7 +9226,7 @@ exports[`South check press edit first dataSource id 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9241,7 +9241,7 @@ exports[`South check press edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9261,7 +9261,7 @@ exports[`South check press edit first dataSource id 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -9276,7 +9276,7 @@ exports[`South check press edit first dataSource id 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10510,7 +10510,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10525,7 +10525,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10545,7 +10545,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10560,7 +10560,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10580,7 +10580,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -10595,7 +10595,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11815,7 +11815,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
           >
             Data Source ID
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11830,7 +11830,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11850,7 +11850,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
           >
             Status
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11865,7 +11865,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11885,7 +11885,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
           >
             Protocol
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"
@@ -11900,7 +11900,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
               />
             </svg>
             <svg
-              class="oi-icon"
+              class="oi-up-down"
               fill="currentColor"
               height="1em"
               stroke="currentColor"

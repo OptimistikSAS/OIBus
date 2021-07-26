@@ -262,22 +262,28 @@ label {
 }
 
 .oi-icon {
-  width: 30px;
-  margin-right: 5px;
+  width: 12px;
+  margin-right: 20px;
   margin-bottom: 0px;
+  color: #627187;
+}
+
+.oi-up-down {
+  margin-right: 1px;
   color: #627187;
 }
 
 .oi-icon-inline {
   vertical-align: top;
   margin-left: 5px;
+  width: 12px;
 }
 
 .oi-log td{
   padding: 1px;
 }
 
-.oi-icon:hover,.oi-help:hover{
+.oi-icon:hover,.oi-help:hover,.oi-up-down:hover {
   text-decoration: none;
   color: #F5BB51;
   cursor: pointer;

@@ -249,6 +249,13 @@ exports[`Engine check Engine 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -3392,6 +3399,13 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -6268,6 +6282,13 @@ exports[`Engine check change engineName 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -9411,6 +9432,13 @@ exports[`Engine check change password 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -12554,6 +12582,13 @@ exports[`Engine check change port 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
@@ -15697,6 +15732,13 @@ exports[`Engine check change user 1`] = `
               type="checkbox"
             />
           </label>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              When safe mode is active OIBus only starts the web server for configuration
+            </div>
+          </small>
         </div>
       </div>
     </div>
