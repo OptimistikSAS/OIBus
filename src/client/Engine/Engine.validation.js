@@ -1,4 +1,5 @@
 import { isIp, notEmpty, inRange, minLength, isHost, minValue, hasLengthBetween } from '../../services/validation.service'
+import utils from '../helpers/utils'
 
 const validation = {
   engine: {
@@ -7,13 +8,6 @@ const validation = {
     user: notEmpty('User'),
     password: hasLengthBetween(4, 256),
     filter: (val) => isIp('Filter')(val === '*' ? '0.0.0.0' : val.replace(/\*/g, '0')), // replace * with a valid ip before testing
-    logParameters: {
-      filename: notEmpty('Filename'),
-      maxsize: minValue(10000),
-      maxFiles: inRange(1, 10),
-      sqliteFilename: notEmpty('Filename of sqlite db'),
-      sqliteMaxFileSize: minValue(10000),
-    },
     scanModes: {
       scanMode: (val, excludedList) => {
         let error = null
@@ -25,7 +19,9 @@ const validation = {
         }
         return error
       },
-      cronTime: notEmpty('Cron'),
+      cronTime: (val) => (
+        utils.nextTime(val).length > 0 ? null : 'Cron value should be valid'
+      ),
     },
     caching: {
       cacheFolder: notEmpty('Cache Folder'),
@@ -38,11 +34,13 @@ const validation = {
       username: notEmpty(),
       password: hasLengthBetween(0, 256),
     },
-    aliveSignal: {
-      host: notEmpty('Host'),
-      endpoint: notEmpty('Endpoint'),
-      id: notEmpty('Id'),
-      frequency: inRange(60, 3600),
+    healthSignal: {
+      http: {
+        host: notEmpty('Host'),
+        endpoint: notEmpty('Endpoint'),
+        frequency: inRange(60, 3600),
+      },
+      logging: { frequency: inRange(60, 3600) },
     },
     httpRequest: {
       timeout: minValue(1),

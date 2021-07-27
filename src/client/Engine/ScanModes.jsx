@@ -13,7 +13,7 @@ const ScanModes = ({ scanModes }) => {
     dispatchNewConfig({ type: 'deleteRow', name: `engine.scanModes.${rowIndex}` })
   }
   const handleAdd = () => {
-    dispatchNewConfig({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
+    dispatchNewConfig({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '* * * * * *' } })
   }
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })

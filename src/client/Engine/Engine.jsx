@@ -8,7 +8,7 @@ import Logging from './Logging/Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
-import AliveSignal from './AliveSignal.jsx'
+import HealthSignal from './HealthSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
 import ExternalSources from './ExternalSources.jsx'
 import validation from './Engine.validation'
@@ -60,7 +60,7 @@ const Engine = () => {
               valid={validation.engine.engineName}
               defaultValue="OIBus"
               onChange={onChange}
-              help={<div>The name for the OIBus</div>}
+              help={<div>The name to this OIBus used for identification. It must be as much explicit as possible</div>}
             />
           </Col>
           <Col md={2}>
@@ -115,7 +115,7 @@ const Engine = () => {
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
-        <AliveSignal onChange={onChange} aliveSignal={newConfig.engine.aliveSignal} />
+        <HealthSignal onChange={onChange} healthSignal={newConfig.engine.healthSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />
         <ExternalSources onChange={onChange} externalSources={newConfig.engine.externalSources} />
       </Form>

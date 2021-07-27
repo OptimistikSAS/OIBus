@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
@@ -61,8 +64,8 @@ describe('FileLogging', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.fileLog.maxSize'), { target: { value: 1000 } })
-    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.maxSize', 1000, null)
+    Simulate.change(document.getElementById('engine.logParameters.fileLog.maxSize'), { target: { value: 90000 } })
+    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.maxSize', 90000, null)
     expect(container).toMatchSnapshot()
   })
   test('check change fileLog numberOfFiles to 1', () => {

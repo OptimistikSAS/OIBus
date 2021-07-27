@@ -37,7 +37,7 @@ const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
-const AliveSignal = require('./AliveSignal.class')
+const HealthSignal = require('./HealthSignal.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const { createRequestService } = require('../services/request')
 
@@ -62,9 +62,15 @@ class Engine {
     this.configService = new ConfigService(this, configFile)
     const { engineConfig } = this.configService.getConfig()
 
+    // Check for private key
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
+
     // Configure the logger
     this.logger = Logger.getDefaultLogger()
-    this.logger.changeParameters(engineConfig.logParameters)
+    this.logger.setEncryptionService(this.encryptionService)
+    this.logger.changeParameters(engineConfig, {})
 
     // Configure the Cache
     this.cache = new Cache(this)
@@ -79,11 +85,6 @@ class Engine {
     Config file: ${this.configService.configFile}
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
 
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
     // Request service
     this.requestService = createRequestService(this)
 
@@ -97,7 +98,7 @@ class Engine {
     this.addValuesMessages = 0
     this.addValuesCount = 0
     this.addFileCount = 0
-    this.forwardedAliveSignalMessages = 0
+    this.forwardedHealthSignalMessages = 0
     this.check = check
   }
 
@@ -284,9 +285,9 @@ class Engine {
       }
     })
 
-    // 7. Start AliveSignal
-    this.aliveSignal = new AliveSignal(this)
-    this.aliveSignal.start()
+    // 7. Start HealthSignal
+    this.healthSignal = new HealthSignal(this)
+    this.healthSignal.start()
 
     this.logger.info('OIBus started')
   }
@@ -302,8 +303,8 @@ class Engine {
       return
     }
 
-    // Stop AliveSignal
-    this.aliveSignal.stop()
+    // Stop HealthSignal
+    this.healthSignal.stop()
 
     // Stop timers
     this.jobs.forEach((id) => {
@@ -468,7 +469,6 @@ class Engine {
       addValuesMessages: this.addValuesMessages,
       addValuesCount: this.addValuesCount,
       addFileCount: this.addFileCount,
-      forwardedAliveSignalMessages: this.forwardedAliveSignalMessages,
       logError: logsCount.error,
       logWarning: logsCount.warn,
       filesErrorCount,

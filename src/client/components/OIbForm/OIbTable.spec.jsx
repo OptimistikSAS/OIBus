@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
@@ -68,6 +71,7 @@ describe('OIbTable', () => {
       />, container)
     })
     Simulate.click(document.querySelector('td path'))
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
     expect(dispatchNewConfig).toBeCalledWith({ type: 'deleteRow', name: 'name.0' })
     expect(container).toMatchSnapshot()
   })

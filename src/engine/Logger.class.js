@@ -12,9 +12,9 @@ const ENGINE_LOG_LEVEL_ENTRY = 'engine'
 class Logger {
   constructor() {
     const defaultFormat = combine(timestamp(), printf((info) => `${info.source} - ${info.timestamp} ${info.level}: ${info.message}`))
-    const consoleFormat = combine(timestamp(), printf((msg) => {
-      const logPrefix = `${msg.source} - ${msg.timestamp}-${msg.level}:`
-      return `${colorize().colorize(msg.level, logPrefix)} ${msg.message}`
+    const consoleFormat = combine(timestamp(), printf((info) => {
+      const logPrefix = `${info.source} - ${info.timestamp}-${info.level}:`
+      return `${colorize().colorize(info.level, logPrefix)} ${info.message}`
     }))
     this.logger = createLogger({
       level: 'info',
@@ -23,6 +23,7 @@ class Logger {
         new transports.Console({ format: consoleFormat, handleExceptions: true }),
       ],
     })
+    this.encryptionService = null
   }
 
   static getDefaultLogger() {
@@ -32,12 +33,28 @@ class Logger {
     return Logger.instance
   }
 
-  changeParameters(baseParameters, specificParameters = {}) {
-    const logParameters = {
-      ...baseParameters,
-      ...this.removeDefaultSettings(specificParameters),
-    }
+  setEncryptionService(encryptionService) {
+    this.encryptionService = encryptionService
+  }
 
+  changeParameters(engineConfig, specificParameters = {}) {
+    const logParameters = { ...engineConfig.logParameters }
+
+    /**
+     * Replacing global log parameters by specific one if not set to engine level
+     */
+    if (specificParameters.consoleLevel && specificParameters.consoleLevel !== ENGINE_LOG_LEVEL_ENTRY) {
+      logParameters.consoleLog.level = specificParameters.consoleLevel
+    }
+    if (specificParameters.fileLevel && specificParameters.fileLevel !== ENGINE_LOG_LEVEL_ENTRY) {
+      logParameters.fileLog.level = specificParameters.fileLevel
+    }
+    if (specificParameters.sqliteLevel && specificParameters.sqliteLevel !== ENGINE_LOG_LEVEL_ENTRY) {
+      logParameters.sqliteLog.level = specificParameters.sqliteLevel
+    }
+    if (specificParameters.lokiLevel && specificParameters.lokiLevel !== ENGINE_LOG_LEVEL_ENTRY) {
+      logParameters.lokiLog.level = specificParameters.lokiLevel
+    }
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
     this.logger.level = consoleLog.level
     if (fileLog.level !== 'none') {
@@ -60,14 +77,15 @@ class Logger {
       }))
     }
 
-    if (lokiLog.level !== 'none') {
+    if (lokiLog.level !== 'none' && this.encryptionService) {
       this.logger.add(new LokiTransport({
         host: lokiLog.host,
         json: true,
         batching: true,
         replaceTimestamp: true,
         interval: lokiLog.interval,
-        labels: { oibus: lokiLog.identifier },
+        basicAuth: lokiLog.username ? `${lokiLog.username}:${this.encryptionService?.decryptText(lokiLog.password)}` : null,
+        labels: { oibus: engineConfig.engineName },
       }))
     }
   }
@@ -90,21 +108,6 @@ class Logger {
 
   silly(message) {
     this.logger.silly(message, { source: this.getSource() })
-  }
-
-  /* eslint-disable-next-line class-methods-use-this */
-  removeDefaultSettings(parameters) {
-    if (parameters.consoleLevel === ENGINE_LOG_LEVEL_ENTRY) {
-      delete parameters.consoleLevel
-    }
-    if (parameters.fileLevel === ENGINE_LOG_LEVEL_ENTRY) {
-      delete parameters.fileLevel
-    }
-    if (parameters.sqliteLevel === ENGINE_LOG_LEVEL_ENTRY) {
-      delete parameters.sqliteLevel
-    }
-
-    return parameters
   }
 
   /**

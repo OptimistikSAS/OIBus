@@ -129,7 +129,7 @@ exports[`LokiLogging check LokiLogging 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value must be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -140,8 +140,15 @@ exports[`LokiLogging check LokiLogging 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="col-md-2"
+        class="col-md-3"
+      />
+      <div
+        class="col-md-3"
       />
     </div>
   </div>
@@ -277,7 +284,7 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value must be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -288,8 +295,15 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="col-md-2"
+        class="col-md-3"
+      />
+      <div
+        class="col-md-3"
       />
     </div>
   </div>
@@ -425,7 +439,7 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value must be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -436,8 +450,15 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="col-md-2"
+        class="col-md-3"
+      />
+      <div
+        class="col-md-3"
       />
     </div>
   </div>
@@ -573,7 +594,7 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value should not greater than 10
+            Value must be greater than 10
           </div>
           <small
             class="form-text text-muted"
@@ -584,8 +605,15 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
           </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="col-md-2"
+        class="col-md-3"
+      />
+      <div
+        class="col-md-3"
       />
     </div>
   </div>

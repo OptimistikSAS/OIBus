@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
@@ -106,6 +109,7 @@ describe('ScanModes', () => {
       />, container)
     })
     Simulate.click(document.querySelector('td path'))
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
     expect(dispatchNewConfig).toBeCalledWith({ type: 'deleteRow', name: 'engine.scanModes.0' })
     expect(container).toMatchSnapshot()
   })
@@ -116,7 +120,7 @@ describe('ScanModes', () => {
       />, container)
     })
     Simulate.click(document.querySelector('th path'))
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '' } })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '* * * * * *' } })
     expect(container).toMatchSnapshot()
     global.Date = RealDate
     global.Date.prototype.toLocaleString = realToLocaleString

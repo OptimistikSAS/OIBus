@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
@@ -16,7 +19,7 @@ afterEach(() => {
 })
 
 describe('OIbAuthentication', () => {
-  test('check Authentication with default mode (user/password)', () => {
+  test('check Authentication with mode null', () => {
     act(() => {
       ReactDOM.render(<OIbAuthentication
         value={{ type: 'Basic', username: 'user', password: 'pass' }}
@@ -24,46 +27,39 @@ describe('OIbAuthentication', () => {
         onChange={() => (1)}
       />, container)
     })
-
-    // need to replace random id and toggler with fixed values
-    // so the snapshot can be compared between test runs
-    const button = container.querySelector('.close')
-    const div = container.querySelector('.collapse')
-    button.id = 'id'
-    div.setAttribute('toggler', 'toggler')
     expect(container).toMatchSnapshot()
   })
-  test('check Authentication with "custom" mode (headerName/secretKey)', () => {
+  test('check Authentication with mode API Key', () => {
     act(() => {
       ReactDOM.render(<OIbAuthentication
-        value={{ type: 'API Key', key: 'anyHeader', secretKey: 'anySecretKey' }}
+        value={{ type: 'API Key', key: 'aaaaaa', secretKey: 'sssss' }}
         name="name"
         onChange={() => (1)}
+        mode="API Key"
       />, container)
     })
-    // need to replace random id and toggler with fixed values
-    // so the snapshot can be compared between test runs
-    const button = container.querySelector('.close')
-    const div = container.querySelector('.collapse')
-    button.id = 'id'
-    div.setAttribute('toggler', 'toggler')
     expect(container).toMatchSnapshot()
   })
-  test('check Authentication with  mode accessKey', () => {
+  test('check Authentication with mode Bearer', () => {
     act(() => {
       ReactDOM.render(<OIbAuthentication
-        value={{ type: 'Basic', accessKey: 'aaaaaa', secretKey: 'sssss' }}
+        value={{ type: 'Bearer', token: 'sssss' }}
         name="name"
         onChange={() => (1)}
-        mode="accessKey"
+        mode="Bearer"
       />, container)
     })
-    // need to replace random id and toggler with fixed values
-    // so the snapshot can be compared between test runs
-    const button = container.querySelector('.close')
-    const div = container.querySelector('.collapse')
-    button.id = 'id'
-    div.setAttribute('toggler', 'toggler')
+    expect(container).toMatchSnapshot()
+  })
+  test('check Authentication with mode Basic', () => {
+    act(() => {
+      ReactDOM.render(<OIbAuthentication
+        value={{ type: 'Basic', username: 'user', password: 'pass' }}
+        name="name"
+        onChange={() => (1)}
+        mode="Basic"
+      />, container)
+    })
     expect(container).toMatchSnapshot()
   })
   test('check the returned value', () => {

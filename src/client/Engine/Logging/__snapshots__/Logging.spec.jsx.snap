@@ -665,7 +665,7 @@ exports[`Logging check Logging 1`] = `
             <div
               class="invalid-feedback"
             >
-              Value should not greater than 10
+              Value must be greater than 10
             </div>
             <small
               class="form-text text-muted"
@@ -676,8 +676,15 @@ exports[`Logging check Logging 1`] = `
             </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
         <div
-          class="col-md-2"
+          class="col-md-3"
+        />
+        <div
+          class="col-md-3"
         />
       </div>
     </div>

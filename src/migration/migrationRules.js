@@ -406,9 +406,84 @@ module.exports = {
         level: 'none',
         host: '',
         interval: 60,
-        identifier: 'oibus',
       },
     }
     config.engine.logParameters = newLogParameters
+
+    if (typeof config.engine.safeMode === 'undefined') {
+      config.engine.safeMode = false
+    }
+    config.engine.healthSignal = {
+      logging: {
+        enabled: true,
+        frequency: 3600,
+        username: '',
+        password: '',
+      },
+      http: {
+        enabled: config.engine.aliveSignal.enabled,
+        host: config.engine.aliveSignal.host,
+        endpoint: config.engine.aliveSignal.endpoint,
+        authentication: config.engine.aliveSignal.authentication,
+        frequency: config.engine.aliveSignal.frequency,
+        proxy: config.engine.aliveSignal.proxy,
+      },
+    }
+    delete config.engine.aliveSignal
+    config.south.dataSources.forEach((dataSource) => {
+      if (!dataSource.logParameters) {
+        dataSource.logParameters = {
+          consoleLevel: 'engine',
+          fileLevel: 'engine',
+          sqliteLevel: 'engine',
+          lokiLevel: 'engine',
+        }
+      } else if (!dataSource.logParameters.lokiLevel) {
+        dataSource.logParameters.lokiLevel = 'engine'
+      }
+      if (dataSource.protocol === 'FolderScanner') {
+        // a previous migration forgot to update the compression parameter (called "compress" before)
+        if (typeof dataSource.FolderScanner.compression === 'undefined') {
+          if (typeof dataSource.FolderScanner.compress !== 'undefined') {
+            dataSource.FolderScanner.compression = dataSource.FolderScanner.compress
+            delete dataSource.FolderScanner.compress
+          } else {
+            dataSource.FolderScanner.compression = false
+          }
+        }
+        if (dataSource.FolderScanner.inputFolder) {
+          // a previous commit add the endsWith('/') validation in the front, causing error when going back to the
+          // application after an update if the inputFolder did not include the '/' previously
+          if (!dataSource.FolderScanner.inputFolder.endsWith('/')) {
+            dataSource.FolderScanner.inputFolder = `${dataSource.FolderScanner.inputFolder}/`
+          }
+        } else {
+          dataSource.FolderScanner.inputFolder = './input/'
+        }
+      }
+      if (dataSource.protocol === 'SQLDbToFile') {
+        // when the driver sqlite was added to SQLDbToFile, the databasePath was forgotten in the migration, causing the
+        // config to change (adding the databasePath default value) after an update when the user visit a SQLDbToFile
+        // connector page
+        if (typeof dataSource.SQLDbToFile.databasePath === 'undefined') {
+          dataSource.SQLDbToFile.databasePath = './sqlite.db'
+        }
+      }
+    })
+    config.north.applications.forEach((application) => {
+      if (!application.logParameters) {
+        application.logParameters = {
+          consoleLevel: 'engine',
+          fileLevel: 'engine',
+          sqliteLevel: 'engine',
+          lokiLevel: 'engine',
+        }
+      } else if (!application.logParameters.lokiLevel) {
+        application.logParameters.lokiLevel = 'engine'
+      }
+      if (application.api === 'AmazonS3') {
+        application.AmazonS3.key = application.AmazonS3.accessKey
+      }
+    })
   },
 }

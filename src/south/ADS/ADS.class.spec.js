@@ -830,6 +830,7 @@ describe('ADS south', () => {
   })
 
   it('should properly disconnect and clearTimeout', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
@@ -841,7 +842,7 @@ describe('ADS south', () => {
     expect(adsSouth.connected)
       .toBeFalsy()
 
-    expect(clearTimeout).toHaveBeenCalledTimes(1)
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
 
     await adsSouth.onScanImplementation()
 
