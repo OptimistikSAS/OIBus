@@ -93,7 +93,7 @@ class ProtocolHandler {
             }
           })
         } else {
-          this.logger.error(`${this.constructor.name} scanGroups are not defined. This South driver will not work`)
+          this.logger.error(`${this.dataSource.dataSourceId} scanGroups are not defined. This South driver will not work`)
           this.scanGroups = []
         }
       }
@@ -121,7 +121,7 @@ class ProtocolHandler {
         // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
         // eslint-disable-next-line no-await-in-loop
         const lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanMode}`)
-        this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(lastCompletedAt) : defaultLastCompletedAt
+        this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(parseInt(lastCompletedAt, 10)) : defaultLastCompletedAt
         this.logger.info(`Initializing lastCompletedAt for ${scanMode} with ${this.lastCompletedAt[scanMode]}`)
       }
     }
