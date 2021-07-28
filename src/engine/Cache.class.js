@@ -6,6 +6,8 @@ const Queue = require('../services/queue.class')
 const Logger = require('./Logger.class')
 const ApiHandler = require('../north/ApiHandler.class')
 
+const ARCHIVE_TIMEOUT = 3600000
+
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
  */
@@ -25,8 +27,9 @@ class Cache {
     this.logger = Logger.getDefaultLogger()
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
-    const { cacheFolder, archiveFolder, archiveMode } = engineConfig.caching
-    this.archiveMode = archiveMode
+    const { cacheFolder, archive } = engineConfig.caching
+    this.archiveMode = archive.enabled
+    this.retentionDuration = (archive.retentionDuration) * 3600000
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
     if (!fs.existsSync(this.cacheFolder)) {
@@ -34,7 +37,7 @@ class Cache {
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
     // Create archive folder if not exists
-    this.archiveFolder = path.resolve(archiveFolder)
+    this.archiveFolder = path.resolve(archive.archiveFolder)
     if (!fs.existsSync(this.archiveFolder)) {
       this.logger.info(`creating archive folder in ${this.archiveFolder}`)
       fs.mkdirSync(this.archiveFolder, { recursive: true })
@@ -52,6 +55,12 @@ class Cache {
     // Errored files/values database path
     this.filesErrorDatabasePath = `${this.cacheFolder}/fileCache-error.db`
     this.valuesErrorDatabasePath = `${this.cacheFolder}/valueCache-error.db`
+
+    this.archiveTimeout = null
+    // refresh the archiveFolder at the beginning only if retentionDuration is different than 0
+    if (this.archiveMode && this.retentionDuration > 0) {
+      this.refreshArchiveFolder()
+    }
   }
 
   /**
@@ -421,36 +430,78 @@ class Cache {
       const archivedFilename = path.basename(filePath)
       const archivePath = path.join(this.archiveFolder, archivedFilename)
 
-      switch (this.archiveMode) {
-        case 'delete':
-          // Delete original file
-          fs.unlink(filePath, (unlinkError) => {
-            if (unlinkError) {
-              this.logger.error(unlinkError)
-            } else {
-              this.logger.info(`File ${filePath} deleted`)
-            }
-          })
-          break
-        case 'archive':
-          // Create archive folder if it doesn't exist
-          if (!fs.existsSync(this.archiveFolder)) {
-            fs.mkdirSync(this.archiveFolder, { recursive: true })
-          }
+      if (this.archiveMode) {
+        // Create archive folder if it doesn't exist
+        if (!fs.existsSync(this.archiveFolder)) {
+          fs.mkdirSync(this.archiveFolder, { recursive: true })
+        }
 
-          // Move original file into the archive folder
-          fs.rename(filePath, archivePath, (renameError) => {
-            if (renameError) {
-              this.logger.error(renameError)
-            } else {
-              this.logger.info(`File ${filePath} moved to ${archivePath}`)
-            }
-          })
-          break
-        default:
-          this.logger.error(`unknown Archive Mode: ${this.archiveMode}`)
+        // Move original file into the archive folder
+        fs.rename(filePath, archivePath, (renameError) => {
+          if (renameError) {
+            this.logger.error(renameError)
+          } else {
+            this.logger.info(`File ${filePath} moved to ${archivePath}`)
+          }
+        })
+      } else {
+        // Delete original file
+        fs.unlink(filePath, (unlinkError) => {
+          if (unlinkError) {
+            this.logger.error(unlinkError)
+          } else {
+            this.logger.info(`File ${filePath} deleted`)
+          }
+        })
       }
     }
+  }
+
+  /**
+   * Delete file in archiveFolder
+   * @param {string} filePath - The file
+   * @return {void}
+   */
+  async refreshArchiveFolder() {
+    this.logger.silly('refreshArchiveFolder()')
+    // if a process already occurs, it clears it
+    if (this.archiveTimeout) {
+      clearTimeout(this.archiveTimeout)
+    }
+
+    const files = fs.readdirSync(this.archiveFolder)
+    const timestamp = new Date().getTime()
+    if (files.length > 0) {
+      // Disable ESLint check because we need for..of loop to support async calls
+      // eslint-disable-next-line no-restricted-syntax
+      for (const file of files) {
+        // Disable ESLint check because we want to handle files one by one
+        // eslint-disable-next-line no-await-in-loop
+        const stats = fs.statSync(path.join(this.archiveFolder, file))
+
+        if (stats.mtimeMs + this.retentionDuration < timestamp) {
+          // local try catch in case an error occurs on a file
+          // if so, the loop goes on with the other files
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            fs.unlink(path.join(this.archiveFolder, file), (unlinkError) => {
+              if (unlinkError) {
+                this.logger.error(unlinkError)
+              } else {
+                this.logger.info(`File ${path.join(this.archiveFolder, file)} deleted`)
+              }
+            })
+          } catch (sendFileError) {
+            this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+          }
+        }
+      }
+    } else {
+      this.logger.debug(`The archive folder ${this.archiveFolder} is empty. Nothing to delete`)
+    }
+    this.archiveTimeout = setTimeout(() => {
+      this.refreshArchiveFolder()
+    }, ARCHIVE_TIMEOUT)
   }
 
   /**

@@ -53,8 +53,8 @@ describe('Caching', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.caching.archiveFolder'), { target: { value: './newArchiveFolder' } })
-    expect(onChange).toBeCalledWith('engine.caching.archiveFolder', './newArchiveFolder', null)
+    Simulate.change(document.getElementById('engine.caching.archive.archiveFolder'), { target: { value: './newArchiveFolder' } })
+    expect(onChange).toBeCalledWith('engine.caching.archive.archiveFolder', './newArchiveFolder', null)
     expect(container).toMatchSnapshot()
   })
   test('check change archiveMode to "archive"', () => {
@@ -64,8 +64,8 @@ describe('Caching', () => {
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.caching.archiveMode'), { target: { value: 'archive', selectedIndex: 0 } })
-    expect(onChange).toBeCalledWith('engine.caching.archiveMode', 'archive', null, null)
+    Simulate.change(document.getElementById('engine.caching.archive.enabled'), { target: { checked: true } })
+    expect(onChange).toBeCalledWith('engine.caching.archive.enabled', true, null)
     expect(container).toMatchSnapshot()
   })
 })

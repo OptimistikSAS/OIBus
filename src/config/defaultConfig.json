@@ -18,9 +18,12 @@
       "sqliteMaxFileSize": 50000000
     },
     "caching": {
-      "cacheFolder": "./cache",
-      "archiveMode": "archive",
-      "archiveFolder": "./cache/archived/"
+      "archive": {
+        "enabled": true,
+        "archiveFolder": "./cache/archive/",
+        "retentionDuration": 720
+      },
+        "cacheFolder": "./cache"
     },
     "scanModes": [
       {

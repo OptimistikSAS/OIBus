@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
-import { OIbText, OIbSelect, OIbTitle } from '../components/OIbForm'
+import { OIbText, OIbTitle, OIbCheckBox, OIbInteger } from '../components/OIbForm'
 import validation from './Engine.validation'
 
 const Caching = ({ onChange, caching }) => (
@@ -9,7 +9,7 @@ const Caching = ({ onChange, caching }) => (
     <OIbTitle label="Cache parameters">
       <>
         <p>
-          In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one
+          In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one
           cache is needed for each North application) and they will be retried regularly.
         </p>
         <p>
@@ -17,15 +17,19 @@ const Caching = ({ onChange, caching }) => (
           OIBus server is indicated in the cache folder parameters.
         </p>
         <p>
-          When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they have been sent to the North
-          application or to archive them in the Archive folder).
+          When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North
+          application or to archive them in the archive folder.
+        </p>
+        <p>
+          When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain
+          in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
         </p>
       </>
     </OIbTitle>
     <Row>
       <Col md={4}>
         <OIbText
-          label="Cache Folder"
+          label="Cache folder"
           name="engine.caching.cacheFolder"
           value={caching.cacheFolder}
           defaultValue="./cache"
@@ -36,29 +40,44 @@ const Caching = ({ onChange, caching }) => (
       </Col>
     </Row>
     <Row>
+      <Col md={2}>
+        <OIbCheckBox
+          label={caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
+          name="engine.caching.archive.enabled"
+          value={caching.archive.enabled}
+          defaultValue
+          help={<div>Move to archive folder or delete files when they are sent</div>}
+          onChange={onChange}
+          switchButton
+        />
+      </Col>
+    </Row>
+    {caching.archive.enabled && (
+    <Row>
       <Col md={4}>
         <OIbText
-          name="engine.caching.archiveFolder"
-          label="Archive Folder"
-          value={caching.archiveFolder}
+          name="engine.caching.archive.archiveFolder"
+          label="Archive folder"
+          value={caching.archive.archiveFolder}
           defaultValue="./cache/archive"
-          valid={validation.engine.caching.archiveFolder}
-          help={<div>Where to store the cached data</div>}
+          valid={validation.engine.caching.archive.archiveFolder}
+          help={<div>Where to store the archived files</div>}
           onChange={onChange}
         />
       </Col>
       <Col md={2}>
-        <OIbSelect
-          label="Archive Mode"
-          name="engine.caching.archiveMode"
-          options={['archive', 'delete']}
-          value={caching.archiveMode}
-          defaultValue="archive"
-          help={<div> Move to Archive Folders or Delete files</div>}
+        <OIbInteger
+          name="engine.caching.archive.retentionDuration"
+          label="Retention duration"
+          value={caching.archive.retentionDuration}
+          defaultValue={720}
+          valid={validation.engine.caching.archive.retentionDuration}
+          help={<div>Retention period of archived files (in hours)</div>}
           onChange={onChange}
         />
       </Col>
     </Row>
+    )}
   </>
 )
 Caching.propTypes = {
