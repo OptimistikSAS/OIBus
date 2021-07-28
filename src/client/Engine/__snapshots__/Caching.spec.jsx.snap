@@ -44,13 +44,16 @@ exports[`Caching check Caching 1`] = `
           class="col"
         >
           <p>
-            In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+            In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
           </p>
           <p>
             When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
           </p>
           <p>
-            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they have been sent to the North application or to archive them in the Archive folder).
+            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+          </p>
+          <p>
+            When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
           </p>
         </div>
       </div>
@@ -69,7 +72,7 @@ exports[`Caching check Caching 1`] = `
           class=""
           for="engine.caching.cacheFolder"
         >
-          Cache Folder
+          Cache folder
         </label>
         <input
           aria-invalid="false"
@@ -96,6 +99,43 @@ exports[`Caching check Caching 1`] = `
     class="row"
   >
     <div
+      class="col-md-2"
+    >
+      <div
+        class="form-group"
+      >
+        <div
+          class="custom-switch custom-control"
+        >
+          <input
+            checked=""
+            class="custom-control-input"
+            color="secondary"
+            id="engine.caching.archive.enabled"
+            name="engine.caching.archive.enabled"
+            type="checkbox"
+          />
+          <label
+            class="custom-control-label"
+            for="engine.caching.archive.enabled"
+          >
+            Archive mode activated
+          </label>
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Move to archive folder or delete files when they are sent
+          </div>
+        </small>
+      </div>
+    </div>
+  </div>
+  <div
+    class="row"
+  >
+    <div
       class="col-md-4"
     >
       <div
@@ -103,17 +143,17 @@ exports[`Caching check Caching 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveFolder"
+          for="engine.caching.archive.archiveFolder"
         >
-          Archive Folder
+          Archive folder
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveFolder"
-          name="engine.caching.archiveFolder"
+          id="engine.caching.archive.archiveFolder"
+          name="engine.caching.archive.archiveFolder"
           type="text"
-          value="./cache/archived/"
+          value="./cache/archive/"
         />
         <div
           class="invalid-feedback"
@@ -122,7 +162,7 @@ exports[`Caching check Caching 1`] = `
           class="form-text text-muted"
         >
           <div>
-            Where to store the cached data
+            Where to store the archived files
           </div>
         </small>
       </div>
@@ -135,27 +175,18 @@ exports[`Caching check Caching 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveMode"
+          for="engine.caching.archive.retentionDuration"
         >
-          Archive Mode
+          Retention duration
         </label>
-        <select
+        <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveMode"
-          name="engine.caching.archiveMode"
-        >
-          <option
-            value="archive"
-          >
-            archive
-          </option>
-          <option
-            value="delete"
-          >
-            delete
-          </option>
-        </select>
+          id="engine.caching.archive.retentionDuration"
+          name="engine.caching.archive.retentionDuration"
+          type="integer"
+          value="720"
+        />
         <div
           class="invalid-feedback"
         />
@@ -163,7 +194,7 @@ exports[`Caching check Caching 1`] = `
           class="form-text text-muted"
         >
           <div>
-             Move to Archive Folders or Delete files
+            Retention period of archived files (in hours)
           </div>
         </small>
       </div>
@@ -216,13 +247,16 @@ exports[`Caching check change archiveFolder 1`] = `
           class="col"
         >
           <p>
-            In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+            In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
           </p>
           <p>
             When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
           </p>
           <p>
-            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they have been sent to the North application or to archive them in the Archive folder).
+            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+          </p>
+          <p>
+            When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
           </p>
         </div>
       </div>
@@ -241,7 +275,7 @@ exports[`Caching check change archiveFolder 1`] = `
           class=""
           for="engine.caching.cacheFolder"
         >
-          Cache Folder
+          Cache folder
         </label>
         <input
           aria-invalid="false"
@@ -268,6 +302,43 @@ exports[`Caching check change archiveFolder 1`] = `
     class="row"
   >
     <div
+      class="col-md-2"
+    >
+      <div
+        class="form-group"
+      >
+        <div
+          class="custom-switch custom-control"
+        >
+          <input
+            checked=""
+            class="custom-control-input"
+            color="secondary"
+            id="engine.caching.archive.enabled"
+            name="engine.caching.archive.enabled"
+            type="checkbox"
+          />
+          <label
+            class="custom-control-label"
+            for="engine.caching.archive.enabled"
+          >
+            Archive mode activated
+          </label>
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Move to archive folder or delete files when they are sent
+          </div>
+        </small>
+      </div>
+    </div>
+  </div>
+  <div
+    class="row"
+  >
+    <div
       class="col-md-4"
     >
       <div
@@ -275,17 +346,17 @@ exports[`Caching check change archiveFolder 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveFolder"
+          for="engine.caching.archive.archiveFolder"
         >
-          Archive Folder
+          Archive folder
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveFolder"
-          name="engine.caching.archiveFolder"
+          id="engine.caching.archive.archiveFolder"
+          name="engine.caching.archive.archiveFolder"
           type="text"
-          value="./cache/archived/"
+          value="./cache/archive/"
         />
         <div
           class="invalid-feedback"
@@ -294,7 +365,7 @@ exports[`Caching check change archiveFolder 1`] = `
           class="form-text text-muted"
         >
           <div>
-            Where to store the cached data
+            Where to store the archived files
           </div>
         </small>
       </div>
@@ -307,27 +378,18 @@ exports[`Caching check change archiveFolder 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveMode"
+          for="engine.caching.archive.retentionDuration"
         >
-          Archive Mode
+          Retention duration
         </label>
-        <select
+        <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveMode"
-          name="engine.caching.archiveMode"
-        >
-          <option
-            value="archive"
-          >
-            archive
-          </option>
-          <option
-            value="delete"
-          >
-            delete
-          </option>
-        </select>
+          id="engine.caching.archive.retentionDuration"
+          name="engine.caching.archive.retentionDuration"
+          type="integer"
+          value="720"
+        />
         <div
           class="invalid-feedback"
         />
@@ -335,7 +397,7 @@ exports[`Caching check change archiveFolder 1`] = `
           class="form-text text-muted"
         >
           <div>
-             Move to Archive Folders or Delete files
+            Retention period of archived files (in hours)
           </div>
         </small>
       </div>
@@ -388,13 +450,16 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
           class="col"
         >
           <p>
-            In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+            In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
           </p>
           <p>
             When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
           </p>
           <p>
-            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they have been sent to the North application or to archive them in the Archive folder).
+            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+          </p>
+          <p>
+            When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
           </p>
         </div>
       </div>
@@ -413,7 +478,7 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
           class=""
           for="engine.caching.cacheFolder"
         >
-          Cache Folder
+          Cache folder
         </label>
         <input
           aria-invalid="false"
@@ -440,6 +505,43 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
     class="row"
   >
     <div
+      class="col-md-2"
+    >
+      <div
+        class="form-group"
+      >
+        <div
+          class="custom-switch custom-control"
+        >
+          <input
+            checked=""
+            class="custom-control-input"
+            color="secondary"
+            id="engine.caching.archive.enabled"
+            name="engine.caching.archive.enabled"
+            type="checkbox"
+          />
+          <label
+            class="custom-control-label"
+            for="engine.caching.archive.enabled"
+          >
+            Archive mode activated
+          </label>
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Move to archive folder or delete files when they are sent
+          </div>
+        </small>
+      </div>
+    </div>
+  </div>
+  <div
+    class="row"
+  >
+    <div
       class="col-md-4"
     >
       <div
@@ -447,17 +549,17 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveFolder"
+          for="engine.caching.archive.archiveFolder"
         >
-          Archive Folder
+          Archive folder
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveFolder"
-          name="engine.caching.archiveFolder"
+          id="engine.caching.archive.archiveFolder"
+          name="engine.caching.archive.archiveFolder"
           type="text"
-          value="./cache/archived/"
+          value="./cache/archive/"
         />
         <div
           class="invalid-feedback"
@@ -466,7 +568,7 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
           class="form-text text-muted"
         >
           <div>
-            Where to store the cached data
+            Where to store the archived files
           </div>
         </small>
       </div>
@@ -479,27 +581,18 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveMode"
+          for="engine.caching.archive.retentionDuration"
         >
-          Archive Mode
+          Retention duration
         </label>
-        <select
+        <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveMode"
-          name="engine.caching.archiveMode"
-        >
-          <option
-            value="archive"
-          >
-            archive
-          </option>
-          <option
-            value="delete"
-          >
-            delete
-          </option>
-        </select>
+          id="engine.caching.archive.retentionDuration"
+          name="engine.caching.archive.retentionDuration"
+          type="integer"
+          value="720"
+        />
         <div
           class="invalid-feedback"
         />
@@ -507,7 +600,7 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
           class="form-text text-muted"
         >
           <div>
-             Move to Archive Folders or Delete files
+            Retention period of archived files (in hours)
           </div>
         </small>
       </div>
@@ -560,13 +653,16 @@ exports[`Caching check change cacheFolder 1`] = `
           class="col"
         >
           <p>
-            In case communication errors prevent OIBus to send information to a North application, The values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+            In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
           </p>
           <p>
             When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
           </p>
           <p>
-            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files one they have been sent to the North application or to archive them in the Archive folder).
+            When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+          </p>
+          <p>
+            When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
           </p>
         </div>
       </div>
@@ -585,7 +681,7 @@ exports[`Caching check change cacheFolder 1`] = `
           class=""
           for="engine.caching.cacheFolder"
         >
-          Cache Folder
+          Cache folder
         </label>
         <input
           aria-invalid="false"
@@ -612,6 +708,43 @@ exports[`Caching check change cacheFolder 1`] = `
     class="row"
   >
     <div
+      class="col-md-2"
+    >
+      <div
+        class="form-group"
+      >
+        <div
+          class="custom-switch custom-control"
+        >
+          <input
+            checked=""
+            class="custom-control-input"
+            color="secondary"
+            id="engine.caching.archive.enabled"
+            name="engine.caching.archive.enabled"
+            type="checkbox"
+          />
+          <label
+            class="custom-control-label"
+            for="engine.caching.archive.enabled"
+          >
+            Archive mode activated
+          </label>
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Move to archive folder or delete files when they are sent
+          </div>
+        </small>
+      </div>
+    </div>
+  </div>
+  <div
+    class="row"
+  >
+    <div
       class="col-md-4"
     >
       <div
@@ -619,17 +752,17 @@ exports[`Caching check change cacheFolder 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveFolder"
+          for="engine.caching.archive.archiveFolder"
         >
-          Archive Folder
+          Archive folder
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveFolder"
-          name="engine.caching.archiveFolder"
+          id="engine.caching.archive.archiveFolder"
+          name="engine.caching.archive.archiveFolder"
           type="text"
-          value="./cache/archived/"
+          value="./cache/archive/"
         />
         <div
           class="invalid-feedback"
@@ -638,7 +771,7 @@ exports[`Caching check change cacheFolder 1`] = `
           class="form-text text-muted"
         >
           <div>
-            Where to store the cached data
+            Where to store the archived files
           </div>
         </small>
       </div>
@@ -651,27 +784,18 @@ exports[`Caching check change cacheFolder 1`] = `
       >
         <label
           class=""
-          for="engine.caching.archiveMode"
+          for="engine.caching.archive.retentionDuration"
         >
-          Archive Mode
+          Retention duration
         </label>
-        <select
+        <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="engine.caching.archiveMode"
-          name="engine.caching.archiveMode"
-        >
-          <option
-            value="archive"
-          >
-            archive
-          </option>
-          <option
-            value="delete"
-          >
-            delete
-          </option>
-        </select>
+          id="engine.caching.archive.retentionDuration"
+          name="engine.caching.archive.retentionDuration"
+          type="integer"
+          value="720"
+        />
         <div
           class="invalid-feedback"
         />
@@ -679,7 +803,7 @@ exports[`Caching check change cacheFolder 1`] = `
           class="form-text text-muted"
         >
           <div>
-             Move to Archive Folders or Delete files
+            Retention period of archived files (in hours)
           </div>
         </small>
       </div>
