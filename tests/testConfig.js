@@ -24,7 +24,14 @@ const testConfig = {
         host: 'localhost:3100',
       },
     },
-    caching: { cacheFolder: './cache', archiveMode: 'delete', archiveFolder: './cache/archived/' },
+    caching: { 
+      cacheFolder: './cache', 
+      archive: {
+        enabled: true,
+        archiveFolder: "./cache/archive/",
+        retentionDuration: 720
+      },
+   },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },

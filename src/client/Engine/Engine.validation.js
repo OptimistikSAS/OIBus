@@ -24,8 +24,11 @@ const validation = {
       ),
     },
     caching: {
+      archive: {
+        archiveFolder: notEmpty('Archive Folder'),
+        retentionDuration: minValue(0),
+      },
       cacheFolder: notEmpty('Cache Folder'),
-      archiveFolder: notEmpty('Archive Folder'),
     },
     proxies: {
       name: minLength(2),

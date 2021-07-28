@@ -388,7 +388,7 @@ module.exports = {
     })
   },
   24: (config) => {
-    const newLogParameters = {
+    config.engine.logParameters = {
       consoleLog: { level: config.engine.logParameters.consoleLevel },
       fileLog: {
         level: config.engine.logParameters.fileLevel,
@@ -408,7 +408,6 @@ module.exports = {
         interval: 60,
       },
     }
-    config.engine.logParameters = newLogParameters
 
     if (typeof config.engine.safeMode === 'undefined') {
       config.engine.safeMode = false
@@ -484,6 +483,13 @@ module.exports = {
       if (application.api === 'AmazonS3') {
         application.AmazonS3.key = application.AmazonS3.accessKey
       }
+      config.engine.caching.archive = {
+        enabled: config.engine.caching.archiveMode === 'archive',
+        archiveFolder: config.engine.caching.archive.archiveFolder,
+        retentionDuration: 0,
+      }
+      delete config.engine.caching.archiveMode
+      delete config.engine.caching.archiveFolder
     })
   },
 }
