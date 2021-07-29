@@ -1,5 +1,7 @@
+const fs = require('fs')
+const path = require('path')
+const ApiHandler = require('../ApiHandler.class')
 const FileWriter = require('./FileWriter.class')
-// const config = require('../../config/defaultConfig.json')
 const config = require('../../../tests/testConfig').default
 
 // Mock database service
@@ -17,12 +19,81 @@ beforeEach(() => {
 })
 
 describe('FileWriter north', () => {
+  const nowDateString = '2020-02-02T02:02:02.222Z'
+  const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
+  const fileWriterConfig = config.north.applications[7]
+  const fileWriterNorth = new FileWriter(fileWriterConfig, engine)
   it('should be properly initialized', () => {
-    const fileWriterNorth = new FileWriter(config.north.applications[7], engine)
-
     expect(fileWriterNorth.canHandleFiles).toBeTruthy()
     expect(fileWriterNorth.canHandleValues).toBeTruthy()
     expect(fileWriterNorth.prefixFileName).toBe('')
     expect(fileWriterNorth.suffixFileName).toBe('')
+    expect(fileWriterNorth.outputFolder).toEqual(path.resolve(fileWriterConfig.FileWriter.outputFolder))
+  })
+
+  it('should properly handle values', async () => {
+    const RealDate = Date
+    global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs)
+    const values = [
+      {
+        timestamp: '2021-07-29T12:13:31.883Z',
+        data: { value: 666, quality: 'good' },
+        pointId: 'pointId',
+      },
+    ]
+    jest.spyOn(fs, 'writeFile').mockImplementation(() => true)
+    let expectedResult = null
+    expectedResult = await fileWriterNorth.handleValues(values)
+    const expectedData = JSON.stringify(values)
+    const expectedFileName = `${fileWriterNorth.prefixFileName}${new Date().getTime()}${fileWriterNorth.suffixFileName}.json`
+    const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
+    const expectedPath = path.join(expectedOutputFolder, expectedFileName)
+    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData)
+    expect(expectedResult).toEqual(values.length)
+    global.Date = RealDate
+  })
+
+  it('should properly catch handle values error', async () => {
+    const values = [
+      {
+        timestamp: '2021-07-29T12:13:31.883Z',
+        data: { value: 666, quality: 'good' },
+        pointId: 'pointId',
+      },
+    ]
+    jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
+      throw new Error('Error handling values')
+    })
+    let expectedResult = null
+    expectedResult = await fileWriterNorth.handleValues(values)
+    expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
+    expect(expectedResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+  })
+
+  it('should properly handle files', async () => {
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
+    jest.spyOn(fs, 'copyFileSync').mockImplementation(() => true)
+    const filePath = '/path/to/file/example.file'
+    const extension = path.extname(filePath)
+    let expectedFileName = path.basename(filePath, extension)
+    expectedFileName = `${fileWriterNorth.prefixFileName}${expectedFileName}${fileWriterNorth.suffixFileName}${extension}`
+    const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
+    let expectedResult = null
+    expectedResult = await fileWriterNorth.handleFile(filePath)
+    expect(fs.copyFileSync).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName))
+    expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
+  })
+
+  it('should properly catch handle file error', async () => {
+    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
+    jest.spyOn(fs, 'copyFileSync').mockImplementation(() => true)
+    const filePath = '/path/to/file/example.file'
+    jest.spyOn(fs, 'copyFileSync').mockImplementationOnce(() => {
+      throw new Error('Error handling files')
+    })
+    let expectedResult = null
+    expectedResult = await fileWriterNorth.handleFile(filePath)
+    expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
+    expect(expectedResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
   })
 })
