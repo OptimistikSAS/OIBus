@@ -71,7 +71,7 @@
     "object-path": "0.11.5",
     "oracledb": "5.2.0",
     "papaparse": "5.3.1",
-    "pg": "8.6.0",
+    "pg": "8.7.1",
     "prop-types": "15.7.2",
     "proxy-agent": "5.0.0",
     "react": "17.0.2",
