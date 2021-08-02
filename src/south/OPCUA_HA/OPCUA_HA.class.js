@@ -340,7 +340,7 @@ class OPCUA_HA extends ProtocolHandler {
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
         // eslint-disable-next-line no-await-in-loop
-        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].getTime())
+        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
         this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
 
         opcStartTime = intervalOpcEndTime
