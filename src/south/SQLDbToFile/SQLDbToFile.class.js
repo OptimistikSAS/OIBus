@@ -165,7 +165,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     if (result.length > 0) {
       this.lastCompletedAt[scanMode] = this.setLastCompletedAt(result, this.lastCompletedAt[scanMode])
-      await this.setConfig(`astCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].getTime())
+      await this.setConfig(`astCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
