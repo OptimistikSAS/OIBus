@@ -121,7 +121,12 @@ class ProtocolHandler {
         // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
         // eslint-disable-next-line no-await-in-loop
         const lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanMode}`)
-        this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(parseInt(lastCompletedAt, 10)) : defaultLastCompletedAt
+        // Required to support the transition from storing lastCompletedAt as timestamp or as ISO string
+        if (Number.isNaN(Number(lastCompletedAt))) {
+          this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(lastCompletedAt) : defaultLastCompletedAt
+        } else {
+          this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(parseInt(lastCompletedAt, 10)) : defaultLastCompletedAt
+        }
         this.logger.info(`Initializing lastCompletedAt for ${scanMode} with ${this.lastCompletedAt[scanMode]}`)
       }
     }

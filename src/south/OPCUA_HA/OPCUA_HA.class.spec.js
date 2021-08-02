@@ -352,7 +352,7 @@ describe('OPCUA-HA south', () => {
       .toBeCalledWith(
         'configDatabase',
         `lastCompletedAt-${opcuaConfig.OPCUA_HA.scanGroups[0].scanMode}`,
-        sampleDate.getTime() + 1,
+        new Date(sampleDate.getTime() + 1).toISOString(),
       )
     expect(opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode])
       .toBeFalsy()
