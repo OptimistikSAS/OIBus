@@ -306,7 +306,7 @@ class OPCHDA extends ProtocolHandler {
           this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
           await this.setConfig(
             `lastCompletedAt-${messageObject.Content.Group}`,
-            this.lastCompletedAt[messageObject.Content.Group].getTime(),
+            this.lastCompletedAt[messageObject.Content.Group].toISOString(),
           )
           this.logger.silly(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
