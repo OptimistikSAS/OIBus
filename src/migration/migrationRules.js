@@ -1,5 +1,8 @@
+/* eslint-disable no-restricted-syntax, no-await-in-loop */
+
 const fs = require('fs')
 const Logger = require('../engine/Logger.class')
+const databaseService = require('../services/database.service')
 
 const logger = new Logger('migration')
 
@@ -493,5 +496,30 @@ module.exports = {
       delete config.engine.caching.archiveMode
       delete config.engine.caching.archiveFolder
     })
+  },
+  25: async (config) => {
+    for (const dataSource of config.south.dataSources) {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        logger.info(`Update lastCompletedAt key for ${dataSource.dataSourceId}`)
+        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.dataSourceId}.db`
+        const database = await databaseService.createConfigDatabase(databasePath)
+        const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
+        await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
+      }
+      if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
+        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.dataSourceId}.db`
+        const database = await databaseService.createConfigDatabase(databasePath)
+        const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
+        // eslint-disable-next-line no-restricted-syntax
+        for (const scanMode of scanModes) {
+          logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.dataSourceId}`)
+          const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
+          if (lastCompletedAtString) {
+            const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
+            await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
+          }
+        }
+      }
+    }
   },
 }

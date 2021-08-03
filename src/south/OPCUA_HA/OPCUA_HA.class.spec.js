@@ -81,7 +81,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
 
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     opcuaSouth.connectToOpcuaServer = jest.fn()
@@ -99,7 +99,7 @@ describe('OPCUA-HA south', () => {
     expect(databaseService.getConfig)
       .toHaveBeenCalledTimes(1)
     expect(opcuaSouth.lastCompletedAt.every10Second)
-      .toEqual(new Date(1587640141001))
+      .toEqual(new Date('2020-04-23T11:09:01.001Z'))
     expect(opcuaSouth.connectToOpcuaServer)
       .toHaveBeenCalledTimes(1)
   })
@@ -250,7 +250,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should quit onScan if not connected', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
 
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     await opcuaSouth.connect()
@@ -264,7 +264,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should quit onScan if previous read did not complete', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
 
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     await opcuaSouth.connect()
@@ -279,7 +279,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should quit onScan if scan group has no points to read', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
     const testOpcuaConfig = {
       ...opcuaConfig,
       points: [{
@@ -310,7 +310,7 @@ describe('OPCUA-HA south', () => {
       statusCode: { value: 0 },
     }]]
 
-    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    databaseService.getConfig.mockReturnValue(startDate.toISOString())
     databaseService.createConfigDatabase.mockReturnValue('configDatabase')
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     await opcuaSouth.connect()
@@ -366,7 +366,7 @@ describe('OPCUA-HA south', () => {
     const startDate = new Date()
     startDate.setTime(startDate.getTime() - (8000 * 1000))
 
-    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    databaseService.getConfig.mockReturnValue(startDate.toISOString())
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
@@ -388,9 +388,7 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should in onScan call check if readHistoryValue returns the requested number of node IDs', async () => {
-    const startDate = new Date('2020-02-02T02:02:02.222Z')
-
-    databaseService.getConfig.mockReturnValue(`${startDate.getTime()}.0`)
+    databaseService.getConfig.mockReturnValue('2020-02-02T02:02:02.222Z')
     databaseService.createConfigDatabase.mockReturnValue('configDatabase')
     const opcuaSouth = new OPCUA_HA(opcuaConfig, engine)
     await opcuaSouth.connect()
