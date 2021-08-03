@@ -12,7 +12,7 @@ const DEFAULT_VERSION = 1
 /**
  * Migration implementation.
  * Iterate through versions and migrate until we reach actual OIBus version.
- * @param {string} configVersion - The config file version
+ * @param {number} configVersion - The config file version
  * @param {object} config - The configuration
  * @param {string} configFile - The config file
  * @returns {void}
