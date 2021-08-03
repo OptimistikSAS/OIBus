@@ -78,12 +78,12 @@ beforeEach(async () => {
 
 describe('SQLDbToFile', () => {
   it('should properly connect and set lastCompletedAt from database', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
+    databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
     await sqlSouth.connect()
 
     expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(sqlSouth.lastCompletedAt[sqlConfig.scanMode]).toEqual(new Date(1587640141001))
+    expect(sqlSouth.lastCompletedAt[sqlConfig.scanMode]).toEqual(new Date('2020-04-23T11:09:01.001Z'))
   })
 
   it('should properly connect and set lastCompletedAt from startDate', async () => {
