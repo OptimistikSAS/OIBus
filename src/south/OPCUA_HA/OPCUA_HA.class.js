@@ -213,7 +213,7 @@ class OPCUA_HA extends ProtocolHandler {
         }
 
         // eslint-disable-next-line max-len
-        this.logger.silly(`Read from ${opcStartTime.getTime()} to ${intervalOpcEndTime.getTime()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
+        this.logger.silly(`Read from ${opcStartTime.toISOString()} to ${intervalOpcEndTime.toISOString()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
         const options = { timeout: this.readTimeout, numValuesPerNode: this.maxReturnValues }
         switch (scanGroup.resampling) {
           case 'Second':
@@ -255,7 +255,7 @@ class OPCUA_HA extends ProtocolHandler {
           case 'Raw':
             break
           default:
-            this.logger.error(`unsupported aggregage: ${scanGroup.aggregate}`)
+            this.logger.error(`unsupported aggregate: ${scanGroup.aggregate}`)
         }
 
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
