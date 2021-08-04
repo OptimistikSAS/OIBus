@@ -41,7 +41,7 @@ jest.mock('../../engine/Logger.class')
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/OIBusEngine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
 
@@ -108,9 +108,7 @@ describe('sql-db-to-file', () => {
   })
 
   it('should properly update lastCompletedAt', () => {
-    sqlSouth.lastCompletedAt = '2020-02-02T02:02:02.000Z'
     sqlSouth.timezone = 'UTC'
-
     const entryList1 = [
       { timestamp: '2021-03-30 10:30:00.150' },
       { timestamp: '2021-03-30 11:30:00.150' },
@@ -129,15 +127,15 @@ describe('sql-db-to-file', () => {
     const entryList4 = [{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }] // no timestamp
 
     sqlSouth.setLastCompletedAt(entryList1, new Date('2020-02-02T02:02:02.000Z')) // with string format
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date('2021-03-30 12:30:00.150')}`)
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date('2021-03-30 12:30:00.150').toISOString()}`)
     sqlSouth.logger.debug.mockClear()
 
     sqlSouth.setLastCompletedAt(entryList2, new Date('2020-02-02T02:02:02.000Z')) // with number format - no ms
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617107400000)}`)
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617107400000).toISOString()}`)
     sqlSouth.logger.debug.mockClear()
 
     sqlSouth.setLastCompletedAt(entryList3, new Date('2020-02-02T02:02:02.000Z')) // with date format
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617193800000)}`)
+    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617193800000).toISOString()}`)
     sqlSouth.logger.debug.mockClear()
 
     sqlSouth.setLastCompletedAt(entryList4, new Date('2020-02-02T02:02:02.000Z')) // without timestamp

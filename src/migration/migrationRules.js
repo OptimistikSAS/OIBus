@@ -374,8 +374,6 @@ module.exports = {
         }
       }
     })
-    logger.info('Add HistoryQuery setting to Engine')
-    config.engine.historyQuery = { folder: './historyQuery' }
   },
   23: (config) => {
     config.south.dataSources.forEach((dataSource) => {
@@ -498,6 +496,8 @@ module.exports = {
     })
   },
   25: async (config) => {
+    logger.info('Add HistoryQuery setting to Engine')
+    config.engine.historyQuery = { folder: './historyQuery' }
     for (const dataSource of config.south.dataSources) {
       if (dataSource.protocol === 'SQLDbToFile') {
         logger.info(`Update lastCompletedAt key for ${dataSource.dataSourceId}`)
