@@ -6,7 +6,7 @@ jest.mock('./logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
-const engine = jest.genMockFromModule('./Engine.class')
+const engine = jest.genMockFromModule('./OIBusEngine.class')
 
 beforeEach(() => {
   jest.resetAllMocks()

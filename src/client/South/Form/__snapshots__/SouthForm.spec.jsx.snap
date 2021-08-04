@@ -520,7 +520,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     </p>
                     <p>
                       The client ams net id must be set beforehand. See the official
-                       
+
                       <a
                         href="https://optimistik.fr/oibus/"
                         rel="noreferrer"
@@ -528,7 +528,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                       >
                         OIBus
                       </a>
-                       
+
                       documentation for more information.
                     </p>
                   </div>
@@ -832,7 +832,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                           PLC name:
                         </b>
                         You can add a prefix to your points ID by mentioning your PLC name. To separate this name from your points ID, you can add a separator.
-                         
+
                         <br />
                         For example, if you have a point ID TEST.MY_INTEGER and that I want to add something in front of it to better identify the data, you can add MY_PLC. in front of your point (dot included). That will give you MY_PLC.TEST.MY_INTEGER
                         <br />
@@ -4553,396 +4553,487 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                           <td>
                             0x00400000
                           </td>
-                          <td>
-                            The raw data in the selected interval were not completely archived.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </ul>
-                </div>
+                          <td
+                        >
+                          The raw data in the selected interval were not completely archived.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="row"
+        class="col-md-4"
       >
         <div
-          class="col-md-4"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.agentFilename"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.agentFilename"
-            >
-              Agent filename
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.agentFilename"
-              name="south.dataSources.0.OPCHDA.agentFilename"
-              type="text"
-              value="./deps/win/HdaAgent/HdaAgent.exe"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                ex: c:\\HdaAgent\\HdaAgent.exe
-              </div>
-            </small>
-          </div>
+            Agent filename
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.agentFilename"
+            name="south.dataSources.0.OPCHDA.agentFilename"
+            type="text"
+            value="./deps/win/HdaAgent/HdaAgent.exe"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              ex: c:\\HdaAgent\\HdaAgent.exe
+            </div>
+          </small>
         </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
         <div
-          class="col-md-2"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.tcpPort"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.tcpPort"
-            >
-              TCP Port
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.tcpPort"
-              name="south.dataSources.0.OPCHDA.tcpPort"
-              type="integer"
-              value="3333"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA Agent port
-              </div>
-            </small>
-          </div>
+            TCP Port
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.tcpPort"
+            name="south.dataSources.0.OPCHDA.tcpPort"
+            type="integer"
+            value="3333"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              HDA Agent port
+            </div>
+          </small>
         </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
         <div
-          class="col-md-2"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.logLevel"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.logLevel"
+            Logging Level
+          </label>
+          <select
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.logLevel"
+            name="south.dataSources.0.OPCHDA.logLevel"
+          >
+            <option
+              value="silly"
             >
+              silly
+            </option>
+            <option
+              value="debug"
+            >
+              debug
+            </option>
+            <option
+              value="info"
+            >
+              info
+            </option>
+            <option
+              value="warning"
+            >
+              warning
+            </option>
+            <option
+              value="error"
+            >
+              error
+            </option>
+          </select>
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
               Logging Level
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.logLevel"
-              name="south.dataSources.0.OPCHDA.logLevel"
-            >
-              <option
-                value="silly"
-              >
-                silly
-              </option>
-              <option
-                value="debug"
-              >
-                debug
-              </option>
-              <option
-                value="info"
-              >
-                info
-              </option>
-              <option
-                value="warning"
-              >
-                warning
-              </option>
-              <option
-                value="error"
-              >
-                error
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Logging Level
-              </div>
-            </small>
-          </div>
+            </div>
+          </small>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="row"
+        class="col-md-12"
       >
         <div
-          class="col-md-12"
+          class="row"
+        >
+          <h5>
+            HDA Server
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
         >
           <div
-            class="row"
-          >
-            <h5>
-              HDA Server
-              <button
-                aria-label="Close"
-                class="close"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="1em"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="1em"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
+            class="collapse"
+            toggler="id"
           >
             <div
-              class="collapse"
-              toggler="id"
+              class="row"
+              style="margin-bottom: 15px;"
             >
               <div
-                class="row"
-                style="margin-bottom: 15px;"
+                class="col"
               >
-                <div
-                  class="col"
-                >
-                  <p>
-                    OPCHDA Server is hosted on the equipment or server on which we want to retrieve values. You need to give the host name as well as the HDA server name.
-                  </p>
-                  <ul>
-                    <li>
-                      The retry interval will be used when the HDA server cant be connected to the HDA Agent to indicate when the next retry will occur.
-                    </li>
-                    <li>
-                      Max return values is an OPC HDA parameters allowing to indicate the maximum number of values that can be returned in a single read request. Most HDA implementations allows to specify 0 so the maximum is defined by the HDA server. Some memory conditions may cause the HDA server to send errors that can be solved by minimizing this parameters. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
-                    </li>
-                    <li>
-                      Max read interval is used when a query request a very long range (one month for example). The range will be divided in smaller request (one hour by default) to avoid the memory issues on the HDA server. This parameter is typically used when OIBus was stopped for a long time and that we need to recover values from that range on the restart.
-                    </li>
-                  </ul>
-                </div>
+                <p>
+                  OPCHDA Server is hosted on the equipment or server on which we want to retrieve values. You need to give the host name as well as the HDA server name.
+                </p>
+                <ul>
+                  <li>
+                    The retry interval will be used when the HDA server cant be connected to the HDA Agent to indicate when the next retry will occur.
+                  </li>
+                  <li>
+                    Max return values is an OPC HDA parameters allowing to indicate the maximum number of values that can be returned in a single read request. Most HDA implementations allows to specify 0 so the maximum is defined by the HDA server. Some memory conditions may cause the HDA server to send errors that can be solved by minimizing this parameters. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
+                  </li>
+                  <li>
+                    Max read interval is used when a query request a very long range (one month for example). The range will be divided in smaller request (one hour by default) to avoid the memory issues on the HDA server. This parameter is typically used when OIBus was stopped for a long time and that we need to recover values from that range on the restart.
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="row"
+        class="col-md-4"
       >
         <div
-          class="col-md-4"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.host"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.host"
-            >
-              Host
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.host"
-              name="south.dataSources.0.OPCHDA.host"
-              type="text"
-              value="opcserver"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                IP address or hostname of the HDA server
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
+            Host
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.host"
+            name="south.dataSources.0.OPCHDA.host"
+            type="text"
+            value="opcserver"
+          />
           <div
-            class="form-group"
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.serverName"
-            >
-              Server name
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.serverName"
-              name="south.dataSources.0.OPCHDA.serverName"
-              type="text"
-              value="Matrikon.OPC.Simulation"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA server (Matrikon.OPC.Simulation)
-              </div>
-            </small>
-          </div>
+            <div>
+              IP address or hostname of the HDA server
+            </div>
+          </small>
         </div>
       </div>
       <div
-        class="row"
+        class="col-md-4"
       >
         <div
-          class="col-md-2"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.serverName"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.retryInterval"
-            >
-              Retry interval
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.retryInterval"
-              name="south.dataSources.0.OPCHDA.retryInterval"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Retry Interval (ms)
-              </div>
-            </small>
-          </div>
+            Server name
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.serverName"
+            name="south.dataSources.0.OPCHDA.serverName"
+            type="text"
+            value="Matrikon.OPC.Simulation"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              HDA server (Matrikon.OPC.Simulation)
+            </div>
+          </small>
         </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
         <div
-          class="col-md-2"
+          class="form-group"
         >
-          <div
-            class="form-group"
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.retryInterval"
           >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.maxReturnValues"
-            >
+            Retry interval
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.retryInterval"
+            name="south.dataSources.0.OPCHDA.retryInterval"
+            type="integer"
+            value="10000"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Retry Interval (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.maxReturnValues"
+          >
+            Max return values
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.maxReturnValues"
+            name="south.dataSources.0.OPCHDA.maxReturnValues"
+            type="integer"
+            value="10000"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
               Max return values
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.maxReturnValues"
-              name="south.dataSources.0.OPCHDA.maxReturnValues"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max return values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="south.dataSources.0.OPCHDA.maxReadInterval"
-            >
-              Max read interval
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCHDA.maxReadInterval"
-              name="south.dataSources.0.OPCHDA.maxReadInterval"
-              type="integer"
-              value="3600"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max read interval (s)
-              </div>
-            </small>
-          </div>
+            </div>
+          </small>
         </div>
       </div>
       <div
-        class="row"
+        class="col-md-2"
       >
         <div
-          class="col-md-12"
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.maxReadInterval"
+          >
+            Max read interval
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.maxReadInterval"
+            name="south.dataSources.0.OPCHDA.maxReadInterval"
+            type="integer"
+            value="3600"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Max read interval (s)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.readIntervalDelay"
+            name="south.dataSources.0.OPCHDA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-12"
+      >
+        <div
+          class="row"
+        >
+          <h5>
+            ScanGroups
+            <button
+              aria-label="Close"
+              class="close"
+              id="id"
+            >
+              <svg
+                class="oi-help"
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                />
+              </svg>
+            </button>
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
         >
           <div
-            class="row"
+            class="collapse"
+            toggler="id"
           >
-            <h5>
-              ScanGroups
-              <button
-                aria-label="Close"
-                class="close"
-                id="id"
+            <div
+              class="row"
+              style="margin-bottom: 15px;"
+            >
+              <div
+                class="col"
+              >
+                <p>
+                  OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested.
+                  <br />
+                  <b>
+                    In the current version, aggregates are NOT supported for production mode. Please use "Raw"
+                  </b>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-6"
+      >
+        <table
+          class="table table-sm table-striped table-hover"
+        >
+          <thead>
+            <tr>
+              <th
+                scope="col"
               >
                 <svg
-                  class="oi-help"
+                  class="oi-icon"
                   fill="currentColor"
                   height="1em"
                   stroke="currentColor"
@@ -4952,75 +5043,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                    d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
                   />
                 </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
+                <span>
+                  Scan Mode
+                </span>
+              </th>
+              <th
+                scope="col"
               >
-                <div
-                  class="col"
-                >
-                  <p>
-                    OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested.
-                    <br />
-                    <b>
-                      In the current version, aggregates are NOT supported for production mode. Please use "Raw"
-                    </b>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-6"
-        >
-          <table
-            class="table table-sm table-striped table-hover"
-          >
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                >
-                  <svg
-                    class="oi-icon"
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
-                    />
-                  </svg>
-                  <span>
-                    Scan Mode
-                  </span>
-                </th>
-                <th
-                  scope="col"
-                >
-                  aggregate
+                aggregate
                 </th>
                 <th
                   scope="col"
@@ -7377,7 +7410,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               id="south.dataSources.0.SQLDbToFile.query"
               name="south.dataSources.0.SQLDbToFile.query"
             >
-              SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @LastCompletedDate
+              SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @StartTime AND created_at &lt;= @EndTime LIMIT @MaxReturnValues
             </textarea>
             <div
               class="invalid-feedback"
@@ -8098,6 +8131,108 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 type="checkbox"
               />
             </label>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.maxReadInterval"
+          >
+            Max read interval
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.SQLDbToFile.maxReadInterval"
+            name="south.dataSources.0.SQLDbToFile.maxReadInterval"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value must be greater than 60
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Max read interval (s)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+            name="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.maxReturnValues"
+          >
+            Max return values
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.maxReturnValues"
+            name="south.dataSources.0.SQLDbToFile.maxReturnValues"
+            type="integer"
+            value="1000"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Max number of values returned for one point during a read interval
+            </div>
+          </small>
           </div>
         </div>
       </div>
@@ -8617,7 +8752,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -9753,7 +9888,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -10676,7 +10811,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>

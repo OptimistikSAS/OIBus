@@ -26,14 +26,15 @@ class BaseEngine {
     this.configService = new ConfigService(this, configFile)
     const { engineConfig } = this.configService.getConfig()
 
-    // Configure the logger
-    this.logger = Logger.getDefaultLogger()
-    this.logger.changeParameters(engineConfig.logParameters)
-
     // Check for private key
     this.encryptionService = EncryptionService.getInstance()
     this.encryptionService.setKeyFolder(this.configService.keyFolder)
     this.encryptionService.checkOrCreatePrivateKey()
+
+    // Configure the logger
+    this.logger = Logger.getDefaultLogger()
+    this.logger.setEncryptionService(this.encryptionService)
+    this.logger.changeParameters(engineConfig, {})
 
     // Request service
     this.requestService = createRequestService(this)
