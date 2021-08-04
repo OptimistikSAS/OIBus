@@ -52,6 +52,9 @@ class SQLDbToFile extends ProtocolHandler {
       timezone,
       dateFormat,
       compression,
+      maxReadInterval,
+      readIntervalDelay,
+      maxReturnValues,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -65,7 +68,6 @@ class SQLDbToFile extends ProtocolHandler {
     this.database = database
     this.encryption = encryption
     this.query = query
-    this.containsLastCompletedDate = query.includes('@LastCompletedDate')
     this.connectionTimeout = connectionTimeout
     this.timeColumn = timeColumn
     this.requestTimeout = requestTimeout
@@ -73,6 +75,14 @@ class SQLDbToFile extends ProtocolHandler {
     this.delimiter = delimiter
     this.dateFormat = dateFormat
     this.compression = compression
+    this.maxReadInterval = maxReadInterval
+    this.readIntervalDelay = readIntervalDelay
+    this.maxReturnValues = maxReturnValues
+
+    const hasStartTime = this.query.indexOf('@StartTime') === -1 ? 0 : 1
+    const hasEndTime = this.query.indexOf('@EndTime') === -1 ? 0 : 1
+    const hasMaxReturnValues = this.query.indexOf('@MaxReturnValues') === -1 ? 0 : 1
+    this.nrOfReplacements = hasStartTime + hasEndTime + hasMaxReturnValues
 
     if (timezone && DateTime.local().setZone(timezone).isValid) {
       this.timezone = timezone
@@ -107,6 +117,16 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   /**
+   * Connect.
+   * @return {Promise<void>} The connection promise
+   */
+  async connect() {
+    await super.connect()
+
+    this.connected = true
+  }
+
+  /**
    * Function used to parse an entry and update the lastCompletedAt if needed
    * @param {*} entryList - on sql result item
    * @param {Date} actualLastCompletedAt - The actual last completed date
@@ -136,7 +156,7 @@ class SQLDbToFile extends ProtocolHandler {
           }
         }
         if (entryDate > new Date(newLastCompletedAt)) {
-          newLastCompletedAt = entryDate.toISOString()
+          newLastCompletedAt = entryDate
         }
       }
     })
@@ -150,18 +170,21 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   /**
-   * Get entries from the database since the last query completion, write them into a CSV file and send to the Engine.
-   * @param {*} scanMode - The scan mode
+   * Get entries from the database since the last query completion,
+   * write them into a CSV file and send to the Engine.
+   * @param {String} scanMode - The scan mode
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
    * @return {void}
    */
-  async onScanImplementation(scanMode) {
+  async historyQuery(scanMode, startTime, endTime) {
     if (!this.timezone) {
       this.logger.error('Invalid timezone')
       return
     }
 
-    if (this.ongoingReads[scanMode]) {
-      this.logger.silly(`onScan ignored: ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+    if (!((this.nrOfReplacements === 0) || (this.nrOfReplacements === 3))) {
+      this.logger.error('Invalid query format. Please use all or nothing from @StartTime, @EndTime, @MaxReturnValues')
       return
     }
 
@@ -171,23 +194,22 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       switch (this.driver) {
         case 'mssql':
-          result = await this.getDataFromMSSQL(this.lastCompletedAt[scanMode])
+          result = await this.getDataFromMSSQL(startTime, endTime)
           break
         case 'mysql':
-          result = await this.getDataFromMySQL(this.lastCompletedAt[scanMode])
+          result = await this.getDataFromMySQL(startTime, endTime)
           break
         case 'postgresql':
-          result = await this.getDataFromPostgreSQL(this.lastCompletedAt[scanMode])
+          result = await this.getDataFromPostgreSQL(startTime, endTime)
           break
         case 'oracle':
-          result = await this.getDataFromOracle(this.lastCompletedAt[scanMode])
+          result = await this.getDataFromOracle(startTime, endTime)
           break
         case 'sqlite':
-          result = await this.getDataFromSqlite(this.lastCompletedAt[scanMode])
+          result = await this.getDataFromSqlite(startTime, endTime)
           break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
-          result = []
       }
     } catch (error) {
       this.logger.error(error)
@@ -196,10 +218,11 @@ class SQLDbToFile extends ProtocolHandler {
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      this.lastCompletedAt[scanMode] = this.setLastCompletedAt(result, this.lastCompletedAt[scanMode])
+      this.lastCompletedAt[scanMode] = this.setLastCompletedAt(result, startTime)
       await this.setConfig(`astCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
       this.statusData['Last Completed At '] = new Date().toISOString()
       this.updateStatusDataStream()
+
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss'))
@@ -237,12 +260,13 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from MSSQL database.
-   * @param {Date} lastCompletedAt - The last completed date
-   * @returns {void}
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<array>} - The new entries
    */
-  async getDataFromMSSQL(lastCompletedAt) {
+  async getDataFromMSSQL(startTime, endTime) {
     const adaptedQuery = this.query
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       user: this.username,
@@ -261,9 +285,11 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       const pool = await new mssql.ConnectionPool(config).connect()
       let result
-      if (this.containsLastCompletedDate) {
+      if (this.nrOfReplacements) {
         result = await pool.request()
-          .input('LastCompletedDate', mssql.DateTimeOffset, lastCompletedAt)
+          .input('StartTime', mssql.DateTimeOffset, startTime)
+          .input('EndTime', mssql.DateTimeOffset, endTime)
+          .input('MaxReturnValues', mssql.Numeric, this.maxReturnValues)
           .query(adaptedQuery)
       } else {
         result = await pool.request()
@@ -284,12 +310,13 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from MySQL database.
-   * @param {Date} lastCompletedAt - The last completed date
-   * @returns {void}
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<array>} - The new entries
    */
-  async getDataFromMySQL(lastCompletedAt) {
-    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '?')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+  async getDataFromMySQL(startTime, endTime) {
+    const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?').replace(/@MaxReturnValues/g, '?')
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       host: this.host,
@@ -305,7 +332,7 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       connection = await mysql.createConnection(config)
-      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
+      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
       const [rows] = await connection.execute(
         { sql: adaptedQuery, timeout: this.requestTimeout },
         params,
@@ -326,12 +353,13 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from PostgreSQL database.
-   * @param {Date} lastCompletedAt - The last completed date
-   * @returns {void}
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<array>} - The new entries
    */
-  async getDataFromPostgreSQL(lastCompletedAt) {
-    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, '$1')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+  async getDataFromPostgreSQL(startTime, endTime) {
+    const adaptedQuery = this.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2').replace(/@MaxReturnValues/g, '$3')
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       host: this.host,
@@ -348,7 +376,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = new Client(config)
       await connection.connect()
-      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
+      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
       const { rows } = await connection.query(adaptedQuery, params)
       this.statusData['Last PostgreSQL Request'] = adaptedQuery
       this.updateStatusDataStream()
@@ -366,16 +394,18 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from Oracle database.
-   * @param {Date} lastCompletedAt - The last completed date
-   * @returns {void}
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<array>} - The data
    */
-  async getDataFromOracle(lastCompletedAt) {
+  async getDataFromOracle(startTime, endTime) {
     if (this.engine.m1) {
       this.logger.error('Oracle not supported on apple m1')
       return []
     }
-    const adaptedQuery = this.query.replace(/@LastCompletedDate/g, ':date1')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+
+    const adaptedQuery = this.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2').replace(/@MaxReturnValues/g, ':values')
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       user: this.username,
@@ -390,7 +420,7 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const params = this.containsLastCompletedDate ? [lastCompletedAt] : []
+      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
       const { rows } = await connection.execute(adaptedQuery, params)
       this.statusData['Last Oracle Request'] = adaptedQuery
       this.updateStatusDataStream()
@@ -408,19 +438,24 @@ class SQLDbToFile extends ProtocolHandler {
 
   /**
    * Get new entries from local SQLite db file
-   * @param {Date} lastCompletedAt - The last completed date
-   * @returns {void}
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<array>} - The new entries
    */
-  async getDataFromSqlite(lastCompletedAt) {
+  async getDataFromSqlite(startTime, endTime) {
     const adaptedQuery = this.query
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.containsLastCompletedDate ? 'with' : 'without'} LastCompletedDate`)
+    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     let database = null
     let data = []
     try {
       database = await sqlite.open({ filename: this.databasePath, driver: sqlite3.Database })
       const stmt = await database.prepare(adaptedQuery)
-      const preparedParameters = this.containsLastCompletedDate ? { '@LastCompletedDate': lastCompletedAt } : {}
+      const preparedParameters = this.nrOfReplacements ? {
+        '@StartTime': startTime,
+        '@EndTime': endTime,
+        '@MaxReturnValues': this.maxReturnValues,
+      } : {}
       data = await stmt.all(preparedParameters)
       await stmt.finalize()
       this.statusData['Last SQlite Request'] = adaptedQuery
