@@ -54,7 +54,12 @@ class ProtocolHandler {
     this.logger = engine.logger
 
     if (this.supportedModes) {
-      const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
+      const {
+        supportListen,
+        supportLastPoint,
+        supportFile,
+        supportHistory
+      } = this.supportedModes
       if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
         this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
       }
@@ -99,6 +104,8 @@ class ProtocolHandler {
       }
     }
 
+    this.connected = false
+
     this.lastOnScanAt = null
     this.lastAddFileAt = null
     this.addFileCount = 0
@@ -126,7 +133,12 @@ class ProtocolHandler {
   }
 
   async connect() {
-    const { id, name, protocol, startTime } = this.dataSource
+    const {
+      id,
+      name,
+      protocol,
+      startTime
+    } = this.dataSource
 
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
@@ -151,7 +163,7 @@ class ProtocolHandler {
   }
 
   initializeStatusData() {
-    const initialStatusData = { }
+    const initialStatusData = {}
     if (this.handlesPoints) {
       initialStatusData['Number of values since OIBus has started'] = 0
     }
@@ -184,9 +196,52 @@ class ProtocolHandler {
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.events?.emit('data', this.statusData)
   }
 
-  onScanImplementation(scanMode) {
-    const { name } = this.dataSource
-    this.logger.error(`Data source ${name} should surcharge onScanImplementation(${scanMode})`)
+  async onScanImplementation(scanMode) {
+    if (!this.connected || this.ongoingReads[scanMode]) {
+      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      return
+    }
+
+    if (this.dataSource[this.constructor.name].scanGroups) {
+      const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
+
+      if (!scanGroup) {
+        this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
+        return
+      }
+
+      if (!scanGroup.points || !scanGroup.points.length) {
+        this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
+        return
+      }
+    }
+
+    let startTime = this.lastCompletedAt[scanMode]
+    const endTime = new Date()
+    let intervalEndTime = endTime
+    let firstIteration = true
+    do {
+      // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
+      if (!firstIteration) {
+        this.logger.silly(`Wait ${this.readIntervalDelay} ms`)
+        // eslint-disable-next-line no-await-in-loop
+        await this.delay(this.readIntervalDelay)
+      }
+
+      // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+      // requests (for example only one hour if maxReadInterval is 3600)
+      if ((endTime.getTime() - startTime.getTime()) > 1000 * this.maxReadInterval) {
+        intervalEndTime = new Date(startTime.getTime() + 1000 * this.maxReadInterval)
+      } else {
+        intervalEndTime = endTime
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      await this.historyQuery(scanMode, startTime, endTime)
+
+      startTime = intervalEndTime
+      firstIteration = false
+    } while (intervalEndTime !== endTime)
   }
 
   async onScan(scanMode) {
@@ -197,14 +252,14 @@ class ProtocolHandler {
     this.updateStatusDataStream()
     try {
       if (this.supportedModes?.supportLastPoint) {
-          await this.lastPointQuery(scanMode)
-        }
-        if (this.supportedModes?.supportFile) {
-          await this.fileQuery(scanMode)
-        }
-        if (this.supportedModes?.supportHistory) {
-          await this.onScanImplementation(scanMode)
-        }
+        await this.lastPointQuery(scanMode)
+      }
+      if (this.supportedModes?.supportFile) {
+        await this.fileQuery(scanMode)
+      }
+      if (this.supportedModes?.supportHistory) {
+        await this.onScanImplementation(scanMode)
+      }
     } catch (error) {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
     }
@@ -212,16 +267,19 @@ class ProtocolHandler {
   }
 
   disconnect() {
-    const { name, id } = this.dataSource
+    const {
+      name,
+      id
+    } = this.dataSource
     this.logger.info(`Data source ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/south/${id}/sse`]?.events?.off('data', this.listener)
   }
 
   /**
-     * Method used to flush the buffer from a time trigger or a max trigger
-     * @param {string} flag - The trigger
-     * @returns {void} -
-     */
+   * Method used to flush the buffer from a time trigger or a max trigger
+   * @param {string} flag - The trigger
+   * @returns {void} -
+   */
   async flush(flag = 'time-flush') {
     this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
     // save the buffer to be sent and immediately clear it
@@ -240,10 +298,10 @@ class ProtocolHandler {
   }
 
   /**
-     * Add a new Value to the Engine.
-     * @param {array} values - The new value
-     * @return {void}
-     */
+   * Add a new Value to the Engine.
+   * @param {array} values - The new value
+   * @return {void}
+   */
   async addValues(values) {
     // used for status
     this.lastAddPointsAt = new Date().getTime()
@@ -262,11 +320,11 @@ class ProtocolHandler {
   }
 
   /**
-     * Add a new File to the Engine.
-     * @param {string} filePath - The path to the File
-     * @param {boolean} preserveFiles - Whether to preserve the original file
-     * @return {void}
-     */
+   * Add a new File to the Engine.
+   * @param {string} filePath - The path to the File
+   * @param {boolean} preserveFiles - Whether to preserve the original file
+   * @return {void}
+   */
   addFile(filePath, preserveFiles) {
     this.lastAddFileAt = new Date().toISOString()
     this.addFileCount += 1
@@ -279,11 +337,11 @@ class ProtocolHandler {
   }
 
   /**
-     * Compress the specified file
-     * @param {string} input - The path of the file to compress
-     * @param {string} output - The path to the compressed file
-     * @returns {Promise} - The compression result
-     */
+   * Compress the specified file
+   * @param {string} input - The path of the file to compress
+   * @param {string} output - The path to the compressed file
+   * @returns {Promise} - The compression result
+   */
   compress(input, output) {
     return new Promise((resolve, reject) => {
       const readStream = fs.createReadStream(input)
@@ -302,20 +360,20 @@ class ProtocolHandler {
   }
 
   /**
-     * Read a given key in the config db of the protocol handler
-     * @param {string} configKey - key to retrieve
-     * @returns {string} - The value of the key
-     */
+   * Read a given key in the config db of the protocol handler
+   * @param {string} configKey - key to retrieve
+   * @returns {string} - The value of the key
+   */
   async getConfig(configKey) {
     return databaseService.getConfig(this.southDatabase, configKey)
   }
 
   /**
-     * Update or add a given key in the config db of the protocol handler
-     * @param {string} configKey - key to update/add
-     * @param {string} value - value of the key
-     * @returns {Promise} - the value to update the key
-     */
+   * Update or add a given key in the config db of the protocol handler
+   * @param {string} configKey - key to update/add
+   * @param {string} value - value of the key
+   * @returns {Promise} - the value to update the key
+   */
   async setConfig(configKey, value) {
     return databaseService.upsertConfig(
       this.southDatabase,
@@ -325,11 +383,12 @@ class ProtocolHandler {
   }
 
   /**
-     * Decompress the specified file
-     * @param {string} input - The path of the compressed file
-     * @param {string} output - The path to the decompressed file
-     * @returns {Promise} - The decompression result
-     */
+   * Decompress the specified file
+   * @param {string} input - The path of the compressed file
+   * @param {string} output - The path to the decompressed file
+   * @returns {Promise} - The decompression result
+   */
+
   /* eslint-disable-next-line class-methods-use-this */
   decompress(input, output) {
     return new Promise((resolve, reject) => {
@@ -349,10 +408,11 @@ class ProtocolHandler {
   }
 
   /**
-     * Method to return a delayed promise.
-     * @param {number} timeout - The delay
-     * @return {Promise<any>} - The delay promise
-     */
+   * Method to return a delayed promise.
+   * @param {number} timeout - The delay
+   * @return {Promise<any>} - The delay promise
+   */
+
   /* eslint-disable-next-line class-methods-use-this */
   async delay(timeout) {
     return new Promise((resolve) => {
@@ -361,9 +421,9 @@ class ProtocolHandler {
   }
 
   /**
-     * Get live status.
-     * @returns {object} - The live status
-     */
+   * Get live status.
+   * @returns {object} - The live status
+   */
   getStatus() {
     const status = {
       Name: this.dataSource.name,
@@ -381,9 +441,10 @@ class ProtocolHandler {
     if (this.canHandleHistory) {
       if (this.lastCompletedAt) {
         if (typeof this.lastCompletedAt === 'object') {
-          Object.entries(this.lastCompletedAt).forEach(([key, value]) => {
-            status[`Last completed at - ${key}`] = new Date(value).toLocaleString()
-          })
+          Object.entries(this.lastCompletedAt)
+            .forEach(([key, value]) => {
+              status[`Last completed at - ${key}`] = new Date(value).toLocaleString()
+            })
         } else {
           status['Last completed at'] = new Date(this.lastCompletedAt).toLocaleString()
         }
@@ -425,8 +486,10 @@ class ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date, dateFormat).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone).toISOString()
+    const timestampWithoutTZAsString = moment.utc(date, dateFormat)
+      .format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone)
+      .toISOString()
   }
 }
 
