@@ -106,13 +106,13 @@ class SQLDbToFile extends ProtocolHandler {
       } else if (entry[this.timeColumn] && new Date(entry[this.timeColumn]).toString() !== 'Invalid Date') {
         const entryDate = new Date(moment.tz(entry[this.timeColumn], this.timezone).tz('UTC').toISOString())
         if (entryDate > newLastCompletedAt) {
-          newLastCompletedAt = entryDate.toISOString()
+          newLastCompletedAt = entryDate
         }
       }
     })
 
     if (newLastCompletedAt !== actualLastCompletedAt) {
-      this.logger.debug(`Updating lastCompletedAt to ${newLastCompletedAt}`)
+      this.logger.debug(`Updating lastCompletedAt to ${newLastCompletedAt.toISOString()}`)
     } else {
       this.logger.debug('lastCompletedAt not used')
     }
