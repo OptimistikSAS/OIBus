@@ -327,11 +327,6 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<array>} - The new entries
    */
   async getDataFromPostgreSQL(startTime, endTime) {
-    if (this.engine.m1) {
-      this.logger.error('Oracle not supported on apple m1')
-      return []
-    }
-
     const adaptedQuery = this.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2').replace(/@MaxReturnValues/g, '$3')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
@@ -371,6 +366,11 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<array>} - The data
    */
   async getDataFromOracle(startTime, endTime) {
+    if (this.engine.m1) {
+      this.logger.error('Oracle not supported on apple m1')
+      return []
+    }
+
     const adaptedQuery = this.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2').replace(/@MaxReturnValues/g, ':values')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
