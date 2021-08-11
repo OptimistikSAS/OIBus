@@ -5,10 +5,17 @@ const sqlite3 = require('sqlite3')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
-const oracledb = require('oracledb')
 const csv = require('papaparse')
 const moment = require('moment-timezone')
 const ProtocolHandler = require('../ProtocolHandler.class')
+
+let oracledb
+try {
+  // eslint-disable-next-line global-require,import/no-unresolved
+  oracledb = require('oracledb')
+} catch {
+  console.error('Could not load node oracledb')
+}
 
 /**
  * Class SQLDbToFile
@@ -320,6 +327,11 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {Promise<array>} - The new entries
    */
   async getDataFromPostgreSQL(startTime, endTime) {
+    if (this.engine.m1) {
+      this.logger.error('Oracle not supported on apple m1')
+      return []
+    }
+
     const adaptedQuery = this.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2').replace(/@MaxReturnValues/g, '$3')
     this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
