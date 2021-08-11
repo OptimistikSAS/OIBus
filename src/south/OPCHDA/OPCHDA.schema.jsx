@@ -554,6 +554,14 @@ schema.form = {
     defaultValue: 3600,
     help: <div>Max read interval (s)</div>,
   },
+  readIntervalDelay: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 200,
+    help: <div>Time to wait between the read interval iterations (ms)</div>,
+  },
   scanGroupsSection: {
     type: 'OIbTitle',
     label: 'ScanGroups',
