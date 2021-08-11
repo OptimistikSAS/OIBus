@@ -1520,6 +1520,38 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.8.OPCHDA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.8.OPCHDA.readIntervalDelay"
+            name="south.dataSources.8.OPCHDA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -3172,6 +3204,38 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <div>
               Max read interval (s)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.8.OPCHDA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.8.OPCHDA.readIntervalDelay"
+            name="south.dataSources.8.OPCHDA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
             </div>
           </small>
         </div>

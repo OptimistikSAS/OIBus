@@ -178,6 +178,30 @@ schema.form = {
     md: 2,
     defaultValue: false,
   },
+  maxReadInterval: {
+    type: 'OIbInteger',
+    newRow: true,
+    md: 2,
+    valid: minValue(60),
+    defaultValue: 3600,
+    help: <div>Max read interval (s)</div>,
+  },
+  readIntervalDelay: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 200,
+    help: <div>Time to wait between the read interval iterations (ms)</div>,
+  },
+  maxReturnValues: {
+    type: 'OIbInteger',
+    newRow: false,
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 1000,
+    help: <div>Max number of values returned for one point during a read interval</div>,
+  },
 }
 schema.points = null
 

@@ -167,164 +167,130 @@ class OPCUA_HA extends ProtocolHandler {
   /**
    * On scan.
    * @param {String} scanMode - The scan mode
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
    * @return {Promise<void>} - The on scan promise
    */
-  async onScanImplementation(scanMode) {
-    const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
-
-    if (!scanGroup) {
-      this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
-      return
-    }
-
-    if (!this.connected || this.ongoingReads[scanMode]) {
-      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
-      return
-    }
-
-    if (!scanGroup.points || !scanGroup.points.length) {
-      this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
-      return
-    }
-
+  async historyQuery(scanMode, startTime, endTime) {
     this.ongoingReads[scanMode] = true
 
+    const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
-      let opcStartTime = this.lastCompletedAt[scanMode]
-      const opcEndTime = new Date()
-      let intervalOpcEndTime
-      let firstIteration = true
-      do {
-        // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
-        if (!firstIteration) {
-          this.logger.silly(`Wait ${this.readIntervalDelay} ms`)
-          // eslint-disable-next-line no-await-in-loop
-          await this.delay(this.readIntervalDelay)
-        }
-        // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
-        // requests (for example only one hour if maxReadInterval is 3600)
-        if ((opcEndTime.getTime() - opcStartTime.getTime()) > 1000 * this.maxReadInterval) {
-          intervalOpcEndTime = new Date(opcStartTime.getTime() + 1000 * this.maxReadInterval)
-        } else {
-          intervalOpcEndTime = opcEndTime
-        }
+      // eslint-disable-next-line max-len
+      this.logger.silly(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
+      const options = {
+        timeout: this.readTimeout,
+        numValuesPerNode: this.maxReturnValues,
+      }
+      switch (scanGroup.resampling) {
+        case 'Second':
+          options.processingInterval = 1000
+          break
+        case '10 Seconds':
+          options.processingInterval = 1000 * 10
+          break
+        case '30 Seconds':
+          options.processingInterval = 1000 * 30
+          break
+        case 'Minute':
+          options.processingInterval = 1000 * 60
+          break
+        case 'Hour':
+          options.processingInterval = 1000 * 3600
+          break
+        case 'Day':
+          options.processingInterval = 1000 * 3600 * 24
+          break
+        case 'None':
+          break
+        default:
+          this.logger.error(`unsupported resampling: ${scanGroup.resampling}`)
+      }
+      switch (scanGroup.aggregate) {
+        case 'Average':
+          options.aggregateFn = Opcua.AggregateFunction.Average
+          break
+        case 'Minimum':
+          options.aggregateFn = Opcua.AggregateFunction.Minimum
+          break
+        case 'Maximum':
+          options.aggregateFn = Opcua.AggregateFunction.Maximum
+          break
+        case 'Count':
+          options.aggregateFn = Opcua.AggregateFunction.Count
+          break
+        case 'Raw':
+          break
+        default:
+          this.logger.error(`unsupported aggregage: ${scanGroup.aggregate}`)
+      }
 
-        // eslint-disable-next-line max-len
-        this.logger.silly(`Read from ${opcStartTime.toISOString()} to ${intervalOpcEndTime.toISOString()} (${intervalOpcEndTime - opcStartTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
-        const options = { timeout: this.readTimeout, numValuesPerNode: this.maxReturnValues }
-        switch (scanGroup.resampling) {
-          case 'Second':
-            options.processingInterval = 1000
-            break
-          case '10 Seconds':
-            options.processingInterval = 1000 * 10
-            break
-          case '30 Seconds':
-            options.processingInterval = 1000 * 30
-            break
-          case 'Minute':
-            options.processingInterval = 1000 * 60
-            break
-          case 'Hour':
-            options.processingInterval = 1000 * 3600
-            break
-          case 'Day':
-            options.processingInterval = 1000 * 3600 * 24
-            break
-          case 'None':
-            break
-          default:
-            this.logger.error(`unsupported resampling: ${scanGroup.resampling}`)
-        }
-        switch (scanGroup.aggregate) {
-          case 'Average':
-            options.aggregateFn = Opcua.AggregateFunction.Average
-            break
-          case 'Minimum':
-            options.aggregateFn = Opcua.AggregateFunction.Minimum
-            break
-          case 'Maximum':
-            options.aggregateFn = Opcua.AggregateFunction.Maximum
-            break
-          case 'Count':
-            options.aggregateFn = Opcua.AggregateFunction.Count
-            break
-          case 'Raw':
-            break
-          default:
-            this.logger.error(`unsupported aggregate: ${scanGroup.aggregate}`)
-        }
-
-        const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
-        /*
-        Below are two example of responses
-        1- With OPCUA_HA WINCC
-          [
-            {
-              "statusCode": { "value": 0 },
-              "historyData": {
-                "dataValues": [
-                  {
-                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
-                    "statusCode": {
-                      "value": 1024
-                    },
-                    "sourceTimestamp": "2020-10-31T14:11:20.238Z",
-                    "sourcePicoseconds": 0,
-                    "serverPicoseconds": 0
+      const dataValues = await this.readHistoryValue(nodesToRead, startTime, endTime, options)
+      /*
+      Below are two example of responses
+      1- With OPCUA_HA WINCC
+        [
+          {
+            "statusCode": { "value": 0 },
+            "historyData": {
+              "dataValues": [
+                {
+                  "value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                  "statusCode": {
+                    "value": 1024
                   },
-                  {"value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
-                    "statusCode": {
-                      "value": 1024
-                    },
-                    "sourceTimestamp": "2020-10-31T14:11:21.238Z",
-                    "sourcePicoseconds": 0,
-                    "serverPicoseconds": 0
-                  }
-                ]
-              }
-            }
-          ]
-          2/ With OPCUA_HA MATRIKON
-          [
-            {
-              "statusCode": {"value": 0},
-              "historyData": {
-                "dataValues": [
-                  {
-                    "value": { "dataType": "Double", "arrayType": "Scalar", "value": -0.927561841177095 },
-                    "statusCode": { "value": 0 },
-                    "sourceTimestamp": "2020-10-31T14:23:01.000Z",
-                    "sourcePicoseconds": 0,
-                    "serverTimestamp": "2020-10-31T14:23:01.000Z",
-                    "serverPicoseconds": 0
+                  "sourceTimestamp": "2020-10-31T14:11:20.238Z",
+                  "sourcePicoseconds": 0,
+                  "serverPicoseconds": 0
+                },
+                {"value": { "dataType": "Double", "arrayType": "Scalar", "value": 300},
+                  "statusCode": {
+                    "value": 1024
                   },
-                  {
-                    "value": {"dataType": "Double", "arrayType": "Scalar","value": 0.10154855112346262},
-                    "statusCode": {"value": 0},
-                    "sourceTimestamp": "2020-10-31T14:23:02.000Z",
-                    "sourcePicoseconds": 0,
-                    "serverTimestamp": "2020-10-31T14:23:02.000Z",
-                    "serverPicoseconds": 0
-                  }
-                ]
-              }
+                  "sourceTimestamp": "2020-10-31T14:11:21.238Z",
+                  "sourcePicoseconds": 0,
+                  "serverPicoseconds": 0
+                }
+              ]
             }
-          ]
-        */
-        if (dataValues.length !== nodesToRead.length) {
-          this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
+          }
+        ]
+        2/ With OPCUA_HA MATRIKON
+        [
+          {
+            "statusCode": {"value": 0},
+            "historyData": {
+              "dataValues": [
+                {
+                  "value": { "dataType": "Double", "arrayType": "Scalar", "value": -0.927561841177095 },
+                  "statusCode": { "value": 0 },
+                  "sourceTimestamp": "2020-10-31T14:23:01.000Z",
+                  "sourcePicoseconds": 0,
+                  "serverTimestamp": "2020-10-31T14:23:01.000Z",
+                  "serverPicoseconds": 0
+                },
+                {
+                  "value": {"dataType": "Double", "arrayType": "Scalar","value": 0.10154855112346262},
+                  "statusCode": {"value": 0},
+                  "sourceTimestamp": "2020-10-31T14:23:02.000Z",
+                  "sourcePicoseconds": 0,
+                  "serverTimestamp": "2020-10-31T14:23:02.000Z",
+                  "serverPicoseconds": 0
+                }
+              ]
+            }
+          }
+        ]
+      */
+      if (dataValues.length !== nodesToRead.length) {
+        this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await this.manageDataValues(dataValues, nodesToRead, startTime, scanMode)
 
-        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-        this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
-
-        opcStartTime = intervalOpcEndTime
-        firstIteration = false
-      } while (intervalOpcEndTime.getTime() !== opcEndTime.getTime())
+      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+      this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
     }

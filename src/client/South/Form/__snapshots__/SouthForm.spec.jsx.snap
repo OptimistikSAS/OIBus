@@ -5132,6 +5132,38 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           </small>
         </div>
       </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.OPCHDA.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.OPCHDA.readIntervalDelay"
+            name="south.dataSources.0.OPCHDA.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -7561,7 +7593,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.query"
             name="south.dataSources.0.SQLDbToFile.query"
           >
-            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @LastCompletedDate
+            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @StartTime AND created_at &lt;= @EndTime LIMIT @MaxReturnValues
           </textarea>
           <div
             class="invalid-feedback"
@@ -8282,6 +8314,108 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               type="checkbox"
             />
           </label>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.maxReadInterval"
+          >
+            Max read interval
+          </label>
+          <input
+            aria-invalid="true"
+            class="oi-form-input is-invalid form-control"
+            id="south.dataSources.0.SQLDbToFile.maxReadInterval"
+            name="south.dataSources.0.SQLDbToFile.maxReadInterval"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          >
+            Value must be greater than 60
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Max read interval (s)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+          >
+            Read interval delay
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+            name="south.dataSources.0.SQLDbToFile.readIntervalDelay"
+            type="integer"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Time to wait between the read interval iterations (ms)
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.SQLDbToFile.maxReturnValues"
+          >
+            Max return values
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.SQLDbToFile.maxReturnValues"
+            name="south.dataSources.0.SQLDbToFile.maxReturnValues"
+            type="integer"
+            value="1000"
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Max number of values returned for one point during a read interval
+            </div>
+          </small>
         </div>
       </div>
     </div>

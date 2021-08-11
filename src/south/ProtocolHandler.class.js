@@ -51,7 +51,7 @@ class ProtocolHandler {
 
     const { logParameters } = this.dataSource
     this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig, logParameters)
+    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
 
     if (this.supportedModes) {
       const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
@@ -99,6 +99,8 @@ class ProtocolHandler {
       }
     }
 
+    this.connected = false
+
     this.lastOnScanAt = null
     this.lastAddFileAt = null
     this.addFileCount = 0
@@ -134,9 +136,52 @@ class ProtocolHandler {
     this.logger.info(`Data source ${name} (${id}) started with protocol ${protocol}`)
   }
 
-  onScanImplementation(scanMode) {
-    const { name } = this.dataSource
-    this.logger.error(`Data source ${name} should surcharge onScanImplementation(${scanMode})`)
+  async onScanImplementation(scanMode) {
+    if (!this.connected || this.ongoingReads[scanMode]) {
+      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      return
+    }
+
+    if (this.dataSource[this.constructor.name].scanGroups) {
+      const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
+
+      if (!scanGroup) {
+        this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
+        return
+      }
+
+      if (!scanGroup.points || !scanGroup.points.length) {
+        this.logger.error(`onScan ignored: scanGroup.points undefined or empty: ${scanGroup.points}`)
+        return
+      }
+    }
+
+    let startTime = this.lastCompletedAt[scanMode]
+    const endTime = new Date()
+    let intervalEndTime = endTime
+    let firstIteration = true
+    do {
+      // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
+      if (!firstIteration) {
+        this.logger.silly(`Wait ${this.readIntervalDelay} ms`)
+        // eslint-disable-next-line no-await-in-loop
+        await this.delay(this.readIntervalDelay)
+      }
+
+      // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+      // requests (for example only one hour if maxReadInterval is 3600)
+      if ((endTime.getTime() - startTime.getTime()) > 1000 * this.maxReadInterval) {
+        intervalEndTime = new Date(startTime.getTime() + 1000 * this.maxReadInterval)
+      } else {
+        intervalEndTime = endTime
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      await this.historyQuery(scanMode, startTime, endTime)
+
+      startTime = intervalEndTime
+      firstIteration = false
+    } while (intervalEndTime !== endTime)
   }
 
   async onScan(scanMode) {
