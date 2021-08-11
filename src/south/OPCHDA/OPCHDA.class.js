@@ -17,12 +17,16 @@ class OPCHDA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
+    const { maxReadInterval, readIntervalDelay, maxReturnValues } = dataSource.OPCUA_HA
+
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
-    this.agentReady = false
     this.receivedLog = ''
     this.reconnectTimeout = null
+    this.maxReadInterval = maxReadInterval
+    this.readIntervalDelay = readIntervalDelay
+    this.maxReturnValues = maxReturnValues
 
     this.canHandleHistory = true
     this.handlesPoints = true
@@ -50,10 +54,12 @@ class OPCHDA extends ProtocolHandler {
   /**
    * On scan.
    * @param {String} scanMode - The scan mode
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
    * @return {Promise<void>} - The on scan promise
    */
-  onScanImplementation(scanMode) {
-    this.sendReadMessage(scanMode)
+  async historyQuery(scanMode, startTime, endTime) {
+    this.sendReadMessage(scanMode, startTime, endTime)
   }
 
   /**
@@ -174,33 +180,29 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendInitializeMessage() {
-    const { maxReturnValues, maxReadInterval } = this.dataSource.OPCHDA
     const message = {
       Request: 'Initialize',
       TransactionId: this.generateTransactionId(),
       Content: {
         Groups: this.scanGroups,
-        MaxReturnValues: maxReturnValues,
-        MaxReadInterval: maxReadInterval,
+        MaxReturnValues: this.maxReturnValues,
+        MaxReadInterval: this.maxReadInterval,
       },
     }
     this.sendMessage(message)
   }
 
-  sendReadMessage(scanMode) {
-    if (!this.ongoingReads[scanMode] && this.agentReady) {
-      const message = {
-        Request: 'Read',
-        TransactionId: this.generateTransactionId(),
-        Content: {
-          Group: scanMode,
-          StartTime: this.lastCompletedAt[scanMode].getTime(),
-        },
-      }
-      this.sendMessage(message)
-    } else {
-      this.logger.silly(`sendReadMessage(${scanMode}) skipped, agent ready: ${this.agentReady}/ongoing ${this.ongoingReads[scanMode]}`)
+  sendReadMessage(scanMode, startTime, endTime) {
+    const message = {
+      Request: 'Read',
+      TransactionId: this.generateTransactionId(),
+      Content: {
+        Group: scanMode,
+        StartTime: startTime.getTime(),
+        EndTime: endTime.getTime(),
+      },
     }
+    this.sendMessage(message)
   }
 
   sendStopMessage() {
@@ -255,8 +257,8 @@ class OPCHDA extends ProtocolHandler {
           }
           break
         case 'Initialize':
-          this.agentReady = true
-          this.logger.info(`HDAAgent initialized: ${this.agentReady}`)
+          this.connected = true
+          this.logger.info(`HDAAgent initialized: ${this.connected}`)
           break
         case 'Read':
           if (messageObject.Content.Error) {
@@ -265,7 +267,7 @@ class OPCHDA extends ProtocolHandler {
 
             if (messageObject.Content.Disconnected) {
               this.logger.error('Agent disconnected from OPC HDA server')
-              this.agentReady = false
+              this.connected = false
               this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
             }
 
@@ -311,7 +313,7 @@ class OPCHDA extends ProtocolHandler {
           this.ongoingReads[messageObject.Content.Group] = false
           break
         case 'Disconnect':
-          this.agentReady = false
+          this.connected = false
           this.agentConnected = false
           break
         case 'Stop':
