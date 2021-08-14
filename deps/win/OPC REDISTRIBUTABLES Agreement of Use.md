@@ -1,4 +1,4 @@
-OPC REDISTRIBUTABLES Agreement of Use
+﻿OPC REDISTRIBUTABLES Agreement of Use
 Version 1.3, February 06, 2017, OPC Foundation
 
 The terms and conditions of the Agreement apply to the Software Deliverables including without limitation any OPC Foundation:

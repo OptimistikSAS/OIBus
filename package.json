@@ -18,7 +18,7 @@
     "build-lib-win": "node-pre-gyp --directory ./node_modules/sqlite3 install --target_platform=win32",
     "build-lib-macos": "node-pre-gyp --directory ./node_modules/sqlite3 install --target_platform=darwin",
     "build-lib-linux": "node-pre-gyp --directory ./node_modules/sqlite3 install --target_platform=linux",
-    "build-win": "npm run build-client && npm run build-lib-win && rimraf ./dist/win && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./dist/win/oibus --target node14-win-x64 && ncp ./deps/win ./dist/win",
+    "build-win": "npm run build-client && npm run build-lib-win && rimraf ./deps/win/oibus.exe && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./deps/win/oibus --target node14-win-x64",
     "build-macos": "npm run build-client && npm run build-lib-macos && rimraf ./dist/macos && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./dist/macos/oibus --target node14-macos-x64",
     "build-linux": "npm run build-client && npm run build-lib-linux && rimraf ./dist/linux && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./dist/linux/oibus --target node14-linux-x64",
     "start-client": "webpack --mode development --watch",

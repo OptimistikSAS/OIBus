@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 .idea/
 dist/
+deps/win/oibus.exe
 docs/
 logs/
 cache/
