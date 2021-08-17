@@ -152,7 +152,6 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {void}
    */
   async historyQuery(scanMode, startTime, endTime) {
-
     if (!this.timezone) {
       this.logger.error('Invalid timezone')
       return
@@ -446,8 +445,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static formatDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone).format(dateFormat)
+    return moment.utc(date).tz(timezone).format(dateFormat)
   }
 
   /**

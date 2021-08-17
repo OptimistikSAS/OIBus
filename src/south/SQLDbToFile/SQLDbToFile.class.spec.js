@@ -93,6 +93,28 @@ describe('sql-db-to-file', () => {
     expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
   })
 
+  it('should trigger an error on connection if the query is invalid', async () => {
+    // jest.spyOn(fs, 'existsSync').mockImplementation(() => false)
+    // jest.spyOn(fs, 'mkdirSync').mockImplementation(() => true)
+
+    const badConfig = { ...sqlConfig }
+    badConfig.SQLDbToFile.timezone = 'UTC'
+    badConfig.SQLDbToFile.query = `
+        SELECT created_at AS timestamp, value1 AS temperature
+        FROM oibus_test
+        WHERE created_at > @StartTime
+          AND created_at <= @EndTime
+        LIMIT @MaxReturnsValues`
+    const badSqlSouth = new SQLDbToFile(badConfig, engine)
+
+    await badSqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+
+    expect(badSqlSouth.logger.error)
+      .toHaveBeenCalledWith('Invalid query format. Please use all or nothing from @StartTime, @EndTime, @MaxReturnValues')
+
+    // expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
+  })
+
   it('should properly connect and set lastCompletedAt to now', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
@@ -355,6 +377,7 @@ describe('sql-db-to-file', () => {
       password: sqlConfig.SQLDbToFile.password,
       connectString: `${sqlConfig.SQLDbToFile.host}:${sqlConfig.SQLDbToFile.port}/${sqlConfig.SQLDbToFile.database}`,
     }
+    // eslint-disable-next-line
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > :date1 AND created_at <= :date2 LIMIT :values'
     const expectedExecuteParams = [
       new Date('2019-10-03T13:36:38.590Z'),
@@ -571,5 +594,15 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.compression = false
     fs.rmdirSync(tmpFolder, { recursive: true })
+  })
+
+  it('should format date properly', () => {
+    const actual = SQLDbToFile.formatDateWithTimezone(
+      new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
+      'Europe/Paris',
+      'YYYY_MM_DD HH:mm:ss.SSS',
+    )
+    const expected = '2020_03_22 23:22:22.666'
+    expect(actual).toBe(expected)
   })
 })
