@@ -152,12 +152,13 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {void}
    */
   async historyQuery(scanMode, startTime, endTime) {
+
     if (!this.timezone) {
       this.logger.error('Invalid timezone')
       return
     }
 
-    if ((this.nrOfReplacements !== 0) || (this.nrOfReplacements !== 3)) {
+    if (!((this.nrOfReplacements === 0) || (this.nrOfReplacements === 3))) {
       this.logger.error('Invalid query format. Please use all or nothing from @StartTime, @EndTime, @MaxReturnValues')
       return
     }

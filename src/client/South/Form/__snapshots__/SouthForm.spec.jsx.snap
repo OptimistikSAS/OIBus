@@ -7466,7 +7466,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.query"
             name="south.dataSources.0.SQLDbToFile.query"
           >
-            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @LastCompletedDate
+            SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @StartTime AND created_at &lt;= @EndTime LIMIT @MaxReturnValues
           </textarea>
           <div
             class="invalid-feedback"
