@@ -67,7 +67,7 @@
     "multer": "1.4.2",
     "mysql2": "2.2.5",
     "node-fetch": "2.6.1",
-    "node-opcua": "2.47.0",
+    "node-opcua": "2.50.0",
     "object-path": "0.11.5",
     "oracledb": "5.2.0",
     "papaparse": "5.3.1",
