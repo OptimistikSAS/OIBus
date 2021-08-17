@@ -8432,7 +8432,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             id="south.dataSources.0.SQLDbToFile.maxReturnValues"
             name="south.dataSources.0.SQLDbToFile.maxReturnValues"
             type="integer"
-            value=""
+            value="1000"
           />
           <div
             class="invalid-feedback"
