@@ -125,7 +125,6 @@ class OPCUA_HA extends ProtocolHandler {
   async readHistoryValue(nodes, startTime, endTime, options) {
     this.logger.silly(`read with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
-    let historyReadResult = []
     let nodesToRead = nodes.map((nodeId) => ({
       continuationPoint: null,
       dataEncoding: undefined,
@@ -168,18 +167,15 @@ class OPCUA_HA extends ProtocolHandler {
       if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
-      historyReadResult = response?.results
-      historyReadResult?.forEach((result, i) => {
+      response?.results?.forEach((result, i) => {
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
         /**
-         * @todo: need to check if throw is good enough to manage result.statusCode
+         * Reason of statusCode not equal to zero could be there is no data for the requested data and interval
          */
         if (result.statusCode.value !== 0) {
           // eslint-disable-next-line no-underscore-dangle
-          this.logger.error(result.statusCode._description)
-          // eslint-disable-next-line no-underscore-dangle
-          throw result.statusCode._description
+          this.logger.debug(`${nodesToRead[i]}: ${result.statusCode.value} - ${result.statusCode._description}`)
         }
         nodesToRead[i].continuationPoint = result.continuationPoint
       })
@@ -187,7 +183,7 @@ class OPCUA_HA extends ProtocolHandler {
       nodesToRead = nodesToRead.filter((node) => !!node.continuationPoint)
       this.logger.silly(`continue read for ${nodesToRead.length} points`)
     } while (nodesToRead.length)
-    // if all is retrieved, clean continatuon points
+    // if all is retrieved, clean continuation points
     nodesToRead = nodes.map((nodeId) => ({
       continuationPoint: null,
       dataEncoding: undefined,
