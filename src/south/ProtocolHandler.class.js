@@ -51,7 +51,7 @@ class ProtocolHandler {
 
     const { logParameters } = this.dataSource
     this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig.logParameters, logParameters)
+    this.logger.changeParameters(this.engineConfig, logParameters)
 
     if (this.supportedModes) {
       const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
