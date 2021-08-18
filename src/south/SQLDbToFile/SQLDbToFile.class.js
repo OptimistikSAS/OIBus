@@ -445,7 +445,8 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static formatDateWithTimezone(date, timezone, dateFormat) {
-    return moment.utc(date).tz(timezone).format(dateFormat)
+    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
+    return moment.tz(timestampWithoutTZAsString, timezone).format(dateFormat)
   }
 
   /**
