@@ -596,13 +596,23 @@ describe('sql-db-to-file', () => {
     fs.rmdirSync(tmpFolder, { recursive: true })
   })
 
-  it('should format date properly', () => {
+  it('should format date properly without timezone', () => {
     const actual = SQLDbToFile.formatDateWithTimezone(
       new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
       'Europe/Paris',
       'YYYY_MM_DD HH:mm:ss.SSS',
     )
-    const expected = '2020_03_22 23:22:22.666'
+    const expected = '2020_03_22 22:22:22.666'
+    expect(actual).toBe(expected)
+  })
+
+  it('should format date properly with timezone', () => {
+    const actual = SQLDbToFile.formatDateWithTimezone(
+      new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
+      'Europe/Paris',
+      'YYYY_MM_DD HH:mm:ss.SSS Z',
+    )
+    const expected = '2020_03_22 22:22:22.666 +01:00'
     expect(actual).toBe(expected)
   })
 })
