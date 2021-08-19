@@ -756,4 +756,12 @@ module.exports = {
       }
     }
   },
+  26: async (config) => {
+    for (const dataSource of config.south.dataSources) {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.dataSourceId}`)
+        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
+      }
+    }
+  },
 }
