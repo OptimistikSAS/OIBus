@@ -7,23 +7,36 @@
     "filter": ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
     "safeMode": true,
     "logParameters": {
-      "consoleLevel": "debug",
-      "fileLevel": "debug",
-      "filename": "./logs/journal.log",
-      "maxsize": 1000000,
-      "maxFiles": 5,
-      "tailable": true,
-      "sqliteLevel": "debug",
-      "sqliteFilename": "./logs/journal.db",
-      "sqliteMaxFileSize": 50000000
+      "consoleLog": {
+        "level": "debug"
+      },
+      "fileLog": {
+        "level": "debug",
+        "fileName": "./logs/journal.log",
+        "maxSize": 1000000,
+        "numberOfFiles": 5,
+        "tailable": true
+      },
+      "sqliteLog": {
+        "level": "debug",
+        "fileName": "./logs/journal.db",
+        "maxSize": 50000000
+      },
+      "lokiLog": {
+        "level": "none",
+        "host": "",
+        "interval": 60,
+        "password": "",
+        "username": ""
+      }
     },
     "caching": {
+      "cacheFolder": "./cache",
       "archive": {
         "enabled": true,
         "archiveFolder": "./cache/archive/",
         "retentionDuration": 720
-      },
-        "cacheFolder": "./cache"
+      }
     },
     "scanModes": [
       {
@@ -44,18 +57,22 @@
       }
     ],
     "proxies" : [],
-    "aliveSignal": {
-      "enabled": false,
-      "host": "",
-      "endpoint": "/api/optimistik/oibus/info",
-      "authentication": {
-        "type": "Basic",
-        "username": "",
-        "password": ""
+    "healthSignal": {
+      "logging": {
+        "enabled": true,
+        "frequency": 3600
       },
-      "id": "",
-      "frequency": 300,
-      "proxy": ""
+      "http": {
+        "enabled": false,
+        "host": "",
+        "endpoint": "/api/optimistik/oibus/info",
+        "authentication": {
+          "type": "Basic",
+          "username": "",
+          "password": ""
+        },
+        "frequency": 300
+      }
     },
     "httpRequest": {
       "stack": "fetch",
@@ -69,5 +86,5 @@
   "north": {
     "applications": []
   },
-  "schemaVersion": 18
+  "schemaVersion": 24
 }
