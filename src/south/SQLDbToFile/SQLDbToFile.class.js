@@ -77,11 +77,6 @@ class SQLDbToFile extends ProtocolHandler {
     this.readIntervalDelay = readIntervalDelay
     this.maxReturnValues = maxReturnValues
 
-    const hasStartTime = this.query.indexOf('@StartTime') === -1 ? 0 : 1
-    const hasEndTime = this.query.indexOf('@EndTime') === -1 ? 0 : 1
-    const hasMaxReturnValues = this.query.indexOf('@MaxReturnValues') === -1 ? 0 : 1
-    this.nrOfReplacements = hasStartTime + hasEndTime + hasMaxReturnValues
-
     if (moment.tz.zone(timezone)) {
       this.timezone = timezone
     } else {
@@ -152,17 +147,14 @@ class SQLDbToFile extends ProtocolHandler {
       return
     }
 
-    if (!((this.nrOfReplacements === 0) || (this.nrOfReplacements === 3))) {
-      this.logger.error('Invalid query format. Please use all or nothing from @StartTime, @EndTime, @MaxReturnValues')
-      return
-    }
-
     this.ongoingReads[scanMode] = true
 
     let result = []
     let intervalResult = []
     do {
       try {
+        this.logQuery(this.query, startTime, endTime, this.maxReturnValues)
+
         switch (this.driver) {
           case 'mssql':
             // eslint-disable-next-line no-await-in-loop
@@ -251,7 +243,6 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromMSSQL(startTime, endTime) {
     const adaptedQuery = this.query
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       user: this.username,
@@ -269,17 +260,17 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       const pool = await new mssql.ConnectionPool(config).connect()
-      let result
-      if (this.nrOfReplacements) {
-        result = await pool.request()
-          .input('StartTime', mssql.DateTimeOffset, startTime)
-          .input('EndTime', mssql.DateTimeOffset, endTime)
-          .input('MaxReturnValues', mssql.Numeric, this.maxReturnValues)
-          .query(adaptedQuery)
-      } else {
-        result = await pool.request()
-          .query(adaptedQuery)
+      const request = pool.request()
+      if (this.query.indexOf('@StartTime') !== -1) {
+        request.input('StartTime', mssql.DateTimeOffset, startTime)
       }
+      if (this.query.indexOf('@EndTime') !== -1) {
+        request.input('EndTime', mssql.DateTimeOffset, endTime)
+      }
+      if (this.query.indexOf('@MaxReturnValues') !== -1) {
+        request.input('MaxReturnValues', mssql.Numeric, this.maxReturnValues)
+      }
+      const result = await request.query(adaptedQuery)
       const [first] = result.recordsets
       data = first
     } catch (error) {
@@ -299,7 +290,6 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromMySQL(startTime, endTime) {
     const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?').replace(/@MaxReturnValues/g, '?')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       host: this.host,
@@ -315,7 +305,8 @@ class SQLDbToFile extends ProtocolHandler {
     let data = []
     try {
       connection = await mysql.createConnection(config)
-      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
+
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
       const [rows] = await connection.execute(
         { sql: adaptedQuery, timeout: this.requestTimeout },
         params,
@@ -340,7 +331,6 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromPostgreSQL(startTime, endTime) {
     const adaptedQuery = this.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2').replace(/@MaxReturnValues/g, '$3')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       host: this.host,
@@ -357,7 +347,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = new Client(config)
       await connection.connect()
-      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
       const { rows } = await connection.query(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -384,7 +374,6 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     const adaptedQuery = this.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2').replace(/@MaxReturnValues/g, ':values')
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     const config = {
       user: this.username,
@@ -399,7 +388,7 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const params = this.nrOfReplacements ? [startTime, endTime, this.maxReturnValues] : []
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
       const { rows } = await connection.execute(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -421,18 +410,23 @@ class SQLDbToFile extends ProtocolHandler {
    */
   async getDataFromSqlite(startTime, endTime) {
     const adaptedQuery = this.query
-    this.logger.debug(`Executing "${adaptedQuery}" ${this.nrOfReplacements ? 'with' : 'without'} StartTime/EndTime/MaxReturnValues`)
 
     let database = null
     let data = []
     try {
       database = await sqlite.open({ filename: this.databasePath, driver: sqlite3.Database })
       const stmt = await database.prepare(adaptedQuery)
-      const preparedParameters = this.nrOfReplacements ? {
-        '@StartTime': startTime,
-        '@EndTime': endTime,
-        '@MaxReturnValues': this.maxReturnValues,
-      } : {}
+      const preparedParameters = {}
+      if (this.query.indexOf('@StartTime') !== -1) {
+        preparedParameters['@StartTime'] = startTime
+      }
+      if (this.query.indexOf('@EndTime') !== -1) {
+        preparedParameters['@EndTime'] = endTime
+      }
+      if (this.query.indexOf('@MaxReturnValues') !== -1) {
+        preparedParameters['@MaxReturnValues'] = this.maxReturnValues
+      }
+
       data = await stmt.all(preparedParameters)
       await stmt.finalize()
     } catch (error) {
@@ -481,6 +475,58 @@ class SQLDbToFile extends ProtocolHandler {
       delimiter: this.delimiter,
     }
     return csv.unparse(result, options)
+  }
+
+  /**
+   * Log the executed query with replacements
+   * @param {string} query - The query
+   * @param {Date} startTime - The replaced StartTime
+   * @param {Date} endTime - The replaced EndTime
+   * @param {number} maxReturnValues - The replaced MaxReturnValues
+   * @returns {void}
+   */
+  logQuery(query, startTime, endTime, maxReturnValues) {
+    const startTimeLog = query.indexOf('@StartTime') !== -1 ? `StartTime = ${startTime.toISOString()}` : ''
+    const endTimeLog = query.indexOf('@EndTime') !== -1 ? `EndTime = ${endTime.toISOString()}` : ''
+    const maxReturnValuesLog = query.indexOf('@MaxReturnValues') !== -1 ? `MaxReturnValues = ${maxReturnValues}` : ''
+    this.logger.debug(`Executing "${query}" with ${startTimeLog} ${endTimeLog} ${maxReturnValuesLog}`)
+  }
+
+  /**
+   * Generate replacements parameters
+   * @param {string} query - The query
+   * @param {Date} startTime - The StartTime
+   * @param {Date} endTime - The EndTime
+   * @param {number} maxReturnValues - The MaxReturnValues
+   * @return {any[]} - The replacement parameters
+   */
+  static generateReplacementParameters(query, startTime, endTime, maxReturnValues) {
+    const startTimeOccurrences = SQLDbToFile.getOccurrences(query, '@StartTime', startTime)
+    const endTimeOccurrences = SQLDbToFile.getOccurrences(query, '@EndTime', endTime)
+    const maxReturnValuesOccurrences = SQLDbToFile.getOccurrences(query, '@MaxReturnValues', maxReturnValues)
+    const occurrences = startTimeOccurrences.concat(endTimeOccurrences).concat(maxReturnValuesOccurrences)
+    occurrences.sort((a, b) => (a.index - b.index))
+    return occurrences.map((occurrence) => occurrence.value)
+  }
+
+  /**
+   * Get all occurrences of a substring with a value
+   * @param {string} str - The string to look for occurrences in
+   * @param {string} keyword - The keyword
+   * @param {any} value - The value to assign to the occurrences index
+   * @return {object[]} - The result as { index, value}
+   */
+  static getOccurrences(str, keyword, value) {
+    const occurrences = []
+    let occurrenceIndex = str.indexOf(keyword, 0)
+    while (occurrenceIndex > -1) {
+      occurrences.push({
+        index: occurrenceIndex,
+        value,
+      })
+      occurrenceIndex = str.indexOf(keyword, occurrenceIndex + 1)
+    }
+    return occurrences
   }
 }
 
