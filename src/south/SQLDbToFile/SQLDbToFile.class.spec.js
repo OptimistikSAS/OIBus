@@ -129,7 +129,7 @@ describe('sql-db-to-file', () => {
     global.Date = RealDate
   })
 
-  it('should properly update lastCompletedAt', () => {
+  it('should properly get the latest date', () => {
     sqlSouth.timezone = 'UTC'
     const entryList1 = [
       { timestamp: '2021-03-30 10:30:00.150' },
@@ -148,23 +148,23 @@ describe('sql-db-to-file', () => {
     ]
     const entryList4 = [{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }] // no timestamp
 
-    sqlSouth.setLastCompletedAt(entryList1, new Date('2020-02-02T02:02:02.000Z')) // with string format
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date('2021-03-30 12:30:00.150')}`)
+    const latestDate1 = sqlSouth.getLatestDate(entryList1, new Date('2020-02-02T02:02:02.000Z')) // with string format
+    expect(latestDate1).toEqual(new Date('2021-03-30 12:30:00.150'))
     sqlSouth.logger.debug.mockClear()
 
-    sqlSouth.setLastCompletedAt(entryList2, new Date('2020-02-02T02:02:02.000Z')) // with number format - no ms
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617107400000)}`)
+    const latestDate2 = sqlSouth.getLatestDate(entryList2, new Date('2020-02-02T02:02:02.000Z')) // with number format - no ms
+    expect(latestDate2).toEqual(new Date(1617107400000))
     sqlSouth.logger.debug.mockClear()
 
-    sqlSouth.setLastCompletedAt(entryList3, new Date('2020-02-02T02:02:02.000Z')) // with date format
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith(`Updating lastCompletedAt to ${new Date(1617193800000)}`)
+    const latestDate3 = sqlSouth.getLatestDate(entryList3, new Date('2020-02-02T02:02:02.000Z')) // with date format
+    expect(latestDate3).toEqual(new Date(1617193800000))
     sqlSouth.logger.debug.mockClear()
 
-    sqlSouth.setLastCompletedAt(entryList4, new Date('2020-02-02T02:02:02.000Z')) // without timestamp
-    expect(sqlSouth.logger.debug).toHaveBeenCalledWith('lastCompletedAt not used')
+    const latestDate4 = sqlSouth.getLatestDate(entryList4, new Date('2020-02-02T02:02:02.000Z')) // without timestamp
+    expect(latestDate4).toEqual(new Date('2020-02-02T02:02:02.000Z'))
   })
 
-  it('should quit onScan if timezone is invalid', async () => {
+  it('should quit historyQuery if timezone is invalid', async () => {
     const { timezone } = sqlSouth
     sqlSouth.timezone = undefined
 
@@ -203,16 +203,23 @@ describe('sql-db-to-file', () => {
 
   it('should interact with MySQL server if driver is mysql', async () => {
     sqlSouth.driver = 'mysql'
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const connection = {
-      execute: jest.fn(() => ([{
-        value: 75.2,
-        timestamp: '2019-10-03T14:36:38.590Z',
-      }])),
+      execute: jest.fn((query, params) => (
+        params[0] < valueTimestamp ? {
+          rows: [{
+            value: 75.2,
+            timestamp: valueTimestamp,
+          }],
+        } : { rows: [] }
+      )),
       end: jest.fn(),
     }
     jest.spyOn(mysql, 'createConnection').mockImplementation(() => connection)
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
       host: sqlConfig.SQLDbToFile.host,
@@ -228,8 +235,8 @@ describe('sql-db-to-file', () => {
       timeout: sqlConfig.SQLDbToFile.requestTimeout,
     }
     const expectedExecuteParams = [
-      new Date('2019-10-03T13:36:38.590Z'),
-      new Date('2019-10-03T15:36:38.590Z'),
+      new Date('2019-10-03T13:36:36.360Z'),
+      new Date('2019-10-03T13:40:40.400Z'),
       sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(mysql.createConnection).toHaveBeenCalledWith(expectedConfig)
@@ -268,27 +275,31 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.logger.error.mockClear()
     jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => null)
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
+    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
     expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot read property \'execute\' of null'))
   })
 
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
     sqlSouth.driver = 'postgresql'
-    sqlSouth.lastCompletedAt[sqlConfig.scanMode] = new Date('2020-02-02T02:02:02.222Z')
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     types.setTypeParser = jest.fn()
     const client = {
       connect: jest.fn(),
-      query: jest.fn(() => ({
-        rows: [{
-          value: 75.2,
-          timestamp: '2019-10-03T14:36:38.590Z',
-        }],
-      })),
+      query: jest.fn((adaptedQuery, params) => (
+        params[0] < valueTimestamp ? {
+          rows: [{
+            value: 75.2,
+            timestamp: valueTimestamp,
+          }],
+        } : { rows: [] }
+      )),
       end: jest.fn(),
     }
     Client.mockReturnValue(client)
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
       host: sqlConfig.SQLDbToFile.host,
@@ -300,25 +311,15 @@ describe('sql-db-to-file', () => {
     }
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > $1 AND created_at <= $2 LIMIT $3'
     const expectedExecuteParams = [
-      new Date('2019-10-03T13:36:38.590Z'),
-      new Date('2019-10-03T15:36:38.590Z'),
+      new Date('2019-10-03T13:36:36.360Z'),
+      new Date('2019-10-03T13:40:40.400Z'),
       sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(types.setTypeParser).toBeCalledWith(1114, expect.any(Function))
     expect(Client).toBeCalledWith(expectedConfig)
-    expect(client.connect).toBeCalledTimes(1)
+    expect(client.connect).toBeCalledTimes(2)
     expect(client.query).toBeCalledWith(expectedQuery, expectedExecuteParams)
-    expect(client.end).toBeCalledTimes(1)
-
-    sqlSouth.containsLastCompletedDate = false
-    client.connect.mockClear()
-    client.query.mockClear()
-    client.end.mockClear()
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
-    expect(client.connect).toBeCalledTimes(1)
-    expect(client.query).toBeCalledTimes(1)
-    expect(client.end).toBeCalledTimes(1)
-    sqlSouth.containsLastCompletedDate = true
+    expect(client.end).toBeCalledTimes(2)
   })
 
   it('should interact with PostgreSQL server and catch request error', async () => {
@@ -357,20 +358,24 @@ describe('sql-db-to-file', () => {
   it('should interact with Oracle server if driver is oracle', async () => {
     if (!oracledb) return
     sqlSouth.driver = 'oracle'
-    sqlSouth.lastCompletedAt[sqlConfig.scanMode] = new Date('2020-02-02T02:02:02.222Z')
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const connection = {
       callTimeout: 0,
-      execute: jest.fn(() => ({
-        rows: [{
-          value: 75.2,
-          timestamp: '2019-10-03T14:36:38.590Z',
-        }],
-      })),
+      execute: jest.fn((adaptedQuery, params) => (
+        params[0] < valueTimestamp ? {
+          rows: [{
+            value: 75.2,
+            timestamp: valueTimestamp,
+          }],
+        } : { rows: [] }
+      )),
       close: jest.fn(),
     }
     jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
       user: sqlConfig.SQLDbToFile.username,
@@ -380,23 +385,14 @@ describe('sql-db-to-file', () => {
     // eslint-disable-next-line
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > :date1 AND created_at <= :date2 LIMIT :values'
     const expectedExecuteParams = [
-      new Date('2019-10-03T13:36:38.590Z'),
-      new Date('2019-10-03T15:36:38.590Z'),
+      new Date('2019-10-03T13:36:36.360Z'),
+      new Date('2019-10-03T13:40:40.400Z'),
       sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(oracledb.getConnection).toHaveBeenCalledWith(expectedConfig)
+    expect(connection.execute).toBeCalledTimes(2)
     expect(connection.execute).toBeCalledWith(expectedQuery, expectedExecuteParams)
-    expect(connection.close).toBeCalledTimes(1)
-
-    sqlSouth.containsLastCompletedDate = false
-    connection.execute.mockClear()
-    connection.close.mockClear()
-    oracledb.getConnection.mockClear()
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
-    expect(oracledb.getConnection).toBeCalledTimes(1)
-    expect(connection.execute).toBeCalledTimes(1)
-    expect(connection.close).toBeCalledTimes(1)
-    sqlSouth.containsLastCompletedDate = true
+    expect(connection.close).toBeCalledTimes(2)
   })
 
   it('should interact with Oracle server and catch request error', async () => {
@@ -418,16 +414,25 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.logger.error.mockClear()
     jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => null)
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
+    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
     expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot set property \'callTimeout\' of null'))
   })
 
   it('should interact with SQLite database server if driver is sqlite', async () => {
     sqlSouth.driver = 'sqlite'
-    sqlSouth.lastCompletedAt[sqlConfig.scanMode] = new Date('2020-02-02T02:02:02.222Z')
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
 
     const finalize = jest.fn()
-    const all = jest.fn(() => ([{ id: 1, res: 'one result', timestamp: '2020-12-25T00:00:00.000Z' }]))
+    const all = jest.fn((preparedParameters) => (
+      preparedParameters['@StartTime'] < valueTimestamp ? {
+        rows: [{
+          value: 75.2,
+          timestamp: valueTimestamp,
+        }],
+      } : { rows: [] }
+    ))
     const prepare = jest.fn(() => ({ all, finalize }))
     const close = jest.fn()
     const database = {
@@ -436,18 +441,13 @@ describe('sql-db-to-file', () => {
     }
     jest.spyOn(sqlite, 'open').mockResolvedValue(database)
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     expect(database.prepare).toBeCalledTimes(1)
     expect(database.close).toBeCalledTimes(1)
 
-    sqlSouth.containsLastCompletedDate = false
     database.close.mockClear()
     database.prepare.mockClear()
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
-    expect(database.prepare).toBeCalledTimes(1)
-    expect(database.close).toBeCalledTimes(1)
-    sqlSouth.containsLastCompletedDate = true
   })
 
   it('should interact with SQLite database and catch request error', async () => {
@@ -482,7 +482,7 @@ describe('sql-db-to-file', () => {
   it('should log an error if invalid driver is specified', async () => {
     sqlSouth.driver = 'invalid'
 
-    await sqlSouth.onScanImplementation(sqlConfig.scanMode)
+    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith('Driver invalid not supported by SQLDbToFile')
   })
@@ -503,16 +503,26 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.driver = 'mysql'
 
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const rows = [{
       value: 75.2,
-      timestamp: '2019-10-03T14:36:38.590Z',
+      timestamp: valueTimestamp,
     }]
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
-    sqlSouth.getDataFromMySQL = () => rows
+    sqlSouth.getDataFromMySQL = (startTimeParam, _) => (
+      startTimeParam < valueTimestamp ? {
+        rows: [{
+          value: 75.2,
+          timestamp: valueTimestamp,
+        }],
+      } : { rows: [] }
+    )
     csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
@@ -529,12 +539,17 @@ describe('sql-db-to-file', () => {
 
     sqlSouth.driver = 'mysql'
 
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const rows = [{
       value: 75.2,
-      timestamp: '2019-10-03T14:36:38.590Z',
+      timestamp: valueTimestamp,
     }]
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
-    sqlSouth.getDataFromMySQL = () => rows
+    sqlSouth.getDataFromMySQL = (startTimeParam, _) => (
+      startTimeParam < valueTimestamp ? rows : []
+    )
     csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync')
 
@@ -546,7 +561,7 @@ describe('sql-db-to-file', () => {
     const decompressedCsv = path.join(tmpFolder, 'decompressed.csv')
     sqlSouth.compression = true
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
@@ -564,12 +579,17 @@ describe('sql-db-to-file', () => {
   it('should manage fs unlink error and catch error', async () => {
     sqlSouth.driver = 'mysql'
 
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const rows = [{
       value: 75.2,
       timestamp: '2019-10-03T14:36:38.590Z',
     }]
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
-    sqlSouth.getDataFromMySQL = () => rows
+    sqlSouth.getDataFromMySQL = (startTimeParam, _) => (
+      startTimeParam < valueTimestamp ? rows : []
+    )
     csv.unparse.mockReturnValue(csvContent)
     jest.spyOn(fs, 'writeFileSync')
     jest.spyOn(fs, 'unlink')
@@ -587,7 +607,7 @@ describe('sql-db-to-file', () => {
     fs.mkdirSync(tmpFolder, { recursive: true })
     sqlSouth.compression = true
 
-    await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
+    await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('unlink Error'))
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('add file error'))
