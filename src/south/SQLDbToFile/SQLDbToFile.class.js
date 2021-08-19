@@ -127,13 +127,13 @@ class SQLDbToFile extends ProtocolHandler {
   }
 
   /**
-   * Function used to parse an entry and update the lastCompletedAt if needed
+   * Function used to parse an entry and get latest date
    * @param {*} entryList - on sql result item
-   * @param {Date} actualLastCompletedAt - The actual last completed date
-   * @return {string} date - the updated date in iso string format
+   * @param {Date} startTime - The reference date
+   * @return {Date} date - the updated date in iso string format
    */
-  setLastCompletedAt(entryList, actualLastCompletedAt) {
-    let newLastCompletedAt = actualLastCompletedAt
+  getLatestDate(entryList, startTime) {
+    let newLastCompletedAt = startTime
     entryList.forEach((entry) => {
       if (entry[this.timeColumn]) {
         let entryDate
@@ -161,11 +161,6 @@ class SQLDbToFile extends ProtocolHandler {
       }
     })
 
-    if (newLastCompletedAt !== actualLastCompletedAt) {
-      this.logger.debug(`Updating lastCompletedAt to ${newLastCompletedAt}`)
-    } else {
-      this.logger.debug('lastCompletedAt not used')
-    }
     return newLastCompletedAt
   }
 
@@ -191,38 +186,44 @@ class SQLDbToFile extends ProtocolHandler {
     this.ongoingReads[scanMode] = true
 
     let result = []
-    try {
-      switch (this.driver) {
-        case 'mssql':
-          result = await this.getDataFromMSSQL(startTime, endTime)
-          break
-        case 'mysql':
-          result = await this.getDataFromMySQL(startTime, endTime)
-          break
-        case 'postgresql':
-          result = await this.getDataFromPostgreSQL(startTime, endTime)
-          break
-        case 'oracle':
-          result = await this.getDataFromOracle(startTime, endTime)
-          break
-        case 'sqlite':
-          result = await this.getDataFromSqlite(startTime, endTime)
-          break
-        default:
-          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
+    let intervalResult = []
+    do {
+      try {
+        switch (this.driver) {
+          case 'mssql':
+            // eslint-disable-next-line no-await-in-loop
+            intervalResult = await this.getDataFromMSSQL(startTime, endTime)
+            break
+          case 'mysql':
+            // eslint-disable-next-line no-await-in-loop
+            intervalResult = await this.getDataFromMySQL(startTime, endTime)
+            break
+          case 'postgresql':
+            // eslint-disable-next-line no-await-in-loop
+            intervalResult = await this.getDataFromPostgreSQL(startTime, endTime)
+            break
+          case 'oracle':
+            // eslint-disable-next-line no-await-in-loop
+            intervalResult = await this.getDataFromOracle(startTime, endTime)
+            break
+          case 'sqlite':
+            // eslint-disable-next-line no-await-in-loop
+            intervalResult = await this.getDataFromSqlite(startTime, endTime)
+            break
+          default:
+            this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
+        }
+        result = result.concat(intervalResult)
+        // eslint-disable-next-line no-param-reassign
+        startTime = this.getLatestDate(result, startTime)
+      } catch (error) {
+        this.logger.error(error)
       }
-    } catch (error) {
-      this.logger.error(error)
-    }
+    } while (intervalResult.length)
 
     this.logger.debug(`Found ${result.length} results`)
 
     if (result.length > 0) {
-      this.lastCompletedAt[scanMode] = this.setLastCompletedAt(result, startTime)
-      await this.setConfig(`astCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-      this.statusData['Last Completed At '] = new Date().toISOString()
-      this.updateStatusDataStream()
-
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss'))
@@ -252,6 +253,15 @@ class SQLDbToFile extends ProtocolHandler {
         } catch (error) {
           this.logger.error(error)
         }
+      }
+
+      const oldLastCompletedAt = this.lastCompletedAt[scanMode]
+      this.lastCompletedAt[scanMode] = this.getLatestDate(result, startTime)
+      if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
+        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode]}`)
+        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+      } else {
+        this.logger.debug('lastCompletedAt not used')
       }
     }
 
