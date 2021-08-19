@@ -93,28 +93,6 @@ describe('sql-db-to-file', () => {
     expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
   })
 
-  it('should trigger an error on connection if the query is invalid', async () => {
-    // jest.spyOn(fs, 'existsSync').mockImplementation(() => false)
-    // jest.spyOn(fs, 'mkdirSync').mockImplementation(() => true)
-
-    const badConfig = { ...sqlConfig }
-    badConfig.SQLDbToFile.timezone = 'UTC'
-    badConfig.SQLDbToFile.query = `
-        SELECT created_at AS timestamp, value1 AS temperature
-        FROM oibus_test
-        WHERE created_at > @StartTime
-          AND created_at <= @EndTime
-        LIMIT @MaxReturnsValues`
-    const badSqlSouth = new SQLDbToFile(badConfig, engine)
-
-    await badSqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
-
-    expect(badSqlSouth.logger.error)
-      .toHaveBeenCalledWith('Invalid query format. Please use all or nothing from @StartTime, @EndTime, @MaxReturnValues')
-
-    // expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
-  })
-
   it('should properly connect and set lastCompletedAt to now', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
@@ -243,7 +221,7 @@ describe('sql-db-to-file', () => {
     expect(connection.execute).toBeCalledWith(expectedExecute, expectedExecuteParams)
     expect(connection.end).toBeCalledTimes(1)
     // eslint-disable-next-line max-len
-    expect(sqlSouth.logger.debug).toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ? LIMIT ?" with StartTime/EndTime/MaxReturnValues')
+    expect(sqlSouth.logger.debug).toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime LIMIT @MaxReturnValues" with StartTime = 2019-10-03T13:36:36.360Z EndTime = 2019-10-03T13:40:40.400Z MaxReturnValues = 1000')
 
     mysql.createConnection.mockClear()
     connection.execute.mockClear()
@@ -634,5 +612,45 @@ describe('sql-db-to-file', () => {
     )
     const expected = '2020_03_22 22:22:22.666 +01:00'
     expect(actual).toBe(expected)
+  })
+
+  it('should generate proper replacement parameters when no parameters are used', () => {
+    const query = 'SELECT timestamp,temperature FROM history'
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([])
+  })
+
+  it('should generate proper replacement parameters when some parameters are used', () => {
+    const query = 'SELECT timestamp,temperature FROM history WHERE timestamp > @StartTime LIMIT @MaxReturnValues'
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([startTime, maxReturnValues])
+  })
+
+  it('should generate proper replacement parameters when all parameters are used', () => {
+    const query = `
+        SELECT timestamp,temperature
+        FROM history
+        WHERE
+            timestamp > @StartTime
+            AND timestamp <= @EndTime
+            AND timestamp > @StartTime
+        LIMIT @MaxReturnValues`
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([startTime, endTime, startTime, maxReturnValues])
   })
 })
