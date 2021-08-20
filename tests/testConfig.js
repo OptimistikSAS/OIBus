@@ -24,14 +24,14 @@ const testConfig = {
         host: 'localhost:3100',
       },
     },
-    caching: { 
-      cacheFolder: './cache', 
+    caching: {
+      cacheFolder: './cache',
       archive: {
         enabled: true,
-        archiveFolder: "./cache/archive/",
+        archiveFolder: './cache/archive/',
         retentionDuration: 720
       },
-   },
+    },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
       { scanMode: 'every10Second', cronTime: '* * * * * /10' },
@@ -91,6 +91,7 @@ const testConfig = {
   south: {
     dataSources: [
       {
+        id: 'datasource-uuid-1',
         dataSourceId: 'MQTTServer',
         protocol: 'MQTT',
         enabled: false,
@@ -111,6 +112,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-2',
         dataSourceId: 'SimulationServer',
         protocol: 'OPCUA_HA',
         enabled: false,
@@ -131,6 +133,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-3',
         dataSourceId: 'SimulationServerBis',
         protocol: 'OPCUA_HA',
         enabled: false,
@@ -146,6 +149,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-4',
         dataSourceId: 'SimulationServerBis copy',
         protocol: 'OPCUA_HA',
         enabled: false,
@@ -161,6 +165,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-5',
         dataSourceId: 'PLC-35',
         protocol: 'Modbus',
         enabled: false,
@@ -199,6 +204,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-6',
         dataSourceId: 'PLC-42',
         protocol: 'Modbus',
         enabled: false,
@@ -219,6 +225,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-7',
         dataSourceId: 'FolderScanner',
         protocol: 'FolderScanner',
         enabled: true,
@@ -235,6 +242,7 @@ const testConfig = {
         scanMode: 'every10Second',
       },
       {
+        id: 'datasource-uuid-8',
         dataSourceId: 'SQLDbToFile',
         protocol: 'SQLDbToFile',
         enabled: false,
@@ -263,6 +271,7 @@ const testConfig = {
         points: [],
       },
       {
+        id: 'datasource-uuid-9',
         dataSourceId: 'OPC-HDA',
         protocol: 'OPCHDA',
         enabled: false,
@@ -287,6 +296,7 @@ const testConfig = {
         ],
       },
       {
+        id: 'datasource-uuid-10',
         dataSourceId: 'ADS - Test',
         protocol: 'ADS',
         enabled: true,
@@ -416,6 +426,7 @@ const testConfig = {
   north: {
     applications: [
       {
+        id: 'application-uuid-1',
         applicationId: 'c',
         api: 'Console',
         enabled: true,
@@ -424,6 +435,7 @@ const testConfig = {
         subscribedTo: ['MQTTServer'],
       },
       {
+        id: 'application-uuid-2',
         applicationId: 'monoiconnect',
         api: 'OIConnect',
         enabled: false,
@@ -440,6 +452,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-3',
         applicationId: 'RawFileSender',
         enabled: false,
         api: 'OIAnalytics',
@@ -460,6 +473,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-4',
         applicationId: 'mqtt',
         api: 'MQTTNorth',
         enabled: true,
@@ -480,6 +494,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-5',
         applicationId: 'Timescale',
         api: 'TimescaleDB',
         enabled: false,
@@ -498,6 +513,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-6',
         applicationId: 'WATSYConnect',
         api: 'WATSYConnect',
         enabled: false,
@@ -518,6 +534,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-7',
         applicationId: 'CsvToHttp',
         api: 'CsvToHttp',
         enabled: false,
@@ -554,6 +571,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-8',
         applicationId: 'filewriter',
         api: 'FileWriter',
         enabled: true,
@@ -562,6 +580,7 @@ const testConfig = {
         subscribedTo: [],
       },
       {
+        id: 'application-uuid-9',
         applicationId: 'test04',
         api: 'AmazonS3',
         enabled: false,

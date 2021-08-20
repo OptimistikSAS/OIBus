@@ -656,7 +656,7 @@ describe('ADS south', () => {
     const adsSouth = new ADS(adsConfig, engine)
     await adsSouth.connect()
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.dataSourceId}.db`)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.id}.db`)
 
     expect(adsSouth.connected)
       .toBeTruthy()

@@ -28,7 +28,7 @@ const folderScanner = new FolderScanner(config.south.dataSources[6], engine)
 describe('folder-scanner', () => {
   it('should connect properly', async () => {
     await folderScanner.connect()
-    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith('./cache/FolderScanner.db')
+    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith(`./cache/${config.south.dataSources[6].id}.db`)
   })
   it('onScan: should exit if folder does not exist', () => {
     jest.spyOn(fs, 'accessSync').mockImplementationOnce(() => {
