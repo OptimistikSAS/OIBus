@@ -168,6 +168,7 @@ class Modbus extends ProtocolHandler {
       this.socket.end()
       this.connected = false
     }
+    super.disconnect()
   }
 
   async connectorToModbusServer() {
