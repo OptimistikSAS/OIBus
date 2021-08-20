@@ -50,7 +50,7 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   connect() {
-    this.logger.info('Connection to MongoDB')
+    super.connect()
     const { host, user, password, db } = this.application.MongoDB
 
     // creating url connection string
@@ -88,8 +88,8 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.logger.info('Disconnection from MongoDB')
     this.client.close()
+    super.disconnect()
   }
 
   /**
