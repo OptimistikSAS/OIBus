@@ -217,6 +217,7 @@ class ADS extends ProtocolHandler {
           this.connected = false
         })
     }
+    super.disconnect()
   }
 }
 

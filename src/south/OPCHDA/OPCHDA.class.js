@@ -92,6 +92,7 @@ class OPCHDA extends ProtocolHandler {
     }
 
     this.sendStopMessage()
+    super.disconnect()
   }
 
   /**
