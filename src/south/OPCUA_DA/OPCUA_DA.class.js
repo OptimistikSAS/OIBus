@@ -105,6 +105,7 @@ class OPCUA_DA extends ProtocolHandler {
       await this.client.disconnect()
       this.connected = false
     }
+    super.disconnect()
   }
 
   /*
