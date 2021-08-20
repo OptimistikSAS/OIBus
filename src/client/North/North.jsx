@@ -77,11 +77,11 @@ const North = () => {
    * applicationId, enabled and api fields
    * @returns {void}
    */
-  const addApplication = ({ applicationId, api }) => {
+  const addApplication = ({ id, applicationId, api }) => {
     const applicationIndex = getApplicationIndex(applicationId)
     if (applicationIndex === -1) {
       // Adds new application
-      dispatchNewConfig({ type: 'addRow', name: 'north.applications', value: { applicationId, api, enabled: false } })
+      dispatchNewConfig({ type: 'addRow', name: 'north.applications', value: { id, applicationId, api, enabled: false } })
     } else {
       const error = new Error('application already exists')
       setAlert({ text: error.message, type: 'danger' })
@@ -129,9 +129,9 @@ const North = () => {
     setIsAscending(ascending)
   }
 
-  const tableHeaders = ['Application ID', 'Status', 'API']
-  const sortableProperties = ['applicationId', 'enabled', 'api']
-  const tableRows = sortableApplications?.map(({ applicationId, enabled, api, index }) => [
+  const tableHeaders = ['Application ID', 'UUID', 'Status', 'API']
+  const sortableProperties = ['applicationId', 'id', 'enabled', 'api']
+  const tableRows = sortableApplications?.map(({ id, applicationId, enabled, api, index }) => [
     {
       name: applicationId,
       value: (
@@ -145,6 +145,7 @@ const North = () => {
         />
       ),
     },
+    { name: 'id', value: id },
     {
       name: 'enabled',
       value: <div className={enabled ? 'text-success' : 'text-danger'}>{enabled ? 'Enabled' : 'Disabled'}</div>,

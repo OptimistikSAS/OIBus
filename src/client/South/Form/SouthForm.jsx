@@ -9,7 +9,7 @@ import PointsButton from '../PointsButton.jsx'
 import StatusButton from '../StatusButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
-  const { protocol, dataSourceId } = dataSource
+  const { id, protocol, dataSourceId } = dataSource
   const history = useHistory()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -45,6 +45,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             </BreadcrumbItem>
             <BreadcrumbItem active tag="span">
               {dataSourceId}
+              <small>{` (${id || ''})`}</small>
             </BreadcrumbItem>
           </Breadcrumb>
         </Col>

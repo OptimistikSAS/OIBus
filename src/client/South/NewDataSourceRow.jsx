@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Col, Row } from 'reactstrap'
+import { v4 as uuidv4 } from 'uuid'
 import { OIbText, OIbSelect } from '../components/OIbForm/index'
 
 const NewDataSourceRow = ({ protocolList, addDataSource }) => {
@@ -14,7 +15,7 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
   const handleAddDataSource = () => {
     //  update the new dataSource's state
     if (dataSourceId === '') return
-    addDataSource({ dataSourceId, protocol })
+    addDataSource({ id: uuidv4(), dataSourceId, protocol })
   }
 
   const handleChange = (name, value) => {

@@ -73,6 +73,7 @@ class Cache {
    */
   async initializeApi(activeApi) {
     const api = {
+      id: activeApi.application.id,
       applicationId: activeApi.application.applicationId,
       config: activeApi.application.caching,
       canHandleValues: activeApi.canHandleValues,
@@ -81,8 +82,8 @@ class Cache {
     }
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
-      this.logger.debug(`use db: ${this.cacheFolder}/${api.applicationId}.db`)
-      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.applicationId}.db`)
+      this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.applicationId}`)
+      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`)
       this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.applicationId] = api

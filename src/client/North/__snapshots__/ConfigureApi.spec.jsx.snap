@@ -32,6 +32,9 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             class="active breadcrumb-item"
           >
             monoiconnect
+            <small>
+               (application-uuid-2)
+            </small>
           </span>
         </ol>
       </h5>
@@ -1107,6 +1110,9 @@ exports[`ConfigureApi check update 1`] = `
             class="active breadcrumb-item"
           >
             monoiconnect
+            <small>
+               (application-uuid-2)
+            </small>
           </span>
         </ol>
       </h5>
