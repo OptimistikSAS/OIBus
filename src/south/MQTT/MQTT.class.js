@@ -177,6 +177,7 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
+    super.disconnect()
   }
 
   /**
