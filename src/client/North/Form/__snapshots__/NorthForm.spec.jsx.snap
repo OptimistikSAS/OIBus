@@ -32,6 +32,9 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             class="active breadcrumb-item"
           >
             CsvToHttp
+            <small>
+               (application-uuid-7)
+            </small>
           </span>
         </ol>
       </h5>
@@ -1488,6 +1491,9 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             class="active breadcrumb-item"
           >
             RawFileSender
+            <small>
+               (application-uuid-3)
+            </small>
           </span>
         </ol>
       </h5>
@@ -2508,6 +2514,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             class="active breadcrumb-item"
           >
             Timescale
+            <small>
+               (application-uuid-5)
+            </small>
           </span>
         </ol>
       </h5>
@@ -3378,6 +3387,9 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             class="active breadcrumb-item"
           >
             WATSYConnect
+            <small>
+               (application-uuid-6)
+            </small>
           </span>
         </ol>
       </h5>
@@ -4467,6 +4479,9 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             class="active breadcrumb-item"
           >
             c
+            <small>
+               (application-uuid-1)
+            </small>
           </span>
         </ol>
       </h5>
@@ -5317,6 +5332,9 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             class="active breadcrumb-item"
           >
             filewriter
+            <small>
+               (application-uuid-8)
+            </small>
           </span>
         </ol>
       </h5>
@@ -6120,6 +6138,9 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             class="active breadcrumb-item"
           >
             monoiconnect
+            <small>
+               (application-uuid-2)
+            </small>
           </span>
         </ol>
       </h5>
@@ -7175,6 +7196,9 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="active breadcrumb-item"
           >
             mqtt
+            <small>
+               (application-uuid-4)
+            </small>
           </span>
         </ol>
       </h5>
@@ -8182,6 +8206,9 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             class="active breadcrumb-item"
           >
             test04
+            <small>
+               (application-uuid-9)
+            </small>
           </span>
         </ol>
       </h5>
@@ -9105,7 +9132,11 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           <span
             aria-current="page"
             class="active breadcrumb-item"
-          />
+          >
+            <small>
+               ()
+            </small>
+          </span>
         </ol>
       </h5>
     </div>

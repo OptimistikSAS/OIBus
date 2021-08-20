@@ -72,7 +72,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const firstApplicationButtons = document.querySelectorAll('td')[5]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[3])
     Simulate.click(document.getElementsByClassName('btn btn-primary')[1])
     expect(dispatchNewConfig).toBeCalledWith({
@@ -87,7 +87,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const firstApplicationButtons = document.querySelectorAll('td')[5]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].dataSourceId}` })
     expect(container).toMatchSnapshot()
@@ -98,7 +98,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const firstApplicationButtons = document.querySelectorAll('td')[5]
     const duplicateButton = firstApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[0]
@@ -120,7 +120,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const thirdApplicationButtons = document.querySelectorAll('td')[14]
+    const thirdApplicationButtons = document.querySelectorAll('td')[17]
     const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[2]

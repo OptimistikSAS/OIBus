@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Col, Row } from 'reactstrap'
+import { v4 as uuidv4 } from 'uuid'
 import { OIbText, OIbSelect } from '../components/OIbForm/index'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
@@ -14,7 +15,7 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
   const handleAddApplication = () => {
     //  update the new application's state
     if (applicationId === '') return
-    addApplication({ applicationId, api })
+    addApplication({ id: uuidv4(), applicationId, api })
   }
 
   const handleChange = (name, value) => {

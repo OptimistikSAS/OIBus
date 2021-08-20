@@ -247,7 +247,7 @@ describe('Modbus south', () => {
     await modbusSouth.connect()
 
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.dataSourceId}.db`)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.id}.db`)
 
     expect(modbusSouth.connected)
       .toBeTruthy()

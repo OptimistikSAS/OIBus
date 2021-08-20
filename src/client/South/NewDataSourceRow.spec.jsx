@@ -5,8 +5,13 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as uuid from 'uuid'
 import testConfig from '../../../tests/testConfig'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
+
+// mocking the uuid method
+jest.mock('uuid')
+jest.spyOn(uuid, 'v4').mockReturnValue('generated-uuid')
 
 // mocking state updates
 let dataSourceId = ''
@@ -102,7 +107,7 @@ describe('NewDataSourceRow', () => {
       )
     })
     Simulate.click(document.querySelector('div button'))
-    expect(addDataSource).toBeCalledWith({ dataSourceId, protocol })
+    expect(addDataSource).toBeCalledWith({ id: 'generated-uuid', dataSourceId, protocol })
     expect(container).toMatchSnapshot()
   })
 })

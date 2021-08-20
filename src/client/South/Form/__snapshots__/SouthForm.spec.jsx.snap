@@ -35,6 +35,9 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               class="active breadcrumb-item"
             >
               ADS - Test
+              <small>
+                 (datasource-uuid-10)
+              </small>
             </span>
           </ol>
         </h5>
@@ -1236,6 +1239,9 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               class="active breadcrumb-item"
             >
               FolderScanner
+              <small>
+                 (datasource-uuid-7)
+              </small>
             </span>
           </ol>
         </h5>
@@ -1978,6 +1984,9 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               class="active breadcrumb-item"
             >
               MQTTServer
+              <small>
+                 (datasource-uuid-1)
+              </small>
             </span>
           </ol>
         </h5>
@@ -3504,6 +3513,9 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               class="active breadcrumb-item"
             >
               OPC-HDA
+              <small>
+                 (datasource-uuid-9)
+              </small>
             </span>
           </ol>
         </h5>
@@ -5144,6 +5156,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               class="active breadcrumb-item"
             >
               PLC-35
+              <small>
+                 (datasource-uuid-5)
+              </small>
             </span>
           </ol>
         </h5>
@@ -5883,6 +5898,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               class="active breadcrumb-item"
             >
               PLC-42
+              <small>
+                 (datasource-uuid-6)
+              </small>
             </span>
           </ol>
         </h5>
@@ -6622,6 +6640,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               class="active breadcrumb-item"
             >
               SQLDbToFile
+              <small>
+                 (datasource-uuid-8)
+              </small>
             </span>
           </ol>
         </h5>
@@ -8197,6 +8218,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="active breadcrumb-item"
             >
               SimulationServer
+              <small>
+                 (datasource-uuid-2)
+              </small>
             </span>
           </ol>
         </h5>
@@ -9248,6 +9272,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="active breadcrumb-item"
             >
               SimulationServerBis
+              <small>
+                 (datasource-uuid-3)
+              </small>
             </span>
           </ol>
         </h5>
@@ -10086,6 +10113,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="active breadcrumb-item"
             >
               SimulationServerBis copy
+              <small>
+                 (datasource-uuid-4)
+              </small>
             </span>
           </ol>
         </h5>
@@ -10922,7 +10952,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <span
               aria-current="page"
               class="active breadcrumb-item"
-            />
+            >
+              <small>
+                 ()
+              </small>
+            </span>
           </ol>
         </h5>
       </div>
