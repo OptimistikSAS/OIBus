@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { v4: uuidv4 } = require('uuid')
 const Logger = require('../engine/Logger.class')
 
 const logger = new Logger('migration')
@@ -490,6 +491,36 @@ module.exports = {
       }
       delete config.engine.caching.archiveMode
       delete config.engine.caching.archiveFolder
+    })
+  },
+  25: (config) => {
+    const cachePath = config.engine.caching.cacheFolder
+    config.north.applications.forEach((application) => {
+      application.id = uuidv4()
+      const oldApplicationPath = `${cachePath}/${application.applicationId}.db`
+      if (fs.existsSync(oldApplicationPath)) {
+        logger.info(`Renaming old cache path for datasource ${application.applicationId}`)
+        fs.rename(oldApplicationPath,
+          `${cachePath}/${application.id}.db`, (err) => {
+            if (err) {
+              logger.error(`Could not rename application: ${application.applicationId}`)
+            }
+          })
+      }
+    })
+
+    config.south.dataSources.forEach((dataSource) => {
+      dataSource.id = uuidv4()
+      const oldDataSourcePath = `${cachePath}/${dataSource.dataSourceId}.db`
+      if (fs.existsSync(oldDataSourcePath)) {
+        logger.info(`Renaming old cache file for datasource ${dataSource.dataSourceId}`)
+        fs.rename(oldDataSourcePath,
+          `${cachePath}/${dataSource.id}.db`, (err) => {
+            if (err) {
+              logger.error(`Could not rename datasource: ${dataSource.dataSourceId}`)
+            }
+          })
+      }
     })
   },
 }

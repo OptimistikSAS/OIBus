@@ -35,6 +35,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               class="active breadcrumb-item"
             >
               OPC-HDA
+              <small>
+                 (datasource-uuid-9)
+              </small>
             </span>
           </ol>
         </h5>
@@ -1695,6 +1698,9 @@ exports[`ConfigureProtocol check update 1`] = `
               class="active breadcrumb-item"
             >
               OPC-HDA
+              <small>
+                 (datasource-uuid-9)
+              </small>
             </span>
           </ol>
         </h5>

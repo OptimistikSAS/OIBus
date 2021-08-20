@@ -67,8 +67,8 @@ class ProtocolHandler {
   }
 
   async connect() {
-    const { dataSourceId, protocol } = this.dataSource
-    const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    const { id, dataSourceId, protocol } = this.dataSource
+    const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }

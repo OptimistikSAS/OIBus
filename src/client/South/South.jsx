@@ -78,14 +78,14 @@ const South = () => {
    * dataSourceId, enabled and protocol fields
    * @returns {void}
    */
-  const addDataSource = ({ dataSourceId, protocol }) => {
+  const addDataSource = ({ id, dataSourceId, protocol }) => {
     const dataSourceIndex = getDataSourceIndex(dataSourceId)
     if (dataSourceIndex === -1) {
       // Adds new dataSource
       dispatchNewConfig({
         type: 'addRow',
         name: 'south.dataSources',
-        value: { dataSourceId, protocol, enabled: false },
+        value: { id, dataSourceId, protocol, enabled: false },
       })
     } else {
       const error = new Error('data source already exists')
@@ -146,8 +146,8 @@ const South = () => {
     history.push({ pathname })
   }
 
-  const tableHeaders = ['Data Source ID', 'Status', 'Protocol', 'Points']
-  const sortableProperties = ['dataSourceId', 'enabled', 'protocol']
+  const tableHeaders = ['Data Source ID', 'UUID', 'Status', 'Protocol', 'Points']
+  const sortableProperties = ['dataSourceId', 'id', 'enabled', 'protocol']
   const tableRows = sortableDataSources?.map((dataSource) => [
     {
       name: dataSource.dataSourceId,
@@ -162,6 +162,7 @@ const South = () => {
         />
       ),
     },
+    { name: 'id', value: dataSource.id },
     {
       name: 'enabled',
       value: (

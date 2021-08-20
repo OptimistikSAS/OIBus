@@ -72,7 +72,7 @@ describe('North', () => {
         <North />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[3]
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[2])
     Simulate.click(document.getElementsByClassName('btn btn-primary')[1])
     expect(dispatchNewConfig).toBeCalledWith({
@@ -87,7 +87,7 @@ describe('North', () => {
         <North />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[3]
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].applicationId}` })
     expect(container).toMatchSnapshot()

@@ -95,7 +95,7 @@ describe('OPCUA-HA south', () => {
       .toEqual([opcuaConfig.OPCUA_HA.scanGroups[0].scanMode])
 
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig)
       .toHaveBeenCalledTimes(1)
     expect(opcuaSouth.lastCompletedAt.every10Second)
@@ -112,7 +112,7 @@ describe('OPCUA-HA south', () => {
     await opcuaSouth.connect()
 
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig)
       .toHaveBeenCalledTimes(1)
     expect(opcuaSouth.lastCompletedAt.every10Second)
@@ -131,7 +131,7 @@ describe('OPCUA-HA south', () => {
     await opcuaSouth.connect()
 
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.dataSourceId}.db`)
+      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig)
       .toHaveBeenCalledTimes(1)
     expect(opcuaSouth.lastCompletedAt.every10Second)

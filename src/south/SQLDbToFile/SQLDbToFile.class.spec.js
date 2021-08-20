@@ -62,7 +62,7 @@ describe('sql-db-to-file', () => {
 
     await sqlSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.dataSourceId}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(sqlSouth.lastCompletedAt).toEqual('2020-08-07T06:48:12.852Z')
   })
@@ -99,7 +99,7 @@ describe('sql-db-to-file', () => {
 
     await sqlSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.dataSourceId}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(sqlSouth.lastCompletedAt).not.toEqual(new Date(nowDateString).getTime())
     global.Date = RealDate
