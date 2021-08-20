@@ -101,8 +101,8 @@ class WATSYConnect extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.logger.info(`Disconnecting WATSYConnect North MQTT Connector from ${this.url}`)
     this.client.end(true)
+    super.disconnect()
   }
 
   /**
