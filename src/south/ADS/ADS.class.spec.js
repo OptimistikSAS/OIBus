@@ -679,6 +679,7 @@ describe('ADS south', () => {
   })
 
   it('should properly read onScan', async () => {
+    jest.useFakeTimers()
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
@@ -693,6 +694,7 @@ describe('ADS south', () => {
       .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
 
     await adsSouth.onScanImplementation('every10Seconds')
+    jest.runOnlyPendingTimers()
 
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestENUM')
     expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestINT')
@@ -710,18 +712,129 @@ describe('ADS south', () => {
     expect(engine.addValues)
       .toHaveBeenCalledWith(
         'ADS - Test',
-        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: '0' } }],
+        [
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestENUM',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: 'Running' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestINT',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '1234' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestSTRING',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: 'Hello this is a test string' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY.0',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '0' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY.1',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '10' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY.2',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '200' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY.3',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3000' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY.4',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '4000' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeReal',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3.1415927410125732' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2020-02-02T02:02:02.222Z' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3.1415927410125732' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2020-02-02T02:02:02.222Z' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3.1415927410125732' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2020-02-02T02:02:02.222Z' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3.1415927410125732' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2020-02-02T02:02:02.222Z' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '3.1415927410125732' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2020-02-02T02:02:02.222Z' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '0' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.PT',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '2500' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.Q',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '0' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.ET',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '0' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.M',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '1' },
+          },
+          {
+            pointId: 'PLC_TEST.GVL_Test.TestTimer.StartTime',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '0' },
+          },
+        ],
       )
-    expect(engine.addValues)
-      .toHaveBeenCalledWith(
-        'ADS - Test',
-        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.M', timestamp: nowDateString, data: { value: '1' } }],
-      )
-    // Test enum value as text
-    expect(engine.addValues).toHaveBeenCalledWith(
-      'ADS - Test',
-      [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: 'Running' } }],
-    )
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
 
@@ -764,16 +877,253 @@ describe('ADS south', () => {
     // Test boolean value as text
     expect(engine.addValues).toHaveBeenCalledWith(
       'ADS - Test',
-      [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.Q', timestamp: nowDateString, data: { value: 'false' } }],
+      [
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestENUM',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Running' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestINT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1234' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestSTRING',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Hello this is a test string' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.0',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.1',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '10' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.2',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '200' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.3',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.4',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '4000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.PT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2500' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.Q',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.ET',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.M',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.StartTime',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+      ],
     )
-    expect(engine.addValues)
-      .toHaveBeenCalledWith(
-        'ADS - Test',
-        [{ pointId: 'PLC_TEST.GVL_Test.TestTimer.M', timestamp: nowDateString, data: { value: 'true' } }],
-      )
     // Test enum value as integer
     expect(engine.addValues).toHaveBeenCalledWith('ADS - Test',
-      [{ pointId: 'PLC_TEST.GVL_Test.TestENUM', timestamp: nowDateString, data: { value: '100' } }])
+      [
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestENUM',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Running' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestINT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1234' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestSTRING',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Hello this is a test string' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.0',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.1',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '10' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.2',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '200' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.3',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.4',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '4000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-02-02T02:02:02.222Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.PT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2500' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.Q',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.ET',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.M',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.StartTime',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+      ])
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestBadType)))
     await adsSouth.onScanImplementation('every1Hour')
@@ -800,9 +1150,10 @@ describe('ADS south', () => {
 
     engine.addValues.mockClear()
     await adsSouth.onScanImplementation('every3Hours')
+    jest.runOnlyPendingTimers()
 
     expect(engine.addValues)
-      .toHaveBeenCalledTimes(16)
+      .toHaveBeenCalledTimes(1)
 
     global.Date = RealDate
   })
