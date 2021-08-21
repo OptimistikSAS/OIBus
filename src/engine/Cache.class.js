@@ -6,7 +6,8 @@ const Queue = require('../services/queue.class')
 const Logger = require('./Logger.class')
 const ApiHandler = require('../north/ApiHandler.class')
 
-const ARCHIVE_TIMEOUT = 3600000
+// Time between two checks of the Archive Folder
+const ARCHIVE_TIMEOUT = 3600000 // one hour
 
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
@@ -36,11 +37,13 @@ class Cache {
       this.logger.info(`creating cache folder in ${this.cacheFolder}`)
       fs.mkdirSync(this.cacheFolder, { recursive: true })
     }
-    // Create archive folder if not exists
-    this.archiveFolder = path.resolve(archive.archiveFolder)
-    if (!fs.existsSync(this.archiveFolder)) {
-      this.logger.info(`creating archive folder in ${this.archiveFolder}`)
-      fs.mkdirSync(this.archiveFolder, { recursive: true })
+    if (this.archiveMode) {
+      // Create archive folder if not exists
+      this.archiveFolder = path.resolve(archive.archiveFolder)
+      if (!fs.existsSync(this.archiveFolder)) {
+        this.logger.info(`creating archive folder in ${this.archiveFolder}`)
+        fs.mkdirSync(this.archiveFolder, { recursive: true })
+      }
     }
     // will contains the list of North apis
     this.apis = {}
@@ -431,11 +434,6 @@ class Cache {
       const archivePath = path.join(this.archiveFolder, archivedFilename)
 
       if (this.archiveMode) {
-        // Create archive folder if it doesn't exist
-        if (!fs.existsSync(this.archiveFolder)) {
-          fs.mkdirSync(this.archiveFolder, { recursive: true })
-        }
-
         // Move original file into the archive folder
         fs.rename(filePath, archivePath, (renameError) => {
           if (renameError) {
@@ -458,7 +456,7 @@ class Cache {
   }
 
   /**
-   * Delete file in archiveFolder
+   * Delete files in archiveFolder if they are older thant the rentention time.
    * @param {string} filePath - The file
    * @return {void}
    */
@@ -472,30 +470,25 @@ class Cache {
     const files = fs.readdirSync(this.archiveFolder)
     const timestamp = new Date().getTime()
     if (files.length > 0) {
-      // Disable ESLint check because we need for..of loop to support async calls
-      // eslint-disable-next-line no-restricted-syntax
-      for (const file of files) {
-        // Disable ESLint check because we want to handle files one by one
-        // eslint-disable-next-line no-await-in-loop
+      files.forEach((file) => {
         const stats = fs.statSync(path.join(this.archiveFolder, file))
 
         if (stats.mtimeMs + this.retentionDuration < timestamp) {
           // local try catch in case an error occurs on a file
           // if so, the loop goes on with the other files
           try {
-            // eslint-disable-next-line no-await-in-loop
             fs.unlink(path.join(this.archiveFolder, file), (unlinkError) => {
               if (unlinkError) {
                 this.logger.error(unlinkError)
               } else {
-                this.logger.info(`File ${path.join(this.archiveFolder, file)} deleted`)
+                this.logger.debug(`File ${path.join(this.archiveFolder, file)} removed from archive`)
               }
             })
           } catch (sendFileError) {
             this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
           }
         }
-      }
+      })
     } else {
       this.logger.debug(`The archive folder ${this.archiveFolder} is empty. Nothing to delete`)
     }
