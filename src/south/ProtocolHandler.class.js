@@ -5,6 +5,13 @@ const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/Logger.class')
 
+// Buffer delay in ms: when a protocol generates a lot of values at the same time, it may be better to accumulate them
+// in a buffer before sending them to the engine
+// Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
+// these parameters could be settings from OIBus UI
+const BUFFER_TIME = 300 // ms
+const BUFFER_MAX = 250 // values
+
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  * Building a new South Protocol means to extend this class, and to surcharge
@@ -55,6 +62,8 @@ class ProtocolHandler {
     this.lastAddPointsAt = null
     this.addPointsCount = 0
     this.currentlyOnScan = false
+    this.buffer = []
+    this.bufferTimeout = null
   }
 
   async connect() {
@@ -101,9 +110,26 @@ class ProtocolHandler {
    * @return {void}
    */
   addValues(values) {
+    const flush = async (flag = 'time') => {
+      this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
+      await this.engine.addValues(this.dataSource.dataSourceId, this.buffer)
+      this.buffer = []
+      clearTimeout(this.bufferTimeout)
+      this.bufferTimeout = null
+    }
+    // used for status
     this.lastAddPointsAt = new Date().getTime()
     this.addPointsCount += values.length
-    this.engine.addValues(this.dataSource.dataSourceId, values)
+    // add new values to the protocol buffer
+    this.buffer.push(...values)
+    // if the protocol buffer is large enough, send it
+    // else start a timer before sending it
+    this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.dataSourceId}`)
+    if (this.buffer.length > BUFFER_MAX) {
+      flush('max')
+    } else if (this.bufferTimeout === null) {
+      this.bufferTimeout = setTimeout(flush, BUFFER_TIME)
+    }
   }
 
   /**
