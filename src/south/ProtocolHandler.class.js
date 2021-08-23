@@ -105,18 +105,26 @@ class ProtocolHandler {
   }
 
   /**
+   * Method used to flush the buffer from a time trigger or a max trigger
+   * @param {string} flag - The trigger
+   * @returns {void}
+   */
+  async flush(flag = 'time') {
+    this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
+    await this.engine.addValues(this.dataSource.dataSourceId, this.buffer)
+    this.buffer = []
+    if (this.bufferTimeout) {
+      clearTimeout(this.bufferTimeout)
+      this.bufferTimeout = null
+    }
+  }
+
+  /**
    * Add a new Value to the Engine.
    * @param {array} values - The new value
    * @return {void}
    */
-  addValues(values) {
-    const flush = async (flag = 'time') => {
-      this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
-      await this.engine.addValues(this.dataSource.dataSourceId, this.buffer)
-      this.buffer = []
-      clearTimeout(this.bufferTimeout)
-      this.bufferTimeout = null
-    }
+  async addValues(values) {
     // used for status
     this.lastAddPointsAt = new Date().getTime()
     this.addPointsCount += values.length
@@ -126,9 +134,11 @@ class ProtocolHandler {
     // else start a timer before sending it
     this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.dataSourceId}`)
     if (this.buffer.length > BUFFER_MAX) {
-      flush('max')
+      await this.flush('max')
     } else if (this.bufferTimeout === null) {
-      this.bufferTimeout = setTimeout(flush, BUFFER_TIME)
+      this.bufferTimeout = setTimeout(async () => {
+        await this.flush()
+      }, BUFFER_TIME)
     }
   }
 
