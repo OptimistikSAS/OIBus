@@ -485,7 +485,7 @@ module.exports = {
       }
       config.engine.caching.archive = {
         enabled: config.engine.caching.archiveMode === 'archive',
-        archiveFolder: config.engine.caching.archive.archiveFolder,
+        archiveFolder: config.engine.caching.archiveFolder,
         retentionDuration: 0,
       }
       delete config.engine.caching.archiveMode
