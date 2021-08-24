@@ -185,7 +185,7 @@ class SQLDbToFile extends ProtocolHandler {
       } catch (error) {
         this.logger.error(error)
       }
-    } while (intervalResult.length)
+    } while (intervalResult.length > 0 && endTime > startTime)
 
     this.logger.debug(`Found ${result.length} results`)
 
