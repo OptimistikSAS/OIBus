@@ -34,11 +34,11 @@ const North = () => {
 
   /**
    * Gets the index of a north application
-   * @param {string} applicationId ID of an application
+   * @param {string} name name of an application
    * @returns {object} The selected application's config
    */
-  const getApplicationIndex = ((applicationId) => {
-    const position = sortableApplications.findIndex((application) => application.applicationId === applicationId)
+  const getApplicationIndex = ((name) => {
+    const position = sortableApplications.findIndex((application) => application.name === name)
     if (position === -1) {
       return position
     }
@@ -53,35 +53,35 @@ const North = () => {
    */
   const handleEdit = (position) => {
     const application = sortableApplications[position]
-    const link = `/north/${application.applicationId}`
+    const link = `/north/${application.id}`
     history.push({ pathname: link })
   }
 
   /**
    * Handles the change of one application id (name)
    * @param {integer} applicationIndex The index that will change
-   * @param {string} newApplicationId The new application id
+   * @param {string} newApplicationName The new application name
    * @return {void}
    */
-  const handleApplicationIdChanged = (applicationIndex, newApplicationId) => {
+  const handleApplicationNameChanged = (applicationIndex, newApplicationName) => {
     dispatchNewConfig({
       type: 'update',
-      name: `north.applications.${applicationIndex}.applicationId`,
-      value: newApplicationId,
+      name: `north.applications.${applicationIndex}.name`,
+      value: newApplicationName,
     })
   }
 
   /**
    * Adds a new application row to the table
    * @param {Object} param0 An application object containing
-   * applicationId, enabled and api fields
+   * name, enabled and api fields
    * @returns {void}
    */
-  const addApplication = ({ id, applicationId, api }) => {
-    const applicationIndex = getApplicationIndex(applicationId)
+  const addApplication = ({ id, name, api }) => {
+    const applicationIndex = getApplicationIndex(name)
     if (applicationIndex === -1) {
       // Adds new application
-      dispatchNewConfig({ type: 'addRow', name: 'north.applications', value: { id, applicationId, api, enabled: false } })
+      dispatchNewConfig({ type: 'addRow', name: 'north.applications', value: { id, name, api, enabled: false } })
     } else {
       const error = new Error('application already exists')
       setAlert({ text: error.message, type: 'danger' })
@@ -105,14 +105,14 @@ const North = () => {
    */
   const handleDuplicate = (position) => {
     const application = applications[sortableApplications[position].index]
-    const newName = `${application.applicationId} copy`
-    const countCopies = applications.filter((e) => e.applicationId.startsWith(newName)).length
+    const newName = `${application.name} copy`
+    const countCopies = applications.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
       name: 'north.applications',
       value: {
         ...application,
-        applicationId: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
+        name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
       },
     })
@@ -129,23 +129,22 @@ const North = () => {
     setIsAscending(ascending)
   }
 
-  const tableHeaders = ['Application ID', 'UUID', 'Status', 'API']
-  const sortableProperties = ['applicationId', 'id', 'enabled', 'api']
-  const tableRows = sortableApplications?.map(({ id, applicationId, enabled, api, index }) => [
+  const tableHeaders = ['Application Name', 'Status', 'API']
+  const sortableProperties = ['name', 'enabled', 'api']
+  const tableRows = sortableApplications?.map(({ name, enabled, api, index }) => [
     {
-      name: applicationId,
+      name,
       value: (
         <EditableIdField
-          id={applicationId}
+          id={name}
           fromList={sortableApplications}
           index={index}
-          name="applicationId"
+          name="name"
           valid={validation.application.isValidName}
-          idChanged={handleApplicationIdChanged}
+          idChanged={handleApplicationNameChanged}
         />
       ),
     },
-    { name: 'id', value: id },
     {
       name: 'enabled',
       value: <div className={enabled ? 'text-success' : 'text-danger'}>{enabled ? 'Enabled' : 'Disabled'}</div>,

@@ -9,7 +9,7 @@ import PointsButton from '../PointsButton.jsx'
 import StatusButton from '../StatusButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
-  const { id, protocol, dataSourceId } = dataSource
+  const { id, protocol, name } = dataSource
   const history = useHistory()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -28,7 +28,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
    * @return {void}
    */
   const handleStatus = () => {
-    const pathname = `/south/${dataSourceId}/live`
+    const pathname = `/south/${id}/live`
     history.push({ pathname })
   }
 
@@ -44,8 +44,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
               South
             </BreadcrumbItem>
             <BreadcrumbItem active tag="span">
-              {dataSourceId}
-              <small>{` (${id || ''})`}</small>
+              {name}
             </BreadcrumbItem>
           </Breadcrumb>
         </Col>

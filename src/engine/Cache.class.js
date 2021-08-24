@@ -74,7 +74,7 @@ class Cache {
   async initializeApi(activeApi) {
     const api = {
       id: activeApi.application.id,
-      applicationId: activeApi.application.applicationId,
+      name: activeApi.application.name,
       config: activeApi.application.caching,
       canHandleValues: activeApi.canHandleValues,
       canHandleFiles: activeApi.canHandleFiles,
@@ -82,15 +82,15 @@ class Cache {
     }
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
-      this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.applicationId}`)
+      this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.name}`)
       api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`)
       this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
-    this.apis[api.applicationId] = api
+    this.apis[api.id] = api
     if (api && api.config && api.config.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
-      this.logger.warning(`api: ${api.applicationId} has no sendInterval`)
+      this.logger.warning(`api: ${api.name} has no sendInterval`)
     }
   }
 
@@ -123,13 +123,13 @@ class Cache {
   /**
    * Check whether a North is subscribed to a South. if subscribedTo is not defined
    * or an empty array, the subscription is true.
-   * @param {string} dataSourceId - The South generating the value
+   * @param {string} id - The data source id
    * @param {string[]} subscribedTo - The list of Souths the North is subscribed to
    * @returns {boolean} - The North is subscribed to the given South
    */
-  static isSubscribed(dataSourceId, subscribedTo) {
+  static isSubscribed(id, subscribedTo) {
     if (!Array.isArray(subscribedTo) || subscribedTo.length === 0) return true
-    return subscribedTo.includes(dataSourceId)
+    return subscribedTo.includes(id)
   }
 
   /**
@@ -137,19 +137,19 @@ class Cache {
    * It will store the value in every database.
    * to every North application
    * @param {Object} api - The North to cache the Value for
-   * @param {string} dataSourceId - The South generating the value
+   * @param {string} id - The data source id
    * @param {object} values - values
    * @return {object} the api object or null if api should do nothing.
    */
-  async cacheValuesForApi(api, dataSourceId, values) {
-    const { applicationId, database, config, canHandleValues, subscribedTo } = api
+  async cacheValuesForApi(api, id, values) {
+    const { id: applicationId, database, config, canHandleValues, subscribedTo } = api
     // save the value in the North's queue if it is subscribed to the dataSource
-    if (canHandleValues && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+    if (canHandleValues && Cache.isSubscribed(id, subscribedTo)) {
       // Update stats for api
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
       // Queue saving values.
-      this.queue.add(databaseService.saveValues, database, dataSourceId, values)
+      this.queue.add(databaseService.saveValues, database, id, values)
 
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
@@ -159,7 +159,7 @@ class Cache {
         return api
       }
     } else {
-      this.logger.silly(`datasource ${dataSourceId} is not subscribed to application ${applicationId}`)
+      this.logger.silly(`datasource ${id} is not subscribed to application ${applicationId}`)
     }
     return null
   }
@@ -168,17 +168,17 @@ class Cache {
    * Cache a new Value from the South
    * It will store the value in every database.
    * to every North application (used for alarm values for example)
-   * @param {string} dataSourceId - The South generating the value
+   * @param {string} id - The data source id
    * @param {object} values - The new value
    * @return {void}
    */
-  async cacheValues(dataSourceId, values) {
+  async cacheValues(id, values) {
     try {
-      // Update stats for dataSourceId
-      this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + values.length
+      // Update stats for datasource id
+      this.cacheStats[id] = (this.cacheStats[id] || 0) + values.length
 
       // Cache values
-      const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, dataSourceId, values))
+      const actions = Object.values(this.apis).map((api) => this.cacheValuesForApi(api, id, values))
       const apisToActivate = await Promise.all(actions)
       apisToActivate.forEach((apiToActivate) => {
         if (apiToActivate) {
@@ -193,39 +193,41 @@ class Cache {
   /**
    * Cache the new raw file for a given North.
    * @param {object} api - The North to cache the file for
-   * @param {string} dataSourceId - The South generating the file
+   * @param {string} id - The data source id
+   * @param {string} name - The data source name
    * @param {String} cachePath - The path of the raw file
    * @param {number} timestamp - The timestamp the file was received
    * @return {object} the api object or null if api should do nothing.
    */
-  async cacheFileForApi(api, dataSourceId, cachePath, timestamp) {
-    const { applicationId, canHandleFiles, subscribedTo } = api
-    if (canHandleFiles && Cache.isSubscribed(dataSourceId, subscribedTo)) {
+  async cacheFileForApi(api, id, name, cachePath, timestamp) {
+    const { name: applicationName, id: applicationId, canHandleFiles, subscribedTo } = api
+    if (canHandleFiles && Cache.isSubscribed(id, subscribedTo)) {
       // Update stats for api
-      this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + 1
+      this.cacheStats[applicationName] = (this.cacheStats[applicationName] || 0) + 1
 
       // Cache file
-      this.logger.debug(`cacheFileForApi() ${cachePath} for api: ${applicationId}`)
+      this.logger.debug(`cacheFileForApi() ${cachePath} for api: ${applicationName}`)
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
-    this.logger.silly(`datasource ${dataSourceId} is not subscribed to application ${applicationId}`)
+    this.logger.silly(`datasource ${name} is not subscribed to application ${applicationName}`)
     return null
   }
 
   /**
    * Cache the new raw file.
-   * @param {string} dataSourceId - The South generating the file
+   * @param {string} id - The data source id
+   * @param {string} name - The South generating the file
    * @param {String} filePath - The path of the raw file
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  async cacheFile(dataSourceId, filePath, preserveFiles) {
-    // Update stats for dataSourceId
-    this.cacheStats[dataSourceId] = (this.cacheStats[dataSourceId] || 0) + 1
+  async cacheFile(id, name, filePath, preserveFiles) {
+    // Update stats for datasource name
+    this.cacheStats[id] = (this.cacheStats[id] || 0) + 1
 
     // Cache files
-    this.logger.debug(`cacheFile(${filePath}) from ${dataSourceId}, preserveFiles:${preserveFiles}`)
+    this.logger.debug(`cacheFile(${filePath}) from ${name}, preserveFiles:${preserveFiles}`)
     const timestamp = new Date().getTime()
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath)
@@ -237,7 +239,7 @@ class Cache {
       await this.transferFile(filePath, cachePath, preserveFiles)
 
       // Cache the file for every subscribed North
-      const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, dataSourceId, cachePath, timestamp))
+      const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, id, name, cachePath, timestamp))
       const apisToActivate = await Promise.all(actions)
       // Activate sending
       apisToActivate.forEach((apiToActivate) => {
@@ -296,14 +298,14 @@ class Cache {
    * @return {void}
    */
   async sendCallback(api) {
-    const { applicationId, canHandleValues, canHandleFiles, config } = api
+    const { name, canHandleValues, canHandleFiles, config } = api
     let status = ApiHandler.STATUS.SUCCESS
 
-    this.logger.silly(`sendCallback ${applicationId}, sendInProgress ${!!this.sendInProgress[applicationId]}`)
+    this.logger.silly(`sendCallback ${name}, sendInProgress ${!!this.sendInProgress[name]}`)
 
-    if (!this.sendInProgress[applicationId]) {
-      this.sendInProgress[applicationId] = true
-      this.resendImmediately[applicationId] = false
+    if (!this.sendInProgress[name]) {
+      this.sendInProgress[name] = true
+      this.resendImmediately[name] = false
 
       if (canHandleValues) {
         status = await this.sendCallbackForValues(api)
@@ -313,13 +315,13 @@ class Cache {
         status = await this.sendCallbackForFiles(api)
       }
 
-      const successTimeout = this.resendImmediately[applicationId] ? 0 : config.sendInterval
+      const successTimeout = this.resendImmediately[name] ? 0 : config.sendInterval
       const timeout = (status === ApiHandler.STATUS.SUCCESS) ? successTimeout : config.retryInterval
       this.resetTimeout(api, timeout)
 
-      this.sendInProgress[applicationId] = false
+      this.sendInProgress[name] = false
     } else {
-      this.resendImmediately[applicationId] = true
+      this.resendImmediately[name] = true
     }
   }
 
@@ -329,41 +331,41 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForValues(application) {
-    this.logger.silly(`Cache sendCallbackForValues() for ${application.applicationId}`)
-    const { applicationId, database, config } = application
+    this.logger.silly(`Cache sendCallbackForValues() for ${application.name}`)
+    const { id, name, database, config } = application
 
     try {
       const values = await databaseService.getValuesToSend(database, config.maxSendCount)
       let removed
 
       if (values.length) {
-        this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.applicationId}`)
-        const successCountStatus = await this.engine.handleValuesFromCache(applicationId, values)
-        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus} AppId: ${application.applicationId}`)
+        this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.name}`)
+        const successCountStatus = await this.engine.handleValuesFromCache(id, name, values)
+        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus} AppId: ${application.name}`)
         // If there was a logic error
         if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
           // Add errored values into error table
-          this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${applicationId}`)
-          await databaseService.saveErroredValues(this.valuesErrorDatabase, applicationId, values)
+          this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${name}`)
+          await databaseService.saveErroredValues(this.valuesErrorDatabase, id, values)
 
           // Remove them from the cache table
           removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== values.length) {
-            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${values.length}`)
+            this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${values.length}`)
           }
         }
         // If some values were successfully sent
         if (successCountStatus > 0) {
           const valuesSent = values.slice(0, successCountStatus)
           removed = await databaseService.removeSentValues(database, valuesSent)
-          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.applicationId}`)
+          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== valuesSent.length) {
-            this.logger.debug(`Cache for ${applicationId} can't be deleted: ${removed}/${valuesSent.length}`)
+            this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${valuesSent.length}`)
           }
         }
       } else {
-        this.logger.silly(`no values in the db for ${applicationId}`)
+        this.logger.silly(`no values in the db for ${name}`)
       }
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
@@ -378,11 +380,11 @@ class Cache {
    * @return {void}
    */
   async sendCallbackForFiles(application) {
-    const { applicationId } = application
-    this.logger.silly(`sendCallbackForFiles() for ${applicationId}`)
+    const { id, name } = application
+    this.logger.silly(`sendCallbackForFiles() for ${name}`)
 
     try {
-      const fileToSend = await databaseService.getFileToSend(this.filesDatabase, applicationId)
+      const fileToSend = await databaseService.getFileToSend(this.filesDatabase, id)
 
       if (fileToSend === null) {
         this.logger.silly('sendCallbackForFiles(): no file to send')
@@ -393,24 +395,24 @@ class Cache {
 
       if (!fs.existsSync(fileToSend.path)) {
         // file in cache does not exist on filesystem
-        await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+        await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
         this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
         return ApiHandler.STATUS.SUCCESS
       }
-      this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${applicationId}`)
-      const status = await this.engine.sendFile(applicationId, fileToSend.path)
+      this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${name}`)
+      const status = await this.engine.sendFile(id, name, fileToSend.path)
       switch (status) {
         case ApiHandler.STATUS.SUCCESS:
-          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${applicationId}`)
-          await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
+          await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           await this.handleSentFile(fileToSend.path)
           break
         case ApiHandler.STATUS.LOGIC_ERROR:
-          this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${applicationId}`)
-          await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, applicationId, fileToSend.path)
+          this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${name}`)
+          await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, id, fileToSend.path)
 
-          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${applicationId}`)
-          await databaseService.deleteSentFile(this.filesDatabase, applicationId, fileToSend.path)
+          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
+          await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           break
         default:
           break
@@ -521,7 +523,7 @@ class Cache {
   /* eslint-disable-next-line class-methods-use-this */
   generateApiCacheStat(apiNames, totalCounts, cacheSizes, mode) {
     return apiNames.map((api, i) => ({
-      name: `${api.applicationId} (${mode})`,
+      name: `${api.name} (${mode})`,
       count: totalCounts[i] || 0,
       cache: cacheSizes[i] || 0,
     }))
@@ -534,15 +536,15 @@ class Cache {
   async getCacheStatsForApis() {
     // Get points APIs stats
     const pointApis = Object.values(this.apis).filter((api) => api.canHandleValues)
-    const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.applicationId])
+    const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.name])
     const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
     const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)
     const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes, 'points')
 
     // Get file APIs stats
     const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
-    const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.applicationId])
-    const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.applicationId))
+    const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.name])
+    const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.name))
     const filesCacheSizes = await Promise.all(filesCacheSizeActions)
     const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes, 'files')
 

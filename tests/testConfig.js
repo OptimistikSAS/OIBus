@@ -29,7 +29,7 @@ const testConfig = {
       archive: {
         enabled: true,
         archiveFolder: './cache/archive/',
-        retentionDuration: 720
+        retentionDuration: 720,
       },
     },
     scanModes: [
@@ -92,7 +92,7 @@ const testConfig = {
     dataSources: [
       {
         id: 'datasource-uuid-1',
-        dataSourceId: 'MQTTServer',
+        name: 'MQTTServer',
         protocol: 'MQTT',
         enabled: false,
         MQTT: {
@@ -113,7 +113,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-2',
-        dataSourceId: 'SimulationServer',
+        name: 'SimulationServer',
         protocol: 'OPCUA_HA',
         enabled: false,
         OPCUA_HA: {
@@ -134,7 +134,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-3',
-        dataSourceId: 'SimulationServerBis',
+        name: 'SimulationServerBis',
         protocol: 'OPCUA_HA',
         enabled: false,
         OPCUA_HA: {
@@ -150,7 +150,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-4',
-        dataSourceId: 'SimulationServerBis copy',
+        name: 'SimulationServerBis copy',
         protocol: 'OPCUA_HA',
         enabled: false,
         OPCUA_HA: {
@@ -166,7 +166,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-5',
-        dataSourceId: 'PLC-35',
+        name: 'PLC-35',
         protocol: 'Modbus',
         enabled: false,
         Modbus: { port: 502, host: 'http://hostname' },
@@ -205,7 +205,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-6',
-        dataSourceId: 'PLC-42',
+        name: 'PLC-42',
         protocol: 'Modbus',
         enabled: false,
         Modbus: { port: 502, host: 'http://hostname' },
@@ -226,7 +226,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-7',
-        dataSourceId: 'FolderScanner',
+        name: 'FolderScanner',
         protocol: 'FolderScanner',
         enabled: true,
         FolderScanner: {
@@ -243,7 +243,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-8',
-        dataSourceId: 'SQLDbToFile',
+        name: 'SQLDbToFile',
         protocol: 'SQLDbToFile',
         enabled: false,
         SQLDbToFile: {
@@ -272,7 +272,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-9',
-        dataSourceId: 'OPC-HDA',
+        name: 'OPC-HDA',
         protocol: 'OPCHDA',
         enabled: false,
         OPCHDA: {
@@ -297,7 +297,7 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-10',
-        dataSourceId: 'ADS - Test',
+        name: 'ADS - Test',
         protocol: 'ADS',
         enabled: true,
         ADS: {
@@ -427,16 +427,16 @@ const testConfig = {
     applications: [
       {
         id: 'application-uuid-1',
-        applicationId: 'c',
+        name: 'c',
         api: 'Console',
         enabled: true,
         Console: {},
         caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1, maxSendCount: 10000 },
-        subscribedTo: ['MQTTServer'],
+        subscribedTo: ['datasource-uuid-1'],
       },
       {
         id: 'application-uuid-2',
-        applicationId: 'monoiconnect',
+        name: 'monoiconnect',
         api: 'OIConnect',
         enabled: false,
         OIConnect: {
@@ -453,7 +453,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-3',
-        applicationId: 'RawFileSender',
+        name: 'RawFileSender',
         enabled: false,
         api: 'OIAnalytics',
         caching: {
@@ -474,7 +474,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-4',
-        applicationId: 'mqtt',
+        name: 'mqtt',
         api: 'MQTTNorth',
         enabled: true,
         MQTTNorth: {
@@ -495,7 +495,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-5',
-        applicationId: 'Timescale',
+        name: 'Timescale',
         api: 'TimescaleDB',
         enabled: false,
         TimescaleDB: {
@@ -514,7 +514,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-6',
-        applicationId: 'WATSYConnect',
+        name: 'WATSYConnect',
         api: 'WATSYConnect',
         enabled: false,
         WATSYConnect: {
@@ -535,7 +535,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-7',
-        applicationId: 'CsvToHttp',
+        name: 'CsvToHttp',
         api: 'CsvToHttp',
         enabled: false,
         CsvToHttp: {
@@ -572,7 +572,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-8',
-        applicationId: 'filewriter',
+        name: 'filewriter',
         api: 'FileWriter',
         enabled: true,
         FileWriter: { outputFolder: './output' },
@@ -581,7 +581,7 @@ const testConfig = {
       },
       {
         id: 'application-uuid-9',
-        applicationId: 'test04',
+        name: 'test04',
         api: 'AmazonS3',
         enabled: false,
         AmazonS3: {

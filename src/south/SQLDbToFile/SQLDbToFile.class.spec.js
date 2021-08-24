@@ -532,11 +532,11 @@ describe('sql-db-to-file', () => {
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
     const expectedPath = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
-    expect(engine.addFile).toBeCalledWith('SQLDbToFile', expectedPath, false)
+    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', 'SQLDbToFile', expectedPath, false)
     global.Date = RealDate
   })
 
@@ -556,7 +556,7 @@ describe('sql-db-to-file', () => {
     jest.spyOn(fs, 'writeFileSync')
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
     fs.mkdirSync(tmpFolder, { recursive: true })
     const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv.gz')
@@ -567,7 +567,7 @@ describe('sql-db-to-file', () => {
 
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
-    expect(engine.addFile).toBeCalledWith('SQLDbToFile', targetGzip, false)
+    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', 'SQLDbToFile', targetGzip, false)
 
     await sqlSouth.decompress(targetGzip, decompressedCsv)
     const targetBuffer = fs.readFileSync(decompressedCsv)
@@ -600,7 +600,7 @@ describe('sql-db-to-file', () => {
     })
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.dataSourceId)
+    const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
     fs.mkdirSync(tmpFolder, { recursive: true })
     sqlSouth.compression = true
 

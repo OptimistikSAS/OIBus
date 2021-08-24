@@ -28,7 +28,7 @@ afterEach(() => {
 
 describe('NorthForm', () => {
   newConfig.north.applications.forEach((application) => {
-    test(`check NorthForm with application: ${application.applicationId}`, () => {
+    test(`check NorthForm with application: ${application.name}`, () => {
       act(() => {
         ReactDOM.render(
           <BrowserRouter>

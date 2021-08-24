@@ -53,8 +53,8 @@ class ApiHandler {
    * @return {void}
    */
   connect() {
-    const { applicationId, api } = this.application
-    this.logger.info(`North API ${applicationId} started with protocol ${api}`)
+    const { name, api } = this.application
+    this.logger.info(`North API ${name} started with protocol ${api}`)
   }
 
   /**
@@ -63,8 +63,8 @@ class ApiHandler {
    * @return {void}
    */
   disconnect() {
-    const { applicationId } = this.application
-    this.logger.info(`North API ${applicationId} disconnected`)
+    const { name } = this.application
+    this.logger.info(`North API ${name} disconnected`)
   }
 
   /**

@@ -9,7 +9,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 const SouthStatus = () => {
   const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
-  const { dataSourceId } = useParams() // the dataSourceId passed in the url
+  const { id } = useParams() // the dataSource id passed in the url
 
   /**
    * Acquire the status
@@ -17,7 +17,7 @@ const SouthStatus = () => {
    */
   const fetchStatus = () => {
     apis
-      .getSouthStatus(dataSourceId)
+      .getSouthStatus(id)
       .then((response) => {
         setStatus(response)
       })
@@ -87,8 +87,8 @@ const SouthStatus = () => {
         <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
           South
         </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to={`/south/${dataSourceId}`} className="oi-breadcrumb">
-          {dataSourceId}
+        <BreadcrumbItem tag={Link} to={`/south/${id}`} className="oi-breadcrumb">
+          {status.Name}
         </BreadcrumbItem>
         <BreadcrumbItem active tag="span">
           Live
@@ -97,7 +97,7 @@ const SouthStatus = () => {
       <Row>
         <Label>
           <span>
-            {`${dataSourceId} status`}
+            {`${status.Name} status`}
             &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
           </span>

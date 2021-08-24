@@ -97,14 +97,14 @@ const createValueErrorsDatabase = async (databasePath) => {
 /**
  * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {String} dataSourceId - The data source ID
+ * @param {String} id - The data source id
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveValues = (database, dataSourceId, values) => {
+const saveValues = (database, id, values) => {
   const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id)
                       VALUES `
-  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceId}')`)
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${id}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   try {
     database.prepare(query).run()
@@ -116,17 +116,17 @@ const saveValues = (database, dataSourceId, values) => {
 /**
  * Save errored values in database.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {String} applicationId - The application ID
+ * @param {String} id - The application id
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveErroredValues = async (database, applicationId, values) => {
+const saveErroredValues = async (database, id, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application_id)
                  VALUES (?, ?, ?, ?)`
   try {
     await database.run('BEGIN;')
     const stmt = await database.prepare(query)
-    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, applicationId))
+    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, id))
     await Promise.all(actions)
     await database.run('COMMIT;')
   } catch (error) {
@@ -160,7 +160,7 @@ const getCount = async (database) => {
  * @return {array|null} - The values
  */
 const getValuesToSend = async (database, count) => {
-  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId
+  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as name
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`
@@ -213,31 +213,31 @@ const removeSentValues = (database, values) => {
  * Save file for a given application.
  * @param {BetterSqlite3.Database} database - The database to use
  * @param {number} timestamp - The timestamp
- * @param {string} applicationId - The application ID
+ * @param {string} id - The application id
  * @param {string} filePath - The file path
  * @return {void}
  */
-const saveFile = async (database, timestamp, applicationId, filePath) => {
+const saveFile = async (database, timestamp, id, filePath) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, application, path) 
                  VALUES (?, ?, ?)`
   const stmt = await database.prepare(query)
-  await stmt.run(timestamp, applicationId, filePath)
+  await stmt.run(timestamp, id, filePath)
 }
 
 /**
  * Get file to send to a given North application.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {string} applicationId - The application ID
+ * @param {string} id - The application name
  * @return {string|null} - The file path
  */
-const getFileToSend = async (database, applicationId) => {
+const getFileToSend = async (database, id) => {
   const query = `SELECT path, timestamp 
                  FROM ${CACHE_TABLE_NAME}
                  WHERE application = ?
                  ORDER BY timestamp
                  LIMIT 1`
   const stmt = await database.prepare(query)
-  const results = await stmt.all(applicationId)
+  const results = await stmt.all(id)
 
   return results.length > 0 ? results[0] : null
 }
@@ -245,16 +245,16 @@ const getFileToSend = async (database, applicationId) => {
 /**
  * Delete sent file from the cache for a given North application.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {string} applicationId - The application ID
+ * @param {string} id - The application id
  * @param {string} filePath - The file path
  * @return {void}
  */
-const deleteSentFile = async (database, applicationId, filePath) => {
+const deleteSentFile = async (database, id, filePath) => {
   const query = `DELETE FROM ${CACHE_TABLE_NAME}
                  WHERE application = ?
                    AND path = ?`
   const stmt = await database.prepare(query)
-  await stmt.run(applicationId, filePath)
+  await stmt.run(id, filePath)
 }
 
 /**

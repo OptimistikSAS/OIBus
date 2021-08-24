@@ -61,7 +61,7 @@ describe('South', () => {
     Simulate.click(document.querySelector('td path'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.dataSourceId',
+      name: 'south.dataSources.0.name',
       value: 'new_id',
     })
     expect(container).toMatchSnapshot()
@@ -72,7 +72,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[5]
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[3])
     Simulate.click(document.getElementsByClassName('btn btn-primary')[1])
     expect(dispatchNewConfig).toBeCalledWith({
@@ -87,9 +87,9 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[5]
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].dataSourceId}` })
+    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].id}` })
     expect(container).toMatchSnapshot()
   })
   test('check duplicate first dataSource', () => {
@@ -98,17 +98,17 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[5]
+    const firstApplicationButtons = document.querySelectorAll('td')[4]
     const duplicateButton = firstApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[0]
-    const newName = `${dataSource.dataSourceId} copy`
+    const newName = `${dataSource.name} copy`
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
       value: {
         ...dataSource,
-        dataSourceId: newName,
+        name: newName,
         enabled: false,
       },
     })
@@ -120,17 +120,17 @@ describe('South', () => {
         <South />, container,
       )
     })
-    const thirdApplicationButtons = document.querySelectorAll('td')[17]
+    const thirdApplicationButtons = document.querySelectorAll('td')[14]
     const duplicateButton = thirdApplicationButtons.querySelectorAll('path')[2]
     Simulate.click(duplicateButton)
     const dataSource = newConfig.south.dataSources[2]
-    const newName = `${dataSource.dataSourceId} copy2`
+    const newName = `${dataSource.name} copy2`
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
       value: {
         ...dataSource,
-        dataSourceId: newName,
+        name: newName,
         enabled: false,
       },
     })
@@ -142,7 +142,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    Simulate.change(document.getElementById('dataSourceId'), { target: { value: 'new_datasource' } })
+    Simulate.change(document.getElementById('name'), { target: { value: 'new_datasource' } })
     Simulate.click(document.querySelector('form div div button'))
     expect(container).toMatchSnapshot()
   })
@@ -154,7 +154,7 @@ describe('South', () => {
         <South />, container,
       )
     })
-    Simulate.change(document.getElementById('dataSourceId'), { target: { value: newConfig.south.dataSources[0].dataSourceId } })
+    Simulate.change(document.getElementById('name'), { target: { value: newConfig.south.dataSources[0].id } })
     try {
       Simulate.click(document.querySelector('form div div button'))
     } catch (e) {
@@ -162,7 +162,7 @@ describe('South', () => {
     }
     console.error = originalError
   })
-  test('check sort pressed on dataSourceId', () => {
+  test('check sort pressed on dataSource name', () => {
     act(() => {
       ReactDOM.render(
         <South />, container,
@@ -172,7 +172,7 @@ describe('South', () => {
     Simulate.click(firstHeader.querySelectorAll('path')[1])
     expect(container).toMatchSnapshot()
   })
-  test('check sort pressed on dataSourceId ascending', () => {
+  test('check sort pressed on dataSource name ascending', () => {
     act(() => {
       ReactDOM.render(
         <South />, container,
@@ -191,8 +191,8 @@ describe('South', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check with sortBy=dataSourceId', () => {
-    sort.sortSouthBy = 'dataSourceId'
+  test('check with sortBy=name', () => {
+    sort.sortSouthBy = 'name'
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
     act(() => {
       ReactDOM.render(

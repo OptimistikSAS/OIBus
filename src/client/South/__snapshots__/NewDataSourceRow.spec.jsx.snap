@@ -16,15 +16,15 @@ exports[`NewDataSourceRow check NewDataSourceRow 1`] = `
         >
           <label
             class=""
-            for="dataSourceId"
+            for="name"
           >
-            New DataSource ID
+            New DataSource Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="dataSourceId"
-            name="dataSourceId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />
@@ -123,15 +123,15 @@ exports[`NewDataSourceRow check add press 1`] = `
         >
           <label
             class=""
-            for="dataSourceId"
+            for="name"
           >
-            New DataSource ID
+            New DataSource Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="dataSourceId"
-            name="dataSourceId"
+            id="name"
+            name="name"
             type="text"
             value="new_datasource"
           />
@@ -230,15 +230,15 @@ exports[`NewDataSourceRow check add pressed with empty dataSource name 1`] = `
         >
           <label
             class=""
-            for="dataSourceId"
+            for="name"
           >
-            New DataSource ID
+            New DataSource Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="dataSourceId"
-            name="dataSourceId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />
@@ -321,7 +321,7 @@ exports[`NewDataSourceRow check add pressed with empty dataSource name 1`] = `
 </div>
 `;
 
-exports[`NewDataSourceRow check change dataSourceId 1`] = `
+exports[`NewDataSourceRow check change dataSource name 1`] = `
 <div>
   <form
     class=""
@@ -337,15 +337,15 @@ exports[`NewDataSourceRow check change dataSourceId 1`] = `
         >
           <label
             class=""
-            for="dataSourceId"
+            for="name"
           >
-            New DataSource ID
+            New DataSource Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="dataSourceId"
-            name="dataSourceId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />
@@ -444,15 +444,15 @@ exports[`NewDataSourceRow check change protocol 1`] = `
         >
           <label
             class=""
-            for="dataSourceId"
+            for="name"
           >
-            New DataSource ID
+            New DataSource Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="dataSourceId"
-            name="dataSourceId"
+            id="name"
+            name="name"
             type="text"
             value="new_datasource"
           />

@@ -105,41 +105,44 @@ class Engine {
   /**
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
-   * @param {string} dataSourceId - The South generating the value
+   * @param {string} id - The data source id
+   * @param {string} name - The data source name
    * @param {object} values - array of values
    * @return {void}
    */
-  async addValues(dataSourceId, values) {
+  async addValues(id, name, values) {
     const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from ${dataSourceId}`)
-    if (sanitizedValues.length) await this.cache.cacheValues(dataSourceId, sanitizedValues)
+    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from ${name}`)
+    if (sanitizedValues.length) await this.cache.cacheValues(id, sanitizedValues)
   }
 
   /**
    * Add a new File from an data source to the Engine.
    * The Engine will forward the File to the Cache.
-   * @param {string} dataSourceId - The South generating the file
+   * @param {string} id - The data source id
+   * @param {string} name - The South generating the file
    * @param {string} filePath - The path to the File
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(dataSourceId, filePath, preserveFiles) {
-    this.logger.silly(`Engine addFile() from ${dataSourceId} with ${filePath}`)
-    this.cache.cacheFile(dataSourceId, filePath, preserveFiles)
+  addFile(id, name, filePath, preserveFiles) {
+    this.logger.silly(`Engine addFile() from ${name} with ${filePath}`)
+    this.cache.cacheFile(id, name, filePath, preserveFiles)
   }
 
   /**
    * Send values to a North application.
-   * @param {string} applicationId - The application ID
+   * @param {string} id - The application id
+   * @param {string} name - The application name
    * @param {object[]} values - The values to send
    * @return {number} - The send status
    */
-  async handleValuesFromCache(applicationId, values) {
-    this.logger.silly(`handleValuesFromCache() call with ${applicationId} and ${values.length} values`)
+  async handleValuesFromCache(id, name, values) {
+    this.logger.silly(`handleValuesFromCache() call with ${name} and ${values.length} values`)
 
     let status
     try {
-      status = await this.activeApis[applicationId].handleValues(values)
+      status = await this.activeApis[id].handleValues(values)
     } catch (error) {
       status = error
     }
@@ -149,16 +152,17 @@ class Engine {
 
   /**
    * Send file to a North application.
-   * @param {string} applicationId - The application ID
+   * @param {string} id - The application id
+   * @param {string} name - The application name
    * @param {string} filePath - The file to send
    * @return {number} - The send status
    */
-  async sendFile(applicationId, filePath) {
-    this.logger.silly(`Engine sendFile() call with ${applicationId} and ${filePath}`)
+  async sendFile(id, name, filePath) {
+    this.logger.silly(`Engine sendFile() call with ${name} and ${filePath}`)
 
     let status
     try {
-      status = await this.activeApis[applicationId].handleFile(filePath)
+      status = await this.activeApis[id].handleFile(filePath)
     } catch (error) {
       status = error
     }
@@ -192,30 +196,30 @@ class Engine {
     }
     // 2. start Protocol for each data sources
     southConfig.dataSources.forEach((dataSource) => {
-      const { protocol, enabled, dataSourceId } = dataSource
+      const { id, protocol, enabled, name } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
       if (enabled) {
         if (ProtocolHandler) {
-          this.activeProtocols[dataSourceId] = new ProtocolHandler(dataSource, this)
-          this.activeProtocols[dataSourceId].connect()
+          this.activeProtocols[id] = new ProtocolHandler(dataSource, this)
+          this.activeProtocols[id].connect()
         } else {
-          this.logger.error(`Protocol for ${dataSourceId} is not found : ${protocol}`)
+          this.logger.error(`Protocol for ${name} is not found : ${protocol}`)
         }
       }
     })
 
     // 3. start Applications
     northConfig.applications.forEach((application) => {
-      const { api, enabled, applicationId } = application
+      const { id, api, enabled, name } = application
       // select the right api handler
       const ApiHandler = apiList[api]
       if (enabled) {
         if (ApiHandler) {
-          this.activeApis[applicationId] = new ApiHandler(application, this)
-          this.activeApis[applicationId].connect()
+          this.activeApis[id] = new ApiHandler(application, this)
+          this.activeApis[id].connect()
         } else {
-          this.logger.error(`API for ${applicationId} is not found : ${api}`)
+          this.logger.error(`API for ${name} is not found : ${api}`)
         }
       }
     })
@@ -241,24 +245,24 @@ class Engine {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
-            this.logger.error(` dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${dataSource.scanMode}`)
-          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.dataSourceId)) {
+            this.logger.error(` dataSource: ${dataSource.name} has a unknown scan mode: ${dataSource.scanMode}`)
+          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.id)) {
             // add the source for this scan only if not already there
-            this.scanLists[dataSource.scanMode].push(dataSource.dataSourceId)
+            this.scanLists[dataSource.scanMode].push(dataSource.id)
           }
         } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
           dataSource.points.forEach((point) => {
             if (point.scanMode !== 'listen') {
               if (!this.scanLists[point.scanMode]) {
-                this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.dataSourceId} has a unknown scan mode: ${point.scanMode}`)
-              } else if (!this.scanLists[point.scanMode].includes(dataSource.dataSourceId)) {
+                this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.name} has a unknown scan mode: ${point.scanMode}`)
+              } else if (!this.scanLists[point.scanMode].includes(dataSource.id)) {
                 // add the source for this scan only if not already there
-                this.scanLists[point.scanMode].push(dataSource.dataSourceId)
+                this.scanLists[point.scanMode].push(dataSource.id)
               }
             }
           })
         } else {
-          this.logger.error(` dataSource: ${dataSource.dataSourceId} has no scan mode defined`)
+          this.logger.error(` dataSource: ${dataSource.name} has no scan mode defined`)
         }
       }
     })
@@ -269,11 +273,11 @@ class Engine {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
-          this.scanLists[scanMode].forEach((dataSourceId) => {
+          this.scanLists[scanMode].forEach((id) => {
             try {
-              this.activeProtocols[dataSourceId].onScan(scanMode)
+              this.activeProtocols[id].onScan(scanMode)
             } catch (error) {
-              this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
+              this.logger.error(`scan for ${id} failed: ${error}`)
             }
           })
         })
@@ -312,14 +316,14 @@ class Engine {
     })
 
     // Stop Protocols
-    Object.entries(this.activeProtocols).forEach(([dataSourceId, protocol]) => {
-      this.logger.info(`Stopping ${dataSourceId}`)
+    Object.entries(this.activeProtocols).forEach(([name, protocol]) => {
+      this.logger.info(`Stopping ${name}`)
       protocol.disconnect()
     })
 
     // Stop Applications
-    Object.entries(this.activeApis).forEach(([applicationId, application]) => {
-      this.logger.info(`Stopping ${applicationId}`)
+    Object.entries(this.activeApis).forEach(([name, application]) => {
+      this.logger.info(`Stopping ${name}`)
       application.disconnect()
     })
 
@@ -479,11 +483,11 @@ class Engine {
 
   /**
    * Get live status for a given South.
-   * @param {string} dataSourceId - The dataSourceId
+   * @param {string} id - The datasource id
    * @returns {object} - The live status
    */
-  getStatusForSouth(dataSourceId) {
-    const south = this.activeProtocols[dataSourceId]
+  getStatusForSouth(id) {
+    const south = this.activeProtocols[id]
     return south ? south.getStatus() : {}
   }
 }
