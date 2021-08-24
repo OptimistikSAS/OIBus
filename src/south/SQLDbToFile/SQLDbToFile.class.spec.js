@@ -144,15 +144,15 @@ describe('SQLDbToFile', () => {
     const entryList4 = [{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }] // no timestamp
 
     const latestDate1 = sqlSouth.getLatestDate(entryList1, new Date('2020-02-02T02:02:02.000Z')) // with string format
-    expect(latestDate1).toEqual(new Date('2021-03-30 12:30:00.150'))
+    expect(latestDate1).toEqual(new Date('2021-03-30 12:30:00.151'))
     sqlSouth.logger.debug.mockClear()
 
     const latestDate2 = sqlSouth.getLatestDate(entryList2, new Date('2020-02-02T02:02:02.000Z')) // with number format - no ms
-    expect(latestDate2).toEqual(new Date(1617107400000))
+    expect(latestDate2).toEqual(new Date(1617107400001))
     sqlSouth.logger.debug.mockClear()
 
     const latestDate3 = sqlSouth.getLatestDate(entryList3, new Date('2020-02-02T02:02:02.000Z')) // with date format
-    expect(latestDate3).toEqual(new Date(1617193800000))
+    expect(latestDate3).toEqual(new Date(1617193800001))
     sqlSouth.logger.debug.mockClear()
 
     const latestDate4 = sqlSouth.getLatestDate(entryList4, new Date('2020-02-02T02:02:02.000Z')) // without timestamp
