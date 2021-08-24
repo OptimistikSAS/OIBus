@@ -118,6 +118,7 @@ class SQLDbToFile extends ProtocolHandler {
     entryList.forEach((entry) => {
       if (entry[this.timeColumn] instanceof Date && entry[this.timeColumn] > newLastCompletedAt) {
         newLastCompletedAt = entry[this.timeColumn]
+        newLastCompletedAt.setMilliseconds(newLastCompletedAt.getMilliseconds() + 1)
       } else if (entry[this.timeColumn]) {
         const entryDate = new Date(entry[this.timeColumn])
         if (entryDate.toString() !== 'Invalid Date') {
@@ -127,6 +128,7 @@ class SQLDbToFile extends ProtocolHandler {
           const entryDateWithoutTimezoneOffset = typeof entry[this.timeColumn] === 'string' ? new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000) : entryDate
           if (entryDateWithoutTimezoneOffset > new Date(newLastCompletedAt)) {
             newLastCompletedAt = entryDateWithoutTimezoneOffset
+            newLastCompletedAt.setMilliseconds(newLastCompletedAt.getMilliseconds() + 1)
           }
         }
       }
@@ -187,7 +189,7 @@ class SQLDbToFile extends ProtocolHandler {
       } catch (error) {
         this.logger.error(error)
       }
-    } while (intervalResult.length)
+    } while (intervalResult.length > 0 && endTime > startTime)
 
     this.logger.debug(`Found ${result.length} results`)
 
@@ -270,7 +272,7 @@ class SQLDbToFile extends ProtocolHandler {
         request.input('EndTime', mssql.DateTimeOffset, endTime)
       }
       if (this.query.indexOf('@MaxReturnValues') !== -1) {
-        request.input('MaxReturnValues', mssql.Numeric, this.maxReturnValues)
+        request.input('MaxReturnValues', mssql.Int, this.maxReturnValues)
       }
       const result = await request.query(adaptedQuery)
       const [first] = result.recordsets
