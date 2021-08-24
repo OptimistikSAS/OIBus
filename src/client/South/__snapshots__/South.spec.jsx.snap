@@ -34,42 +34,7 @@ exports[`South check South 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -211,9 +176,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -317,9 +279,6 @@ exports[`South check South 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -427,9 +386,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -533,9 +489,6 @@ exports[`South check South 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -643,9 +596,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -749,9 +699,6 @@ exports[`South check South 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -859,9 +806,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -965,9 +909,6 @@ exports[`South check South 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -1075,9 +1016,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -1183,9 +1121,6 @@ exports[`South check South 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -1278,15 +1213,15 @@ exports[`South check South 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -1404,42 +1339,7 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -1581,9 +1481,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -1687,9 +1584,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -1797,9 +1691,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -1903,9 +1794,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -2013,9 +1901,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -2119,9 +2004,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -2229,9 +2111,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -2335,9 +2214,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -2445,9 +2321,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -2553,9 +2426,6 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -2648,15 +2518,15 @@ exports[`South check add pressed with "new_datasource" id 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value="new_datasource"
             />
@@ -2774,42 +2644,7 @@ exports[`South check delete first dataSource 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -2951,9 +2786,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -3057,9 +2889,6 @@ exports[`South check delete first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -3167,9 +2996,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -3273,9 +3099,6 @@ exports[`South check delete first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -3383,9 +3206,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -3489,9 +3309,6 @@ exports[`South check delete first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -3599,9 +3416,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -3705,9 +3519,6 @@ exports[`South check delete first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -3815,9 +3626,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -3923,9 +3731,6 @@ exports[`South check delete first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -4018,15 +3823,15 @@ exports[`South check delete first dataSource 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -4144,42 +3949,7 @@ exports[`South check duplicate first dataSource 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -4321,9 +4091,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -4427,9 +4194,6 @@ exports[`South check duplicate first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -4537,9 +4301,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -4643,9 +4404,6 @@ exports[`South check duplicate first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -4753,9 +4511,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -4859,9 +4614,6 @@ exports[`South check duplicate first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -4969,9 +4721,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -5075,9 +4824,6 @@ exports[`South check duplicate first dataSource 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -5185,9 +4931,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -5293,9 +5036,6 @@ exports[`South check duplicate first dataSource 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -5388,15 +5128,15 @@ exports[`South check duplicate first dataSource 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -5514,42 +5254,7 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -5691,9 +5396,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -5797,9 +5499,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -5907,9 +5606,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -6013,9 +5709,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -6123,9 +5816,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -6229,9 +5919,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -6339,9 +6026,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -6445,9 +6129,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -6555,9 +6236,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -6663,9 +6341,6 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -6758,15 +6433,15 @@ exports[`South check duplicate first dataSource with countCopies 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -6884,42 +6559,7 @@ exports[`South check edit first dataSource id 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -7061,9 +6701,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -7167,9 +6804,6 @@ exports[`South check edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -7277,9 +6911,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -7383,9 +7014,6 @@ exports[`South check edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -7493,9 +7121,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -7599,9 +7224,6 @@ exports[`South check edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -7709,9 +7331,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -7815,9 +7434,6 @@ exports[`South check edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -7925,9 +7541,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -8033,9 +7646,6 @@ exports[`South check edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -8128,15 +7738,15 @@ exports[`South check edit first dataSource id 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -8274,42 +7884,7 @@ exports[`South check open edit first application 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -8451,9 +8026,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -8557,9 +8129,6 @@ exports[`South check open edit first application 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -8667,9 +8236,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -8773,9 +8339,6 @@ exports[`South check open edit first application 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -8883,9 +8446,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -8989,9 +8549,6 @@ exports[`South check open edit first application 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -9099,9 +8656,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -9205,9 +8759,6 @@ exports[`South check open edit first application 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -9315,9 +8866,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -9423,9 +8971,6 @@ exports[`South check open edit first application 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -9518,15 +9063,15 @@ exports[`South check open edit first application 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -9644,42 +9189,7 @@ exports[`South check press edit first dataSource id 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -9835,9 +9345,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -9941,9 +9448,6 @@ exports[`South check press edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -10051,9 +9555,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -10157,9 +9658,6 @@ exports[`South check press edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -10267,9 +9765,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -10373,9 +9868,6 @@ exports[`South check press edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -10483,9 +9975,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -10589,9 +10078,6 @@ exports[`South check press edit first dataSource id 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -10699,9 +10185,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -10807,9 +10290,6 @@ exports[`South check press edit first dataSource id 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -10902,15 +10382,15 @@ exports[`South check press edit first dataSource id 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -10994,7 +10474,7 @@ exports[`South check press edit first dataSource id 1`] = `
 </div>
 `;
 
-exports[`South check sort pressed on dataSourceId 1`] = `
+exports[`South check sort pressed on dataSource name 1`] = `
 <div>
   <div
     class="south col-md-8"
@@ -11028,42 +10508,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -11205,9 +10650,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -11311,9 +10753,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -11421,9 +10860,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -11527,9 +10963,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -11637,9 +11070,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -11743,9 +11173,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -11853,9 +11280,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -11959,9 +11383,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -12069,9 +11490,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -12177,9 +11595,6 @@ exports[`South check sort pressed on dataSourceId 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -12272,15 +11687,15 @@ exports[`South check sort pressed on dataSourceId 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -12364,7 +11779,7 @@ exports[`South check sort pressed on dataSourceId 1`] = `
 </div>
 `;
 
-exports[`South check sort pressed on dataSourceId ascending 1`] = `
+exports[`South check sort pressed on dataSource name ascending 1`] = `
 <div>
   <div
     class="south col-md-8"
@@ -12398,42 +11813,7 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
           <th
             scope="col"
           >
-            Data Source ID
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px; margin-left: 2px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M168 345.941V44c0-6.627-5.373-12-12-12h-56c-6.627 0-12 5.373-12 12v301.941H41.941c-21.382 0-32.09 25.851-16.971 40.971l86.059 86.059c9.373 9.373 24.569 9.373 33.941 0l86.059-86.059c15.119-15.119 4.411-40.971-16.971-40.971H168z"
-              />
-            </svg>
-            <svg
-              class="oi-up-down"
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="opacity: 0.5; width: 6px;"
-              viewBox="0 0 256 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M88 166.059V468c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12V166.059h46.059c21.382 0 32.09-25.851 16.971-40.971l-86.059-86.059c-9.373-9.373-24.569-9.373-33.941 0l-86.059 86.059c-15.119 15.119-4.411 40.971 16.971 40.971H88z"
-              />
-            </svg>
-          </th>
-          <th
-            scope="col"
-          >
-            UUID
+            Data Source Name
             <svg
               class="oi-up-down"
               fill="currentColor"
@@ -12575,9 +11955,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-1
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -12681,9 +12058,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-2
           </td>
           <td>
             <div
@@ -12791,9 +12165,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-3
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -12897,9 +12268,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-4
           </td>
           <td>
             <div
@@ -13007,9 +12375,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-5
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -13113,9 +12478,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-6
           </td>
           <td>
             <div
@@ -13223,9 +12585,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-7
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -13329,9 +12688,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
                 </svg>
               </button>
             </div>
-          </td>
-          <td>
-            datasource-uuid-8
           </td>
           <td>
             <div
@@ -13439,9 +12795,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-9
-          </td>
-          <td>
             <div
               class="text-danger"
             >
@@ -13547,9 +12900,6 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
             </div>
           </td>
           <td>
-            datasource-uuid-10
-          </td>
-          <td>
             <div
               class="text-success"
             >
@@ -13642,15 +12992,15 @@ exports[`South check sort pressed on dataSourceId ascending 1`] = `
           >
             <label
               class=""
-              for="dataSourceId"
+              for="name"
             >
-              New DataSource ID
+              New DataSource Name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="dataSourceId"
-              name="dataSourceId"
+              id="name"
+              name="name"
               type="text"
               value=""
             />
@@ -13754,7 +13104,7 @@ exports[`South check with missing dataSources 1`] = `
 </div>
 `;
 
-exports[`South check with sortBy=dataSourceId 1`] = `
+exports[`South check with sortBy=name 1`] = `
 <div>
   <div
     class="spinner-container"

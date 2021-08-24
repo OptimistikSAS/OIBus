@@ -62,7 +62,7 @@ describe('PointsButton', () => {
       )
     })
     Simulate.click(document.querySelector('button.oi-points-button'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${dataSource.dataSourceId}/points` })
+    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${dataSource.id}/points` })
     expect(container).toMatchSnapshot()
   })
   test('check if points array is empty', () => {

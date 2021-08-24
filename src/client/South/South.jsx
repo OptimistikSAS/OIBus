@@ -35,11 +35,11 @@ const South = () => {
 
   /**
    * Gets the index of a south dataSource
-   * @param {string} dataSourceId ID of an dataSource
+   * @param {string} name name of a dataSource
    * @returns {object} The selected dataSource's config
    */
-  const getDataSourceIndex = ((dataSourceId) => {
-    const position = sortableDataSources.findIndex((dataSource) => dataSource.dataSourceId === dataSourceId)
+  const getDataSourceIndex = ((name) => {
+    const position = sortableDataSources.findIndex((dataSource) => dataSource.name === name)
     if (position === -1) {
       return position
     }
@@ -54,38 +54,38 @@ const South = () => {
    */
   const handleEdit = (position) => {
     const dataSource = sortableDataSources[position]
-    const pathname = `/south/${dataSource.dataSourceId}`
+    const pathname = `/south/${dataSource.id}`
     history.push({ pathname })
   }
 
   /**
    * Handles the change of one data source id (name)
    * @param {integer} dataSourceIndex The index that will change
-   * @param {string} newDataSourceId The new data source id
+   * @param {string} newName The new data source id
    * @return {void}
    */
-  const handleDataSourceIdChanged = (dataSourceIndex, newDataSourceId) => {
+  const handleDataSourceNameChanged = (dataSourceIndex, newName) => {
     dispatchNewConfig({
       type: 'update',
-      name: `south.dataSources.${dataSourceIndex}.dataSourceId`,
-      value: newDataSourceId,
+      name: `south.dataSources.${dataSourceIndex}.name`,
+      value: newName,
     })
   }
 
   /**
    * Adds a new datasource row to the table
    * @param {Object} param0 An datasource object containing
-   * dataSourceId, enabled and protocol fields
+   * name, enabled and protocol fields
    * @returns {void}
    */
-  const addDataSource = ({ id, dataSourceId, protocol }) => {
-    const dataSourceIndex = getDataSourceIndex(dataSourceId)
+  const addDataSource = ({ id, name, protocol }) => {
+    const dataSourceIndex = getDataSourceIndex(name)
     if (dataSourceIndex === -1) {
       // Adds new dataSource
       dispatchNewConfig({
         type: 'addRow',
         name: 'south.dataSources',
-        value: { id, dataSourceId, protocol, enabled: false },
+        value: { id, name, protocol, enabled: false },
       })
     } else {
       const error = new Error('data source already exists')
@@ -121,14 +121,14 @@ const South = () => {
    */
   const handleDuplicate = (position) => {
     const dataSource = dataSources[sortableDataSources[position].index]
-    const newName = `${dataSource.dataSourceId} copy`
-    const countCopies = dataSources.filter((e) => e.dataSourceId.startsWith(newName)).length
+    const newName = `${dataSource.name} copy`
+    const countCopies = dataSources.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
       name: 'south.dataSources',
       value: {
         ...dataSource,
-        dataSourceId: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
+        name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
       },
     })
@@ -142,27 +142,26 @@ const South = () => {
    */
   const handleStatus = (position) => {
     const dataSource = sortableDataSources[position]
-    const pathname = `/south/${dataSource.dataSourceId}/live`
+    const pathname = `/south/${dataSource.id}/live`
     history.push({ pathname })
   }
 
-  const tableHeaders = ['Data Source ID', 'UUID', 'Status', 'Protocol', 'Points']
-  const sortableProperties = ['dataSourceId', 'id', 'enabled', 'protocol']
+  const tableHeaders = ['Data Source Name', 'Status', 'Protocol', 'Points']
+  const sortableProperties = ['name', 'enabled', 'protocol']
   const tableRows = sortableDataSources?.map((dataSource) => [
     {
-      name: dataSource.dataSourceId,
+      name: dataSource.name,
       value: (
         <EditableIdField
-          id={dataSource.dataSourceId}
+          id={dataSource.name}
           fromList={sortableDataSources}
           index={dataSource.index}
-          name="dataSourceId"
+          name="name"
           valid={validation.protocol.isValidName}
-          idChanged={handleDataSourceIdChanged}
+          idChanged={handleDataSourceNameChanged}
         />
       ),
     },
-    { name: 'id', value: dataSource.id },
     {
       name: 'enabled',
       value: (

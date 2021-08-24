@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Col, Row } from 'reactstrap'
-import { v4 as uuidv4 } from 'uuid'
+import { nanoid } from 'nanoid'
 import { OIbText, OIbSelect } from '../components/OIbForm/index'
 
 const NewDataSourceRow = ({ protocolList, addDataSource }) => {
-  const [dataSourceId, setDataSourceId] = React.useState('')
+  const [name, setName] = React.useState('')
   const [protocol, setProtocol] = React.useState(protocolList[0])
   /**
    * Updates the dataSource's state
@@ -14,14 +14,14 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
    */
   const handleAddDataSource = () => {
     //  update the new dataSource's state
-    if (dataSourceId === '') return
-    addDataSource({ id: uuidv4(), dataSourceId, protocol })
+    if (name === '') return
+    addDataSource({ id: nanoid(), name, protocol })
   }
 
-  const handleChange = (name, value) => {
-    switch (name) {
-      case 'dataSourceId':
-        setDataSourceId(value)
+  const handleChange = (attributeName, value) => {
+    switch (attributeName) {
+      case 'name':
+        setName(value)
         break
       case 'protocol':
       default:
@@ -34,9 +34,9 @@ const NewDataSourceRow = ({ protocolList, addDataSource }) => {
       <Row>
         <Col md="5">
           <OIbText
-            label="New DataSource ID"
-            value={dataSourceId}
-            name="dataSourceId"
+            label="New DataSource Name"
+            value={name}
+            name="name"
             onChange={handleChange}
             defaultValue=""
           />

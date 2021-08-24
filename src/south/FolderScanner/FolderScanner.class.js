@@ -39,7 +39,7 @@ class FolderScanner extends ProtocolHandler {
     try {
       // eslint-disable-next-line no-bitwise
       fs.accessSync(this.inputFolder, fs.constants.R_OK | fs.constants.W_OK)
-      this.logger.debug(`${this.dataSource.dataSourceId} is checking folder ${this.inputFolder}.`)
+      this.logger.debug(`${this.dataSource.name} is checking folder ${this.inputFolder}.`)
     } catch (err) {
       this.logger.error(`can't write to ${this.inputFolder}: ${err.message}`)
     }

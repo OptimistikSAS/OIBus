@@ -34,7 +34,7 @@ describe('Console north', () => {
     ]
     await oiconnectNorth.handleValues(values)
 
-    const expectedUrl = 'http://hostname:2223/addValues?dataSourceId=OIBus:monoiconnect'
+    const expectedUrl = 'http://hostname:2223/addValues?name=OIBus:monoiconnect'
     const expectedAuthentication = config.north.applications[1].OIConnect.authentication
     const expectedBody = JSON.stringify(values)
     const expectedHeaders = { 'Content-Type': 'application/json' }
@@ -48,7 +48,7 @@ describe('Console north', () => {
 
     await oiconnectNorth.handleFile(filePath)
 
-    const expectedUrl = 'http://hostname:2223/addFile?dataSourceId=OIBus:monoiconnect'
+    const expectedUrl = 'http://hostname:2223/addFile?name=OIBus:monoiconnect'
     const expectedAuthentication = config.north.applications[1].OIConnect.authentication
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
   })

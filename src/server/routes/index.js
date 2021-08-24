@@ -24,7 +24,7 @@ router.post('/engine/addValues', engineController.addValues)
 router.post('/engine/addFile', upload.single('file'), engineController.addFile)
 router.post('/engine/aliveSignal', engineController.aliveSignal)
 router.get('/status', engineController.getStatus)
-router.get('/status/south/:dataSourceId', engineController.getStatusForSouth)
+router.get('/status/south/:id', engineController.getStatusForSouth)
 router.get('/reload', engineController.reload)
 router.get('/shutdown', engineController.shutdown)
 

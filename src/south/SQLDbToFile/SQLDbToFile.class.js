@@ -81,7 +81,7 @@ class SQLDbToFile extends ProtocolHandler {
     }
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
-    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
+    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.id)
 
     // Create tmp folder if not exists
     if (!fs.existsSync(this.tmpFolder)) {
@@ -161,7 +161,7 @@ class SQLDbToFile extends ProtocolHandler {
           result = await this.getDataFromSqlite()
           break
         default:
-          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.dataSourceId}`)
+          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
           result = []
       }
     } catch (error) {

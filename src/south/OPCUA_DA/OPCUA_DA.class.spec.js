@@ -36,7 +36,7 @@ beforeEach(() => {
 
 describe('OPCUA-DA south', () => {
   const opcuaConfig = {
-    dataSourceId: 'OPCUA-DA',
+    name: 'OPCUA-DA',
     protocol: 'OPCUA_DA',
     enabled: true,
     startTime: '2020-02-02 02:02:02',

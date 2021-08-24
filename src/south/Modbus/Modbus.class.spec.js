@@ -47,7 +47,7 @@ beforeEach(() => {
 
 describe('Modbus south', () => {
   const modbusConfig = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {
@@ -166,7 +166,7 @@ describe('Modbus south', () => {
   }
 
   const modbusConfigAddressOffset = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {
@@ -224,7 +224,7 @@ describe('Modbus south', () => {
   }
 
   const modbusConfigAddressSwapDataAll = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {
@@ -249,7 +249,7 @@ describe('Modbus south', () => {
   }
 
   const modbusConfigAddressSwapData16 = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {
@@ -274,7 +274,7 @@ describe('Modbus south', () => {
   }
 
   const modbusConfigAddressSwapData32 = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {
@@ -299,7 +299,7 @@ describe('Modbus south', () => {
   }
 
   const modbusConfigAddressSwapDataNo = {
-    dataSourceId: 'Modbus',
+    name: 'Modbus',
     protocol: 'Modbus',
     enabled: true,
     Modbus: {

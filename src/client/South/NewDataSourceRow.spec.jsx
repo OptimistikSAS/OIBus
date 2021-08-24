@@ -5,18 +5,18 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
-import * as uuid from 'uuid'
+import * as nanoid from 'nanoid'
 import testConfig from '../../../tests/testConfig'
 import NewDataSourceRow from './NewDataSourceRow.jsx'
 
-// mocking the uuid method
-jest.mock('uuid')
-jest.spyOn(uuid, 'v4').mockReturnValue('generated-uuid')
+// mocking the nanoid method
+jest.mock('nanoid')
+jest.spyOn(nanoid, 'nanoid').mockReturnValue('generated-uuid')
 
 // mocking state updates
-let dataSourceId = ''
-const setDataSourceId = jest.fn().mockImplementation((newValue) => {
-  dataSourceId = newValue
+let name = ''
+const setName = jest.fn().mockImplementation((newValue) => {
+  name = newValue
 })
 let protocol = testConfig.protocolList[0]
 const setProtocol = jest.fn().mockImplementation((newValue) => {
@@ -25,7 +25,7 @@ const setProtocol = jest.fn().mockImplementation((newValue) => {
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === '') {
-    return [dataSourceId, setDataSourceId]
+    return [name, setName]
   }
   if (init === testConfig.protocolList[0]) {
     return [protocol, setProtocol]
@@ -66,11 +66,11 @@ describe('NewDataSourceRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('dataSourceId'), { target: { value: '' } })
+    Simulate.change(document.getElementById('name'), { target: { value: '' } })
     Simulate.click(document.querySelector('div button'))
     expect(container).toMatchSnapshot()
   })
-  test('check change dataSourceId', () => {
+  test('check change dataSource name', () => {
     act(() => {
       ReactDOM.render(
         <NewDataSourceRow
@@ -79,8 +79,8 @@ describe('NewDataSourceRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('dataSourceId'), { target: { value: 'new_datasource' } })
-    expect(setDataSourceId).toBeCalledWith('new_datasource')
+    Simulate.change(document.getElementById('name'), { target: { value: 'new_datasource' } })
+    expect(setName).toBeCalledWith('new_datasource')
     expect(container).toMatchSnapshot()
   })
   test('check change protocol', () => {
@@ -107,7 +107,7 @@ describe('NewDataSourceRow', () => {
       )
     })
     Simulate.click(document.querySelector('div button'))
-    expect(addDataSource).toBeCalledWith({ id: 'generated-uuid', dataSourceId, protocol })
+    expect(addDataSource).toBeCalledWith({ id: 'generated-uuid', name, protocol })
     expect(container).toMatchSnapshot()
   })
 })

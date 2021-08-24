@@ -8,7 +8,7 @@ import { act } from 'react-dom/test-utils'
 import OIbScanMode from './OIbScanMode.jsx'
 
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
+  { useParams: jest.fn().mockReturnValue({ name: 'OPC-HDA' }) }
 ))
 
 let container

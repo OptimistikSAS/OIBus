@@ -45,7 +45,7 @@ const activateConfig = () => putRequest('/config/activate')
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')
 
-const getSouthStatus = (dataSourceId) => getRequest(`/status/south/${dataSourceId}`)
+const getSouthStatus = (id) => getRequest(`/status/south/${id}`)
 
 const reload = () => getRequest('/reload')
 const shutdown = () => getRequest('/shutdown')
