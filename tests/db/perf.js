@@ -12,7 +12,7 @@ const start = async () => {
   const size = 1000000
   console.time('create.array')
   for (let i = 0; i < size; i += 1) {
-    received.push({ timestamp: timestamp + 10 * i, pointId: `pointId${i}`, data: { value: i, quality, dataSourceId } })
+    received.push({ timestamp: timestamp + 10 * i, pointId: `pointId${i}`, data: { value: i, quality, id: dataSourceId } })
   }
   console.timeEnd('create.array')
   for (let i = 0; i < 10; i += 1) {

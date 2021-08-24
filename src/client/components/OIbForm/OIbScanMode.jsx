@@ -7,8 +7,8 @@ import { ConfigContext } from '../../context/configContext.jsx'
 const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const scanModes = newConfig?.engine?.scanModes ?? [] // scan modes defined in engine
-  const { dataSourceId } = useParams()
-  const dataSource = newConfig?.south.dataSources.find((d) => d.dataSourceId === dataSourceId)
+  const { id } = useParams()
+  const dataSource = newConfig?.south.dataSources.find((d) => d.id === id)
   const scanGroups = dataSource ? dataSource[dataSource.protocol]?.scanGroups : null
   // Scan Group protocols should only allow scan modes set in a scan group as option
   const isPointConfig = name.startsWith('points.')

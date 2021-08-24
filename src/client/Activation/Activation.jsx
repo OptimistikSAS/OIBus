@@ -31,14 +31,6 @@ const Activation = () => {
       if (typeof obj.name !== 'undefined') {
         return obj.name
       }
-      // allow to diff the north list array correctly
-      if (typeof obj.applicationId !== 'undefined') {
-        return obj.applicationId
-      }
-      // allow to diff the south list array correctly
-      if (typeof obj.dataSourceId !== 'undefined') {
-        return obj.dataSourceId
-      }
       return `$$index:${index}`
     },
   })

@@ -28,7 +28,7 @@ afterEach(() => {
 
 newConfig.north.applications.forEach((application) => {
   describe('SubscribedTo', () => {
-    test(`check SubscribedTo with application: ${application.applicationId}`, () => {
+    test(`check SubscribedTo with application: ${application.name}`, () => {
       act(() => {
         ReactDOM.render(
           <SubscribedTo
@@ -57,7 +57,7 @@ describe('SubscribedTo click changes', () => {
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications.0.subscribedTo',
-      value: newConfig.south.dataSources[0].dataSourceId,
+      value: newConfig.south.dataSources[0].id,
     })
     expect(container).toMatchSnapshot()
   })
@@ -74,7 +74,7 @@ describe('SubscribedTo click changes', () => {
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'north.applications.0.subscribedTo.0',
-      value: 'MQTTServer',
+      value: 'datasource-uuid-1',
     })
     expect(container).toMatchSnapshot()
   })

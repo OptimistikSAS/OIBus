@@ -12,7 +12,7 @@ import utils from '../helpers/utils'
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ applicationId: 'monoiconnect' }) }
+  { useParams: jest.fn().mockReturnValue({ id: 'application-uuid-2' }) }
 ))
 
 const mockMath = Object.create(global.Math)

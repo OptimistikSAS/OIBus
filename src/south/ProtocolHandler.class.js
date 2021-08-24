@@ -67,15 +67,15 @@ class ProtocolHandler {
   }
 
   async connect() {
-    const { id, dataSourceId, protocol } = this.dataSource
+    const { id, name, protocol } = this.dataSource
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
-    this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
+    this.logger.info(`Data source ${name} started with protocol ${protocol}`)
   }
 
   onScanImplementation(scanMode) {
-    const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge onScanImplementation(${scanMode})`)
+    const { name } = this.dataSource
+    this.logger.error(`Data source ${name} should surcharge onScanImplementation(${scanMode})`)
   }
 
   async onScan(scanMode) {
@@ -95,13 +95,13 @@ class ProtocolHandler {
   }
 
   listen() {
-    const { dataSourceId } = this.dataSource
-    this.logger.error(`Data source ${dataSourceId} should surcharge listen()`)
+    const { name } = this.dataSource
+    this.logger.error(`Data source ${name} should surcharge listen()`)
   }
 
   disconnect() {
-    const { dataSourceId } = this.dataSource
-    this.logger.info(`Data source ${dataSourceId} disconnected`)
+    const { name } = this.dataSource
+    this.logger.info(`Data source ${name} disconnected`)
   }
 
   /**
@@ -111,7 +111,7 @@ class ProtocolHandler {
    */
   async flush(flag = 'time') {
     this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
-    await this.engine.addValues(this.dataSource.dataSourceId, this.buffer)
+    await this.engine.addValues(this.dataSource.id, this.dataSource.name, this.buffer)
     this.buffer = []
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)
@@ -151,7 +151,7 @@ class ProtocolHandler {
   addFile(filePath, preserveFiles) {
     this.lastAddFileAt = new Date().getTime()
     this.addFileCount += 1
-    this.engine.addFile(this.dataSource.dataSourceId, filePath, preserveFiles)
+    this.engine.addFile(this.dataSource.id, this.dataSource.name, filePath, preserveFiles)
   }
 
   /**
@@ -243,7 +243,11 @@ class ProtocolHandler {
    * @returns {object} - The live status
    */
   getStatus() {
-    const status = { 'Last scan time': this.lastOnScanAt ? new Date(this.lastOnScanAt).toLocaleString() : 'Never' }
+    const status = {
+      Name: this.dataSource.name,
+      Id: this.dataSource.id,
+      'Last scan time': this.lastOnScanAt ? new Date(this.lastOnScanAt).toLocaleString() : 'Never',
+    }
     if (this.handlesFiles) {
       status['Last file added time'] = this.lastAddFileAt ? new Date(this.lastAddFileAt).toLocaleString() : 'Never'
       status['Number of files added'] = this.addFileCount

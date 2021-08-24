@@ -14,7 +14,7 @@ const getStatus = async (ctx) => {
  * @return {void}
  */
 const getStatusForSouth = async (ctx) => {
-  const status = await ctx.app.engine.getStatusForSouth(ctx.params.dataSourceId)
+  const status = await ctx.app.engine.getStatusForSouth(ctx.params.id)
   ctx.ok(status)
 }
 
@@ -65,17 +65,18 @@ const shutdown = async (ctx) => {
  * @return {void}
  */
 const addValues = async (ctx) => {
-  if (ctx.request.query.dataSourceId && Array.isArray(ctx.request.body)) {
+  const { name } = ctx.request.query
+  if (name && Array.isArray(ctx.request.body)) {
     try {
       ctx.app.engine.addValuesMessages += 1
       ctx.app.engine.addValuesCount += ctx.request.body.length
-      await ctx.app.engine.addValues(ctx.request.query.dataSourceId, ctx.request.body)
+      await ctx.app.engine.addValues(`external-${name}`, name, ctx.request.body)
       ctx.ok()
     } catch (error) {
-      ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${ctx.request.query.dataSourceId}`)
+      ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${name}`)
     }
   } else {
-    throw ctx(400, 'Missing dataSourceId')
+    throw ctx(400, 'Missing datasource name')
   }
 }
 
@@ -86,16 +87,17 @@ const addValues = async (ctx) => {
  * @return {void}
  */
 const addFile = async (ctx) => {
-  if (ctx.request.query.dataSourceId) {
+  const { name } = ctx.request.query
+  if (name) {
     try {
       ctx.app.engine.addFileCount += 1
-      await ctx.app.engine.addFile(ctx.request.query.dataSourceId, ctx.request.file.path, false)
+      await ctx.app.engine.addFile(`external-${name}`, name, ctx.request.file.path, false)
       ctx.ok()
     } catch (error) {
-      ctx.throw(500, `Unable to add file from ${ctx.request.query.dataSourceId}`)
+      ctx.throw(500, `Unable to add file from ${name}`)
     }
   } else {
-    throw ctx(400, 'Missing dataSourceId')
+    throw ctx(400, 'Missing dataSource name')
   }
 }
 

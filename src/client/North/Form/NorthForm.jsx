@@ -10,7 +10,7 @@ import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ApiSchemas from '../Apis.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
-  const { id, api, applicationId } = application
+  const { api, name } = application
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
   if (!application.caching) application.caching = {}
@@ -30,8 +30,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             North
           </BreadcrumbItem>
           <BreadcrumbItem active tag="span">
-            {applicationId}
-            <small>{` (${id || ''})`}</small>
+            {name}
           </BreadcrumbItem>
         </Breadcrumb>
       </Row>

@@ -32,7 +32,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 
   const northNodes = applications?.map((application, index) => (
     {
-      id: application.applicationId, // unique id of node
+      id: application.id, // unique id of node
       type: 'output', // output node
       targetPosition: 'bottom', // handle is at the bottom
       style: {
@@ -42,13 +42,13 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div id={`north-${index}`} className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
-            <Link to={`/north/${application.applicationId}`}>
+          <div id={`north-${application.id}`} className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
+            <Link to={`/north/${application.id}`}>
               <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {application.applicationId}
+                {application.name}
               </div>
-              <UncontrolledTooltip placement="top" target={`north-${index}`} innerClassName="oi-pop">
-                {application.applicationId}
+              <UncontrolledTooltip placement="top" target={`north-${application.id}`} innerClassName="oi-pop">
+                {application.name}
               </UncontrolledTooltip>
               <div>{`(${application.api})`}</div>
             </Link>
@@ -60,9 +60,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
   )) ?? []
   const northLinks = applications?.map((application) => (
     {
-      id: `${application.applicationId}-engine`,
+      id: `${application.id}-engine`,
       source: 'engine',
-      target: application.applicationId,
+      target: application.id,
       animated: true,
       type: 'default',
       arrowHeadType: 'arrow',
@@ -72,7 +72,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 
   const southNodes = dataSources?.map((dataSource, index) => (
     {
-      id: dataSource.dataSourceId,
+      id: dataSource.id,
       type: 'input',
       sourcePosition: 'top',
       style: {
@@ -82,13 +82,13 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div id={`south-${index}`} className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
-            <Link to={`/south/${dataSource.dataSourceId}`}>
+          <div id={`south-${dataSource.id}`} className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
+            <Link to={`/south/${dataSource.id}`}>
               <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {dataSource.dataSourceId}
+                {dataSource.name}
               </div>
-              <UncontrolledTooltip placement="top" target={`south-${index}`} innerClassName="oi-pop">
-                {dataSource.dataSourceId}
+              <UncontrolledTooltip placement="top" target={`south-${dataSource.id}`} innerClassName="oi-pop">
+                {dataSource.name}
               </UncontrolledTooltip>
               <div>{`(${dataSource.protocol})`}</div>
             </Link>
@@ -104,9 +104,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 
   const southLinks = dataSources?.map((dataSource) => (
     {
-      id: `${dataSource.dataSourceId}-engine`,
+      id: `${dataSource.id}-engine`,
       target: 'engine',
-      source: dataSource.dataSourceId,
+      source: dataSource.id,
       animated: true,
       type: 'default',
       arrowHeadType: 'arrow',

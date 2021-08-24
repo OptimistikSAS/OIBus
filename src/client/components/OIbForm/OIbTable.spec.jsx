@@ -11,7 +11,7 @@ const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
 
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ dataSourceId: 'OPC-HDA' }) }
+  { useParams: jest.fn().mockReturnValue({ name: 'OPC-HDA' }) }
 ))
 
 let container

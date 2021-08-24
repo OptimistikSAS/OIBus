@@ -24,7 +24,7 @@ const ConfigurePoints = () => {
   const MAX_PAGINATION_DISPLAY = 11
   const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
 
-  const { dataSourceId } = useParams()
+  const { id } = useParams()
   if (!newConfig?.south) {
     return (
       <div className="spinner-container">
@@ -34,9 +34,11 @@ const ConfigurePoints = () => {
     )
   }
   const dataSourceIndex = newConfig.south.dataSources.findIndex(
-    (dataSource) => dataSource.dataSourceId === dataSourceId,
+    (dataSource) => dataSource.id === id,
   )
-  const { points: pointsOrdered = [], protocol } = newConfig.south.dataSources[dataSourceIndex]
+  const dataSource = newConfig.south.dataSources[dataSourceIndex]
+
+  const { points: pointsOrdered = [], protocol } = dataSource
   const points = pointsOrdered.slice().reverse()
 
   /**
@@ -122,7 +124,7 @@ const ConfigurePoints = () => {
     const element = document.createElement('a')
     const file = new Blob([csvString], { type: 'text/csv' })
     element.href = URL.createObjectURL(file)
-    element.download = `${dataSourceId}.csv`
+    element.download = `${dataSource.name}.csv`
     document.body.appendChild(element)
     element.click()
     document.body.removeChild(element)
@@ -195,8 +197,8 @@ const ConfigurePoints = () => {
         <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
           South
         </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to={`/south/${dataSourceId}`} className="oi-breadcrumb">
-          {dataSourceId}
+        <BreadcrumbItem tag={Link} to={`/south/${id}`} className="oi-breadcrumb">
+          {dataSource.name}
         </BreadcrumbItem>
         <BreadcrumbItem active tag="span">
           Points
