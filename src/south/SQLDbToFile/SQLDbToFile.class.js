@@ -211,7 +211,7 @@ class SQLDbToFile extends ProtocolHandler {
       } catch (error) {
         this.logger.error(error)
       }
-    } while (intervalResult.length)
+    } while (intervalResult.length > 0 && endTime > startTime)
 
     this.logger.debug(`Found ${result.length} results`)
 
@@ -293,7 +293,7 @@ class SQLDbToFile extends ProtocolHandler {
         request.input('EndTime', mssql.DateTimeOffset, endTime)
       }
       if (this.query.indexOf('@MaxReturnValues') !== -1) {
-        request.input('MaxReturnValues', mssql.Numeric, this.maxReturnValues)
+        request.input('MaxReturnValues', mssql.Int, this.maxReturnValues)
       }
       const result = await request.query(adaptedQuery)
       this.statusData['Last MSSQL Request'] = adaptedQuery
