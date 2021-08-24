@@ -613,4 +613,44 @@ describe('sql-db-to-file', () => {
     const expected = '2020_03_22 22:22:22.666 +01:00'
     expect(actual).toBe(expected)
   })
+
+  it('should generate proper replacement parameters when no parameters are used', () => {
+    const query = 'SELECT timestamp,temperature FROM history'
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([])
+  })
+
+  it('should generate proper replacement parameters when some parameters are used', () => {
+    const query = 'SELECT timestamp,temperature FROM history WHERE timestamp > @StartTime LIMIT @MaxReturnValues'
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([startTime, maxReturnValues])
+  })
+
+  it('should generate proper replacement parameters when all parameters are used', () => {
+    const query = `
+        SELECT timestamp,temperature
+        FROM history
+        WHERE
+            timestamp > @StartTime
+            AND timestamp <= @EndTime
+            AND timestamp > @StartTime
+        LIMIT @MaxReturnValues`
+    const startTime = new Date('2020-02-20 20:20:20.222')
+    const endTime = new Date('2020-02-20 22:20:20.222')
+    const maxReturnValues = 666
+
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+
+    expect(replacementParameters).toEqual([startTime, endTime, startTime, maxReturnValues])
+  })
 })
