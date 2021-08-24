@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('SouthForm', () => {
   newConfig.south.dataSources.forEach((dataSource) => {
-    test(`check SouthForm with dataSource: ${dataSource.dataSourceId}`, () => {
+    test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
       act(() => {
         ReactDOM.render(
           <BrowserRouter>

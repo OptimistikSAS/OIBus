@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe('MQTT south', () => {
   const mqttConfig = {
-    dataSourceId: 'MQTTServer',
+    name: 'MQTTServer',
     enabled: true,
     protocol: MQTT,
     MQTT: {

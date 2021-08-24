@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Col, Row } from 'reactstrap'
-import { v4 as uuidv4 } from 'uuid'
+import { nanoid } from 'nanoid'
 import { OIbText, OIbSelect } from '../components/OIbForm/index'
 
 const NewApplicationRow = ({ apiList, addApplication }) => {
-  const [applicationId, setApplicationId] = React.useState('')
+  const [name, setName] = React.useState('')
   const [api, setApi] = React.useState(apiList[0])
   /**
    * Updates the application's state
@@ -14,14 +14,14 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
    */
   const handleAddApplication = () => {
     //  update the new application's state
-    if (applicationId === '') return
-    addApplication({ id: uuidv4(), applicationId, api })
+    if (name === '') return
+    addApplication({ id: nanoid(), name, api })
   }
 
-  const handleChange = (name, value) => {
-    switch (name) {
-      case 'applicationId':
-        setApplicationId(value)
+  const handleChange = (attributeName, value) => {
+    switch (attributeName) {
+      case 'name':
+        setName(value)
         break
       case 'api':
       default:
@@ -34,9 +34,9 @@ const NewApplicationRow = ({ apiList, addApplication }) => {
       <Row>
         <Col md="5">
           <OIbText
-            label="New Application ID"
-            value={applicationId}
-            name="applicationId"
+            label="New Application Name"
+            value={name}
+            name="name"
             onChange={handleChange}
             defaultValue=""
           />

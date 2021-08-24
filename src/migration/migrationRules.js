@@ -1,5 +1,6 @@
 const fs = require('fs')
-const { v4: uuidv4 } = require('uuid')
+const { nanoid } = require('nanoid')
+const path = require('path')
 const Logger = require('../engine/Logger.class')
 
 const logger = new Logger('migration')
@@ -495,32 +496,58 @@ module.exports = {
   },
   25: (config) => {
     const cachePath = config.engine.caching.cacheFolder
-    config.north.applications.forEach((application) => {
-      application.id = uuidv4()
-      const oldApplicationPath = `${cachePath}/${application.applicationId}.db`
-      if (fs.existsSync(oldApplicationPath)) {
-        logger.info(`Renaming old cache path for datasource ${application.applicationId}`)
-        fs.rename(oldApplicationPath,
-          `${cachePath}/${application.id}.db`, (err) => {
-            if (err) {
-              logger.error(`Could not rename application: ${application.applicationId}`)
-            }
-          })
-      }
-    })
-
     config.south.dataSources.forEach((dataSource) => {
-      dataSource.id = uuidv4()
-      const oldDataSourcePath = `${cachePath}/${dataSource.dataSourceId}.db`
+      // Rename the old temp folder if it exists
+      const oldTmpFolder = path.resolve(cachePath, this.dataSource.name)
+      const newTmpFolder = path.resolve(cachePath, this.dataSource.id)
+      if (fs.existsSync(oldTmpFolder)) {
+        fs.rename(oldTmpFolder, newTmpFolder, (error) => {
+          if (error) {
+            logger.error(`Could not rename temp folder for dataSource: ${dataSource.dataSourceId}`)
+          }
+        })
+      }
+
+      // Generate new id for each connector
+      dataSource.id = nanoid()
+      // The old dataSourceId will be the new name
+      dataSource.name = dataSource.dataSourceId
+
+      // Rename the already existing cache db files with the id
+      const oldDataSourcePath = `${cachePath}/${dataSource.name}.db`
       if (fs.existsSync(oldDataSourcePath)) {
-        logger.info(`Renaming old cache file for datasource ${dataSource.dataSourceId}`)
+        logger.info(`Renaming old cache file for datasource ${dataSource.name}`)
         fs.rename(oldDataSourcePath,
           `${cachePath}/${dataSource.id}.db`, (err) => {
             if (err) {
-              logger.error(`Could not rename datasource: ${dataSource.dataSourceId}`)
+              logger.error(`Could not rename datasource: ${dataSource.name}`)
             }
           })
       }
+      // This field should be deleted
+      delete dataSource.dataSourceId
+    })
+
+    config.north.applications.forEach((application) => {
+      application.id = nanoid()
+      application.name = application.applicationId
+      const oldApplicationPath = `${cachePath}/${application.name}.db`
+      if (fs.existsSync(oldApplicationPath)) {
+        logger.info(`Renaming old cache path for datasource ${application.name}`)
+        fs.rename(oldApplicationPath,
+          `${cachePath}/${application.id}.db`, (err) => {
+            if (err) {
+              logger.error(`Could not rename application: ${application.name}`)
+            }
+          })
+      }
+      delete application.applicationId
+
+      // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
+      application.subscribedTo = application.subscribedTo.map((dataSourceName) => {
+        const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
+        return subscribedDataSource.id
+      })
     })
   },
 }

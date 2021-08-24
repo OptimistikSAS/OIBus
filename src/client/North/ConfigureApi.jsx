@@ -7,8 +7,8 @@ import NorthForm from './Form/NorthForm.jsx'
 const ConfigureApi = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const applications = newConfig?.north?.applications // array of all defined applications
-  const { applicationId } = useParams()
-  const applicationIndex = applications?.findIndex((application) => application.applicationId === applicationId)
+  const { id } = useParams()
+  const applicationIndex = applications?.findIndex((application) => application.id === id)
 
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })

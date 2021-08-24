@@ -26,7 +26,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -536,7 +536,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -1046,7 +1046,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -1556,7 +1556,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -2066,7 +2066,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -2576,7 +2576,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -3086,7 +3086,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -3596,7 +3596,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -4106,7 +4106,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -4616,7 +4616,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -5126,7 +5126,7 @@ exports[`ConfigurePoints check export points 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -5636,7 +5636,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -6146,7 +6146,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -6656,7 +6656,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -7166,7 +7166,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -7676,7 +7676,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -8206,7 +8206,7 @@ exports[`ConfigurePoints check no points 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -8406,7 +8406,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>
@@ -8916,7 +8916,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         </li>
         <li
           class="oi-breadcrumb breadcrumb-item"
-          to="/south/OPC-HDA"
+          to="/south/datasource-uuid-9"
         >
           OPC-HDA
         </li>

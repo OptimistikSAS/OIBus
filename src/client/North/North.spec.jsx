@@ -61,7 +61,7 @@ describe('North', () => {
     Simulate.click(document.querySelector('td path'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'north.applications.0.applicationId',
+      name: 'north.applications.0.name',
       value: 'new_id',
     })
     expect(container).toMatchSnapshot()
@@ -72,7 +72,7 @@ describe('North', () => {
         <North />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const firstApplicationButtons = document.querySelectorAll('td')[3]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[2])
     Simulate.click(document.getElementsByClassName('btn btn-primary')[1])
     expect(dispatchNewConfig).toBeCalledWith({
@@ -87,9 +87,9 @@ describe('North', () => {
         <North />, container,
       )
     })
-    const firstApplicationButtons = document.querySelectorAll('td')[4]
+    const firstApplicationButtons = document.querySelectorAll('td')[3]
     Simulate.click(firstApplicationButtons.querySelectorAll('path')[0])
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].applicationId}` })
+    expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].id}` })
     expect(container).toMatchSnapshot()
   })
   test('check add pressed with "new_application" id', () => {
@@ -98,7 +98,7 @@ describe('North', () => {
         <North />, container,
       )
     })
-    Simulate.change(document.getElementById('applicationId'), { target: { value: 'new_application' } })
+    Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
     Simulate.click(document.querySelector('form div div button'))
     expect(container).toMatchSnapshot()
   })
@@ -110,7 +110,7 @@ describe('North', () => {
         <North />, container,
       )
     })
-    Simulate.change(document.getElementById('applicationId'), { target: { value: newConfig.north.applications[0].applicationId } })
+    Simulate.change(document.getElementById('name'), { target: { value: newConfig.north.applications[0].name } })
     try {
       Simulate.click(document.querySelector('form div div button'))
     } catch (e) {
@@ -118,7 +118,7 @@ describe('North', () => {
     }
     console.error = originalError
   })
-  test('check sort pressed on applicationId', () => {
+  test('check sort pressed on application name', () => {
     act(() => {
       ReactDOM.render(
         <North />, container,
@@ -137,8 +137,8 @@ describe('North', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check with sortBy=applicationId', () => {
-    sort.sortNorthBy = 'applicationId'
+  test('check with sortBy=name', () => {
+    sort.sortNorthBy = 'name'
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert, sort })
     act(() => {
       ReactDOM.render(

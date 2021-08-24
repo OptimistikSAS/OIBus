@@ -32,9 +32,6 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             class="active breadcrumb-item"
           >
             CsvToHttp
-            <small>
-               (application-uuid-7)
-            </small>
           </span>
         </ol>
       </h5>
@@ -1491,9 +1488,6 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             class="active breadcrumb-item"
           >
             RawFileSender
-            <small>
-               (application-uuid-3)
-            </small>
           </span>
         </ol>
       </h5>
@@ -2514,9 +2508,6 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             class="active breadcrumb-item"
           >
             Timescale
-            <small>
-               (application-uuid-5)
-            </small>
           </span>
         </ol>
       </h5>
@@ -3387,9 +3378,6 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             class="active breadcrumb-item"
           >
             WATSYConnect
-            <small>
-               (application-uuid-6)
-            </small>
           </span>
         </ol>
       </h5>
@@ -4479,9 +4467,6 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             class="active breadcrumb-item"
           >
             c
-            <small>
-               (application-uuid-1)
-            </small>
           </span>
         </ol>
       </h5>
@@ -5215,54 +5200,54 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                     name="subscribedTo.0"
                   >
                     <option
-                      value="MQTTServer"
+                      value="datasource-uuid-1"
                     >
-                      MQTTServer
+                      datasource-uuid-1
                     </option>
                     <option
-                      value="SimulationServer"
+                      value="datasource-uuid-2"
                     >
-                      SimulationServer
+                      datasource-uuid-2
                     </option>
                     <option
-                      value="SimulationServerBis"
+                      value="datasource-uuid-3"
                     >
-                      SimulationServerBis
+                      datasource-uuid-3
                     </option>
                     <option
-                      value="SimulationServerBis copy"
+                      value="datasource-uuid-4"
                     >
-                      SimulationServerBis copy
+                      datasource-uuid-4
                     </option>
                     <option
-                      value="PLC-35"
+                      value="datasource-uuid-5"
                     >
-                      PLC-35
+                      datasource-uuid-5
                     </option>
                     <option
-                      value="PLC-42"
+                      value="datasource-uuid-6"
                     >
-                      PLC-42
+                      datasource-uuid-6
                     </option>
                     <option
-                      value="FolderScanner"
+                      value="datasource-uuid-7"
                     >
-                      FolderScanner
+                      datasource-uuid-7
                     </option>
                     <option
-                      value="SQLDbToFile"
+                      value="datasource-uuid-8"
                     >
-                      SQLDbToFile
+                      datasource-uuid-8
                     </option>
                     <option
-                      value="OPC-HDA"
+                      value="datasource-uuid-9"
                     >
-                      OPC-HDA
+                      datasource-uuid-9
                     </option>
                     <option
-                      value="ADS - Test"
+                      value="datasource-uuid-10"
                     >
-                      ADS - Test
+                      datasource-uuid-10
                     </option>
                     <option
                       value="any"
@@ -5332,9 +5317,6 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             class="active breadcrumb-item"
           >
             filewriter
-            <small>
-               (application-uuid-8)
-            </small>
           </span>
         </ol>
       </h5>
@@ -6138,9 +6120,6 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             class="active breadcrumb-item"
           >
             monoiconnect
-            <small>
-               (application-uuid-2)
-            </small>
           </span>
         </ol>
       </h5>
@@ -7196,9 +7175,6 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="active breadcrumb-item"
           >
             mqtt
-            <small>
-               (application-uuid-4)
-            </small>
           </span>
         </ol>
       </h5>
@@ -8206,9 +8182,6 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             class="active breadcrumb-item"
           >
             test04
-            <small>
-               (application-uuid-9)
-            </small>
           </span>
         </ol>
       </h5>
@@ -9132,11 +9105,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           <span
             aria-current="page"
             class="active breadcrumb-item"
-          >
-            <small>
-               ()
-            </small>
-          </span>
+          />
         </ol>
       </h5>
     </div>

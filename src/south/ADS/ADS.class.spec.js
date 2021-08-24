@@ -711,6 +711,7 @@ describe('ADS south', () => {
     // Test boolean value as integer
     expect(engine.addValues)
       .toHaveBeenCalledWith(
+        'datasource-uuid-10',
         'ADS - Test',
         [
           {
@@ -846,6 +847,7 @@ describe('ADS south', () => {
     // The SomeText field is not called because not specified in the structure filtering config
     expect(engine.addValues)
       .not.toHaveBeenCalledWith(
+        'datasource-uuid-10',
         'ADS - Test',
         [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
       )
@@ -876,6 +878,7 @@ describe('ADS south', () => {
 
     // Test boolean value as text
     expect(engine.addValues).toHaveBeenCalledWith(
+      'datasource-uuid-10',
       'ADS - Test',
       [
         {
@@ -1001,7 +1004,9 @@ describe('ADS south', () => {
       ],
     )
     // Test enum value as integer
-    expect(engine.addValues).toHaveBeenCalledWith('ADS - Test',
+    expect(engine.addValues).toHaveBeenCalledWith(
+      'datasource-uuid-10',
+      'ADS - Test',
       [
         {
           pointId: 'PLC_TEST.GVL_Test.TestENUM',
@@ -1123,7 +1128,8 @@ describe('ADS south', () => {
           timestamp: '2020-02-02T02:02:02.222Z',
           data: { value: '0' },
         },
-      ])
+      ],
+    )
 
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestBadType)))
     await adsSouth.onScanImplementation('every1Hour')

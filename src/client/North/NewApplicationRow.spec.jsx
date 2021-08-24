@@ -5,18 +5,18 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
-import * as uuid from 'uuid'
+import * as nanoid from 'nanoid'
 import testConfig from '../../../tests/testConfig'
 import NewApplicationRow from './NewApplicationRow.jsx'
 
-// mocking the uuid method
-jest.mock('uuid')
-jest.spyOn(uuid, 'v4').mockReturnValue('generated-uuid')
+// mocking the nanoid method
+jest.mock('nanoid')
+jest.spyOn(nanoid, 'nanoid').mockReturnValue('generated-uuid')
 
 // mocking state updates
-let applicationId = ''
-const setApplicationId = jest.fn().mockImplementation((newValue) => {
-  applicationId = newValue
+let name = ''
+const setName = jest.fn().mockImplementation((newValue) => {
+  name = newValue
 })
 let api = testConfig.apiList[0]
 const setApi = jest.fn().mockImplementation((newValue) => {
@@ -25,7 +25,7 @@ const setApi = jest.fn().mockImplementation((newValue) => {
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === '') {
-    return [applicationId, setApplicationId]
+    return [name, setName]
   }
   if (init === testConfig.apiList[0]) {
     return [api, setApi]
@@ -66,11 +66,11 @@ describe('NewApplicationRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('applicationId'), { target: { value: '' } })
+    Simulate.change(document.getElementById('name'), { target: { value: '' } })
     Simulate.click(document.querySelector('div button'))
     expect(container).toMatchSnapshot()
   })
-  test('check change applicationId', () => {
+  test('check change application name', () => {
     act(() => {
       ReactDOM.render(
         <NewApplicationRow
@@ -79,8 +79,8 @@ describe('NewApplicationRow', () => {
         />, container,
       )
     })
-    Simulate.change(document.getElementById('applicationId'), { target: { value: 'new_application' } })
-    expect(setApplicationId).toBeCalledWith('new_application')
+    Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+    expect(setName).toBeCalledWith('new_application')
     expect(container).toMatchSnapshot()
   })
   test('check change api', () => {
@@ -107,7 +107,7 @@ describe('NewApplicationRow', () => {
       )
     })
     Simulate.click(document.querySelector('div button'))
-    expect(addApplication).toBeCalledWith({ id: 'generated-uuid', applicationId, api })
+    expect(addApplication).toBeCalledWith({ id: 'generated-uuid', name, api })
     expect(container).toMatchSnapshot()
   })
 })

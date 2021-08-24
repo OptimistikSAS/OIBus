@@ -476,54 +476,54 @@ exports[`SubscribedTo check SubscribedTo with application: c 1`] = `
                   name="subscribedTo.0"
                 >
                   <option
-                    value="MQTTServer"
+                    value="datasource-uuid-1"
                   >
-                    MQTTServer
+                    datasource-uuid-1
                   </option>
                   <option
-                    value="SimulationServer"
+                    value="datasource-uuid-2"
                   >
-                    SimulationServer
+                    datasource-uuid-2
                   </option>
                   <option
-                    value="SimulationServerBis"
+                    value="datasource-uuid-3"
                   >
-                    SimulationServerBis
+                    datasource-uuid-3
                   </option>
                   <option
-                    value="SimulationServerBis copy"
+                    value="datasource-uuid-4"
                   >
-                    SimulationServerBis copy
+                    datasource-uuid-4
                   </option>
                   <option
-                    value="PLC-35"
+                    value="datasource-uuid-5"
                   >
-                    PLC-35
+                    datasource-uuid-5
                   </option>
                   <option
-                    value="PLC-42"
+                    value="datasource-uuid-6"
                   >
-                    PLC-42
+                    datasource-uuid-6
                   </option>
                   <option
-                    value="FolderScanner"
+                    value="datasource-uuid-7"
                   >
-                    FolderScanner
+                    datasource-uuid-7
                   </option>
                   <option
-                    value="SQLDbToFile"
+                    value="datasource-uuid-8"
                   >
-                    SQLDbToFile
+                    datasource-uuid-8
                   </option>
                   <option
-                    value="OPC-HDA"
+                    value="datasource-uuid-9"
                   >
-                    OPC-HDA
+                    datasource-uuid-9
                   </option>
                   <option
-                    value="ADS - Test"
+                    value="datasource-uuid-10"
                   >
-                    ADS - Test
+                    datasource-uuid-10
                   </option>
                   <option
                     value="any"
@@ -1036,54 +1036,54 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
                   name="subscribedTo.0"
                 >
                   <option
-                    value="MQTTServer"
+                    value="datasource-uuid-1"
                   >
-                    MQTTServer
+                    datasource-uuid-1
                   </option>
                   <option
-                    value="SimulationServer"
+                    value="datasource-uuid-2"
                   >
-                    SimulationServer
+                    datasource-uuid-2
                   </option>
                   <option
-                    value="SimulationServerBis"
+                    value="datasource-uuid-3"
                   >
-                    SimulationServerBis
+                    datasource-uuid-3
                   </option>
                   <option
-                    value="SimulationServerBis copy"
+                    value="datasource-uuid-4"
                   >
-                    SimulationServerBis copy
+                    datasource-uuid-4
                   </option>
                   <option
-                    value="PLC-35"
+                    value="datasource-uuid-5"
                   >
-                    PLC-35
+                    datasource-uuid-5
                   </option>
                   <option
-                    value="PLC-42"
+                    value="datasource-uuid-6"
                   >
-                    PLC-42
+                    datasource-uuid-6
                   </option>
                   <option
-                    value="FolderScanner"
+                    value="datasource-uuid-7"
                   >
-                    FolderScanner
+                    datasource-uuid-7
                   </option>
                   <option
-                    value="SQLDbToFile"
+                    value="datasource-uuid-8"
                   >
-                    SQLDbToFile
+                    datasource-uuid-8
                   </option>
                   <option
-                    value="OPC-HDA"
+                    value="datasource-uuid-9"
                   >
-                    OPC-HDA
+                    datasource-uuid-9
                   </option>
                   <option
-                    value="ADS - Test"
+                    value="datasource-uuid-10"
                   >
-                    ADS - Test
+                    datasource-uuid-10
                   </option>
                   <option
                     value="any"
@@ -1220,54 +1220,54 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
                   name="subscribedTo.0"
                 >
                   <option
-                    value="MQTTServer"
+                    value="datasource-uuid-1"
                   >
-                    MQTTServer
+                    datasource-uuid-1
                   </option>
                   <option
-                    value="SimulationServer"
+                    value="datasource-uuid-2"
                   >
-                    SimulationServer
+                    datasource-uuid-2
                   </option>
                   <option
-                    value="SimulationServerBis"
+                    value="datasource-uuid-3"
                   >
-                    SimulationServerBis
+                    datasource-uuid-3
                   </option>
                   <option
-                    value="SimulationServerBis copy"
+                    value="datasource-uuid-4"
                   >
-                    SimulationServerBis copy
+                    datasource-uuid-4
                   </option>
                   <option
-                    value="PLC-35"
+                    value="datasource-uuid-5"
                   >
-                    PLC-35
+                    datasource-uuid-5
                   </option>
                   <option
-                    value="PLC-42"
+                    value="datasource-uuid-6"
                   >
-                    PLC-42
+                    datasource-uuid-6
                   </option>
                   <option
-                    value="FolderScanner"
+                    value="datasource-uuid-7"
                   >
-                    FolderScanner
+                    datasource-uuid-7
                   </option>
                   <option
-                    value="SQLDbToFile"
+                    value="datasource-uuid-8"
                   >
-                    SQLDbToFile
+                    datasource-uuid-8
                   </option>
                   <option
-                    value="OPC-HDA"
+                    value="datasource-uuid-9"
                   >
-                    OPC-HDA
+                    datasource-uuid-9
                   </option>
                   <option
-                    value="ADS - Test"
+                    value="datasource-uuid-10"
                   >
-                    ADS - Test
+                    datasource-uuid-10
                   </option>
                   <option
                     value="any"
@@ -1404,54 +1404,54 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
                   name="subscribedTo.0"
                 >
                   <option
-                    value="MQTTServer"
+                    value="datasource-uuid-1"
                   >
-                    MQTTServer
+                    datasource-uuid-1
                   </option>
                   <option
-                    value="SimulationServer"
+                    value="datasource-uuid-2"
                   >
-                    SimulationServer
+                    datasource-uuid-2
                   </option>
                   <option
-                    value="SimulationServerBis"
+                    value="datasource-uuid-3"
                   >
-                    SimulationServerBis
+                    datasource-uuid-3
                   </option>
                   <option
-                    value="SimulationServerBis copy"
+                    value="datasource-uuid-4"
                   >
-                    SimulationServerBis copy
+                    datasource-uuid-4
                   </option>
                   <option
-                    value="PLC-35"
+                    value="datasource-uuid-5"
                   >
-                    PLC-35
+                    datasource-uuid-5
                   </option>
                   <option
-                    value="PLC-42"
+                    value="datasource-uuid-6"
                   >
-                    PLC-42
+                    datasource-uuid-6
                   </option>
                   <option
-                    value="FolderScanner"
+                    value="datasource-uuid-7"
                   >
-                    FolderScanner
+                    datasource-uuid-7
                   </option>
                   <option
-                    value="SQLDbToFile"
+                    value="datasource-uuid-8"
                   >
-                    SQLDbToFile
+                    datasource-uuid-8
                   </option>
                   <option
-                    value="OPC-HDA"
+                    value="datasource-uuid-9"
                   >
-                    OPC-HDA
+                    datasource-uuid-9
                   </option>
                   <option
-                    value="ADS - Test"
+                    value="datasource-uuid-10"
                   >
-                    ADS - Test
+                    datasource-uuid-10
                   </option>
                   <option
                     value="any"

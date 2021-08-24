@@ -16,15 +16,15 @@ exports[`NewApplicationRow check NewApplicationRow 1`] = `
         >
           <label
             class=""
-            for="applicationId"
+            for="name"
           >
-            New Application ID
+            New Application Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="applicationId"
-            name="applicationId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />
@@ -103,15 +103,15 @@ exports[`NewApplicationRow check add press 1`] = `
         >
           <label
             class=""
-            for="applicationId"
+            for="name"
           >
-            New Application ID
+            New Application Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="applicationId"
-            name="applicationId"
+            id="name"
+            name="name"
             type="text"
             value="new_application"
           />
@@ -190,15 +190,15 @@ exports[`NewApplicationRow check add pressed with empty application name 1`] = `
         >
           <label
             class=""
-            for="applicationId"
+            for="name"
           >
-            New Application ID
+            New Application Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="applicationId"
-            name="applicationId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />
@@ -277,15 +277,15 @@ exports[`NewApplicationRow check change api 1`] = `
         >
           <label
             class=""
-            for="applicationId"
+            for="name"
           >
-            New Application ID
+            New Application Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="applicationId"
-            name="applicationId"
+            id="name"
+            name="name"
             type="text"
             value="new_application"
           />
@@ -348,7 +348,7 @@ exports[`NewApplicationRow check change api 1`] = `
 </div>
 `;
 
-exports[`NewApplicationRow check change applicationId 1`] = `
+exports[`NewApplicationRow check change application name 1`] = `
 <div>
   <form
     class=""
@@ -364,15 +364,15 @@ exports[`NewApplicationRow check change applicationId 1`] = `
         >
           <label
             class=""
-            for="applicationId"
+            for="name"
           >
-            New Application ID
+            New Application Name
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="applicationId"
-            name="applicationId"
+            id="name"
+            name="name"
             type="text"
             value=""
           />

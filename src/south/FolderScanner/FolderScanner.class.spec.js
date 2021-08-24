@@ -92,7 +92,8 @@ describe('folder-scanner', () => {
     await folderScanner.onScanImplementation('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(
-      folderScanner.dataSource.dataSourceId,
+      folderScanner.dataSource.id,
+      folderScanner.dataSource.name,
       path.join(folderScanner.inputFolder, 'test.csv'),
       false,
     )
@@ -109,7 +110,8 @@ describe('folder-scanner', () => {
     await new Promise(setImmediate)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(
-      folderScanner.dataSource.dataSourceId,
+      folderScanner.dataSource.id,
+      folderScanner.dataSource.name,
       path.join(folderScanner.inputFolder, 'test.csv'),
       true,
     )
@@ -127,7 +129,8 @@ describe('folder-scanner', () => {
     await new Promise(setImmediate)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(folderScanner.engine.addFile).toHaveBeenCalledWith(
-      folderScanner.dataSource.dataSourceId,
+      folderScanner.dataSource.id,
+      folderScanner.dataSource.name,
       path.join(folderScanner.inputFolder, 'test.csv'),
       true,
     )
@@ -149,7 +152,7 @@ describe('folder-scanner', () => {
     await folderScanner.onScanImplementation('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
+    expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.id, folderScanner.dataSource.name, targetGzip, false)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
 
     const decompressedCsv = path.join(folderScanner.inputFolder, 'decompressed.csv')
@@ -175,7 +178,7 @@ describe('folder-scanner', () => {
     await folderScanner.onScanImplementation('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.dataSourceId, targetGzip, false)
+    expect(folderScanner.engine.addFile).toHaveBeenCalledWith(folderScanner.dataSource.id, folderScanner.dataSource.name, targetGzip, false)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(1)
 
     const decompressedCsv = path.join(folderScanner.inputFolder, 'decompressed.csv')
