@@ -237,7 +237,7 @@ class ProtocolHandler {
       }
 
       // eslint-disable-next-line no-await-in-loop
-      await this.historyQuery(scanMode, startTime, endTime)
+      await this.historyQuery(scanMode, startTime, intervalEndTime)
 
       startTime = intervalEndTime
       firstIteration = false
