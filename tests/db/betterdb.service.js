@@ -97,14 +97,14 @@ const createValueErrorsDatabase = async (databasePath) => {
 /**
  * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {String} id - The data source id
+ * @param {String} dataSourceName - The data source id
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveValues = (database, id, values) => {
+const saveValues = (database, dataSourceName, values) => {
   const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id)
                       VALUES `
-  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${id}')`)
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceName}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   try {
     database.prepare(query).run()

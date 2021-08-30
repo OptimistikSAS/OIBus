@@ -20,7 +20,7 @@ const createValuesDatabase = async (databasePath, options) => {
                    timestamp TEXT KEY,
                    data TEXT,
                    point_id TEXT,
-                   data_source_id TEXT
+                   data_source TEXT
                  );`)
   await database.run('PRAGMA secure_delete = OFF;')
   await database.run('PRAGMA cache_size = 100000;')
@@ -83,7 +83,7 @@ const createValueErrorsDatabase = async (databasePath) => {
                    timestamp TEXT,
                    data TEXT,
                    point_id TEXT,
-                   application_id TEXT
+                   application TEXT
                  );`
   const stmt = await database.prepare(query)
   await stmt.run()
@@ -94,14 +94,14 @@ const createValueErrorsDatabase = async (databasePath) => {
 /**
  * Save values in database.
  * @param {BetterSqlite3.Database} database - The database to use
- * @param {String} id - The data source ID
+ * @param {String} dataSourceName - The name of the data source to be sent with the value
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveValues = async (database, id, values) => {
-  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source_id)
+const saveValues = async (database, dataSourceName, values) => {
+  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source)
                       VALUES `
-  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${id}')`)
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceName}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   try {
     await database.run(query)
@@ -118,7 +118,7 @@ const saveValues = async (database, id, values) => {
  * @return {void}
  */
 const saveErroredValues = async (database, id, values) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application_id)
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application)
                  VALUES (?, ?, ?, ?)`
   try {
     await database.run('BEGIN;')
@@ -158,7 +158,7 @@ const getCount = async (database) => {
  * @return {array|null} - The values
  */
 const getValuesToSend = async (database, count) => {
-  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source_id as dataSourceId
+  const query = `SELECT id, timestamp, data, point_id AS pointId, data_source as dataSourceId
                  FROM ${CACHE_TABLE_NAME}
                  ORDER BY timestamp
                  LIMIT ${count}`

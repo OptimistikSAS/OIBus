@@ -111,7 +111,7 @@ class ProtocolHandler {
    */
   async flush(flag = 'time') {
     this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
-    await this.engine.addValues(this.dataSource.id, this.dataSource.name, this.buffer)
+    await this.engine.addValues(this.dataSource.id, this.buffer)
     this.buffer = []
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)

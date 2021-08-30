@@ -106,13 +106,12 @@ class Engine {
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} id - The data source id
-   * @param {string} name - The data source name
    * @param {object} values - array of values
    * @return {void}
    */
-  async addValues(id, name, values) {
+  async addValues(id, values) {
     const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from ${name}`)
+    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from ${this.activeProtocols[id]?.name || id}`)
     if (sanitizedValues.length) await this.cache.cacheValues(id, sanitizedValues)
   }
 
@@ -120,25 +119,23 @@ class Engine {
    * Add a new File from an data source to the Engine.
    * The Engine will forward the File to the Cache.
    * @param {string} id - The data source id
-   * @param {string} name - The South generating the file
    * @param {string} filePath - The path to the File
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(id, name, filePath, preserveFiles) {
-    this.logger.silly(`Engine addFile() from ${name} with ${filePath}`)
-    this.cache.cacheFile(id, name, filePath, preserveFiles)
+  addFile(id, filePath, preserveFiles) {
+    this.logger.silly(`Engine addFile() from ${this.activeProtocols[id]?.name || id} with ${filePath}`)
+    this.cache.cacheFile(id, filePath, preserveFiles)
   }
 
   /**
    * Send values to a North application.
    * @param {string} id - The application id
-   * @param {string} name - The application name
    * @param {object[]} values - The values to send
    * @return {number} - The send status
    */
-  async handleValuesFromCache(id, name, values) {
-    this.logger.silly(`handleValuesFromCache() call with ${name} and ${values.length} values`)
+  async handleValuesFromCache(id, values) {
+    this.logger.silly(`handleValuesFromCache() call with ${this.activeApis[id]?.name || id} and ${values.length} values`)
 
     let status
     try {
@@ -153,12 +150,11 @@ class Engine {
   /**
    * Send file to a North application.
    * @param {string} id - The application id
-   * @param {string} name - The application name
    * @param {string} filePath - The file to send
    * @return {number} - The send status
    */
-  async sendFile(id, name, filePath) {
-    this.logger.silly(`Engine sendFile() call with ${name} and ${filePath}`)
+  async sendFile(id, filePath) {
+    this.logger.silly(`Engine sendFile() call with ${this.activeApis[id]?.name || id} and ${filePath}`)
 
     let status
     try {
@@ -245,7 +241,7 @@ class Engine {
       if (dataSource.enabled) {
         if (dataSource.scanMode) {
           if (!this.scanLists[dataSource.scanMode]) {
-            this.logger.error(` dataSource: ${dataSource.name} has a unknown scan mode: ${dataSource.scanMode}`)
+            this.logger.error(`dataSource: ${dataSource.name} has a unknown scan mode: ${dataSource.scanMode}`)
           } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.id)) {
             // add the source for this scan only if not already there
             this.scanLists[dataSource.scanMode].push(dataSource.id)
@@ -277,7 +273,7 @@ class Engine {
             try {
               this.activeProtocols[id].onScan(scanMode)
             } catch (error) {
-              this.logger.error(`scan for ${id} failed: ${error}`)
+              this.logger.error(`scan for ${this.activeProtocols[id]?.name || id} failed: ${error}`)
             }
           })
         })

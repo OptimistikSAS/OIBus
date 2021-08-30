@@ -712,7 +712,6 @@ describe('ADS south', () => {
     expect(engine.addValues)
       .toHaveBeenCalledWith(
         'datasource-uuid-10',
-        'ADS - Test',
         [
           {
             pointId: 'PLC_TEST.GVL_Test.TestENUM',
@@ -848,7 +847,6 @@ describe('ADS south', () => {
     expect(engine.addValues)
       .not.toHaveBeenCalledWith(
         'datasource-uuid-10',
-        'ADS - Test',
         [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
       )
 
@@ -879,7 +877,6 @@ describe('ADS south', () => {
     // Test boolean value as text
     expect(engine.addValues).toHaveBeenCalledWith(
       'datasource-uuid-10',
-      'ADS - Test',
       [
         {
           pointId: 'PLC_TEST.GVL_Test.TestENUM',
@@ -1006,7 +1003,6 @@ describe('ADS south', () => {
     // Test enum value as integer
     expect(engine.addValues).toHaveBeenCalledWith(
       'datasource-uuid-10',
-      'ADS - Test',
       [
         {
           pointId: 'PLC_TEST.GVL_Test.TestENUM',
