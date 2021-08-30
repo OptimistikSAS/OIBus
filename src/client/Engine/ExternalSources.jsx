@@ -23,7 +23,7 @@ const ExternalSources = ({ externalSources }) => {
         <OIbTitle label="ExternalSources">
           <p>
             This is a list of dataSources from another OIBus. The name should respect the following convention:
-            OIbusId:name
+            OIBusId:DataSourceName
           </p>
         </OIbTitle>
         <Row>
