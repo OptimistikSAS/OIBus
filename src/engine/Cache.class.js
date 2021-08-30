@@ -83,7 +83,7 @@ class Cache {
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
       this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.name}`)
-      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`)
+      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`, {})
       this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.id] = api
@@ -149,7 +149,7 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
       // Queue saving values.
-      this.queue.add(databaseService.saveValues, database, id, values)
+      this.queue.add(databaseService.saveValues, database, this.engine.activeProtocols[id]?.name || id, values)
 
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
@@ -159,7 +159,8 @@ class Cache {
         return api
       }
     } else {
-      this.logger.silly(`datasource ${id} is not subscribed to application ${applicationId}`)
+      // eslint-disable-next-line max-len
+      this.logger.silly(`datasource ${this.engine.activeProtocols[id]?.name || id} is not subscribed to application ${this.engine.activeApis[applicationId]?.name || applicationId}`)
     }
     return null
   }
@@ -194,12 +195,11 @@ class Cache {
    * Cache the new raw file for a given North.
    * @param {object} api - The North to cache the file for
    * @param {string} id - The data source id
-   * @param {string} name - The data source name
    * @param {String} cachePath - The path of the raw file
    * @param {number} timestamp - The timestamp the file was received
    * @return {object} the api object or null if api should do nothing.
    */
-  async cacheFileForApi(api, id, name, cachePath, timestamp) {
+  async cacheFileForApi(api, id, cachePath, timestamp) {
     const { name: applicationName, id: applicationId, canHandleFiles, subscribedTo } = api
     if (canHandleFiles && Cache.isSubscribed(id, subscribedTo)) {
       // Update stats for api
@@ -210,24 +210,23 @@ class Cache {
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
-    this.logger.silly(`datasource ${name} is not subscribed to application ${applicationName}`)
+    this.logger.silly(`datasource ${this.engine.activeProtocols[id]?.name || id} is not subscribed to application ${applicationName}`)
     return null
   }
 
   /**
    * Cache the new raw file.
    * @param {string} id - The data source id
-   * @param {string} name - The South generating the file
    * @param {String} filePath - The path of the raw file
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  async cacheFile(id, name, filePath, preserveFiles) {
+  async cacheFile(id, filePath, preserveFiles) {
     // Update stats for datasource name
     this.cacheStats[id] = (this.cacheStats[id] || 0) + 1
 
     // Cache files
-    this.logger.debug(`cacheFile(${filePath}) from ${name}, preserveFiles:${preserveFiles}`)
+    this.logger.debug(`cacheFile(${filePath}) from ${this.engine.activeProtocols[id]?.name || id}, preserveFiles:${preserveFiles}`)
     const timestamp = new Date().getTime()
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath)
@@ -239,7 +238,7 @@ class Cache {
       await this.transferFile(filePath, cachePath, preserveFiles)
 
       // Cache the file for every subscribed North
-      const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, id, name, cachePath, timestamp))
+      const actions = Object.values(this.apis).map((api) => this.cacheFileForApi(api, id, cachePath, timestamp))
       const apisToActivate = await Promise.all(actions)
       // Activate sending
       apisToActivate.forEach((apiToActivate) => {

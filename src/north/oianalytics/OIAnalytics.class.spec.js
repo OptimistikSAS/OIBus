@@ -31,7 +31,7 @@ describe('oi-analytics', () => {
     ]
     await oiAnalytics.handleValues(values)
 
-    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/optimistik/oibus/data/time_values?dataSourceId=${oiAnalyticsConfig.name}`
+    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/oianalytics/oibus/data/time_values?dataSourceId=${oiAnalyticsConfig.name}`
     const expectedAuthentication = oiAnalyticsConfig.OIAnalytics.authentication
     const expectedBody = JSON.stringify(values.map((value) => ({
       timestamp: value.timestamp,
@@ -48,7 +48,7 @@ describe('oi-analytics', () => {
 
     await oiAnalytics.handleFile(filePath)
 
-    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/optimistik/data/values/upload?dataSourceId=${oiAnalyticsConfig.name}`
+    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/oianalytics/data/values/upload?dataSourceId=${oiAnalyticsConfig.name}`
     const expectedAuthentication = oiAnalyticsConfig.OIAnalytics.authentication
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
   })

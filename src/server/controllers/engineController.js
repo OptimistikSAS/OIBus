@@ -70,7 +70,7 @@ const addValues = async (ctx) => {
     try {
       ctx.app.engine.addValuesMessages += 1
       ctx.app.engine.addValuesCount += ctx.request.body.length
-      await ctx.app.engine.addValues(`external-${name}`, name, ctx.request.body)
+      await ctx.app.engine.addValues(`external-${name}`, ctx.request.body)
       ctx.ok()
     } catch (error) {
       ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${name}`)

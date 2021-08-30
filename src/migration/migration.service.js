@@ -17,22 +17,23 @@ const DEFAULT_VERSION = 1
  * @param {string} configFile - The config file
  * @returns {void}
  */
-const migrateImpl = (configVersion, config, configFile) => {
+const migrateImpl = async (configVersion, config, configFile) => {
   let iterateVersion = configVersion
-  Object.keys(migrationRules)
-    .forEach((version) => {
-      const intVersion = parseInt(version, 10)
-      if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
-        if (migrationRules[version] instanceof Function) {
-          logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
-          config.schemaVersion = intVersion
-          migrationRules[version](config)
-        } else {
-          logger.info(`Invalid rules definition to migrate to version ${version}`)
-        }
-        iterateVersion = intVersion
+  // eslint-disable-next-line no-restricted-syntax
+  for (const version of Object.keys(migrationRules)) {
+    const intVersion = parseInt(version, 10)
+    if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
+      if (migrationRules[version] instanceof Function) {
+        logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
+        config.schemaVersion = intVersion
+        // eslint-disable-next-line no-await-in-loop
+        await migrationRules[version](config)
+      } else {
+        logger.info(`Invalid rules definition to migrate to version ${version}`)
       }
-    })
+      iterateVersion = intVersion
+    }
+  }
 
   if (iterateVersion !== REQUIRED_SCHEMA_VERSION) {
     logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
