@@ -44,7 +44,7 @@ exports[`ExternalSources check ExternalSources 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIbusId:name
+            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
           </p>
         </div>
       </div>
@@ -175,7 +175,7 @@ exports[`ExternalSources check add line 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIbusId:name
+            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
           </p>
         </div>
       </div>
@@ -306,7 +306,7 @@ exports[`ExternalSources check change line 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIbusId:name
+            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
           </p>
         </div>
       </div>
@@ -437,7 +437,7 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIbusId:name
+            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
           </p>
         </div>
       </div>

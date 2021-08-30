@@ -109,7 +109,7 @@ describe('Engine', () => {
     }]
 
     engine.cache.cacheValues = jest.fn()
-    await engine.addValues('sourceId', 'sourceName', sampleValues)
+    await engine.addValues('sourceId', sampleValues)
     expect(engine.cache.cacheValues)
       .toBeCalledWith('sourceId', sanitizedValues)
   })
