@@ -68,7 +68,7 @@
     "mysql2": "2.3.0",
     "node-fetch": "2.6.1",
     "node-opcua": "2.50.0",
-    "object-path": "0.11.5",
+    "object-path": "0.11.6",
     "oracledb": "5.2.0",
     "papaparse": "5.3.1",
     "pg": "8.7.1",
