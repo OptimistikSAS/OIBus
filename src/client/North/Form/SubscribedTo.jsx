@@ -8,6 +8,7 @@ import { ConfigContext } from '../../context/configContext.jsx'
 const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
   const dataSourceIds = newConfig?.south?.dataSources?.map((dataSource) => dataSource.id) ?? []
+  const dataSourceNames = newConfig?.south?.dataSources?.map((dataSource) => dataSource.name) ?? []
   const externalSources = newConfig?.engine?.externalSources ?? []
   const handleDelete = (rowIndex) => {
     dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${applicationIndex}.subscribedTo.${rowIndex}` })
@@ -40,6 +41,7 @@ const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
                       name={`subscribedTo.${i}`}
                       value={subscribedTo[i]}
                       options={[...dataSourceIds, ...externalSources]}
+                      optionsLabel={dataSourceNames}
                       defaultValue={dataSourceIds[0] || ''}
                       onChange={onChange}
                     />
