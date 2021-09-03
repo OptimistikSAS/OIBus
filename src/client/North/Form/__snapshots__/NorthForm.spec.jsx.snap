@@ -5202,52 +5202,52 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                     <option
                       value="datasource-uuid-1"
                     >
-                      datasource-uuid-1
+                      MQTTServer
                     </option>
                     <option
                       value="datasource-uuid-2"
                     >
-                      datasource-uuid-2
+                      SimulationServer
                     </option>
                     <option
                       value="datasource-uuid-3"
                     >
-                      datasource-uuid-3
+                      SimulationServerBis
                     </option>
                     <option
                       value="datasource-uuid-4"
                     >
-                      datasource-uuid-4
+                      SimulationServerBis copy
                     </option>
                     <option
                       value="datasource-uuid-5"
                     >
-                      datasource-uuid-5
+                      PLC-35
                     </option>
                     <option
                       value="datasource-uuid-6"
                     >
-                      datasource-uuid-6
+                      PLC-42
                     </option>
                     <option
                       value="datasource-uuid-7"
                     >
-                      datasource-uuid-7
+                      FolderScanner
                     </option>
                     <option
                       value="datasource-uuid-8"
                     >
-                      datasource-uuid-8
+                      SQLDbToFile
                     </option>
                     <option
                       value="datasource-uuid-9"
                     >
-                      datasource-uuid-9
+                      OPC-HDA
                     </option>
                     <option
                       value="datasource-uuid-10"
                     >
-                      datasource-uuid-10
+                      ADS - Test
                     </option>
                     <option
                       value="any"
