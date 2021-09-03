@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
-const OIbSelect = ({ label, help, valid, value, options, name, onChange, defaultValue, style }) => {
+const OIbSelect = ({ label, help, valid, value, options, optionsLabel, name, onChange, defaultValue, style }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
@@ -32,9 +32,9 @@ const OIbSelect = ({ label, help, valid, value, options, name, onChange, default
         value={value}
         invalid={validCheck !== null}
       >
-        {options.map((o) => (
+        {options.map((o, index) => (
           <option key={o} value={o}>
-            {o}
+            {optionsLabel[index] || o}
           </option>
         ))}
       </Input>
@@ -52,6 +52,7 @@ OIbSelect.propTypes = {
     PropTypes.arrayOf(String),
     PropTypes.arrayOf(Number),
   ]).isRequired,
+  optionsLabel: PropTypes.arrayOf(String),
   value: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
@@ -63,6 +64,6 @@ OIbSelect.propTypes = {
   valid: PropTypes.func,
   style: PropTypes.object,
 }
-OIbSelect.defaultProps = { label: null, help: null, value: null, valid: () => null, style: {} }
+OIbSelect.defaultProps = { label: null, help: null, value: null, valid: () => null, style: {}, optionsLabel: [] }
 
 export default OIbSelect

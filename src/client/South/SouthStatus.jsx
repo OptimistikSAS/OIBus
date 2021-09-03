@@ -88,7 +88,7 @@ const SouthStatus = () => {
           South
         </BreadcrumbItem>
         <BreadcrumbItem tag={Link} to={`/south/${id}`} className="oi-breadcrumb">
-          {status.Name}
+          {status.name}
         </BreadcrumbItem>
         <BreadcrumbItem active tag="span">
           Live
@@ -97,7 +97,7 @@ const SouthStatus = () => {
       <Row>
         <Label>
           <span>
-            {`${status.Name} status`}
+            {`${status.name} status`}
             &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
           </span>
