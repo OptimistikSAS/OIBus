@@ -47,7 +47,7 @@ describe('FileWriter north', () => {
     const expectedFileName = `${fileWriterNorth.prefixFileName}${new Date().getTime()}${fileWriterNorth.suffixFileName}.json`
     const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
     const expectedPath = path.join(expectedOutputFolder, expectedFileName)
-    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData)
+    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData, expect.any(Function))
     expect(handleValueResults).toEqual(values.length)
     global.Date = RealDate
   })
