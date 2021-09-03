@@ -36,11 +36,11 @@ class FileWriter extends ApiHandler {
     }))
     const data = JSON.stringify(cleanedValues)
     try {
-      await fs.writeFile(path.join(this.outputFolder, fileName), data)
-      this.logger.debug(`FileWriter created ${fileName}`)
+      await fs.writeFile(path.join(this.outputFolder, fileName), data, () => {})
+      this.logger.debug(`FileWriter ${fileName} created in "${this.outputFolder}"`)
       return values.length
     } catch (error) {
-      this.logger.error(`Error handling values, ${error}`)
+      this.logger.error(`Error handling values: ${error}`)
       return ApiHandler.STATUS.LOGIC_ERROR
     }
   }
