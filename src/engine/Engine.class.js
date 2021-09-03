@@ -111,7 +111,7 @@ class Engine {
    */
   async addValues(id, values) {
     const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from ${this.activeProtocols[id]?.name || id}`)
+    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
     if (sanitizedValues.length) await this.cache.cacheValues(id, sanitizedValues)
   }
 
@@ -124,7 +124,7 @@ class Engine {
    * @return {void}
    */
   addFile(id, filePath, preserveFiles) {
-    this.logger.silly(`Engine addFile() from ${this.activeProtocols[id]?.name || id} with ${filePath}`)
+    this.logger.silly(`Engine addFile() from "${this.activeProtocols[id]?.dataSource.name || id}" with ${filePath}`)
     this.cache.cacheFile(id, filePath, preserveFiles)
   }
 
@@ -135,7 +135,7 @@ class Engine {
    * @return {number} - The send status
    */
   async handleValuesFromCache(id, values) {
-    this.logger.silly(`handleValuesFromCache() call with ${this.activeApis[id]?.name || id} and ${values.length} values`)
+    this.logger.silly(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
 
     let status
     try {
@@ -154,7 +154,7 @@ class Engine {
    * @return {number} - The send status
    */
   async sendFile(id, filePath) {
-    this.logger.silly(`Engine sendFile() call with ${this.activeApis[id]?.name || id} and ${filePath}`)
+    this.logger.silly(`Engine sendFile() call with "${this.activeApis[id]?.application.name || id}" and ${filePath}`)
 
     let status
     try {
@@ -273,7 +273,7 @@ class Engine {
             try {
               this.activeProtocols[id].onScan(scanMode)
             } catch (error) {
-              this.logger.error(`scan for ${this.activeProtocols[id]?.name || id} failed: ${error}`)
+              this.logger.error(`scan for "${this.activeProtocols[id]?.dataSource.name || id}" failed: ${error}`)
             }
           })
         })
