@@ -392,7 +392,7 @@ module.exports = {
       }
     })
   },
-  24: (config) => {
+  24: async (config) => {
     config.engine.logParameters = {
       consoleLog: { level: config.engine.logParameters.consoleLevel },
       fileLog: {
@@ -434,7 +434,7 @@ module.exports = {
       },
     }
     delete config.engine.aliveSignal
-    config.south.dataSources.forEach((dataSource) => {
+    for (const dataSource of config.south.dataSources) {
       if (!dataSource.logParameters) {
         dataSource.logParameters = {
           consoleLevel: 'engine',
@@ -473,8 +473,8 @@ module.exports = {
           dataSource.SQLDbToFile.databasePath = './sqlite.db'
         }
       }
-    })
-    config.north.applications.forEach((application) => {
+    }
+    for (const application of config.north.applications) {
       if (!application.logParameters) {
         application.logParameters = {
           consoleLevel: 'engine',
@@ -495,22 +495,21 @@ module.exports = {
       }
       delete config.engine.caching.archiveMode
       delete config.engine.caching.archiveFolder
-    })
-  },
-  25: async (config) => {
+    }
+
     const cachePath = config.engine.caching.cacheFolder
-    config.south.dataSources.forEach((dataSource) => {
+    for (const dataSource of config.south.dataSources) {
       // Generate new id for each connector
       dataSource.id = nanoid()
       // The old dataSourceId will be the new name
       dataSource.name = dataSource.dataSourceId
 
       // Rename the old temp folder if it exists
-      const oldTmpFolder = path.resolve(cachePath, this.dataSource.name)
+      const oldTmpFolder = path.resolve(cachePath, dataSource.name)
       if (fs.existsSync(oldTmpFolder)) {
         logger.info(`Renaming old temp folder for datasource ${dataSource.name}`)
-        const newTmpFolder = path.resolve(cachePath, this.dataSource.id)
-        fs.rename(oldTmpFolder, newTmpFolder, (error) => {
+        const newTmpFolder = path.resolve(cachePath, dataSource.id)
+        await fs.rename(oldTmpFolder, newTmpFolder, (error) => {
           if (error) {
             logger.error(`Could not rename temp folder for dataSource: ${dataSource.name}`)
           }
@@ -521,7 +520,7 @@ module.exports = {
       const oldDataSourcePath = `${cachePath}/${dataSource.name}.db`
       if (fs.existsSync(oldDataSourcePath)) {
         logger.info(`Renaming old cache file for datasource ${dataSource.name}`)
-        fs.rename(oldDataSourcePath,
+        await fs.rename(oldDataSourcePath,
           `${cachePath}/${dataSource.id}.db`, async (error) => {
             if (error) {
               logger.error(`Could not rename datasource: ${dataSource.name}`)
@@ -530,7 +529,7 @@ module.exports = {
       }
       // This field should be deleted
       delete dataSource.dataSourceId
-    })
+    }
 
     // eslint-disable-next-line max-len
     logger.info(`Migration of value error database ${cachePath}/valueCache-error.db: Renaming column name "application_id" into "application"`)
@@ -538,42 +537,43 @@ module.exports = {
       'application_id',
       'application')
 
-    config.north.applications.forEach((application) => {
+    for (const application of config.north.applications) {
       application.id = nanoid()
       application.name = application.applicationId
       const oldApplicationPath = `${cachePath}/${application.name}.db`
       if (fs.existsSync(oldApplicationPath)) {
         logger.info(`Renaming old cache path for datasource ${application.name}`)
-        fs.rename(oldApplicationPath,
+        await fs.rename(oldApplicationPath,
           `${cachePath}/${application.id}.db`, async (error) => {
             if (error) {
               logger.error(`Could not rename application: ${application.name}`)
-            } else {
-              // eslint-disable-next-line max-len
-              logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
-              await databaseMigrationService.changeColumnName(`${cachePath}/${application.id}.db`,
-                'data_source_id',
-                'data_source')
             }
-            // eslint-disable-next-line max-len
-            logger.info(`Migration of file database ${cachePath}/fileCache.db:  Changing application value from ${application.name} to ${application.id}`)
-            await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache.db`,
-              'application',
-              application.name,
-              application.id)
-            // eslint-disable-next-line max-len
-            logger.info(`Migration of file error database ${cachePath}/fileCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
-            await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache-error.db`,
-              'application',
-              application.name,
-              application.id)
-            // eslint-disable-next-line max-len
-            logger.info(`Migration of value error database ${cachePath}/valueCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
-            await databaseMigrationService.changeColumnValue(`${cachePath}/valueCache-error.db`,
-              'application',
-              application.name,
-              application.id)
           })
+
+        // eslint-disable-next-line max-len
+        logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
+        await databaseMigrationService.changeColumnName(`${cachePath}/${application.id}.db`,
+          'data_source_id',
+          'data_source')
+        // eslint-disable-next-line max-len
+        logger.info(`Migration of file database ${cachePath}/fileCache.db:  Changing application value from ${application.name} to ${application.id}`)
+        await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache.db`,
+          'application',
+          application.name,
+          application.id)
+
+        // eslint-disable-next-line max-len
+        logger.info(`Migration of file error database ${cachePath}/fileCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
+        await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache-error.db`,
+          'application',
+          application.name,
+          application.id)
+        // eslint-disable-next-line max-len
+        logger.info(`Migration of value error database ${cachePath}/valueCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
+        await databaseMigrationService.changeColumnValue(`${cachePath}/valueCache-error.db`,
+          'application',
+          application.name,
+          application.id)
       }
       delete application.applicationId
 
@@ -582,6 +582,6 @@ module.exports = {
         const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
         return subscribedDataSource.id
       })
-    })
+    }
   },
 }

@@ -54,22 +54,24 @@ if (cluster.isMaster) {
     }
   })
 } else {
-  const { configFile, check, m1 } = ConfigService.getCommandLineArguments(logger)
+  const { configFile, check } = ConfigService.getCommandLineArguments(logger)
   process.chdir(path.parse(configFile).dir)
 
   // Migrate config file, if needed
-  migrationService.migrate(configFile)
+  migrationService.migrate(configFile).then(() => {
+    // this condition is reached only for a worker (i.e. not master)
+    // so this is here where we execute the OIBus Engine
+    const engine = new Engine(configFile, check)
+    engine.start(process.env.SAFE_MODE === 'true')
 
-  // this condition is reached only for a worker (i.e. not master)
-  // so this is here where we execute the OIBus Engine
-  const engine = new Engine(configFile, check, m1)
-  engine.start(process.env.SAFE_MODE === 'true')
-
-  // Catch Ctrl+C and properly stop the Engine
-  process.on('SIGINT', () => {
-    logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-    engine.stop().then(() => {
-      process.exit()
+    // Catch Ctrl+C and properly stop the Engine
+    process.on('SIGINT', () => {
+      logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+      engine.stop().then(() => {
+        process.exit()
+      })
     })
+  }).catch((error) => {
+    logger.error(`Migration error: ${JSON.stringify(error)}`)
   })
 }
