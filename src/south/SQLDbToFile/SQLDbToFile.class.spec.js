@@ -536,7 +536,7 @@ describe('sql-db-to-file', () => {
     const expectedPath = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
-    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', 'SQLDbToFile', expectedPath, false)
+    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', expectedPath, false)
     global.Date = RealDate
   })
 
@@ -567,7 +567,7 @@ describe('sql-db-to-file', () => {
 
     expect(csv.unparse).toBeCalledTimes(1)
     expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
-    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', 'SQLDbToFile', targetGzip, false)
+    expect(engine.addFile).toBeCalledWith('datasource-uuid-8', targetGzip, false)
 
     await sqlSouth.decompress(targetGzip, decompressedCsv)
     const targetBuffer = fs.readFileSync(decompressedCsv)

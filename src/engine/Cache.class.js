@@ -149,7 +149,7 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
       // Queue saving values.
-      this.queue.add(databaseService.saveValues, database, this.engine.activeProtocols[id]?.name || id, values)
+      this.queue.add(databaseService.saveValues, database, this.engine.activeProtocols[id]?.dataSource.name || id, values)
 
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
@@ -160,7 +160,7 @@ class Cache {
       }
     } else {
       // eslint-disable-next-line max-len
-      this.logger.silly(`datasource ${this.engine.activeProtocols[id]?.name || id} is not subscribed to application ${this.engine.activeApis[applicationId]?.name || applicationId}`)
+      this.logger.silly(`Application "${this.engine.activeApis[applicationId]?.application.name || applicationId}" is not subscribed to datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}"`)
     }
     return null
   }
@@ -210,7 +210,7 @@ class Cache {
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
-    this.logger.silly(`datasource ${this.engine.activeProtocols[id]?.name || id} is not subscribed to application ${applicationName}`)
+    this.logger.silly(`datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}" is not subscribed to application "${applicationName}"`)
     return null
   }
 
@@ -226,7 +226,7 @@ class Cache {
     this.cacheStats[id] = (this.cacheStats[id] || 0) + 1
 
     // Cache files
-    this.logger.debug(`cacheFile(${filePath}) from ${this.engine.activeProtocols[id]?.name || id}, preserveFiles:${preserveFiles}`)
+    this.logger.debug(`cacheFile(${filePath}) from "${this.engine.activeProtocols[id]?.dataSource.name || id}", preserveFiles:${preserveFiles}`)
     const timestamp = new Date().getTime()
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath)
@@ -339,8 +339,8 @@ class Cache {
 
       if (values.length) {
         this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.name}`)
-        const successCountStatus = await this.engine.handleValuesFromCache(id, name, values)
-        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus} AppId: ${application.name}`)
+        const successCountStatus = await this.engine.handleValuesFromCache(id, values)
+        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus}, Application: ${application.name}`)
         // If there was a logic error
         if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
           // Add errored values into error table
@@ -458,12 +458,11 @@ class Cache {
   }
 
   /**
-   * Delete files in archiveFolder if they are older thant the rentention time.
-   * @param {string} filePath - The file
+   * Delete files in archiveFolder if they are older thant the retention time.
    * @return {void}
    */
   async refreshArchiveFolder() {
-    this.logger.silly('refreshArchiveFolder()')
+    this.logger.silly('Parse archive folder to empty old files')
     // if a process already occurs, it clears it
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout)

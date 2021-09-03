@@ -110,7 +110,7 @@ class ProtocolHandler {
    * @returns {void}
    */
   async flush(flag = 'time') {
-    this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.dataSourceId}`)
+    this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
     await this.engine.addValues(this.dataSource.id, this.buffer)
     this.buffer = []
     if (this.bufferTimeout) {
@@ -132,7 +132,7 @@ class ProtocolHandler {
     this.buffer.push(...values)
     // if the protocol buffer is large enough, send it
     // else start a timer before sending it
-    this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.dataSourceId}`)
+    this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.name}`)
     if (this.buffer.length > BUFFER_MAX) {
       await this.flush('max')
     } else if (this.bufferTimeout === null) {
@@ -151,7 +151,7 @@ class ProtocolHandler {
   addFile(filePath, preserveFiles) {
     this.lastAddFileAt = new Date().getTime()
     this.addFileCount += 1
-    this.engine.addFile(this.dataSource.id, this.dataSource.name, filePath, preserveFiles)
+    this.engine.addFile(this.dataSource.id, filePath, preserveFiles)
   }
 
   /**
