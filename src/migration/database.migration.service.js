@@ -12,8 +12,8 @@ const changeColumnName = async (databasePath, oldName, newName) => {
 
 const changeColumnValue = async (databasePath, columnName, oldValue, newValue) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
-  await database.run(`UPDATE ${CACHE_TABLE_NAME} SET ${columnName} = ${newValue}
-                           WHERE ${columnName} = ${oldValue};`)
+  await database.run(`UPDATE ${CACHE_TABLE_NAME} SET ${columnName} = '${newValue}'
+                           WHERE ${columnName} = '${oldValue}';`)
   return true
 }
 
