@@ -81,7 +81,7 @@
     "react-json-view": "1.21.3",
     "react-router": "5.2.0",
     "react-router-dom": "5.2.0",
-    "reactstrap": "8.9.0",
+    "reactstrap": "8.10.0",
     "sprintf-js": "1.1.2",
     "sqlite": "4.0.23",
     "sqlite3": "5.0.2",
