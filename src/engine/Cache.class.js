@@ -399,7 +399,7 @@ class Cache {
         return ApiHandler.STATUS.SUCCESS
       }
       this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${name}`)
-      const status = await this.engine.sendFile(id, name, fileToSend.path)
+      const status = await this.engine.sendFile(id, fileToSend.path)
       switch (status) {
         case ApiHandler.STATUS.SUCCESS:
           this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
