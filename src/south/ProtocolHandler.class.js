@@ -109,10 +109,12 @@ class ProtocolHandler {
    * @param {string} flag - The trigger
    * @returns {void}
    */
-  async flush(flag = 'time') {
+  async flush(flag = 'time-flush') {
     this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
-    await this.engine.addValues(this.dataSource.id, this.buffer)
+    // save the buffer to be sent and immediately clear it
+    const bufferSave = [...this.buffer]
     this.buffer = []
+    await this.engine.addValues(this.dataSource.id, bufferSave)
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)
       this.bufferTimeout = null
@@ -134,7 +136,7 @@ class ProtocolHandler {
     // else start a timer before sending it
     this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.name}`)
     if (this.buffer.length > BUFFER_MAX) {
-      await this.flush('max')
+      await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
       this.bufferTimeout = setTimeout(async () => {
         await this.flush()
