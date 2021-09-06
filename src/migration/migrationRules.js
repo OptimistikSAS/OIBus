@@ -939,4 +939,17 @@ module.exports = {
       }
     }
   },
+  27: async (config) => {
+    for (const dataSource of config.south.dataSources) {
+      if (['OPCUA_DA', 'OPCUA_HA'].includes(dataSource.protocol)) {
+        logger.info(`Rename nodeId to pointId in the points for ${dataSource.dataSourceId}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+            delete point.nodeId
+          }
+        })
+      }
+    }
+  },
 }
