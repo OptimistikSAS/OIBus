@@ -613,6 +613,28 @@ const testConfig = {
         },
         subscribedTo: [],
       },
+      {
+        id: 'application-uuid-10',
+        name: 'test04 copy',
+        api: 'AmazonS3',
+        enabled: false,
+        AmazonS3: {
+          bucket: 'aef',
+          folder: 'azsdfcv',
+          proxy: '',
+          authentication: {
+            key: 'myAccessKey',
+            secretKey: 'mySecretKey',
+          },
+        },
+        caching: {
+          sendInterval: 10000,
+          retryInterval: 5000,
+          groupCount: 1000,
+          maxSendCount: 10000,
+        },
+        subscribedTo: [],
+      },
     ],
   },
   schemaVersion: 5,

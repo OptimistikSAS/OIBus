@@ -1,4 +1,5 @@
 import React from 'react'
+import OPCUA_HA from './api.png'
 import { notEmpty, minValue, optional } from '../../services/validation.service'
 import validation from '../../client/South/Form/South.validation'
 
@@ -164,5 +165,6 @@ schema.points = {
     ),
   },
 }
+schema.image = OPCUA_HA
 
 export default schema

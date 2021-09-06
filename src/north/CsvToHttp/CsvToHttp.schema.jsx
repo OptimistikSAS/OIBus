@@ -1,4 +1,5 @@
 import React from 'react'
+import CsvToHttp from './file-in.png'
 import { notEmpty, inRange } from '../../services/validation.service'
 
 const schema = { name: 'CsvToHttp' }
@@ -150,5 +151,5 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-
+schema.image = CsvToHttp
 export default schema

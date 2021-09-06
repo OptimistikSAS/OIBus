@@ -1,11 +1,19 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Row, Container, Button, UncontrolledTooltip } from 'reactstrap'
-import { Link } from 'react-router-dom'
+import { Container, Row } from 'reactstrap'
 import ReactFlow from 'react-flow-renderer'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
-import Modal from '../components/Modal.jsx'
+import ApiSchemas from '../North/Apis.jsx'
+import ProtocolSchemas from '../South/Protocols.jsx'
+import validationNorth from '../North/Form/North.validation'
+import validationSouth from '../South/Form/South.validation'
+import EditableIdField from '../components/EditableIdField.jsx'
+import NorthSettings from './NorthSettings.jsx'
+import SouthSettings from './SouthSettings.jsx'
+import EngineSettings from './EngineSettings.jsx'
+import NewNorth from './NewNorth.jsx'
+import NewSouth from './NewSouth.jsx'
 
 const colors = {
   border: {
@@ -21,42 +29,73 @@ const colors = {
     success: '#e1ffe15c',
   },
 }
-const height = 500
-const width = 1240
 
 const NodeView = ({ status, onRestart, onShutdown }) => {
-  const { activeConfig } = React.useContext(ConfigContext)
-  const applications = activeConfig?.north?.applications
-  const dataSources = activeConfig?.south?.dataSources
-  const engine = activeConfig?.engine
+  const { newConfig, dispatchNewConfig, apiList, protocolList } = React.useContext(ConfigContext)
+  const [renamingConnector, setRenamingConnector] = useState(null)
+  const applications = newConfig?.north?.applications ?? []
+  const dataSources = newConfig?.south?.dataSources ?? []
+  const engine = newConfig?.engine
 
-  const northNodes = applications?.map((application, index) => (
+  const handleConnectorNameChanged = (name) => (oldDataSourceId, newDataSourceId) => {
+    setRenamingConnector(null)
+    dispatchNewConfig({
+      type: 'update',
+      name,
+      value: newDataSourceId,
+    })
+  }
+
+  const northNodes = applications?.map((application, indexNorth) => (
     {
       id: application.id, // unique id of node
       type: 'output', // output node
       targetPosition: 'bottom', // handle is at the bottom
       style: {
-        background: colors.background[application.enabled ? 'enabled' : 'disabled'],
-        border: colors.border[application.enabled ? 'enabled' : 'disabled'],
-        width: '140px',
+        background: colors.background.disabled,
+        border: colors.border.disabled,
+        width: 170,
+        height: 130,
       },
       data: {
         label: (
-          <div id={`north-${application.id}`} className={`oi-box tight text-${application.enabled ? 'success' : 'muted'}`}>
-            <Link to={`/north/${application.id}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {application.name}
+          <div className="box-container">
+            <div className="icon-container">
+              <div className="icon-left">
+                <img src={`${ApiSchemas[application.api].image}`} alt="logo" height="24px" />
               </div>
-              <UncontrolledTooltip placement="top" target={`north-${application.id}`} innerClassName="oi-pop">
-                {application.name}
-              </UncontrolledTooltip>
-              <div>{`(${application.api})`}</div>
-            </Link>
+              <div className="icon-center flex-grow">
+                {`${application.api}`}
+              </div>
+              <div className={`icon-right icon-status-${application.enabled ? 'enabled' : 'disabled'}`} />
+            </div>
+
+            <div
+              className="oi-box tight text-muted"
+            >
+              <EditableIdField
+                connectorName={application.name}
+                editing={renamingConnector === `north-${application.id}`}
+                fromList={applications}
+                valid={validationNorth.application.isValidName}
+                nameChanged={handleConnectorNameChanged(
+                  `north.applications.${applications.findIndex(
+                    (element) => element.id === application.id,
+                  )}.name`,
+                )}
+              />
+            </div>
+            <NorthSettings application={application} renamingConnector={setRenamingConnector} />
           </div>),
       },
+
       // position the node with an offset to center and then an offset for each node
-      position: { x: 620 - 75 * applications.length + index * 150, y: 0 },
+      position: {
+        x: 620 - (100 * Math.min(applications.length, 5)) + (indexNorth % 5) * 200,
+        y: 150 * Math.trunc(indexNorth / 5),
+      },
     }
+
   )) ?? []
   const northLinks = applications?.map((application) => (
     {
@@ -70,35 +109,56 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
     }
   )) ?? []
 
-  const southNodes = dataSources?.map((dataSource, index) => (
+  const southNodes = dataSources?.map((dataSource, indexSouth) => (
     {
       id: dataSource.id,
       type: 'input',
       sourcePosition: 'top',
       style: {
-        background: colors.background[dataSource.enabled ? 'enabled' : 'disabled'],
-        border: colors.border[dataSource.enabled ? 'enabled' : 'disabled'],
-        width: '140px',
+        background: colors.background.disabled,
+        border: colors.border.disabled,
+        width: '170px',
+        height: '130px',
       },
       data: {
         label: (
-          <div id={`south-${dataSource.id}`} className={`oi-box tight text-${dataSource.enabled ? 'success' : 'muted'}`}>
-            <Link to={`/south/${dataSource.id}`}>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {dataSource.name}
+          <div className="box-container">
+            <div className="icon-container">
+              <div className="icon-left">
+                <img src={`${ProtocolSchemas[dataSource.protocol].image}`} alt="logo" height="24px" />
               </div>
-              <UncontrolledTooltip placement="top" target={`south-${dataSource.id}`} innerClassName="oi-pop">
-                {dataSource.name}
-              </UncontrolledTooltip>
-              <div>{`(${dataSource.protocol})`}</div>
-            </Link>
-            <PointsButton dataSource={dataSource} />
+              <div className="icon-center flex-grow">
+                {`${dataSource.protocol}`}
+              </div>
+              <div className={`icon-right icon-status-${dataSource.enabled ? 'enabled' : 'disabled'}`} />
+            </div>
+
+            <div className="oi-box tight text-muted">
+              <EditableIdField
+                connectorName={dataSource.name}
+                editing={renamingConnector === `south-${dataSource.id}`}
+                fromList={dataSources}
+                valid={validationSouth.protocol.isValidName}
+                nameChanged={handleConnectorNameChanged(
+                  `south.dataSources.${dataSources.findIndex(
+                    (element) => element.id === dataSource.id,
+                  )}.name`,
+                )}
+              />
+            </div>
+            <div className="oi-points tight text-muted">
+              <PointsButton dataSource={dataSource} />
+            </div>
+            <SouthSettings dataSource={dataSource} renamingConnector={setRenamingConnector} />
           </div>
         ),
       },
       // postion the node with an offset to center and then an offset for each node
-      // 6 per line max => potentially render on several lines with y
-      position: { x: 620 - (75 * Math.min(dataSources.length, 8)) + (index % 8) * 150, y: 250 + 120 * Math.trunc(index / 8) },
+      // 5 per line max => potentially render on several lines with y
+      position: {
+        x: 620 - (100 * Math.min(dataSources.length, 5)) + (indexSouth % 5) * 200,
+        y: 190 + 150 * Math.trunc(indexSouth / 5) + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+      },
     }
   )) ?? []
 
@@ -121,73 +181,77 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       id: 'engine',
       data: {
         label: (
-          <div className="oi-box">
-            <Link to="/engine">
-              <div className={`text-${engine?.safeMode ? 'warning oi-safe-mode' : 'success'} center`}>
-                {`Engine ${status?.version}${engine?.safeMode ? ' - Safe mode warning' : ''}`}
+          <div className="box-container">
+            <div className="icon-container">
+              <div className="icon-center icon-left">
+                {`Engine ${status?.version}`}
               </div>
-            </Link>
-            <Modal show={false} title="Server restart" body="Confirm restart?">
-              {(confirm) => (
-                <Button
-                  className="inline-button autosize oi-restart-button"
-                  color={engine?.safeMode ? 'warning' : 'success'}
-                  onClick={confirm(onRestart)}
-                  size="sm"
-                  outline
-                >
-                  Restart
-                </Button>
-              )}
-            </Modal>
-            <Modal show={false} title="Server shutdown" body="Confirm shutdown?">
-              {(confirm) => (
-                <Button
-                  className="inline-button autosize oi-shutdown-button"
-                  color={engine?.safeMode ? 'warning' : 'success'}
-                  onClick={confirm(onShutdown)}
-                  size="sm"
-                  outline
-                >
-                  Shutdown
-                </Button>
-              )}
-            </Modal>
+              <div className={`icon-right icon-status-${engine?.safeMode ? 'disabled' : 'enabled'}`} />
+            </div>
+            <EngineSettings onRestart={onRestart} onShutdown={onShutdown} />
           </div>
         ),
       },
-      position: { x: 20, y: 125 },
+      position: {
+        x: 100,
+        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+      },
       targetPosition: 'bottom',
       sourcePosition: 'top',
       style: {
-        background: colors.background[engine?.safeMode ? 'warning' : 'success'],
+        background: colors.background.warning,
         color: 'black',
-        border: colors.border[engine?.safeMode ? 'warning' : 'success'],
-        width: 1080,
+        border: colors.border.disabled,
+        width: 1020,
+        height: 130,
       },
     },
     {
-      id: 'alive',
+      id: 'newSouth',
+      type: 'input',
+      sourcePosition: 'right',
+      data: {
+        label: (
+          protocolList && (
+          <>
+            <NewSouth />
+          </>
+          )
+        ),
+      },
+      position: {
+        x: 1122,
+        y: 125 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+      },
+      style: {
+        background: colors.background[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
+        border: colors.border[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
+        width: 63,
+        height: 25,
+      },
+    },
+    {
+      id: 'newNorth',
       type: 'input',
       sourcePosition: 'left',
       data: {
         label: (
-          <Link to="/engine">
-            <div
-              className={`oi-box d-flex align-items-center text-${engine?.aliveSignal?.enabled ? 'success' : 'muted'}`}
-            >
-              <div className="oi-alive d-flex align-items-center">
-                Alive
-              </div>
-            </div>
-          </Link>
+          apiList && (
+          <>
+            <NewNorth />
+          </>
+          )
         ),
       },
-      position: { x: 1100, y: 125 },
+      position: {
+        x: 38,
+        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+      },
       style: {
         background: colors.background[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
         border: colors.border[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
-        width: 100,
+        width: 62,
+        height: 25,
       },
     },
     ...southNodes,
@@ -195,13 +259,17 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
   ]
 
   const onLoad = (reactFlowInstance) => {
-    reactFlowInstance.setTransform({ y: 0, x: 0, zoom: 0.8 })
+    reactFlowInstance.setTransform({ y: 35, x: 0, zoom: 0.9 })
   }
 
   return (
     <Container>
       <Row>
-        <div style={{ height, width }}>
+        <div style={{
+          height: 210 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
+          width: 1240,
+        }}
+        >
           <ReactFlow
             elements={elements}
             zoomOnScroll={false}

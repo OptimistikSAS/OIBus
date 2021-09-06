@@ -1,4 +1,5 @@
 import React from 'react'
+import FolderScanner from './file-out.png'
 import { notEmpty, minValue, endsWith } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
@@ -83,4 +84,5 @@ schema.form = {
 
 schema.points = null
 
+schema.image = FolderScanner
 export default schema

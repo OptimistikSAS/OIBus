@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewNorth check add pressed with "new_application" id 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;
+
+exports[`NewNorth display NewNorth page based on config 1`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;
+
+exports[`NewNorth display NewNorth page based on config 2`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;
+
+exports[`NewNorth display NewNorth page based on config 3`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;
+
+exports[`NewNorth display NewNorth page based on config 4`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;
+
+exports[`NewNorth display NewNorth page based on config 5`] = `
+<div>
+  <button
+    class="inline-button autosize oi-north-button btn btn-outline-secondary btn-sm"
+    id="add-north"
+  >
+    + North
+  </button>
+</div>
+`;

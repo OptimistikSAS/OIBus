@@ -16,7 +16,7 @@ const PointsButton = ({ dataSource }) => {
     <Button
       className="inline-button autosize oi-points-button"
       // eslint-disable-next-line no-nested-ternary
-      color={enabled ? (points?.length ? 'success' : 'warning') : 'secondary'}
+      color={enabled ? (points?.length ? 'secondary' : 'warning') : 'secondary'}
       onClick={() => handleEditPoints(name)}
       size="sm"
       outline

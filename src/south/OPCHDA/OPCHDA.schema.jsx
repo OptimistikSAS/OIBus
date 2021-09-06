@@ -1,4 +1,5 @@
 import React from 'react'
+import OPCHDA from './api.png'
 import { notEmpty, inRange, isPath, minValue, isHost } from '../../services/validation.service'
 import validation from '../../client/South/Form/South.validation'
 
@@ -610,5 +611,7 @@ schema.points = {
     ),
   },
 }
+
+schema.image = OPCHDA
 
 export default schema

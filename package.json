@@ -43,7 +43,6 @@
     "firefox esr"
   ],
   "dependencies": {
-    "@fortawesome/fontawesome-free": "5.15.4",
     "@koa/cors": "3.1.0",
     "@koa/multer": "3.0.0",
     "@koa/router": "10.1.1",
@@ -82,10 +81,12 @@
     "prop-types": "15.7.2",
     "proxy-agent": "5.0.0",
     "react": "17.0.2",
+    "react-bootstrap": "1.6.1",
     "react-dom": "17.0.2",
     "react-flow-renderer": "9.6.7",
     "react-icons": "4.2.0",
     "react-json-view": "1.21.3",
+    "react-modal": "3.14.3",
     "react-router": "5.2.1",
     "react-router-dom": "5.3.0",
     "reactstrap": "8.10.0",
