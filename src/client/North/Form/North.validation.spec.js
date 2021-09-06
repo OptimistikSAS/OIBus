@@ -39,12 +39,9 @@ describe('North.validation', () => {
   })
   it('check application.isValidName name already exists', () => {
     const error = validation.application.isValidName('name1', ['name1', 'name2'])
-    expect(error).toEqual('Id already exists')
+    expect(error).toEqual('Name already exists')
   })
-  it('check application.isValidName name empty', () => {
-    const error = validation.application.isValidName('', ['name1', 'name2'])
-    expect(error).toBeTruthy()
-  })
+
   it('check application.isValidName name int', () => {
     const error = validation.application.isValidName(1, ['name1', 'name2'])
     expect(error).toBeTruthy()

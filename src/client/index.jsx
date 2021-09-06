@@ -8,8 +8,6 @@ import './style/main.less'
 import TopHeader from './TopHeader.jsx'
 import Activation from './Activation/Activation.jsx'
 import NotFound from './NotFound.jsx'
-import South from './South/South.jsx'
-import North from './North/North.jsx'
 import Engine from './Engine/Engine.jsx'
 import ConfigureApi from './North/ConfigureApi.jsx'
 import ConfigureProtocol from './South/ConfigureProtocol.jsx'
@@ -33,11 +31,9 @@ const Main = () => (
             <Switch>
               <Route exact path="/" component={Health} />
               <Route exact path="/engine" component={Engine} />
-              <Route exact path="/south" component={South} />
               <Route exact path="/south/:id" component={ConfigureProtocol} />
               <Route exact path="/south/:id/live" component={SouthStatus} />
               <Route exact path="/south/:id/points" component={ConfigurePoints} />
-              <Route exact path="/north" component={North} />
               <Route exact path="/north/:id" component={ConfigureApi} />
               <Route exact path="/log" component={Logs} />
               <Route exact path="/about" component={About} />

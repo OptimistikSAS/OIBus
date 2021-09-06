@@ -5,10 +5,10 @@ const validation = {
     isValidName: (val, excludedList) => {
       let error = null
       if (excludedList.includes(val)) {
-        error = 'Id already exists'
+        error = 'Name already exists'
       }
       if (!error) {
-        error = (((typeof val === 'string' || val instanceof String) && val !== '') ? null : 'value must not be empty')
+        error = (((typeof val === 'string' || val instanceof String)) ? null : 'value must not be empty')
       }
       return error
     },

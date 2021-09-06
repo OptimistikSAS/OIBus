@@ -1,4 +1,5 @@
 import React from 'react'
+import Modbus from './api.png'
 import {
   inRange,
   isHost,
@@ -159,5 +160,7 @@ schema.points = {
     label: 'Scan Mode',
   },
 }
+
+schema.image = Modbus
 
 export default schema

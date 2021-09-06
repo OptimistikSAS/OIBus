@@ -1,4 +1,5 @@
 import React from 'react'
+import MQTTNorth from './iot.png'
 import { notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTTNorth' }
@@ -150,5 +151,6 @@ schema.form = {
     help: 'Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)',
   },
 }
+schema.image = MQTTNorth
 
 export default schema

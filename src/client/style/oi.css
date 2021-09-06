@@ -1,5 +1,105 @@
 /* OI Styles */
 
+.box-container {
+  display: flex;
+  flex-direction: column;
+  height: 25px;
+}
+
+.connector {
+  flex-grow: 2;
+}
+
+.icon-container {
+ display: flex;
+ flex-direction: row;
+ margin-top: -10px;
+ height: 27px;
+}
+
+.icon-left {
+  margin-left: -10px;
+  background-color: #323e48;
+  width: 20%;
+  border-color:#323e48;
+  flex-grow: 0;
+  line-height: 25px;
+}
+
+.icon-center {
+  flex-grow: 4;
+  background-color: #323e48;
+  color:#fff;
+  font-size: 13px;
+  font-weight: 400;
+  text-align:center;
+  vertical-align:top;
+  line-height: 27px;
+}
+
+.icon-right {
+  margin-right: -10px;
+  flex-grow: 0;
+}
+
+.icon-status-enabled {
+  width: 26px;
+  background-color:rgb(134, 207, 141);
+}
+
+.icon-status-disabled {
+  width: 26px;
+  background-color:rgb(172, 169, 169);
+}
+
+.icon-dropdown {
+  background-color: rgba(222, 227, 228, 0.36);;
+  color: #000000;
+  border: none;
+  width: 18px;
+  border-radius: 40%;
+  justify-content: center;
+}
+
+.icon-dropdown:hover {
+  color:#fff;
+  border: none;
+  border-radius: 40%;
+  width: 18px;
+  justify-content: center;
+}
+
+.icon-dropdown:focus {
+  background-color:lightgray;
+  color: #000000;
+  border: none;
+  border-radius: 40%;
+  width: 18px;
+  justify-content: center;
+  box-shadow: 0 0 0 0.1rem rgb(130 138 145 / 20%);
+}
+
+.icon-dropdown-item {
+  margin-right: 18px;
+  color:#6c757d;
+}
+
+.icon-dropdown-ellipsis {
+  padding-right: 24px;
+  width: 28px;
+}
+
+
+.icon-menu {
+  position: absolute;
+  right: 25px;
+  bottom: 5px;
+  width: 8px;
+  border-radius: 30px;
+  }
+  
+
+
 .custom-control-input:checked~.custom-control-label::before {
   border-color: #f5bb51;
   background-color: #f5bb51;
@@ -274,9 +374,9 @@ label {
 }
 
 .oi-icon-inline {
-  vertical-align: top;
-  margin-left: 5px;
-  width: 12px;
+  vertical-align:middle;
+  margin-left: 10px;
+  width: 10px;
 }
 
 .oi-log td{
@@ -287,6 +387,16 @@ label {
   text-decoration: none;
   color: #F5BB51;
   cursor: pointer;
+}
+
+.oi-node-image{
+  position: absolute;
+  left: 5px;
+  bottom:5px;
+}
+.oi-node-center-image{
+  position: absolute;
+  left: 40%;
 }
 
 .oi-form-input {
@@ -340,21 +450,22 @@ h3 {
 }
 
 .oi-add-button {
-  margin-top: 20px;
+
   height: 20px;
+  position: absolute;
+  bottom: 0px;
+  left: 210px;
 }
 
-.oi-restart-button {
-  height: 16px;
-  padding-top: 1px;
-  margin-top: 3px;
+.oi-north-button{
+  bottom: -5px;
+  left: 0px;
+  position: absolute;
 }
-
-.oi-shutdown-button {
-  height: 16px;
-  padding-top: 1px;
-  margin-top: 3px;
-  margin-left: 5px;
+.oi-south-button{
+  bottom: -5px;
+  right: 0px;
+  position: absolute;
 }
 
 .oi-points-button {
@@ -393,16 +504,28 @@ h3 {
   align-items: center;
   justify-content: center;
   text-align: center;
-  vertical-align: middle;
+  vertical-align:middle;
   white-space: nowrap;
-  min-height: 50px;
-  line-height: 15px;
+  min-height: 30px;
+  line-height: 75px;
   margin-top: 3px;
   margin-bottom: 3px;
-  padding-bottom: 10px;
-  padding-top: 10px;
+  padding-bottom: 0px;
+  padding-top: 0px;
   padding-right: 5px;
   padding-left: 5px;
+  flex-grow: 2
+}
+.oi-editing {
+  margin-top: 15px;
+  padding-right: -15px;
+  padding-left: -15px;
+  margin-left: 15px;
+  width: 140px;
+}
+.oi-points {
+  min-height: 47px;
+  line-height: 45px;
 }
 
 .oi-box > a {
@@ -436,12 +559,7 @@ h3 {
   margin-top: 9px;
 }
 
-.oi-pop{
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
+.oi-popper-inner-class {
   min-height: 50px;
   line-height: 15px;
   margin-top: 3px;

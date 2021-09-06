@@ -1,4 +1,5 @@
 import React from 'react'
+import SQLDbToFile from './db-out.png'
 import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
@@ -193,5 +194,7 @@ schema.withDriver = (driver) => {
   schema.form.connectionTimeout.hidden = driver === 'sqlite'
   return schema
 }
+
+schema.image = SQLDbToFile
 
 export default schema

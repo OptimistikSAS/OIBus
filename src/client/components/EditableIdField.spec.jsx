@@ -9,7 +9,7 @@ import EditableIdField from './EditableIdField.jsx'
 
 // mock states
 let initializing = 'editingId'
-let editing = false
+const editing = false
 const setEditing = jest.fn()
 const setEditingId = jest.fn()
 const setOtherIds = jest.fn()
@@ -44,26 +44,27 @@ describe('EditableIdField', () => {
   test('check EditableIdField editing = false', () => {
     act(() => {
       ReactDOM.render(<EditableIdField
-        id="id"
+        connectorName="id"
         fromList={[{ test: 'test' }]}
+        editing={false}
         index={1}
-        name="name"
+        fieldName="name"
         valid={() => null}
-        idChanged={() => (1)}
+        nameChanged={() => (1)}
       />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check EditableIdField editing = true', () => {
-    editing = true
     act(() => {
       ReactDOM.render(<EditableIdField
-        id="id"
+        connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
-        name="name"
+        fieldName="name"
+        editing
         valid={() => null}
-        idChanged={() => (1)}
+        nameChanged={() => (1)}
       />, container)
     })
     expect(container).toMatchSnapshot()
@@ -73,12 +74,13 @@ describe('EditableIdField', () => {
     const idChanged = jest.fn()
     act(() => {
       ReactDOM.render(<EditableIdField
-        id="id"
+        connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
-        name="name"
+        fieldName="name"
+        editing
         valid={() => null}
-        idChanged={idChanged}
+        nameChanged={idChanged}
       />, container)
     })
     Simulate.click(document.querySelector('button svg path'))
@@ -89,12 +91,13 @@ describe('EditableIdField', () => {
     const idChanged = jest.fn()
     act(() => {
       ReactDOM.render(<EditableIdField
-        id="id"
+        connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
-        name="name"
+        fieldName="name"
+        editing
         valid={() => 'error'}
-        idChanged={idChanged}
+        nameChanged={idChanged}
       />, container)
     })
     Simulate.click(document.querySelector('button svg path'))

@@ -14,7 +14,7 @@ exports[`PointsButton check PointsButton disabled 1`] = `
 exports[`PointsButton check PointsButton enabled 1`] = `
 <div>
   <button
-    class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+    class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
     type="button"
   >
     Points (2)
@@ -58,7 +58,7 @@ exports[`PointsButton check no points 1`] = `
 exports[`PointsButton check points button click 1`] = `
 <div>
   <button
-    class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+    class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
     type="button"
   >
     Points (2)

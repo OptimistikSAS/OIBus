@@ -1,4 +1,5 @@
 import React from 'react'
+import WATSYConnect from './iot.png'
 import { notEmpty, hasLengthBetween, inRange } from '../../services/validation.service'
 
 const schema = { name: 'WATSYConnect' }
@@ -101,5 +102,6 @@ schema.form = {
     defaultValue: '',
   },
 }
+schema.image = WATSYConnect
 
 export default schema

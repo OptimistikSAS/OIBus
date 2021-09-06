@@ -39,12 +39,6 @@ const TopHeader = () => {
             {engine?.safeMode ? <Badge className="oi-safe-mode" color="warning" pill>Safe mode</Badge> : null}
             {!engine?.password ? <Badge className="oi-safe-mode" color="warning" pill>Change password</Badge> : null}
           </NavItem>
-          <NavItem className="oi-navitem" active={isActive('north')} tag={Link} to="/north">
-            North
-          </NavItem>
-          <NavItem className="oi-navitem" active={isActive('south')} tag={Link} to="/south">
-            South
-          </NavItem>
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs
           </NavItem>
