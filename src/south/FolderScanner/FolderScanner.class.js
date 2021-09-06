@@ -3,6 +3,10 @@ const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
+const NO_ACCESS = 0
+const READ_ACCESS_ONLY = 1
+const WRITE_READ_ACCESS = 2
+
 /**
  * Class FolderScanner
  */
@@ -35,42 +39,80 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   async onScanImplementation(_scanMode) {
-    // Check if input folder exists
-    try {
-      // eslint-disable-next-line no-bitwise
-      fs.accessSync(this.inputFolder, fs.constants.R_OK | fs.constants.W_OK)
-      this.logger.debug(`${this.dataSource.name} is checking folder ${this.inputFolder}.`)
-    } catch (err) {
-      this.logger.error(`can't write to ${this.inputFolder}: ${err.message}`)
-    }
+    const folderAccess = await this.checkAccess()
 
-    // List files in the inputFolder and manage them.
-    try {
-      const files = fs.readdirSync(this.inputFolder)
-      if (files.length > 0) {
-        // Disable ESLint check because we need for..of loop to support async calls
-        // eslint-disable-next-line no-restricted-syntax
-        for (const file of files) {
-          // Disable ESLint check because we want to handle files one by one
-          // eslint-disable-next-line no-await-in-loop
-          const matchConditions = await this.checkConditions(file)
-          if (matchConditions) {
-            // local try catch in case an error occurs on a file
-            // if so, the loop goes on with the other files
-            try {
-              // eslint-disable-next-line no-await-in-loop
-              await this.sendFile(file)
-            } catch (sendFileError) {
-              this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
-            }
+    return new Promise((resolve) => {
+      if (folderAccess !== NO_ACCESS) {
+        // List files in the inputFolder and manage them.
+        fs.readdir(this.inputFolder, async (error, files) => {
+          if (error) {
+            this.logger.error(`Error while reading the input folder ${this.inputFolder}: ${error.message}`)
           }
-        }
+          if (files.length > 0) {
+            // Disable ESLint check because we need for..of loop to support async calls
+            // eslint-disable-next-line no-restricted-syntax
+            for (const file of files) {
+              // Disable ESLint check because we want to handle files one by one
+              // eslint-disable-next-line no-await-in-loop
+              const matchConditions = await this.checkConditions(file)
+              if (matchConditions) {
+                // local try catch in case an error occurs on a file
+                // if so, the loop goes on with the other files
+                try {
+                  // eslint-disable-next-line no-await-in-loop
+                  await this.sendFile(file, folderAccess)
+                } catch (sendFileError) {
+                  this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+                }
+              }
+            }
+          } else {
+            this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+          }
+          resolve()
+        })
       } else {
-        this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+        this.logger.warn(`No read access for folder ${this.inputFolder}`)
+        resolve()
       }
-    } catch (error) {
-      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error.message}`)
-    }
+    })
+  }
+
+  /**
+   * Return the access level of OIBus on the inputFolder
+   * @returns {Promise<*>} - The result promise to get the input folder access level
+   */
+  checkAccess() {
+    return new Promise((resolve) => {
+      // eslint-disable-next-line max-len
+      this.logger.silly(`${this.dataSource.dataSourceId} is checking read access of folder ${this.inputFolder}`)
+      // eslint-disable-next-line no-bitwise
+      fs.access(this.inputFolder, fs.constants.R_OK, (err) => {
+        if (!err) {
+          this.logger.silly(`${this.dataSource.dataSourceId} has read access for folder ${this.inputFolder}`)
+          // Check if OIBus has write access in case of compression of no preserveFiles option
+          if (!this.preserveFiles || this.compression) {
+            // eslint-disable-next-line max-len
+            this.logger.silly(`${this.dataSource.dataSourceId} is checking write access for folder ${this.inputFolder}`)
+            // eslint-disable-next-line no-bitwise
+            fs.access(this.inputFolder, fs.constants.R_OK | fs.constants.W_OK, (writeAccessError) => {
+              if (!writeAccessError) {
+                this.logger.silly(`${this.dataSource.dataSourceId} has write access for folder ${this.inputFolder}`)
+                resolve(WRITE_READ_ACCESS)
+              } else {
+                this.logger.warn(`Write access error of folder "${this.inputFolder}": ${err.message}`)
+                resolve(READ_ACCESS_ONLY)
+              }
+            })
+          } else {
+            resolve(READ_ACCESS_ONLY)
+          }
+        } else {
+          this.logger.warn(`Read access error of folder "${this.inputFolder}": ${err.message}`)
+          resolve(NO_ACCESS)
+        }
+      })
+    })
   }
 
   /**
@@ -100,15 +142,34 @@ class FolderScanner extends ProtocolHandler {
   }
 
   /**
+   * Return a promise when the fs.unlink method is done
+   * @param {String} filePath - the file to remove
+   * @returns {Promise<unknown>} - The promise to resolve
+   */
+  deleteFile(filePath) {
+    return new Promise((resolve) => {
+      fs.unlink(filePath, (unlinkError) => {
+        if (unlinkError) {
+          this.logger.error(unlinkError)
+        } else {
+          this.logger.info(`File ${filePath} compressed and deleted`)
+        }
+        resolve()
+      })
+    })
+  }
+
+  /**
    * Send the file to the Engine.
    * @param {String} filename - The filename
+   * @param {number} folderAccess - The access rights for the foldeer
    * @return {void}
    */
-  async sendFile(filename) {
+  async sendFile(filename, folderAccess) {
     const filePath = path.join(this.inputFolder, filename)
     this.logger.debug(`Sending ${filePath} to Engine.`)
 
-    if (this.compression) {
+    if (this.compression && folderAccess === WRITE_READ_ACCESS) {
       // Compress and send the compressed file
       const gzipPath = `${filePath}.gz`
       await this.compress(filePath, gzipPath)
@@ -116,14 +177,11 @@ class FolderScanner extends ProtocolHandler {
 
       // Delete original file if preserveFile is not set
       if (!this.preserveFiles) {
-        fs.unlink(filePath, (unlinkError) => {
-          if (unlinkError) {
-            this.logger.error(unlinkError)
-          } else {
-            this.logger.info(`File ${filePath} compressed and deleted`)
-          }
-        })
+        await this.deleteFile(filePath)
       }
+    } else if (this.compression && folderAccess !== WRITE_READ_ACCESS) {
+      this.logger.debug(`Cannot compress file because of write access error for folder ${this.inputFolder}, the file will be sent raw.`)
+      await this.addFile(filePath, this.preserveFiles)
     } else {
       await this.addFile(filePath, this.preserveFiles)
     }
