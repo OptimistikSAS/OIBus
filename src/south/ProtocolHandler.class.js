@@ -83,7 +83,7 @@ class ProtocolHandler {
           this.scanGroups = this.dataSource[this.constructor.name].scanGroups.map((scanGroup) => {
             const points = this.dataSource.points
               .filter((point) => point.scanMode === scanGroup.scanMode)
-              .map((point) => point.nodeId)
+              .map((point) => point.pointId)
             this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
             this.ongoingReads[scanGroup.scanMode] = false
             return {

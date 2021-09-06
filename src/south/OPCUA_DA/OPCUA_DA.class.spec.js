@@ -48,7 +48,7 @@ describe('OPCUA-DA south', () => {
       maxReadInterval: 3600,
     },
     points: [{
-      nodeId: 'ns=3;s=Random',
+      pointId: 'ns=3;s=Random',
       scanMode: 'every10Second',
     }],
   }
