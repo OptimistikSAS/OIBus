@@ -205,10 +205,13 @@ schema.form = {
 }
 
 schema.points = {
-  nodeId: {
+  pointId: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
+    help: (
+      <div>The pointId for OPCUA represents the NodeId</div>
+    ),
   },
   scanMode: {
     type: 'OIbScanMode',

@@ -50,7 +50,7 @@ const opcuaConfig = {
     keyFile: '',
   },
   points: [{
-    nodeId: 'ns=3;s=Random',
+    pointId: 'ns=3;s=Random',
     scanMode: 'every10Second',
   }],
 }

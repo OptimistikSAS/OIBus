@@ -64,7 +64,7 @@ const opcuaConfig = {
     }],
   },
   points: [{
-    nodeId: 'ns=3;s=Random',
+    pointId: 'ns=3;s=Random',
     scanMode: 'every10Second',
   }],
 }
@@ -435,7 +435,7 @@ describe('OPCUA-HA south', () => {
     const testOpcuaConfig = {
       ...opcuaConfig,
       points: [{
-        nodeId: 'ns=3;s=Random',
+        pointId: 'ns=3;s=Random',
         scanMode: 'every1minute',
       }],
     }
@@ -488,7 +488,7 @@ describe('OPCUA-HA south', () => {
     global.Date = RealDate
 
     const expectedValue = {
-      pointId: opcuaConfig.points[0].nodeId,
+      pointId: opcuaConfig.points[0].pointId,
       timestamp: sampleDate.toISOString(),
       data: {
         value: sampleValue,
@@ -498,7 +498,7 @@ describe('OPCUA-HA south', () => {
     expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(1)
     expect(opcuaSouth.readHistoryValue)
-      .toBeCalledWith([opcuaConfig.points[0].nodeId], startDate, nowDate, { numValuesPerNode: 1000, timeout: 600000 })
+      .toBeCalledWith([opcuaConfig.points[0].pointId], startDate, nowDate, { numValuesPerNode: 1000, timeout: 600000 })
     expect(opcuaSouth.addValues)
       .toBeCalledTimes(1)
     expect(opcuaSouth.addValues)
