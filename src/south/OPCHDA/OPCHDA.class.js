@@ -19,7 +19,7 @@ class OPCHDA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
-    const { maxReadInterval, readIntervalDelay, maxReturnValues } = dataSource.OPCUA_HA
+    const { maxReadInterval, readIntervalDelay, maxReturnValues } = dataSource.OPCHDA
 
     this.tcpServer = null
     this.transactionId = 0
