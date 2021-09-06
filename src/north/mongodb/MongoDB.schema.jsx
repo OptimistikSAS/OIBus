@@ -1,4 +1,5 @@
 import React from 'react'
+import MongoDB from './db-in.png'
 import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'MongoDB' }
@@ -108,5 +109,6 @@ schema.form = {
     help: <div>field in engine data which contain timestamp value</div>,
   },
 }
+schema.image = MongoDB
 
 export default schema

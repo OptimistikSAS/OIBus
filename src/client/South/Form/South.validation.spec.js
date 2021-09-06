@@ -8,11 +8,7 @@ describe('South.validation', () => {
   })
   it('check protocol.isValidName name already exists', () => {
     const error = validation.protocol.isValidName('name1', ['name1', 'name2'])
-    expect(error).toEqual('Id already exists')
-  })
-  it('check protocol.isValidName name empty', () => {
-    const error = validation.protocol.isValidName('', ['name1', 'name2'])
-    expect(error).toBeTruthy()
+    expect(error).toEqual('Name already exists')
   })
   it('check protocol.isValidName name int', () => {
     const error = validation.protocol.isValidName(1, ['name1', 'name2'])

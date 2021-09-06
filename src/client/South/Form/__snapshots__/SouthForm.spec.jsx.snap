@@ -49,7 +49,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           Status
         </button>
         <button
-          class="inline-button autosize oi-points-button btn btn-outline-success btn-sm"
+          class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
           type="button"
         >
           Points (24)
