@@ -74,7 +74,7 @@ class OPCUA_DA extends ProtocolHandler {
 
     const nodesToRead = this.dataSource.points
       .filter((point) => point.scanMode === scanMode)
-      .map((point) => point.nodeId)
+      .map((point) => point.pointId)
     if (!nodesToRead.length) {
       this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
       return
@@ -112,7 +112,7 @@ class OPCUA_DA extends ProtocolHandler {
   monitorPoints() {
     const nodesToMonitor = this.dataSource.points
       .filter((point) => point.scanMode === 'listen')
-      .map((point) => point.nodeId)
+      .map((point) => point.pointId)
     if (!nodesToMonitor.length) {
       this.logger.error('Monitoring ignored: no points to monitor')
       return
