@@ -936,6 +936,28 @@ module.exports = {
           application[application.api].keyParentValue = ''
         }
       }
+      if (application.api === 'TimescaleDB') {
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'regExp')) {
+          logger.info('Add regExp field to TimescaleDB')
+          application.TimescaleDB.regExp = '(.*)/'
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'table')) {
+          logger.info('Add table field to TimescaleDB')
+          application.TimescaleDB.table = '%1$s'
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'optFields')) {
+          logger.info('Add optFields field to TimescaleDB')
+          application.TimescaleDB.optFields = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'useDataKeyValue')) {
+          logger.info('Add useDataKeyValue field to TimescaleDB')
+          application.TimescaleDB.useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'keyParentValue')) {
+          logger.info('Add keyParentValue field to TimescaleDB')
+          application.TimescaleDB.keyParentValue = ''
+        }
+      }
     })
   }
 }

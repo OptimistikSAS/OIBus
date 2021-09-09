@@ -1,23 +1,7 @@
 const { Client } = require('pg')
+const { vsprintf } = require('sprintf-js')
 
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * Reads a string in pointId format and returns an object with corresponding indexes and values.
- * @param {String} pointId - String with this form : value1.name1/value2.name2#value
- * @return {Object} Values indexed by name
- */
-const pointIdToNodes = (pointId) => {
-  const attributes = {}
-  pointId
-    .slice(1)
-    .split('/')
-    .forEach((node) => {
-      const nodeId = node.replace(/[\w ]+\.([\w]+)/g, '$1') // Extracts the word after the dot
-      attributes[nodeId] = node.replace(/([\w ]+)\.[\w]+/g, '$1') // Extracts the one before
-    })
-  return attributes
-}
 
 /**
  * Escape spaces.
@@ -29,6 +13,24 @@ const escapeSpace = (chars) => {
     return chars.replace(/ /g, '\\ ')
   }
   return chars
+}
+
+/**
+ * function return the content of value, that could be a Json object with path keys given by string value
+ * @param {*} value - simple value (integer or float or string, ...) or Json object
+ * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
+ * @return {*} The content of value depending on value type (object or simple value)
+ */
+const getJsonValueByStringPath = (value, pathValue) => {
+  let tmpValue = value
+
+  if (typeof value === 'object') {
+    if (pathValue !== '') {
+      const arrValue = pathValue.split('.')
+      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
+    }
+  }
+  return tmpValue
 }
 
 class TimescaleDB extends ApiHandler {
@@ -68,49 +70,126 @@ class TimescaleDB extends ApiHandler {
   }
 
   /**
+   * Connection to MongoDB
+   * @return {void}
+   */
+  connect() {
+    this.logger.info('Connection to TimescaleDB')
+    const { host, user, password, db } = this.application.TimescaleDB
+
+    // Build the url
+    const url = `postgres://${user}:${this.encryptionService.decryptText(password)}@${host}/${db}`
+    // Get client object and connect to the database
+    this.clientPG = new Client(url)
+    this.clientPG.connect((error) => {
+      if (error) {
+        this.logger.error(`Error during Connection To TimescaleDB : ${error}`)
+        this.clientPG = null
+      } else {
+        this.logger.info('Connection To TimescaleDB : OK')
+      }
+    })
+  }
+
+  /**
+   * Disconnection from MongoDB
+   * @return {void}
+   */
+  disconnect() {
+    this.logger.info('Disconnection from TimeScaleDB')
+    this.clientPG.end()
+  }
+
+  /**
    * Makes a TimescaleDB request with the parameters in the Object arg.
    * @param {object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
+
   async makeRequest(entries) {
-    const { host, user, password, db } = this.application.TimescaleDB
-    // Build the url
-    const url = `postgres://${user}:${this.encryptionService.decryptText(password)}@${host}/${db}`
-    // Get client object and connect to the database
-    const client = new Client(url)
-    await client.connect()
+    const { regExp, table, optFields, useDataKeyValue, keyParentValue } = this.application.TimescaleDB
 
     let query = 'BEGIN;'
+    let tableValue = ''
+    let optFieldsValue = ''
 
     entries.forEach((entry) => {
-      const { pointId, data, timestamp } = entry
-      // Convert the pointId into nodes
-      const Nodes = Object.entries(pointIdToNodes(pointId))
+      const { pointId, data } = entry
+
+      const mainRegExp = new RegExp(regExp)
+      const groups = mainRegExp.exec(pointId)
+      // Remove the first element, which is the matched string, because we only need the groups
+      groups.shift()
+
+      tableValue = vsprintf(table, groups)
+
+      // optFieldsValue is used to identify fields which are determinated from pointId string
+      optFieldsValue = vsprintf(optFields, groups)
+
+      // If there are less groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      if ((tableValue.match(/undefined/g) || []).length > (table.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for table`)
+        return
+      }
+
+      if ((optFieldsValue.match(/undefined/g) || []).length > (optFields.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for optionnals fields`)
+        return
+      }
+
       // Make the query by rebuilding the Nodes
-      const tableName = 'oibus_test' // Nodes[Nodes.length - 1][0]
-      let statement = `insert into ${tableName}(`
+      const tableName = tableValue
+      let statement = `insert into "${tableName}"(`
       let values = null
       let fields = null
 
-      // FIXME rewrite this part to handle a data in form of {value: string, quality: string}
-      Nodes.slice(1).forEach(([nodeKey, nodeValue]) => {
-        if (!fields) fields = `${escapeSpace(nodeKey)}`
-        else fields = `${fields},${escapeSpace(nodeKey)}`
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      // In fact, as some usecases can produce value structured as Json Object, code is modified to process value which could be
+      // simple value (integer, float, ...) or Json object
+      let dataValue = null
 
-        if (!values) values = `'${nodeValue}'`
-        else values = `${values},'${nodeValue}'`
-      })
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      if (useDataKeyValue) {
+        // data to use is value key of Json object data (data.value)
+        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
+        // If it's a json, the function return data where path is given by keyParentValue parameter
+        // even if json object containing more than one level of object.
+        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
+        // in this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
+        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
+        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+      } else {
+        // data to use is Json object data
+        dataValue = data
+      }
+
       // Converts data into fields for CLI
       try {
-        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-          if (!fields) fields = `${escapeSpace(fieldKey)}`
-          else fields = `${fields},${escapeSpace(fieldKey)}`
+        Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
+          if (!fields) fields = `"${escapeSpace(fieldKey)}"`
+          else fields = `${fields},"${escapeSpace(fieldKey)}"`
 
           if (!values) values = `'${fieldValue}'`
           else values = `${values},'${fieldValue}'`
         })
-        fields += ',created_at'
-        values += `,'${timestamp}'`
+        // fields += ',created_at'
+        // values += `,'${timestamp}'`
+
+        // Some of optionnals fields are not presents in values, because they are calculated from pointId
+        // Those fields must be added in values inserting in table
+        optFieldsValue.split(',').forEach((optValueString) => {
+          const optItems = optValueString.split(':')
+          const optField = escapeSpace(optItems[0])
+          if (!fields.includes(optField)) {
+            if (!fields) fields = `"${optField}"`
+            else fields = `${fields},"${optField}"`
+
+            if (!values) values = `'${escapeSpace(optItems[1])}'`
+            else values = `${values},'${escapeSpace(optItems[1])}'`
+          }
+        })
 
         statement += `${fields}) values(${values});`
 
@@ -122,8 +201,7 @@ class TimescaleDB extends ApiHandler {
 
     query += 'COMMIT'
 
-    await client.query(query)
-    await client.end()
+    await this.clientPG.query(query)
   }
 }
 
