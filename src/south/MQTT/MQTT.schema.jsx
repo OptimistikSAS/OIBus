@@ -50,6 +50,24 @@ schema.form = {
             client.
           </li>
           <li>
+            <b>CertFile:</b>
+            Server certificate : used for mqtts protocol
+          </li>
+          <li>
+            <b>KeyFile:</b>
+            Server Public Key : used to decrypt CertFile
+          </li>
+          <li>
+            <b>CAFile:</b>
+            Certificate Authority file : if empty we consider CertFile as self-signed certificate.
+          </li>
+          <li>
+            <b>rejectUnauthorized:</b>
+            In some cases the certificate (CertFile) can not be verified.
+            (ex: certificate is self-signed or Certification Authority can not be contacted).
+            No matter if rejectUnauthorized is set to false because connection is crypted.
+          </li>
+          <li>
             <b>Keepalive:</b>
             Set to 0 to disable.
           </li>
@@ -103,6 +121,30 @@ schema.form = {
     valid: optional(),
     defaultValue: '',
     help: <div>password</div>,
+  },
+  certfile: {
+    type: 'OIbText',
+    label: 'Cert File',
+    defaultValue: '',
+    help: <div>Server certificate (used for mqtts protocol)</div>,
+  },
+  keyfile: {
+    type: 'OIbText',
+    label: 'Key File',
+    defaultValue: '',
+    help: <div>Server Public Key (used to decrypt CertFile)</div>,
+  },
+  cafile: {
+    type: 'OIbText',
+    label: 'CA File',
+    defaultValue: '',
+    help: <div>Certificate Authority file (if empty we consider CertFile as self-signed certificates)</div>,
+  },
+  rejectunauthorized: {
+    type: 'OIbCheckBox',
+    label: 'reject Unauthorized Connection',
+    defaultValue: false,
+    help: <div>Accept or not ...</div>,
   },
   keepalive: {
     type: 'OIbInteger',
