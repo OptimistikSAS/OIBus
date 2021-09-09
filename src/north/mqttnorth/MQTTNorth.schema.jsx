@@ -10,14 +10,24 @@ schema.form = {
         <p>MQTT North is in Beta</p>
         <ul>
           <li>
-            <b>Protocol:</b>
-            Network protocol used by MQTT client to connect with MQTT broker. OIBus supports MQTT, and MQTTS.
+            <b>Url:</b>
+            MQTT host to connect. Make sure you specify right protocol, host and port number.
+            MQTT client may not get connected if you mention wrong port number or interchange port numbers.
           </li>
           <li>
-            <b>Host and Port:</b>
-            MQTT host to connect. Make sure you specify right host and port number depending on MQTT connection protocol
-            you selected. MQTT client may not get connected if you mention wrong port number or interchange port
-            numbers.
+            <b>QoS:</b>
+            The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message
+            that defines the guarantee of delivery for a specific message. There are 3 QoS levels in MQTT:
+            <ul>
+              <li>At most once (0)</li>
+              <li>At least once (1)</li>
+              <li>Exactly once (2)</li>
+            </ul>
+          </li>
+          <li>
+            <b>ClientId:</b>
+            if ClientId is not empty, MQTT connection will use this text for clientId information.
+            If ClientId is empty, MQTT connection will use default clientId information.
           </li>
           <li>
             <b>Username:</b>
@@ -30,15 +40,40 @@ schema.form = {
             client.
           </li>
           <li>
-            <p>Regexp and Topic:</p>
-            Regexp will be used to identify token in the pointId that will be used to build the MQTT topic.
+            <b>CertFile:</b>
+            Server certificate : used for mqtts protocol
+          </li>
+          <li>
+            <b>KeyFile:</b>
+            Server Public Key : used to decrypt CertFile
+          </li>
+          <li>
+            <b>CAFile:</b>
+            Certificate Authority file : if empty we consider CertFile as self-signed certificate.
+          </li>
+          <li>
+            <b>rejectUnauthorized:</b>
+            In some cases the certificate (CertFile) can not be verified.
+            (ex: certificate is self-signed or Certification Authority can not be contacted).
+            No matter if rejectUnauthorized is set to false because connection is crypted.
+          </li>
+          <li>
+            <b>Regexp:</b>
+            Regexp will be used to identify token in the pointId that will be used to get data used by MQTT North Connector.
             <ul>
               <li>
-                {'(.*)\\/(.{2})(.)(.*)'}
+                {'(.*)\\/(.{2})(.)(.*) '}
                 This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
               </li>
-              <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
+              <li>
+                (.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC
+              </li>
             </ul>
+          </li>
+          <li>
+            <b>Topic:</b>
+            Topic is used to publish data to broker MQTT.
+            Topic value is based on pointId group part(s) splitted using Regexp.
           </li>
         </ul>
       </div>
@@ -57,6 +92,11 @@ schema.form = {
     options: [0, 1, 2],
     defaultValue: 1,
   },
+  clientId: {
+    type: 'OIbText',
+    defaultValue: '',
+    help: <div>clientId information for mqtt and mqtts connection</div>,
+  },
   username: {
     type: 'OIbText',
     valid: notEmpty(),
@@ -70,6 +110,30 @@ schema.form = {
     defaultValue: '',
     help: <div>password</div>,
   },
+  certfile: {
+    type: 'OIbText',
+    label: 'Cert File',
+    defaultValue: '',
+    help: <div>Server certificate (used for mqtts protocol)</div>,
+  },
+  keyfile: {
+    type: 'OIbText',
+    label: 'Key File',
+    defaultValue: '',
+    help: <div>Server Public Key (used to decrypt CertFile)</div>,
+  },
+  cafile: {
+    type: 'OIbText',
+    label: 'CA File',
+    defaultValue: '',
+    help: <div>Certificate Authority file (if empty we consider CertFile as self-signed certificates)</div>,
+  },
+  rejectunauthorized: {
+    type: 'OIbCheckBox',
+    label: 'reject Unauthorized Connection',
+    defaultValue: false,
+    help: <div>Accept or not to reject unauthorized connection</div>,
+  },
   regExp: {
     type: 'OIbText',
     valid: notEmpty(),
@@ -80,6 +144,7 @@ schema.form = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '%1$s',
+    help: 'topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) splitted using Regexp',
   },
 }
 

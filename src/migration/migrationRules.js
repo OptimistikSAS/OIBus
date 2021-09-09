@@ -732,5 +732,25 @@ module.exports = {
         }
       }
     })
+    config.north.applications.forEach((application) => {
+      if (application.api === 'MQTTNorth') {
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'certfile')) {
+          logger.info('Add certfile field to MQTTNorth')
+          application.MQTTNorth.certfile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'keyfile')) {
+          logger.info('Add keyfile field to MQTTNorth')
+          application.MQTTNorth.keyfile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'cafile')) {
+          logger.info('Add cafile field to MQTTNorth')
+          application.MQTTNorth.cafile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'rejectunauthorized')) {
+          logger.info('Add rejectunauthorized field to MQTTNorth')
+          application.MQTTNorth.rejectunauthorized = false
+        }
+      }
+    })
   }
 }

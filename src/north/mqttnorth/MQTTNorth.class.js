@@ -1,4 +1,5 @@
 const { vsprintf } = require('sprintf-js')
+const fs = require('fs')
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -17,12 +18,30 @@ class MQTTNorth extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { url, qos, username, password, regExp, topic } = this.application.MQTTNorth
+    // eslint-disable-next-line max-len
+    const {
+      url,
+      qos,
+      clientId,
+      username,
+      password,
+      keyfile,
+      certfile,
+      cafile,
+      rejectunauthorized,
+      regExp,
+      topic,
+    } = this.application.MQTTNorth
 
     this.url = url
+    this.qos = qos
+    this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
-    this.qos = qos
+    this.keyfile = keyfile
+    this.certfile = certfile
+    this.cafile = cafile
+    this.rejectunauthorized = rejectunauthorized
     this.regExp = regExp
     this.topic = topic
 
@@ -50,7 +69,24 @@ class MQTTNorth extends ApiHandler {
   connect() {
     super.connect()
     this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
-    this.client = mqtt.connect(this.url, { username: this.username, password: this.password })
+    let keyFileContent = ''
+    let certFileContent = ''
+    let caFileContent = ''
+    if ((this.keyfile) && (fs.existsSync(this.keyfile))) keyFileContent = fs.readFileSync(this.keyfile)
+    if ((this.certfile) && (fs.existsSync(this.certfile))) certFileContent = fs.readFileSync(this.certfile)
+    if ((this.cafile) && (fs.existsSync(this.cafile))) caFileContent = fs.readFileSync(this.cafile)
+
+    const options = {
+      username: this.username,
+      password: this.password,
+      clientId: this.clientId,
+      key: keyFileContent,
+      cert: certFileContent,
+      ca: caFileContent,
+      rejectUnauthorized: this.rejectunauthorized ? this.rejectunauthorized : false,
+    }
+    this.client = mqtt.connect(this.url, options)
+
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
@@ -65,6 +101,7 @@ class MQTTNorth extends ApiHandler {
    * @return {void}
    */
   disconnect() {
+    this.logger.info(`Disconnecting North MQTT Connector from ${this.url}`)
     this.client.end(true)
     super.disconnect()
   }
