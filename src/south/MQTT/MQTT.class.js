@@ -2,6 +2,7 @@ const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
+const fs = require('fs')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -20,6 +21,10 @@ class MQTT extends ProtocolHandler {
       url,
       username,
       password,
+      keyfile,
+      certfile,
+      cafile,
+      rejectunauthorized,
       keepalive,
       reconnectPeriod,
       connectTimeout,
@@ -45,6 +50,10 @@ class MQTT extends ProtocolHandler {
     this.url = url
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
+    this.keyfile = keyfile
+    this.certfile = certfile
+    this.cafile = cafile
+    this.rejectunauthorized = rejectunauthorized
     this.keepalive = keepalive
     this.reconnectPeriod = reconnectPeriod
     this.connectTimeout = connectTimeout
@@ -70,9 +79,21 @@ class MQTT extends ProtocolHandler {
     await super.connect()
 
     this.logger.info(`Connecting to ${this.url}...`)
+
+    let keyFileContent = ''
+    let certFileContent = ''
+    let caFileContent = ''
+    if ((this.keyfile) && (fs.existsSync(this.keyfile))) keyFileContent = fs.readFileSync(this.keyfile)
+    if ((this.certfile) && (fs.existsSync(this.certfile))) certFileContent = fs.readFileSync(this.certfile)
+    if ((this.cafile) && (fs.existsSync(this.cafile))) caFileContent = fs.readFileSync(this.cafile)
+
     const options = {
       username: this.username,
       password: this.password,
+      key: keyFileContent,
+      cert: certFileContent,
+      ca: caFileContent,
+      rejectUnauthorized: this.rejectunauthorized ? this.rejectunauthorized : false,
       keepalive: this.keepalive,
       reconnectPeriod: this.reconnectPeriod,
       connectTimeout: this.connectTimeout,
@@ -177,6 +198,7 @@ class MQTT extends ProtocolHandler {
    */
   disconnect() {
     this.client.end(true)
+    this.logger.info(`Disconnecting from ${this.url}...`)
     super.disconnect()
   }
 

@@ -710,4 +710,27 @@ module.exports = {
       }
     }
   },
+  25: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      // Adding default parameters for MQTT South Connector modified
+      if (dataSource.protocol === 'MQTT') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'certfile')) {
+          logger.info('Add certfile field to MQTT')
+          dataSource.MQTT.certfile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keyfile')) {
+          logger.info('Add keyfile field to MQTT')
+          dataSource.MQTT.keyfile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'cafile')) {
+          logger.info('Add cafile field to MQTT')
+          dataSource.MQTT.cafile = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'rejectunauthorized')) {
+          logger.info('Add rejectunauthorized field to MQTT')
+          dataSource.MQTT.rejectunauthorized = false
+        }
+      }
+    })
+  }
 }
