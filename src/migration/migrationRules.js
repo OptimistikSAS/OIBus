@@ -925,6 +925,17 @@ module.exports = {
           application.MQTTNorth.keyParentValue = ''
         }
       }
+      if (application.api === 'MongoDB') {
+        // adding the default value for the new parameters for MongoDB connector (useDataKeyValue and keyParentValue)
+        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'useDataKeyValue')) {
+          logger.info(`Add useDataKeyValue field to ${application.api}`)
+          application[application.api].useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'keyParentValue')) {
+          logger.info(`Add keyParentValue field to ${application.api}`)
+          application[application.api].keyParentValue = ''
+        }
+      }
     })
   }
 }

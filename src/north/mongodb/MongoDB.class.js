@@ -6,14 +6,26 @@ const { vsprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
+ * function return the content of value, that could be a Json object with path keys given by string value
+ * without using eval function
+ * @param {*} value - simple value (integer or float or string, ...) or Json object
+ * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
+ * @return {*} The content of value depending on value type (object or simple value)
+ */
+const getJsonValueByStringPath = (value, pathValue) => {
+  let tmpValue = value
+
+  if (typeof value === 'object') {
+    if (pathValue !== '') {
+      const arrValue = pathValue.split('.')
+      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
+    }
+  }
+  return tmpValue
+}
+
+/**
  * Class MongoDB - generates and sends MongoDB requests
- * Warning : This class is based on InfluxDB class
- * Data received are structured on InfluxDB "Model"
- * Nodes is (for example) "/ANA.base/1RCV019MT.repere"
- *    ANA    ==> Collection Name
- *    repere ==> One index (we will also add timestamp index)
- * Value is JSON object which is insert in document like that
- * Normally this JSON object must contains "repere" and "timestamp" fields used in indexes
  */
 class MongoDB extends ApiHandler {
   static category = 'DatabaseIn'
@@ -56,6 +68,7 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   connect() {
+    this.logger.info('Connection to MongoDB')
     super.connect()
     const { host, user, password, db } = this.application.MongoDB
 
@@ -95,6 +108,7 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   disconnect() {
+    this.logger.info('Disconnection from MongoDB')
     this.client.close()
     super.disconnect()
     this.statusData['Connected at'] = 'Not connected'
@@ -107,7 +121,8 @@ class MongoDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { regExp, collection, indexFields, createCollection, createCollectionIndex, addTimestampToIndex, timeStampKey } = this.application.MongoDB
+    // eslint-disable-next-line max-len
+    const { regExp, collection, indexFields, createCollection, createCollectionIndex, addTimestampToIndex, timeStampKey, useDataKeyValue, keyParentValue } = this.application.MongoDB
 
     let body = ''
     let collectionValue = ''
@@ -141,9 +156,28 @@ class MongoDB extends ApiHandler {
 
       // Converts data into fields for inserting by insertMany function
       let mongoFields = null
-      // ymp : I don't know why but data is a JSON object ... so we use it without any transformation
-      // const dataJson = JSON.parse(decodeURI(data))
-      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+
+      // As some usecases can produce value structured as Json Object, code is modified to process value which could be
+      // simple value (integer, float, ...) or Json object
+      let dataValue = null
+
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      if (useDataKeyValue) {
+        // data to use is value key of Json object data (data.value)
+        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
+        // If it's a json, the function return data where path is given by keyParentValue parameter
+        // even if json object containing more than one level of object.
+        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
+        // in this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
+        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
+        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+      } else {
+        // data to use is Json object data
+        dataValue = data
+      }
+
+      Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
         if (typeof fieldValue === 'string') {
           if (!mongoFields) mongoFields = `"${fieldKey}":"${fieldValue}"`
           else mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
