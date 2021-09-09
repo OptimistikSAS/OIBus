@@ -5,6 +5,25 @@ const mqtt = require('mqtt')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
+ * function return the content of value, that could be a Json object with path keys given by string value
+ * without using eval function
+ * @param {*} value - simple value (integer or float or string, ...) or Json object
+ * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
+ * @return {*} The content of value depending on value type (object or simple value)
+ */
+const getJsonValueByStringPath = (value, pathValue) => {
+  let tmpValue = value
+
+  if (typeof value === 'object') {
+    if (pathValue !== '') {
+      const arrValue = pathValue.split('.')
+      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
+    }
+  }
+  return tmpValue
+}
+
+/**
  * Class MQTT - generates and sends MQTT messages
  */
 class MQTTNorth extends ApiHandler {
@@ -33,6 +52,8 @@ class MQTTNorth extends ApiHandler {
       rejectUnauthorized,
       regExp,
       topic,
+      useDataKeyValue,
+      keyParentValue
     } = this.application.MQTTNorth
 
     this.url = url
@@ -46,6 +67,8 @@ class MQTTNorth extends ApiHandler {
     this.rejectUnauthorized = rejectUnauthorized
     this.regExp = regExp
     this.topic = topic
+    this.useDataKeyValue = useDataKeyValue
+    this.keyParentValue = keyParentValue
 
     this.canHandleValues = true
   }
@@ -179,7 +202,19 @@ class MQTTNorth extends ApiHandler {
 
       const topicValue = vsprintf(this.topic, groups)
 
-      this.client.publish(topicValue, JSON.stringify(data), { qos: this.qos }, (error) => {
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      let dataValue = null
+      if (this.useDataKeyValue) {
+        // data to use is value key of Json object data (data.value)
+        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
+        // If it's a json the function return data where "adress" is given by keyParentValue parametrer
+        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
+      } else {
+        // data to use is Json object data
+        dataValue = data
+      }
+
+      this.client.publish(topicValue, JSON.stringify(dataValue), { qos: this.qos }, (error) => {
         if (error) {
           reject(error)
         } else {
