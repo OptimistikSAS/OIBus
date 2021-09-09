@@ -3,6 +3,25 @@ const { vsprintf } = require('sprintf-js')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
+ * function return the content of value, that could be a Json object with path keys given by string value
+ * without using eval function
+ * @param {*} value - simple value (integer or float or string, ...) or Json object
+ * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
+ * @return {*} The content of value depending on value type (object or simple value)
+ */
+const getJsonValueByStringPath = (value, pathValue) => {
+  let tmpValue = value
+
+  if (typeof value === 'object') {
+    if (pathValue !== '') {
+      const arrValue = pathValue.split('.')
+      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
+    }
+  }
+  return tmpValue
+}
+
+/**
  * Escape spaces.
  * @param {*} chars - The content to escape
  * @return {*} The escaped or the original content
@@ -59,7 +78,7 @@ class InfluxDB extends ApiHandler {
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { host, user, password, db, precision = 'ms', regExp, measurement, tags } = this.application.InfluxDB
+    const { host, user, password, db, precision = 'ms', regExp, measurement, tags, useDataKeyValue, keyParentValue } = this.application.InfluxDB
     const url = `${host}/write?u=${user}&p=${this.encryptionService.decryptText(password)}&db=${db}&precision=${precision}`
 
     let body = ''
@@ -88,16 +107,41 @@ class InfluxDB extends ApiHandler {
 
       // Converts data into fields for CLI
       let fields = null
-      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        const escapedFieldKey = escapeSpace(fieldKey)
-        let escapedFieldValue = escapeSpace(fieldValue)
 
-        if (typeof escapedFieldValue === 'string') {
-          escapedFieldValue = `"${escapedFieldValue}"`
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      // In fact, as some usecases can produce value structured as Json Object, code is modified to process value which could be
+      // simple value (integer, float, ...) or Json object
+      let dataValue = null
+
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      if (useDataKeyValue) {
+        // data to use is value key of Json object data (data.value)
+        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
+        // If it's a json, the function return data where path is given by keyParentValue parameter
+        // even if json object containing more than one level of object.
+        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
+        // in this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
+        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
+        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+      } else {
+        // data to use is Json object data
+        dataValue = data
+      }
+
+      Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
+        // Before inserting fieldKey in fields string, we must verify that fieldKey isn't store in tagsValue string
+        // The reason is: in InfluxDB it's not useful to store value in tags ans in fields
+        if (!tagsValue.includes(fieldKey)) {
+          const escapedFieldKey = escapeSpace(fieldKey)
+          let escapedFieldValue = escapeSpace(fieldValue)
+
+          if (typeof escapedFieldValue === 'string') {
+            escapedFieldValue = `"${escapedFieldValue}"`
+          }
+          if (!fields) fields = `${escapedFieldKey}=${escapedFieldValue}`
+          else fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
         }
-
-        if (!fields) fields = `${escapedFieldKey}=${escapedFieldValue}`
-        else fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
       })
 
       // Convert timestamp to the configured precision
