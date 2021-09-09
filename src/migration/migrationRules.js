@@ -914,6 +914,17 @@ module.exports = {
           application[application.api].keyParentValue = ''
         }
       }
+      if (application.api === 'MQTTNorth') {
+        // adding the default value for the new parameters for MQTTNorth connector (useDataKeyValue and keyParentValue)
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'useDataKeyValue')) {
+          logger.info('Add useDataKeyValue field to MQTTNorth')
+          application.MQTTNorth.useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'keyParentValue')) {
+          logger.info('Add keyParentValue field to MQTTNorth')
+          application.MQTTNorth.keyParentValue = ''
+        }
+      }
     })
   }
 }
