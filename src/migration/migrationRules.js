@@ -531,11 +531,13 @@ module.exports = {
       delete dataSource.dataSourceId
     }
 
-    // eslint-disable-next-line max-len
-    logger.info(`Migration of value error database ${cachePath}/valueCache-error.db: Renaming column name "application_id" into "application"`)
-    await databaseMigrationService.changeColumnName(`${cachePath}/valueCache-error.db`,
-      'application_id',
-      'application')
+    if (fs.existsSync(`${cachePath}/valueCache-error.db`)) {
+      // eslint-disable-next-line max-len
+      logger.info(`Migration of value error database ${cachePath}/valueCache-error.db: Renaming column name "application_id" into "application"`)
+      await databaseMigrationService.changeColumnName(`${cachePath}/valueCache-error.db`,
+        'application_id',
+        'application')
+    }
 
     for (const application of config.north.applications) {
       application.id = nanoid()
@@ -550,30 +552,40 @@ module.exports = {
             }
           })
 
-        // eslint-disable-next-line max-len
-        logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
-        await databaseMigrationService.changeColumnName(`${cachePath}/${application.id}.db`,
-          'data_source_id',
-          'data_source')
-        // eslint-disable-next-line max-len
-        logger.info(`Migration of file database ${cachePath}/fileCache.db:  Changing application value from ${application.name} to ${application.id}`)
-        await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache.db`,
-          'application',
-          application.name,
-          application.id)
+        if (fs.existsSync(`${cachePath}/${application.id}.db`)) {
+          // eslint-disable-next-line max-len
+          logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
+          await databaseMigrationService.changeColumnName(`${cachePath}/${application.id}.db`,
+            'data_source_id',
+            'data_source')
+        }
 
+        if (fs.existsSync(`${cachePath}/fileCache.db`)) {
         // eslint-disable-next-line max-len
-        logger.info(`Migration of file error database ${cachePath}/fileCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
-        await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache-error.db`,
-          'application',
-          application.name,
-          application.id)
-        // eslint-disable-next-line max-len
-        logger.info(`Migration of value error database ${cachePath}/valueCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
-        await databaseMigrationService.changeColumnValue(`${cachePath}/valueCache-error.db`,
-          'application',
-          application.name,
-          application.id)
+          logger.info(`Migration of file database ${cachePath}/fileCache.db:  Changing application value from ${application.name} to ${application.id}`)
+          await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache.db`,
+            'application',
+            application.name,
+            application.id)
+        }
+
+        if (fs.existsSync(`${cachePath}/fileCache-error.db`)) {
+          // eslint-disable-next-line max-len
+          logger.info(`Migration of file error database ${cachePath}/fileCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
+          await databaseMigrationService.changeColumnValue(`${cachePath}/fileCache-error.db`,
+            'application',
+            application.name,
+            application.id)
+        }
+
+        if (fs.existsSync(`${cachePath}/valueCache-error.db`)) {
+          // eslint-disable-next-line max-len
+          logger.info(`Migration of value error database ${cachePath}/valueCache-error.db:  Changing application value from ${application.name} to ${application.id}`)
+          await databaseMigrationService.changeColumnValue(`${cachePath}/valueCache-error.db`,
+            'application',
+            application.name,
+            application.id)
+        }
       }
       delete application.applicationId
 
