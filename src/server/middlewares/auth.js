@@ -29,6 +29,8 @@ const auth = (opts = {}) => {
     if (user && user.pass && user.name === opts.name && user.pass === opts.pass) {
       return next()
     }
+
+    /* eslint-disable-next-line react/destructuring-assignment */
     return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
   }
 }

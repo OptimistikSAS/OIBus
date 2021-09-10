@@ -1,3 +1,5 @@
+/* eslint-disable react/destructuring-assignment */
+
 import path from 'path'
 
 // regular expressions to validate
