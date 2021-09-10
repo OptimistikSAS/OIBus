@@ -35,35 +35,37 @@ class FolderScanner extends ProtocolHandler {
    * @return {void}
    */
   async onScanImplementation(_scanMode) {
-    return new Promise((resolve) => {
-      // List files in the inputFolder and manage them.
-      fs.readdir(this.inputFolder, async (error, files) => {
+    // List files in the inputFolder
+    const files = await new Promise((resolve, reject) => {
+      fs.readdir(this.inputFolder, async (error, fileList) => {
         if (error) {
-          this.logger.error(`Error while reading the input folder ${this.inputFolder}: ${error.message}`)
-        } else if (files.length > 0) {
-          // Disable ESLint check because we need for..of loop to support async calls
-          // eslint-disable-next-line no-restricted-syntax
-          for (const file of files) {
-            // Disable ESLint check because we want to handle files one by one
-            // eslint-disable-next-line no-await-in-loop
-            const matchConditions = await this.checkConditions(file)
-            if (matchConditions) {
-              // local try catch in case an error occurs on a file
-              // if so, the loop goes on with the other files
-              try {
-                // eslint-disable-next-line no-await-in-loop
-                await this.sendFile(file)
-              } catch (sendFileError) {
-                this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
-              }
-            }
-          }
+          reject(new Error(`Error while reading the input folder ${this.inputFolder}: ${error.message}`))
         } else {
-          this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+          resolve(fileList)
         }
-        resolve()
       })
     })
+    if (files.length > 0) {
+      // Disable ESLint check because we need for..of loop to support async calls
+      // eslint-disable-next-line no-restricted-syntax
+      for (const file of files) {
+        // Disable ESLint check because we want to handle files one by one
+        // eslint-disable-next-line no-await-in-loop
+        const matchConditions = await this.checkConditions(file)
+        if (matchConditions) {
+          // local try catch in case an error occurs on a file
+          // if so, the loop goes on with the other files
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await this.sendFile(file)
+          } catch (sendFileError) {
+            this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+          }
+        }
+      }
+    } else {
+      this.logger.debug(`The folder ${this.inputFolder} is empty.`)
+    }
   }
 
   /**
