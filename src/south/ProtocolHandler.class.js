@@ -5,13 +5,6 @@ const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/Logger.class')
 
-// Buffer delay in ms: when a protocol generates a lot of values at the same time, it may be better to accumulate them
-// in a buffer before sending them to the engine
-// Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
-// these parameters could be settings from OIBus UI
-const BUFFER_TIME = 300 // ms
-const BUFFER_MAX = 250 // values
-
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  * Building a new South Protocol means to extend this class, and to surcharge
@@ -135,12 +128,12 @@ class ProtocolHandler {
     // if the protocol buffer is large enough, send it
     // else start a timer before sending it
     this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.name}`)
-    if (this.buffer.length > BUFFER_MAX) {
+    if (this.buffer.length > this.engine.bufferMax) {
       await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
       this.bufferTimeout = setTimeout(async () => {
         await this.flush()
-      }, BUFFER_TIME)
+      }, this.engine.bufferTimeoutInterval)
     }
   }
 

@@ -29,6 +29,8 @@ const validation = {
         retentionDuration: minValue(0),
       },
       cacheFolder: notEmpty('Cache Folder'),
+      bufferMax: minValue(0),
+      bufferTimeoutInterval: minValue(10),
     },
     proxies: {
       name: minLength(2),
