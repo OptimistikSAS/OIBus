@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
@@ -36,15 +36,8 @@ class FolderScanner extends ProtocolHandler {
    */
   async onScanImplementation(_scanMode) {
     // List files in the inputFolder
-    const files = await new Promise((resolve, reject) => {
-      fs.readdir(this.inputFolder, async (error, fileList) => {
-        if (error) {
-          reject(new Error(`Error while reading the input folder ${this.inputFolder}: ${error.message}`))
-        } else {
-          resolve(fileList)
-        }
-      })
-    })
+    const files = await fs.readdir(this.inputFolder)
+    console.log('files', files)
     if (files.length > 0) {
       // Disable ESLint check because we need for..of loop to support async calls
       // eslint-disable-next-line no-restricted-syntax
@@ -52,12 +45,14 @@ class FolderScanner extends ProtocolHandler {
         // Disable ESLint check because we want to handle files one by one
         // eslint-disable-next-line no-await-in-loop
         const matchConditions = await this.checkConditions(file)
+        console.log('matchConditions', matchConditions)
         if (matchConditions) {
           // local try catch in case an error occurs on a file
           // if so, the loop goes on with the other files
           try {
             // eslint-disable-next-line no-await-in-loop
             await this.sendFile(file)
+            console.log('sendFile', file)
           } catch (sendFileError) {
             this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
           }
@@ -80,7 +75,7 @@ class FolderScanner extends ProtocolHandler {
     this.logger.silly(`checkConditions:${filename} match regexp`)
     // check age
     const timestamp = new Date().getTime()
-    const stats = fs.statSync(path.join(this.inputFolder, filename))
+    const stats = await fs.stat(path.join(this.inputFolder, filename))
     this.logger.silly(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
     if (stats.mtimeMs + this.minAge > timestamp) return false
     this.logger.silly(`checkConditions: ${filename} match age`)
@@ -92,24 +87,6 @@ class FolderScanner extends ProtocolHandler {
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
-  }
-
-  /**
-   * Return a promise when the fs.unlink method is done
-   * @param {String} filePath - the file to remove
-   * @returns {Promise<unknown>} - The promise to resolve
-   */
-  deleteFile(filePath) {
-    return new Promise((resolve) => {
-      fs.unlink(filePath, (unlinkError) => {
-        if (unlinkError) {
-          this.logger.error(unlinkError)
-        } else {
-          this.logger.info(`File ${filePath} compressed and deleted`)
-        }
-        resolve()
-      })
-    })
   }
 
   /**
@@ -130,7 +107,7 @@ class FolderScanner extends ProtocolHandler {
 
         // Delete original file if preserveFile is not set
         if (!this.preserveFiles) {
-          await this.deleteFile(filePath)
+          await fs.unlink(filePath)
         }
       } catch (compressionError) {
         this.logger.error(`Error compressing file ${filename}. Sending it raw instead`)
@@ -141,7 +118,7 @@ class FolderScanner extends ProtocolHandler {
     }
 
     if (this.preserveFiles) {
-      const stats = fs.statSync(path.join(this.inputFolder, filename))
+      const stats = await fs.stat(path.join(this.inputFolder, filename))
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
       await this.setConfig(filename, `${stats.mtimeMs}`)
     }
