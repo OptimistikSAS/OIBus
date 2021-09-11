@@ -434,6 +434,9 @@ module.exports = {
       },
     }
     delete config.engine.aliveSignal
+    config.engine.caching.bufferMax = 250
+    config.engine.caching.bufferTimeoutInterval = 300
+
     for (const dataSource of config.south.dataSources) {
       if (!dataSource.logParameters) {
         dataSource.logParameters = {
@@ -473,6 +476,14 @@ module.exports = {
           dataSource.SQLDbToFile.databasePath = './sqlite.db'
         }
       }
+      if (dataSource.protocol === 'MQTT') {
+        dataSource.MQTT.timestampOrigin = dataSource.MQTT.timeStampOrigin
+        delete dataSource.MQTT.timeStampOrigin
+        dataSource.MQTT.timestampFormat = dataSource.MQTT.timeStampFormat
+        delete dataSource.MQTT.timeStampFormat
+        dataSource.MQTT.timestampTimezone = dataSource.MQTT.timeStampTimezone
+        delete dataSource.MQTT.timeStampTimezone
+      }
     }
     for (const application of config.north.applications) {
       if (!application.logParameters) {
@@ -490,7 +501,7 @@ module.exports = {
       }
       config.engine.caching.archive = {
         enabled: config.engine.caching.archiveMode === 'archive',
-        archiveFolder: config.engine.caching.archiveFolder,
+        archiveFolder: config.engine.caching.archiveFolder || './cache/archive/',
         retentionDuration: 0,
       }
       delete config.engine.caching.archiveMode

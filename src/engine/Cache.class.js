@@ -432,10 +432,9 @@ class Cache {
     this.logger.silly(`handleSentFile(${filePath})`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
-      const archivedFilename = path.basename(filePath)
-      const archivePath = path.join(this.archiveFolder, archivedFilename)
-
       if (this.archiveMode) {
+        const archivedFilename = path.basename(filePath)
+        const archivePath = path.join(this.archiveFolder, archivedFilename)
         // Move original file into the archive folder
         fs.rename(filePath, archivePath, (renameError) => {
           if (renameError) {

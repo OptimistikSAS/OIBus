@@ -94,6 +94,72 @@ exports[`Caching check Caching 1`] = `
         </small>
       </div>
     </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferMax"
+        >
+          Max buffer size
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="engine.caching.bufferMax"
+          name="engine.caching.bufferMax"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of values the buffer must reach before caching values
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferTimeoutInterval"
+        >
+          Buffer flush interval (in ms)
+        </label>
+        <input
+          aria-invalid="true"
+          class="oi-form-input is-invalid form-control"
+          id="engine.caching.bufferTimeoutInterval"
+          name="engine.caching.bufferTimeoutInterval"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        >
+          Value must be greater than 10
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of ms before flushing the buffer to cache its values
+          </div>
+        </small>
+      </div>
+    </div>
   </div>
   <div
     class="row"
@@ -293,6 +359,72 @@ exports[`Caching check change archiveFolder 1`] = `
         >
           <div>
             Where to store the cached data
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferMax"
+        >
+          Max buffer size
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="engine.caching.bufferMax"
+          name="engine.caching.bufferMax"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of values the buffer must reach before caching values
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferTimeoutInterval"
+        >
+          Buffer flush interval (in ms)
+        </label>
+        <input
+          aria-invalid="true"
+          class="oi-form-input is-invalid form-control"
+          id="engine.caching.bufferTimeoutInterval"
+          name="engine.caching.bufferTimeoutInterval"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        >
+          Value must be greater than 10
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of ms before flushing the buffer to cache its values
           </div>
         </small>
       </div>
@@ -500,6 +632,72 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
         </small>
       </div>
     </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferMax"
+        >
+          Max buffer size
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="engine.caching.bufferMax"
+          name="engine.caching.bufferMax"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of values the buffer must reach before caching values
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferTimeoutInterval"
+        >
+          Buffer flush interval (in ms)
+        </label>
+        <input
+          aria-invalid="true"
+          class="oi-form-input is-invalid form-control"
+          id="engine.caching.bufferTimeoutInterval"
+          name="engine.caching.bufferTimeoutInterval"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        >
+          Value must be greater than 10
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of ms before flushing the buffer to cache its values
+          </div>
+        </small>
+      </div>
+    </div>
   </div>
   <div
     class="row"
@@ -699,6 +897,72 @@ exports[`Caching check change cacheFolder 1`] = `
         >
           <div>
             Where to store the cached data
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferMax"
+        >
+          Max buffer size
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="engine.caching.bufferMax"
+          name="engine.caching.bufferMax"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of values the buffer must reach before caching values
+          </div>
+        </small>
+      </div>
+    </div>
+    <div
+      class="col-md-3"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="engine.caching.bufferTimeoutInterval"
+        >
+          Buffer flush interval (in ms)
+        </label>
+        <input
+          aria-invalid="true"
+          class="oi-form-input is-invalid form-control"
+          id="engine.caching.bufferTimeoutInterval"
+          name="engine.caching.bufferTimeoutInterval"
+          type="integer"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        >
+          Value must be greater than 10
+        </div>
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            The number of ms before flushing the buffer to cache its values
           </div>
         </small>
       </div>

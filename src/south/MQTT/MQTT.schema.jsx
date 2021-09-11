@@ -16,7 +16,8 @@ schema.form = {
           </li>
           <li>
             <b>QoS:</b>
-            The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message
+            The Quality of Service (QoS) level is an agreement between the sender of a message and the
+            receiver of a message
             that defines the guarantee of delivery for a specific message. There are 3 QoS levels in MQTT:
             <ul>
               <li>At most once (0)</li>
@@ -26,8 +27,10 @@ schema.form = {
           </li>
           <li>
             <b>Persistent:</b>
-            In this mode the broker will store subscription information, and undelivered messages for the client.
-            With a non persistent connection the broker does not store any subscription information or undelivered messages for the client.
+            In this mode the broker will store subscription information, and undelivered messages for the
+            client.
+            With a non persistent connection the broker does not store any subscription information or
+            undelivered messages for the client.
             For this option to take effect QoS must be set to 1 or 2.
           </li>
           <li>
@@ -36,12 +39,14 @@ schema.form = {
           </li>
           <li>
             <b>Username:</b>
-            Username required by broker, if any. MQTT allows to send username for authenticating and authorization of
+            Username required by broker, if any. MQTT allows to send username for authenticating and
+            authorization of
             client.
           </li>
           <li>
             <b>Password:</b>
-            Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
+            Password required by broker, if any. MQTT allows to send password for authenticating and
+            authorization of
             client.
           </li>
           <li>
@@ -126,21 +131,25 @@ schema.form = {
         <ul>
           <li>
             <b>Data array path:</b>
-            Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON object array at the specified path.
+            Optional. If empty, the payload is a simple JSON object. If specified, the JSON contains a JSON
+            object array at the specified path.
           </li>
           <li>
             <b>Value path:</b>
-            Mandatory. This string is the JSON key path where to find the value (in the array element if data array path is specified, or directly in
+            Mandatory. This string is the JSON key path where to find the value (in the array element if
+            data array path is specified, or directly in
             the JSON object if not).
           </li>
           <li>
             <b>Node id path:</b>
-            Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates where to find the nodeId value (in the
+            Optional. If empty, the nodeId is inferred from the topic. If not empty, this string indicates
+            where to find the nodeId value (in the
             array element if data array path is specified, or directly in the JSON object if not).
           </li>
           <li>
             <b>Quality path:</b>
-            Mandatory. This string is the JSON key path where to find the quality (in the array element if data array path is specified, or directly
+            Mandatory. This string is the JSON key path where to find the quality (in the array element if
+            data array path is specified, or directly
             in the JSON object if not).
           </li>
         </ul>
@@ -168,7 +177,7 @@ schema.form = {
     newRow: false,
     valid: notEmpty(),
   },
-  timeStampSettings: {
+  timestampSettings: {
     type: 'OIbTitle',
     children: (
       <div>
@@ -176,29 +185,35 @@ schema.form = {
         <ul>
           <li>
             <b>Time Origin:</b>
-            If the value is &quot;oibus&quot; the timestamp will be the timestamp for the reception of the value by oibus.
-            If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using the key specified below.
+            If the value is &quot;oibus&quot; the timestamp will be the timestamp for the reception of the
+            value by oibus.
+            If the value is &quot;payload&quot; the timestamp will be retrieved from the MQTT payload using
+            the key specified below.
           </li>
           <li>
             <b>TimeStamp Path:</b>
-            The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that
+            The string indicates which key in the payload contains the timestamp value. If the payload is an
+            array of data, it indicates the key that
             contains the timestamp value in the elements of this array
           </li>
           <li>
             <b>TimeStamp Format:</b>
-            The string indicates which format to use to parse the timestamp. For example, the timestamp &apos;2020-09-16 07:00:00.000&apos; is in the
+            The string indicates which format to use to parse the timestamp. For example, the
+            timestamp &apos;2020-09-16 07:00:00.000&apos; is in the
             format YYYY-MM-DD HH:mm:ss.SSS.
-            Another example : if the timestamp is &apos;2020-09-16T07:00:00Z&apos; so the format would be YYYY-MM-DDTHH:mm:ssZ.
+            Another example : if the timestamp is &apos;2020-09-16T07:00:00Z&apos; so the format would be
+            YYYY-MM-DDTHH:mm:ssZ.
           </li>
           <li>
             <b>TimeStamp timezone:</b>
-            This field indicates in which timezone the timestamp received is. OIBus then converts it into an UTC timestamp.
+            This field indicates in which timezone the timestamp received is. OIBus then converts it into an
+            UTC timestamp.
           </li>
         </ul>
       </div>
     ),
   },
-  timeStampOrigin: {
+  timestampOrigin: {
     type: 'OIbSelect',
     options: ['payload', 'oibus'],
     defaultValue: 'oibus',
@@ -209,13 +224,13 @@ schema.form = {
     valid: notEmpty(),
     defaultValue: 'timestamp',
   },
-  timeStampFormat: {
+  timestampFormat: {
     type: 'OIbText',
     newRow: false,
     valid: notEmpty(),
     defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
   },
-  timeStampTimezone: {
+  timestampTimezone: {
     type: 'OIbTimezone',
     newRow: false,
     md: 2,
