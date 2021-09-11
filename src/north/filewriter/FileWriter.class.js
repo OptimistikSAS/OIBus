@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -36,7 +36,7 @@ class FileWriter extends ApiHandler {
     }))
     const data = JSON.stringify(cleanedValues)
     try {
-      await fs.writeFile(path.join(this.outputFolder, fileName), data, () => {})
+      await fs.writeFile(path.join(this.outputFolder, fileName), data)
       this.logger.debug(`FileWriter ${fileName} created in "${this.outputFolder}"`)
       return values.length
     } catch (error) {
@@ -52,12 +52,12 @@ class FileWriter extends ApiHandler {
    */
   async handleFile(filePath) {
     try {
-      const stats = fs.statSync(filePath)
+      const stats = await fs.stat(filePath)
       this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
       const extension = path.extname(filePath)
       let fileName = path.basename(filePath, extension)
       fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
-      fs.copyFileSync(filePath, path.join(this.outputFolder, fileName))
+      await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
       this.logger.debug(`FileWriter copied file ${fileName}`)
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
