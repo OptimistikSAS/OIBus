@@ -33,7 +33,7 @@ describe('MQTT south', () => {
   const mqttConfig = {
     name: 'MQTTServer',
     enabled: true,
-    protocol: MQTT,
+    protocol: 'MQTT',
     MQTT: {
       url: 'mqtt://localhost:1883',
       qos: 1,
@@ -45,11 +45,10 @@ describe('MQTT south', () => {
       nodeIdPath: 'name',
       qualityPath: 'quality',
       valuePath: 'value',
-
-      timeStampOrigin: 'oibus',
+      timestampOrigin: 'oibus',
       timestampPath: 'timestamp',
-      timeStampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-      timeStampTimezone: 'Europe/Paris',
+      timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+      timestampTimezone: 'Europe/Paris',
     },
     points: [
       {
@@ -80,14 +79,14 @@ describe('MQTT south', () => {
       .toEqual(mqttConfig.MQTT.username)
     expect(mqttSouth.password)
       .toEqual(Buffer.from(mqttConfig.MQTT.password))
-    expect(mqttSouth.timeStampOrigin)
-      .toEqual(mqttConfig.MQTT.timeStampOrigin)
-    expect(mqttSouth.timeStampPath)
+    expect(mqttSouth.timestampOrigin)
+      .toEqual(mqttConfig.MQTT.timestampOrigin)
+    expect(mqttSouth.timestampPath)
       .toEqual(mqttConfig.MQTT.timestampPath)
-    expect(mqttSouth.timeStampFormat)
-      .toEqual(mqttConfig.MQTT.timeStampFormat)
+    expect(mqttSouth.timestampFormat)
+      .toEqual(mqttConfig.MQTT.timestampFormat)
     expect(mqttSouth.timezone)
-      .toEqual(mqttConfig.MQTT.timeStampTimezone)
+      .toEqual(mqttConfig.MQTT.timestampTimezone)
     expect(mqttSouth.client)
       .toBeUndefined()
   })
@@ -97,7 +96,7 @@ describe('MQTT south', () => {
       ...mqttConfig,
       MQTT: {
         ...mqttConfig.MQTT,
-        timeStampTimezone: 'invalid',
+        timestampTimezone: 'invalid',
       },
     }
     const mqttSouth = new MQTT(testMqttConfig, engine)
@@ -114,16 +113,16 @@ describe('MQTT south', () => {
       .toEqual(testMqttConfig.MQTT.username)
     expect(mqttSouth.password)
       .toEqual(Buffer.from(testMqttConfig.MQTT.password))
-    expect(mqttSouth.timeStampOrigin)
-      .toEqual(testMqttConfig.MQTT.timeStampOrigin)
-    expect(mqttSouth.timeStampPath)
+    expect(mqttSouth.timestampOrigin)
+      .toEqual(testMqttConfig.MQTT.timestampOrigin)
+    expect(mqttSouth.timestampPath)
       .toEqual(testMqttConfig.MQTT.timestampPath)
-    expect(mqttSouth.timeStampFormat)
-      .toEqual(testMqttConfig.MQTT.timeStampFormat)
+    expect(mqttSouth.timestampFormat)
+      .toEqual(testMqttConfig.MQTT.timestampFormat)
     expect(mqttSouth.timezone)
       .toBeUndefined()
     expect(mqttSouth.logger.error)
-      .toBeCalledWith(`Invalid timezone supplied: ${testMqttConfig.MQTT.timeStampTimezone}`)
+      .toBeCalledWith(`Invalid timezone supplied: ${testMqttConfig.MQTT.timestampTimezone}`)
     expect(mqttSouth.client)
       .toBeUndefined()
   })

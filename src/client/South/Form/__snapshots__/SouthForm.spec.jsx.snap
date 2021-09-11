@@ -2829,7 +2829,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="row"
         >
           <h5>
-            Time stamp settings
+            Timestamp settings
             <button
               aria-label="Close"
               class="close"
@@ -2914,15 +2914,15 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.MQTT.timeStampOrigin"
+            for="south.dataSources.0.MQTT.timestampOrigin"
           >
-            Time stamp origin
+            Timestamp origin
           </label>
           <select
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.timeStampOrigin"
-            name="south.dataSources.0.MQTT.timeStampOrigin"
+            id="south.dataSources.0.MQTT.timestampOrigin"
+            name="south.dataSources.0.MQTT.timestampOrigin"
           >
             <option
               value="payload"
@@ -2951,15 +2951,15 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.MQTT.timeStampFormat"
+            for="south.dataSources.0.MQTT.timestampFormat"
           >
-            Time stamp format
+            Timestamp format
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.timeStampFormat"
-            name="south.dataSources.0.MQTT.timeStampFormat"
+            id="south.dataSources.0.MQTT.timestampFormat"
+            name="south.dataSources.0.MQTT.timestampFormat"
             type="text"
             value="YYYY-MM-DD HH:mm:ss.SSS"
           />
@@ -2976,15 +2976,15 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         >
           <label
             class=""
-            for="south.dataSources.0.MQTT.timeStampTimezone"
+            for="south.dataSources.0.MQTT.timestampTimezone"
           >
-            Time stamp timezone
+            Timestamp timezone
           </label>
           <select
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="south.dataSources.0.MQTT.timeStampTimezone"
-            name="south.dataSources.0.MQTT.timeStampTimezone"
+            id="south.dataSources.0.MQTT.timestampTimezone"
+            name="south.dataSources.0.MQTT.timestampTimezone"
           >
             <option
               value="Etc/UTC"
@@ -11652,7 +11652,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="row"
         >
           <h5>
-            Time stamp settings
+            Timestamp settings
             <button
               aria-label="Close"
               class="close"

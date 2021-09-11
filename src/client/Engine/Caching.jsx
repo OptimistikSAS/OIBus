@@ -38,6 +38,28 @@ const Caching = ({ onChange, caching }) => (
           onChange={onChange}
         />
       </Col>
+      <Col md={3}>
+        <OIbInteger
+          name="engine.caching.bufferMax"
+          label="Max buffer size"
+          value={caching.bufferMax}
+          defaultValue={250}
+          valid={validation.engine.caching.bufferMax}
+          help={<div>The number of values the buffer must reach before caching values</div>}
+          onChange={onChange}
+        />
+      </Col>
+      <Col md={3}>
+        <OIbInteger
+          name="engine.caching.bufferTimeoutInterval"
+          label="Buffer flush interval (in ms)"
+          value={caching.bufferTimeoutInterval}
+          defaultValue={300}
+          valid={validation.engine.caching.bufferTimeoutInterval}
+          help={<div>The number of ms before flushing the buffer to cache its values</div>}
+          onChange={onChange}
+        />
+      </Col>
     </Row>
     <Row>
       <Col md={2}>

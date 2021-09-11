@@ -32,6 +32,8 @@
     },
     "caching": {
       "cacheFolder": "./cache",
+      "bufferMax": 250,
+      "bufferTimeoutInterval": 300,
       "archive": {
         "enabled": true,
         "archiveFolder": "./cache/archive/",
