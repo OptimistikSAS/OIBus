@@ -100,6 +100,13 @@ class Engine {
     this.addFileCount = 0
     this.forwardedHealthSignalMessages = 0
     this.check = check
+
+    // Buffer delay in ms: when a protocol generates a lot of values at the same time, it may be better to accumulate them
+    // in a buffer before sending them to the engine
+    // Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
+    // these parameters could be settings from OIBus UI
+    this.bufferMax = engineConfig.caching.bufferMax
+    this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
   }
 
   /**

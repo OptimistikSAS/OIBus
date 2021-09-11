@@ -30,16 +30,16 @@ class MQTT extends ProtocolHandler {
       valuePath,
       nodeIdPath,
       qualityPath,
-      timeStampOrigin,
+      timestampOrigin,
       timestampPath,
-      timeStampFormat,
-      timeStampTimezone,
+      timestampFormat,
+      timestampTimezone,
     } = this.dataSource.MQTT
 
-    if (moment.tz.zone(timeStampTimezone)) {
-      this.timezone = timeStampTimezone
+    if (moment.tz.zone(timestampTimezone)) {
+      this.timezone = timestampTimezone
     } else {
-      this.logger.error(`Invalid timezone supplied: ${timeStampTimezone}`)
+      this.logger.error(`Invalid timezone supplied: ${timestampTimezone}`)
     }
 
     this.url = url
@@ -55,9 +55,9 @@ class MQTT extends ProtocolHandler {
     this.valuePath = valuePath
     this.nodeIdPath = nodeIdPath
     this.qualityPath = qualityPath
-    this.timeStampOrigin = timeStampOrigin
-    this.timeStampPath = timestampPath
-    this.timeStampFormat = timeStampFormat
+    this.timestampOrigin = timestampOrigin
+    this.timestampPath = timestampPath
+    this.timestampFormat = timestampFormat
 
     this.handlesPoints = true
   }
