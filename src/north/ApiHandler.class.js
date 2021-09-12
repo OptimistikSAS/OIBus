@@ -63,8 +63,8 @@ class ApiHandler {
    * @return {void}
    */
   disconnect() {
-    const { name } = this.application
-    this.logger.info(`North API ${name} disconnected`)
+    const { name, id } = this.application
+    this.logger.info(`North API ${name} (${id}) disconnected`)
   }
 
   /**
