@@ -276,7 +276,7 @@ class Engine {
                 this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
               }
             } else {
-              this.logger.debug(`${dataSourceId} already activated on scanMode: ${scanMode}. Skipping it.`)
+              this.logger.error(`${dataSourceId} currently on scan. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
             }
           })
         })

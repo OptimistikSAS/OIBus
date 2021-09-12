@@ -30,46 +30,12 @@ class FolderScanner extends ProtocolHandler {
   }
 
   /**
-   * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} _scanMode - The scan mode
-   * @return {void}
-   */
-  async onScanImplementation(_scanMode) {
-    // List files in the inputFolder
-    const files = await fs.readdir(this.inputFolder)
-    if (files.length > 0) {
-      // Disable ESLint check because we need for..of loop to support async calls
-      // eslint-disable-next-line no-restricted-syntax
-      for (const file of files) {
-        // Disable ESLint check because we want to handle files one by one
-        // eslint-disable-next-line no-await-in-loop
-        const matchConditions = await this.checkConditions(file)
-        if (matchConditions) {
-          // local try catch in case an error occurs on a file
-          // if so, the loop goes on with the other files
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            await this.sendFile(file)
-          } catch (sendFileError) {
-            this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
-          }
-        }
-      }
-    } else {
-      this.logger.debug(`The folder ${this.inputFolder} is empty.`)
-    }
-  }
-
-  /**
    * Filter the files if the name and the age of the file meet the request
    * or (when preserveFiles)if they were already sent.
    * @param {String} filename - file
    * @returns {Array} - Whether the file matches the conditions
    */
-  async checkConditions(filename) {
-    // check regexp
-    if (!this.regex.test(filename)) return false
-    this.logger.silly(`checkConditions:${filename} match regexp`)
+  async checkAge(filename) {
     // check age
     const timestamp = new Date().getTime()
     const stats = await fs.stat(path.join(this.inputFolder, filename))
@@ -84,6 +50,48 @@ class FolderScanner extends ProtocolHandler {
       this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
+  }
+
+  /**
+   * Read the raw file and rewrite it to another file in the folder archive
+   * @param {*} scanMode - The scan mode
+   * @return {void}
+   */
+  async onScanImplementation(scanMode) {
+    // List files in the inputFolder
+    let files = []
+    try {
+      files = await fs.readdir(this.inputFolder)
+    } catch (error) {
+      this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
+      return
+    }
+
+    if (files.length === 0) {
+      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${scanMode})`)
+      return
+    }
+    // filters file that don't match the regex
+    const filteredFiles = files.filter((file) => file.match(this.regex))
+    if (filteredFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${scanMode})is empty.`)
+      return
+    }
+    // filters file that may still currently modified (based on last modifcation date)
+    const promisesResults = await Promise.all(filteredFiles.map(this.checkAge.bind(this)))
+    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index])
+    if (matchedFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${scanMode})is empty.`)
+      return
+    }
+    // the files remaining after these checks need to be sent to the bus
+    matchedFiles.forEach(async (file) => {
+      try {
+        await this.sendFile(file)
+      } catch (sendFileError) {
+        this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+      }
+    })
   }
 
   /**
