@@ -61,6 +61,7 @@ class FolderScanner extends ProtocolHandler {
     // List files in the inputFolder
     let files = []
     try {
+      this.logger.silly(`Reading ${this.inputFolder} directory`)
       files = await fs.readdir(this.inputFolder)
     } catch (error) {
       this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
@@ -85,13 +86,17 @@ class FolderScanner extends ProtocolHandler {
       return
     }
     // the files remaining after these checks need to be sent to the bus
-    matchedFiles.forEach(async (file) => {
+    this.logger.silly(`Sending ${matchedFiles.length} files`)
+    // eslint-disable-next-line no-restricted-syntax
+    for (const file of matchedFiles) {
       try {
+        // eslint-disable-next-line no-await-in-loop
         await this.sendFile(file)
       } catch (sendFileError) {
         this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
       }
-    })
+    }
+    this.logger.silly('Leaving onscan method')
   }
 
   /**
