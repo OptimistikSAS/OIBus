@@ -126,7 +126,7 @@ describe('folder-scanner', () => {
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(1)
     folderScanner.ignoreModifiedDate = false
   })
-  it.skip('onScan: should addFile() if file match conditions with preserveFiles false and compression true', async () => {
+  it('onScan: should addFile() if file match conditions with preserveFiles false and compression true', async () => {
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
 
     const referenceCsv = path.resolve('./tests/test.csv')
@@ -152,7 +152,7 @@ describe('folder-scanner', () => {
     jest.restoreAllMocks()
     fs.rmdirSync(folderScanner.inputFolder, { recursive: true })
   })
-  it.skip('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
+  it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
     jest.spyOn(fs.promises, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
 
     const referenceCsv = path.resolve('./tests/test.csv')
