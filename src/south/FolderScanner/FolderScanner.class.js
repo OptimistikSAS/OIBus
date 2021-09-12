@@ -80,7 +80,7 @@ class FolderScanner extends ProtocolHandler {
     }
     // filters file that may still currently modified (based on last modifcation date)
     const promisesResults = await Promise.allSettled(filteredFiles.map(this.checkAge.bind(this)))
-    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index])
+    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index].value)
     if (matchedFiles.length === 0) {
       this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${scanMode}).`)
       return
