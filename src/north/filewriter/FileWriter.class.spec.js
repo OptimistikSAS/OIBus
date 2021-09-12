@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 const ApiHandler = require('../ApiHandler.class')
 const FileWriter = require('./FileWriter.class')
@@ -47,7 +47,7 @@ describe('FileWriter north', () => {
     const expectedFileName = `${fileWriterNorth.prefixFileName}${new Date().getTime()}${fileWriterNorth.suffixFileName}.json`
     const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
     const expectedPath = path.join(expectedOutputFolder, expectedFileName)
-    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData, expect.any(Function))
+    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData)
     expect(handleValueResults).toEqual(values.length)
     global.Date = RealDate
   })
@@ -69,25 +69,24 @@ describe('FileWriter north', () => {
   })
 
   it('should properly handle files', async () => {
-    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
-    jest.spyOn(fs, 'copyFileSync').mockImplementation(() => true)
+    jest.spyOn(fs, 'stat').mockImplementation(() => ({ size: 666 }))
+    jest.spyOn(fs, 'copyFile').mockImplementation(() => true)
     const filePath = '/path/to/file/example.file'
     const extension = path.extname(filePath)
     let expectedFileName = path.basename(filePath, extension)
     expectedFileName = `${fileWriterNorth.prefixFileName}${expectedFileName}${fileWriterNorth.suffixFileName}${extension}`
     const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
     const handleFileResult = await fileWriterNorth.handleFile(filePath)
-    expect(fs.copyFileSync).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName))
+    expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName))
     expect(handleFileResult).toEqual(ApiHandler.STATUS.SUCCESS)
   })
 
   it('should properly catch handle file error', async () => {
-    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
-    jest.spyOn(fs, 'copyFileSync').mockImplementation(() => true)
-    const filePath = '/path/to/file/example.file'
-    jest.spyOn(fs, 'copyFileSync').mockImplementationOnce(() => {
+    jest.spyOn(fs, 'stat').mockImplementation(() => ({ size: 666 }))
+    jest.spyOn(fs, 'copyFile').mockImplementationOnce(() => {
       throw new Error('Error handling files')
     })
+    const filePath = '/path/to/file/example.file'
     const handlerFileResult = await fileWriterNorth.handleFile(filePath)
     expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
     expect(handlerFileResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
