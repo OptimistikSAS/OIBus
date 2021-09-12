@@ -319,14 +319,14 @@ class Engine {
     })
 
     // Stop Protocols
-    Object.entries(this.activeProtocols).forEach(([name, protocol]) => {
-      this.logger.info(`Stopping ${name}`)
+    Object.entries(this.activeProtocols).forEach(([id, protocol]) => {
+      this.logger.info(`Stopping south ${id}`)
       protocol.disconnect()
     })
 
     // Stop Applications
-    Object.entries(this.activeApis).forEach(([name, application]) => {
-      this.logger.info(`Stopping ${name}`)
+    Object.entries(this.activeApis).forEach(([id, application]) => {
+      this.logger.info(`Stopping north ${id}`)
       application.disconnect()
     })
 
