@@ -284,7 +284,8 @@ class Engine {
                 this.logger.error(`scan for "${this.activeProtocols[id]?.dataSource.name || id}" failed: ${error}`)
               }
             } else {
-              this.logger.debug(`${this.activeProtocols[id]?.dataSource.name || id} already activated on scanMode: ${scanMode}. Skipping it.`)
+              // eslint-disable-next-line max-len
+              this.logger.error(`${this.activeProtocols[id]?.dataSource.name || id} currently on scan. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
             }
           })
         })
