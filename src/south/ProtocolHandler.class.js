@@ -63,7 +63,7 @@ class ProtocolHandler {
     const { id, name, protocol } = this.dataSource
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
-    this.logger.info(`Data source ${name} started with protocol ${protocol}`)
+    this.logger.info(`Data source ${name} (${id}) started with protocol ${protocol}`)
   }
 
   onScanImplementation(scanMode) {
@@ -93,8 +93,8 @@ class ProtocolHandler {
   }
 
   disconnect() {
-    const { name } = this.dataSource
-    this.logger.info(`Data source ${name} disconnected`)
+    const { name, id } = this.dataSource
+    this.logger.info(`Data source ${name} (${id}) disconnected`)
   }
 
   /**
@@ -127,7 +127,6 @@ class ProtocolHandler {
     this.buffer.push(...values)
     // if the protocol buffer is large enough, send it
     // else start a timer before sending it
-    this.logger.silly(`${this.buffer.length}, ${!!this.bufferTimeout}, ${this.dataSource.name}`)
     if (this.buffer.length > this.engine.bufferMax) {
       await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
