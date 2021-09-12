@@ -268,11 +268,15 @@ class Engine {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
-          this.scanLists[scanMode].forEach((dataSourceId) => {
-            try {
-              this.activeProtocols[dataSourceId].onScan(scanMode)
-            } catch (error) {
-              this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
+          this.scanLists[scanMode].forEach(async (dataSourceId) => {
+            if (!this.activeProtocols[dataSourceId].currentlyOnScan[scanMode]) {
+              try {
+                await this.activeProtocols[dataSourceId].onScan(scanMode)
+              } catch (error) {
+                this.logger.error(`scan for ${dataSourceId} failed: ${error}`)
+              }
+            } else {
+              this.logger.debug(`${dataSourceId} already activated on scanMode: ${scanMode}. Skipping it.`)
             }
           })
         })
