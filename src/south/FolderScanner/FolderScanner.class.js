@@ -37,7 +37,6 @@ class FolderScanner extends ProtocolHandler {
   async onScanImplementation(_scanMode) {
     // List files in the inputFolder
     const files = await fs.readdir(this.inputFolder)
-    console.log('files', files)
     if (files.length > 0) {
       // Disable ESLint check because we need for..of loop to support async calls
       // eslint-disable-next-line no-restricted-syntax
@@ -45,14 +44,12 @@ class FolderScanner extends ProtocolHandler {
         // Disable ESLint check because we want to handle files one by one
         // eslint-disable-next-line no-await-in-loop
         const matchConditions = await this.checkConditions(file)
-        console.log('matchConditions', matchConditions)
         if (matchConditions) {
           // local try catch in case an error occurs on a file
           // if so, the loop goes on with the other files
           try {
             // eslint-disable-next-line no-await-in-loop
             await this.sendFile(file)
-            console.log('sendFile', file)
           } catch (sendFileError) {
             this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
           }
