@@ -60,6 +60,11 @@ class OPCHDA extends ProtocolHandler {
    */
   async historyQuery(scanMode, startTime, endTime) {
     this.sendReadMessage(scanMode, startTime, endTime)
+    // Wait until we receive the response
+    while (this.ongoingReads[scanMode]) {
+      // eslint-disable-next-line no-await-in-loop
+      await this.delay(100)
+    }
   }
 
   /**
@@ -303,7 +308,7 @@ class OPCHDA extends ProtocolHandler {
           this.addValues(values)
 
           dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
-          this.lastCompletedAt[messageObject.Content.Group] = new Date(dateString).getTime() + 1
+          this.lastCompletedAt[messageObject.Content.Group] = new Date(new Date(dateString).getTime() + 1)
           await this.setConfig(
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group].toISOString(),
