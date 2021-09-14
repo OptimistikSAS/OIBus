@@ -18,7 +18,7 @@ schema.form = {
           <li>
             The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime.
             It can also contain a LIMIT clause with @MaxReturnValues to limit the number of results.
-            Note: The query should contain either all parameters all none of them.
+            Note: The query should contain either all parameters or all none of them.
           </li>
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
