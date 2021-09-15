@@ -10,3 +10,5 @@ coverage/
 oibus-*.json
 oibus.json
 tests/db/test.db
+local-development/data
+.env
