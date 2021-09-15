@@ -4,6 +4,10 @@
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
+  "engines": {
+    "node": "=14.17.6",
+    "npm": "=7.23.0"
+  },
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
     "start-macos": "./dist/macos/oibus --config ./tests/oibus.json",
