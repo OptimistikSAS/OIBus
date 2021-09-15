@@ -1,0 +1,98 @@
+version: '3.5'
+services:
+    mysql:
+        image: 'mysql:5.7'
+        ports:
+            - ${FORWARD_MYSQL_PORT:-5306}:3306
+        environment:
+            TZ: 'Europe/Bucharest'
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-oibus123}'
+            MYSQL_DATABASE: '${DB_DATABASE:-oibus}'
+            MYSQL_USER: '${DB_USERNAME:-oibus}'
+            MYSQL_PASSWORD: '${DB_PASSWORD:-oibus123}'
+        volumes:
+            - /var/lib/mysql
+
+    postgresql:
+        container_name: postgresql
+        image: postgres
+        volumes:
+            - /var/lib/postgresql/data
+        ports:
+            - ${FORWARD_POSTGRESQL_PORT:-5432}:5432
+        environment:
+            - TZ=Europe/Bucharest
+            - POSTGRES_USER=${DB_USERNAME:-oibus}
+            - POSTGRES_PASSWORD=${DB_PASSWORD:-oibus123}
+            - POSTGRES_DB=${DB_DATABASE:-oibus}
+
+    mssql:
+        container_name: mssql
+        image: mcr.microsoft.com/mssql/server:2017-latest
+        ports:
+            - ${FORWARD_MSSQL_PORT:-1433}:1433
+        environment:
+            SA_PASSWORD: ${MSSQL_PASSWORD:-Oibus123@}
+            ACCEPT_EULA: "Y"
+
+    influxdb:
+        container_name: influxdb
+        image: influxdb
+        networks:
+            - influx
+        volumes:
+            - /var/lib/influxdb
+        ports:
+            - ${FORWARD_INFLUX_PORT:-8086}:8086
+    
+    chronograf:
+        container_name: chronograf
+        image: chronograf
+        command: --influxdb-url=http://influxdb:8086
+        networks:
+            - influx
+        volumes:
+            - /var/lib/chronograf
+        ports:
+            - ${FORWARD_CHRONOGRAF_PORT:-8087}:8888
+        depends_on:
+            - influxdb
+
+    timescaledb:
+        container_name: timescaledb
+        image: timescale/timescaledb:latest-pg13
+        volumes:
+            - /var/lib/postgresql/data
+        ports:
+            - ${FORWARD_TIMESCALE_PORT:-5433}:5432
+        environment:
+            - TIMESCALEDB_TELEMETRY=off
+            - POSTGRES_PASSWORD=${DB_PASSWORD:-oibus123}
+            - POSTGRES_DB=${DB_DATABASE:-oibus}
+    
+    rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - ${FORWARD_RABBITMQ_PORT:-5672}:5672
+
+    mosquitto:
+        image: eclipse-mosquitto
+        container_name: mosquitto
+        ports:
+            - ${FORWARD_MOSQUITTO_PORT:-1883}:1883
+            
+    mongodb:
+        image: mongo
+        container_name: mongodb
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME:-oibus}
+            - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD:-oibus123}
+        volumes:
+            - /data/db
+        ports:
+            - ${FORWARD_MONGO_PORT:-27017}:27017
+
+networks:
+    influx:
+        name: custom_influx
+        driver: bridge
