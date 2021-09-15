@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 1.2.4 (2021-09-15)
+
+
+### Bug Fixes
+
+* **OPCUA_HA:** read history does not exit when a data has no value ([d39583f](https://github.com/OptimistikSAS/OIBus/commit/d39583fe9bc239d6bf4b9f5e199ae730fd2cf3e9))
+
 ### 1.2.3 (2021-06-25)
 
 
