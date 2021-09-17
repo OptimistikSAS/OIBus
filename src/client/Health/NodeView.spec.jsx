@@ -9,16 +9,21 @@ import { act } from 'react-dom/test-utils'
 import { BrowserRouter } from 'react-router-dom'
 
 import NodeView from './NodeView.jsx'
+import newConfig from '../../../tests/testConfig'
 
-import activeConfig from '../../../tests/testConfig'
+const dispatchNewConfig = jest.fn()
 
-// ReacFlow does not seem to be working with jest.
+// ReactFlow does not seem to be working with jest.
 // so we have to mock this component
 jest.mock('../../../node_modules/react-flow-renderer/dist/ReactFlow.js', () => () => ('ReactFlow'))
 
 let container
 
 beforeEach(() => {
+  React.useContext = jest.fn().mockReturnValue({
+    newConfig,
+    dispatchNewConfig,
+  })
   container = document.createElement('div')
   document.body.appendChild(container)
 })
@@ -31,14 +36,68 @@ afterEach(() => {
 // sample status (object returned by Server to give various informations on the behavior)
 const status = { version: 'x.x.x' }
 
-React.useContext = jest.fn().mockReturnValue({ activeConfig })
-describe('Health', () => {
-  test('display NodeView page based on config', async () => {
+React.useContext = jest.fn().mockReturnValue({ newConfig })
+describe('NodeView', () => {
+  test('display main page based on config', async () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <NodeView status={status} />
+          <NodeView status={status} onRestart={() => true} onShutdown={() => true} />
         </BrowserRouter>,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+
+    React.useContext = jest.fn().mockReturnValue({
+      newConfig: null,
+      dispatchNewConfig,
+    })
+
+    act(() => {
+      ReactDOM.render(
+        <BrowserRouter>
+          <NodeView status={status} onRestart={() => true} onShutdown={() => true} />
+        </BrowserRouter>,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+
+    React.useContext = jest.fn().mockReturnValue({
+      newConfig: {},
+      dispatchNewConfig,
+    })
+
+    act(() => {
+      ReactDOM.render(
+        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+
+    React.useContext = jest.fn().mockReturnValue({
+      newConfig: { south: {}, north: {} },
+      dispatchNewConfig,
+    })
+
+    act(() => {
+      ReactDOM.render(
+        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
+        container,
+      )
+    })
+    expect(container).toMatchSnapshot()
+
+    React.useContext = jest.fn().mockReturnValue({
+      newConfig: { south: { dataSources: [] }, north: { applications: [] } },
+      dispatchNewConfig,
+    })
+
+    act(() => {
+      ReactDOM.render(
+        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
         container,
       )
     })

@@ -1,5 +1,4 @@
 import React from 'react'
-import OIConnect from './oi.png'
 import { notEmpty } from '../../services/validation.service'
 
 const schema = { name: 'OIConnect' }
@@ -53,6 +52,6 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.image = OIConnect
+schema.category = 'OI'
 
 export default schema

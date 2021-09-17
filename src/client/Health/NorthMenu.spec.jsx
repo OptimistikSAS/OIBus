@@ -5,9 +5,8 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
-import NorthSettings from './NorthSettings.jsx'
+import NorthMenu from './NorthMenu.jsx'
 import newConfig from '../../../tests/testConfig'
-import SouthSettings from './SouthSettings'
 
 // mocking the nanoid method
 jest.mock('nanoid')
@@ -43,13 +42,13 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('NorthSettings', () => {
-  test('display NorthSettings properly when empty newConfig', async () => {
+describe('Northmenu', () => {
+  test('display NorthMenu properly when empty newConfig', async () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig })
 
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -59,7 +58,7 @@ describe('NorthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -69,7 +68,7 @@ describe('NorthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -79,17 +78,17 @@ describe('NorthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />,
         container,
       )
     })
     expect(container).toMatchSnapshot()
   })
 
-  test('display NorthSettings page based on config', async () => {
+  test('display NorthMenu page based on config', async () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -99,7 +98,7 @@ describe('NorthSettings', () => {
   test('check duplicate application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -122,7 +121,7 @@ describe('NorthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={applicationWithCopyInName} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={applicationWithCopyInName} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -143,7 +142,7 @@ describe('NorthSettings', () => {
   test('check edit first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -155,7 +154,7 @@ describe('NorthSettings', () => {
   test('check delete first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -171,7 +170,7 @@ describe('NorthSettings', () => {
   test('check cancel delete first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -184,7 +183,7 @@ describe('NorthSettings', () => {
   test('check rename first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthSettings application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))

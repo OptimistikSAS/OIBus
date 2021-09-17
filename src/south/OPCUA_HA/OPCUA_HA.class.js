@@ -11,6 +11,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * @extends {ProtocolHandler}
  */
 class OPCUA_HA extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for OPCUA_HA
    * @constructor

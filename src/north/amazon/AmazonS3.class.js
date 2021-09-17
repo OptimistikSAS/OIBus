@@ -11,6 +11,8 @@ const ApiHandler = require('../ApiHandler.class')
  * Class AmazonS3 - sends files to Amazon AWS S3
  */
 class AmazonS3 extends ApiHandler {
+  static category = 'FileIn'
+
   /**
    * Constructor for AmazonS3
    * @constructor

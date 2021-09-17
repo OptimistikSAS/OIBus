@@ -3,26 +3,20 @@ import PropTypes from 'prop-types'
 import { nanoid } from 'nanoid'
 import { FaEllipsisV, FaTrashAlt, FaPencilAlt, FaCopy, FaCog, FaSpinner } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
-import { Modal, Button } from 'react-bootstrap'
 import { useHistory } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
+import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
-const SouthSettings = ({ dataSource, renamingConnector }) => {
+const SouthMenu = ({ dataSource, renamingConnector }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const history = useHistory()
   const dataSources = newConfig?.south?.dataSources ?? []
-
-  const [show, setShow] = useState(false)
-  const handleClose = () => setShow(false)
-  const handleShow = () => setShow(true)
-
+  const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const toggle = () => setDropdownOpen((prevState) => !prevState)
 
   const handleGoToConnector = (pathname) => {
     history.push({ pathname })
   }
-
   const handleDuplicateSouth = () => {
     const newName = `${dataSource.name} copy`
     const countCopies = dataSources.filter((e) => e.name.startsWith(newName)).length
@@ -40,13 +34,19 @@ const SouthSettings = ({ dataSource, renamingConnector }) => {
   const handleDeleteConnector = (name) => {
     dispatchNewConfig({ type: 'deleteRow', name })
   }
-
+  const title = 'Delete'
+  const body = `Are you sure you want to delete ${dataSource.name}?`
+  const onConfirm = () => {
+    handleDeleteConnector(`south.dataSources.${dataSources.findIndex(
+      (element) => element.id === dataSource.id,
+    )}`)
+  }
   return (
     <>
       <div className="icon-menu">
         <Dropdown
           isOpen={dropdownOpen}
-          toggle={toggle}
+          toggle={() => setDropdownOpen((prevState) => !prevState)}
           direction="up"
         >
           <DropdownToggle size="sm" className="icon-dropdown">
@@ -110,35 +110,11 @@ const SouthSettings = ({ dataSource, renamingConnector }) => {
               </div>
             </DropdownItem>
 
-            <DropdownItem className="icon-dropdown-item" onClick={handleShow}>
+            <DropdownItem className="icon-dropdown-item" onClick={() => setModal(true)}>
               <FaTrashAlt id="icon-delete" className="icon-dropdown-item" />
               Delete
             </DropdownItem>
-
-            <Modal show={show} onHide={handleClose}>
-              <Modal.Header closeButton>
-                Delete
-              </Modal.Header>
-              <Modal.Body>{`Are you sure you want to delete ${dataSource.name}?`}</Modal.Body>
-              <Modal.Footer>
-                <Button
-                  id="icon-confirm"
-                  variant="secondary"
-                  onClick={() => handleDeleteConnector(`south.dataSources.${dataSources.findIndex(
-                    (element) => element.id === dataSource.id,
-                  )}`)}
-                >
-                  Confirm
-                </Button>
-                <Button
-                  id="cancel-button"
-                  variant="primary"
-                  onClick={handleClose}
-                >
-                  Cancel
-                </Button>
-              </Modal.Footer>
-            </Modal>
+            <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
           </DropdownMenu>
         </Dropdown>
       </div>
@@ -146,9 +122,9 @@ const SouthSettings = ({ dataSource, renamingConnector }) => {
   )
 }
 
-SouthSettings.propTypes = {
+SouthMenu.propTypes = {
   dataSource: PropTypes.object.isRequired,
   renamingConnector: PropTypes.func.isRequired,
 }
 
-export default SouthSettings
+export default SouthMenu

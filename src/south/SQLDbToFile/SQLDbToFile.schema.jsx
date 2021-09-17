@@ -1,5 +1,4 @@
 import React from 'react'
-import SQLDbToFile from './db-out.png'
 import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../services/validation.service'
 
 const schema = { name: 'SQLDbToFile' }
@@ -195,6 +194,6 @@ schema.withDriver = (driver) => {
   return schema
 }
 
-schema.image = SQLDbToFile
+schema.category = 'DatabaseOut'
 
 export default schema

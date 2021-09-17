@@ -5,7 +5,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
-import SouthSettings from './SouthSettings.jsx'
+import SouthMenu from './SouthMenu.jsx'
 import newConfig from '../../../tests/testConfig'
 
 // mocking the nanoid method
@@ -42,13 +42,13 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('SouthSettings', () => {
-  test('display SouthSettings properly when empty newConfig', async () => {
+describe('SouthMenu', () => {
+  test('display SouthMenu properly when empty newConfig', async () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig })
 
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -58,7 +58,7 @@ describe('SouthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -68,7 +68,7 @@ describe('SouthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -78,17 +78,17 @@ describe('SouthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
         container,
       )
     })
     expect(container).toMatchSnapshot()
   })
 
-  test('display SouthSettings page based on config', async () => {
+  test('display SouthMenu page based on config', async () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
         container,
       )
     })
@@ -98,7 +98,7 @@ describe('SouthSettings', () => {
   test('check duplicate dataSource', async () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -121,7 +121,7 @@ describe('SouthSettings', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSourceWithCopyInName} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSourceWithCopyInName} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -142,7 +142,7 @@ describe('SouthSettings', () => {
   test('check edit first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -154,7 +154,7 @@ describe('SouthSettings', () => {
   test('check status first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -166,7 +166,7 @@ describe('SouthSettings', () => {
   test('check delete first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -182,7 +182,7 @@ describe('SouthSettings', () => {
   test('check cancel delete first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
@@ -195,7 +195,7 @@ describe('SouthSettings', () => {
   test('check rename first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthSettings dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))

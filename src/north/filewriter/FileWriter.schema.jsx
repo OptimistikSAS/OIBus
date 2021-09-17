@@ -1,5 +1,4 @@
 import React from 'react'
-import FileWriter from './file-in.png'
 import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'FileWriter' }
@@ -35,5 +34,5 @@ schema.form = {
     valid: hasLengthBetween(0, 256),
   },
 }
-schema.image = FileWriter
+schema.category = 'FileIn'
 export default schema

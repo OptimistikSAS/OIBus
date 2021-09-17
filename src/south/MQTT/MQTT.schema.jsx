@@ -1,5 +1,4 @@
 import React from 'react'
-import MQTT from './iot.png'
 import { minValue, notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTT' }
@@ -311,6 +310,6 @@ schema.points = {
   },
 }
 
-schema.image = MQTT
+schema.category = 'IoT'
 
 export default schema

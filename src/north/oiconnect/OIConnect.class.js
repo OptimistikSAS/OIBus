@@ -3,6 +3,8 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 class OIConnect extends ApiHandler {
+  static category = 'OI'
+
   /**
    * Constructor for OIConnect
    * @constructor

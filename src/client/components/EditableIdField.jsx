@@ -46,7 +46,7 @@ const EditableIdField = ({ connectorName, fromList, valid, nameChanged, editing 
         />
         <Button close>
           <FaCheck
-            className="oi-icon oi-icon-inline "
+            className="oi-icon oi-icon-inline"
             onClick={handleDoneEditName}
           />
         </Button>

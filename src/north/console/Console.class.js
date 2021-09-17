@@ -3,6 +3,8 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 class Console extends ApiHandler {
+  static category = 'Debug'
+
   /**
    * Constructor for Console
    * @constructor

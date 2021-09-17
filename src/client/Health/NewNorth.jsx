@@ -1,23 +1,35 @@
 import React, { useState } from 'react'
-import { Button, Col, Form, Popover, PopoverBody, Row } from 'reactstrap'
 import { nanoid } from 'nanoid'
+import PropTypes from 'prop-types'
+import { Button, Col, Container, Row, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 import { ConfigContext } from '../context/configContext.jsx'
 import validationNorth from '../North/Form/North.validation'
-import { OIbSelect, OIbText } from '../components/OIbForm'
+import { OIbText } from '../components/OIbForm'
+import imageCategories from './imageCategories'
 
-const NewNorth = () => {
+const NewNorth = ({ modal, toggle }) => {
   const { newConfig, dispatchNewConfig, apiList } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
-  const [api, setApi] = React.useState(apiList[0])
-
-  const [openPopover, setOpenPopover] = useState(false)
+  const [active, setActive] = useState(false)
+  const [apiError, setApiError] = React.useState(null)
+  const [nameError, setNameError] = React.useState(null)
+  const [api, setApi] = React.useState(null)
   const applications = newConfig?.north?.applications ?? []
 
-  const togglePopover = () => setOpenPopover(!openPopover)
+  const northCategoryList = apiList ? [...new Set(apiList.map((e) => e.category))] : []
 
   const addApplication = () => {
-    if (!validationNorth.application.isValidName(name, applications?.map((application) => application.name) ?? [])) {
-      togglePopover(false)
+    if (api === null && name !== '') {
+      setApiError('An application must be selected')
+    }
+    if (name === '' && api !== null) {
+      setNameError('A name must be specified')
+    }
+    if (name === '' && api === null) {
+      setApiError('A name must be specified and an application must be selected')
+    }
+
+    if (!validationNorth.application.isValidName(name, applications.map((application) => application.name)) && name !== '' && api !== null) {
       dispatchNewConfig({
         type: 'addRow',
         name: 'north.applications',
@@ -28,68 +40,107 @@ const NewNorth = () => {
           enabled: false,
         },
       })
-    }
-  }
-
-  const handleChange = (attributeName, value) => {
-    switch (attributeName) {
-      case 'name':
-        setName(value)
-        break
-      case 'api':
-      default:
-        setApi(value)
-        break
+      toggle()
+      setApi(null)
+      setName('')
+      setApiError(null)
+      setNameError(null)
     }
   }
 
   return (
     <>
-      <Button
-        id="add-north"
-        className="inline-button autosize oi-north-button"
-        size="sm"
-        outline
+      <Modal
+        isOpen={modal}
+        toggle={toggle}
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+        size="lg"
       >
-        + North
-      </Button>
-      <Popover
-        className="pop-container"
-        trigger="legacy"
-        placement="left"
-        target="add-north"
-        isOpen={openPopover}
-        toggle={togglePopover}
-      >
-        <PopoverBody>
-          <Form>
-            <Row>
-              <Col md="7">
-                <OIbText
-                  label="Application Name"
-                  value={name}
-                  name="name"
-                  onChange={handleChange}
-                  defaultValue=""
-                  valid={() => validationNorth.application.isValidName(name, applications?.map((application) => application.name) ?? [])}
-                />
-              </Col>
-              <Col md="5">
-                <OIbSelect label="API" value={api} name="api" options={apiList} defaultValue={apiList[0]} onChange={handleChange} />
-              </Col>
-            </Row>
-            <br />
-            <Col md="2">
-              <Button size="sm" id="icon-add" className="oi-add-button" color="primary" onClick={addApplication}>
-                Add
-              </Button>
-            </Col>
-          </Form>
-        </PopoverBody>
-      </Popover>
-    </>
+        <ModalHeader className="oi-modal-header">
+          Select an application
+        </ModalHeader>
 
+        <ModalBody>
+          <Container className="scrollBar">
+            {northCategoryList?.map((category) => (
+              <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
+                <Col xs={6} md={12}>
+                  <div className="icon-container">
+                    <div className="icon-left-modal">
+                      <img src={imageCategories[category]?.image ?? imageCategories.Default.image} alt="logo" height="24px" />
+                    </div>
+                    <div style={{ fontSize: '18px', paddingRight: '75px' }} className="icon-center-modal ">
+                      {imageCategories[category]?.label}
+                    </div>
+                  </div>
+                  <div className="connector-container">
+                    {apiList.filter((e) => e.category === category).map(({ connectorName }) => (
+                      <button
+                        id="icon-connector"
+                        key={`${category}-${connectorName}-north-icon-connector`}
+                        className={`${(api === connectorName && active) ? 'connector-focus' : 'connector'}`}
+                        type="button"
+                        onClick={() => {
+                          setActive(true)
+                          setApi(connectorName)
+                        }}
+                      >
+                        {connectorName}
+                      </button>
+                    ))}
+                  </div>
+                </Col>
+              </Row>
+            ))}
+            {apiError && !api ? (
+              <div className="oi-error">
+                {apiError}
+              </div>
+            ) : null}
+            {nameError && name === '' ? (
+              <div className="oi-error">
+                {nameError}
+              </div>
+            ) : null}
+          </Container>
+        </ModalBody>
+
+        <ModalFooter className="oi-modal-footer">
+          <Col className="oi-new-name" md="6">
+            <OIbText
+              label="Application Name"
+              value={name}
+              name="name"
+              onChange={(fieldName, newName) => setName(newName)}
+              defaultValue=""
+              valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
+            />
+          </Col>
+          <Button
+            className="oi-add-button"
+            id="icon-confirm"
+            variant="secondary"
+            onClick={() => { addApplication() }}
+          >
+            Add
+          </Button>
+          <Button
+            className="oi-add-button"
+            id="cancel-button"
+            variant="primary"
+            onClick={toggle}
+          >
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </>
   )
 }
 
+NewNorth.propTypes = {
+  modal: PropTypes.bool.isRequired,
+  toggle: PropTypes.func.isRequired,
+}
 export default NewNorth
