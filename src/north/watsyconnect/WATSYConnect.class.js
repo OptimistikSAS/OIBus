@@ -31,6 +31,8 @@ const ApiHandler = require('../ApiHandler.class')
  */
 
 class WATSYConnect extends ApiHandler {
+  static category = 'Api'
+
   /**
    * Constructor for WATSYConnect
    * @constructor

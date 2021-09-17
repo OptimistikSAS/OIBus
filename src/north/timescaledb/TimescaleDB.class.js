@@ -32,6 +32,8 @@ const escapeSpace = (chars) => {
 }
 
 class TimescaleDB extends ApiHandler {
+  static category = 'DatabaseIn'
+
   /**
    * Constructor for TimescaleDB
    * @constructor

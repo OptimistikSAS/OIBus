@@ -9,11 +9,10 @@ import ProtocolSchemas from '../South/Protocols.jsx'
 import validationNorth from '../North/Form/North.validation'
 import validationSouth from '../South/Form/South.validation'
 import EditableIdField from '../components/EditableIdField.jsx'
-import NorthSettings from './NorthSettings.jsx'
-import SouthSettings from './SouthSettings.jsx'
-import EngineSettings from './EngineSettings.jsx'
-import NewNorth from './NewNorth.jsx'
-import NewSouth from './NewSouth.jsx'
+import NorthMenu from './NorthMenu.jsx'
+import SouthMenu from './SouthMenu.jsx'
+import EngineMenu from './EngineMenu.jsx'
+import imageCategories from './imageCategories'
 
 const colors = {
   border: {
@@ -31,22 +30,26 @@ const colors = {
 }
 
 const NodeView = ({ status, onRestart, onShutdown }) => {
-  const { newConfig, dispatchNewConfig, apiList, protocolList } = React.useContext(ConfigContext)
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
-  const engine = newConfig?.engine
+  const engine = newConfig?.engine ?? {}
 
-  const handleConnectorNameChanged = (name) => (oldDataSourceId, newDataSourceId) => {
+  const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
     dispatchNewConfig({
       type: 'update',
       name,
-      value: newDataSourceId,
+      value: newConnectorName,
     })
   }
 
-  const northNodes = applications?.map((application, indexNorth) => (
+  const onLoad = (reactFlowInstance) => {
+    reactFlowInstance.setTransform({ y: 35, x: 0, zoom: 0.9 })
+  }
+
+  const northNodes = applications.map((application, indexNorth) => (
     {
       id: application.id, // unique id of node
       type: 'output', // output node
@@ -62,7 +65,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
           <div className="box-container">
             <div className="icon-container">
               <div className="icon-left">
-                <img src={`${ApiSchemas[application.api].image}`} alt="logo" height="24px" />
+                <img
+                  src={`${imageCategories[ApiSchemas[application.api].category].image}` ?? imageCategories.Default.image}
+                  alt="logo"
+                  height="24px"
+                />
               </div>
               <div className="icon-center flex-grow">
                 {`${application.api}`}
@@ -85,7 +92,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                 )}
               />
             </div>
-            <NorthSettings application={application} renamingConnector={setRenamingConnector} />
+            <NorthMenu application={application} renamingConnector={setRenamingConnector} />
           </div>),
       },
 
@@ -95,9 +102,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         y: 150 * Math.trunc(indexNorth / 5),
       },
     }
-
-  )) ?? []
-  const northLinks = applications?.map((application) => (
+  ))
+  const northLinks = applications.map((application) => (
     {
       id: `${application.id}-engine`,
       source: 'engine',
@@ -107,9 +113,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       arrowHeadType: 'arrow',
       isHidden: !application.enabled,
     }
-  )) ?? []
+  ))
 
-  const southNodes = dataSources?.map((dataSource, indexSouth) => (
+  const southNodes = dataSources.map((dataSource, indexSouth) => (
     {
       id: dataSource.id,
       type: 'input',
@@ -125,7 +131,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
           <div className="box-container">
             <div className="icon-container">
               <div className="icon-left">
-                <img src={`${ProtocolSchemas[dataSource.protocol].image}`} alt="logo" height="24px" />
+                <img
+                  src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category].image}` ?? imageCategories.Default.image}
+                  alt="logo"
+                  height="24px"
+                />
               </div>
               <div className="icon-center flex-grow">
                 {`${dataSource.protocol}`}
@@ -149,7 +159,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
             <div className="oi-points tight text-muted">
               <PointsButton dataSource={dataSource} />
             </div>
-            <SouthSettings dataSource={dataSource} renamingConnector={setRenamingConnector} />
+            <SouthMenu dataSource={dataSource} renamingConnector={setRenamingConnector} />
           </div>
         ),
       },
@@ -160,9 +170,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         y: 190 + 150 * Math.trunc(indexSouth / 5) + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
       },
     }
-  )) ?? []
-
-  const southLinks = dataSources?.map((dataSource) => (
+  ))
+  const southLinks = dataSources.map((dataSource) => (
     {
       id: `${dataSource.id}-engine`,
       target: 'engine',
@@ -172,7 +181,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       arrowHeadType: 'arrow',
       isHidden: !dataSource.enabled,
     }
-  )) ?? []
+  ))
 
   const elements = [
     ...northNodes,
@@ -184,11 +193,30 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
           <div className="box-container">
             <div className="icon-container">
               <div className="icon-center icon-left">
-                {`Engine ${status?.version}`}
+                {`Engine ${status.version}`}
               </div>
-              <div className={`icon-right icon-status-${engine?.safeMode ? 'disabled' : 'enabled'}`} />
+              <div className={`icon-right icon-status-${engine.safeMode ? 'disabled' : 'enabled'}`} />
             </div>
-            <EngineSettings onRestart={onRestart} onShutdown={onShutdown} />
+            <br />
+            <div style={{ color: 'grey' }}>
+              <div>
+                <b>Uptime: </b>
+                {status.uptime}
+              </div>
+              <div>
+                <b>Hostname: </b>
+                {status.hostname}
+              </div>
+              <div>
+                <b>CurrentDirectory: </b>
+                {status.currentDirectory}
+              </div>
+              <div>
+                <b>ConfigurationFile: </b>
+                {status.configurationFile}
+              </div>
+            </div>
+            <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
           </div>
         ),
       },
@@ -206,61 +234,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         height: 130,
       },
     },
-    {
-      id: 'newSouth',
-      type: 'input',
-      sourcePosition: 'right',
-      data: {
-        label: (
-          protocolList && (
-          <>
-            <NewSouth />
-          </>
-          )
-        ),
-      },
-      position: {
-        x: 1122,
-        y: 125 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
-      },
-      style: {
-        background: colors.background[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
-        border: colors.border[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
-        width: 63,
-        height: 25,
-      },
-    },
-    {
-      id: 'newNorth',
-      type: 'input',
-      sourcePosition: 'left',
-      data: {
-        label: (
-          apiList && (
-          <>
-            <NewNorth />
-          </>
-          )
-        ),
-      },
-      position: {
-        x: 38,
-        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
-      },
-      style: {
-        background: colors.background[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
-        border: colors.border[engine?.aliveSignal?.enabled ? 'enabled' : 'disabled'],
-        width: 62,
-        height: 25,
-      },
-    },
     ...southNodes,
     ...southLinks,
   ]
-
-  const onLoad = (reactFlowInstance) => {
-    reactFlowInstance.setTransform({ y: 35, x: 0, zoom: 0.9 })
-  }
 
   return (
     <Container>
@@ -285,14 +261,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 }
 
 NodeView.propTypes = {
-  status: PropTypes.object,
-  onRestart: PropTypes.func,
-  onShutdown: PropTypes.func,
-}
-NodeView.defaultProps = {
-  status: {},
-  onRestart: () => null,
-  onShutdown: () => null,
+  status: PropTypes.object.isRequired,
+  onRestart: PropTypes.func.isRequired,
+  onShutdown: PropTypes.func.isRequired,
 }
 
 export default NodeView

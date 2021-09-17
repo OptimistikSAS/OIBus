@@ -18,6 +18,8 @@ const escapeSpace = (chars) => {
  * Class InfluxDB - generates and sends InfluxDB requests
  */
 class InfluxDB extends ApiHandler {
+  static category = 'DatabaseIn'
+
   /**
    * Constructor for InfluxDB
    * @constructor

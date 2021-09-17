@@ -1,5 +1,4 @@
 import React from 'react'
-import ADS from './api.png'
 import { inRange, optional, notEmpty, minValue } from '../../services/validation.service'
 
 // eslint-disable-next-line max-len
@@ -192,6 +191,6 @@ schema.points = {
     label: 'Scan Mode',
   },
 }
-schema.image = ADS
+schema.category = 'IoT'
 
 export default schema

@@ -1,7 +1,6 @@
 import React from 'react'
-import { Label, Row, Breadcrumb, BreadcrumbItem, Container, Spinner } from 'reactstrap'
+import { Label, Row, Breadcrumb, BreadcrumbItem, Spinner } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
-import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
@@ -80,49 +79,6 @@ const Health = () => {
     }
   }
 
-  /**
-   * Generate string value from on object.
-   * @param {Object[]} data - The object
-   * @return {string} - The string value
-   */
-  const generateStringValueFromObject = (data) => {
-    let stringValue = ''
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'name') {
-        stringValue += stringValue ? ` / ${key}: ${value}` : `${key}: ${value}`
-      }
-    })
-    return stringValue
-  }
-
-  /**
-   * Generate row entry for the status table.
-   * @param {string} key - The key
-   * @param {string} value - The value
-   * @return {[{name: *, value: *}, {name: string, value: *}]} - The table row
-   */
-  const generateRowEntry = (key, value) => [
-    {
-      name: key,
-      value: key,
-    },
-    {
-      name: 'value',
-      value,
-    },
-  ]
-
-  const tableRows = []
-  Object.keys(status).forEach((key) => {
-    if (Array.isArray(status[key])) {
-      status[key].forEach((entry) => {
-        tableRows.push(generateRowEntry(entry.name, generateStringValueFromObject(entry)))
-      })
-    } else {
-      tableRows.push(generateRowEntry(key, status[key]))
-    }
-  })
-
   return (
     <>
       <Breadcrumb tag="h4">
@@ -140,18 +96,7 @@ const Health = () => {
         </Label>
       </Row>
       <NodeView status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
-      <Row>
-        <Label>
-          <h6>
-            {`${engineName} health status`}
-            &nbsp;
-            <FaSync className="oi-icon" onClick={fetchStatus} />
-          </h6>
-        </Label>
-      </Row>
-      <Row>
-        <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
-      </Row>
+
       {loading && (
         <div className="spinner-container">
           <Spinner color="primary" />

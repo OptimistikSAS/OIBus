@@ -1,5 +1,4 @@
 import React from 'react'
-import OIAnalytics from './oi.png'
 import { notEmpty, startsWith, combinedValidations } from '../../services/validation.service'
 import screenshot from './screenshot.png'
 import userpass from './userpass.png'
@@ -55,6 +54,6 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.image = OIAnalytics
+schema.category = 'OI'
 
 export default schema

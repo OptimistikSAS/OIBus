@@ -3,21 +3,16 @@ import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { FaEllipsisV, FaTrashAlt, FaPencilAlt, FaCopy, FaCog } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
-import { Modal, Button } from 'react-bootstrap'
 import { useHistory } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
+import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
-const NorthSettings = ({ application, renamingConnector }) => {
+const NorthMenu = ({ application, renamingConnector }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const history = useHistory()
   const applications = newConfig?.north?.applications ?? []
-
-  const [show, setShow] = useState(false)
-  const handleClose = () => setShow(false)
-  const handleShow = () => setShow(true)
-
+  const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const toggle = () => setDropdownOpen((prevState) => !prevState)
 
   const handleGoToConnector = (pathname) => {
     history.push({ pathname })
@@ -40,12 +35,20 @@ const NorthSettings = ({ application, renamingConnector }) => {
     dispatchNewConfig({ type: 'deleteRow', name })
   }
 
+  const title = 'Delete'
+  const body = `Are you sure you want to delete ${application.name}?`
+  const onConfirm = () => {
+    handleDeleteConnector(`north.applications.${applications.findIndex(
+      (element) => element.id === application.id,
+    )}`)
+  }
+
   return (
     <>
       <div className="icon-menu">
         <Dropdown
           isOpen={dropdownOpen}
-          toggle={toggle}
+          toggle={() => setDropdownOpen((prevState) => !prevState)}
         >
           <DropdownToggle size="sm" className="icon-dropdown">
             <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
@@ -94,34 +97,11 @@ const NorthSettings = ({ application, renamingConnector }) => {
               </div>
             </DropdownItem>
 
-            <DropdownItem className="icon-dropdown-item" onClick={handleShow}>
+            <DropdownItem className="icon-dropdown-item" onClick={() => setModal(true)}>
               <FaTrashAlt id="icon-delete" className="icon-dropdown-item" />
               Delete
             </DropdownItem>
-            <Modal show={show} onHide={handleClose}>
-              <Modal.Header closeButton>
-                Delete
-              </Modal.Header>
-              <Modal.Body>{`Are you sure you want to delete ${application.name}?`}</Modal.Body>
-              <Modal.Footer>
-                <Button
-                  id="icon-confirm"
-                  variant="secondary"
-                  onClick={() => handleDeleteConnector(`north.applications.${applications.findIndex(
-                    (element) => element.id === application.id,
-                  )}`)}
-                >
-                  Confirm
-                </Button>
-                <Button
-                  id="cancel-button"
-                  variant="primary"
-                  onClick={handleClose}
-                >
-                  Cancel
-                </Button>
-              </Modal.Footer>
-            </Modal>
+            <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
           </DropdownMenu>
         </Dropdown>
       </div>
@@ -129,9 +109,9 @@ const NorthSettings = ({ application, renamingConnector }) => {
   )
 }
 
-NorthSettings.propTypes = {
+NorthMenu.propTypes = {
   application: PropTypes.object.isRequired,
   renamingConnector: PropTypes.func.isRequired,
 }
 
-export default NorthSettings
+export default NorthMenu

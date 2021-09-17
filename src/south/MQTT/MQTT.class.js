@@ -7,6 +7,8 @@ const fs = require('fs/promises')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 class MQTT extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for MQTT
    * @constructor

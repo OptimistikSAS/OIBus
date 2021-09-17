@@ -7,6 +7,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * Class FolderScanner
  */
 class FolderScanner extends ProtocolHandler {
+  static category = 'FileOut'
+
   /**
    * Constructor for FolderScanner
    * @constructor

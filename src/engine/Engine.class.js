@@ -1,13 +1,10 @@
 const timexe = require('timexe')
 const path = require('path')
 const os = require('os')
-
 const moment = require('moment-timezone')
-
 const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
 
-// South classes
 const protocolList = {}
 protocolList.ADS = require('../south/ADS/ADS.class')
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
@@ -18,19 +15,18 @@ protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
-// North classes
 const apiList = {}
-apiList.Console = require('../north/console/Console.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
 apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
-apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
 apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
 apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
 apiList.FileWriter = require('../north/filewriter/FileWriter.class')
+apiList.Console = require('../north/console/Console.class')
+apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
 
 // Engine classes
 const Server = require('../server/Server.class')
@@ -380,7 +376,10 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.keys(apiList)
+    return Object.entries(apiList).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
+    }))
   }
 
   /**
@@ -390,7 +389,10 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.keys(protocolList)
+    return Object.entries(protocolList).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
+    }))
   }
 
   /**

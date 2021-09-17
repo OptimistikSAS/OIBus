@@ -23,7 +23,7 @@ exports[`EditableIdField check EditableIdField editing = true 1`] = `
       class="close"
     >
       <svg
-        class="oi-icon oi-icon-inline "
+        class="oi-icon oi-icon-inline"
         fill="currentColor"
         height="1em"
         stroke="currentColor"
@@ -52,7 +52,7 @@ exports[`EditableIdField check editing done 1`] = `
       class="close"
     >
       <svg
-        class="oi-icon oi-icon-inline "
+        class="oi-icon oi-icon-inline"
         fill="currentColor"
         height="1em"
         stroke="currentColor"
@@ -81,7 +81,7 @@ exports[`EditableIdField check editing done with error 1`] = `
       class="close"
     >
       <svg
-        class="oi-icon oi-icon-inline "
+        class="oi-icon oi-icon-inline"
         fill="currentColor"
         height="1em"
         stroke="currentColor"

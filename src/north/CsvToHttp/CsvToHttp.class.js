@@ -13,6 +13,8 @@ const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
  */
 class CsvToHttp extends ApiHandler {
+  static category = 'Api'
+
   /**
    * Constructor for CsvToHttp
    * @constructor

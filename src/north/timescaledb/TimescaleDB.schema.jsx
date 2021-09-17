@@ -1,5 +1,4 @@
 import React from 'react'
-import TimescaleDB from './db-in.png'
 import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'TimescaleDB' }
@@ -39,6 +38,6 @@ schema.form = {
     defaultValue: '',
   },
 }
-schema.image = TimescaleDB
+schema.category = 'DatabaseIn'
 
 export default schema

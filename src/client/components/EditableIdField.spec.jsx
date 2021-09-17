@@ -87,6 +87,7 @@ describe('EditableIdField', () => {
     expect(idChanged).toBeCalled()
     expect(container).toMatchSnapshot()
   })
+
   test('check editing done with error', () => {
     const idChanged = jest.fn()
     act(() => {

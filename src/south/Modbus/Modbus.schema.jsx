@@ -1,5 +1,4 @@
 import React from 'react'
-import Modbus from './api.png'
 import {
   inRange,
   isHost,
@@ -161,6 +160,6 @@ schema.points = {
   },
 }
 
-schema.image = Modbus
+schema.category = 'IoT'
 
 export default schema
