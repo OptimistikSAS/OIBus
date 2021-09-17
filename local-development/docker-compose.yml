@@ -1,6 +1,7 @@
 version: '3.5'
 services:
     mysql:
+        container_name: oibus-mysql
         image: 'mysql:5.7'
         ports:
             - ${FORWARD_MYSQL_PORT:-5306}:3306
@@ -14,7 +15,7 @@ services:
             - /var/lib/mysql
 
     postgresql:
-        container_name: postgresql
+        container_name: oibus-postgresql
         image: postgres
         volumes:
             - /var/lib/postgresql/data
@@ -27,7 +28,7 @@ services:
             - POSTGRES_DB=${DB_DATABASE:-oibus}
 
     mssql:
-        container_name: mssql
+        container_name: oibus-mssql
         image: mcr.microsoft.com/mssql/server:2017-latest
         ports:
             - ${FORWARD_MSSQL_PORT:-1433}:1433
@@ -36,21 +37,21 @@ services:
             ACCEPT_EULA: "Y"
 
     influxdb:
-        container_name: influxdb
+        container_name: oibus-influxdb
         image: influxdb
         networks:
-            - influx
+            - oibus-influx
         volumes:
             - /var/lib/influxdb
         ports:
             - ${FORWARD_INFLUX_PORT:-8086}:8086
-    
+
     chronograf:
-        container_name: chronograf
+        container_name: oibus-chronograf
         image: chronograf
         command: --influxdb-url=http://influxdb:8086
         networks:
-            - influx
+            - oibus-influx
         volumes:
             - /var/lib/chronograf
         ports:
@@ -59,7 +60,7 @@ services:
             - influxdb
 
     timescaledb:
-        container_name: timescaledb
+        container_name: oibus-timescaledb
         image: timescale/timescaledb:latest-pg13
         volumes:
             - /var/lib/postgresql/data
@@ -69,21 +70,22 @@ services:
             - TIMESCALEDB_TELEMETRY=off
             - POSTGRES_PASSWORD=${DB_PASSWORD:-oibus123}
             - POSTGRES_DB=${DB_DATABASE:-oibus}
-    
+
     rabbitmq:
+        container_name: oibus-rabbitmq
         image: rabbitmq:3-management
         ports:
             - ${FORWARD_RABBITMQ_PORT:-5672}:5672
 
     mosquitto:
+        container_name: oibus-mosquitto
         image: eclipse-mosquitto
-        container_name: mosquitto
         ports:
             - ${FORWARD_MOSQUITTO_PORT:-1883}:1883
-            
+
     mongodb:
+        container_name: oibus-mongodb
         image: mongo
-        container_name: mongodb
         environment:
             - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME:-oibus}
             - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD:-oibus123}
@@ -93,6 +95,6 @@ services:
             - ${FORWARD_MONGO_PORT:-27017}:27017
 
 networks:
-    influx:
+    oibus-influx:
         name: custom_influx
         driver: bridge
