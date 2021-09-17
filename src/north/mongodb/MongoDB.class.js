@@ -16,6 +16,8 @@ const ApiHandler = require('../ApiHandler.class')
  * Normally this JSON object must contains "repere" and "timestamp" fields used in indexes
  */
 class MongoDB extends ApiHandler {
+  static category = 'DatabaseIn'
+
   /**
    * Constructor for MongoDB
    * @constructor

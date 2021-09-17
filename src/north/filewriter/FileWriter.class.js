@@ -4,6 +4,8 @@ const path = require('path')
 const ApiHandler = require('../ApiHandler.class')
 
 class FileWriter extends ApiHandler {
+  static category = 'FileIn'
+
   /**
    * Constructor for FileWriter
    * @constructor

@@ -7,6 +7,8 @@ const TcpServer = require('./TcpServer')
  * Class OPCHDA.
  */
 class OPCHDA extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for OPCHDA
    * @constructor

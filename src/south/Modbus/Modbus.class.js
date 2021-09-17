@@ -30,6 +30,8 @@ const swapWordsInDWords = (data) => {
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for Modbus
    * @constructor

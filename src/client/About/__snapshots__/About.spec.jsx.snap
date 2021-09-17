@@ -67,6 +67,57 @@ exports[`About display About page based on config and status 1`] = `
       </ul>
     </div>
   </div>
+  <br />
+  <div
+    class="row"
+  >
+    <h5
+      aria-label="breadcrumb"
+      class=""
+    >
+      <ol
+        class="breadcrumb"
+      >
+        <span
+          aria-current="page"
+          class="active breadcrumb-item"
+        >
+          OIBus health status
+           
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"
+            />
+          </svg>
+        </span>
+      </ol>
+    </h5>
+  </div>
+  <div
+    class="row"
+  >
+    <div
+      class="container"
+    >
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody />
+      </table>
+    </div>
+  </div>
 </div>
 `;
 
@@ -139,6 +190,256 @@ exports[`About display About page based on config and status 2`] = `
       </ul>
     </div>
   </div>
+  <br />
+  <div
+    class="row"
+  >
+    <h5
+      aria-label="breadcrumb"
+      class=""
+    >
+      <ol
+        class="breadcrumb"
+      >
+        <span
+          aria-current="page"
+          class="active breadcrumb-item"
+        >
+          OIBus health status
+           
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"
+            />
+          </svg>
+        </span>
+      </ol>
+    </h5>
+  </div>
+  <div
+    class="row"
+  >
+    <div
+      class="container"
+    >
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              version
+            </td>
+            <td>
+              0.5.7-dev
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              architecture
+            </td>
+            <td>
+              x64
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              currentDirectory
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              nodeVersion
+            </td>
+            <td>
+              v12.13.1
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              executable
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\oibus.exe
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              configurationFile
+            </td>
+            <td>
+              C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              memory
+            </td>
+            <td>
+              564.89/2047.61/27.59 MB/%
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              rss
+            </td>
+            <td>
+              127.80/128.79/354.32 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              heapTotal
+            </td>
+            <td>
+              79.55/81.54/281.62 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              heapUsed
+            </td>
+            <td>
+              60.54/60.54/261.28 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              external
+            </td>
+            <td>
+              1.99/2.16/3.16 MB
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              processId
+            </td>
+            <td>
+              4916
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              uptime
+            </td>
+            <td>
+              3 minutes
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              hostname
+            </td>
+            <td>
+              EC2AMAZ-OBJ8M6C
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              osRelease
+            </td>
+            <td>
+              10.0.14393
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              osType
+            </td>
+            <td>
+              Windows_NT
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              Console (points)
+            </td>
+            <td>
+              count: 195410 / cache: 614
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              Console (files)
+            </td>
+            <td>
+              count: 195410 / cache: 0
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              MQTTServer
+            </td>
+            <td>
+              count: 62
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              SimulationServer
+            </td>
+            <td>
+              count: 422
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              OPC-HDA
+            </td>
+            <td>
+              count: 194926
+            </td>
+            <td />
+          </tr>
+          <tr>
+            <td>
+              copyright
+            </td>
+            <td>
+              (c) Copyright 2019 Optimistik, all rights reserved.
+            </td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 `;
 
@@ -207,6 +508,57 @@ exports[`About display About with config null 1`] = `
           Licensed under the EUPL-1.2-or-later
         </a>
       </ul>
+    </div>
+  </div>
+  <br />
+  <div
+    class="row"
+  >
+    <h5
+      aria-label="breadcrumb"
+      class=""
+    >
+      <ol
+        class="breadcrumb"
+      >
+        <span
+          aria-current="page"
+          class="active breadcrumb-item"
+        >
+           health status
+           
+          <svg
+            class="oi-icon"
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"
+            />
+          </svg>
+        </span>
+      </ol>
+    </h5>
+  </div>
+  <div
+    class="row"
+  >
+    <div
+      class="container"
+    >
+      <table
+        class="table table-sm table-striped table-hover"
+      >
+        <thead>
+          <tr />
+        </thead>
+        <tbody />
+      </table>
     </div>
   </div>
 </div>

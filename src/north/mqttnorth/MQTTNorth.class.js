@@ -8,6 +8,8 @@ const ApiHandler = require('../ApiHandler.class')
  * Class MQTT - generates and sends MQTT messages
  */
 class MQTTNorth extends ApiHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for MQTT
    * @constructor

@@ -21,6 +21,8 @@ try {
  * Class SQLDbToFile
  */
 class SQLDbToFile extends ProtocolHandler {
+  static category = 'DatabaseOut'
+
   /**
    * Constructor for SQLDbToFile
    * @constructor

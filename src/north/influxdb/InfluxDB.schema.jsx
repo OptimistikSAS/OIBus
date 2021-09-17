@@ -1,5 +1,4 @@
 import React from 'react'
-import influxDB from './db-in.png'
 import { notEmpty, hasLengthBetween } from '../../services/validation.service'
 
 const schema = { name: 'InfluxDB' }
@@ -78,6 +77,6 @@ schema.form = {
     help: 'for example, site=%2$s,unit=%3$s,sensor=%4$s',
   },
 }
-schema.image = influxDB
+schema.category = 'DatabaseIn'
 
 export default schema

@@ -19,7 +19,7 @@ const getStatusForSouth = async (ctx) => {
 }
 
 /**
- * Get North list.
+ * Get North List.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */

@@ -1,5 +1,4 @@
 import React from 'react'
-import Console from './api.png'
 
 const schema = { name: 'Console' }
 schema.form = {
@@ -24,5 +23,5 @@ schema.form = {
     defaultValue: false,
   },
 }
-schema.image = Console
+schema.category = 'Debug'
 export default schema

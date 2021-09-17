@@ -17,7 +17,6 @@ const upload = multer({ storage })
 router.get('/config', configController.getActiveConfiguration)
 router.put('/config', configController.updateConfig)
 router.put('/config/activate', configController.activateConfiguration)
-
 router.get('/config/schemas/north', engineController.getNorthList)
 router.get('/config/schemas/south', engineController.getSouthList)
 router.post('/engine/addValues', engineController.addValues)
@@ -27,7 +26,6 @@ router.get('/status', engineController.getStatus)
 router.get('/status/south/:id', engineController.getStatusForSouth)
 router.get('/reload', engineController.reload)
 router.get('/shutdown', engineController.shutdown)
-
 router.get('/logs', logController.getLogs)
 
 module.exports = router

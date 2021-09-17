@@ -6,6 +6,8 @@ const ProtocolHandler = require('../ProtocolHandler.class')
  * Class ADS - Provides instruction for Modbus client connection
  */
 class ADS extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for ADS
    * @constructor
