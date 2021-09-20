@@ -41,15 +41,22 @@ const ConfigurePoints = () => {
   const { points: pointsOrdered = [], protocol } = dataSource
   const points = pointsOrdered.slice().reverse()
 
+  // filter
+  const filteredPoints = filterText
+    ? points.filter(
+      (point) => Object.values(point).findIndex((element) => element
+        .toString()
+        .toLowerCase()
+        .includes(filterText.toLowerCase())) >= 0,
+    ) : points
+
   /**
-   * Get the index of point for reversed poitns list
-   * @param {number} index of point
-   * @returns {number} return reversed index
+   * @param {number} index the index of a point in the table
+   * @returns {number} the index in the config file of the chosen point
    */
-  const reversedIndex = (index) => {
-    const totalIndex = points.length - 1
-    const totalOnPage = totalIndex - (MAX_ON_PAGE * (selectedPage - 1))
-    return totalOnPage - index
+  const findIndexBasedOnPointId = (index) => {
+    const paginatedIndex = MAX_ON_PAGE * (selectedPage - 1) + index
+    return dataSource.points.findIndex((point) => point.pointId === filteredPoints[paginatedIndex].pointId)
   }
 
   /**
@@ -77,7 +84,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${reversedIndex(index)}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${findIndexBasedOnPointId(index)}` })
   }
 
   /**
@@ -133,7 +140,7 @@ const ConfigurePoints = () => {
   const onChange = (name, value, validity) => {
     // add pageOffet before dispatch the update to update the correct point (pagination)
     const index = Number(name.match(/[0-9]+/g))
-    const pathWithPageOffset = name.replace(/[0-9]+/g, `${reversedIndex(index)}`)
+    const pathWithPageOffset = name.replace(/[0-9]+/g, `${findIndexBasedOnPointId(index)}`)
     dispatchNewConfig({
       type: 'update',
       name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`,
@@ -153,14 +160,6 @@ const ConfigurePoints = () => {
   )) : null
   // configure table header and rows
   const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
-  // filter
-  const filteredPoints = filterText
-    ? points.filter(
-      (point) => Object.values(point).findIndex((element) => element
-        .toString()
-        .toLowerCase()
-        .includes(filterText.toLowerCase())) >= 0,
-    ) : points
 
   // paging
   const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
