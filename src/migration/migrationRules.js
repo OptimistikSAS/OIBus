@@ -595,9 +595,13 @@ module.exports = {
     if (valueCacheErrorDbExists) {
       // eslint-disable-next-line max-len
       logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Renaming column name "application_id" into "application"`)
-      await databaseMigrationService.changeColumnName(valueCacheErrorDbPath,
-        'application_id',
-        'application')
+      try {
+        await databaseMigrationService.changeColumnName(valueCacheErrorDbPath,
+          'application_id',
+          'application')
+      } catch (error) {
+        logger.error(`Error during column name migration of value error database ${valueCacheErrorDbPath}: ${error}`)
+      }
     }
 
     const fileCacheDbPath = `${cachePath}/fileCache.db`
@@ -640,44 +644,70 @@ module.exports = {
 
         // eslint-disable-next-line max-len
         logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
-        await databaseMigrationService.changeColumnName(newApplicationPath,
-          'data_source_id',
-          'data_source')
+        try {
+          await databaseMigrationService.changeColumnName(newApplicationPath,
+            'data_source_id',
+            'data_source')
+        } catch (error) {
+          logger.error(`Error during column name migration of ${newApplicationPath}: ${error}`)
+        }
 
         if (fileCacheDbExists) {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file database ${fileCacheDbPath}: Changing application value from ${application.name} to ${application.id}`)
-          await databaseMigrationService.changeColumnValue(fileCacheDbPath,
-            'application',
-            application.name,
-            application.id)
+          try {
+            await databaseMigrationService.changeColumnValue(fileCacheDbPath,
+              'application',
+              application.name,
+              application.id)
+          } catch (error) {
+            logger.error(`Error during column value migration of ${fileCacheDbPath}: ${error}`)
+          }
         }
 
         if (fileCacheErrorDbExists) {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file error database ${fileCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
-          await databaseMigrationService.changeColumnValue(fileCacheErrorDbPath,
-            'application',
-            application.name,
-            application.id)
+          try {
+            await databaseMigrationService.changeColumnValue(fileCacheErrorDbPath,
+              'application',
+              application.name,
+              application.id)
+          } catch (error) {
+            logger.error(`Error during column value migration of ${fileCacheErrorDbPath}: ${error}`)
+          }
         }
 
         if (valueCacheErrorDbExists) {
           // eslint-disable-next-line max-len
           logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
-          await databaseMigrationService.changeColumnValue(valueCacheErrorDbPath,
-            'application',
-            application.name,
-            application.id)
+          try {
+            await databaseMigrationService.changeColumnValue(valueCacheErrorDbPath,
+              'application',
+              application.name,
+              application.id)
+          } catch (error) {
+            logger.error(`Error during column value migration of ${valueCacheErrorDbPath}: ${error}`)
+          }
         }
       }
       delete application.applicationId
 
-      // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
-      application.subscribedTo = application.subscribedTo.map((dataSourceName) => {
-        const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
-        return subscribedDataSource.id
-      })
+      if (application.subscribedTo?.length > 0) {
+        // eslint-disable-next-line max-len
+        logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}. Obsolete subscription will be removed`)
+        // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
+        application.subscribedTo = application.subscribedTo
+        // eslint-disable-next-line max-len
+          .filter((dataSourceName) => config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName) || config.engine.externalSources.find((externalDataSourceName) => externalDataSourceName === dataSourceName))
+          .map((dataSourceName) => {
+            const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
+            if (subscribedDataSource) {
+              return subscribedDataSource.id
+            }
+            return dataSourceName
+          })
+      }
     }
   },
 }
