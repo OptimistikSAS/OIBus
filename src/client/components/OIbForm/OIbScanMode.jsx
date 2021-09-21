@@ -27,7 +27,7 @@ const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
 
   React.useEffect(() => {
     // save error if validCheck has error message
-    onChange(name, value, validCheck)
+    if (validCheck) onChange(name, value, validCheck)
   }, [validCheck])
 
   const handleChange = (event) => {

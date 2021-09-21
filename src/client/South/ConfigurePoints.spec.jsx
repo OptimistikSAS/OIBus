@@ -16,14 +16,14 @@ React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, set
 jest.mock('react-router-dom', () => (
   { useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }) }
 ))
-
+window.URL.createObjectURL = () => { }
 // mock states
 const originalUseState = React.useState
 let filterText = ''
 const setFilterText = jest.fn()
 const setSelectedPage = jest.fn()
 const setState = jest.fn()
-React.useState = jest.fn().mockImplementation((init) => {
+const useStateMock = jest.fn().mockImplementation((init) => {
   if (init === '') {
     return [filterText, setFilterText]
   }
@@ -32,6 +32,7 @@ React.useState = jest.fn().mockImplementation((init) => {
   }
   return [init, setState]
 })
+React.useState = useStateMock
 
 // mock createCSV
 let resolve
@@ -167,15 +168,6 @@ describe('ConfigurePoints', () => {
       value: 'every1Min',
       validity: null,
     })
-    expect(container).toMatchSnapshot()
-  })
-  test('check delete first point', () => {
-    act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
-    })
-    Simulate.click(document.querySelector('td path')) // click on delete icon
     expect(container).toMatchSnapshot()
   })
   test('check import points press', () => {
@@ -328,6 +320,20 @@ describe('ConfigurePoints', () => {
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteAllRows',
       name: 'south.dataSources.8.points',
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check delete first point', () => {
+    act(() => {
+      ReactDOM.render(
+        <ConfigurePoints />, container,
+      )
+    })
+    Simulate.click(document.querySelector('td path')) // click on delete icon
+    Simulate.click(document.getElementsByClassName('btn btn-primary')[3])
+    expect(dispatchNewConfig).toBeCalledWith({
+      type: 'deleteRow',
+      name: 'south.dataSources.8.points.2',
     })
     expect(container).toMatchSnapshot()
   })

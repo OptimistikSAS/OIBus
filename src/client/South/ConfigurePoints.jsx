@@ -39,24 +39,35 @@ const ConfigurePoints = () => {
   const dataSource = newConfig.south.dataSources[dataSourceIndex]
 
   const { points: pointsOrdered = [], protocol } = dataSource
-  const points = pointsOrdered.slice().reverse()
+  // add virtualIndex for each point for helping the filter
+  const points = pointsOrdered.slice().map((item, index) => ({ virtualIndex: index, ...item })).reverse()
 
   // filter
   const filteredPoints = filterText
     ? points.filter(
-      (point) => Object.values(point).findIndex((element) => element
-        .toString()
-        .toLowerCase()
-        .includes(filterText.toLowerCase())) >= 0,
+      (point) => {
+        // remove the virtualIndex from filterable attributes
+        const filterableAttributes = { ...point }
+        delete filterableAttributes.virtualIndex
+        return Object.values(filterableAttributes).findIndex((element) => element
+          .toString()
+          .toLowerCase()
+          .includes(filterText.toLowerCase())) >= 0
+      },
     ) : points
 
   /**
    * @param {number} index the index of a point in the table
    * @returns {number} the index in the config file of the chosen point
    */
-  const findIndexBasedOnPointId = (index) => {
+  const findIndexBasedOnVirtualIndex = (index) => {
     const paginatedIndex = MAX_ON_PAGE * (selectedPage - 1) + index
-    return dataSource.points.findIndex((point) => point.pointId === filteredPoints[paginatedIndex].pointId)
+    const pointToOperate = filteredPoints[paginatedIndex]
+    const indexInTable = points.findIndex((point) => point.virtualIndex === pointToOperate.virtualIndex)
+    // reverse the table index to get the index in the config file
+    const totalIndex = points.length - 1
+    const totalOnPage = totalIndex - (MAX_ON_PAGE * (selectedPage - 1))
+    return totalOnPage - indexInTable
   }
 
   /**
@@ -84,7 +95,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${findIndexBasedOnPointId(index)}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `south.dataSources.${dataSourceIndex}.points.${findIndexBasedOnVirtualIndex(index)}` })
   }
 
   /**
@@ -138,9 +149,9 @@ const ConfigurePoints = () => {
   }
 
   const onChange = (name, value, validity) => {
-    // add pageOffet before dispatch the update to update the correct point (pagination)
+    // add pageOffset before dispatch the update to update the correct point (pagination)
     const index = Number(name.match(/[0-9]+/g))
-    const pathWithPageOffset = name.replace(/[0-9]+/g, `${findIndexBasedOnPointId(index)}`)
+    const pathWithPageOffset = name.replace(/[0-9]+/g, `${findIndexBasedOnVirtualIndex(index)}`)
     dispatchNewConfig({
       type: 'update',
       name: `south.dataSources.${dataSourceIndex}.${pathWithPageOffset}`,
@@ -152,12 +163,12 @@ const ConfigurePoints = () => {
   const ProtocolSchema = ProtocolSchemas[protocol]
   // configure help if exists
   const pointsWithHelp = Object.entries(ProtocolSchema.points).filter(([name, value]) => name && value.help)
-  const tableHelps = pointsWithHelp.length > 0 ? pointsWithHelp.map(([name, value]) => (
+  const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
     <div key={name}>
       <b>{`${value.label || humanizeString(name)}: `}</b>
       {value.help}
     </div>
-  )) : null
+  ))
   // configure table header and rows
   const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
 
@@ -173,7 +184,7 @@ const ConfigurePoints = () => {
     // check if must be unique and extend already existing validation with isUnique check
     if (ProtocolSchema.points[key].unique) {
       const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
-      const pointIds = points.filter((_, i) => i !== indexOffset + index).map((p) => p[key])
+      const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
       rest.valid = (val) => {
         const result = oldValid(val) || validation.points.isUnique(val, pointIds)
