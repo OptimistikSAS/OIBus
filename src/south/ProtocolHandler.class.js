@@ -134,7 +134,7 @@ class ProtocolHandler {
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
-  async git ad(scanMode) {
+  async historyQueryHandler(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
       this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
