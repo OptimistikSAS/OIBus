@@ -256,7 +256,7 @@ describe('OPCUA-HA south', () => {
     await opcuaSouth.connect()
     await opcuaSouth.disconnect()
     opcuaSouth.session = { readHistoryValue: jest.fn() }
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
       .not
@@ -271,7 +271,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode] = true
     opcuaSouth.session = { readHistoryValue: jest.fn() }
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
       .not
@@ -292,7 +292,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode] = false
     opcuaSouth.session = { readHistoryValue: jest.fn() }
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.session.readHistoryValue)
       .not
@@ -332,7 +332,7 @@ describe('OPCUA-HA south', () => {
       return nowDate
     })
     global.Date.getTime = jest.fn(() => RealDate.getTime)
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
     global.Date = RealDate
 
     const expectedValue = {
@@ -379,7 +379,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.addValues = jest.fn()
     opcuaSouth.delay = jest.fn().mockReturnValue(Promise.resolve())
 
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(3)
@@ -400,7 +400,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.readHistoryValue.mockReturnValue(Promise.resolve([]))
     opcuaSouth.addValues = jest.fn()
 
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(1)
@@ -415,7 +415,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode] = false
     opcuaSouth.readHistoryValue = jest.fn()
     opcuaSouth.readHistoryValue.mockReturnValue(Promise.reject(new Error('fail')))
-    await opcuaSouth.onScanImplementation(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
+    await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.readHistoryValue)
       .toBeCalled()

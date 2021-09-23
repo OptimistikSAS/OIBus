@@ -134,7 +134,7 @@ class ProtocolHandler {
     this.logger.info(`Data source ${dataSourceId} started with protocol ${protocol}`)
   }
 
-  async onScanImplementation(scanMode) {
+  async git ad(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
       this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
@@ -197,7 +197,7 @@ class ProtocolHandler {
           await this.fileQuery(scanMode)
         }
         if (this.supportedModes?.supportHistory) {
-          await this.onScanImplementation(scanMode)
+          await this.historyQueryHandler(scanMode)
         }
       } catch (error) {
         this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
