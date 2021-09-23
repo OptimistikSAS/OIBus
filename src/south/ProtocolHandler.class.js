@@ -196,7 +196,7 @@ class ProtocolHandler {
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.events?.emit('data', this.statusData)
   }
 
-  async onScanImplementation(scanMode) {
+  async historyQueryHandler(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
       this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
@@ -258,7 +258,7 @@ class ProtocolHandler {
         await this.fileQuery(scanMode)
       }
       if (this.supportedModes?.supportHistory) {
-        await this.onScanImplementation(scanMode)
+        await this.historyQueryHandler(scanMode)
       }
     } catch (error) {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
