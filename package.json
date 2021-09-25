@@ -54,7 +54,7 @@
     "humanize-string": "2.1.0",
     "jsmodbus": "4.0.6",
     "jsondiffpatch": "0.4.1",
-    "koa": "2.13.1",
+    "koa": "2.13.3",
     "koa-bodyparser": "4.3.0",
     "koa-helmet": "6.1.0",
     "koa-json": "2.0.2",
