@@ -187,7 +187,7 @@ const ConfigurePoints = () => {
       const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
       rest.valid = (val) => {
-        const result = oldValid(val) || validation.points.isUnique(val, pointIds)
+        const result = oldValid(val) || validation.points.isUnique(val, pointIds) || validation.points.noUnintendedTrailingSpaces(val)
         return result
       }
     }

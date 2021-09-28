@@ -37,6 +37,13 @@ const validation = {
       }
       return error
     },
+    noUnintendedTrailingSpaces: (val) => {
+      let error = null
+      if (val.startsWith(' ') || val.endsWith(' ')) {
+        error = 'Id contains unintended spaces'
+      }
+      return error
+    },
   },
 }
 
