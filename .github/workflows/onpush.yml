@@ -15,7 +15,7 @@ jobs:
         node-version: 14.17.6
     - name: Use npm
       run: |
-        npm install -g npm@7.23.0
+        npm install -g npm@7.24.1
     - name: npm install, test and lint
       run: |
         npm ci
