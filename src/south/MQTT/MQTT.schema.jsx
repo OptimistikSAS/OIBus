@@ -11,13 +11,12 @@ schema.form = {
         <ul>
           <li>
             <b>Url:</b>
-            MQTT host to connect. Make sure you specify right protocol, host and port number.
-            MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+            MQTT host to connect. Make sure you specify the right protocol, host and port number.
+            The MQTT client may not get connected if you mention wrong port number or interchange port numbers.
           </li>
           <li>
             <b>QoS:</b>
-            The Quality of Service (QoS) level is an agreement between the sender of a message and the
-            receiver of a message
+            The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message
             that defines the guarantee of delivery for a specific message. There are 3 QoS levels in MQTT:
             <ul>
               <li>At most once (0)</li>
@@ -39,33 +38,29 @@ schema.form = {
           </li>
           <li>
             <b>Username:</b>
-            Username required by broker, if any. MQTT allows to send username for authenticating and
-            authorization of
-            client.
+            Username required by the broker, if any.
           </li>
           <li>
             <b>Password:</b>
-            Password required by broker, if any. MQTT allows to send password for authenticating and
-            authorization of
-            client.
+            Password required by the broker, if any.
           </li>
           <li>
-            <b>CertFile:</b>
-            Server certificate : used for mqtts protocol
+            <b>Cert File:</b>
+            Server certificate used for MQTTS protocol in PEM format.
           </li>
           <li>
-            <b>KeyFile:</b>
-            Server Public Key : used to decrypt CertFile
+            <b>Key File:</b>
+            MQTT client private key in PEM format.
           </li>
           <li>
-            <b>CAFile:</b>
-            Certificate Authority file : if empty we consider CertFile as self-signed certificate.
+            <b>CA File:</b>
+            Certificate Authority file in PEM format. If empty we consider the Cert File as self-signed certificate.
           </li>
           <li>
-            <b>rejectUnauthorized:</b>
+            <b>Reject Unauthorized:</b>
             In some cases the certificate (CertFile) can not be verified.
             (ex: certificate is self-signed or Certification Authority can not be contacted).
-            No matter if rejectUnauthorized is set to false because connection is crypted.
+            If Reject Unauthorized is set to false, the connection will still be encrypted but may be vulnerable to man in the middle attacks.
           </li>
           <li>
             <b>Keepalive:</b>
@@ -113,38 +108,40 @@ schema.form = {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: <div>authorized user</div>,
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
     valid: optional(),
     defaultValue: '',
-    help: <div>password</div>,
   },
-  certfile: {
+  certFile: {
     type: 'OIbText',
     label: 'Cert File',
+    valid: optional(),
     defaultValue: '',
-    help: <div>Server certificate (used for mqtts protocol)</div>,
+    help: <div>Server certificate (used for MQTTS protocol)</div>,
   },
-  keyfile: {
+  keyFile: {
     type: 'OIbText',
     label: 'Key File',
+    newRow: false,
+    valid: optional(),
     defaultValue: '',
-    help: <div>Server Public Key (used to decrypt CertFile)</div>,
+    help: <div>MQTT client private key</div>,
   },
-  cafile: {
+  caFile: {
     type: 'OIbText',
     label: 'CA File',
+    newRow: false,
+    valid: optional(),
     defaultValue: '',
-    help: <div>Certificate Authority file (if empty we consider CertFile as self-signed certificates)</div>,
+    help: <div>Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>,
   },
-  rejectunauthorized: {
+  rejectUnauthorized: {
     type: 'OIbCheckBox',
-    label: 'reject Unauthorized Connection',
+    label: 'Reject Unauthorized Connection',
     defaultValue: false,
-    help: <div>Accept or not ...</div>,
   },
   keepalive: {
     type: 'OIbInteger',
@@ -155,14 +152,14 @@ schema.form = {
   reconnectPeriod: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'Reconnect period',
+    label: 'Reconnect period (ms)',
     valid: minValue(0),
     defaultValue: 1000,
   },
   connectTimeout: {
     type: 'OIbInteger',
     newRow: false,
-    label: 'Connect Timeout',
+    label: 'Connect Timeout (ms)',
     valid: minValue(0),
     defaultValue: 30000,
   },
@@ -207,9 +204,9 @@ schema.form = {
     defaultValue: 'value',
     valid: notEmpty(),
   },
-  nodeIdPath: {
+  pointIdPath: {
     type: 'OIbText',
-    defaultValue: 'name',
+    defaultValue: '',
     newRow: false,
     valid: optional(),
   },

@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween } from '../../services/validation.service'
+import { notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'MQTTNorth' }
 schema.form = {
@@ -7,12 +7,11 @@ schema.form = {
     type: 'OIbTitle',
     children: (
       <div>
-        <p>MQTT North is in Beta</p>
         <ul>
           <li>
             <b>Url:</b>
-            MQTT host to connect. Make sure you specify right protocol, host and port number.
-            MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+            MQTT host to connect. Make sure you specify the right protocol, host and port number.
+            The MQTT client may not get connected if you mention wrong port number or interchange port numbers.
           </li>
           <li>
             <b>QoS:</b>
@@ -26,36 +25,33 @@ schema.form = {
           </li>
           <li>
             <b>ClientId:</b>
-            if ClientId is not empty, MQTT connection will use this text for clientId information.
-            If ClientId is empty, MQTT connection will use default clientId information.
+            In order for the broker to store session information for a client a client id must be used.
           </li>
           <li>
             <b>Username:</b>
-            Username required by broker, if any. MQTT allows to send username for authenticating and authorization of
-            client.
+            Username required by the broker, if any.
           </li>
           <li>
             <b>Password:</b>
-            Password required by broker, if any. MQTT allows to send password for authenticating and authorization of
-            client.
+            Password required by the broker, if any.
           </li>
           <li>
-            <b>CertFile:</b>
-            Server certificate : used for mqtts protocol
+            <b>Cert File:</b>
+            Server certificate used for MQTTS protocol in PEM format.
           </li>
           <li>
-            <b>KeyFile:</b>
-            Server Public Key : used to decrypt CertFile
+            <b>Key File:</b>
+            MQTT client private key in PEM format.
           </li>
           <li>
-            <b>CAFile:</b>
-            Certificate Authority file : if empty we consider CertFile as self-signed certificate.
+            <b>CA File:</b>
+            Certificate Authority file in PEM format. If empty we consider the Cert File as self-signed certificate.
           </li>
           <li>
-            <b>rejectUnauthorized:</b>
+            <b>Reject Unauthorized:</b>
             In some cases the certificate (CertFile) can not be verified.
             (ex: certificate is self-signed or Certification Authority can not be contacted).
-            No matter if rejectUnauthorized is set to false because connection is crypted.
+            If Reject Unauthorized is set to false, the connection will still be encrypted but may be vulnerable to man in the middle attacks.
           </li>
           <li>
             <b>Regexp:</b>
@@ -72,8 +68,14 @@ schema.form = {
           </li>
           <li>
             <b>Topic:</b>
-            Topic is used to publish data to broker MQTT.
-            Topic value is based on pointId group part(s) splitted using Regexp.
+            Topic is used to publish data to the MQTT broker.
+            The topic value is based on pointId group part(s) split using Regexp. Set the Regexp accordingly.
+            <br />
+            For example, RegExp
+            <b> .* </b>
+            and topic
+            <b> %1$s </b>
+            means that the topic equals the point ID.
           </li>
         </ul>
       </div>
@@ -94,45 +96,46 @@ schema.form = {
   },
   clientId: {
     type: 'OIbText',
+    valid: optional(),
     defaultValue: '',
     help: <div>clientId information for mqtt and mqtts connection</div>,
   },
   username: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: optional(),
     defaultValue: '',
-    help: <div>authorized user</div>,
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: optional,
     defaultValue: '',
-    help: <div>password</div>,
   },
-  certfile: {
+  certFile: {
     type: 'OIbText',
     label: 'Cert File',
+    valid: optional(),
     defaultValue: '',
-    help: <div>Server certificate (used for mqtts protocol)</div>,
+    help: <div>Server certificate (used for MQTTS protocol)</div>,
   },
-  keyfile: {
+  keyFile: {
     type: 'OIbText',
     label: 'Key File',
+    valid: optional(),
     defaultValue: '',
-    help: <div>Server Public Key (used to decrypt CertFile)</div>,
+    help: <div>MQTT client private key</div>,
   },
-  cafile: {
+  caFile: {
     type: 'OIbText',
     label: 'CA File',
+    valid: optional(),
     defaultValue: '',
-    help: <div>Certificate Authority file (if empty we consider CertFile as self-signed certificates)</div>,
+    help: <div>Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>,
   },
-  rejectunauthorized: {
+  rejectUnauthorized: {
     type: 'OIbCheckBox',
-    label: 'reject Unauthorized Connection',
+    label: 'Reject Unauthorized Connection',
     defaultValue: false,
-    help: <div>Accept or not to reject unauthorized connection</div>,
   },
   regExp: {
     type: 'OIbText',
@@ -144,7 +147,7 @@ schema.form = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '%1$s',
-    help: 'topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) splitted using Regexp',
+    help: 'Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)',
   },
 }
 
