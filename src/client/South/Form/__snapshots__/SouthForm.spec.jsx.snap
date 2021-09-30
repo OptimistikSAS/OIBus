@@ -2452,7 +2452,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                       <b>
                         Url:
                       </b>
-                      MQTT host to connect. Make sure you specify right protocol, host and port number. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+                      MQTT host to connect. Make sure you specify the right protocol, host and port number. The MQTT client may not get connected if you mention wrong port number or interchange port numbers.
                     </li>
                     <li>
                       <b>
@@ -2487,13 +2487,37 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                       <b>
                         Username:
                       </b>
-                      Username required by broker, if any. MQTT allows to send username for authenticating and authorization of client.
+                      Username required by the broker, if any.
                     </li>
                     <li>
                       <b>
                         Password:
                       </b>
-                      Password required by broker, if any. MQTT allows to send password for authenticating and authorization of client.
+                      Password required by the broker, if any.
+                    </li>
+                    <li>
+                      <b>
+                        Cert File:
+                      </b>
+                      Server certificate used for MQTTS protocol in PEM format.
+                    </li>
+                    <li>
+                      <b>
+                        Key File:
+                      </b>
+                      MQTT client private key in PEM format.
+                    </li>
+                    <li>
+                      <b>
+                        CA File:
+                      </b>
+                      Certificate Authority file in PEM format. If empty we consider the Cert File as self-signed certificate.
+                    </li>
+                    <li>
+                      <b>
+                        Reject Unauthorized:
+                      </b>
+                      In some cases the certificate (CertFile) can not be verified. (ex: certificate is self-signed or Certification Authority can not be contacted). If Reject Unauthorized is set to false, the connection will still be encrypted but may be vulnerable to man in the middle attacks.
                     </li>
                     <li>
                       <b>
@@ -2564,7 +2588,29 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       />
       <div
         class="col-md-2"
-      />
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.clientId"
+          >
+            Client id
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.clientId"
+            name="south.dataSources.0.MQTT.clientId"
+            type="text"
+            value="myClientId"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
     </div>
     <div
       class="row"
@@ -2592,13 +2638,6 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           <div
             class="invalid-feedback"
           />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              authorized user
-            </div>
-          </small>
         </div>
       </div>
       <div
@@ -2629,13 +2668,129 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class="invalid-feedback"
             style="display: inline;"
           />
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.certFile"
+          >
+            Cert File
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.certFile"
+            name="south.dataSources.0.MQTT.certFile"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
           <small
             class="form-text text-muted"
           >
             <div>
-              password
+              Server certificate (used for MQTTS protocol)
             </div>
           </small>
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.keyFile"
+          >
+            Key File
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.keyFile"
+            name="south.dataSources.0.MQTT.keyFile"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              MQTT client private key
+            </div>
+          </small>
+        </div>
+      </div>
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="south.dataSources.0.MQTT.caFile"
+          >
+            CA File
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="south.dataSources.0.MQTT.caFile"
+            name="south.dataSources.0.MQTT.caFile"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            Reject Unauthorized Connection
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.MQTT.rejectUnauthorized"
+              name="south.dataSources.0.MQTT.rejectUnauthorized"
+              type="checkbox"
+            />
+          </label>
         </div>
       </div>
     </div>
@@ -2677,7 +2832,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class=""
             for="south.dataSources.0.MQTT.reconnectPeriod"
           >
-            Reconnect period
+            Reconnect period (ms)
           </label>
           <input
             aria-invalid="false"
@@ -2702,7 +2857,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class=""
             for="south.dataSources.0.MQTT.connectTimeout"
           >
-            Connect Timeout
+            Connect Timeout (ms)
           </label>
           <input
             aria-invalid="false"
@@ -11367,7 +11522,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       <b>
                         Url:
                       </b>
-                      MQTT host to connect. Make sure you specify right protocol, host and port number. MQTT client may not get connected if you mention wrong port number or interchange port numbers.
+                      MQTT host to connect. Make sure you specify the right protocol, host and port number. The MQTT client may not get connected if you mention wrong port number or interchange port numbers.
                     </li>
                     <li>
                       <b>
@@ -11402,13 +11557,37 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       <b>
                         Username:
                       </b>
-                      Username required by broker, if any. MQTT allows to send username for authenticating and authorization of client.
+                      Username required by the broker, if any.
                     </li>
                     <li>
                       <b>
                         Password:
                       </b>
-                      Password required by broker, if any. MQTT allows to send password for authenticating and authorization of client.
+                      Password required by the broker, if any.
+                    </li>
+                    <li>
+                      <b>
+                        Cert File:
+                      </b>
+                      Server certificate used for MQTTS protocol in PEM format.
+                    </li>
+                    <li>
+                      <b>
+                        Key File:
+                      </b>
+                      MQTT client private key in PEM format.
+                    </li>
+                    <li>
+                      <b>
+                        CA File:
+                      </b>
+                      Certificate Authority file in PEM format. If empty we consider the Cert File as self-signed certificate.
+                    </li>
+                    <li>
+                      <b>
+                        Reject Unauthorized:
+                      </b>
+                      In some cases the certificate (CertFile) can not be verified. (ex: certificate is self-signed or Certification Authority can not be contacted). If Reject Unauthorized is set to false, the connection will still be encrypted but may be vulnerable to man in the middle attacks.
                     </li>
                     <li>
                       <b>
@@ -11467,6 +11646,26 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     >
       <div
         class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
       >
         <div
           class="form-group"
@@ -11500,7 +11699,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             class=""
             for="south.dataSources.0.MQTT.reconnectPeriod"
           >
-            Reconnect period
+            Reconnect period (ms)
           </label>
           <input
             aria-invalid="false"
@@ -11525,7 +11724,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             class=""
             for="south.dataSources.0.MQTT.connectTimeout"
           >
-            Connect Timeout
+            Connect Timeout (ms)
           </label>
           <input
             aria-invalid="false"

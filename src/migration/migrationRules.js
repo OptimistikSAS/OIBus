@@ -515,6 +515,16 @@ module.exports = {
         delete dataSource.MQTT.timeStampFormat
         dataSource.MQTT.timestampTimezone = dataSource.MQTT.timeStampTimezone
         delete dataSource.MQTT.timeStampTimezone
+        dataSource.MQTT.pointIdPath = dataSource.MQTT.nodeIdPath
+        delete dataSource.MQTT.nodeIdPath
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'certificate')) {
+          logger.info('Add certificate field to MQTT')
+          dataSource.MQTT.certFile = ''
+          dataSource.MQTT.keyFile = ''
+          dataSource.MQTT.caFile = ''
+          dataSource.MQTT.rejectUnauthorized = false
+        }
       }
     }
     for (const application of config.north.applications) {
@@ -530,6 +540,14 @@ module.exports = {
       }
       if (application.api === 'AmazonS3') {
         application.AmazonS3.key = application.AmazonS3.accessKey
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'certificate')) {
+        logger.info('Add certificate field to MQTTNorth')
+        application.MQTTNorth.certFile = ''
+        application.MQTTNorth.keyFile = ''
+        application.MQTTNorth.caFile = ''
+        application.MQTTNorth.rejectUnauthorized = false
       }
     }
 
@@ -710,47 +728,4 @@ module.exports = {
       }
     }
   },
-  25: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      // Adding default parameters for MQTT South Connector modified
-      if (dataSource.protocol === 'MQTT') {
-        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'certfile')) {
-          logger.info('Add certfile field to MQTT')
-          dataSource.MQTT.certfile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keyfile')) {
-          logger.info('Add keyfile field to MQTT')
-          dataSource.MQTT.keyfile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'cafile')) {
-          logger.info('Add cafile field to MQTT')
-          dataSource.MQTT.cafile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'rejectunauthorized')) {
-          logger.info('Add rejectunauthorized field to MQTT')
-          dataSource.MQTT.rejectunauthorized = false
-        }
-      }
-    })
-    config.north.applications.forEach((application) => {
-      if (application.api === 'MQTTNorth') {
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'certfile')) {
-          logger.info('Add certfile field to MQTTNorth')
-          application.MQTTNorth.certfile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'keyfile')) {
-          logger.info('Add keyfile field to MQTTNorth')
-          application.MQTTNorth.keyfile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'cafile')) {
-          logger.info('Add cafile field to MQTTNorth')
-          application.MQTTNorth.cafile = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'rejectunauthorized')) {
-          logger.info('Add rejectunauthorized field to MQTTNorth')
-          application.MQTTNorth.rejectunauthorized = false
-        }
-      }
-    })
-  }
 }
