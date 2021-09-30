@@ -2,7 +2,7 @@ const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
-const fs = require('fs')
+const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -21,10 +21,10 @@ class MQTT extends ProtocolHandler {
       url,
       username,
       password,
-      keyfile,
-      certfile,
-      cafile,
-      rejectunauthorized,
+      keyFile,
+      certFile,
+      caFile,
+      rejectUnauthorized,
       keepalive,
       reconnectPeriod,
       connectTimeout,
@@ -33,7 +33,7 @@ class MQTT extends ProtocolHandler {
       clientId,
       dataArrayPath,
       valuePath,
-      nodeIdPath,
+      pointIdPath,
       qualityPath,
       timestampOrigin,
       timestampPath,
@@ -50,10 +50,10 @@ class MQTT extends ProtocolHandler {
     this.url = url
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
-    this.keyfile = keyfile
-    this.certfile = certfile
-    this.cafile = cafile
-    this.rejectunauthorized = rejectunauthorized
+    this.keyFile = keyFile
+    this.certFile = certFile
+    this.caFile = caFile
+    this.rejectUnauthorized = rejectUnauthorized
     this.keepalive = keepalive
     this.reconnectPeriod = reconnectPeriod
     this.connectTimeout = connectTimeout
@@ -62,7 +62,7 @@ class MQTT extends ProtocolHandler {
     this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath
-    this.nodeIdPath = nodeIdPath
+    this.pointIdPath = pointIdPath
     this.qualityPath = qualityPath
     this.timestampOrigin = timestampOrigin
     this.timestampPath = timestampPath
@@ -83,9 +83,42 @@ class MQTT extends ProtocolHandler {
     let keyFileContent = ''
     let certFileContent = ''
     let caFileContent = ''
-    if ((this.keyfile) && (fs.existsSync(this.keyfile))) keyFileContent = fs.readFileSync(this.keyfile)
-    if ((this.certfile) && (fs.existsSync(this.certfile))) certFileContent = fs.readFileSync(this.certfile)
-    if ((this.cafile) && (fs.existsSync(this.cafile))) caFileContent = fs.readFileSync(this.cafile)
+    if (this.keyFile) {
+      try {
+        if (await fs.exists(this.keyFile)) {
+          keyFileContent = await fs.readFile(this.keyFile)
+        } else {
+          this.logger.error(`Key file ${this.keyFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
+        return
+      }
+    }
+    if (this.certFile) {
+      try {
+        if (await fs.exists(this.certFile)) {
+          certFileContent = await fs.readFile(this.certFile)
+        } else {
+          this.logger.error(`Cert file ${this.certFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
+        return
+      }
+    }
+    if (this.caFile) {
+      try {
+        if (await fs.exists(this.caFile)) {
+          caFileContent = await fs.readFile(this.caFile)
+        } else {
+          this.logger.error(`CA file ${this.caFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading ca file ${this.caFile}: ${error}`)
+        return
+      }
+    }
 
     const options = {
       username: this.username,
@@ -93,7 +126,7 @@ class MQTT extends ProtocolHandler {
       key: keyFileContent,
       cert: certFileContent,
       ca: caFileContent,
-      rejectUnauthorized: this.rejectunauthorized ? this.rejectunauthorized : false,
+      rejectUnauthorized: this.rejectUnauthorized ? this.rejectUnauthorized : false,
       keepalive: this.keepalive,
       reconnectPeriod: this.reconnectPeriod,
       connectTimeout: this.connectTimeout,
@@ -149,17 +182,17 @@ class MQTT extends ProtocolHandler {
    * @returns {{pointId: string, data: {value: *, quality: *}, timestamp: string}|null} - the formatted data
    */
   formatValue(data, topic) {
-    const dataNodeId = this.getPointId(topic, data)
-    if (dataNodeId) {
-      const dataTimestamp = this.getTimestamp(data[this.timeStampPath])
+    const dataPointId = this.getPointId(topic, data)
+    if (dataPointId) {
+      const dataTimestamp = this.getTimestamp(data[this.timestampPath])
       const dataValue = data[this.valuePath]
       const dataQuality = data[this.qualityPath]
-      delete data[this.timeStampPath] // delete fields to avoid duplicates in the returned object
+      delete data[this.timestampPath] // delete fields to avoid duplicates in the returned object
       delete data[this.valuePath]
-      delete data[this.nodeIdPath]
+      delete data[this.pointIdPath]
       delete data[this.qualityPath]
       return {
-        pointId: dataNodeId,
+        pointId: dataPointId,
         timestamp: dataTimestamp,
         data: {
           ...data,
@@ -168,7 +201,7 @@ class MQTT extends ProtocolHandler {
         },
       }
     }
-    this.logger.error(`PointId cant be determined. The followingvalue ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
+    this.logger.error(`PointId cant be determined. The following value ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
     return null
   }
 
@@ -210,9 +243,9 @@ class MQTT extends ProtocolHandler {
   getTimestamp(elementTimestamp) {
     let timestamp = new Date().toISOString()
 
-    if (this.timeStampOrigin === 'payload') {
+    if (this.timestampOrigin === 'payload') {
       if (this.timezone && elementTimestamp) {
-        timestamp = MQTT.generateDateWithTimezone(elementTimestamp, this.timezone, this.timeStampFormat)
+        timestamp = MQTT.generateDateWithTimezone(elementTimestamp, this.timezone, this.timestampFormat)
       } else {
         this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
       }
@@ -228,12 +261,12 @@ class MQTT extends ProtocolHandler {
    * @return {string | null} - The pointId
    */
   getPointId(topic, currentData) {
-    if (this.nodeIdPath) { // if the nodeId is in the data
-      if (!currentData[this.nodeIdPath]) {
-        this.logger.error(`Could node find nodeId in path ${this.nodeIdPath} for data: ${JSON.stringify(currentData)}`)
+    if (this.pointIdPath) { // if the pointId is in the data
+      if (!currentData[this.pointIdPath]) {
+        this.logger.error(`Could node find pointId in path ${this.pointIdPath} for data: ${JSON.stringify(currentData)}`)
         return null
       }
-      return currentData[this.nodeIdPath]
+      return currentData[this.pointIdPath]
     } // else, the pointId is in the topic
     let pointId = null
     const matchedPoints = []

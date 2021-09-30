@@ -1,5 +1,5 @@
 const { vsprintf } = require('sprintf-js')
-const fs = require('fs')
+const fs = require('fs/promises')
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -25,10 +25,10 @@ class MQTTNorth extends ApiHandler {
       clientId,
       username,
       password,
-      keyfile,
-      certfile,
-      cafile,
-      rejectunauthorized,
+      keyFile,
+      certFile,
+      caFile,
+      rejectUnauthorized,
       regExp,
       topic,
     } = this.application.MQTTNorth
@@ -38,10 +38,10 @@ class MQTTNorth extends ApiHandler {
     this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
-    this.keyfile = keyfile
-    this.certfile = certfile
-    this.cafile = cafile
-    this.rejectunauthorized = rejectunauthorized
+    this.keyFile = keyFile
+    this.certFile = certFile
+    this.caFile = caFile
+    this.rejectUnauthorized = rejectUnauthorized
     this.regExp = regExp
     this.topic = topic
 
@@ -66,15 +66,49 @@ class MQTTNorth extends ApiHandler {
    * Connection to Broker MQTT
    * @return {void}
    */
-  connect() {
+  async connect() {
     super.connect()
     this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
     let keyFileContent = ''
     let certFileContent = ''
     let caFileContent = ''
-    if ((this.keyfile) && (fs.existsSync(this.keyfile))) keyFileContent = fs.readFileSync(this.keyfile)
-    if ((this.certfile) && (fs.existsSync(this.certfile))) certFileContent = fs.readFileSync(this.certfile)
-    if ((this.cafile) && (fs.existsSync(this.cafile))) caFileContent = fs.readFileSync(this.cafile)
+
+    if (this.keyFile) {
+      try {
+        if (await fs.exists(this.keyFile)) {
+          keyFileContent = await fs.readFile(this.keyFile)
+        } else {
+          this.logger.error(`Key file ${this.keyFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
+        return
+      }
+    }
+    if (this.certFile) {
+      try {
+        if (await fs.exists(this.certFile)) {
+          certFileContent = await fs.readFile(this.certFile)
+        } else {
+          this.logger.error(`Cert file ${this.certFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
+        return
+      }
+    }
+    if (this.caFile) {
+      try {
+        if (await fs.exists(this.caFile)) {
+          caFileContent = await fs.readFile(this.caFile)
+        } else {
+          this.logger.error(`CA file ${this.caFile} does not exist`)
+        }
+      } catch (error) {
+        this.logger.error(`Error reading ca file ${this.caFile}: ${error}`)
+        return
+      }
+    }
 
     const options = {
       username: this.username,
@@ -83,17 +117,29 @@ class MQTTNorth extends ApiHandler {
       key: keyFileContent,
       cert: certFileContent,
       ca: caFileContent,
-      rejectUnauthorized: this.rejectunauthorized ? this.rejectunauthorized : false,
+      rejectUnauthorized: this.rejectUnauthorized ? this.rejectUnauthorized : false,
     }
     this.client = mqtt.connect(this.url, options)
 
-    this.client.on('error', (error) => {
-      this.logger.error(error)
-    })
+    this.client.on('connect', this.handleConnectEvent.bind(this))
+    this.client.on('error', this.handleConnectError.bind(this))
+  }
 
-    this.client.on('connect', () => {
-      this.logger.info(`Connection North MQTT Connector to ${this.url}`)
-    })
+  /**
+   * Handle successful connection event.
+   * @return {void}
+   */
+  handleConnectEvent() {
+    this.logger.info(`North MQTT Connector connected to ${this.url}`)
+  }
+
+  /**
+   * Handle connection error event.
+   * @param {object} error - The error
+   * @return {void}
+   */
+  handleConnectError(error) {
+    this.logger.error(error)
   }
 
   /**

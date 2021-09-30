@@ -101,10 +101,17 @@ const testConfig = {
           username: 'bai',
           password: 'pppppppppppppppppppppp',
           url: 'mqtt://hostname:1883',
+          clientId: 'myClientId',
           timestampOrigin: 'oibus',
           timestampKey: 'timestamp',
           timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
           timestampTimezone: 'Europe/Paris',
+
+          keyFile: '',
+          certFile: '',
+          caFile: '',
+          rejectUnauthorized: false,
+
         },
         points: [
           { pointId: '/fttest.base/Tank 5.tank/Sensor22.temperature', scanMode: 'listen', topic: 'temperatureTank1' },
@@ -484,6 +491,11 @@ const testConfig = {
           qos: 1,
           regExp: '(.*)/',
           topic: '%1$s',
+          clientId: 'myClientId',
+          keyFile: '',
+          certFile: '',
+          caFile: '',
+          rejectUnauthorized: false,
         },
         caching: {
           sendInterval: 10000,
