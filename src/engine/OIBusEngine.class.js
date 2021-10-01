@@ -45,6 +45,7 @@ class OIBusEngine extends BaseEngine {
     Current directory: ${process.cwd()}
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
+    HistoryQuery config file: ${this.configService.historyQueryConfigFile},
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
 
     // Will only contain protocols/application used
@@ -421,6 +422,7 @@ class OIBusEngine extends BaseEngine {
       nodeVersion: process.version,
       executable: process.execPath,
       configurationFile: this.configService.getConfigurationFileLocation(),
+      historyQueryConfigurationFile: this.configService.getHistoryQueryConfigurationFileLocation(),
       memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
       ...memoryUsage,
       cpuUsage: `${cpuUsagePercentage}%`,

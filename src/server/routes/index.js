@@ -31,8 +31,8 @@ router.get('/shutdown', engineController.shutdown)
 
 router.get('/logs', logController.getLogs)
 
-router.post('/historyQueries', historyQueryController.createHistoryQuery)
-router.get('/historyQueries', historyQueryController.getHistoryQueries)
-router.put('/historyQueries/:historyQueryId', historyQueryController.updateHistoryQuery)
+router.get('/historyQuery/config', historyQueryController.getActiveConfiguration)
+router.put('/historyQuery/config', historyQueryController.updateConfig)
+router.put('/historyQuery/config/activate', historyQueryController.activateConfiguration)
 
 module.exports = router
