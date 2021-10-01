@@ -27,10 +27,16 @@ class ConfigService {
       fs.mkdirSync(baseDir, { recursive: true })
     }
 
-    this.checkOrCreateConfigFile(this.configFile) // Create default config file if it doesn't exist
+    this.historyQueryConfigFile = `${baseDir}/historyQuery.json`
+
+    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+    this.checkOrCreateConfigFile(this.configFile, defaultConfig)
+    this.checkOrCreateConfigFile(this.historyQueryConfigFile, [])
 
     this.config = ConfigService.tryReadFile(this.configFile, this.logger)
     this.modifiedConfig = this.duplicateConfig(this.config)
+    this.historyQueryConfig = ConfigService.tryReadFile(this.historyQueryConfigFile, this.logger)
+    this.historyQueryModifiedConfig = this.duplicateConfig(this.historyQueryConfig)
 
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
   }
@@ -105,16 +111,23 @@ class ConfigService {
   }
 
   /**
-   * Check if config file exists
+   * Get HistoryQuery config.
+   * @returns {object} - The config
+   */
+  getHistoryQueryConfig() {
+    return this.historyQueryConfig
+  }
+
+  /**
+   * Check if config file exists and create it if not
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
    */
   /* eslint-disable-next-line class-methods-use-this */
-  checkOrCreateConfigFile(filePath) {
+  checkOrCreateConfigFile(filePath, defaultConfig) {
     if (!fs.existsSync(filePath)) {
       this.logger.info('Default config file does not exist. Creating it.')
       try {
-        const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
         fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
       } catch (error) {
         this.logger.error(error)
@@ -145,8 +158,16 @@ class ConfigService {
   }
 
   /**
-   * Update Engine
-   * @param {object} config - The updated Engine
+   * Get active HistoryQuery configuration.
+   * @returns {object} - The active HistoryQuery configuration
+   */
+  getActiveHistoryQueryConfiguration() {
+    return this.historyQueryConfig
+  }
+
+  /**
+   * Update configuration
+   * @param {object} config - The updated configuration
    * @returns {void}
    */
   updateConfig(config) {
@@ -161,6 +182,15 @@ class ConfigService {
   }
 
   /**
+   * Update HistoryQuery configuration
+   * @param {object} config - The updated HistoryQuery configuration
+   * @returns {void}
+   */
+  updateHistoryQueryConfig(config) {
+    this.historyQueryModifiedConfig = config
+  }
+
+  /**
    * Activate the configuration
    * @returns {void}
    */
@@ -171,11 +201,29 @@ class ConfigService {
   }
 
   /**
+   * Activate the HistoryQuery configuration
+   * @returns {void}
+   */
+  activateHistoryQueryConfiguration() {
+    ConfigService.backupConfigFile(this.historyQueryConfigFile)
+    ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryModifiedConfig)
+    this.engine.reload(10)
+  }
+
+  /**
    * Get the location of the config file.
    * @returns {string} - The location of the config file
    */
   getConfigurationFileLocation() {
     return this.configFile
+  }
+
+  /**
+   * Get the location of the HistoryQuery config file.
+   * @returns {string} - The location of the HistoryQuery config file
+   */
+  getHistoryQueryConfigurationFileLocation() {
+    return this.historyQueryConfigFile
   }
 }
 
