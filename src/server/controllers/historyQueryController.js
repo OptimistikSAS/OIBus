@@ -1,28 +1,42 @@
 /**
- * Create historyQuery.
+ * Get the active HistoryQuery configuration.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const createHistoryQuery = async (ctx) => {
-  ctx.ok()
+const getActiveConfiguration = (ctx) => {
+  ctx.ok({ config: ctx.app.engine.configService.getActiveHistoryQueryConfiguration() })
 }
 
 /**
- * Get historyQueries.
+ * Update HistoryQuery config.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getHistoryQueries = async (ctx) => {
-  ctx.ok()
+const updateConfig = (ctx) => {
+  try {
+    ctx.app.engine.configService.updateHistoryQueryConfig(ctx.request.body)
+    ctx.ok()
+  } catch (error) {
+    ctx.throw(500, 'Unable to update Config')
+  }
 }
 
 /**
- * Update historyQuery.
+ * Activate the HistoryQuery configuration.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const updateHistoryQuery = async (ctx) => {
-  ctx.ok()
+const activateConfiguration = (ctx) => {
+  try {
+    ctx.app.engine.configService.activateHistoryQueryConfiguration()
+    ctx.ok('Reloading...')
+  } catch (error) {
+    ctx.throw(500, 'Unable to activate configuration')
+  }
 }
 
-module.exports = { createHistoryQuery, getHistoryQueries, updateHistoryQuery }
+module.exports = {
+  getActiveConfiguration,
+  updateConfig,
+  activateConfiguration,
+}
