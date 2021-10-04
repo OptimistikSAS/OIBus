@@ -94,6 +94,14 @@ services:
         ports:
             - ${FORWARD_MONGO_PORT:-27017}:27017
 
+    opcuaserver:
+        container_name: oibus-opcua
+        image: mcr.microsoft.com/iotedge/opc-plc:latest
+        restart: always
+        ports:
+            - 8080:8080
+            - 50000:50000
+
 networks:
     oibus-influx:
         name: custom_influx

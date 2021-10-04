@@ -28,7 +28,9 @@
     "version": "npm run build && gulp build-archives",
     "postversion": "git push && git push --tags",
     "bump": "standard-version -i CHANGELOG.md",
-    "postbump": "git push --follow-tags origin"
+    "postbump": "git push --follow-tags origin",
+    "setup-dev-env": "cd local-development && docker-compose --env-file ./.env.dev up",
+    "seed-destinations": "node ./local-developent/database-seeder/seed-db.js"
   },
   "keywords": [
     "Optimistik"
