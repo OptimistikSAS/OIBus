@@ -13,17 +13,16 @@ A simple way to try out the functionality is to create a `FolderScanner` south d
 
 ### Run database servers
 
-With the help of the docker-compose file, we can run a few databases by one command.
-- Open a terminal in the `local-deleopment` folder
-- Run command `docker-compose --env-file ./.env.dev up`
+With the help of the docker-compose file, we can run a few datab sources by one command.
+- Run command `npm run setup-dev-env`
 The following services will start: **mysql, mssql, postgresql, mongodb, timescaledb, influxdb, rabbitmq, mosquitto**.
 If you want to change the credentials or the ports for the services, you can create your own `.env` file that won't be pushed to the repository. Note that in this case you will need to replace the environment file path to `./.env` in the command above.
 
 #### Seed databases with random data
 
 Once you have run the docker compose, you can check if the services are running correctly by connecting to them with a client (TablePlus, Sequel Pro, MongoDB Compass etc.) using the credentials from the env file. 
-If the connection can be established then we can seed the databases. The seeder can be run with the following command from the `database-seeder` folder: `node seed-db.js db=<database-type>`, where the `<database-type>` attribute should be changed to one of the following types: **mysql, mssql, postgresql, oracle**. This will create a table in the database (if it does not exist already) containing a temperature field, and seed random temperature value in every second until you stop the script. If some error is logged, take a look at your connection credentials, the issue may be there. 
-The `db` argument is mandatory, but you can choose one between two other (optional) parameters:
+If the connection can be established then we can seed the databases. The seeder can be run with the following command from the root folder: `npm run seed-destinations -- destination=<destination-type>`, where the `<destination-type>` attribute should be changed to one of the following types: **mysql, mssql, postgresql, oracle**. This will create a table in the database (if it does not exist already) containing a temperature field, and seed random temperature value in every second until you stop the script. If some error is logged, take a look at your connection credentials, the issue may be there. 
+- `destination` - this argument shows which destination do we want to seed (if not given, all the destinations will be seeded)
 - `bulk-insert` - if this parameter is given, its value represents how many rows should be inserted in the database
 - `live-insert` - if this parameter is given, its value represents the milliseconds of how often should insert a new row in the database
 

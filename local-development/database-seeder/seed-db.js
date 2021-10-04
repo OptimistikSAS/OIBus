@@ -10,6 +10,7 @@ const password = 'oibus123'
 const database = 'oibus'
 const table = 'history'
 const logger = new Logger()
+const possibleDestinations = ['mysql', 'mssql', 'postgresql', 'oracle']
 
 const insertValueIntoMSSQL = async (query) => {
   const config = {
@@ -78,11 +79,11 @@ const insertValueIntoOracle = async (query) => {
   await connection.close()
 }
 
-const insertValue = async (dbType) => {
+const insertValue = async (destination) => {
   const value = (100 * Math.random()).toFixed(2)
   const query = `INSERT INTO ${table} (temperature) VALUES (${value})`
   try {
-    switch (dbType) {
+    switch (destination) {
       case 'mysql': {
         await insertValueIntoMySQL(query)
         break
@@ -100,7 +101,7 @@ const insertValue = async (dbType) => {
         break
       }
       default: {
-        console.error('Wrong database name given! (Please choose among the following dbs: mysql, mssql, postgresql or oracle)')
+        console.error('Wrong destination name given! (Please choose among the following dbs: mysql, mssql, postgresql or oracle)')
         break
       }
     }
@@ -119,29 +120,29 @@ const argumentParser = () => {
   return Object.assign(...args.map((arg) => ({ [arg.split('=')[0]]: arg.split('=')[1] })))
 }
 
-const bulkInsert = (dbType, rowNumber) => {
-  Array.from({ length: rowNumber }, () => insertValue(dbType))
+const bulkInsert = (destination, rowNumber) => {
+  Array.from({ length: rowNumber }, () => (destination === 'all' ? possibleDestinations.map((dest) => insertValue(dest))
+    : insertValue(destination)))
 }
 
-const liveInsert = (dbType, milliseconds) => {
-  setInterval(() => insertValue(dbType), milliseconds)
+const liveInsert = (destination, milliseconds) => {
+  setInterval(() => (
+    destination === 'all' ? possibleDestinations.map((dest) => insertValue(dest))
+      : insertValue(destination)
+  ), milliseconds)
 }
 
-const seedDB = () => {
+const seedDestination = () => {
   const paramValues = argumentParser()
-  if (!paramValues.db) {
-    logger.error('No database type given! Read the documentation.')
-    process.exit(1)
-  }
 
   if (paramValues['bulk-insert']) {
-    bulkInsert(paramValues.db, paramValues['bulk-insert'])
+    bulkInsert(paramValues.destination || 'all', paramValues['bulk-insert'])
   } else if (paramValues['live-insert']) {
-    liveInsert(paramValues.db, paramValues['live-insert'])
+    liveInsert(paramValues.destination || 'all', paramValues['live-insert'])
   } else {
     logger.info('No parameter given, running in default mode. Live insert starting...')
-    liveInsert(paramValues.db, 1000)
+    liveInsert(paramValues.destination || 'all', 1000)
   }
 }
 
-seedDB()
+seedDestination()
