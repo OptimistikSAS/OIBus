@@ -5,28 +5,6 @@ const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
- * Swap Bytes (8 bits) in Words (16 bits)
- * Example : 0101 0001 => 0001 0101
- * @param {Number} data on which to apply the swap
- * @return {Number} Swapped data
- */
-const swapBytesinWords = (data) => {
-  const res = (data & 0x00FF00FF) << 8 | (data & 0xFF00FF00) >> 8 // eslint-disable-line no-bitwise, no-mixed-operators
-  return res
-}
-
-/**
- * Swap Words (16 bits) in DWords (32 bits)
- * Example : 0101 0001 1110 0110 => 1110 0110 0101 0001
- * @param {Number} data on which to apply the swap
- * @return {Number} Swapped data
- */
-const swapWordsInDWords = (data) => {
-  const res = (data & 0x0000FFFF) << 16 | (data & 0xFFFF0000) >> 16 // eslint-disable-line no-bitwise, no-mixed-operators
-  return res
-}
-
-/**
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends ProtocolHandler {
@@ -88,25 +66,20 @@ class Modbus extends ProtocolHandler {
     }
     const endianness = this.dataSource.Modbus.endianness === 'Big Endian' ? 'BE' : 'LE'
     const funcName = `read${point.dataType}${endianness}`
+
+    let responseBuffer = response.body.valuesAsBuffer
+    // transform 01 02 03 04 into 03 04 01 02
+    if (this.dataSource.Modbus.swapWordsInDWords && !['Int16', 'UInt16'].includes(point.dataType)) {
+      responseBuffer = responseBuffer.swap32().swap16()
+    }
+
+    // transform 01 02 03 04 into 02 01 04 03
+    if (this.dataSource.Modbus.swapBytesinWords) {
+      responseBuffer = responseBuffer.swap16()
+    }
     /* Here, the position must be multiplied by 2 because the jsmodbus library is set to read addresses values on 16 bits (2 bytes),
       but in the valuesAsBuffer field each cell of the array contains 8 bits (1 byte) */
-    return response.body.valuesAsBuffer[funcName](position * 2)
-  }
-
-  /**
-   * Swap retreive data according to the modbus datasource configuration
-   * @param {Number} data Retreived data
-   * @return {Number} Swapped data
-   */
-  swapData(data) {
-    let res = data
-    if (this.dataSource.Modbus.swapWordsInDWords) {
-      res = swapWordsInDWords(res)
-    }
-    if (this.dataSource.Modbus.swapBytesinWords) {
-      res = swapBytesinWords(res)
-    }
-    return res
+    return responseBuffer[funcName](position * 2)
   }
 
   /**
@@ -123,8 +96,7 @@ class Modbus extends ProtocolHandler {
           const timestamp = new Date().toISOString()
           points.forEach((point) => {
             const position = point.address - startAddress - 1
-            let data = this.readRegisterValue(response, point, position)
-            data = this.swapData(data)
+            const data = this.readRegisterValue(response, point, position)
             /** @todo: below should send by batch instead of single points */
             this.addValues([
               {
