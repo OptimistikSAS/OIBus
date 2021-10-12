@@ -12,26 +12,7 @@ import EditableIdField from '../components/EditableIdField.jsx'
 import NorthMenu from './NorthMenu.jsx'
 import SouthMenu from './SouthMenu.jsx'
 import EngineMenu from './EngineMenu.jsx'
-import FileIn from './images/file-in.svg'
-import FileOut from './images/file-out.svg'
-import OI from './images/oi.svg'
-import IoT from './images/iot.svg'
-import Api from './images/api.svg'
-import Debug from './images/debug.svg'
-import DatabaseIn from './images/db-in.svg'
-import DatabaseOut from './images/db-out.svg'
-
-const imageCategories = {
-  DatabaseIn,
-  DatabaseOut,
-  FileIn,
-  FileOut,
-  Api,
-  OI,
-  IoT,
-  Debug,
-  Default: OI,
-}
+import imageCategories from './imageCategories'
 
 const colors = {
   border: {
@@ -84,7 +65,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
           <div className="box-container">
             <div className="icon-container">
               <div className="icon-left">
-                <img src={`${imageCategories[ApiSchemas[application.api].category]}` || imageCategories.Default} alt="logo" height="24px" />
+                <img
+                  src={`${imageCategories[ApiSchemas[application.api].category].image}` ?? imageCategories.Default.image}
+                  alt="logo"
+                  height="24px"
+                />
               </div>
               <div className="icon-center flex-grow">
                 {`${application.api}`}
@@ -146,7 +131,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
           <div className="box-container">
             <div className="icon-container">
               <div className="icon-left">
-                <img src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category]}` || imageCategories.Default} alt="logo" height="24px" />
+                <img
+                  src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category].image}` ?? imageCategories.Default.image}
+                  alt="logo"
+                  height="24px"
+                />
               </div>
               <div className="icon-center flex-grow">
                 {`${dataSource.protocol}`}

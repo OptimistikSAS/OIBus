@@ -5,53 +5,7 @@ import { Col, Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter
 import { ConfigContext } from '../context/configContext.jsx'
 import validationSouth from '../South/Form/South.validation'
 import { OIbText } from '../components/OIbForm'
-import FileIn from './images/file-in.svg'
-import FileOut from './images/file-out.svg'
-import OI from './images/oi.svg'
-import IoT from './images/iot.svg'
-import Api from './images/api.svg'
-import Debug from './images/debug.svg'
-import DatabaseIn from './images/db-in.svg'
-import DatabaseOut from './images/db-out.svg'
-
-const imageCategories = {
-  DatabaseIn: {
-    image: DatabaseIn,
-    label: 'Database',
-  },
-  DatabaseOut: {
-    image: DatabaseOut,
-    label: 'Database',
-  },
-  FileIn: {
-    image: FileIn,
-    label: 'File',
-  },
-  FileOut: {
-    image: FileOut,
-    label: 'File',
-  },
-  Api: {
-    image: Api,
-    label: 'Api',
-  },
-  OI: {
-    image: OI,
-    label: 'OI',
-  },
-  IoT: {
-    image: IoT,
-    label: 'IoT',
-  },
-  Debug: {
-    image: Debug,
-    label: 'Debug',
-  },
-  Default: {
-    image: OI,
-    label: 'OI',
-  },
-}
+import imageCategories from './imageCategories'
 
 const NewSouth = ({ modal, toggle }) => {
   const { newConfig, dispatchNewConfig, protocolList } = React.useContext(ConfigContext)
@@ -114,7 +68,7 @@ const NewSouth = ({ modal, toggle }) => {
                 <Col xs={6} md={12}>
                   <div className="icon-container">
                     <div className="icon-left-modal">
-                      <img src={imageCategories[category]?.image || imageCategories.Default.image} alt="logo" height="24px" />
+                      <img src={imageCategories[category]?.image ?? imageCategories.Default.image} alt="logo" height="24px" />
                     </div>
                     <div style={{ fontSize: '18px' }} className="icon-center-modal ">
                       {imageCategories[category]?.label}

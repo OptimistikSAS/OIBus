@@ -371,9 +371,9 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.entries(apiList).map(([key, value]) => ({
-      connectorName: key,
-      category: value.category,
+    return Object.entries(apiList).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
     }))
   }
 
@@ -384,9 +384,9 @@ class Engine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.entries(protocolList).map(([key, value]) => ({
-      connectorName: key,
-      category: value.category,
+    return Object.entries(protocolList).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
     }))
   }
 
