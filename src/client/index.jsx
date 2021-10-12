@@ -10,6 +10,7 @@ import Activation from './Activation/Activation.jsx'
 import NotFound from './NotFound.jsx'
 import South from './South/South.jsx'
 import North from './North/North.jsx'
+import Bulk from './Bulk/Bulk.jsx'
 import Engine from './Engine/Engine.jsx'
 import ConfigureApi from './North/ConfigureApi.jsx'
 import ConfigureProtocol from './South/ConfigureProtocol.jsx'
@@ -20,12 +21,12 @@ import About from './About/About.jsx'
 import Health from './Health/Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
-import { ConfigProvider } from './context/configContext.jsx'
+import ConfigProviders from './context/ConfigProviders.jsx'
 
 const Main = () => (
   <Router>
     <>
-      <ConfigProvider>
+      <ConfigProviders>
         <AlertProvider>
           <TopHeader />
           <Container className="oi-container-with-top-nav" fluid>
@@ -33,6 +34,7 @@ const Main = () => (
             <Switch>
               <Route exact path="/" component={Health} />
               <Route exact path="/engine" component={Engine} />
+              <Route exact path="/bulk" component={Bulk} />
               <Route exact path="/south" component={South} />
               <Route exact path="/south/:id" component={ConfigureProtocol} />
               <Route exact path="/south/:id/live" component={SouthStatus} />
@@ -46,7 +48,7 @@ const Main = () => (
             </Switch>
           </Container>
         </AlertProvider>
-      </ConfigProvider>
+      </ConfigProviders>
     </>
   </Router>
 )

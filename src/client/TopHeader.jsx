@@ -7,9 +7,11 @@ import { FaNetworkWired } from 'react-icons/fa'
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
+import { HistoryConfigContext } from './context/historyContext.jsx'
 
 const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)
+  const { newHistoryConfig, activeHistoryConfig } = React.useContext(HistoryConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
   const location = useLocation()
@@ -24,6 +26,7 @@ const TopHeader = () => {
   }
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
+  || JSON.stringify(newHistoryConfig) !== JSON.stringify(activeHistoryConfig)
   const engine = activeConfig?.engine
   const engineName = activeConfig ? activeConfig.engine.engineName : ''
   return (
@@ -44,6 +47,9 @@ const TopHeader = () => {
           </NavItem>
           <NavItem className="oi-navitem" active={isActive('south')} tag={Link} to="/south">
             South
+          </NavItem>
+          <NavItem className="oi-navitem" active={isActive('bulk')} tag={Link} to="/bulk">
+            Bulk
           </NavItem>
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs
