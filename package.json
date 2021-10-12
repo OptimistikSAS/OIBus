@@ -6,7 +6,7 @@
   "license": "EUPL",
   "engines": {
     "node": "=14.17.6",
-    "npm": "=7.24.1"
+    "npm": "=7.24.2"
   },
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
