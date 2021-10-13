@@ -6,7 +6,7 @@ import utils from '../helpers/utils'
 import { ConfigContext } from './configContext.jsx'
 
 const reducer = (state, action) => {
-  const { name, value, config, type, validity } = action
+  const { name, value, config, type, validity, position } = action
   const newState = utils.jsonCopy(state)
   switch (type) {
     case 'reset':
@@ -28,7 +28,7 @@ const reducer = (state, action) => {
         keys.forEach((key) => delete newState.errors[key])
         if (Object.keys(newState.errors).length === 0) delete newState.errors
       }
-      objectPath.del(newState, name)
+      newState.splice(position, 1)
       return newState
     }
     case 'addRow':

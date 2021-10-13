@@ -22,6 +22,7 @@ import Health from './Health/Health.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
 import ConfigProviders from './context/ConfigProviders.jsx'
+import ConfigureBulk from './Bulk/ConfigureBulk.jsx'
 
 const Main = () => (
   <Router>
@@ -35,6 +36,7 @@ const Main = () => (
               <Route exact path="/" component={Health} />
               <Route exact path="/engine" component={Engine} />
               <Route exact path="/bulk" component={Bulk} />
+              <Route exact path="/bulk/:id" component={ConfigureBulk} />
               <Route exact path="/south" component={South} />
               <Route exact path="/south/:id" component={ConfigureProtocol} />
               <Route exact path="/south/:id/live" component={SouthStatus} />

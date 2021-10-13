@@ -54,7 +54,7 @@ const Bulk = () => {
    * @returns {void}
    */
   const handleDelete = (position) => {
-    dispatchNewHistoryConfig({ type: 'deleteRow', name: `north.applications.${applications[position].index}` })
+    dispatchNewHistoryConfig({ type: 'deleteRow', position })
   }
 
   /**
@@ -86,9 +86,9 @@ const Bulk = () => {
     }
   }
 
-  const tableHeaders = ['Bulk', 'Status', 'Period', 'Percentage', 'Points']
+  const tableHeaders = ['Bulk', 'Status', 'Period', 'Percentage', 'Points or request']
   const sortableProperties = ['name', 'status', 'period', 'percentage', 'points']
-  const tableRows = bulks?.map(({ name, status, startTime, endTime, _index }) => [
+  const tableRows = bulks?.map(({ name, status, startTime, endTime }) => [
     {
       name: 'name',
       value: name,
