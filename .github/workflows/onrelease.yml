@@ -4,15 +4,14 @@ on:
   release:
     types: [published]
 jobs:
-  publish-all:
-    name: 'Publish'
+  publish-non-windows:
+    name: 'Publish non windows packages'
     runs-on: ${{ matrix.config['os'] }}
     strategy:
       matrix:
         config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip',    zip: 'zip -r'     }
-          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
-          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip',    zip: 'zip -r'     }
+          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip' }
+          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip' }
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -26,25 +25,61 @@ jobs:
       - name: Use npm
         run: |
           npm install -g npm@7.24.1
-
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         id: pkg
         run: |
           npm ci
           npm run build-${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
-          ${{ matrix.config['zip'] }} ../oibus.zip .
-
+          zip -r ../oibus.zip .
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const fs = require('fs')
-
             await github.repos.uploadReleaseAsset({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               release_id: context.payload.release.id,
               name: '${{ matrix.config['archiveName'] }}',
               data: fs.readFileSync('./dist/oibus.zip')
+            })
+  publish-windows:
+    name: 'Publish windows installer'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.17.6
+
+      - name: Use npm
+        run: |
+          npm install -g npm@7.24.1
+      - name: Package OIBus for win
+        id: pkg
+        run: |
+          npm ci
+          npm run build-win
+      - name: Build the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" "oibus_setup.iss"
+        working-directory: ./deps/win
+        shell: cmd
+
+      - uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+            await github.repos.uploadReleaseAsset({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              release_id: context.payload.release.id,
+              name: 'OIBus-win32x64.zip',
+              data: fs.readFileSync('./dist/oibus_setup.exe')
             })
