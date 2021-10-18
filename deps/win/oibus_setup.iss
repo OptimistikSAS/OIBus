@@ -27,6 +27,9 @@ PrivilegesRequired=admin
 SolidCompression=yes
 UsePreviousAppDir=no
 UserInfoPage=no
+SetupIconFile=oibus_icon.ico
+WizardImageFile=oibus_icon.bmp
+WizardSmallImageFile=oibus_icon_small.bmp
 WizardStyle=modern
 WizardSizePercent=100
 WizardResizable=no
@@ -50,6 +53,7 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\oibus.exe"
 
 [Code]
 var
+  AccessLink: TLabel;
   OIBusLink: TLabel;
   MyDataDir: string;
   MyAdminName: string;
@@ -62,7 +66,6 @@ var
   OIBus_DataDirPage: TInputDirWizardPage;
   NamesQueryPage: TInputQueryWizardPage;
   AfterID: Integer;
-
 // Delete OIBusData folder
 function DeleteDataDir(DirToDelete: string): Boolean;
 var
@@ -94,7 +97,6 @@ begin
       Result := True
     end
 end;
-
 // Delete custom-made registry-entries
 function DeleteMyRegistry: Boolean;
 begin
@@ -108,7 +110,6 @@ begin
   else
     Result := True
 end;
-
 // 1# Create (or overwrite existing) OIBus_Data directory
 function CheckDataDir: Boolean;
 var
@@ -133,7 +134,6 @@ begin
     end;
   end;
 end;
-
 // Execute commands with parameters (and eventual redirection of return-value) ==> cf. InstallProgram
 function ExecCmd(Prog: string; Params: string; WorkingDir: string): Boolean;
 var
@@ -150,7 +150,6 @@ begin
     Result := False;
   end;
 end;
-
 // 4# Installation procedure
 function InstallProgram(): Boolean;
 var
@@ -182,7 +181,6 @@ begin
   else
     Result := True;
 end;
-
 // Replace a string in a file with another ==> cf. SetConfig
 function ReplaceEntry(FileContent, OldStr, NewStr: string): Boolean;
 begin
@@ -194,7 +192,6 @@ begin
     Result := True;
   end;
 end;
-
 // 3# Set configuration by altering oibus.json according to user input
 function SetConfig: Boolean;
 var
@@ -253,7 +250,6 @@ begin;
   else
     Result := True;
 end;
-
 // Checking user-input
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
@@ -282,7 +278,6 @@ begin
     end;
   end;
 end;
-
 // Update the 'Ready to install page with additional info'
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
 var
@@ -291,18 +286,16 @@ begin
   MyOIBusName := NamesQueryPage.Values[0];
   MyAdminName := NamesQueryPage.Values[1];
   MyPortNum := NamesQueryPage.Values[2];
-
   Memo := 'Destination location:' + Newline + Space + ExpandConstant('{app}') + Newline + Newline
-  Memo := Memo + 'Oibus data folder location:' + Newline + Space + MyDataDir + Newline + Newline
+  Memo := Memo + 'OIBus data folder location:' + Newline + Space + MyDataDir + Newline + Newline
   if OverwriteConfig = True then
   begin
     Memo := Memo + 'OIBus name:' + Newline + Space + MyOIBusName + Newline + Newline
     Memo := Memo + 'Username:' + Newline + Space + MyAdminName + Newline + Newline
-    Memo := Memo + 'Oibus port:' + Newline + Space + MyPortNum + Newline
+    Memo := Memo + 'OIBus port:' + Newline + Space + MyPortNum + Newline
   end;
   Result := Memo;
 end;
-
 function UninstallProgram(): Boolean;
 begin
   if not ExecCmd('nssm.exe', 'remove OIBus confirm', ExpandConstant('{app}')) then
@@ -316,7 +309,6 @@ begin
     Sleep(400)
   end
 end;
-
 function StopProgram(): Boolean;
 begin
   if not ExecCmd('nssm.exe', ' stop OIBus', ExpandConstant('{app}')) then
@@ -327,7 +319,6 @@ begin
       Sleep(400)
     end
 end;
-
 // License-related functions
 procedure CheckLicense2Accepted;
 begin
@@ -341,7 +332,6 @@ procedure License2Active(Sender: TWizardPage);
 begin
   CheckLicense2Accepted;
 end;
-
 // Web-link on finish page to access OIBus directly
 procedure OIBusLinkClick(Sender: TObject);
 var
@@ -351,8 +341,6 @@ begin
   Link := 'http://localhost:'+ MyPortNum + '/';
   ShellExec('', Link, '', '', SW_SHOW, ewNoWait, ErrorCode);
 end;
-
-
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   Result := False;
@@ -362,15 +350,14 @@ begin
       Result := True;
   end;
 end;
-
 procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = wpFinished then
   begin
+    AccessLink.Visible := True;
     OIBusLink.Visible := True;
   end;
 end;
-
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
@@ -400,7 +387,6 @@ begin
     end;
   end;
 end;
-
 function InitializeSetup: Boolean;
 var
   Dir: string;
@@ -415,7 +401,6 @@ begin
     end;
   end;
 end;
-
 procedure InitializeWizard();
 var
   LicenseFilePath: string;
@@ -424,7 +409,6 @@ begin
   // Create second license page, with the same labels as the original license page
   SecondLicensePage := CreateOutputMsgMemoPage(wpLicense, SetupMessage(msgWizardLicense),
                         SetupMessage(msgLicenseLabel), SetupMessage(msgLicenseLabel3), '');
-
   // Load license
   ExtractTemporaryFile('OPC REDISTRIBUTABLES Agreement of Use.md');
   LicenseFilePath := ExpandConstant('{tmp}\' + 'OPC REDISTRIBUTABLES Agreement of Use.md');
@@ -444,15 +428,13 @@ begin
   License2NotAccepted.Checked := True;
   License2NotAccepted.OnClick := @License2NextButton;
   License2Accepted.OnClick := @License2NextButton;
-
   // Page for user input : OIBus_Data folder-path
   OIBus_DataDirPage := CreateInputDirPage(AfterID, 'Select OIBus data-directory', 'Where do you want to save your OIBus-related data (cache, logs...) ?', 'oibus.json and all OIBus related data will be saved in the following folder.', False, 'OIBusData');
   OIBus_DataDirPage.Add('&To continue, click Next. If you would like to select a different folder, click Browse.');
   OIBus_DataDirPage.Values[0] := 'C:\OIBusData\';
   AfterID := OIBus_DataDirPage.ID;
-
   // Page for user input: username, OIBus-name and port
-  NamesQueryPage := CreateInputQueryPage(AfterID, 'Informations', 'Various identification-related informations', '');
+  NamesQueryPage := CreateInputQueryPage(AfterID, 'Information', 'Various identification-related information', '');
 	NamesQueryPage.Add('Enter a name for your OIBus client. It will be used as unique identifier for your OIBus.', False);
   NamesQueryPage.Values[0] := 'OIBus';
   NamesQueryPage.Add('Enter a username. It will be used to log into the OIBus portal.', False);
@@ -460,24 +442,26 @@ begin
   NamesQueryPage.Add('Enter the port on which you want your OIBus-client to run.', False);
   NamesQueryPage.Values[2] := '2223';
   AfterID := NamesQueryPage.ID;
-
   MyDataDir := OIBus_DataDirPage.Values[0];
   MyOIBusName := NamesQueryPage.Values[0];
   MyAdminName := NamesQueryPage.Values[1];
   MyPortNum := NamesQueryPage.Values[2];
-
   // Link to access OIBus interface after Install
+  AccessLink := TLabel.Create(WizardForm);
+  AccessLink.Parent := WizardForm.FinishedPage;
+  AccessLink.Left := 210;
+  AccessLink.Top := 300;
+  AccessLink.Caption := 'Access OIBus :';
   OIBusLink := TLabel.Create(WizardForm);
   OIBusLink.Parent := WizardForm.FinishedPage;
-  OIBusLink.Left := 210;
+  OIBusLink.Left := 300;
   OIBusLink.Top := 300;//WizardForm.ClientHeight - OIBusLink.ClientHeight + 8;
   OIBusLink.Cursor := crHand;
   OIBusLink.Font.Color := clBlue;
   OIBusLink.Font.Style := [fsUnderline];
-  OIBusLink.Caption := 'Access OIBus';
+  OIBusLink.Caption := 'http://localhost:' + MyPortNum;
   OIBusLink.OnClick := @OIBusLinkClick;
 end;
-
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
 var
   DirToDelete: string;
@@ -504,7 +488,6 @@ begin
     end
   end
 end;
-
 [UninstallDelete]
 Name: {app}\oibus.exe; Type: files
 Name: {app}\nssm.exe; Type: files
