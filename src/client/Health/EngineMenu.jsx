@@ -39,14 +39,14 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
           </DropdownToggle>
 
           <DropdownMenu>
-            <DropdownItem className="icon-dropdown-item" onClick={() => setSouthModal(true)}>
-              <FaPlus id="icon-add-south" className="icon-dropdown-item" />
-              Add South
-            </DropdownItem>
-
             <DropdownItem className="icon-dropdown-item" onClick={() => setNorthModal(true)}>
               <FaPlus id="icon-add-north" className="icon-dropdown-item" />
               Add North
+            </DropdownItem>
+
+            <DropdownItem className="icon-dropdown-item" onClick={() => setSouthModal(true)}>
+              <FaPlus id="icon-add-south" className="icon-dropdown-item" />
+              Add South
             </DropdownItem>
 
             <DropdownItem className="icon-dropdown-item">

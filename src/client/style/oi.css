@@ -10,7 +10,7 @@
  display: flex;
  flex-direction: row;
  margin-top: -10px;
- height: 27px;
+ height: 38px;
 }
 
 .icon-left {
@@ -26,11 +26,11 @@
   flex-grow: 4;
   background-color: #323e48;
   color:#fff;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
   text-align:center;
   vertical-align:top;
-  line-height: 27px;
+  line-height: 24px;
   padding-right: 15px;
   justify-content: left;
 }
@@ -93,6 +93,7 @@
   bottom: 5px;
   width: 8px;
   border-radius: 30px;
+  z-index: 4;
 }
   
 .custom-control-input:checked~.custom-control-label::before {
@@ -220,7 +221,7 @@ margin-top: -7px;
 }
 
 .oi-modal-footer {
-  height: 90px;
+  height: 120px;
 }
 
 .oi-new-name {
@@ -571,11 +572,11 @@ h3 {
   flex-grow: 2
 }
 .oi-editing {
-  margin-top: 15px;
-  padding-right: -15px;
+  margin-top: 5px;
+  padding-right: -25px;
   padding-left: -15px;
-  margin-left: 15px;
-  width: 140px;
+  margin-left: 25px;
+  width: 125px;
 }
 .oi-points {
   min-height: 47px;

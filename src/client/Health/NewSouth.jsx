@@ -93,16 +93,6 @@ const NewSouth = ({ modal, toggle }) => {
                 </Col>
               </Row>
             ))}
-            {protocolError && !protocol ? (
-              <div className="oi-error">
-                {protocolError}
-              </div>
-            ) : null}
-            {nameError && name === '' ? (
-              <div className="oi-error">
-                {nameError}
-              </div>
-            ) : null}
           </Container>
         </ModalBody>
 
@@ -116,6 +106,16 @@ const NewSouth = ({ modal, toggle }) => {
               defaultValue=""
               valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
             />
+            {protocolError && !protocol ? (
+              <div className="oi-error">
+                {protocolError}
+              </div>
+            ) : null}
+            {nameError && name === '' ? (
+              <div className="oi-error">
+                {nameError}
+              </div>
+            ) : null}
           </Col>
           <Button
             className="oi-add-button"

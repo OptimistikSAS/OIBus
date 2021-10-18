@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
-import { FaEllipsisV, FaTrashAlt, FaPencilAlt, FaCopy, FaCog } from 'react-icons/fa'
+import { FaEllipsisV, FaTrashAlt, FaPencilAlt, FaCopy, FaCog, FaToggleOff } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
 import { useHistory } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
@@ -34,6 +34,16 @@ const NorthMenu = ({ application, renamingConnector }) => {
   const handleDeleteConnector = (name) => {
     dispatchNewConfig({ type: 'deleteRow', name })
   }
+  const onChange = () => {
+    dispatchNewConfig({
+      type: 'update',
+      name: application.name,
+      value: {
+        name: application.name,
+        enabled: application.enabled ? 'false' : 'true',
+      },
+    })
+  }
 
   const title = 'Delete'
   const body = `Are you sure you want to delete ${application.name}?`
@@ -55,6 +65,19 @@ const NorthMenu = ({ application, renamingConnector }) => {
           </DropdownToggle>
 
           <DropdownMenu>
+            <DropdownItem className="icon-dropdown-item">
+              <div
+                id="icon-activation"
+                role="button"
+                aria-hidden="true"
+                onClick={() => {
+                  onChange()
+                }}
+              >
+                <FaToggleOff className="icon-dropdown-item" />
+                {application.enabled ? 'Disable' : 'Enable'}
+              </div>
+            </DropdownItem>
             <DropdownItem className="icon-dropdown-item">
               <div
                 id="icon-rename"

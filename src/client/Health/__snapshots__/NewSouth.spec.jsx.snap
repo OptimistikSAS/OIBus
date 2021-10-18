@@ -46,29 +46,6 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
             class="icon-dropdown-item"
             fill="currentColor"
             height="1em"
-            id="icon-add-south"
-            stroke="currentColor"
-            stroke-width="0"
-            viewBox="0 0 448 512"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
-            />
-          </svg>
-          Add South
-        </button>
-        <button
-          class="icon-dropdown-item dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          <svg
-            class="icon-dropdown-item"
-            fill="currentColor"
-            height="1em"
             id="icon-add-north"
             stroke="currentColor"
             stroke-width="0"
@@ -81,6 +58,29 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
             />
           </svg>
           Add North
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <svg
+            class="icon-dropdown-item"
+            fill="currentColor"
+            height="1em"
+            id="icon-add-south"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+            />
+          </svg>
+          Add South
         </button>
         <button
           class="icon-dropdown-item dropdown-item"
@@ -214,29 +214,6 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
             class="icon-dropdown-item"
             fill="currentColor"
             height="1em"
-            id="icon-add-south"
-            stroke="currentColor"
-            stroke-width="0"
-            viewBox="0 0 448 512"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
-            />
-          </svg>
-          Add South
-        </button>
-        <button
-          class="icon-dropdown-item dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          <svg
-            class="icon-dropdown-item"
-            fill="currentColor"
-            height="1em"
             id="icon-add-north"
             stroke="currentColor"
             stroke-width="0"
@@ -249,6 +226,29 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
             />
           </svg>
           Add North
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <svg
+            class="icon-dropdown-item"
+            fill="currentColor"
+            height="1em"
+            id="icon-add-south"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+            />
+          </svg>
+          Add South
         </button>
         <button
           class="icon-dropdown-item dropdown-item"
@@ -382,29 +382,6 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
             class="icon-dropdown-item"
             fill="currentColor"
             height="1em"
-            id="icon-add-south"
-            stroke="currentColor"
-            stroke-width="0"
-            viewBox="0 0 448 512"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
-            />
-          </svg>
-          Add South
-        </button>
-        <button
-          class="icon-dropdown-item dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          <svg
-            class="icon-dropdown-item"
-            fill="currentColor"
-            height="1em"
             id="icon-add-north"
             stroke="currentColor"
             stroke-width="0"
@@ -417,6 +394,29 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
             />
           </svg>
           Add North
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <svg
+            class="icon-dropdown-item"
+            fill="currentColor"
+            height="1em"
+            id="icon-add-south"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+            />
+          </svg>
+          Add South
         </button>
         <button
           class="icon-dropdown-item dropdown-item"
@@ -550,29 +550,6 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
             class="icon-dropdown-item"
             fill="currentColor"
             height="1em"
-            id="icon-add-south"
-            stroke="currentColor"
-            stroke-width="0"
-            viewBox="0 0 448 512"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
-            />
-          </svg>
-          Add South
-        </button>
-        <button
-          class="icon-dropdown-item dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          <svg
-            class="icon-dropdown-item"
-            fill="currentColor"
-            height="1em"
             id="icon-add-north"
             stroke="currentColor"
             stroke-width="0"
@@ -585,6 +562,29 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
             />
           </svg>
           Add North
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <svg
+            class="icon-dropdown-item"
+            fill="currentColor"
+            height="1em"
+            id="icon-add-south"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+            />
+          </svg>
+          Add South
         </button>
         <button
           class="icon-dropdown-item dropdown-item"

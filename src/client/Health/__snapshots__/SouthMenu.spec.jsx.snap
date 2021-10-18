@@ -44,6 +44,34 @@ exports[`SouthMenu check cancel delete first dataSource 1`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -213,6 +241,34 @@ exports[`SouthMenu check delete first dataSource 1`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"
@@ -398,6 +454,34 @@ exports[`SouthMenu check duplicate dataSource 1`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -567,6 +651,34 @@ exports[`SouthMenu check duplicate dataSource already copied 1`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"
@@ -752,6 +864,34 @@ exports[`SouthMenu check edit first dataSource 1`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -921,6 +1061,34 @@ exports[`SouthMenu check rename first dataSource 1`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"
@@ -1106,6 +1274,34 @@ exports[`SouthMenu check status first dataSource 1`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -1275,6 +1471,34 @@ exports[`SouthMenu display SouthMenu page based on config 1`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"
@@ -1460,6 +1684,34 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 1`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -1629,6 +1881,34 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 2`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"
@@ -1814,6 +2094,34 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 3`] = `
         >
           <div
             aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
             id="icon-rename"
             role="button"
           >
@@ -1983,6 +2291,34 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 4`] = `
         role="menu"
         tabindex="-1"
       >
+        <button
+          class="icon-dropdown-item dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <div
+            aria-hidden="true"
+            id="icon-activation"
+            role="button"
+          >
+            <svg
+              class="icon-dropdown-item"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 576 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M384 64H192C85.961 64 0 149.961 0 256s85.961 192 192 192h192c106.039 0 192-85.961 192-192S490.039 64 384 64zM64 256c0-70.741 57.249-128 128-128 70.741 0 128 57.249 128 128 0 70.741-57.249 128-128 128-70.741 0-128-57.249-128-128zm320 128h-48.905c65.217-72.858 65.236-183.12 0-256H384c70.741 0 128 57.249 128 128 0 70.74-57.249 128-128 128z"
+              />
+            </svg>
+            Enable
+          </div>
+        </button>
         <button
           class="icon-dropdown-item dropdown-item"
           role="menuitem"

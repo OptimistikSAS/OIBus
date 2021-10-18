@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { Container, Row } from 'reactstrap'
-import ReactFlow from 'react-flow-renderer'
+import ReactFlow, { MiniMap, Controls, Background } from 'react-flow-renderer'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
@@ -57,8 +57,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       style: {
         background: colors.background.disabled,
         border: colors.border.disabled,
-        width: 170,
-        height: 130,
+        width: 230,
+        height: 140,
       },
       data: {
         label: (
@@ -72,25 +72,23 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                 />
               </div>
               <div className="icon-center flex-grow">
-                {`${application.api}`}
+                <EditableIdField
+                  connectorName={application.name}
+                  editing={renamingConnector === `north-${application.id}`}
+                  fromList={applications}
+                  valid={validationNorth.application.isValidName}
+                  nameChanged={handleConnectorNameChanged(
+                    `north.applications.${applications.findIndex(
+                      (element) => element.id === application.id,
+                    )}.name`,
+                  )}
+                />
               </div>
               <div className={`icon-right icon-status-${application.enabled ? 'enabled' : 'disabled'}`} />
             </div>
 
-            <div
-              className="oi-box tight text-muted"
-            >
-              <EditableIdField
-                connectorName={application.name}
-                editing={renamingConnector === `north-${application.id}`}
-                fromList={applications}
-                valid={validationNorth.application.isValidName}
-                nameChanged={handleConnectorNameChanged(
-                  `north.applications.${applications.findIndex(
-                    (element) => element.id === application.id,
-                  )}.name`,
-                )}
-              />
+            <div className="oi-box tight text-muted">
+              {`${application.api}`}
             </div>
             <NorthMenu application={application} renamingConnector={setRenamingConnector} />
           </div>),
@@ -123,8 +121,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       style: {
         background: colors.background.disabled,
         border: colors.border.disabled,
-        width: '170px',
-        height: '130px',
+        width: 230,
+        height: 140,
       },
       data: {
         label: (
@@ -138,23 +136,23 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                 />
               </div>
               <div className="icon-center flex-grow">
-                {`${dataSource.protocol}`}
+                <EditableIdField
+                  connectorName={dataSource.name}
+                  editing={renamingConnector === `south-${dataSource.id}`}
+                  fromList={dataSources}
+                  valid={validationSouth.protocol.isValidName}
+                  nameChanged={handleConnectorNameChanged(
+                    `south.dataSources.${dataSources.findIndex(
+                      (element) => element.id === dataSource.id,
+                    )}.name`,
+                  )}
+                />
               </div>
               <div className={`icon-right icon-status-${dataSource.enabled ? 'enabled' : 'disabled'}`} />
             </div>
 
             <div className="oi-box tight text-muted">
-              <EditableIdField
-                connectorName={dataSource.name}
-                editing={renamingConnector === `south-${dataSource.id}`}
-                fromList={dataSources}
-                valid={validationSouth.protocol.isValidName}
-                nameChanged={handleConnectorNameChanged(
-                  `south.dataSources.${dataSources.findIndex(
-                    (element) => element.id === dataSource.id,
-                  )}.name`,
-                )}
-              />
+              {`${dataSource.protocol}`}
             </div>
             <div className="oi-points tight text-muted">
               <PointsButton dataSource={dataSource} />
@@ -253,7 +251,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
             elementsSelectable
             nodesDraggable={false}
             onLoad={onLoad}
-          />
+          >
+            <MiniMap />
+            <Controls />
+            <Background />
+          </ReactFlow>
         </div>
       </Row>
     </Container>

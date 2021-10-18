@@ -93,16 +93,6 @@ const NewNorth = ({ modal, toggle }) => {
                 </Col>
               </Row>
             ))}
-            {apiError && !api ? (
-              <div className="oi-error">
-                {apiError}
-              </div>
-            ) : null}
-            {nameError && name === '' ? (
-              <div className="oi-error">
-                {nameError}
-              </div>
-            ) : null}
           </Container>
         </ModalBody>
 
@@ -116,6 +106,16 @@ const NewNorth = ({ modal, toggle }) => {
               defaultValue=""
               valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
             />
+            {apiError && !api ? (
+              <div className="oi-error">
+                {apiError}
+              </div>
+            ) : null}
+            {nameError && name === '' ? (
+              <div className="oi-error">
+                {nameError}
+              </div>
+            ) : null}
           </Col>
           <Button
             className="oi-add-button"
