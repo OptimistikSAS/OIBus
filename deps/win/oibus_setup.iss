@@ -262,11 +262,13 @@ begin
   begin
     if FileExists(JsonFile) then
     begin
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDNO then
+      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDYES then
       begin
+        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed ?', mbInformation, MB_YESNO) = IDNO then
+          OverwriteConfig := False;
+      end
+      else
         OverwriteConfig := False;
-        Result := True;
-      end;
     end;
   end;
   if CurPageId = NamesQueryPage.ID then
@@ -355,6 +357,7 @@ begin
   if CurPageID = wpFinished then
   begin
     AccessLink.Visible := True;
+    OIBusLink.Caption := 'http://localhost:' + MyPortNum;
     OIBusLink.Visible := True;
   end;
 end;
@@ -459,7 +462,6 @@ begin
   OIBusLink.Cursor := crHand;
   OIBusLink.Font.Color := clBlue;
   OIBusLink.Font.Style := [fsUnderline];
-  OIBusLink.Caption := 'http://localhost:' + MyPortNum;
   OIBusLink.OnClick := @OIBusLinkClick;
 end;
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
