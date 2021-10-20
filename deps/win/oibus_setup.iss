@@ -60,6 +60,7 @@ var
   MyOIBusName: string;
   MyPortNum: string;
   OverwriteConfig: boolean;
+  ConfExists: boolean;
   License2Accepted: TRadioButton;
   License2NotAccepted: TRadioButton;
   SecondLicensePage: TOutputMsgMemoWizardPage;
@@ -202,7 +203,7 @@ var
 begin;
   DefaultConfigFilePath := ExpandConstant('{app}') + '\defaultConfig.json';
   ConfigFilePath := MyDataDir + '\oibus.json';
-  if ((FileExists(ConfigFilePath) and OverwriteConfig = True) or not FileExists(ConfigFilePath)) then
+  if ((ConfExists and OverwriteConfig) or not ConfExists) then
   begin
     MyOIBusName := NamesQueryPage.Values[0];
     MyAdminName := NamesQueryPage.Values[1];
@@ -255,18 +256,20 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 var
   JsonFile: string;
 begin
-  Result := True
-  OverwriteConfig := True;
+  Result := True;
   JsonFile := OIBus_DataDirPage.Values[0] + '\oibus.json';
   if (CurPageID = OIBus_DataDirPage.ID) then
   begin
     if FileExists(JsonFile) then
     begin
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDNO then
+      ConfExists := True;
+      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDYES then
       begin
+        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed ?', mbInformation, MB_YESNO) = IDNO then
+          OverwriteConfig := False;
+      end
+      else
         OverwriteConfig := False;
-        Result := True;
-      end;
     end;
   end;
   if CurPageId = NamesQueryPage.ID then
@@ -354,8 +357,14 @@ procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = wpFinished then
   begin
-    AccessLink.Visible := True;
-    OIBusLink.Visible := True;
+    AccessLink.Visible := False;
+    OIBusLink.Visible := False;
+    OIBusLink.Caption := 'http://localhost:' + MyPortNum;
+    if not ConfExists or (ConfExists and OverwriteConfig) then
+    begin
+      AccessLink.Visible := True;
+      OIBusLink.Visible := True;
+    end
   end;
 end;
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -391,6 +400,8 @@ function InitializeSetup: Boolean;
 var
   Dir: string;
 begin
+  OverwriteConfig := True;
+  ConfExists := False;
   Result := True;
   if RegValueExists(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath') then
   begin
@@ -459,7 +470,6 @@ begin
   OIBusLink.Cursor := crHand;
   OIBusLink.Font.Color := clBlue;
   OIBusLink.Font.Style := [fsUnderline];
-  OIBusLink.Caption := 'http://localhost:' + MyPortNum;
   OIBusLink.OnClick := @OIBusLinkClick;
 end;
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
