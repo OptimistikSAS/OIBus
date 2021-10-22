@@ -1,5 +1,4 @@
 #define MyAppName "OIBus"
-#define MyAppVersion "2.0.0"
 #define MyAppPublisher "OPTIMISTIK SAS"
 #define MyAppURL "https://optimistik.io/oibus/"
 #define MyDateTime GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':')
@@ -34,8 +33,10 @@ WizardStyle=modern
 WizardSizePercent=100
 WizardResizable=no
 
+
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
 
 [Files]
 Source: "oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -45,11 +46,10 @@ Source: "OPC REDISTRIBUTABLES Agreement of Use.md"; DestDir: "{app}"; Flags: ign
 Source: "..\..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\src\config\defaultConfig.json"; DestDir: "{app}"; Flags: ignoreversion
 
+
 [Messages]
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%n%nIMPORTANT :%nInternet Explorer is NOT supported. OIBus will only run properly using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
 
-[Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\oibus.exe"
 
 [Code]
 var
@@ -67,6 +67,7 @@ var
   OIBus_DataDirPage: TInputDirWizardPage;
   NamesQueryPage: TInputQueryWizardPage;
   AfterID: Integer;
+
 // Delete OIBusData folder
 function DeleteDataDir(DirToDelete: string): Boolean;
 var
@@ -98,6 +99,7 @@ begin
       Result := True
     end
 end;
+
 // Delete custom-made registry-entries
 function DeleteMyRegistry: Boolean;
 begin
@@ -111,7 +113,8 @@ begin
   else
     Result := True
 end;
-// 1# Create (or overwrite existing) OIBus_Data directory
+
+// Create (or overwrite existing) OIBus_Data directory
 function CheckDataDir: Boolean;
 var
   DirCreated: Boolean;
@@ -135,6 +138,7 @@ begin
     end;
   end;
 end;
+
 // Execute commands with parameters (and eventual redirection of return-value) ==> cf. InstallProgram
 function ExecCmd(Prog: string; Params: string; WorkingDir: string): Boolean;
 var
@@ -151,7 +155,8 @@ begin
     Result := False;
   end;
 end;
-// 4# Installation procedure
+
+// Service installation
 function InstallProgram(): Boolean;
 var
   LogPath: string;
@@ -182,6 +187,7 @@ begin
   else
     Result := True;
 end;
+
 // Replace a string in a file with another ==> cf. SetConfig
 function ReplaceEntry(FileContent, OldStr, NewStr: string): Boolean;
 begin
@@ -193,7 +199,8 @@ begin
     Result := True;
   end;
 end;
-// 3# Set configuration by altering oibus.json according to user input
+
+// Set configuration by altering oibus.json according to user input
 function SetConfig: Boolean;
 var
   DefaultConfigFilePath: string;
@@ -251,6 +258,7 @@ begin;
   else
     Result := True;
 end;
+
 // Checking user-input
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
@@ -263,9 +271,9 @@ begin
     if FileExists(JsonFile) then
     begin
       ConfExists := True;
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDYES then
+      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it?', mbInformation, MB_YESNO) = IDYES then
       begin
-        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed ?', mbInformation, MB_YESNO) = IDNO then
+        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False;
       end
       else
@@ -281,6 +289,7 @@ begin
     end;
   end;
 end;
+
 // Update the 'Ready to install page with additional info'
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
 var
@@ -299,6 +308,7 @@ begin
   end;
   Result := Memo;
 end;
+
 function UninstallProgram(): Boolean;
 begin
   if not ExecCmd('nssm.exe', 'remove OIBus confirm', ExpandConstant('{app}')) then
@@ -312,6 +322,7 @@ begin
     Sleep(400)
   end
 end;
+
 function StopProgram(): Boolean;
 begin
   if not ExecCmd('nssm.exe', ' stop OIBus', ExpandConstant('{app}')) then
@@ -322,19 +333,23 @@ begin
       Sleep(400)
     end
 end;
+
 // License-related functions
 procedure CheckLicense2Accepted;
 begin
   WizardForm.NextButton.Enabled := License2Accepted.Checked;
 end;
+
 procedure License2NextButton(Sender: TObject);
 begin
   CheckLicense2Accepted;
 end;
+
 procedure License2Active(Sender: TWizardPage);
 begin
   CheckLicense2Accepted;
 end;
+
 // Web-link on finish page to access OIBus directly
 procedure OIBusLinkClick(Sender: TObject);
 var
@@ -344,6 +359,7 @@ begin
   Link := 'http://localhost:'+ MyPortNum + '/';
   ShellExec('', Link, '', '', SW_SHOW, ewNoWait, ErrorCode);
 end;
+
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   Result := False;
@@ -353,6 +369,7 @@ begin
       Result := True;
   end;
 end;
+
 procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = wpFinished then
@@ -367,6 +384,7 @@ begin
     end
   end;
 end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
@@ -396,6 +414,7 @@ begin
     end;
   end;
 end;
+
 function InitializeSetup: Boolean;
 var
   Dir: string;
@@ -412,6 +431,7 @@ begin
     end;
   end;
 end;
+
 procedure InitializeWizard();
 var
   LicenseFilePath: string;
@@ -472,6 +492,7 @@ begin
   OIBusLink.Font.Style := [fsUnderline];
   OIBusLink.OnClick := @OIBusLinkClick;
 end;
+
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
 var
   DirToDelete: string;
@@ -498,6 +519,8 @@ begin
     end
   end
 end;
+
+
 [UninstallDelete]
 Name: {app}\oibus.exe; Type: files
 Name: {app}\nssm.exe; Type: files
