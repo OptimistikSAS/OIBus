@@ -21,6 +21,7 @@
     "build-win": "npm run build-client && npm run build-lib-win && rimraf ./deps/win/oibus.exe && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./deps/win/oibus --target node14-win-x64",
     "build-macos": "npm run build-client && npm run build-lib-macos && rimraf ./dist/macos && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./dist/macos/oibus --target node14-macos-x64",
     "build-linux": "npm run build-client && npm run build-lib-linux && rimraf ./dist/linux && pkg ./src/index.js --public --compress GZip --config .pkg.json --output ./dist/linux/oibus --target node14-linux-x64",
+    "build-win-setup": "C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./deps/win/oibus_setup.iss\" \"/DMyAppVersion=\"%npm_package_version%",
     "start-client": "webpack --mode development --watch",
     "build-doc": "esdoc",
     "test": "jest --coverage",
