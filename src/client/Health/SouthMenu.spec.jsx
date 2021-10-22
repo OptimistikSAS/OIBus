@@ -26,8 +26,6 @@ jest.mock('react-router-dom', () => (
 
 const dataSource = newConfig.south.dataSources[0]
 
-const renamingFunction = jest.fn()
-
 let container
 
 beforeEach(() => {
@@ -48,7 +46,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} />,
         container,
       )
     })
@@ -58,7 +56,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} />,
         container,
       )
     })
@@ -68,7 +66,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} />,
         container,
       )
     })
@@ -78,7 +76,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} />,
         container,
       )
     })
@@ -88,7 +86,7 @@ describe('SouthMenu', () => {
   test('display SouthMenu page based on config', async () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />,
+        <SouthMenu dataSource={dataSource} />,
         container,
       )
     })
@@ -98,11 +96,11 @@ describe('SouthMenu', () => {
   test('check duplicate dataSource', async () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-duplicate'))
+    Simulate.click(document.getElementById('oi-duplicate'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
@@ -121,11 +119,11 @@ describe('SouthMenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSourceWithCopyInName} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSourceWithCopyInName} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-duplicate'))
+    Simulate.click(document.getElementById('oi-duplicate'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
@@ -142,11 +140,11 @@ describe('SouthMenu', () => {
   test('check edit first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-settings'))
+    Simulate.click(document.getElementById('oi-settings'))
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].id}` })
     expect(container).toMatchSnapshot()
   })
@@ -154,11 +152,11 @@ describe('SouthMenu', () => {
   test('check status first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-status'))
+    Simulate.click(document.getElementById('oi-status'))
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].id}/live` })
     expect(container).toMatchSnapshot()
   })
@@ -166,12 +164,12 @@ describe('SouthMenu', () => {
   test('check delete first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-delete'))
-    Simulate.click(document.getElementById('icon-confirm'))
+    Simulate.click(document.getElementById('oi-delete'))
+    Simulate.click(document.getElementById('confirm'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'south.dataSources.0',
@@ -182,25 +180,13 @@ describe('SouthMenu', () => {
   test('check cancel delete first dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
+        <SouthMenu dataSource={dataSource} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-delete'))
-    Simulate.click(document.getElementById('cancel-button'))
+    Simulate.click(document.getElementById('oi-delete'))
+    Simulate.click(document.getElementById('cancel'))
     expect(dispatchNewConfig).not.toBeCalled()
-    expect(container).toMatchSnapshot()
-  })
-
-  test('check rename first dataSource', () => {
-    act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} renamingConnector={renamingFunction} />, container,
-      )
-    })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-rename'))
-    expect(renamingFunction).toBeCalledWith(`south-${dataSource.id}`)
     expect(container).toMatchSnapshot()
   })
 })

@@ -1,15 +1,23 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Link, useHistory } from 'react-router-dom'
-import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { useHistory } from 'react-router-dom'
+import { Form, Row, Col } from 'reactstrap'
+import { FaPencilAlt } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import validation from './South.validation'
+import EditableIdField from '../../components/EditableIdField.jsx'
+import { ConfigContext } from '../../context/configContext.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
 import StatusButton from '../StatusButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
-  const { id, protocol, name } = dataSource
+  const { id, protocol } = dataSource
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const [renamingConnector, setRenamingConnector] = useState(null)
+  const [pencil, setPencil] = useState(true)
+  const dataSources = newConfig?.south?.dataSources ?? []
   const history = useHistory()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -31,36 +39,60 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
     const pathname = `/south/${id}/live`
     history.push({ pathname })
   }
+  const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
+    setRenamingConnector(null)
+    dispatchNewConfig({
+      type: 'update',
+      name,
+      value: newConnectorName,
+    })
+    setPencil(true)
+  }
 
   return (
     <Form>
-      <Row>
-        <Col md={5}>
-          <Breadcrumb tag="h5">
-            <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-              Home
-            </BreadcrumbItem>
-            <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
-              South
-            </BreadcrumbItem>
-            <BreadcrumbItem active tag="span">
-              {name}
-            </BreadcrumbItem>
-          </Breadcrumb>
-        </Col>
-        <Col md={2}>
+      <Row className="oi-sub-nav">
+        <div className="oi-sub-nav-connector-name">
+          <EditableIdField
+            connectorName={dataSource.name}
+            editing={renamingConnector === `south-${dataSource.id}`}
+            fromList={dataSources}
+            valid={validation.protocol.isValidName}
+            nameChanged={handleConnectorNameChanged(
+              `south.dataSources.${dataSources.findIndex(
+                (element) => element.id === dataSource.id,
+              )}.name`,
+            )}
+          />
+        </div>
+        {pencil
+                && (
+                <div className="oi-sub-nav-edit-button">
+                  <FaPencilAlt
+                    onClick={() => {
+                      setRenamingConnector(`south-${dataSource.id}`)
+                      setPencil(false)
+                    }}
+                  />
+                </div>
+                )}
+
+        <Col md={2} className="oi-sub-nav-status">
           <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
           <PointsButton dataSource={dataSource} />
         </Col>
       </Row>
-      <OIbTitle label="General settings">
-        <>
-          <ul>
-            <li>This form allows to configure protocol-specific parameters.</li>
-            <li>You need to activate the protocol with the enabled checkbox.</li>
-          </ul>
-        </>
-      </OIbTitle>
+
+      <div style={{ marginTop: '15px' }}>
+        <OIbTitle label="General settings">
+          <>
+            <ul>
+              <li>This form allows to configure protocol-specific parameters.</li>
+              <li>You need to activate the protocol with the enabled checkbox.</li>
+            </ul>
+          </>
+        </OIbTitle>
+      </div>
       <Row>
         <Col md={4}>
           <OIbCheckBox

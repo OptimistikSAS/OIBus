@@ -66,11 +66,11 @@ const NewNorth = ({ modal, toggle }) => {
             {northCategoryList?.map((category) => (
               <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
                 <Col xs={6} md={12}>
-                  <div className="icon-container">
+                  <div className="oi-header-modal">
                     <div className="icon-left-modal">
                       <img src={imageCategories[category]?.image ?? imageCategories.Default.image} alt="logo" height="24px" />
                     </div>
-                    <div style={{ fontSize: '18px', paddingRight: '75px' }} className="icon-center-modal ">
+                    <div style={{ fontSize: '18px', paddingRight: '75px', backgroundColor: 'transparent' }} className="icon-center-modal ">
                       {imageCategories[category]?.label}
                     </div>
                   </div>
@@ -93,16 +93,6 @@ const NewNorth = ({ modal, toggle }) => {
                 </Col>
               </Row>
             ))}
-            {apiError && !api ? (
-              <div className="oi-error">
-                {apiError}
-              </div>
-            ) : null}
-            {nameError && name === '' ? (
-              <div className="oi-error">
-                {nameError}
-              </div>
-            ) : null}
           </Container>
         </ModalBody>
 
@@ -116,10 +106,20 @@ const NewNorth = ({ modal, toggle }) => {
               defaultValue=""
               valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
             />
+            {apiError && !api ? (
+              <div className="oi-error">
+                {apiError}
+              </div>
+            ) : null}
+            {nameError && name === '' ? (
+              <div className="oi-error">
+                {nameError}
+              </div>
+            ) : null}
           </Col>
           <Button
             className="oi-add-button"
-            id="icon-confirm"
+            id="confirm"
             variant="secondary"
             onClick={() => { addApplication() }}
           >
@@ -127,7 +127,7 @@ const NewNorth = ({ modal, toggle }) => {
           </Button>
           <Button
             className="oi-add-button"
-            id="cancel-button"
+            id="cancel"
             variant="primary"
             onClick={toggle}
           >
