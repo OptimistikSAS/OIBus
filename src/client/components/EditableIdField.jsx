@@ -1,19 +1,12 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Tooltip } from 'reactstrap'
+import { Button } from 'reactstrap'
 import { FaCheck } from 'react-icons/fa'
 import { OIbText } from './OIbForm'
 
 const EditableIdField = ({ connectorName, fromList, valid, nameChanged, editing }) => {
   const [editingConnectorName, setEditingConnectorName] = React.useState()
   const [otherConnectorNames, setOtherConnectorNames] = React.useState(fromList.filter((e) => e.name !== connectorName).map((e) => e.name))
-  const [openTooltip, setOpenTooltip] = React.useState(false)
-
-  const toggleTooltip = () => {
-    setOpenTooltip(!openTooltip)
-  }
-
-  const ref = useRef(null)
 
   useEffect(() => {
     if (editing) {
@@ -53,18 +46,10 @@ const EditableIdField = ({ connectorName, fromList, valid, nameChanged, editing 
       </div>
     ) : (
       <div>
-        <div ref={ref} style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+        <div>
           {connectorName}
         </div>
-        <Tooltip
-          placement="top"
-          target={ref}
-          innerClassName="oi-popper-inner-class"
-          isOpen={openTooltip}
-          toggle={toggleTooltip}
-        >
-          {connectorName}
-        </Tooltip>
+
       </div>
     )
   )
@@ -77,4 +62,5 @@ EditableIdField.propTypes = {
   nameChanged: PropTypes.func.isRequired,
   editing: PropTypes.bool.isRequired,
 }
+
 export default EditableIdField

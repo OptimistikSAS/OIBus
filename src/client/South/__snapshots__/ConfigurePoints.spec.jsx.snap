@@ -5,66 +5,72 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -515,66 +521,72 @@ exports[`ConfigurePoints check add new point 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -1025,66 +1037,72 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -1535,66 +1553,72 @@ exports[`ConfigurePoints check delete all points 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -2045,66 +2069,72 @@ exports[`ConfigurePoints check delete first point 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -2555,66 +2585,72 @@ exports[`ConfigurePoints check edit filter input 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -3065,66 +3101,72 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -3575,66 +3617,72 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -4085,66 +4133,72 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -4595,66 +4649,72 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -5105,66 +5165,72 @@ exports[`ConfigurePoints check export points 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -5615,66 +5681,72 @@ exports[`ConfigurePoints check import points file input 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -6125,66 +6197,72 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -6635,66 +6713,72 @@ exports[`ConfigurePoints check import points press 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -7145,66 +7229,72 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -7655,66 +7745,72 @@ exports[`ConfigurePoints check import points success 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -8185,66 +8281,72 @@ exports[`ConfigurePoints check no points 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -8385,66 +8487,72 @@ exports[`ConfigurePoints check pagination 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value=""
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"
@@ -8895,66 +9003,72 @@ exports[`ConfigurePoints check render with filterText 1`] = `
   <div
     class="points"
   >
-    <h5
-      aria-label="breadcrumb"
-      class=""
-    >
-      <ol
-        class="breadcrumb"
-      >
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/"
-        >
-          Home
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south"
-        >
-          South
-        </li>
-        <li
-          class="oi-breadcrumb breadcrumb-item"
-          to="/south/datasource-uuid-9"
-        >
-          OPC-HDA
-        </li>
-        <span
-          aria-current="page"
-          class="active breadcrumb-item"
-        >
-          Points
-        </span>
-      </ol>
-    </h5>
     <div
-      class="form-group"
+      class="oi-sub-nav row"
     >
-      <label
-        class=""
-        for="filterText"
+      <svg
+        class="oi-sub-nav-return"
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 448 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        Filter
-      </label>
-      <input
-        aria-invalid="false"
-        class="oi-form-input form-control"
-        id="filterText"
-        name="filterText"
-        type="text"
-        value="filter"
-      />
+        <path
+          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+        />
+      </svg>
       <div
-        class="invalid-feedback"
-      />
-      <small
-        class="form-text text-muted"
+        class="oi-sub-nav-connector-name"
       >
-        <div>
-          Type any points related data
-        </div>
-      </small>
+        |
+         
+        OPC-HDA
+      </div>
+      <div
+        class="oi-sub-nav-status col-md-2"
+      >
+        <button
+          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+          type="button"
+        >
+          Status
+        </button>
+      </div>
+    </div>
+    <div
+      style="margin-top: 15px;"
+    >
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
+        >
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value="filter"
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
+      </div>
     </div>
     <div
       class="row"

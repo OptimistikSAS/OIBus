@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, Nav, NavItem, Badge } from 'reactstrap'
 import { FaNetworkWired } from 'react-icons/fa'
-
+import apis from './services/apis'
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
@@ -12,6 +12,7 @@ const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
+  const [status, setStatus] = React.useState({})
   const location = useLocation()
 
   React.useEffect(() => {
@@ -22,10 +23,32 @@ const TopHeader = () => {
   const toggle = () => {
     setIsOpen(!isOpen)
   }
+  /**
+   * Acquire the status
+   * @returns {void}
+   */
+  const fetchStatus = () => {
+    apis
+      .getStatus()
+      .then((response) => {
+        setStatus(response)
+      })
+      .catch((error) => {
+        console.error(error)
+        setAlert({ text: error.message, type: 'danger' })
+      })
+  }
+  /**
+   * Fetch status after render
+   * @returns {void}
+   */
+  React.useEffect(() => {
+    fetchStatus()
+  }, [])
+
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
   const engine = activeConfig?.engine
-  const engineName = activeConfig ? activeConfig.engine.engineName : ''
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>
       <NavbarBrand tag={Link} to="/" className="mr-auto">
@@ -51,7 +74,7 @@ const TopHeader = () => {
           </NavItem>
           <NavItem className="oi-navname">
             <FaNetworkWired />
-            {` ${engineName}`}
+            {` ${status.version}`}
           </NavItem>
         </Nav>
       </Collapse>

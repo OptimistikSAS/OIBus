@@ -14,8 +14,12 @@ const dispatchNewConfig = jest.fn()
 const setAlert = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
 jest.mock('react-router-dom', () => (
-  { useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }) }
+  {
+    useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }),
+    useHistory: jest.fn(),
+  }
 ))
+
 window.URL.createObjectURL = () => { }
 // mock states
 const originalUseState = React.useState
