@@ -66,7 +66,7 @@ const NewSouth = ({ modal, toggle }) => {
             {southCategoryList?.map((category) => (
               <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
                 <Col xs={6} md={12}>
-                  <div className="icon-container">
+                  <div className="oi-header-modal">
                     <div className="icon-left-modal">
                       <img src={imageCategories[category]?.image ?? imageCategories.Default.image} alt="logo" height="24px" />
                     </div>
@@ -93,16 +93,6 @@ const NewSouth = ({ modal, toggle }) => {
                 </Col>
               </Row>
             ))}
-            {protocolError && !protocol ? (
-              <div className="oi-error">
-                {protocolError}
-              </div>
-            ) : null}
-            {nameError && name === '' ? (
-              <div className="oi-error">
-                {nameError}
-              </div>
-            ) : null}
           </Container>
         </ModalBody>
 
@@ -116,10 +106,20 @@ const NewSouth = ({ modal, toggle }) => {
               defaultValue=""
               valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
             />
+            {protocolError && !protocol ? (
+              <div className="oi-error">
+                {protocolError}
+              </div>
+            ) : null}
+            {nameError && name === '' ? (
+              <div className="oi-error">
+                {nameError}
+              </div>
+            ) : null}
           </Col>
           <Button
             className="oi-add-button"
-            id="icon-confirm"
+            id="confirm"
             variant="secondary"
             onClick={() => { addDataSource() }}
           >
@@ -127,7 +127,7 @@ const NewSouth = ({ modal, toggle }) => {
           </Button>
           <Button
             className="oi-add-button"
-            id="cancel-button"
+            id="cancel"
             variant="primary"
             onClick={toggle}
           >

@@ -1,8 +1,8 @@
 import React from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Button, Input, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { useParams, useHistory } from 'react-router-dom'
+import { Button, Input, Spinner, Row, Col } from 'reactstrap'
 import humanizeString from 'humanize-string'
-
+import { FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import TablePagination from '../components/table/TablePagination.jsx'
 import Modal from '../components/Modal.jsx'
@@ -12,12 +12,14 @@ import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
 import utils from '../helpers/utils'
 import validation from './Form/South.validation'
+import StatusButton from './StatusButton.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
   const { setAlert } = React.useContext(AlertContext)
+  const history = useHistory()
   // max points on one page
   const MAX_ON_PAGE = 10
   // this value will be used to calculate the amount of max pagination displayed
@@ -25,6 +27,15 @@ const ConfigurePoints = () => {
   const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
 
   const { id } = useParams()
+
+  const handleGoToConnector = (pathname) => {
+    history.push({ pathname })
+  }
+  const handleStatus = () => {
+    const pathname = `/south/${id}/live`
+    history.push({ pathname })
+  }
+
   if (!newConfig?.south) {
     return (
       <div className="spinner-container">
@@ -200,27 +211,31 @@ const ConfigurePoints = () => {
 
   return (
     <div className="points">
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
-          South
-        </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to={`/south/${id}`} className="oi-breadcrumb">
+      <Row className="oi-sub-nav">
+        <FaArrowLeft
+          className="oi-sub-nav-return"
+          onClick={() => {
+            handleGoToConnector(`/south/${dataSource.id}`)
+          }}
+        />
+        <div className="oi-sub-nav-connector-name">
+          |
+          {' '}
           {dataSource.name}
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          Points
-        </BreadcrumbItem>
-      </Breadcrumb>
-      <Controls.OIbText
-        label="Filter"
-        name="filterText"
-        value={filterText}
-        help={<div>Type any points related data</div>}
-        onChange={(_name, val) => updateFilterText(val)}
-      />
+        </div>
+        <Col md={2} className="oi-sub-nav-status">
+          <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
+        </Col>
+      </Row>
+      <div style={{ marginTop: '15px' }}>
+        <Controls.OIbText
+          label="Filter"
+          name="filterText"
+          value={filterText}
+          help={<div>Type any points related data</div>}
+          onChange={(_name, val) => updateFilterText(val)}
+        />
+      </div>
       <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
       {filteredPoints.length && (
         <TablePagination

@@ -12,14 +12,14 @@ const ConfirmationModal = ({ title, body, onConfirm, isOpen, toggle }) => (
     </ModalBody>
     <ModalFooter>
       <Button
-        id="icon-confirm"
+        id="confirm"
         variant="secondary"
         onClick={onConfirm}
       >
         Confirm
       </Button>
       <Button
-        id="cancel-button"
+        id="cancel"
         variant="primary"
         onClick={toggle}
       >

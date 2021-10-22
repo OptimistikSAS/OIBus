@@ -49,7 +49,7 @@ const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchB
 }
 OIbCheckBox.propTypes = {
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   help: PropTypes.element,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.bool,
@@ -57,6 +57,6 @@ OIbCheckBox.propTypes = {
   switchButton: PropTypes.bool,
 }
 
-OIbCheckBox.defaultProps = { value: null, help: null, switchButton: false }
+OIbCheckBox.defaultProps = { value: null, help: null, switchButton: false, label: null }
 
 export default OIbCheckBox

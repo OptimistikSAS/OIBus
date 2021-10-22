@@ -1,14 +1,12 @@
-import React, { useState } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import { Container, Row } from 'reactstrap'
-import ReactFlow from 'react-flow-renderer'
+import ReactFlow, { Controls } from 'react-flow-renderer'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
 import ProtocolSchemas from '../South/Protocols.jsx'
-import validationNorth from '../North/Form/North.validation'
-import validationSouth from '../South/Form/South.validation'
-import EditableIdField from '../components/EditableIdField.jsx'
+import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
 import NorthMenu from './NorthMenu.jsx'
 import SouthMenu from './SouthMenu.jsx'
 import EngineMenu from './EngineMenu.jsx'
@@ -30,26 +28,19 @@ const colors = {
 }
 
 const NodeView = ({ status, onRestart, onShutdown }) => {
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const [renamingConnector, setRenamingConnector] = useState(null)
+  const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
-  const engine = newConfig?.engine ?? {}
-
-  const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
-    setRenamingConnector(null)
-    dispatchNewConfig({
-      type: 'update',
-      name,
-      value: newConnectorName,
-    })
-  }
-
+  const engineName = activeConfig ? activeConfig.engine.engineName : ''
   const onLoad = (reactFlowInstance) => {
     reactFlowInstance.setTransform({ y: 35, x: 0, zoom: 0.9 })
   }
+  const onChange = (name, value, validity) => {
+    dispatchNewConfig({ type: 'update', name, value, validity })
+  }
 
   const northNodes = applications.map((application, indexNorth) => (
+
     {
       id: application.id, // unique id of node
       type: 'output', // output node
@@ -57,8 +48,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       style: {
         background: colors.background.disabled,
         border: colors.border.disabled,
-        width: 170,
+        width: 180,
         height: 130,
+        borderRadius: 5,
       },
       data: {
         label: (
@@ -71,28 +63,30 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                   height="24px"
                 />
               </div>
-              <div className="icon-center flex-grow">
-                {`${application.api}`}
+              <div className="icon-center flex-grow" style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                {`${application.name}`}
               </div>
-              <div className={`icon-right icon-status-${application.enabled ? 'enabled' : 'disabled'}`} />
+
+              <div className="icon-right">
+                <NorthMenu application={application} />
+                <div className="icon-activation">
+                  <OIbCheckBox
+                    name={`${`north.applications.${applications.findIndex(
+                      (element) => element.id === application.id,
+                    )}`
+                    }.enabled`}
+                    defaultValue={false}
+                    value={application.enabled}
+                    onChange={onChange}
+                    switchButton
+                  />
+                </div>
+              </div>
             </div>
 
-            <div
-              className="oi-box tight text-muted"
-            >
-              <EditableIdField
-                connectorName={application.name}
-                editing={renamingConnector === `north-${application.id}`}
-                fromList={applications}
-                valid={validationNorth.application.isValidName}
-                nameChanged={handleConnectorNameChanged(
-                  `north.applications.${applications.findIndex(
-                    (element) => element.id === application.id,
-                  )}.name`,
-                )}
-              />
+            <div className="oi-box tight text-muted">
+              {application.api}
             </div>
-            <NorthMenu application={application} renamingConnector={setRenamingConnector} />
           </div>),
       },
 
@@ -123,8 +117,9 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       style: {
         background: colors.background.disabled,
         border: colors.border.disabled,
-        width: '170px',
-        height: '130px',
+        width: 180,
+        height: 130,
+        borderRadius: 5,
       },
       data: {
         label: (
@@ -137,29 +132,32 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                   height="24px"
                 />
               </div>
-              <div className="icon-center flex-grow">
-                {`${dataSource.protocol}`}
+              <div className="icon-center flex-grow" style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                {`${dataSource.name}`}
               </div>
-              <div className={`icon-right icon-status-${dataSource.enabled ? 'enabled' : 'disabled'}`} />
+              <div className="icon-right ">
+                <SouthMenu dataSource={dataSource} />
+                <div className="icon-activation">
+                  <OIbCheckBox
+                    name={`${`south.dataSources.${dataSources.findIndex(
+                      (element) => element.id === dataSource.id,
+                    )}`
+                    }.enabled`}
+                    defaultValue={false}
+                    value={dataSource.enabled}
+                    onChange={onChange}
+                    switchButton
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="oi-box tight text-muted">
-              <EditableIdField
-                connectorName={dataSource.name}
-                editing={renamingConnector === `south-${dataSource.id}`}
-                fromList={dataSources}
-                valid={validationSouth.protocol.isValidName}
-                nameChanged={handleConnectorNameChanged(
-                  `south.dataSources.${dataSources.findIndex(
-                    (element) => element.id === dataSource.id,
-                  )}.name`,
-                )}
-              />
+              {dataSource.protocol}
             </div>
             <div className="oi-points tight text-muted">
               <PointsButton dataSource={dataSource} />
             </div>
-            <SouthMenu dataSource={dataSource} renamingConnector={setRenamingConnector} />
           </div>
         ),
       },
@@ -192,10 +190,13 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         label: (
           <div className="box-container">
             <div className="icon-container">
-              <div className="icon-center icon-left">
-                {`Engine ${status.version}`}
+              <div className="icon-left" />
+              <div className="icon-center">
+                {`Engine ${engineName}`}
               </div>
-              <div className={`icon-right icon-status-${engine.safeMode ? 'disabled' : 'enabled'}`} />
+              <div className="icon-right">
+                <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
+              </div>
             </div>
             <br />
             <div style={{ color: 'grey' }}>
@@ -216,7 +217,6 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                 {status.configurationFile}
               </div>
             </div>
-            <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
           </div>
         ),
       },
@@ -232,6 +232,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
         border: colors.border.disabled,
         width: 1020,
         height: 130,
+        borderRadius: 5,
       },
     },
     ...southNodes,
@@ -242,8 +243,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
     <Container>
       <Row>
         <div style={{
-          height: 210 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
-          width: 1240,
+          height: 410 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
+          width: 3900,
         }}
         >
           <ReactFlow
@@ -253,7 +254,11 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
             elementsSelectable
             nodesDraggable={false}
             onLoad={onLoad}
-          />
+          >
+
+            <Controls />
+
+          </ReactFlow>
         </div>
       </Row>
     </Container>

@@ -7,24 +7,25 @@
 }
 
 .icon-container {
+margin-left: -10px;
+margin-right: -10px;
  display: flex;
  flex-direction: row;
  margin-top: -10px;
  height: 27px;
+ background-color: #323e48;
+ border-top-left-radius: 5px;
+ border-top-right-radius: 5px;
+
 }
 
 .icon-left {
-  margin-left: -10px;
-  background-color: #323e48;
-  width: 20%;
-  border-color:#323e48;
   flex-grow: 0;
   line-height: 25px;
 }
 
 .icon-center {
   flex-grow: 4;
-  background-color: #323e48;
   color:#fff;
   font-size: 13px;
   font-weight: 400;
@@ -32,16 +33,18 @@
   vertical-align:top;
   line-height: 27px;
   padding-right: 15px;
+  padding-left: 15px;
   justify-content: left;
+  
 }
 
 .icon-right {
-  margin-right: -10px;
   flex-grow: 0;
+  right: 0;
 }
 
 .icon-status-enabled {
-  width: 26px;
+  width: 36px;
   background-color:rgb(134, 207, 141);
 }
 
@@ -50,9 +53,46 @@
   background-color:rgb(172, 169, 169);
 }
 
+.icon-activation {
+  margin: 65px 0px 0px -260px
+}
+
+.oi-sub-nav {
+  display: flex;
+  background-color: rgba(219, 220, 223, 0.36);
+  margin: -20px -25px 0px -25px;
+  height: 35px;
+}
+
+.oi-sub-nav-edit-button {
+  font-size: 15px;
+ padding: 5px 0px 0px 15px;
+ color: #323e48;
+ cursor: pointer;
+}
+
+.oi-sub-nav-connector-name {
+ font-size: 20px;
+ font-weight: 500;
+ padding: 5px 0px 0px 15px;
+ color: #323e48;
+} 
+
+
+.oi-sub-nav-status {
+  margin: 10px 0px 0px 45%;
+  position: fixed;
+}
+.oi-sub-nav-return {
+  font-size: 18px;
+  margin: 12px -10px 0px 10px;
+  color: #323e48;
+  cursor: pointer;
+}
+
 .icon-dropdown {
-  background-color: rgba(222, 227, 228, 0.36);;
-  color: #000000;
+  background-color: #323e48;
+  color: #fff;
   border: none;
   width: 18px;
   border-radius: 40%;
@@ -68,8 +108,8 @@
 }
 
 .icon-dropdown:focus {
-  background-color:lightgray;
-  color: #000000;
+  background-color: #323e48;
+  color: #fff;
   border: none;
   border-radius: 40%;
   width: 18px;
@@ -77,7 +117,7 @@
   box-shadow: 0 0 0 0.1rem rgb(130 138 145 / 20%);
 }
 
-.icon-dropdown-item {
+.dropdown-item {
   margin-right: 18px;
   color:#6c757d;
 }
@@ -220,7 +260,7 @@ margin-top: -7px;
 }
 
 .oi-modal-footer {
-  height: 90px;
+  height: 120px;
 }
 
 .oi-new-name {
@@ -251,7 +291,17 @@ margin-top: -7px;
   border:none;
   border-radius:5px;
 }
-
+.oi-header-modal {
+  margin-left: -10px;
+  margin-right: -10px;
+   display: flex;
+   flex-direction: row;
+   margin-top: -10px;
+   height: 27px;
+   border-top-left-radius: 5px;
+   border-top-right-radius: 5px;
+  
+  }
 .icon-left-modal {
   background-color: #323e48;
   border-color:#323e48;
@@ -571,11 +621,11 @@ h3 {
   flex-grow: 2
 }
 .oi-editing {
-  margin-top: 15px;
+  margin-top: 0px;
   padding-right: -15px;
   padding-left: -15px;
-  margin-left: 15px;
-  width: 140px;
+  margin-left: 0px;
+  width: 200px;
 }
 .oi-points {
   min-height: 47px;

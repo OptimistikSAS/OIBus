@@ -26,8 +26,6 @@ jest.mock('react-router-dom', () => (
 
 const application = newConfig.north.applications[0]
 
-const renamingFunction = jest.fn()
-
 let container
 
 beforeEach(() => {
@@ -48,7 +46,7 @@ describe('Northmenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} />,
         container,
       )
     })
@@ -58,7 +56,7 @@ describe('Northmenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} />,
         container,
       )
     })
@@ -68,7 +66,7 @@ describe('Northmenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} />,
         container,
       )
     })
@@ -78,7 +76,7 @@ describe('Northmenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} />,
         container,
       )
     })
@@ -88,7 +86,7 @@ describe('Northmenu', () => {
   test('display NorthMenu page based on config', async () => {
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />,
+        <NorthMenu application={application} />,
         container,
       )
     })
@@ -98,11 +96,11 @@ describe('Northmenu', () => {
   test('check duplicate application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-duplicate'))
+    Simulate.click(document.getElementById('oi-duplicate'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications',
@@ -121,11 +119,11 @@ describe('Northmenu', () => {
 
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={applicationWithCopyInName} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={applicationWithCopyInName} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-duplicate'))
+    Simulate.click(document.getElementById('oi-duplicate'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications',
@@ -142,11 +140,11 @@ describe('Northmenu', () => {
   test('check edit first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-settings'))
+    Simulate.click(document.getElementById('oi-settings'))
     expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].id}` })
     expect(container).toMatchSnapshot()
   })
@@ -154,12 +152,12 @@ describe('Northmenu', () => {
   test('check delete first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-delete'))
-    Simulate.click(document.getElementById('icon-confirm'))
+    Simulate.click(document.getElementById('oi-delete'))
+    Simulate.click(document.getElementById('confirm'))
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'north.applications.0',
@@ -170,26 +168,13 @@ describe('Northmenu', () => {
   test('check cancel delete first application', () => {
     act(() => {
       ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
+        <NorthMenu application={application} />, container,
       )
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-delete'))
-    Simulate.click(document.getElementById('cancel-button'))
+    Simulate.click(document.getElementById('oi-delete'))
+    Simulate.click(document.getElementById('cancel'))
     expect(dispatchNewConfig).not.toBeCalled()
-    expect(container).toMatchSnapshot()
-  })
-
-  test('check rename first application', () => {
-    act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} renamingConnector={renamingFunction} />, container,
-      )
-    })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('icon-rename'))
-    expect(renamingFunction).toBeCalledWith(`north-${application.id}`)
-
     expect(container).toMatchSnapshot()
   })
 })
