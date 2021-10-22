@@ -50,7 +50,7 @@ exports[`Health display Health page based on config and status 1`] = `
       class="row"
     >
       <div
-        style="height: 510px; width: 1240px;"
+        style="height: 710px; width: 2400px;"
       >
         ReactFlow
       </div>
@@ -109,7 +109,7 @@ exports[`Health display Health page based on config and status 2`] = `
       class="row"
     >
       <div
-        style="height: 510px; width: 1240px;"
+        style="height: 710px; width: 2400px;"
       >
         ReactFlow
       </div>
@@ -168,7 +168,7 @@ exports[`Health display Health with config null 1`] = `
       class="row"
     >
       <div
-        style="height: 510px; width: 1240px;"
+        style="height: 710px; width: 2400px;"
       >
         ReactFlow
       </div>

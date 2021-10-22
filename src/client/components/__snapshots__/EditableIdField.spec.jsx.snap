@@ -3,9 +3,7 @@
 exports[`EditableIdField check EditableIdField editing = false 1`] = `
 <div>
   <div>
-    <div
-      style="display: inline-block; overflow: hidden; text-overflow: ellipsis; width: 100%;"
-    >
+    <div>
       id
     </div>
   </div>

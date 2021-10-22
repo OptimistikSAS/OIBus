@@ -1,6 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
-import { Col, Row, Form, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { Col, Row, Form, Spinner } from 'reactstrap'
 import { ConfigContext } from '../context/configContext.jsx'
 import { OIbInteger, OIbText, OIbPassword, OIbTitle, OIbCheckBox } from '../components/OIbForm'
 import Filters from './Filters.jsx'
@@ -21,15 +20,13 @@ const Engine = () => {
   }
   return newConfig?.engine ? (
     <>
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
+      <Row className="oi-container-settings">
+        <div className="oi-container-name">
           Engine
-        </BreadcrumbItem>
-      </Breadcrumb>
+        </div>
+      </Row>
       <Form>
+        <div style={{ marginTop: '15px' }} />
         <OIbTitle label="Engine Parameters">
           <>
             <p>In this section, you must define:</p>

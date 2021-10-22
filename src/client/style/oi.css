@@ -20,6 +20,7 @@
   border-color:#323e48;
   flex-grow: 0;
   line-height: 25px;
+  border-top-left-radius: 10px;
 }
 
 .icon-center {
@@ -32,16 +33,19 @@
   vertical-align:top;
   line-height: 27px;
   padding-right: 15px;
+  padding-left: 15px;
   justify-content: left;
+  
 }
 
 .icon-right {
   margin-right: -10px;
   flex-grow: 0;
+  border-top-right-radius: 10px;
 }
 
 .icon-status-enabled {
-  width: 26px;
+  width: 36px;
   background-color:rgb(134, 207, 141);
 }
 
@@ -49,10 +53,45 @@
   width: 26px;
   background-color:rgb(172, 169, 169);
 }
+.icon-status {
+  width: 20%;
+  background-color: #323e48;
+}
+.icon-activation {
+  margin: 65px 0px 0px -260px
+}
+.oi-container-settings {
+  background-color: rgba(219, 220, 223, 0.36);
+  margin: -20px -5px 0px -25px;
+  height: 35px;
+}
+.oi-container-name {
+ width: 100px;
+ font-size: 20px;
+ font-weight: 500;
+ margin: 5px 0px 0px 15px;
+ color: #323e48;
+}
+.oi-container-pencilBox {
+ margin: 0px 0px 0px 100px;
+}
+.oi-container-pencil {
+  color:#6c757d;
+  margin-top: 16px; 
+}
+.oi-container-status {
+  margin: 10px 0px 0px 45%;
+  position: fixed;
+}
+.oi-container-return {
+  font-size: 18px;
+  margin: 12px -10px 0px 10px;
+  color: #323e48;
+}
 
 .icon-dropdown {
-  background-color: rgba(222, 227, 228, 0.36);;
-  color: #000000;
+  background-color: #323e48;
+  color: #fff;
   border: none;
   width: 18px;
   border-radius: 40%;
@@ -68,8 +107,8 @@
 }
 
 .icon-dropdown:focus {
-  background-color:lightgray;
-  color: #000000;
+  background-color: #323e48;
+  color: #fff;
   border: none;
   border-radius: 40%;
   width: 18px;
@@ -571,11 +610,11 @@ h3 {
   flex-grow: 2
 }
 .oi-editing {
-  margin-top: 15px;
+  margin-top: 0px;
   padding-right: -15px;
   padding-left: -15px;
-  margin-left: 15px;
-  width: 140px;
+  margin-left: 0px;
+  width: 200px;
 }
 .oi-points {
   min-height: 47px;

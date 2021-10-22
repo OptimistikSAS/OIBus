@@ -1,16 +1,22 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
-import { Link } from 'react-router-dom'
+import { Form, Row, Col } from 'reactstrap'
+import { FaPencilAlt } from 'react-icons/fa'
 // import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbTitle, OIbCheckBox, OIbInteger, OIbLogLevel } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
+import EditableIdField from '../../components/EditableIdField.jsx'
+import { ConfigContext } from '../../context/configContext.jsx'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ApiSchemas from '../Apis.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
-  const { api, name } = application
+  const { api } = application
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const [renamingConnector, setRenamingConnector] = useState(null)
+  const [pencil, setPencil] = useState(true)
+  const applications = newConfig?.north?.applications ?? []
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
   if (!application.caching) application.caching = {}
@@ -19,35 +25,61 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   // load the proper schema based on the api name.
   const schema = ApiSchemas[api]
   const prefix = `north.applications.${applicationIndex}`
+  const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
+    setRenamingConnector(null)
+    dispatchNewConfig({
+      type: 'update',
+      name,
+      value: newConnectorName,
+    })
+    setPencil(true)
+  }
+
   return (
     <Form>
-      <Row>
-        <Breadcrumb tag="h5">
-          <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-            Home
-          </BreadcrumbItem>
-          <BreadcrumbItem tag={Link} to="/north" className="oi-breadcrumb">
-            North
-          </BreadcrumbItem>
-          <BreadcrumbItem active tag="span">
-            {name}
-          </BreadcrumbItem>
-        </Breadcrumb>
+      <Row className="oi-container-settings">
+        <div className="oi-container-name">
+          <EditableIdField
+            connectorName={application.name}
+            editing={renamingConnector === `north-${application.id}`}
+            fromList={applications}
+            valid={validation.application.isValidName}
+            nameChanged={handleConnectorNameChanged(
+              `north.applications.${applications.findIndex(
+                (element) => element.id === application.id,
+              )}.name`,
+            )}
+          />
+        </div>
+        {pencil
+            && (
+            <div className="oi-container-pencilBox">
+              <FaPencilAlt
+                className="oi-container-pencil"
+                onClick={() => {
+                  setRenamingConnector(`north-${application.id}`)
+                  setPencil(false)
+                }}
+              />
+            </div>
+            )}
       </Row>
 
-      <OIbTitle label="General settings">
-        <>
-          <ul>
-            <li>This form allows to configure north-specific parameters.</li>
-            <li>You need to activate the application with the enabled checkbox.</li>
-          </ul>
-        </>
-      </OIbTitle>
+      <div style={{ marginTop: '15px' }}>
+        <OIbTitle label="General settings">
+          <>
+            <ul>
+              <li>This form allows to configure north-specific parameters.</li>
+              <li>You need to activate the application with the enabled checkbox.</li>
+            </ul>
+          </>
+        </OIbTitle>
+      </div>
       <Row>
         <Col md={2}>
           <OIbCheckBox
             name={`${prefix}.enabled`}
-            label="Enabled"
+            label={application.enabled ? 'Enabled' : 'Disabled'}
             defaultValue={false}
             value={application.enabled}
             help={<div>Enable this application</div>}

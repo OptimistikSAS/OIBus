@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { nanoid } from 'nanoid'
-import { FaEllipsisV, FaTrashAlt, FaPencilAlt, FaCopy, FaCog, FaSpinner } from 'react-icons/fa'
+import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
 import { useHistory } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
-const SouthMenu = ({ dataSource, renamingConnector }) => {
+const SouthMenu = ({ dataSource }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const history = useHistory()
   const dataSources = newConfig?.south?.dataSources ?? []
@@ -43,88 +43,68 @@ const SouthMenu = ({ dataSource, renamingConnector }) => {
   }
   return (
     <>
-      <div className="icon-menu">
-        <Dropdown
-          isOpen={dropdownOpen}
-          toggle={() => setDropdownOpen((prevState) => !prevState)}
-          direction="up"
-        >
-          <DropdownToggle size="sm" className="icon-dropdown">
-            <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
-          </DropdownToggle>
 
-          <DropdownMenu>
-            <DropdownItem className="icon-dropdown-item">
-              <div
-                id="icon-rename"
-                role="button"
-                aria-hidden="true"
-                onClick={() => {
-                  renamingConnector(`south-${dataSource.id}`)
-                }}
-              >
-                <FaPencilAlt className="icon-dropdown-item" />
-                Rename
-              </div>
-            </DropdownItem>
+      <Dropdown
+        isOpen={dropdownOpen}
+        toggle={() => setDropdownOpen((prevState) => !prevState)}
+        direction="down"
+      >
+        <DropdownToggle size="sm" className="icon-dropdown">
+          <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
+        </DropdownToggle>
 
-            <DropdownItem className="icon-dropdown-item">
-              <div
-                id="icon-settings"
-                aria-hidden="true"
-                role="button"
-                onClick={() => {
-                  handleGoToConnector(`/south/${dataSource.id}`)
-                }}
-              >
-                <FaCog className="icon-dropdown-item" />
-                Settings
-              </div>
-            </DropdownItem>
+        <DropdownMenu style={{ textAlign: 'center' }}>
+          <DropdownItem className="icon-dropdown-item">
+            <div
+              id="icon-settings"
+              aria-hidden="true"
+              role="button"
+              onClick={() => {
+                handleGoToConnector(`/south/${dataSource.id}`)
+              }}
+            >
 
-            <DropdownItem className="icon-dropdown-item">
-              <div
-                id="icon-duplicate"
-                aria-hidden="true"
-                role="button"
-                onClick={() => {
-                  handleDuplicateSouth(dataSource.id)
-                }}
-              >
-                <FaCopy className="icon-dropdown-item" />
-                Duplicate
-              </div>
-            </DropdownItem>
+              Settings
+            </div>
+          </DropdownItem>
 
-            <DropdownItem className="icon-dropdown-item">
-              <div
-                id="icon-status"
-                aria-hidden="true"
-                role="button"
-                onClick={() => {
-                  handleGoToConnector(`/south/${dataSource.id}/live`)
-                }}
-              >
-                <FaSpinner className="icon-dropdown-item" />
-                Status
-              </div>
-            </DropdownItem>
+          <DropdownItem className="icon-dropdown-item">
+            <div
+              id="icon-duplicate"
+              aria-hidden="true"
+              role="button"
+              onClick={() => {
+                handleDuplicateSouth(dataSource.id)
+              }}
+            >
+              Duplicate
+            </div>
+          </DropdownItem>
 
-            <DropdownItem className="icon-dropdown-item" onClick={() => setModal(true)}>
-              <FaTrashAlt id="icon-delete" className="icon-dropdown-item" />
-              Delete
-            </DropdownItem>
-            <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
-          </DropdownMenu>
-        </Dropdown>
-      </div>
+          <DropdownItem className="icon-dropdown-item">
+            <div
+              id="icon-status"
+              aria-hidden="true"
+              role="button"
+              onClick={() => {
+                handleGoToConnector(`/south/${dataSource.id}/live`)
+              }}
+            >
+              Status
+            </div>
+          </DropdownItem>
+
+          <DropdownItem className="icon-dropdown-item" onClick={() => setModal(true)}>
+            Delete
+          </DropdownItem>
+          <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
+        </DropdownMenu>
+      </Dropdown>
+
     </>
   )
 }
 
-SouthMenu.propTypes = {
-  dataSource: PropTypes.object.isRequired,
-  renamingConnector: PropTypes.func.isRequired,
-}
+SouthMenu.propTypes = { dataSource: PropTypes.object.isRequired }
 
 export default SouthMenu

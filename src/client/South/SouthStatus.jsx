@@ -1,16 +1,20 @@
 import React from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Label, Row, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
-import { FaSync } from 'react-icons/fa'
+import { useParams, useHistory } from 'react-router-dom'
+import { Label, Row, Container, Col } from 'reactstrap'
+import { FaSync, FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
+import PointsButton from './PointsButton.jsx'
+import { ConfigContext } from '../context/configContext.jsx'
 
 const SouthStatus = () => {
   const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
+  const { newConfig } = React.useContext(ConfigContext)
+  const history = useHistory()
   const { id } = useParams() // the dataSource id passed in the url
-
+  const dataSource = newConfig.south?.dataSources?.find((element) => element.id === id)
   /**
    * Acquire the status
    * @returns {void}
@@ -25,6 +29,10 @@ const SouthStatus = () => {
         console.error(error)
         setAlert({ text: error.message, type: 'danger' })
       })
+  }
+
+  const handleGoToConnector = (pathname) => {
+    history.push({ pathname })
   }
 
   /**
@@ -78,26 +86,31 @@ const SouthStatus = () => {
     }
   })
 
-  return (
+  return dataSource ? (
     <>
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to="/south" className="oi-breadcrumb">
-          South
-        </BreadcrumbItem>
-        <BreadcrumbItem tag={Link} to={`/south/${id}`} className="oi-breadcrumb">
-          {status.name}
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          Live
-        </BreadcrumbItem>
-      </Breadcrumb>
-      <Row>
+      <Row className="oi-container-settings">
+        <FaArrowLeft
+          className="oi-container-return"
+          onClick={() => {
+            handleGoToConnector(`/south/${dataSource.id}`)
+          }}
+
+        />
+
+        <div className="oi-container-name">
+          |
+          {' '}
+          {dataSource.name}
+        </div>
+        <Col md={2} className="oi-container-status">
+          <PointsButton dataSource={dataSource} />
+        </Col>
+      </Row>
+
+      <Row style={{ marginTop: '15px' }}>
         <Label>
           <span>
-            {`${status.name} status`}
+            {`${status.Name} status`}
             &nbsp;
             <FaSync className="oi-icon" onClick={fetchStatus} />
           </span>
@@ -107,6 +120,6 @@ const SouthStatus = () => {
         <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
       </Row>
     </>
-  )
+  ) : null
 }
 export default SouthStatus
