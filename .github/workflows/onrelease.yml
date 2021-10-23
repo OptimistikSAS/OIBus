@@ -37,7 +37,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const fs = require('fs')
-            await github.repos.uploadReleaseAsset({
+            await github.rest.repos.uploadReleaseAsset({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               release_id: context.payload.release.id,
@@ -68,7 +68,7 @@ jobs:
       - name: Build the installer
         run: |
           npm run build-win-setup
-        working-directory: ./deps/win
+        working-directory: ./dist/win
         shell: cmd
 
       - uses: actions/github-script@v5
@@ -76,10 +76,10 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const fs = require('fs')
-            await github.repos.uploadReleaseAsset({
+            await github.rest.repos.uploadReleaseAsset({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               release_id: context.payload.release.id,
-              name: 'OIBus-win32x64.zip',
-              data: fs.readFileSync('./dist/oibus_setup.exe')
+              name: 'OIBus_setup_win32x64.exe',
+              data: fs.readFileSync('./dist/win-setup-release/oibus_setup.exe')
             })
