@@ -70,7 +70,7 @@ const addValues = async (ctx) => {
     try {
       ctx.app.engine.addValuesMessages += 1
       ctx.app.engine.addValuesCount += ctx.request.body.length
-      await ctx.app.engine.addValues(`external-${name}`, ctx.request.body)
+      await ctx.app.engine.addValues(name, ctx.request.body)
       ctx.ok()
     } catch (error) {
       ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${name}`)
@@ -91,7 +91,7 @@ const addFile = async (ctx) => {
   if (name) {
     try {
       ctx.app.engine.addFileCount += 1
-      await ctx.app.engine.addFile(`external-${name}`, name, ctx.request.file.path, false)
+      await ctx.app.engine.addFile(name, name, ctx.request.file.path, false)
       ctx.ok()
     } catch (error) {
       ctx.throw(500, `Unable to add file from ${name}`)
