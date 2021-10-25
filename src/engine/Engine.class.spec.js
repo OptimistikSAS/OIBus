@@ -92,31 +92,9 @@ describe('Engine', () => {
         data: { value: '' },
       }]
 
-    const sanitizedValues = [
-      {
-        timestamp: 'today',
-        pointId: 'point1',
-        data: {
-          value: 0,
-          quality: 192,
-        },
-      }, {
-        timestamp: 'today',
-        pointId: 'point2',
-        data: {
-          value: -3.98,
-          quality: 192,
-        },
-      },
-      {
-        timestamp: 'today',
-        pointId: 'point6',
-        data: { value: '' },
-      }]
-
     engine.cache.cacheValues = jest.fn()
     await engine.addValues('sourceId', sampleValues)
     expect(engine.cache.cacheValues)
-      .toBeCalledWith('sourceId', sanitizedValues)
+      .toBeCalledWith('sourceId', sampleValues)
   })
 })

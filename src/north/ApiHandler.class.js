@@ -109,7 +109,6 @@ class ApiHandler {
    * @param {object[]} values - The values to handle
    * @return {Promise} - The handle status
    */
-  /* eslint-disable-next-line class-methods-use-this */
   async handleValues(values) {
     this.logger.warn(`handleValues should be surcharged ${values}`)
     return true
@@ -120,7 +119,6 @@ class ApiHandler {
    * @param {string} filePath - The path of the raw file
    * @return {Promise} - The handle status
    */
-  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
     this.logger.warn(`handleFile should be surcharged ${filePath}`)
     return true
@@ -143,7 +141,6 @@ class ApiHandler {
 
   /**
    * POST file.
-   *
    * @param {string} filePath - The path to the file to send
    * @returns {Promise} - The send status
    */
@@ -153,7 +150,6 @@ class ApiHandler {
 
   /**
    * POST data as JSON.
-   *
    * @param {object[]} values - The values to send
    * @returns {Promise} - The send status
    */

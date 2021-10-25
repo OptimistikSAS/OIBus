@@ -52,12 +52,13 @@ module.exports = {
     config.south.dataSources.forEach((dataSource) => {
       if (!Object.prototype.hasOwnProperty.call(dataSource, dataSource.protocol)) {
         const dataSourceRelatedFields = {}
-        Object.entries(dataSource).forEach(([key, value]) => {
-          if (!engineRelatedDataSourceFields.includes(key)) {
-            dataSourceRelatedFields[key] = value
-            delete dataSource[key]
-          }
-        })
+        Object.entries(dataSource)
+          .forEach(([key, value]) => {
+            if (!engineRelatedDataSourceFields.includes(key)) {
+              dataSourceRelatedFields[key] = value
+              delete dataSource[key]
+            }
+          })
         dataSource[dataSource.protocol] = dataSourceRelatedFields
       }
     })
@@ -67,12 +68,13 @@ module.exports = {
     config.north.applications.forEach((application) => {
       if (!Object.prototype.hasOwnProperty.call(application, application.api)) {
         const applicationRelatedFields = {}
-        Object.entries(application).forEach(([key, value]) => {
-          if (!engineRelatedApplicationFields.includes(key)) {
-            applicationRelatedFields[key] = value
-            delete application[key]
-          }
-        })
+        Object.entries(application)
+          .forEach(([key, value]) => {
+            if (!engineRelatedApplicationFields.includes(key)) {
+              applicationRelatedFields[key] = value
+              delete application[key]
+            }
+          })
         application[application.api] = applicationRelatedFields
       }
     })
@@ -299,7 +301,9 @@ module.exports = {
         }
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'clientId')) {
           logger.info('Add clientId field to MQTT')
-          dataSource.MQTT.clientId = `OIBus-${Math.random().toString(16).substr(2, 8)}`
+          dataSource.MQTT.clientId = `OIBus-${Math.random()
+            .toString(16)
+            .substr(2, 8)}`
         }
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keepalive')) {
           logger.info('Add keepalive field to MQTT')
@@ -539,6 +543,12 @@ module.exports = {
         if (typeof dataSource.SQLDbToFile.databasePath === 'undefined') {
           dataSource.SQLDbToFile.databasePath = './sqlite.db'
         }
+
+        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
+          logger.info('Update date format from moment to luxon for SQLDbToFile')
+          dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy')
+            .replace('DD', 'dd')
+        }
       }
       if (dataSource.protocol === 'MQTT') {
         logger.info(`Fixing MQTT settings for data source ${dataSource.dataSourceId}`)
@@ -550,6 +560,12 @@ module.exports = {
         delete dataSource.MQTT.timeStampTimezone
         dataSource.MQTT.pointIdPath = dataSource.MQTT.nodeIdPath
         delete dataSource.MQTT.nodeIdPath
+
+        if (Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'timestampFormat')) {
+          logger.info('Update date format from moment to luxon for MQTT')
+          dataSource.MQTT.timestampFormat = dataSource.MQTT.timestampFormat.replace('YYYY', 'yyyy')
+            .replace('DD', 'dd')
+        }
 
         // engine name is used instead
         if (dataSource.MQTT.clientId) {
@@ -695,6 +711,67 @@ module.exports = {
           application.MQTTNorth.keyFile = ''
           application.MQTTNorth.caFile = ''
           application.MQTTNorth.rejectUnauthorized = false
+        }
+        // adding the default value for the new parameters for MQTTNorth connector (useDataKeyValue and keyParentValue)
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'useDataKeyValue')) {
+          logger.info(`Add useDataKeyValue field to ${application.name}`)
+          application.MQTTNorth.useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'keyParentValue')) {
+          logger.info(`Add keyParentValue field to ${application.name}`)
+          application.MQTTNorth.keyParentValue = ''
+        }
+      }
+
+      if (application.api === 'InfluxDB') {
+        // adding the default value for the new parameters for InfluxDB connector (useDataKeyValue and keyParentValue)
+        if (!Object.prototype.hasOwnProperty.call(application.InfluxDB, 'useDataKeyValue')) {
+          logger.info(`Add useDataKeyValue field to ${application.name}`)
+          application.InfluxDB.useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.InfluxDB, 'keyParentValue')) {
+          logger.info(`Add keyParentValue field to ${application.name}`)
+          application.InfluxDB.keyParentValue = ''
+        }
+      }
+
+      if (application.api === 'MongoDB') {
+        // adding the default value for the new parameters for MongoDB connector (useDataKeyValue and keyParentValue)
+        if (!Object.prototype.hasOwnProperty.call(application.MongoDB, 'useDataKeyValue')) {
+          logger.info(`Add useDataKeyValue field to ${application.name}`)
+          application[application.api].useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MongoDB, 'keyParentValue')) {
+          logger.info(`Add keyParentValue field to ${application.name}`)
+          application[application.api].keyParentValue = ''
+        }
+        if (Object.prototype.hasOwnProperty.call(application.MongoDB, 'timeStampKey')) {
+          logger.info(`Change key timeStampKey to timestampKey for ${application.name}`)
+          application.MongoDB.timestampKey = application.MongoDB.timeStampKey
+          delete application.MongoDB.timeStampKey
+        }
+      }
+
+      if (application.api === 'TimescaleDB') {
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'regExp')) {
+          logger.info(`Add regExp field to ${application.name}`)
+          application.TimescaleDB.regExp = '(.*)/'
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'table')) {
+          logger.info(`Add table field to ${application.name}`)
+          application.TimescaleDB.table = '%1$s'
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'optFields')) {
+          logger.info(`Add optFields field to ${application.name}`)
+          application.TimescaleDB.optFields = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'useDataKeyValue')) {
+          logger.info(`Add useDataKeyValue field to ${application.name}`)
+          application.TimescaleDB.useDataKeyValue = false
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'keyParentValue')) {
+          logger.info(`Add keyParentValue field to ${application.name}`)
+          application.TimescaleDB.keyParentValue = ''
         }
       }
     }
@@ -872,10 +949,10 @@ module.exports = {
 
       if (application.subscribedTo?.length > 0) {
         // eslint-disable-next-line max-len
-        logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}`)
+        logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}. Obsolete subscription will be removed`)
         // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
         application.subscribedTo = application.subscribedTo
-        // eslint-disable-next-line max-len
+          // eslint-disable-next-line max-len
           .filter((dataSourceName) => config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName) || config.engine.externalSources.find((externalDataSourceName) => externalDataSourceName === dataSourceName))
           .map((dataSourceName) => {
             const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
@@ -887,77 +964,4 @@ module.exports = {
       }
     }
   },
-  25: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'SQLDbToFile') {
-        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
-          logger.info('Update date format from moment to luxon for SQLDbToFile')
-          dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
-        }
-      }
-      if (dataSource.protocol === 'MQTT') {
-        if (Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'timestampFormat')) {
-          logger.info('Update date format from moment to luxon for MQTT')
-          dataSource.MQTT.timestampFormat = dataSource.MQTT.timestampFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
-        }
-      }
-    })
-    config.north.applications.forEach((application) => {
-      if (application.api === 'InfluxDB') {
-        // adding the default value for the new parameters for InfluxDB connector (useDataKeyValue and keyParentValue)
-        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'useDataKeyValue')) {
-          logger.info(`Add useDataKeyValue field to ${application.api}`)
-          application[application.api].useDataKeyValue = false
-        }
-        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'keyParentValue')) {
-          logger.info(`Add keyParentValue field to ${application.api}`)
-          application[application.api].keyParentValue = ''
-        }
-      }
-      if (application.api === 'MQTTNorth') {
-        // adding the default value for the new parameters for MQTTNorth connector (useDataKeyValue and keyParentValue)
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'useDataKeyValue')) {
-          logger.info('Add useDataKeyValue field to MQTTNorth')
-          application.MQTTNorth.useDataKeyValue = false
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'keyParentValue')) {
-          logger.info('Add keyParentValue field to MQTTNorth')
-          application.MQTTNorth.keyParentValue = ''
-        }
-      }
-      if (application.api === 'MongoDB') {
-        // adding the default value for the new parameters for MongoDB connector (useDataKeyValue and keyParentValue)
-        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'useDataKeyValue')) {
-          logger.info(`Add useDataKeyValue field to ${application.api}`)
-          application[application.api].useDataKeyValue = false
-        }
-        if (!Object.prototype.hasOwnProperty.call(application[application.api], 'keyParentValue')) {
-          logger.info(`Add keyParentValue field to ${application.api}`)
-          application[application.api].keyParentValue = ''
-        }
-      }
-      if (application.api === 'TimescaleDB') {
-        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'regExp')) {
-          logger.info('Add regExp field to TimescaleDB')
-          application.TimescaleDB.regExp = '(.*)/'
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'table')) {
-          logger.info('Add table field to TimescaleDB')
-          application.TimescaleDB.table = '%1$s'
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'optFields')) {
-          logger.info('Add optFields field to TimescaleDB')
-          application.TimescaleDB.optFields = ''
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'useDataKeyValue')) {
-          logger.info('Add useDataKeyValue field to TimescaleDB')
-          application.TimescaleDB.useDataKeyValue = false
-        }
-        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'keyParentValue')) {
-          logger.info('Add keyParentValue field to TimescaleDB')
-          application.TimescaleDB.keyParentValue = ''
-        }
-      }
-    })
-  }
 }

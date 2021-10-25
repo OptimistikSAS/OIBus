@@ -1,7 +1,7 @@
 const { Client } = require('pg')
 
 const ApiHandler = require('../ApiHandler.class')
-const InfluxDB = require('./TimescaleDB.class')
+const TimescaleDB = require('./TimescaleDB.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
@@ -14,11 +14,11 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }
 engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 
-let timescaleDbNorth = null
 const timescaleDbConfig = config.north.applications[4]
 const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
 const values = [
@@ -28,22 +28,21 @@ const values = [
     data: { value: 666, quality: 'good' },
   },
 ]
-
-beforeEach(async () => {
+beforeEach(() => {
   jest.resetAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
-  timescaleDbNorth = new InfluxDB(timescaleDbConfig, engine)
-  await timescaleDbNorth.init()
 })
 
 describe('TimescaleDB north', () => {
   it('should be properly initialized', () => {
+    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
     expect(timescaleDbNorth.canHandleValues).toBeTruthy()
     expect(timescaleDbNorth.canHandleFiles).toBeFalsy()
   })
 
   it('should properly handle values and publish them', async () => {
+    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
     const client = {
       connect: jest.fn(),
       query: jest.fn(),
@@ -73,6 +72,7 @@ describe('TimescaleDB north', () => {
   })
 
   it('should properly handle values with publish error', async () => {
+    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
     const client = {
       connect: jest.fn(),
       query: jest.fn(),

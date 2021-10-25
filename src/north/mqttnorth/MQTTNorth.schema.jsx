@@ -205,12 +205,14 @@ schema.form = {
   },
   useDataKeyValue: {
     type: 'OIbCheckBox',
+    valid: notEmpty(),
     label: 'use key "value" of Json "data"',
     help: 'when checked means we use value key of data Json object (but not the quality key)',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
+    valid: optional(),
     defaultValue: '',
     help: 'indicate the key of Json object which contains value data (empty value mean Json object root)',
   },

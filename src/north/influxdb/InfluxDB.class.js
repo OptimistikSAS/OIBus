@@ -48,6 +48,28 @@ class InfluxDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
+    const {
+      host,
+      user,
+      password,
+      db,
+      precision = 'ms',
+      regExp,
+      measurement,
+      tags,
+      useDataKeyValue,
+      keyParentValue,
+    } = this.application.InfluxDB
+    this.host = host
+    this.user = user
+    this.password = password
+    this.database = db
+    this.precision = precision
+    this.regExp = regExp
+    this.measurement = measurement
+    this.tags = tags
+    this.useDataKeyValue = useDataKeyValue
+    this.keyParentValue = keyParentValue
 
     this.canHandleValues = true
   }
@@ -58,12 +80,12 @@ class InfluxDB extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`Link handleValues() call with ${values.length} values`)
+    this.logger.silly(`InfluxDB handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
       this.statusData['Last handled values at'] = new Date().toISOString()
       this.statusData['Number of values sent since OIBus has started'] += values.length
-      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
@@ -72,36 +94,38 @@ class InfluxDB extends ApiHandler {
     return values.length
   }
 
+  // TODO: check here
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    const { host, user, password, db, precision = 'ms', regExp, measurement, tags, useDataKeyValue, keyParentValue } = this.application.InfluxDB
-    const url = `${host}/write?u=${user}&p=${this.encryptionService.decryptText(password)}&db=${db}&precision=${precision}`
+    this.logger.info(`Sending values to ${this.host}/write?u=${this.user}&p=<password>&db=${this.database}&precision=${this.precision}`)
+    // eslint-disable-next-line max-len
+    const url = `${this.host}/write?u=${this.user}&p=${this.encryptionService.decryptText(this.password)}&db=${this.database}&precision=${this.precision}`
 
     let body = ''
 
     entries.forEach((entry) => {
       const { pointId, data, timestamp } = entry
 
-      const mainRegExp = new RegExp(regExp)
+      const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
       // Remove the first element, which is the matched string, because we only need the groups
       groups.shift()
 
-      const measurementValue = vsprintf(measurement, groups)
-      const tagsValue = vsprintf(tags, groups)
+      const measurementValue = vsprintf(this.measurement, groups)
+      const tagsValue = vsprintf(this.tags, groups)
 
       // If there are less groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replace to see if this is the case
-      if ((measurementValue.match(/undefined/g) || []).length > (measurement.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for measurement`)
+      if ((measurementValue.match(/undefined/g) || []).length > (this.measurement.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for measurement`)
         return
       }
-      if ((tagsValue.match(/undefined/g) || []).length > (tags.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for tags`)
+      if ((tagsValue.match(/undefined/g) || []).length > (this.tags.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for tags`)
         return
       }
 
@@ -109,12 +133,12 @@ class InfluxDB extends ApiHandler {
       let fields = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      // In fact, as some usecases can produce value structured as Json Object, code is modified to process value which could be
+      // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
       // simple value (integer, float, ...) or Json object
       let dataValue = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      if (useDataKeyValue) {
+      if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
         // If it's a json, the function return data where path is given by keyParentValue parameter
@@ -123,7 +147,7 @@ class InfluxDB extends ApiHandler {
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
         //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data
@@ -147,7 +171,7 @@ class InfluxDB extends ApiHandler {
       // Convert timestamp to the configured precision
       const timestampTime = (new Date(timestamp)).getTime()
       let preciseTimestamp
-      switch (precision) {
+      switch (this.precision) {
         case 'ns':
           preciseTimestamp = 1000 * 1000 * timestampTime
           break
