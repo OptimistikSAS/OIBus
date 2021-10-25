@@ -49,7 +49,7 @@
     "@koa/router": "10.1.1",
     "ads-client": "1.11.3",
     "aws-sdk": "2.996.0",
-    "axios": "0.21.4",
+    "axios": "0.24.0",
     "basic-auth": "2.0.1",
     "bootstrap-less-port": "2.3.1",
     "form-data": "4.0.0",
