@@ -11,7 +11,7 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock fs
 jest.mock('fs/promises', () => ({
-  exists: jest.fn(() => new Promise((resolve) => {
+  stat: jest.fn(() => new Promise((resolve) => {
     resolve(true)
   })),
   readFile: jest.fn(() => new Promise((resolve) => {
@@ -66,7 +66,7 @@ describe('MQTTNorth north', () => {
     const mockMath = Object.create(global.Math)
     mockMath.random = () => 0.12345
     global.Math = mockMath
-    jest.spyOn(fs, 'exists').mockImplementation(() => false)
+    jest.spyOn(fs, 'stat').mockImplementation(() => false)
     const testMqttConfigWithFiles = {
       ...mqttConfig,
       MQTTNorth: {
@@ -104,7 +104,7 @@ describe('MQTTNorth north', () => {
 
   it('should properly connect with cert files', async () => {
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
-    jest.spyOn(fs, 'exists').mockImplementation(() => true)
+    jest.spyOn(fs, 'stat').mockImplementation(() => true)
     jest.spyOn(fs, 'readFile').mockImplementation(() => 'fileContent')
     const testMqttConfigWithFiles = {
       ...mqttConfig,
@@ -142,7 +142,7 @@ describe('MQTTNorth north', () => {
     expect(mqttNorth.logger.error)
       .toBeCalledWith(error)
 
-    jest.spyOn(fs, 'exists').mockImplementation(() => {
+    jest.spyOn(fs, 'stat').mockImplementation(() => {
       throw new Error('test')
     })
 

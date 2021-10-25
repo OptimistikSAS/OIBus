@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const OIAnalytics = require('./OIAnalytics.class')
 const config = require('../../../tests/testConfig').default
 
@@ -52,7 +52,7 @@ describe('OIAnalytics', () => {
 
   it('should properly handle files', async () => {
     const filePath = '/path/to/file/example.file'
-    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 1000 }))
+    jest.spyOn(fs, 'stat').mockImplementation(() => ({ size: 1000 }))
 
     await oiAnalytics.handleFile(filePath)
 

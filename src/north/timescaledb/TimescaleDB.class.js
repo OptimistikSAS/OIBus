@@ -45,6 +45,26 @@ class TimescaleDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
+    const {
+      host,
+      user,
+      password,
+      db,
+      regExp,
+      table,
+      optFields,
+      useDataKeyValue,
+      keyParentValue,
+    } = this.application.TimescaleDB
+    this.host = host
+    this.user = user
+    this.password = password
+    this.database = db
+    this.regExp = regExp
+    this.table = table
+    this.optFields = optFields
+    this.useDataKeyValue = useDataKeyValue
+    this.keyParentValue = keyParentValue
 
     this.canHandleValues = true
   }
@@ -60,7 +80,7 @@ class TimescaleDB extends ApiHandler {
       await this.makeRequest(values)
       this.statusData['Last handled values at'] = new Date().toISOString()
       this.statusData['Number of values sent since OIBus has started'] += values.length
-      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
@@ -70,20 +90,19 @@ class TimescaleDB extends ApiHandler {
   }
 
   /**
-   * Connection to MongoDB
+   * Connection to TimescaleDB
    * @return {void}
    */
   connect() {
-    this.logger.info('Connection to TimescaleDB')
-    const { host, user, password, db } = this.application.TimescaleDB
+    this.logger.info(`Connection to TimescaleDB: postgres://${this.user}:<password>@${this.host}/${this.database}`)
 
     // Build the url
-    const url = `postgres://${user}:${this.encryptionService.decryptText(password)}@${host}/${db}`
+    const url = `postgres://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
     // Get client object and connect to the database
-    this.clientPG = new Client(url)
-    this.clientPG.connect((error) => {
+    this.timescaleClient = new Client(url)
+    this.timescaleClient.connect((error) => {
       if (error) {
-        this.logger.error(`Error during Connection To TimescaleDB : ${error}`)
+        this.logger.error(`Error during connection to TimescaleDB : ${error}`)
         this.clientPG = null
       } else {
         this.logger.info('Connection To TimescaleDB : OK')
@@ -92,23 +111,23 @@ class TimescaleDB extends ApiHandler {
   }
 
   /**
-   * Disconnection from MongoDB
+   * Disconnection from TimescaleDB
    * @return {void}
    */
   disconnect() {
     this.logger.info('Disconnection from TimeScaleDB')
-    this.clientPG.end()
+    if (this.timescaleClient) {
+      this.timescaleClient.end()
+    }
   }
 
+  // TODO: check here
   /**
    * Makes a TimescaleDB request with the parameters in the Object arg.
    * @param {object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
-
   async makeRequest(entries) {
-    const { regExp, table, optFields, useDataKeyValue, keyParentValue } = this.application.TimescaleDB
-
     let query = 'BEGIN;'
     let tableValue = ''
     let optFieldsValue = ''
@@ -116,25 +135,25 @@ class TimescaleDB extends ApiHandler {
     entries.forEach((entry) => {
       const { pointId, data } = entry
 
-      const mainRegExp = new RegExp(regExp)
+      const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
       // Remove the first element, which is the matched string, because we only need the groups
       groups.shift()
 
-      tableValue = vsprintf(table, groups)
+      tableValue = vsprintf(this.table, groups)
 
-      // optFieldsValue is used to identify fields which are determinated from pointId string
-      optFieldsValue = vsprintf(optFields, groups)
+      // optFieldsValue is used to identify fields which are determined from pointId string
+      optFieldsValue = vsprintf(this.optFields, groups)
 
       // If there are less groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replace to see if this is the case
-      if ((tableValue.match(/undefined/g) || []).length > (table.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for table`)
+      if ((tableValue.match(/undefined/g) || []).length > (this.table.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for table`)
         return
       }
 
-      if ((optFieldsValue.match(/undefined/g) || []).length > (optFields.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for optionnals fields`)
+      if ((optFieldsValue.match(/undefined/g) || []).length > (this.optFields.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for optionals fields`)
         return
       }
 
@@ -150,7 +169,7 @@ class TimescaleDB extends ApiHandler {
       let dataValue = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      if (useDataKeyValue) {
+      if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
         // If it's a json, the function return data where path is given by keyParentValue parameter
@@ -159,7 +178,7 @@ class TimescaleDB extends ApiHandler {
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
         //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data
@@ -201,7 +220,7 @@ class TimescaleDB extends ApiHandler {
 
     query += 'COMMIT'
 
-    await this.clientPG.query(query)
+    await this.timescaleClient.query(query)
   }
 }
 

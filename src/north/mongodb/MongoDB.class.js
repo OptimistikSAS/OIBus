@@ -39,6 +39,34 @@ class MongoDB extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
+    const {
+      host,
+      user,
+      password,
+      db,
+      regExp,
+      collection,
+      indexFields,
+      createCollection,
+      createCollectionIndex,
+      addTimestampToIndex,
+      timeStampKey,
+      useDataKeyValue,
+      keyParentValue,
+    } = this.application.MongoDB
+    this.host = host
+    this.user = user
+    this.password = password
+    this.database = db
+    this.regExp = regExp
+    this.collection = collection
+    this.indexFields = indexFields
+    this.createCollection = createCollection
+    this.createCollectionIndex = createCollectionIndex
+    this.addTimestampToIndex = addTimestampToIndex
+    this.timestampKey = timeStampKey
+    this.useDataKeyValue = useDataKeyValue
+    this.keyParentValue = keyParentValue
 
     this.canHandleValues = true
   }
@@ -49,12 +77,12 @@ class MongoDB extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`Link handleValues() call with ${values.length} values`)
+    this.logger.silly(`MongoDB handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
       this.statusData['Last handled values at'] = new Date().toISOString()
       this.statusData['Number of values sent since OIBus has started'] += values.length
-      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
@@ -68,30 +96,28 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   connect() {
-    this.logger.info('Connection to MongoDB')
     super.connect()
-    const { host, user, password, db } = this.application.MongoDB
-
-    // creating url connection string
-    const url = (user === '') ? `mongodb://${host}` : `mongodb://${user}:${this.encryptionService.decryptText(password)}@${host}`
+    this.logger.info(`Connection to MongoDB: ${this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`} `)
+    const url = (this.user === '') ? `mongodb://${this.host}`
+      : `mongodb://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}`
 
     this.client = new mongo.MongoClient(url, { useUnifiedTopology: true })
     this.client.connect((error) => {
       if (error) {
-        this.logger.error(`Error during Connection To MongoDB : ${error}`)
+        this.logger.error(`Error during connection To MongoDB : ${error}`)
         this.clientDB = null
       } else {
         this.logger.info('Connection To MongoDB : OK')
         this.statusData['Connected at'] = new Date().toISOString()
         this.updateStatusDataStream()
         // open database db
-        this.clientDB = this.client.db(db)
+        this.mongoClient = this.client.db(this.database)
 
-        // variables used to work with Collection and indexes creation if DB Collection doesn't exists
-
+        // TODO: check here
+        // variables used to work with Collection and indexes creation if DB Collection doesn't exist
         // getting database list Collections
         this.listCollections = []
-        this.clientDB.listCollections({ nameonly: true }).toArray((err, collectionNames) => {
+        this.mongoClient.listCollections({ nameonly: true }).toArray((err, collectionNames) => {
           if (!err) {
             this.listCollections = collectionNames.slice()
           }
@@ -109,21 +135,21 @@ class MongoDB extends ApiHandler {
    */
   disconnect() {
     this.logger.info('Disconnection from MongoDB')
-    this.client.close()
+    if (this.client) {
+      this.client.close()
+    }
     super.disconnect()
     this.statusData['Connected at'] = 'Not connected'
     this.updateStatusDataStream()
   }
 
+  // TODO: check here
   /**
    * Makes an MongoDB request with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event
    * @return {Promise} - The request status
    */
   async makeRequest(entries) {
-    // eslint-disable-next-line max-len
-    const { regExp, collection, indexFields, createCollection, createCollectionIndex, addTimestampToIndex, timeStampKey, useDataKeyValue, keyParentValue } = this.application.MongoDB
-
     let body = ''
     let collectionValue = ''
     let indexFieldsValue = ''
@@ -131,22 +157,22 @@ class MongoDB extends ApiHandler {
     entries.forEach((entry) => {
       const { pointId, data } = entry
 
-      const mainRegExp = new RegExp(regExp)
+      const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
       // Remove the first element, which is the matched string, because we only need the groups
       groups.shift()
 
-      collectionValue = vsprintf(collection, groups)
-      indexFieldsValue = vsprintf(indexFields, groups)
+      collectionValue = vsprintf(this.collection, groups)
+      indexFieldsValue = vsprintf(this.indexFields, groups)
 
       // If there are less groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replace to see if this is the case
-      if ((collectionValue.match(/undefined/g) || []).length > (collection.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for collection`)
+      if ((collectionValue.match(/undefined/g) || []).length > (this.collection.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for collection`)
         return
       }
-      if ((indexFieldsValue.match(/undefined/g) || []).length > (indexFields.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${regExp} for ${pointId} doesn't have enough groups for indexes`)
+      if ((indexFieldsValue.match(/undefined/g) || []).length > (this.indexFields.match(/undefined/g) || []).length) {
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for indexes`)
         return
       }
 
@@ -162,7 +188,7 @@ class MongoDB extends ApiHandler {
       let dataValue = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      if (useDataKeyValue) {
+      if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
         // If it's a json, the function return data where path is given by keyParentValue parameter
@@ -171,7 +197,7 @@ class MongoDB extends ApiHandler {
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
         //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, keyParentValue)
+        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data
@@ -195,21 +221,22 @@ class MongoDB extends ApiHandler {
     })
 
     if (!this.collectionChecked) {
-      if (createCollection) {
+      if (this.createCollection) {
         // before inserting data in MongoDB, ensuring, for the first time, that
         // collection exists with indexes which are based on tags indexFields
-        await this.ensureCollectionExists(collectionValue, indexFieldsValue, createCollectionIndex, addTimestampToIndex, timeStampKey)
+        await this.ensureCollectionExists(collectionValue, indexFieldsValue, this.createCollectionIndex, this.addTimestampToIndex, this.timestampKey)
       }
     } else {
       // converting body in JSON Array
       const bodyJson = JSON.parse(`[${body}]`)
 
       // Inserting JSON Array in MongoDB
-      this.clientDB.collection(collectionValue).insertMany(bodyJson)
+      this.mongoClient.collection(collectionValue).insertMany(bodyJson)
     }
     return true
   }
 
+  // TODO: check here
   /**
    * Ensure Collection exists and create it with indexes if not exists
    * @param {string}   collection  - The collection name
@@ -224,7 +251,7 @@ class MongoDB extends ApiHandler {
 
     if (icollection < 0) {
       // the collection doesn't exists, we create it with indexes
-      await this.clientDB.createCollection(collection, ((error1) => {
+      await this.mongoClient.createCollection(collection, ((error1) => {
         if (error1) {
           this.logger.error(`Error during Collection (${collection}) creation : ${error1}`)
         } else {
@@ -250,7 +277,7 @@ class MongoDB extends ApiHandler {
               if (!listIndex) listIndex = `"${listIndexFields[i]}":1`
               else listIndex = `${listIndex},"${listIndexFields[i]}":1`
             }
-            this.clientDB.collection(collection).createIndex(JSON.parse(`{${listIndex}}`), ((error2) => {
+            this.mongoClient.collection(collection).createIndex(JSON.parse(`{${listIndex}}`), ((error2) => {
               if (error2) {
                 this.logger.error(`Error during Collection (${collection}) Indexes Creation : ${error2}`)
               } else {

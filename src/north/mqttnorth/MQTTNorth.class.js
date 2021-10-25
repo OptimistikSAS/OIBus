@@ -53,7 +53,7 @@ class MQTTNorth extends ApiHandler {
       regExp,
       topic,
       useDataKeyValue,
-      keyParentValue
+      keyParentValue,
     } = this.application.MQTTNorth
 
     this.url = url
@@ -79,14 +79,14 @@ class MQTTNorth extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`Link handleValues() call with ${values.length} values`)
+    this.logger.silly(`MQTT North handleValues() call with ${values.length} values`)
     const successCount = await this.publishValues(values)
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
     this.statusData['Last handled values at'] = new Date().toISOString()
     this.statusData['Number of values sent since OIBus has started'] += values.length
-    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
     this.updateStatusDataStream()
     return successCount
   }
@@ -104,7 +104,8 @@ class MQTTNorth extends ApiHandler {
 
     if (this.keyFile) {
       try {
-        if (await fs.exists(this.keyFile)) {
+        const statFile = await fs.stat(this.keyFile)
+        if (statFile) {
           keyFileContent = await fs.readFile(this.keyFile)
         } else {
           this.logger.error(`Key file ${this.keyFile} does not exist`)
@@ -116,7 +117,8 @@ class MQTTNorth extends ApiHandler {
     }
     if (this.certFile) {
       try {
-        if (await fs.exists(this.certFile)) {
+        const statFile = await fs.stat(this.certFile)
+        if (statFile) {
           certFileContent = await fs.readFile(this.certFile)
         } else {
           this.logger.error(`Cert file ${this.certFile} does not exist`)
@@ -128,7 +130,8 @@ class MQTTNorth extends ApiHandler {
     }
     if (this.caFile) {
       try {
-        if (await fs.exists(this.caFile)) {
+        const statFile = await fs.stat(this.caFile)
+        if (statFile) {
           caFileContent = await fs.readFile(this.caFile)
         } else {
           this.logger.error(`CA file ${this.caFile} does not exist`)
@@ -185,9 +188,9 @@ class MQTTNorth extends ApiHandler {
     super.disconnect()
   }
 
+  // TODO: check here
   /**
    * Publish MQTT message.
-   *
    * @param {object} entry - The entry to publish
    * @returns {Promise} - The publish status
    */
@@ -224,6 +227,7 @@ class MQTTNorth extends ApiHandler {
     })
   }
 
+  // TODO: check here
   /**
    * Makes an MQTT publish message with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event

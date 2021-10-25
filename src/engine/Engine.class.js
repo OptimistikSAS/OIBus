@@ -125,9 +125,8 @@ class Engine {
    * @return {void}
    */
   async addValues(id, values) {
-    const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.silly(`Engine: Add ${sanitizedValues?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
-    if (sanitizedValues.length) await this.cache.cacheValues(id, sanitizedValues)
+    this.logger.silly(`Engine: Add ${values?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
+    if (values.length) await this.cache.cacheValues(id, values)
   }
 
   /**
