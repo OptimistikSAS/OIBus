@@ -1,5 +1,6 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ESLintPlugin = require('eslint-webpack-plugin')
 
 module.exports = {
   entry: ['babel-polyfill', './src/client/index.jsx'],
@@ -15,7 +16,6 @@ module.exports = {
     },
     fallback: { path: require.resolve('path-browserify') },
   },
-  // devServer: { contentBase: './build' },
   devtool: 'source-map',
   performance: {
     maxEntrypointSize: 3200000,
@@ -26,7 +26,7 @@ module.exports = {
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ['babel-loader', 'eslint-loader'],
+        use: ['babel-loader'],
       },
       {
         test: /\.(less|css)$/,
@@ -47,5 +47,6 @@ module.exports = {
       },
     ],
   },
-  plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') })],
+  plugins: [new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') }),
+    new ESLintPlugin()],
 }

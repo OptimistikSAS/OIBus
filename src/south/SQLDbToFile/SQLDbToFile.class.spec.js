@@ -294,7 +294,7 @@ describe('sql-db-to-file', () => {
     sqlSouth.logger.error.mockClear()
     jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => null)
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
-    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot read property \'execute\' of null'))
+    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot read properties of null (reading \'execute\')'))
   })
 
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
@@ -435,7 +435,7 @@ describe('sql-db-to-file', () => {
     sqlSouth.logger.error.mockClear()
     jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => null)
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
-    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot set property \'callTimeout\' of null'))
+    expect(sqlSouth.logger.error).toBeCalledWith(new TypeError('Cannot set properties of null (setting \'callTimeout\')'))
   })
 
   it('should interact with SQLite database server if driver is sqlite', async () => {

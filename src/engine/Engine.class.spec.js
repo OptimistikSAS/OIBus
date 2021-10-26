@@ -8,6 +8,8 @@ const ConfigService = require('../services/config.service.class')
 jest.mock('./Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
+jest.mock('./Cache.class')
+
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({
   decryptText: (password) => password,
@@ -18,7 +20,6 @@ EncryptionService.getInstance = () => ({
 })
 
 // Mock configService
-jest.createMockFromModule('../services/config.service.class')
 jest.mock('../services/config.service.class')
 
 const mockConfigService = { getConfig: jest.fn() }
@@ -47,66 +48,68 @@ describe('Engine', () => {
   })
 
   it('should add values', async () => {
-    const sampleValues = [{
-      timestamp: 'today',
-      pointId: 'point1',
-      data: {
-        value: 0,
-        quality: 192,
+    const sampleValues = [
+      {
+        timestamp: 'today',
+        pointId: 'point1',
+        data: {
+          value: 0,
+          quality: 192,
+        },
+      }, {
+        timestamp: 'today',
+        pointId: 'point2',
+        data: {
+          value: -3.98,
+          quality: 192,
+        },
       },
-    }, {
-      timestamp: 'today',
-      pointId: 'point2',
-      data: {
-        value: -3.98,
-        quality: 192,
+      {
+        timestamp: 'today',
+        pointId: 'point3',
+        data: {
+          value: null,
+          quality: 192,
+        },
+      }, {
+        timestamp: 'today',
+        pointId: 'point4',
+        data: {
+          value: undefined,
+          quality: 192,
+        },
+      }, {
+        timestamp: 'today',
+        pointId: 'point5',
+        data: undefined,
       },
-    },
-    {
-      timestamp: 'today',
-      pointId: 'point3',
-      data: {
-        value: null,
-        quality: 192,
-      },
-    }, {
-      timestamp: 'today',
-      pointId: 'point4',
-      data: {
-        value: undefined,
-        quality: 192,
-      },
-    }, {
-      timestamp: 'today',
-      pointId: 'point5',
-      data: undefined,
-    },
-    {
-      timestamp: 'today',
-      pointId: 'point6',
-      data: { value: '' },
-    }]
+      {
+        timestamp: 'today',
+        pointId: 'point6',
+        data: { value: '' },
+      }]
 
-    const sanitizedValues = [{
-      timestamp: 'today',
-      pointId: 'point1',
-      data: {
-        value: 0,
-        quality: 192,
+    const sanitizedValues = [
+      {
+        timestamp: 'today',
+        pointId: 'point1',
+        data: {
+          value: 0,
+          quality: 192,
+        },
+      }, {
+        timestamp: 'today',
+        pointId: 'point2',
+        data: {
+          value: -3.98,
+          quality: 192,
+        },
       },
-    }, {
-      timestamp: 'today',
-      pointId: 'point2',
-      data: {
-        value: -3.98,
-        quality: 192,
-      },
-    },
-    {
-      timestamp: 'today',
-      pointId: 'point6',
-      data: { value: '' },
-    }]
+      {
+        timestamp: 'today',
+        pointId: 'point6',
+        data: { value: '' },
+      }]
 
     engine.cache.cacheValues = jest.fn()
     await engine.addValues('sourceId', sampleValues)
