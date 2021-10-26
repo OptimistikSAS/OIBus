@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import { Container } from 'reactstrap'
 
-import './style/main.less'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import './style/oi.css'
 
 import TopHeader from './TopHeader.jsx'
 import Activation from './Activation/Activation.jsx'
