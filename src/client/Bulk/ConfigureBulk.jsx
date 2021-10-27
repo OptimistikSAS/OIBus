@@ -7,14 +7,16 @@ import BulkForm from './Form/BulkForm.jsx'
 const ConfigureBulk = () => {
   const { newHistoryConfig, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const { id } = useParams()
-  const bulkToUpdate = newHistoryConfig.find((bulk) => bulk.id === id)
-
+  const bulkIndex = newHistoryConfig.findIndex((bulk) => bulk.id === id)
+  const bulkToUpdate = newHistoryConfig[bulkIndex]
   const onChange = (name, value, validity) => {
-    dispatchNewHistoryConfig({ type: 'update', name, value, validity })
+    dispatchNewHistoryConfig({ type: 'update', name: `${bulkIndex}.${name}`, value, validity })
   }
+
   return bulkToUpdate ? (
     <BulkForm
       bulk={bulkToUpdate}
+      bulkIndex={bulkIndex}
       onChange={onChange}
     />
   ) : (

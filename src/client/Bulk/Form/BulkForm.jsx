@@ -1,12 +1,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { Form, Row, Col, Breadcrumb, BreadcrumbItem, Label } from 'reactstrap'
 import { Link } from 'react-router-dom'
-import { OIbTitle, OIbCheckBox, OIbText } from '../../components/OIbForm'
+import { FaPauseCircle, FaPlayCircle } from 'react-icons/fa'
+import { OIbTitle, OIbCheckBox, OIbText, OIbTextArea } from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
+import { ConfigContext } from '../../context/configContext.jsx'
+import PointsSection from './PointsSection.jsx'
 
-const BulkForm = ({ bulk, onChange }) => {
-  const { name } = bulk
+const BulkForm = ({ bulkIndex, bulk, onChange }) => {
+  const { name, paused } = bulk
+  const { newConfig } = React.useContext(ConfigContext)
+  const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === bulk.southId)
+  const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === bulk.northId)
+
+  const handlePause = () => {
+    onChange('paused', !paused)
+  }
 
   return (
     <Form>
@@ -22,12 +32,52 @@ const BulkForm = ({ bulk, onChange }) => {
             {name}
           </BreadcrumbItem>
         </Breadcrumb>
+        {paused
+          ? (
+            <>
+              <FaPauseCircle
+                className="oi-icon-breadcrumb"
+                size={15}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePause()
+                }}
+              />
+              <Label className="status-text-breadcrumb">Ongoing</Label>
+            </>
+          )
+          : (
+            <>
+              <FaPlayCircle
+                className="oi-icon-breadcrumb"
+                size={15}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePause()
+                }}
+              />
+              <Label className="status-text-breadcrumb">Paused</Label>
+            </>
+          )}
+      </Row>
+      <OIbTitle label="Handlers" />
+      <Row>
+        <Col md={1}>
+          {'South handler: '}
+          <a href={`/south/${bulk.southId}`}>{dataSource?.name}</a>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={1}>
+          {'North handler: '}
+          <a href={`/north/${bulk.northId}`}>{application?.name}</a>
+        </Col>
       </Row>
       <OIbTitle label="General settings" />
       <Row>
         <Col md={1}>
           <OIbCheckBox
-            name="d"
+            name="enabled"
             label="Enabled"
             defaultValue={false}
             value={bulk.enabled}
@@ -35,12 +85,6 @@ const BulkForm = ({ bulk, onChange }) => {
             onChange={onChange}
             switchButton
           />
-        </Col>
-        <Col md={1}>
-          <a href={`/south/${bulk.southId}`}><h6>South handler</h6></a>
-        </Col>
-        <Col md={1}>
-          <a href={`/north/${bulk.northId}`}><h6>North handler</h6></a>
         </Col>
       </Row>
       <Row>
@@ -81,12 +125,19 @@ const BulkForm = ({ bulk, onChange }) => {
       </Row>
       <Row>
         <Col md={4}>
-          <p><strong>Current request: </strong></p>
+          <p><strong>Last completed date: </strong></p>
         </Col>
       </Row>
       <Row>
-        <Col md={4}>
-          <p><strong>Last completed date: </strong></p>
+        <Col md={8}>
+          {bulk.points ? (
+            <PointsSection bulk={bulk} bulkIndex={bulkIndex} />
+          ) : (
+            <>
+              <OIbTitle label="Request" />
+              <OIbTextArea label="Query" name="query" value={bulk.query} onChange={onChange} />
+            </>
+          )}
         </Col>
       </Row>
     </Form>
@@ -94,6 +145,7 @@ const BulkForm = ({ bulk, onChange }) => {
 }
 
 BulkForm.propTypes = {
+  bulkIndex: PropTypes.number.isRequired,
   bulk: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
 }

@@ -268,6 +268,18 @@ label {
   color: #627187;
 }
 
+.oi-icon-breadcrumb {
+  width: 35px;
+  margin-left: 10px;
+  margin-top: 5px;
+  color: #627187;
+}
+
+.oi-arrow-up-down {
+  color: #627187;
+  margin-left: 3px;
+}
+
 .oi-up-down {
   margin-right: 1px;
   color: #627187;
@@ -279,11 +291,15 @@ label {
   width: 12px;
 }
 
+.status-text-breadcrumb {
+  margin-top: 5px;
+}
+
 .oi-log td{
   padding: 1px;
 }
 
-.oi-icon:hover,.oi-help:hover,.oi-up-down:hover {
+.oi-icon:hover,.oi-help:hover,.oi-up-down:hover,.oi-icon-breadcrumb:hover,.oi-arrow-up-down:hover {
   text-decoration: none;
   color: #F5BB51;
   cursor: pointer;

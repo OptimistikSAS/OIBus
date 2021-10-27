@@ -1,13 +1,35 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FaTrashAlt, FaCog, FaCopy } from 'react-icons/fa'
+import { FaTrashAlt, FaCog, FaCopy, FaLongArrowAltDown, FaLongArrowAltUp } from 'react-icons/fa'
 import StatusButton from '../../South/StatusButton.jsx'
 import Modal from '../Modal.jsx'
 
-const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate }) => (
+const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate, handleOrder }) => (
   <tbody>
     {rows.map((row, index) => (
       <tr key={row[0].name}>
+        {handleOrder && (
+        <td>
+          <>
+            <FaLongArrowAltDown
+              className="oi-arrow-up-down"
+              size={15}
+              onClick={(e) => {
+                e.preventDefault()
+                handleOrder('down', index)
+              }}
+            />
+            <FaLongArrowAltUp
+              className="oi-arrow-up-down"
+              size={15}
+              onClick={(e) => {
+                e.preventDefault()
+                handleOrder('up', index)
+              }}
+            />
+          </>
+        </td>
+        )}
         {row.map((field) => (
           <td key={field.name} style={{ width: field.value.props?.width ?? '' }}>{field.value}</td>
         ))}
@@ -61,8 +83,9 @@ TableRows.propTypes = {
   handleStatus: PropTypes.func,
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
+  handleOrder: PropTypes.func,
 }
 
-TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleStatus: null, handleDuplicate: null }
+TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleStatus: null, handleDuplicate: null, handleOrder: null }
 
 export default TableRows

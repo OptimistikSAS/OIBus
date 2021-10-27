@@ -6,7 +6,7 @@ const OIbDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(newVal, valid(newVal))
+    onChange(name, newVal, valid(newVal))
   }
 
   const style = label ? null : { marginBottom: 0 }

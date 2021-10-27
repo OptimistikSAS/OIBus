@@ -39,8 +39,14 @@ const ConfigJsonRenderer = ({ loading, activeConfig, newConfig, isModified }) =>
 
 ConfigJsonRenderer.propTypes = {
   loading: PropTypes.bool,
-  activeConfig: PropTypes.object.isRequired,
-  newConfig: PropTypes.object.isRequired,
+  activeConfig: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.arrayOf(PropTypes.object),
+  ]).isRequired,
+  newConfig: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.arrayOf(PropTypes.object),
+  ]).isRequired,
   isModified: PropTypes.bool.isRequired,
 }
 

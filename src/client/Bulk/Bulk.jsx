@@ -8,10 +8,22 @@ import NewBulkRow from './NewBulkRow.jsx'
 
 const Bulk = () => {
   const { newConfig } = React.useContext(ConfigContext)
-  const { newHistoryConfig: bulks, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
+  const { newHistoryConfig: unorderedBulks, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const applications = newConfig?.north?.applications
   const dataSources = newConfig?.south?.dataSources
   const history = useHistory()
+
+  const bulks = unorderedBulks.slice().sort((a, b) => (a.order > b.order ? 1 : -1))
+
+  /**
+   * @param {number} indexInTable the index of a point in the table
+   * @returns {number} the index in the config file of the chosen point
+   */
+  const findIndexBasedOnVirtualIndex = (indexInTable) => {
+    const bulkToOperate = bulks[indexInTable]
+    const index = unorderedBulks.findIndex((bulk) => bulk.order === bulkToOperate.order)
+    return index
+  }
 
   /**
    * Handles the edit of bulk and redirects the
@@ -20,7 +32,7 @@ const Bulk = () => {
    * @return {void}
    */
   const handleEdit = (position) => {
-    const bulk = bulks[position]
+    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(position)]
     const link = `/bulk/${bulk.id}`
     history.push({ pathname: link })
   }
@@ -33,19 +45,18 @@ const Bulk = () => {
    */
   const percentageCalculator = (startTime, endTime) => {
     const differenceFromStartToEnd = new Date(endTime).getTime() - new Date(startTime).getTime()
-    // NOTE: The current date should be replaced with the last completed date
+    // TODO: The current date should be replaced with the last completed date
     const differenceFromNowToEnd = new Date(endTime).getTime() - new Date().getTime()
     return differenceFromNowToEnd > 0 ? (100 - ((differenceFromNowToEnd * 100) / differenceFromStartToEnd)).toFixed(2) : 100
   }
 
   /**
    * Adds a new bulk row to the table
-   * @param {Object} param0 A bulk object containing
-   * id, name fields
+   * @param {Object} bulkObject A bulk object containing
    * @returns {void}
    */
-  const addBulk = ({ id, name }) => {
-    dispatchNewHistoryConfig({ type: 'addRow', value: { id, name, enabled: false } })
+  const addBulk = (bulkObject) => {
+    dispatchNewHistoryConfig({ type: 'addRow', name: '', value: bulkObject })
   }
 
   /**
@@ -54,7 +65,7 @@ const Bulk = () => {
    * @returns {void}
    */
   const handleDelete = (position) => {
-    dispatchNewHistoryConfig({ type: 'deleteRow', position })
+    dispatchNewHistoryConfig({ type: 'deleteRow', name: findIndexBasedOnVirtualIndex(position) })
   }
 
   /**
@@ -63,7 +74,7 @@ const Bulk = () => {
    * @returns {void}
    */
   const handleDuplicate = (position) => {
-    const bulk = bulks[position]
+    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(position)]
     const newName = `${bulk.name} copy`
     const countCopies = bulks.filter((e) => e.name.startsWith(newName)).length
     dispatchNewHistoryConfig({
@@ -72,8 +83,30 @@ const Bulk = () => {
         ...bulk,
         name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
+        order: bulks.length + 1,
       },
     })
+  }
+
+  const handleOrder = (type, positionInTable) => {
+    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(positionInTable)]
+    switch (type) {
+      case 'up': {
+        if (positionInTable > 0) {
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable)}.order`, value: bulk.order - 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable - 1)}.order`, value: bulk.order })
+        }
+        break
+      }
+      case 'down': {
+        if (positionInTable < bulks.length - 1) {
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable)}.order`, value: bulk.order + 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable + 1)}.order`, value: bulk.order })
+        }
+        break
+      }
+      default: break
+    }
   }
 
   const statusColor = (status) => {
@@ -86,24 +119,26 @@ const Bulk = () => {
     }
   }
 
-  const tableHeaders = ['Bulk', 'Status', 'Period', 'Percentage', 'Points or request']
-  const sortableProperties = ['name', 'status', 'period', 'percentage', 'points']
-  const tableRows = bulks?.map(({ name, status, startTime, endTime }) => [
+  const tableHeaders = ['Order', 'Bulk', 'Status', 'Period', 'Percentage']
+  const tableRows = bulks?.map(({ name, status, startTime, endTime, order }) => [
+    {
+      name: order,
+      value: `${order}.`,
+    },
     {
       name: 'name',
       value: name,
     },
     {
       name: 'status',
-      value: <div className={statusColor(status)}>{status}</div>,
+      value: <div className={statusColor(status || 'pending')}>{status || 'pending'}</div>,
     },
-    { name: 'period', value: `${startTime} -> ${endTime}` },
+    { name: 'period', value: startTime && endTime ? `${startTime} -> ${endTime}` : 'Dates not specified' },
     { name: 'percentage', value: `${percentageCalculator(startTime, endTime)} %` },
-    { name: 'points', value: 'Points' },
   ])
 
   return tableRows ? (
-    <Col md="6" className="bulk">
+    <Col md="8" className="bulk">
       <Breadcrumb tag="h5">
         <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
           Home
@@ -114,13 +149,14 @@ const Bulk = () => {
       </Breadcrumb>
       <Table
         headers={tableHeaders}
-        sortableProperties={sortableProperties}
         rows={tableRows}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
         handleDuplicate={handleDuplicate}
+        handleOrder={handleOrder}
       />
-      {applications && dataSources && <NewBulkRow northHandlers={applications} southHandlers={dataSources} addBulk={addBulk} />}
+      {applications && dataSources
+      && <NewBulkRow northHandlers={applications} southHandlers={dataSources} addBulk={addBulk} bulksNumber={bulks.length} />}
     </Col>
   ) : (
     <div className="spinner-container">

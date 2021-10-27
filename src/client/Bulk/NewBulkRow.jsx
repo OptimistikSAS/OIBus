@@ -3,11 +3,15 @@ import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { nanoid } from 'nanoid'
 import { OIbSelect } from '../components/OIbForm/index'
+import ProtocolSchemas from '../South/Protocols.jsx'
 
-const NewBulkRow = ({ northHandlers, southHandlers, addBulk }) => {
+const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
   const [southHandler, setSouthHandler] = React.useState(southHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
-
+  const { protocol } = southHandler
+  const schema = protocol === 'SQLDbToFile'
+    ? ProtocolSchemas.SQLDbToFile.withDriver(southHandler.SQLDbToFile.driver)
+    : ProtocolSchemas[protocol]
   /**
    * Creates a new bulk with the chosen north and south handler
    * @returns {void}
@@ -20,6 +24,8 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk }) => {
       status: 'pending',
       southId: southHandler.id,
       northId: northHandler.id,
+      ...(schema.points ? { points: [] } : { query: '' }),
+      order: bulksNumber + 1,
     })
   }
 
@@ -70,9 +76,10 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk }) => {
 }
 
 NewBulkRow.propTypes = {
-  northHandlers: PropTypes.arrayOf(Object).isRequired,
-  southHandlers: PropTypes.arrayOf(Object).isRequired,
+  northHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  southHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
   addBulk: PropTypes.func.isRequired,
+  bulksNumber: PropTypes.number.isRequired,
 }
 
 export default NewBulkRow
