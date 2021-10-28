@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 16.12.0
+          node-version: 16.13
 
       - name: Use npm
         run: |
@@ -55,7 +55,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 16.12.0
+          node-version: 16.13
 
       - name: Use npm
         run: |

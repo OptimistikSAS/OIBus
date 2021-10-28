@@ -5,8 +5,8 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": "=16.12.0",
-    "npm": "=8.1.1"
+    "node": ">=v16.13.0",
+    "npm": ">=8.1.1"
   },
   "scripts": {
     "start": "node src/index.js --config ./tests/oibus.json",
