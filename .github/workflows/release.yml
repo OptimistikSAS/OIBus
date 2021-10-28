@@ -57,7 +57,7 @@ jobs:
 
       - name: Use npm
         run: |
-          npm install -g npm@8.1.1
+          npm install -g npm@8.1.0
 
       - name: Bump version
         id: standard-version

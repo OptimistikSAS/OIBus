@@ -14,7 +14,7 @@ jobs:
         node-version: 16.13
     - name: Use npm
       run: |
-        npm install -g npm@8.1.1
+        npm install -g npm@8.1.0
     - name: npm install, build, and test
       run: |
         npm ci
