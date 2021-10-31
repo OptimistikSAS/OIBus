@@ -71,7 +71,7 @@
     "mssql": "7.2.1",
     "mysql2": "2.3.2",
     "nanoid": "3.1.30",
-    "node-fetch": "2.6.5",
+    "node-fetch": "2.6.6",
     "node-opcua": "2.50.0",
     "object-path": "0.11.8",
     "oracledb": "5.3.0",
