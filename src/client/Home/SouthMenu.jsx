@@ -17,6 +17,7 @@ const SouthMenu = ({ dataSource }) => {
   const handleGoToConnector = (pathname) => {
     history.push({ pathname })
   }
+
   const handleDuplicateSouth = () => {
     const newName = `${dataSource.name} copy`
     const countCopies = dataSources.filter((e) => e.name.startsWith(newName)).length
@@ -31,75 +32,64 @@ const SouthMenu = ({ dataSource }) => {
       },
     })
   }
+
   const handleDeleteConnector = (name) => {
     dispatchNewConfig({ type: 'deleteRow', name })
   }
-  const title = 'Delete'
-  const body = `Are you sure you want to delete ${dataSource.name}?`
+
   const onConfirm = () => {
     handleDeleteConnector(`south.dataSources.${dataSources.findIndex(
       (element) => element.id === dataSource.id,
     )}`)
   }
+
   return (
     <>
-
       <Dropdown
         isOpen={dropdownOpen}
         toggle={() => setDropdownOpen((prevState) => !prevState)}
         direction="down"
       >
-        <DropdownToggle size="sm" className="icon-dropdown">
-          <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
+        <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+          <FaEllipsisV />
         </DropdownToggle>
-
-        <DropdownMenu style={{ textAlign: 'center' }}>
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-settings"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleGoToConnector(`/south/${dataSource.id}`)
-              }}
-            >
-
-              Settings
-            </div>
+        <DropdownMenu>
+          <DropdownItem
+            id="oi-settings"
+            onClick={() => {
+              handleGoToConnector(`/south/${dataSource.id}`)
+            }}
+          >
+            Settings
           </DropdownItem>
-
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-status"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleGoToConnector(`/south/${dataSource.id}/live`)
-              }}
-            >
-              Status
-            </div>
+          <DropdownItem
+            id="oi-status"
+            onClick={() => {
+              handleGoToConnector(`/south/${dataSource.id}/live`)
+            }}
+          >
+            Status
           </DropdownItem>
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-duplicate"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleDuplicateSouth(dataSource.id)
-              }}
-            >
-              Duplicate
-            </div>
+          <DropdownItem
+            id="oi-duplicate"
+            onClick={() => {
+              handleDuplicateSouth(dataSource.id)
+            }}
+          >
+            Duplicate
           </DropdownItem>
-
-          <DropdownItem className="dropdown-item" onClick={() => setModal(true)}>
-            <div id="oi-delete"> Delete </div>
+          <DropdownItem className="dropdown-item" id="oi-delete" onClick={() => setModal(true)}>
+            Delete
           </DropdownItem>
-          <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
+          <ConfirmationModal
+            title="Delete"
+            body={`Are you sure you want to delete ${dataSource.name}?`}
+            onConfirm={onConfirm}
+            isOpen={modal}
+            toggle={() => setModal(false)}
+          />
         </DropdownMenu>
       </Dropdown>
-
     </>
   )
 }

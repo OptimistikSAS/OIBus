@@ -16,7 +16,7 @@ import SouthStatus from './South/SouthStatus.jsx'
 import ConfigurePoints from './South/ConfigurePoints.jsx'
 import Logs from './Logs/Logs.jsx'
 import About from './About/About.jsx'
-import Health from './Health/Health.jsx'
+import HomePage from './Home/HomePage.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
 import { ConfigProvider } from './context/configContext.jsx'
@@ -30,7 +30,7 @@ const Main = () => (
           <Container className="oi-container-with-top-nav" fluid>
             <AlertContainer />
             <Switch>
-              <Route exact path="/" component={Health} />
+              <Route exact path="/" component={HomePage} />
               <Route exact path="/engine" component={Engine} />
               <Route exact path="/south/:id" component={ConfigureProtocol} />
               <Route exact path="/south/:id/live" component={SouthStatus} />

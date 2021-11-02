@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import {
   FormGroup,
   FormText,
@@ -11,8 +10,6 @@ import {
   CardBody,
   Row,
   Col,
-  Breadcrumb,
-  BreadcrumbItem,
 } from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -150,14 +147,6 @@ const Log = () => {
   const maxDateString = new Date().toISOString().substr(0, 16)
   return (
     <>
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          Logs
-        </BreadcrumbItem>
-      </Breadcrumb>
       <Row>
         <Col className="log-left-panel">
           <Card>

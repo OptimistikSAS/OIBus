@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useHistory } from 'react-router-dom'
-import { Form, Row, Col } from 'reactstrap'
+import { Form, Row, Col, Button } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
@@ -39,6 +39,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
     const pathname = `/south/${id}/live`
     history.push({ pathname })
   }
+
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
     dispatchNewConfig({
@@ -50,9 +51,9 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   }
 
   return (
-    <Form>
-      <Row className="oi-sub-nav">
-        <div className="oi-sub-nav-connector-name">
+    <>
+      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+        <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <EditableIdField
             connectorName={dataSource.name}
             editing={renamingConnector === `south-${dataSource.id}`}
@@ -64,60 +65,58 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
               )}.name`,
             )}
           />
-        </div>
-        {pencil
-                && (
-                <div className="oi-sub-nav-edit-button">
-                  <FaPencilAlt
-                    onClick={() => {
-                      setRenamingConnector(`south-${dataSource.id}`)
-                      setPencil(false)
-                    }}
-                  />
-                </div>
-                )}
-
-        <Col md={2} className="oi-sub-nav-status">
+          {pencil
+          && (
+            <Button
+              close
+              onClick={() => {
+                setRenamingConnector(`south-${dataSource.id}`)
+                setPencil(false)
+              }}
+            >
+              <FaPencilAlt className="oi-icon ml-2" />
+            </Button>
+          )}
+        </h6>
+        <div className="pull-right mr-3">
           <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
           <PointsButton dataSource={dataSource} />
-        </Col>
-      </Row>
-
-      <div style={{ marginTop: '15px' }}>
-        <OIbTitle label="General settings">
-          <>
-            <ul>
-              <li>This form allows to configure protocol-specific parameters.</li>
-              <li>You need to activate the protocol with the enabled checkbox.</li>
-            </ul>
-          </>
-        </OIbTitle>
+        </div>
       </div>
-      <Row>
-        <Col md={4}>
-          <OIbCheckBox
-            name={`${prefix}.enabled`}
-            label={dataSource.enabled ? 'Enabled' : 'Disabled'}
-            defaultValue={false}
-            value={dataSource.enabled}
-            help={<div>Enable this application</div>}
-            onChange={onChange}
-            switchButton
-          />
-        </Col>
-        {!schema.points && (
+      <Form>
+        <OIbTitle label="General settings">
+          <ul>
+            <li>This form allows to configure protocol-specific parameters.</li>
+            <li>You need to activate the protocol with the enabled checkbox.</li>
+          </ul>
+        </OIbTitle>
+        <Row>
           <Col md={4}>
-            <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
+            <OIbCheckBox
+              name={`${prefix}.enabled`}
+              label={dataSource.enabled ? 'Enabled' : 'Disabled'}
+              defaultValue={false}
+              value={dataSource.enabled}
+              help={<div>Enable this application</div>}
+              onChange={onChange}
+              switchButton
+            />
           </Col>
-        )}
-      </Row>
-      <OIbLogLevel
-        name={`${prefix}.logParameters`}
-        value={dataSource.logParameters}
-        onChange={onChange}
-      />
-      <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
-    </Form>
+          {!schema.points && (
+            <Col md={4}>
+              <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
+            </Col>
+          )}
+        </Row>
+        <OIbLogLevel
+          name={`${prefix}.logParameters`}
+          value={dataSource.logParameters}
+          onChange={onChange}
+        />
+        <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
+      </Form>
+    </>
+
   )
 }
 

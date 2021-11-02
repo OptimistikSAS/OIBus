@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import { ListGroup, ListGroupItem, Row, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
 import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
@@ -83,14 +82,6 @@ const About = () => {
 
   return (
     <>
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          About
-        </BreadcrumbItem>
-      </Breadcrumb>
       <Row>
         <Container fluid>
           {status && (

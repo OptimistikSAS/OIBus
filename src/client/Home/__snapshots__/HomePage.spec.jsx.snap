@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`HomePage display Health page based on config and status 1`] = `
+<div>
+  <div
+    class="container"
+  >
+    <div
+      style="height: 710px; width: 100%;"
+    >
+      ReactFlow
+    </div>
+  </div>
+</div>
+`;
+
+exports[`HomePage display Health page based on config and status 2`] = `
+<div>
+  <div
+    class="container"
+  >
+    <div
+      style="height: 710px; width: 100%;"
+    >
+      ReactFlow
+    </div>
+  </div>
+</div>
+`;
+
+exports[`HomePage display Health with config null 1`] = `
+<div>
+  <div
+    class="container"
+  >
+    <div
+      style="height: 710px; width: 100%;"
+    >
+      ReactFlow
+    </div>
+  </div>
+</div>
+`;

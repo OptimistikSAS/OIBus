@@ -7,9 +7,8 @@ import { act } from 'react-dom/test-utils'
 
 // need BrowserRouter so Link component is not complaining
 import { BrowserRouter } from 'react-router-dom'
-
 import apis from '../services/apis'
-import Health from './Health.jsx'
+import HomePage from './HomePage.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
@@ -83,13 +82,22 @@ apis.getStatus = () => new Promise((_resolve, _reject) => {
   resolve = _resolve
   reject = _reject
 })
+apis.reload = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
+apis.shutdown = () => new Promise((_resolve, _reject) => {
+  resolve = _resolve
+  reject = _reject
+})
+
 React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
-describe('Health', () => {
+describe('HomePage', () => {
   test('display Health page based on config and status', async () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )
@@ -107,7 +115,7 @@ describe('Health', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )
@@ -124,7 +132,7 @@ describe('Health', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )

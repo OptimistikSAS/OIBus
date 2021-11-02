@@ -8,14 +8,13 @@ exports[`SouthMenu check cancel delete first dataSource 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -31,62 +30,43 @@ exports[`SouthMenu check cancel delete first dataSource 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -101,14 +81,13 @@ exports[`SouthMenu check delete first dataSource 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -124,62 +103,43 @@ exports[`SouthMenu check delete first dataSource 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -194,14 +154,13 @@ exports[`SouthMenu check duplicate dataSource 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -217,62 +176,43 @@ exports[`SouthMenu check duplicate dataSource 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -287,14 +227,13 @@ exports[`SouthMenu check duplicate dataSource already copied 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -310,62 +249,43 @@ exports[`SouthMenu check duplicate dataSource already copied 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -380,14 +300,13 @@ exports[`SouthMenu check edit first dataSource 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -403,62 +322,43 @@ exports[`SouthMenu check edit first dataSource 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -473,14 +373,13 @@ exports[`SouthMenu check status first dataSource 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -496,62 +395,43 @@ exports[`SouthMenu check status first dataSource 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -566,14 +446,13 @@ exports[`SouthMenu display SouthMenu page based on config 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -589,62 +468,43 @@ exports[`SouthMenu display SouthMenu page based on config 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -659,14 +519,13 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -682,62 +541,43 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -752,14 +592,13 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 2`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -775,62 +614,43 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 2`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -845,14 +665,13 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 3`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -868,62 +687,43 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 3`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>
@@ -938,14 +738,13 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 4`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -961,62 +760,43 @@ exports[`SouthMenu display SouthMenu properly when empty newConfig 4`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-status"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Status
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
       </button>
       <button
         class="dropdown-item dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-status"
-          role="button"
-        >
-          Status
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          aria-hidden="true"
-          id="oi-duplicate"
-          role="button"
-        >
-          Duplicate
-        </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        <div
-          id="oi-delete"
-        >
-           Delete 
-        </div>
+        Delete
       </button>
     </div>
   </div>

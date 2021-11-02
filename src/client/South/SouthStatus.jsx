@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useHistory } from 'react-router-dom'
-import { Label, Row, Container, Col } from 'reactstrap'
+import { Label, Row, Container, Button } from 'reactstrap'
 import { FaSync, FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
@@ -29,10 +29,6 @@ const SouthStatus = () => {
         console.error(error)
         setAlert({ text: error.message, type: 'danger' })
       })
-  }
-
-  const handleGoToConnector = (pathname) => {
-    history.push({ pathname })
   }
 
   /**
@@ -88,26 +84,23 @@ const SouthStatus = () => {
 
   return dataSource ? (
     <>
-      <Row className="oi-sub-nav">
-        <FaArrowLeft
-          className="oi-sub-nav-return"
-          onClick={() => {
-            handleGoToConnector(`/south/${dataSource.id}`)
-          }}
-
-        />
-
-        <div className="oi-sub-nav-connector-name">
-          |
-          {' '}
-          {dataSource.name}
-        </div>
-        <Col md={2} className="oi-sub-nav-status">
+      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+        <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
+          <Button
+            close
+            onClick={() => {
+              history.goBack()
+            }}
+          >
+            <FaArrowLeft className="oi-icon mr-2" />
+          </Button>
+          {`| ${dataSource.name}`}
+        </h6>
+        <div className="pull-right mr-3">
           <PointsButton dataSource={dataSource} />
-        </Col>
-      </Row>
-
-      <Row style={{ marginTop: '15px' }}>
+        </div>
+      </div>
+      <Row>
         <Label>
           <span>
             {`${status.Name} status`}
