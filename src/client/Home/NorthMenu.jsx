@@ -17,6 +17,7 @@ const NorthMenu = ({ application }) => {
   const handleGoToConnector = (pathname) => {
     history.push({ pathname })
   }
+
   const handleDuplicateNorth = () => {
     const newName = `${application.name} copy`
     const countCopies = applications.filter((e) => e.name.startsWith(newName)).length
@@ -35,8 +36,6 @@ const NorthMenu = ({ application }) => {
     dispatchNewConfig({ type: 'deleteRow', name })
   }
 
-  const title = 'Delete'
-  const body = `Are you sure you want to delete ${application.name}?`
   const onConfirm = () => {
     handleDeleteConnector(`north.applications.${applications.findIndex(
       (element) => element.id === application.id,
@@ -45,47 +44,42 @@ const NorthMenu = ({ application }) => {
 
   return (
     <>
-
       <Dropdown
         isOpen={dropdownOpen}
         toggle={() => setDropdownOpen((prevState) => !prevState)}
         direction="down"
       >
-        <DropdownToggle size="sm" className="icon-dropdown">
-          <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
+        <DropdownToggle size="sm" caret={false} id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+          <FaEllipsisV />
         </DropdownToggle>
-
-        <DropdownMenu style={{ textAlign: 'center' }}>
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-settings"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleGoToConnector(`/north/${application.id}`)
-              }}
-            >
-              Settings
-            </div>
+        <DropdownMenu>
+          <DropdownItem
+            id="oi-settings"
+            onClick={() => {
+              handleGoToConnector(`/north/${application.id}`)
+            }}
+          >
+            Settings
+          </DropdownItem>
+          <DropdownItem
+            id="oi-duplicate"
+            onClick={() => {
+              handleDuplicateNorth(application.id)
+            }}
+          >
+            Duplicate
           </DropdownItem>
 
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-duplicate"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleDuplicateNorth(application.id)
-              }}
-            >
-              Duplicate
-            </div>
+          <DropdownItem id="oi-delete" onClick={() => setModal(true)}>
+            <div>Delete</div>
           </DropdownItem>
-
-          <DropdownItem className="dropdown-item" onClick={() => setModal(true)}>
-            <div id="oi-delete">Delete</div>
-          </DropdownItem>
-          <ConfirmationModal title={title} body={body} onConfirm={onConfirm} isOpen={modal} toggle={() => setModal(false)} />
+          <ConfirmationModal
+            title="Delete"
+            body={`Are you sure you want to delete ${application.name}?`}
+            onConfirm={onConfirm}
+            isOpen={modal}
+            toggle={() => setModal(false)}
+          />
         </DropdownMenu>
       </Dropdown>
     </>

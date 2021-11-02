@@ -2,27 +2,6 @@
 
 exports[`About display About page based on config and status 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        About
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -123,27 +102,6 @@ exports[`About display About page based on config and status 1`] = `
 
 exports[`About display About page based on config and status 2`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        About
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -445,27 +403,6 @@ exports[`About display About page based on config and status 2`] = `
 
 exports[`About display About with config null 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        About
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >

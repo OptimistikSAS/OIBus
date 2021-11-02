@@ -1,6 +1,5 @@
 import React from 'react'
-import { Label, Button, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
-import { Link } from 'react-router-dom'
+import { Label, Button, Spinner } from 'reactstrap'
 import ReactJson from 'react-json-view'
 import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
@@ -89,14 +88,6 @@ const Activation = () => {
   const deltaHTML = isModified && removeSecretValues(delta)
   return (
     <>
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          Activation
-        </BreadcrumbItem>
-      </Breadcrumb>
       <OIbTitle label="Modifications">
         <div>
           <p>Modifications requested on the OIBus configuration are listed below</p>

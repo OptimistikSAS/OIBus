@@ -2,27 +2,6 @@
 
 exports[`Logs check Logs 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -331,27 +310,6 @@ exports[`Logs check Logs 1`] = `
 
 exports[`Logs check change filterText 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -660,27 +618,6 @@ exports[`Logs check change filterText 1`] = `
 
 exports[`Logs check change fromDate 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -989,27 +926,6 @@ exports[`Logs check change fromDate 1`] = `
 
 exports[`Logs check change toDate 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -1318,27 +1234,6 @@ exports[`Logs check change toDate 1`] = `
 
 exports[`Logs check change verbosity, check silly 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -1647,27 +1542,6 @@ exports[`Logs check change verbosity, check silly 1`] = `
 
 exports[`Logs check change verbosity, uncheck debug 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -1976,27 +1850,6 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
 
 exports[`Logs check press Show Logs, success in logs call 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -2305,27 +2158,6 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
 
 exports[`Logs check press Show Logs, success in logs call 2`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >
@@ -2634,27 +2466,6 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
 
 exports[`Logs check press showMore 1`] = `
 <div>
-  <h5
-    aria-label="breadcrumb"
-    class=""
-  >
-    <ol
-      class="breadcrumb"
-    >
-      <a
-        class="oi-breadcrumb breadcrumb-item"
-        href="/"
-      >
-        Home
-      </a>
-      <span
-        aria-current="page"
-        class="active breadcrumb-item"
-      >
-        Logs
-      </span>
-    </ol>
-  </h5>
   <div
     class="row"
   >

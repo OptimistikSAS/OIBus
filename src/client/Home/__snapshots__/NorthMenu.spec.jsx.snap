@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`EngineMenu check cancel restart 1`] = `
+exports[`Northmenu check cancel delete first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -8,14 +8,13 @@ exports[`EngineMenu check cancel restart 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -31,65 +30,43 @@ exports[`EngineMenu check cancel restart 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="restart"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Restart
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Shutdown
       </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`EngineMenu check cancel shutdown 1`] = `
+exports[`Northmenu check delete first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -97,14 +74,13 @@ exports[`EngineMenu check cancel shutdown 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -120,65 +96,43 @@ exports[`EngineMenu check cancel shutdown 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="restart"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Restart
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Shutdown
       </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`EngineMenu check restart engine 1`] = `
+exports[`Northmenu check duplicate application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -186,14 +140,13 @@ exports[`EngineMenu check restart engine 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -209,65 +162,43 @@ exports[`EngineMenu check restart engine 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="restart"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Restart
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Shutdown
       </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`EngineMenu check shutdown engine 1`] = `
+exports[`Northmenu check duplicate application already copied 1`] = `
 <div>
   <div
     class="dropdown"
@@ -275,14 +206,13 @@ exports[`EngineMenu check shutdown engine 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -298,65 +228,43 @@ exports[`EngineMenu check shutdown engine 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="restart"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Restart
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Shutdown
       </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`EngineMenu display EngineMenu page based on config 1`] = `
+exports[`Northmenu check edit first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -364,14 +272,13 @@ exports[`EngineMenu display EngineMenu page based on config 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -387,65 +294,43 @@ exports[`EngineMenu display EngineMenu page based on config 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="restart"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Restart
-      </button>
-      <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        Shutdown
       </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`EngineMenu go to engine settings 1`] = `
+exports[`Northmenu display NorthMenu page based on config 1`] = `
 <div>
   <div
     class="dropdown"
@@ -453,14 +338,13 @@ exports[`EngineMenu go to engine settings 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -476,58 +360,300 @@ exports[`EngineMenu go to engine settings 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
-        id="add-north"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add North
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="add-south"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Add South
+        Duplicate
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-delete"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
+        <div>
+          Delete
         </div>
       </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Northmenu display NorthMenu properly when empty newConfig 1`] = `
+<div>
+  <div
+    class="dropdown"
+  >
+    <button
+      aria-expanded="false"
+      aria-haspopup="true"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
+      type="button"
+    >
+      <svg
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 192 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z"
+        />
+      </svg>
+    </button>
+    <div
+      aria-hidden="true"
+      class="dropdown-menu"
+      role="menu"
+      tabindex="-1"
+    >
       <button
-        class="dropdown-item dropdown-item"
-        id="restart"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Restart
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
-        id="shutdown"
+        class="dropdown-item"
+        id="oi-duplicate"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        Shutdown
+        Duplicate
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-delete"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        <div>
+          Delete
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Northmenu display NorthMenu properly when empty newConfig 2`] = `
+<div>
+  <div
+    class="dropdown"
+  >
+    <button
+      aria-expanded="false"
+      aria-haspopup="true"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
+      type="button"
+    >
+      <svg
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 192 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z"
+        />
+      </svg>
+    </button>
+    <div
+      aria-hidden="true"
+      class="dropdown-menu"
+      role="menu"
+      tabindex="-1"
+    >
+      <button
+        class="dropdown-item"
+        id="oi-settings"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-delete"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        <div>
+          Delete
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Northmenu display NorthMenu properly when empty newConfig 3`] = `
+<div>
+  <div
+    class="dropdown"
+  >
+    <button
+      aria-expanded="false"
+      aria-haspopup="true"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
+      type="button"
+    >
+      <svg
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 192 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z"
+        />
+      </svg>
+    </button>
+    <div
+      aria-hidden="true"
+      class="dropdown-menu"
+      role="menu"
+      tabindex="-1"
+    >
+      <button
+        class="dropdown-item"
+        id="oi-settings"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-delete"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        <div>
+          Delete
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Northmenu display NorthMenu properly when empty newConfig 4`] = `
+<div>
+  <div
+    class="dropdown"
+  >
+    <button
+      aria-expanded="false"
+      aria-haspopup="true"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
+      type="button"
+    >
+      <svg
+        fill="currentColor"
+        height="1em"
+        stroke="currentColor"
+        stroke-width="0"
+        viewBox="0 0 192 512"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z"
+        />
+      </svg>
+    </button>
+    <div
+      aria-hidden="true"
+      class="dropdown-menu"
+      role="menu"
+      tabindex="-1"
+    >
+      <button
+        class="dropdown-item"
+        id="oi-settings"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Settings
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-duplicate"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        Duplicate
+      </button>
+      <button
+        class="dropdown-item"
+        id="oi-delete"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        <div>
+          Delete
+        </div>
       </button>
     </div>
   </div>

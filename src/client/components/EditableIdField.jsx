@@ -29,7 +29,7 @@ const EditableIdField = ({ connectorName, fromList, valid, nameChanged, editing 
 
   return (
     editing ? (
-      <div className="oi-editing" style={{ display: 'flex' }}>
+      <>
         <OIbText
           onChange={onChange}
           value={editingConnectorName}
@@ -37,20 +37,17 @@ const EditableIdField = ({ connectorName, fromList, valid, nameChanged, editing 
           name={connectorName}
           inline
         />
-        <Button close>
+        <Button
+          close
+          onClick={handleDoneEditName}
+        >
           <FaCheck
-            className="oi-icon oi-icon-inline"
-            onClick={handleDoneEditName}
+            className="oi-icon ml-2"
           />
         </Button>
-      </div>
+      </>
     ) : (
-      <div>
-        <div>
-          {connectorName}
-        </div>
-
-      </div>
+      <div>{ connectorName }</div>
     )
   )
 }

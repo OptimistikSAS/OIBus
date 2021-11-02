@@ -1,20 +1,18 @@
 import React from 'react'
-import { Label, Row, Breadcrumb, BreadcrumbItem, Spinner } from 'reactstrap'
-import { FaSync } from 'react-icons/fa'
+import { Spinner } from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import NodeView from './NodeView.jsx'
 import utils from '../helpers/utils'
 
-const Health = () => {
-  const [loading, setLoading] = React.useState()
+const HomePage = () => {
+  const [loading, setLoading] = React.useState(false)
   const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
   const config = utils.jsonCopy(activeConfig)
   utils.replaceValues(config, ['password', 'secretKey'], '******')
-  const engineName = activeConfig?.engine.engineName ?? ''
 
   /**
    * Acquire the status
@@ -81,22 +79,7 @@ const Health = () => {
 
   return (
     <>
-      <Breadcrumb tag="h4">
-        <BreadcrumbItem active tag="span">
-          Home
-        </BreadcrumbItem>
-      </Breadcrumb>
-      <Row>
-        <Label>
-          <h6>
-            {`${engineName} overview`}
-            &nbsp;
-            <FaSync className="oi-icon" onClick={fetchStatus} />
-          </h6>
-        </Label>
-      </Row>
       <NodeView status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
-
       {loading && (
         <div className="spinner-container">
           <Spinner color="primary" />
@@ -105,4 +88,4 @@ const Health = () => {
     </>
   )
 }
-export default Health
+export default HomePage

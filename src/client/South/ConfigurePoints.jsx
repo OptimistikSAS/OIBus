@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useHistory } from 'react-router-dom'
-import { Button, Input, Spinner, Row, Col } from 'reactstrap'
+import { Button, Input, Spinner } from 'reactstrap'
 import humanizeString from 'humanize-string'
 import { FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
@@ -27,14 +27,6 @@ const ConfigurePoints = () => {
   const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
 
   const { id } = useParams()
-
-  const handleGoToConnector = (pathname) => {
-    history.push({ pathname })
-  }
-  const handleStatus = () => {
-    const pathname = `/south/${id}/live`
-    history.push({ pathname })
-  }
 
   if (!newConfig?.south) {
     return (
@@ -210,71 +202,73 @@ const ConfigurePoints = () => {
   }))
 
   return (
-    <div className="points">
-      <Row className="oi-sub-nav">
-        <FaArrowLeft
-          className="oi-sub-nav-return"
-          onClick={() => {
-            handleGoToConnector(`/south/${dataSource.id}`)
-          }}
-        />
-        <div className="oi-sub-nav-connector-name">
-          |
-          {' '}
-          {dataSource.name}
+    <>
+      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+        <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
+          <Button
+            close
+            onClick={() => {
+              history.goBack()
+            }}
+          >
+            <FaArrowLeft className="oi-icon mr-2" />
+          </Button>
+          {`| ${dataSource.name}`}
+        </h6>
+        <div className="pull-right mr-3">
+          <StatusButton handler={() => { history.push({ pathname: `/south/${id}/live` }) }} enabled={dataSource.enabled} />
         </div>
-        <Col md={2} className="oi-sub-nav-status">
-          <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
-        </Col>
-      </Row>
-      <div style={{ marginTop: '15px' }}>
-        <Controls.OIbText
-          label="Filter"
-          name="filterText"
-          value={filterText}
-          help={<div>Type any points related data</div>}
-          onChange={(_name, val) => updateFilterText(val)}
-        />
       </div>
-      <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
-      {filteredPoints.length && (
-        <TablePagination
-          maxToDisplay={MAX_PAGINATION_DISPLAY}
-          selected={selectedPage}
-          total={Math.ceil(filteredPoints.length / MAX_ON_PAGE)}
-          onPagePressed={(page) => setSelectedPage(page)}
-        />
-      )}
-      <div className="force-row-display">
-        <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
-          Import
-        </Button>
-        <Input
-          className="oi-form-input"
-          type="file"
-          id="importFile"
-          accept=".csv, text/plain"
-          hidden
-          onChange={(event) => handleImportPoints(event.target.files[0])}
-        />
-        <Button className="inline-button" color="primary" onClick={handleExportPoints}>
-          Export
-        </Button>
-        <Modal
-          show={false}
-          title="Delete All Points"
-          body="Are you sure you want to delete All Points from this Data Source?"
-        >
-          {(confirm) => (
-            <div>
-              <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
-                Delete All Points
-              </Button>
-            </div>
-          )}
-        </Modal>
+      <div className="points">
+        <div>
+          <Controls.OIbText
+            label="Filter"
+            name="filterText"
+            value={filterText}
+            help={<div>Type any points related data</div>}
+            onChange={(_name, val) => updateFilterText(val)}
+          />
+        </div>
+        <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
+        {filteredPoints.length && (
+          <TablePagination
+            maxToDisplay={MAX_PAGINATION_DISPLAY}
+            selected={selectedPage}
+            total={Math.ceil(filteredPoints.length / MAX_ON_PAGE)}
+            onPagePressed={(page) => setSelectedPage(page)}
+          />
+        )}
+        <div className="force-row-display">
+          <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
+            Import
+          </Button>
+          <Input
+            className="oi-form-input"
+            type="file"
+            id="importFile"
+            accept=".csv, text/plain"
+            hidden
+            onChange={(event) => handleImportPoints(event.target.files[0])}
+          />
+          <Button className="inline-button" color="primary" onClick={handleExportPoints}>
+            Export
+          </Button>
+          <Modal
+            show={false}
+            title="Delete All Points"
+            body="Are you sure you want to delete All Points from this Data Source?"
+          >
+            {(confirm) => (
+              <div>
+                <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
+                  Delete All Points
+                </Button>
+              </div>
+            )}
+          </Modal>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

@@ -20,13 +20,7 @@ const Engine = () => {
   }
   return newConfig?.engine ? (
     <>
-      <Row className="oi-sub-nav">
-        <div className="oi-sub-nav-connector-name">
-          Engine
-        </div>
-      </Row>
       <Form>
-        <div style={{ marginTop: '15px' }} />
         <OIbTitle label="Engine Parameters">
           <>
             <p>In this section, you must define:</p>

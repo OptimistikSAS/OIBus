@@ -2,21 +2,9 @@
 
 exports[`Engine check Engine 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >
@@ -3345,21 +3333,9 @@ exports[`Engine check Engine 1`] = `
 
 exports[`Engine check Engine when config has no proxies 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >
@@ -6316,21 +6292,9 @@ exports[`Engine check Engine when no engine 1`] = `
 
 exports[`Engine check change engineName 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >
@@ -9659,21 +9623,9 @@ exports[`Engine check change engineName 1`] = `
 
 exports[`Engine check change password 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >
@@ -13002,21 +12954,9 @@ exports[`Engine check change password 1`] = `
 
 exports[`Engine check change port 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >
@@ -16345,21 +16285,9 @@ exports[`Engine check change port 1`] = `
 
 exports[`Engine check change user 1`] = `
 <div>
-  <div
-    class="oi-sub-nav row"
-  >
-    <div
-      class="oi-sub-nav-connector-name"
-    >
-      Engine
-    </div>
-  </div>
   <form
     class=""
   >
-    <div
-      style="margin-top: 15px;"
-    />
     <div
       class="row"
     >

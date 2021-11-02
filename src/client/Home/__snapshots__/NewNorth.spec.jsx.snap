@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NewSouth check add connector without "name" & with protocol 1`] = `
+exports[`NewNorth check add connector without name & with protocol 1`] = `
 <div>
   <div
     class="dropdown"
@@ -8,14 +8,13 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -31,11 +30,10 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-north"
         role="menuitem"
         tabindex="0"
@@ -44,7 +42,7 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
         Add North
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-south"
         role="menuitem"
         tabindex="0"
@@ -53,21 +51,16 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
         Add South
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="restart"
         role="menuitem"
         tabindex="0"
@@ -76,7 +69,7 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
         Restart
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="shutdown"
         role="menuitem"
         tabindex="0"
@@ -84,12 +77,21 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
       >
         Shutdown
       </button>
+      <button
+        class="dropdown-item"
+        id="oi-about"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        About
+      </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
+exports[`NewNorth check add connector without protocol & with new name 1`] = `
 <div>
   <div
     class="dropdown"
@@ -97,14 +99,13 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -120,11 +121,10 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-north"
         role="menuitem"
         tabindex="0"
@@ -133,7 +133,7 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
         Add North
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-south"
         role="menuitem"
         tabindex="0"
@@ -142,21 +142,16 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
         Add South
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="restart"
         role="menuitem"
         tabindex="0"
@@ -165,7 +160,7 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
         Restart
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="shutdown"
         role="menuitem"
         tabindex="0"
@@ -173,12 +168,21 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
       >
         Shutdown
       </button>
+      <button
+        class="dropdown-item"
+        id="oi-about"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        About
+      </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`NewSouth check add connector without "protocol" & without new name 1`] = `
+exports[`NewNorth check add connector without protocol & without new name 1`] = `
 <div>
   <div
     class="dropdown"
@@ -186,14 +190,13 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -209,11 +212,10 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-north"
         role="menuitem"
         tabindex="0"
@@ -222,7 +224,7 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
         Add North
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-south"
         role="menuitem"
         tabindex="0"
@@ -231,21 +233,16 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
         Add South
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="restart"
         role="menuitem"
         tabindex="0"
@@ -254,7 +251,7 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
         Restart
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="shutdown"
         role="menuitem"
         tabindex="0"
@@ -262,12 +259,21 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
       >
         Shutdown
       </button>
+      <button
+        class="dropdown-item"
+        id="oi-about"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        About
+      </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`NewSouth check change name with "new_application" id 1`] = `
+exports[`NewNorth check change name with "new_application" id 1`] = `
 <div>
   <div
     class="dropdown"
@@ -275,14 +281,13 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="icon-dropdown btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      id="dropdown-toggle"
       type="button"
     >
       <svg
-        class="icon-dropdown-ellipsis"
         fill="currentColor"
         height="1em"
-        id="dropdown-toggle"
         stroke="currentColor"
         stroke-width="0"
         viewBox="0 0 192 512"
@@ -298,11 +303,10 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
       aria-hidden="true"
       class="dropdown-menu"
       role="menu"
-      style="text-align: center;"
       tabindex="-1"
     >
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-north"
         role="menuitem"
         tabindex="0"
@@ -311,7 +315,7 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
         Add North
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="add-south"
         role="menuitem"
         tabindex="0"
@@ -320,21 +324,16 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
         Add South
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
+        id="oi-settings"
         role="menuitem"
         tabindex="0"
         type="button"
       >
-        <div
-          aria-hidden="true"
-          id="oi-settings"
-          role="button"
-        >
-          Settings
-        </div>
+        Settings
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="restart"
         role="menuitem"
         tabindex="0"
@@ -343,7 +342,7 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
         Restart
       </button>
       <button
-        class="dropdown-item dropdown-item"
+        class="dropdown-item"
         id="shutdown"
         role="menuitem"
         tabindex="0"
@@ -351,17 +350,26 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
       >
         Shutdown
       </button>
+      <button
+        class="dropdown-item"
+        id="oi-about"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        About
+      </button>
     </div>
   </div>
 </div>
 `;
 
-exports[`NewSouth display NewSouth page based on config 1`] = `<div />`;
+exports[`NewNorth display NewNorth page based on config 1`] = `<div />`;
 
-exports[`NewSouth display NewSouth page based on config 2`] = `<div />`;
+exports[`NewNorth display NewNorth page based on config 2`] = `<div />`;
 
-exports[`NewSouth display NewSouth page based on config 3`] = `<div />`;
+exports[`NewNorth display NewNorth page based on config 3`] = `<div />`;
 
-exports[`NewSouth display NewSouth page based on config 4`] = `<div />`;
+exports[`NewNorth display NewNorth page based on config 4`] = `<div />`;
 
-exports[`NewSouth display NewSouth page based on config 5`] = `<div />`;
+exports[`NewNorth display NewNorth page based on config 5`] = `<div />`;
