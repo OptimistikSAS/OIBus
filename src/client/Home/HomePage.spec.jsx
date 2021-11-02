@@ -9,7 +9,7 @@ import { act } from 'react-dom/test-utils'
 import { BrowserRouter } from 'react-router-dom'
 
 import apis from '../services/apis'
-import Health from './Health.jsx'
+import HomePage from './HomePage.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
@@ -84,12 +84,12 @@ apis.getStatus = () => new Promise((_resolve, _reject) => {
   reject = _reject
 })
 React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
-describe('Health', () => {
+describe('HomePage', () => {
   test('display Health page based on config and status', async () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )
@@ -107,7 +107,7 @@ describe('Health', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )
@@ -124,7 +124,7 @@ describe('Health', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <Health />
+          <HomePage />
         </BrowserRouter>,
         container,
       )

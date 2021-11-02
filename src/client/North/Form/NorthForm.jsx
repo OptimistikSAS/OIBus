@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col } from 'reactstrap'
+import { Form, Row, Col, Button } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
-// import { AlertContext } from '../context/AlertContext.jsx'
 import { OIbTitle, OIbCheckBox, OIbInteger, OIbLogLevel } from '../../components/OIbForm'
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
@@ -36,45 +35,43 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   }
 
   return (
-    <div>
-      <div className="oi-sub-nav">
-        <div className="oi-sub-nav-connector-name">
-          <EditableIdField
-            connectorName={application.name}
-            editing={renamingConnector === `north-${application.id}`}
-            fromList={applications}
-            valid={validation.application.isValidName}
-            nameChanged={handleConnectorNameChanged(
-              `north.applications.${applications.findIndex(
-                (element) => element.id === application.id,
-              )}.name`,
-            )}
-          />
-        </div>
-        {pencil
-              && (
-              <div className="oi-sub-nav-edit-button">
-                <FaPencilAlt
-                  onClick={() => {
-                    setRenamingConnector(`north-${application.id}`)
-                    setPencil(false)
-                  }}
-                />
-              </div>
+    <>
+      <div className="d-flex align-items-center w-100 oi-sub-nav">
+        <div className="text-muted d-flex align-items-center pl-3 pt-1">
+          <div className="oi-sub-nav-connector-name">
+            <EditableIdField
+              connectorName={application.name}
+              editing={renamingConnector === `north-${application.id}`}
+              fromList={applications}
+              valid={validation.application.isValidName}
+              nameChanged={handleConnectorNameChanged(
+                `north.applications.${applications.findIndex(
+                  (element) => element.id === application.id,
+                )}.name`,
               )}
+            />
+          </div>
+          {pencil
+          && (
+            <Button
+              close
+              onClick={() => {
+                setRenamingConnector(`north-${application.id}`)
+                setPencil(false)
+              }}
+            >
+              <FaPencilAlt className="oi-icon ml-2" />
+            </Button>
+          )}
+        </div>
       </div>
       <Form>
-
-        <div style={{ marginTop: '15px' }}>
-          <OIbTitle label="General settings">
-            <>
-              <ul>
-                <li>This form allows to configure north-specific parameters.</li>
-                <li>You need to activate the application with the enabled checkbox.</li>
-              </ul>
-            </>
-          </OIbTitle>
-        </div>
+        <OIbTitle label="General settings">
+          <ul>
+            <li>This form allows to configure north-specific parameters.</li>
+            <li>You need to activate the application with the enabled checkbox.</li>
+          </ul>
+        </OIbTitle>
         <Row>
           <Col md={2}>
             <OIbCheckBox
@@ -169,7 +166,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Row>
         <SubscribedTo onChange={onChange} subscribedTo={application.subscribedTo} applicationIndex={applicationIndex} />
       </Form>
-    </div>
+    </>
   )
 }
 

@@ -1,7 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Container, Row } from 'reactstrap'
-import ReactFlow, { Controls } from 'react-flow-renderer'
+import { Container } from 'reactstrap'
+import ReactFlow from 'react-flow-renderer'
+import { Link, useHistory } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
@@ -29,6 +30,7 @@ const colors = {
 
 const NodeView = ({ status, onRestart, onShutdown }) => {
   const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
+  const history = useHistory()
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
   const engineName = activeConfig ? activeConfig.engine.engineName : ''
@@ -40,11 +42,10 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
   }
 
   const northNodes = applications.map((application, indexNorth) => (
-
     {
-      id: application.id, // unique id of node
-      type: 'output', // output node
-      targetPosition: 'bottom', // handle is at the bottom
+      id: application.id,
+      type: 'output',
+      targetPosition: 'bottom',
       style: {
         background: colors.background.disabled,
         border: colors.border.disabled,
@@ -54,38 +55,43 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div className="box-container">
-            <div className="icon-container">
-              <div className="icon-left">
-                <img
-                  src={`${imageCategories[ApiSchemas[application.api].category].image}` ?? imageCategories.Default.image}
-                  alt="logo"
-                  height="24px"
-                />
-              </div>
-              <div className="icon-center flex-grow" style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+          <div className="d-flex flex-column">
+            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+              <img
+                src={`${imageCategories[ApiSchemas[application.api].category].image}` ?? imageCategories.Default.image}
+                alt="logo"
+                height="25px"
+              />
+              <div className="oi-node-title">
                 {`${application.name}`}
               </div>
-
-              <div className="icon-right">
+              <div>
                 <NorthMenu application={application} />
-                <div className="icon-activation">
-                  <OIbCheckBox
-                    name={`${`north.applications.${applications.findIndex(
-                      (element) => element.id === application.id,
-                    )}`
-                    }.enabled`}
-                    defaultValue={false}
-                    value={application.enabled}
-                    onChange={onChange}
-                    switchButton
-                  />
-                </div>
               </div>
             </div>
-
-            <div className="oi-box tight text-muted">
-              {application.api}
+            <div
+              className="p-1 text-muted text-center justify-content-center"
+            >
+              <Link
+                className="text-decoration-none text-muted"
+                onClick={() => {
+                  history.push({ pathname: `/north/${application.id}` })
+                }}
+              >
+                {application.api}
+              </Link>
+            </div>
+            <div className="oi-node-footer">
+              <OIbCheckBox
+                name={`${`north.applications.${applications.findIndex(
+                  (element) => element.id === application.id,
+                )}`
+                }.enabled`}
+                defaultValue={false}
+                value={application.enabled}
+                onChange={onChange}
+                switchButton
+              />
             </div>
           </div>),
       },
@@ -123,40 +129,44 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       },
       data: {
         label: (
-          <div className="box-container">
-            <div className="icon-container">
-              <div className="icon-left">
-                <img
-                  src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category].image}` ?? imageCategories.Default.image}
-                  alt="logo"
-                  height="24px"
-                />
-              </div>
-              <div className="icon-center flex-grow" style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+          <div className="d-flex flex-column">
+            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+              <img
+                src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category].image}` ?? imageCategories.Default.image}
+                alt="logo"
+                height="25px"
+              />
+              <div className="oi-node-title">
                 {`${dataSource.name}`}
               </div>
-              <div className="icon-right ">
+              <div>
                 <SouthMenu dataSource={dataSource} />
-                <div className="icon-activation">
-                  <OIbCheckBox
-                    name={`${`south.dataSources.${dataSources.findIndex(
-                      (element) => element.id === dataSource.id,
-                    )}`
-                    }.enabled`}
-                    defaultValue={false}
-                    value={dataSource.enabled}
-                    onChange={onChange}
-                    switchButton
-                  />
-                </div>
               </div>
             </div>
-
-            <div className="oi-box tight text-muted">
-              {dataSource.protocol}
-            </div>
-            <div className="oi-points tight text-muted">
+            <div className="p-1 text-muted text-center justify-content-center">
+              <div>
+                <Link
+                  className="text-decoration-none text-muted"
+                  onClick={() => {
+                    history.push({ pathname: `/south/${dataSource.id}` })
+                  }}
+                >
+                  {dataSource.protocol}
+                </Link>
+              </div>
               <PointsButton dataSource={dataSource} />
+            </div>
+            <div className="oi-node-footer">
+              <OIbCheckBox
+                name={`${`south.dataSources.${dataSources.findIndex(
+                  (element) => element.id === dataSource.id,
+                )}`
+                }.enabled`}
+                defaultValue={false}
+                value={dataSource.enabled}
+                onChange={onChange}
+                switchButton
+              />
             </div>
           </div>
         ),
@@ -188,18 +198,23 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       id: 'engine',
       data: {
         label: (
-          <div className="box-container">
-            <div className="icon-container">
-              <div className="icon-left" />
-              <div className="icon-center">
+          <div className="d-flex flex-column">
+            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+              <div />
+              <div className="oi-node-title">
                 {`Engine ${engineName}`}
               </div>
-              <div className="icon-right">
+              <div>
                 <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
               </div>
             </div>
-            <br />
-            <div style={{ color: 'grey' }}>
+
+            <Link
+              className="text-decoration-none text-muted"
+              onClick={() => {
+                history.push({ pathname: '/engine' })
+              }}
+            >
               <div>
                 <b>Uptime: </b>
                 {status.uptime}
@@ -216,7 +231,7 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
                 <b>ConfigurationFile: </b>
                 {status.configurationFile}
               </div>
-            </div>
+            </Link>
           </div>
         ),
       },
@@ -241,26 +256,20 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 
   return (
     <Container>
-      <Row>
-        <div style={{
-          height: 410 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
-          width: 3900,
-        }}
-        >
-          <ReactFlow
-            elements={elements}
-            zoomOnScroll={false}
-            nodesConnectable={false}
-            elementsSelectable
-            nodesDraggable={false}
-            onLoad={onLoad}
-          >
-
-            <Controls />
-
-          </ReactFlow>
-        </div>
-      </Row>
+      <div style={{
+        height: 410 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
+        width: '100%',
+      }}
+      >
+        <ReactFlow
+          elements={elements}
+          zoomOnScroll={false}
+          nodesConnectable={false}
+          elementsSelectable
+          nodesDraggable={false}
+          onLoad={onLoad}
+        />
+      </div>
     </Container>
   )
 }

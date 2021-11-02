@@ -14,77 +14,66 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
   const [shutdownShow, setShutdownShow] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const toggle = () => setDropdownOpen((prevState) => !prevState)
-
   const history = useHistory()
-
-  const handleGoToConnector = (pathname) => {
-    history.push({ pathname })
-  }
-  const titleRestart = 'Restart'
-  const titleShutDown = 'Shutdown'
-  const bodyRestart = 'Confirm restart?'
-  const bodyShutDown = 'Confirm shutdown?'
 
   return (
     <>
-
       <Dropdown
         isOpen={dropdownOpen}
         toggle={toggle}
         direction="down"
       >
-        <DropdownToggle size="sm" className="icon-dropdown">
-          <FaEllipsisV id="dropdown-toggle" className="icon-dropdown-ellipsis" />
+        <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+          <FaEllipsisV />
         </DropdownToggle>
-
-        <DropdownMenu style={{ textAlign: 'center' }}>
-          <DropdownItem id="add-north" className="dropdown-item" onClick={() => setNorthModal(true)}>
+        <DropdownMenu>
+          <DropdownItem id="add-north" onClick={() => setNorthModal(true)}>
             Add North
           </DropdownItem>
-
-          <DropdownItem id="add-south" className="dropdown-item" onClick={() => setSouthModal(true)}>
+          <DropdownItem id="add-south" onClick={() => setSouthModal(true)}>
             Add South
           </DropdownItem>
-
-          <DropdownItem className="dropdown-item">
-            <div
-              id="oi-settings"
-              aria-hidden="true"
-              role="button"
-              onClick={() => {
-                handleGoToConnector('/Engine/')
-              }}
-            >
-              Settings
-            </div>
+          <DropdownItem
+            id="oi-settings"
+            onClick={() => {
+              history.push({ pathname: '/engine/' })
+            }}
+          >
+            Settings
           </DropdownItem>
-
-          <DropdownItem id="restart" className="dropdown-item" onClick={() => setRestartShow(true)}>
+          <DropdownItem id="restart" onClick={() => setRestartShow(true)}>
             Restart
           </DropdownItem>
           <ConfirmationModal
-            title={titleRestart}
-            body={bodyRestart}
+            title="Restart"
+            body="Confirm restart?"
             onConfirm={onRestart}
             isOpen={restartShow}
             toggle={() => setRestartShow(false)}
           />
-
-          <DropdownItem id="shutdown" className="dropdown-item" onClick={() => setShutdownShow(true)}>
+          <DropdownItem id="shutdown" onClick={() => setShutdownShow(true)}>
             Shutdown
           </DropdownItem>
           <ConfirmationModal
-            title={titleShutDown}
-            body={bodyShutDown}
+            title="Shutdown"
+            body="Confirm shutdown?"
             onConfirm={onShutdown}
             isOpen={shutdownShow}
             toggle={() => setShutdownShow(false)}
           />
+          <DropdownItem
+            id="oi-about"
+            onClick={() => {
+              history.push({ pathname: '/about/' })
+            }}
+          >
+            About
+          </DropdownItem>
         </DropdownMenu>
+
       </Dropdown>
       <NewSouth modal={southModal} toggle={() => setSouthModal(false)} />
       <NewNorth modal={northModal} toggle={() => setNorthModal(false)} />
-
     </>
   )
 }

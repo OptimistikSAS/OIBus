@@ -108,7 +108,7 @@ describe('EngineMenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: '/Engine/' })
+    expect(mockHistoryPush).toBeCalledWith({ pathname: '/engine/' })
     expect(container).toMatchSnapshot()
   })
 })

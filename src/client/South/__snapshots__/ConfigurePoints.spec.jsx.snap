@@ -3,46 +3,48 @@
 exports[`ConfigurePoints check ConfigurePoints 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -519,46 +521,48 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
 exports[`ConfigurePoints check add new point 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -1035,46 +1039,48 @@ exports[`ConfigurePoints check add new point 1`] = `
 exports[`ConfigurePoints check confirm on delete all points 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -1551,46 +1557,48 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
 exports[`ConfigurePoints check delete all points 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -2067,46 +2075,48 @@ exports[`ConfigurePoints check delete all points 1`] = `
 exports[`ConfigurePoints check delete first point 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -2583,46 +2593,48 @@ exports[`ConfigurePoints check delete first point 1`] = `
 exports[`ConfigurePoints check edit filter input 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -3099,46 +3111,48 @@ exports[`ConfigurePoints check edit filter input 1`] = `
 exports[`ConfigurePoints check edit first pointId 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -3615,46 +3629,48 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
 exports[`ConfigurePoints check edit first pointId 2`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -4131,46 +4147,48 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
 exports[`ConfigurePoints check edit first scanMode 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -4647,46 +4665,48 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
 exports[`ConfigurePoints check edit first scanMode 2`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -5163,46 +5183,48 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
 exports[`ConfigurePoints check export points 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -5679,46 +5701,48 @@ exports[`ConfigurePoints check export points 1`] = `
 exports[`ConfigurePoints check import points file input 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -6195,46 +6219,48 @@ exports[`ConfigurePoints check import points file input 1`] = `
 exports[`ConfigurePoints check import points parseCSV fail 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -6711,46 +6737,48 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
 exports[`ConfigurePoints check import points press 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -7227,46 +7255,48 @@ exports[`ConfigurePoints check import points press 1`] = `
 exports[`ConfigurePoints check import points readFileContent fail 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -7743,46 +7773,48 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
 exports[`ConfigurePoints check import points success 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -8279,46 +8311,48 @@ exports[`ConfigurePoints check no config 1`] = `
 exports[`ConfigurePoints check no points 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -8485,46 +8519,48 @@ exports[`ConfigurePoints check no points 1`] = `
 exports[`ConfigurePoints check pagination 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >
@@ -9001,46 +9037,48 @@ exports[`ConfigurePoints check pagination 1`] = `
 exports[`ConfigurePoints check render with filterText 1`] = `
 <div>
   <div
+    class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+  >
+    <h6
+      class="text-muted d-flex align-items-center pl-3 pt-1"
+    >
+      <button
+        aria-label="Close"
+        class="close"
+        type="button"
+      >
+        <svg
+          class="oi-icon mr-2"
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+      </button>
+      | OPC-HDA
+    </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
+  </div>
+  <div
     class="points"
   >
-    <div
-      class="oi-sub-nav row"
-    >
-      <svg
-        class="oi-sub-nav-return"
-        fill="currentColor"
-        height="1em"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 448 512"
-        width="1em"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
-        />
-      </svg>
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        |
-         
-        OPC-HDA
-      </div>
-      <div
-        class="oi-sub-nav-status col-md-2"
-      >
-        <button
-          class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
-          type="button"
-        >
-          Status
-        </button>
-      </div>
-    </div>
-    <div
-      style="margin-top: 15px;"
-    >
+    <div>
       <div
         class="form-group"
       >

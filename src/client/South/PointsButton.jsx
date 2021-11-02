@@ -6,18 +6,14 @@ import ProtocolSchemas from './Protocols.jsx'
 
 const PointsButton = ({ dataSource }) => {
   const history = useHistory()
-  const handleEditPoints = () => {
-    const link = `/south/${dataSource.id}/points`
-    history.push({ pathname: link })
-  }
-  const { points, name, protocol, enabled } = dataSource
+  const { points, protocol, enabled } = dataSource
   const hasPoints = ProtocolSchemas[protocol]?.points !== null
   return hasPoints ? (
     <Button
       className="inline-button autosize oi-points-button"
       // eslint-disable-next-line no-nested-ternary
-      color={enabled ? (points?.length ? 'secondary' : 'warning') : 'secondary'}
-      onClick={() => handleEditPoints(name)}
+      color={enabled ? (points?.length ? 'success' : 'warning') : 'secondary'}
+      onClick={() => history.push({ pathname: `/south/${dataSource.id}/points` })}
       size="sm"
       outline
     >
