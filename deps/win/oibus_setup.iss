@@ -263,9 +263,9 @@ begin
     if FileExists(JsonFile) then
     begin
       ConfExists := True;
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to overwrite it ?', mbInformation, MB_YESNO) = IDYES then
+      if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10+ 'Do you want to proceed ?', mbInformation, MB_YESNO) = IDYES then
       begin
-        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed ?', mbInformation, MB_YESNO) = IDNO then
+        if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Are you sure you want to overwrite it ?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False;
       end
       else
