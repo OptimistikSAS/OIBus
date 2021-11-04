@@ -19,7 +19,7 @@ describe('ProtocolHandler', () => {
     const mockDate = new Date('2020-02-02T02:02:02.222Z')
     jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
 
-    const south = new ProtocolHandler({ dataSourceId: 'dataSourceId' }, engine)
+    const south = new ProtocolHandler({ id: 'id' }, engine, {})
 
     const values = [{
       timestamp: '2020-02-02T01:02:02.000Z',
@@ -30,21 +30,22 @@ describe('ProtocolHandler', () => {
       },
     }]
     await south.addValues(values)
+    await south.flush()
 
-    expect(engine.addValues).toBeCalledWith('dataSourceId', values)
+    expect(engine.addValues).toBeCalledWith('id', values)
   })
 
-  it('should properly handle addVFile call', async () => {
+  it('should properly handle addFile call', async () => {
     const mockDate = new Date('2020-02-02T02:02:02.222Z')
     jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
 
-    const south = new ProtocolHandler({ dataSourceId: 'dataSourceId' }, engine)
+    const south = new ProtocolHandler({ id: 'id' }, engine, {})
 
     const filePath = 'path'
     const preserveFiles = true
     await south.addFile(filePath, preserveFiles)
 
-    expect(engine.addFile).toBeCalledWith('dataSourceId', filePath, preserveFiles)
+    expect(engine.addFile).toBeCalledWith('id', filePath, preserveFiles)
   })
 
   it('should format date properly', () => {

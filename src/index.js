@@ -83,9 +83,9 @@ if (cluster.isMaster) {
       logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
       const stopAll = [oibusEngine.stop(), historyQueryEngine.stop()]
       Promise.allSettled(stopAll)
-          .then(() => {
-            process.exit()
-          })
+        .then(() => {
+          process.exit()
+        })
     })
 
     // Receive messages from the master process.
@@ -93,15 +93,15 @@ if (cluster.isMaster) {
       switch (msg.type) {
         case 'reload':
           Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
-              .then(() => {
-                process.exit()
-              })
+            .then(() => {
+              process.exit()
+            })
           break
         case 'shutdown':
           Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
-              .then(() => {
-                process.send({type: 'shutdown-ready'})
-              })
+            .then(() => {
+              process.send({ type: 'shutdown-ready' })
+            })
           break
         default:
           logger.warn(`Unknown message type received from Master: ${msg.type}`)

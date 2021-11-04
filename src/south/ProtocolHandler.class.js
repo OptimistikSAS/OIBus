@@ -98,7 +98,7 @@ class ProtocolHandler {
             }
           })
         } else {
-          this.logger.error(`${this.dataSource.dataSourceId} scanGroups are not defined. This South driver will not work`)
+          this.logger.error(`${this.dataSource.name} scanGroups are not defined. This South driver will not work`)
           this.scanGroups = []
         }
       }
@@ -140,7 +140,7 @@ class ProtocolHandler {
       startTime
     } = this.dataSource
 
-    const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
 
     if (this.supportedModes?.supportHistory) {
