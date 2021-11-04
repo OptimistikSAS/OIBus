@@ -4,10 +4,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
-
-// need BrowserRouter so Link component is not complaining
-import { BrowserRouter } from 'react-router-dom'
-
 import NodeView from './NodeView.jsx'
 import newConfig from '../../../tests/testConfig'
 
@@ -41,9 +37,7 @@ describe('NodeView', () => {
   test('display main page based on config', async () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <NodeView status={status} onRestart={() => true} onShutdown={() => true} />
-        </BrowserRouter>,
+        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
         container,
       )
     })
@@ -56,9 +50,7 @@ describe('NodeView', () => {
 
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <NodeView status={status} onRestart={() => true} onShutdown={() => true} />
-        </BrowserRouter>,
+        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
         container,
       )
     })

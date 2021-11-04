@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import NewSouth from './NewSouth.jsx'
 import NewNorth from './NewNorth.jsx'
@@ -14,7 +14,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
   const [shutdownShow, setShutdownShow] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const toggle = () => setDropdownOpen((prevState) => !prevState)
-  const history = useHistory()
+  const navigate = useNavigate()
 
   return (
     <>
@@ -36,7 +36,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
           <DropdownItem
             id="oi-settings"
             onClick={() => {
-              history.push({ pathname: '/engine/' })
+              navigate('/engine/')
             }}
           >
             Settings
@@ -64,7 +64,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
           <DropdownItem
             id="oi-about"
             onClick={() => {
-              history.push({ pathname: '/about/' })
+              navigate('/about/')
             }}
           >
             About

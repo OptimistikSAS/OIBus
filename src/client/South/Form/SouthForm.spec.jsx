@@ -4,10 +4,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
-import { BrowserRouter } from 'react-router-dom'
 
 import newConfig from '../../../../tests/testConfig'
 import SouthForm from './SouthForm.jsx'
+
+const mockNavigate = jest.fn()
+
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  useParams: jest.fn().mockReturnValue({ id: 'south-id' }),
+}))
 
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
@@ -32,9 +38,7 @@ describe('SouthForm', () => {
     test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
       act(() => {
         ReactDOM.render(
-          <BrowserRouter>
-            <SouthForm dataSource={dataSource} dataSourceIndex={0} onChange={() => 1} />
-          </BrowserRouter>,
+          <SouthForm dataSource={dataSource} dataSourceIndex={0} onChange={() => 1} />,
           container,
         )
       })
@@ -44,9 +48,7 @@ describe('SouthForm', () => {
   test('check SouthForm with empty dataSource', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <SouthForm dataSource={{ protocol: 'MQTT', name: 'emptyDataSource' }} dataSourceIndex={0} onChange={() => 1} />
-        </BrowserRouter>,
+        <SouthForm dataSource={{ protocol: 'MQTT', name: 'emptyDataSource' }} dataSourceIndex={0} onChange={() => 1} />,
         container,
       )
     })

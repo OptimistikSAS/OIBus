@@ -1,5 +1,5 @@
 import React from 'react'
-import { useParams, useHistory } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Button, Input, Spinner } from 'reactstrap'
 import humanizeString from 'humanize-string'
 import { FaArrowLeft } from 'react-icons/fa'
@@ -19,7 +19,7 @@ const ConfigurePoints = () => {
   const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
   const { setAlert } = React.useContext(AlertContext)
-  const history = useHistory()
+  const navigate = useNavigate()
   // max points on one page
   const MAX_ON_PAGE = 10
   // this value will be used to calculate the amount of max pagination displayed
@@ -208,7 +208,7 @@ const ConfigurePoints = () => {
           <Button
             close
             onClick={() => {
-              history.goBack()
+              navigate(-1)
             }}
           >
             <FaArrowLeft className="oi-icon mr-2" />
@@ -216,7 +216,12 @@ const ConfigurePoints = () => {
           {`| ${dataSource.name}`}
         </h6>
         <div className="pull-right mr-3">
-          <StatusButton handler={() => { history.push({ pathname: `/south/${id}/live` }) }} enabled={dataSource.enabled} />
+          <StatusButton
+            handler={() => {
+              navigate(`/south/${id}/live`)
+            }}
+            enabled={dataSource.enabled}
+          />
         </div>
       </div>
       <div className="points">

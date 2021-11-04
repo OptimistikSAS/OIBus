@@ -9,10 +9,10 @@ import EngineMenu from './EngineMenu.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
-const mockHistoryPush = jest.fn()
+const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => (
-  { useHistory: () => ({ push: mockHistoryPush }) }
+  { useNavigate: () => mockNavigate }
 ))
 
 const restartFunction = jest.fn()
@@ -108,7 +108,7 @@ describe('EngineMenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: '/engine/' })
+    expect(mockNavigate).toBeCalledWith('/engine/')
     expect(container).toMatchSnapshot()
   })
 
@@ -121,7 +121,7 @@ describe('EngineMenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-about'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: '/about/' })
+    expect(mockNavigate).toBeCalledWith('/about/')
     expect(container).toMatchSnapshot()
   })
 })

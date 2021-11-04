@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Northmenu check cancel delete first application 1`] = `
+exports[`NorthMenu check cancel delete first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -66,7 +66,7 @@ exports[`Northmenu check cancel delete first application 1`] = `
 </div>
 `;
 
-exports[`Northmenu check delete first application 1`] = `
+exports[`NorthMenu check delete first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -132,7 +132,7 @@ exports[`Northmenu check delete first application 1`] = `
 </div>
 `;
 
-exports[`Northmenu check duplicate application 1`] = `
+exports[`NorthMenu check duplicate application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -198,7 +198,7 @@ exports[`Northmenu check duplicate application 1`] = `
 </div>
 `;
 
-exports[`Northmenu check duplicate application already copied 1`] = `
+exports[`NorthMenu check duplicate application already copied 1`] = `
 <div>
   <div
     class="dropdown"
@@ -264,7 +264,7 @@ exports[`Northmenu check duplicate application already copied 1`] = `
 </div>
 `;
 
-exports[`Northmenu check edit first application 1`] = `
+exports[`NorthMenu check edit first application 1`] = `
 <div>
   <div
     class="dropdown"
@@ -330,7 +330,7 @@ exports[`Northmenu check edit first application 1`] = `
 </div>
 `;
 
-exports[`Northmenu display NorthMenu page based on config 1`] = `
+exports[`NorthMenu display NorthMenu page based on config 1`] = `
 <div>
   <div
     class="dropdown"
@@ -396,7 +396,7 @@ exports[`Northmenu display NorthMenu page based on config 1`] = `
 </div>
 `;
 
-exports[`Northmenu display NorthMenu properly when empty newConfig 1`] = `
+exports[`NorthMenu display NorthMenu properly when empty newConfig 1`] = `
 <div>
   <div
     class="dropdown"
@@ -462,7 +462,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 1`] = `
 </div>
 `;
 
-exports[`Northmenu display NorthMenu properly when empty newConfig 2`] = `
+exports[`NorthMenu display NorthMenu properly when empty newConfig 2`] = `
 <div>
   <div
     class="dropdown"
@@ -528,7 +528,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 2`] = `
 </div>
 `;
 
-exports[`Northmenu display NorthMenu properly when empty newConfig 3`] = `
+exports[`NorthMenu display NorthMenu properly when empty newConfig 3`] = `
 <div>
   <div
     class="dropdown"
@@ -594,7 +594,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 3`] = `
 </div>
 `;
 
-exports[`Northmenu display NorthMenu properly when empty newConfig 4`] = `
+exports[`NorthMenu display NorthMenu properly when empty newConfig 4`] = `
 <div>
   <div
     class="dropdown"

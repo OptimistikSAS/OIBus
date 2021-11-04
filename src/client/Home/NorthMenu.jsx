@@ -3,20 +3,16 @@ import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
 const NorthMenu = ({ application }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const history = useHistory()
+  const navigate = useNavigate()
   const applications = newConfig?.north?.applications ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-
-  const handleGoToConnector = (pathname) => {
-    history.push({ pathname })
-  }
 
   const handleDuplicateNorth = () => {
     const newName = `${application.name} copy`
@@ -56,7 +52,7 @@ const NorthMenu = ({ application }) => {
           <DropdownItem
             id="oi-settings"
             onClick={() => {
-              handleGoToConnector(`/north/${application.id}`)
+              navigate(`/north/${application.id}`)
             }}
           >
             Settings

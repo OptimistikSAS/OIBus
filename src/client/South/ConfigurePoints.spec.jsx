@@ -16,7 +16,7 @@ React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, set
 jest.mock('react-router-dom', () => (
   {
     useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }),
-    useHistory: jest.fn(),
+    useNavigate: jest.fn(),
   }
 ))
 

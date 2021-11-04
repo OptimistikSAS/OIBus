@@ -4,7 +4,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
-import { BrowserRouter } from 'react-router-dom'
 
 import apis from '../services/apis'
 import Logs from './Logs.jsx'
@@ -127,9 +126,7 @@ describe('Logs', () => {
   test('check Logs', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -138,9 +135,7 @@ describe('Logs', () => {
   test('check change fromDate', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -151,9 +146,7 @@ describe('Logs', () => {
   test('check change toDate', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -164,9 +157,7 @@ describe('Logs', () => {
   test('check change filterText', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -177,9 +168,7 @@ describe('Logs', () => {
   test('check change verbosity, uncheck debug', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -190,9 +179,7 @@ describe('Logs', () => {
   test('check change verbosity, check silly', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -203,9 +190,7 @@ describe('Logs', () => {
   test('check press Show Logs, success in logs call', async () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -222,9 +207,7 @@ describe('Logs', () => {
     console.error = jest.fn()
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })
@@ -239,9 +222,7 @@ describe('Logs', () => {
   test('check press showMore', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <Logs />
-        </BrowserRouter>,
+        <Logs />,
         container,
       )
     })

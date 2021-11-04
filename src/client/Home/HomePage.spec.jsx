@@ -5,8 +5,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
-// need BrowserRouter so Link component is not complaining
-import { BrowserRouter } from 'react-router-dom'
 import apis from '../services/apis'
 import HomePage from './HomePage.jsx'
 
@@ -30,7 +28,7 @@ afterEach(() => {
 
 // sample status (object returned by Server to give various informations on the behavior)
 const status = {
-  version: '0.5.7-dev',
+  version: '2.0.0',
   architecture: 'x64',
   currentDirectory: 'C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests',
   nodeVersion: 'v12.13.1',
@@ -72,7 +70,7 @@ const status = {
       count: 194926,
     },
   ],
-  copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+  copyright: '(c) Copyright 2019 - 2021 Optimistik, all rights reserved.',
 }
 // mock get Status
 let resolve
@@ -96,9 +94,7 @@ describe('HomePage', () => {
   test('display Health page based on config and status', async () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <HomePage />
-        </BrowserRouter>,
+        <HomePage />,
         container,
       )
     })
@@ -114,9 +110,7 @@ describe('HomePage', () => {
     console.error = jest.fn()
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <HomePage />
-        </BrowserRouter>,
+        <HomePage />,
         container,
       )
     })
@@ -131,9 +125,7 @@ describe('HomePage', () => {
     React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <HomePage />
-        </BrowserRouter>,
+        <HomePage />,
         container,
       )
     })

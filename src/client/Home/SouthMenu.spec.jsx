@@ -12,16 +12,12 @@ import newConfig from '../../../tests/testConfig'
 jest.mock('nanoid')
 jest.spyOn(nanoid, 'nanoid').mockReturnValue('generated-uuid')
 
-// ReacFlow does not seem to be working with jest.
-// so we have to mock this component
-jest.mock('../../../node_modules/react-flow-renderer/dist/ReactFlow.js', () => () => ('ReactFlow'))
-
 const dispatchNewConfig = jest.fn((link) => link)
 
-const mockHistoryPush = jest.fn()
+const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => (
-  { useHistory: () => ({ push: mockHistoryPush }) }
+  { useNavigate: () => mockNavigate }
 ))
 
 const dataSource = newConfig.south.dataSources[0]
@@ -145,7 +141,7 @@ describe('SouthMenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].id}` })
+    expect(mockNavigate).toBeCalledWith(`/south/${newConfig.south.dataSources[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
@@ -157,7 +153,7 @@ describe('SouthMenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-status'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${newConfig.south.dataSources[0].id}/live` })
+    expect(mockNavigate).toBeCalledWith(`/south/${newConfig.south.dataSources[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 

@@ -3,20 +3,16 @@ import PropTypes from 'prop-types'
 import { nanoid } from 'nanoid'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
 const SouthMenu = ({ dataSource }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const history = useHistory()
+  const navigate = useNavigate()
   const dataSources = newConfig?.south?.dataSources ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-
-  const handleGoToConnector = (pathname) => {
-    history.push({ pathname })
-  }
 
   const handleDuplicateSouth = () => {
     const newName = `${dataSource.name} copy`
@@ -57,7 +53,7 @@ const SouthMenu = ({ dataSource }) => {
           <DropdownItem
             id="oi-settings"
             onClick={() => {
-              handleGoToConnector(`/south/${dataSource.id}`)
+              navigate(`/south/${dataSource.id}`)
             }}
           >
             Settings
@@ -65,7 +61,7 @@ const SouthMenu = ({ dataSource }) => {
           <DropdownItem
             id="oi-status"
             onClick={() => {
-              handleGoToConnector(`/south/${dataSource.id}/live`)
+              navigate(`/south/${dataSource.id}/live`)
             }}
           >
             Status
