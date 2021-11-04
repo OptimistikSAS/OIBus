@@ -12,16 +12,12 @@ import newConfig from '../../../tests/testConfig'
 jest.mock('nanoid')
 jest.spyOn(nanoid, 'nanoid').mockReturnValue('generated-uuid')
 
-// ReacFlow does not seem to be working with jest.
-// so we have to mock this component
-jest.mock('../../../node_modules/react-flow-renderer/dist/ReactFlow.js', () => () => ('ReactFlow'))
-
 const dispatchNewConfig = jest.fn((link) => link)
 
-const mockHistoryPush = jest.fn()
+const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => (
-  { useHistory: () => ({ push: mockHistoryPush }) }
+  { useNavigate: () => mockNavigate }
 ))
 
 const application = newConfig.north.applications[0]
@@ -40,7 +36,7 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('Northmenu', () => {
+describe('NorthMenu', () => {
   test('display NorthMenu properly when empty newConfig', async () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig })
 
@@ -145,7 +141,7 @@ describe('Northmenu', () => {
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/north/${newConfig.north.applications[0].id}` })
+    expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}`)
     expect(container).toMatchSnapshot()
   })
 

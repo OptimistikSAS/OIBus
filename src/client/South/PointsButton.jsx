@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import ProtocolSchemas from './Protocols.jsx'
 
 const PointsButton = ({ dataSource }) => {
-  const history = useHistory()
+  const navigate = useNavigate()
   const { points, protocol, enabled } = dataSource
   const hasPoints = ProtocolSchemas[protocol]?.points !== null
   return hasPoints ? (
@@ -13,7 +13,7 @@ const PointsButton = ({ dataSource }) => {
       className="inline-button autosize oi-points-button"
       // eslint-disable-next-line no-nested-ternary
       color={enabled ? (points?.length ? 'success' : 'warning') : 'secondary'}
-      onClick={() => history.push({ pathname: `/south/${dataSource.id}/points` })}
+      onClick={() => navigate(`/south/${dataSource.id}/points`)}
       size="sm"
       outline
     >

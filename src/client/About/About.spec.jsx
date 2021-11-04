@@ -5,9 +5,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
-// need BrowserRouter so Link component is not complaining
-import { BrowserRouter } from 'react-router-dom'
-
 import apis from '../services/apis'
 import About from './About.jsx'
 
@@ -84,9 +81,7 @@ describe('About', () => {
   test('display About page based on config and status', async () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <About />
-        </BrowserRouter>,
+        <About />,
         container,
       )
     })
@@ -102,9 +97,7 @@ describe('About', () => {
     console.error = jest.fn()
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <About />
-        </BrowserRouter>,
+        <About />,
         container,
       )
     })
@@ -119,9 +112,7 @@ describe('About', () => {
     React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <About />
-        </BrowserRouter>,
+        <About />,
         container,
       )
     })

@@ -8,9 +8,9 @@ import { act, Simulate } from 'react-dom/test-utils'
 import testConfig from '../../../tests/testConfig'
 import PointsButton from './PointsButton.jsx'
 
-const mockHistoryPush = jest.fn()
+const mockNavigate = jest.fn()
 jest.mock('react-router-dom', () => (
-  { useHistory: () => ({ push: mockHistoryPush }) }
+  { useNavigate: () => mockNavigate }
 ))
 
 let container
@@ -62,7 +62,7 @@ describe('PointsButton', () => {
       )
     })
     Simulate.click(document.querySelector('button.oi-points-button'))
-    expect(mockHistoryPush).toBeCalledWith({ pathname: `/south/${dataSource.id}/points` })
+    expect(mockNavigate).toBeCalledWith(`/south/${dataSource.id}/points`)
     expect(container).toMatchSnapshot()
   })
   test('check if points array is empty', () => {

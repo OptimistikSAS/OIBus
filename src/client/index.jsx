@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { Container } from 'reactstrap'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -29,18 +29,18 @@ const Main = () => (
           <TopHeader />
           <Container className="oi-container-with-top-nav" fluid>
             <AlertContainer />
-            <Switch>
-              <Route exact path="/" component={HomePage} />
-              <Route exact path="/engine" component={Engine} />
-              <Route exact path="/south/:id" component={ConfigureProtocol} />
-              <Route exact path="/south/:id/live" component={SouthStatus} />
-              <Route exact path="/south/:id/points" component={ConfigurePoints} />
-              <Route exact path="/north/:id" component={ConfigureApi} />
-              <Route exact path="/log" component={Logs} />
-              <Route exact path="/about" component={About} />
-              <Route exact path="/activation" component={Activation} />
-              <Route component={NotFound} />
-            </Switch>
+            <Routes>
+              <Route exact path="/" element={<HomePage />} />
+              <Route exact path="/engine" element={<Engine />} />
+              <Route exact path="/south/:id" element={<ConfigureProtocol />} />
+              <Route exact path="/south/:id/live" element={<SouthStatus />} />
+              <Route exact path="/south/:id/points" element={<ConfigurePoints />} />
+              <Route exact path="/north/:id" element={<ConfigureApi />} />
+              <Route exact path="/log" element={<Logs />} />
+              <Route exact path="/about" element={<About />} />
+              <Route exact path="/activation" element={<Activation />} />
+              <Route element={<NotFound />} />
+            </Routes>
           </Container>
         </AlertProvider>
       </ConfigProvider>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useParams, useHistory } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Label, Row, Container, Button } from 'reactstrap'
 import { FaSync, FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
@@ -12,7 +12,7 @@ const SouthStatus = () => {
   const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig } = React.useContext(ConfigContext)
-  const history = useHistory()
+  const navigate = useNavigate()
   const { id } = useParams() // the dataSource id passed in the url
   const dataSource = newConfig.south?.dataSources?.find((element) => element.id === id)
   /**
@@ -89,7 +89,7 @@ const SouthStatus = () => {
           <Button
             close
             onClick={() => {
-              history.goBack()
+              navigate(-1)
             }}
           >
             <FaArrowLeft className="oi-icon mr-2" />

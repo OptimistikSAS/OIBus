@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Form, Row, Col, Button } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
@@ -18,7 +18,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
   const dataSources = newConfig?.south?.dataSources ?? []
-  const history = useHistory()
+  const navigate = useNavigate()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
   if (!dataSource.points) {
@@ -30,15 +30,6 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
     ? ProtocolSchemas.SQLDbToFile.withDriver(dataSource.SQLDbToFile.driver)
     : ProtocolSchemas[protocol]
   const prefix = `south.dataSources.${dataSourceIndex}`
-
-  /**
-   * Redirects the user to the datasource's live page
-   * @return {void}
-   */
-  const handleStatus = () => {
-    const pathname = `/south/${id}/live`
-    history.push({ pathname })
-  }
 
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
@@ -79,7 +70,12 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           )}
         </h6>
         <div className="pull-right mr-3">
-          <StatusButton handler={handleStatus} enabled={dataSource.enabled} />
+          <StatusButton
+            handler={() => {
+              navigate(`/south/${id}/live`)
+            }}
+            enabled={dataSource.enabled}
+          />
           <PointsButton dataSource={dataSource} />
         </div>
       </div>

@@ -11,9 +11,10 @@ import EngineMenu from './EngineMenu.jsx'
 import newConfig from '../../../tests/testConfig'
 
 const dispatchNewConfig = jest.fn()
-
 const restartFunction = jest.fn()
 const shutdownFunction = jest.fn()
+const mockNavigate = jest.fn()
+jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate }))
 
 let container
 

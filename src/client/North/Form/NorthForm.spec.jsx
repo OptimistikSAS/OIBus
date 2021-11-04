@@ -4,7 +4,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
-import { BrowserRouter } from 'react-router-dom'
 
 import newConfig from '../../../../tests/testConfig'
 import NorthForm from './NorthForm.jsx'
@@ -31,9 +30,7 @@ describe('NorthForm', () => {
     test(`check NorthForm with application: ${application.name}`, () => {
       act(() => {
         ReactDOM.render(
-          <BrowserRouter>
-            <NorthForm application={application} applicationIndex={0} onChange={() => 1} />
-          </BrowserRouter>,
+          <NorthForm application={application} applicationIndex={0} onChange={() => 1} />,
           container,
         )
       })
@@ -44,9 +41,7 @@ describe('NorthForm', () => {
   test('check NorthForm with empty application', () => {
     act(() => {
       ReactDOM.render(
-        <BrowserRouter>
-          <NorthForm application={{ api: 'Console', name: 'emptyApplication' }} applicationIndex={0} onChange={() => 1} />
-        </BrowserRouter>,
+        <NorthForm application={{ api: 'Console', name: 'emptyApplication' }} applicationIndex={0} onChange={() => 1} />,
         container,
       )
     })
