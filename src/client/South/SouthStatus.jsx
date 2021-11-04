@@ -1,86 +1,56 @@
 import React from 'react'
+import { Container, Button } from 'reactstrap'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Label, Row, Container, Button } from 'reactstrap'
-import { FaSync, FaArrowLeft } from 'react-icons/fa'
-import Table from '../components/table/Table.jsx'
-import apis from '../services/apis'
+import { FaArrowLeft } from 'react-icons/fa'
 import { AlertContext } from '../context/AlertContext.jsx'
 import PointsButton from './PointsButton.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
+import Table from '../components/table/Table.jsx'
+
+/**
+ * Generate row entry for the status table.
+ * @param {string} key - The key
+ * @param {string} value - The value
+ * @return {[{name: *, value: *}, {name: string, value: *}]} - The table row
+ */
+const generateRowEntry = (key, value) => [
+  {
+    name: key,
+    value: key,
+  },
+  {
+    name: 'value',
+    value,
+  },
+]
 
 const SouthStatus = () => {
-  const [status, setStatus] = React.useState({})
+  const [connectorData, setConnectorData] = React.useState([])
   const { setAlert } = React.useContext(AlertContext)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
   const { id } = useParams() // the dataSource id passed in the url
-  const dataSource = newConfig.south?.dataSources?.find((element) => element.id === id)
-  /**
-   * Acquire the status
-   * @returns {void}
-   */
-  const fetchStatus = () => {
-    apis
-      .getSouthStatus(id)
-      .then((response) => {
-        setStatus(response)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }
+  const [dataSource, setDataSource] = React.useState(null)
 
-  /**
-   * Fetch status after render
-   * @returns {void}
-   */
   React.useEffect(() => {
-    fetchStatus()
-  }, [])
-
-  /**
-   * Generate string value from on object.
-   * @param {Object[]} data - The object
-   * @return {string} - The string value
-   */
-  const generateStringValueFromObject = (data) => {
-    let stringValue = ''
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'name') {
-        stringValue += stringValue ? ` / ${key}: ${value}` : `${key}: ${value}`
-      }
-    })
-    return stringValue
-  }
-
-  /**
-   * Generate row entry for the status table.
-   * @param {string} key - The key
-   * @param {string} value - The value
-   * @return {[{name: *, value: *}, {name: string, value: *}]} - The table row
-   */
-  const generateRowEntry = (key, value) => [
-    {
-      name: key,
-      value: key,
-    },
-    {
-      name: 'value',
-      value,
-    },
-  ]
-
-  const tableRows = []
-  Object.keys(status).forEach((key) => {
-    if (Array.isArray(status[key])) {
-      status[key].forEach((entry) => {
-        tableRows.push(generateRowEntry(entry.name, generateStringValueFromObject(entry)))
-      })
-    } else {
-      tableRows.push(generateRowEntry(key, status[key]))
+    const currentDataSource = newConfig.south?.dataSources?.find((element) => element.id === id)
+    setDataSource(currentDataSource)
+    const source = new EventSource(`/south/${id}/sse`)
+    source.onerror = (error) => {
+      setAlert({ text: error.message, type: 'danger' })
     }
-  })
+    source.onmessage = (event) => {
+      if (event && event.data) {
+        const myData = JSON.parse(event.data)
+        const tableRows = []
+        Object.keys(myData).forEach((key) => {
+          tableRows.push(generateRowEntry(key, myData[key]))
+        })
+        setConnectorData(tableRows)
+      }
+    }
+    return (() => source.close())
+  }, [newConfig])
 
   return dataSource ? (
     <>
@@ -100,18 +70,7 @@ const SouthStatus = () => {
           <PointsButton dataSource={dataSource} />
         </div>
       </div>
-      <Row>
-        <Label>
-          <span>
-            {`${status.Name} status`}
-            &nbsp;
-            <FaSync className="oi-icon" onClick={fetchStatus} />
-          </span>
-        </Label>
-      </Row>
-      <Row>
-        <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
-      </Row>
+      <Container>{connectorData.length > 0 && <Table headers={[]} rows={connectorData} />}</Container>
     </>
   ) : null
 }

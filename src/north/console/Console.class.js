@@ -16,7 +16,7 @@ class Console extends ApiHandler {
     super(applicationParameters, engine)
     this.canHandleValues = true
     this.canHandleFiles = true
-    this.verbose = applicationParameters.Console.verbose || false
+    this.verbose = applicationParameters.Console.verbose ?? false
   }
 
   /**

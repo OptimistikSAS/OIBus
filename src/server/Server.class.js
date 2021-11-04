@@ -4,6 +4,7 @@ const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const json = require('koa-json')
+const { PassThrough } = require('stream')
 
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
@@ -24,6 +25,34 @@ class Server {
    */
   constructor(engine) {
     this.app = new Koa()
+
+    // eslint-disable-next-line consistent-return
+    this.app.use(async (ctx, next) => {
+      // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
+      if (!ctx.path.endsWith('/sse')) {
+        // eslint-disable-next-line no-return-await
+        return await next()
+      }
+      if (!this.app.engine.eventEmitters[ctx.path]) {
+        // eslint-disable-next-line no-return-await
+        return await next()
+      }
+
+      ctx.request.socket.setTimeout(0)
+      ctx.req.socket.setNoDelay(true)
+      ctx.req.socket.setKeepAlive(true)
+      ctx.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+
+      ctx.status = 200
+      this.app.engine.eventEmitters[ctx.path].stream = new PassThrough()
+      ctx.body = this.app.engine.eventEmitters[ctx.path].stream
+      this.app.engine.eventEmitters[ctx.path].events.emit('data', null)
+    })
+
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
     this.app.logger = Logger.getDefaultLogger()

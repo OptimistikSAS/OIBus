@@ -127,7 +127,7 @@ class Modbus extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
-    await this.connectorToModbusServer()
+    this.connectorToModbusServer()
   }
 
   /**
@@ -141,11 +141,13 @@ class Modbus extends ProtocolHandler {
     if (this.connected) {
       this.socket.end()
       this.connected = false
+      this.statusData['Connected at'] = 'Not connected'
+      this.updateStatusDataStream()
     }
     super.disconnect()
   }
 
-  async connectorToModbusServer() {
+  connectorToModbusServer() {
     this.reconnectTimeout = null
     this.socket = new net.Socket()
     const { host, port, slaveId } = this.dataSource.Modbus
@@ -154,6 +156,8 @@ class Modbus extends ProtocolHandler {
       { host, port },
       () => {
         this.connected = true
+        this.statusData['Connected at'] = new Date().toISOString()
+        this.updateStatusDataStream()
       },
     )
     this.socket.on('error', (error) => {

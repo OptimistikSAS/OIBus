@@ -17,6 +17,7 @@ const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.decryptPassword = (password) => password
+engine.eventEmitters = {}
 
 // Define the CsvToHttp North
 const CsvToHttpConfig = config.north.applications[6]

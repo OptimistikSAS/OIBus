@@ -1,5 +1,6 @@
 const fs = require('fs')
 const zlib = require('zlib')
+const EventEmitter = require('events')
 
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
@@ -35,7 +36,6 @@ class ProtocolHandler {
    * @constructor
    * @param {*} dataSource - The data source
    * @param {Engine} engine - The engine
-   * @return {void}
    */
   constructor(dataSource, engine) {
     this.dataSource = dataSource
@@ -57,6 +57,7 @@ class ProtocolHandler {
     this.currentlyOnScan = {}
     this.buffer = []
     this.bufferTimeout = null
+    this.statusData = {}
   }
 
   async connect() {
@@ -64,6 +65,39 @@ class ProtocolHandler {
     const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
     this.logger.info(`Data source ${name} (${id}) started with protocol ${protocol}`)
+  }
+
+  initializeStatusData() {
+    const initialStatusData = { }
+    if (this.handlesPoints) {
+      initialStatusData['Number of values since OIBus has started'] = 0
+    }
+    if (this.handlesFiles) {
+      initialStatusData['Number of files since OIBus has started'] = 0
+    }
+    this.statusData = initialStatusData
+    if (!this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]) {
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`] = {}
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.setMaxListeners(0)
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
+      this.updateStatusDataStream()
+    }
+  }
+
+  /**
+   * Method used by the eventEmmiter of the current protocol to write data to the socket and send them to the frontend
+   * @param {object} data - The json object of data to send
+   * @return {void}
+   */
+  listener = (data) => {
+    if (data) {
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
+  }
+
+  updateStatusDataStream() {
+    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.events.emit('data', this.statusData)
   }
 
   onScanImplementation(scanMode) {
@@ -75,6 +109,8 @@ class ProtocolHandler {
     this.currentlyOnScan[scanMode] = true
     this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
     this.lastOnScanAt = new Date().getTime()
+    this.statusData['Last scan at'] = new Date().toISOString()
+    this.updateStatusDataStream()
     try {
       await this.onScanImplementation(scanMode)
     } catch (error) {
@@ -91,19 +127,24 @@ class ProtocolHandler {
   disconnect() {
     const { name, id } = this.dataSource
     this.logger.info(`Data source ${name} (${id}) disconnected`)
+    this.engine.eventEmitters[`/south/${id}/sse`]?.events?.off('data', this.listener)
   }
 
   /**
-   * Method used to flush the buffer from a time trigger or a max trigger
-   * @param {string} flag - The trigger
-   * @returns {void}
-   */
+     * Method used to flush the buffer from a time trigger or a max trigger
+     * @param {string} flag - The trigger
+     * @returns {void} -
+     */
   async flush(flag = 'time-flush') {
     this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
     // save the buffer to be sent and immediately clear it
     const bufferSave = [...this.buffer]
     this.buffer = []
     await this.engine.addValues(this.dataSource.id, bufferSave)
+    this.statusData['Number of values since OIBus has started'] += bufferSave.length
+    this.statusData['Last added points at'] = new Date().toISOString()
+    this.statusData['Last added point id (value)'] = `${bufferSave[bufferSave.length - 1].pointId} (${bufferSave[bufferSave.length - 1].data.value})`
+    this.updateStatusDataStream()
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)
       this.bufferTimeout = null
@@ -111,10 +152,10 @@ class ProtocolHandler {
   }
 
   /**
-   * Add a new Value to the Engine.
-   * @param {array} values - The new value
-   * @return {void}
-   */
+     * Add a new Value to the Engine.
+     * @param {array} values - The new value
+     * @return {void}
+     */
   async addValues(values) {
     // used for status
     this.lastAddPointsAt = new Date().getTime()
@@ -133,23 +174,28 @@ class ProtocolHandler {
   }
 
   /**
-   * Add a new File to the Engine.
-   * @param {string} filePath - The path to the File
-   * @param {boolean} preserveFiles - Whether to preserve the original file
-   * @return {void}
-   */
+     * Add a new File to the Engine.
+     * @param {string} filePath - The path to the File
+     * @param {boolean} preserveFiles - Whether to preserve the original file
+     * @return {void}
+     */
   addFile(filePath, preserveFiles) {
     this.lastAddFileAt = new Date().getTime()
     this.addFileCount += 1
+    this.statusData['Number of files since OIBus has started'] += 1
+    this.statusData['Last added file at'] = this.lastAddFileAt
+    this.statusData['Last added file'] = filePath
+    this.updateStatusDataStream()
+
     this.engine.addFile(this.dataSource.id, filePath, preserveFiles)
   }
 
   /**
-   * Compress the specified file
-   * @param {string} input - The path of the file to compress
-   * @param {string} output - The path to the compressed file
-   * @returns {Promise} - The compression result
-   */
+     * Compress the specified file
+     * @param {string} input - The path of the file to compress
+     * @param {string} output - The path to the compressed file
+     * @returns {Promise} - The compression result
+     */
   compress(input, output) {
     return new Promise((resolve, reject) => {
       const readStream = fs.createReadStream(input)
@@ -168,22 +214,20 @@ class ProtocolHandler {
   }
 
   /**
-   * Read a given key in the config db of the protocol handler
-   * @param {string} configKey - key to retrieve
-   * @returns {Promise} - The value of the key
-   */
-
+     * Read a given key in the config db of the protocol handler
+     * @param {string} configKey - key to retrieve
+     * @returns {Promise} - The value of the key
+     */
   async getConfig(configKey) {
     return databaseService.getConfig(this.southDatabase, configKey)
   }
 
   /**
-   * Update or add a given key in the config db of the protocol handler
-   * @param {string} configKey - key to update/add
-   * @param {string} value - value of the key
-   * @returns {Promise} - the value to update the key
-   */
-
+     * Update or add a given key in the config db of the protocol handler
+     * @param {string} configKey - key to update/add
+     * @param {string} value - value of the key
+     * @returns {Promise} - the value to update the key
+     */
   async setConfig(configKey, value) {
     return databaseService.upsertConfig(
       this.southDatabase,
@@ -193,11 +237,11 @@ class ProtocolHandler {
   }
 
   /**
-   * Decompress the specified file
-   * @param {string} input - The path of the compressed file
-   * @param {string} output - The path to the decompressed file
-   * @returns {Promise} - The decompression result
-   */
+     * Decompress the specified file
+     * @param {string} input - The path of the compressed file
+     * @param {string} output - The path to the decompressed file
+     * @returns {Promise} - The decompression result
+     */
   /* eslint-disable-next-line class-methods-use-this */
   decompress(input, output) {
     return new Promise((resolve, reject) => {
@@ -217,10 +261,10 @@ class ProtocolHandler {
   }
 
   /**
-   * Method to return a delayed promise.
-   * @param {number} timeout - The delay
-   * @return {Promise<any>} - The delay promise
-   */
+     * Method to return a delayed promise.
+     * @param {number} timeout - The delay
+     * @return {Promise<any>} - The delay promise
+     */
   /* eslint-disable-next-line class-methods-use-this */
   async delay(timeout) {
     return new Promise((resolve) => {
@@ -229,9 +273,9 @@ class ProtocolHandler {
   }
 
   /**
-   * Get live status.
-   * @returns {object} - The live status
-   */
+     * Get live status.
+     * @returns {object} - The live status
+     */
   getStatus() {
     const status = {
       Name: this.dataSource.name,
