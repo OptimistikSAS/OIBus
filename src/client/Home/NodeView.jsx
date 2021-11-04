@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Container } from 'reactstrap'
 import ReactFlow from 'react-flow-renderer'
-import { Link, useHistory } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/configContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
@@ -30,7 +30,6 @@ const colors = {
 
 const NodeView = ({ status, onRestart, onShutdown }) => {
   const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
-  const history = useHistory()
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
   const engineName = activeConfig ? activeConfig.engine.engineName : ''
@@ -73,10 +72,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
               className="p-1 text-muted text-center justify-content-center"
             >
               <Link
+                to={`/north/${application.id}`}
                 className="text-decoration-none text-muted"
-                onClick={() => {
-                  history.push({ pathname: `/north/${application.id}` })
-                }}
               >
                 {application.api}
               </Link>
@@ -146,10 +143,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
             <div className="p-1 text-muted text-center justify-content-center">
               <div>
                 <Link
+                  to={`/south/${dataSource.id}`}
                   className="text-decoration-none text-muted"
-                  onClick={() => {
-                    history.push({ pathname: `/south/${dataSource.id}` })
-                  }}
                 >
                   {dataSource.protocol}
                 </Link>
@@ -210,10 +205,8 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
             </div>
 
             <Link
+              to="/engine"
               className="text-decoration-none text-muted"
-              onClick={() => {
-                history.push({ pathname: '/engine' })
-              }}
             >
               <div>
                 <b>Uptime: </b>

@@ -5,15 +5,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          CsvToHttp
-        </div>
+      <div>
+        CsvToHttp
       </div>
       <button
         aria-label="Close"
@@ -35,7 +31,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -1465,15 +1461,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          RawFileSender
-        </div>
+      <div>
+        RawFileSender
       </div>
       <button
         aria-label="Close"
@@ -1495,7 +1487,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -2489,15 +2481,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          Timescale
-        </div>
+      <div>
+        Timescale
       </div>
       <button
         aria-label="Close"
@@ -2519,7 +2507,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -3363,15 +3351,11 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          WATSYConnect
-        </div>
+      <div>
+        WATSYConnect
       </div>
       <button
         aria-label="Close"
@@ -3393,7 +3377,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -4456,15 +4440,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          c
-        </div>
+      <div>
+        c
       </div>
       <button
         aria-label="Close"
@@ -4486,7 +4466,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -5310,15 +5290,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          filewriter
-        </div>
+      <div>
+        filewriter
       </div>
       <button
         aria-label="Close"
@@ -5340,7 +5316,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -6117,15 +6093,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          monoiconnect
-        </div>
+      <div>
+        monoiconnect
       </div>
       <button
         aria-label="Close"
@@ -6147,7 +6119,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -7176,15 +7148,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          mqtt
-        </div>
+      <div>
+        mqtt
       </div>
       <button
         aria-label="Close"
@@ -7206,7 +7174,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -8399,15 +8367,11 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          test04
-        </div>
+      <div>
+        test04
       </div>
       <button
         aria-label="Close"
@@ -8429,7 +8393,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -9328,15 +9292,11 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          test04 copy
-        </div>
+      <div>
+        test04 copy
       </div>
       <button
         aria-label="Close"
@@ -9358,7 +9318,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -10257,13 +10217,11 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div />
+      <div>
+        emptyApplication
       </div>
       <button
         aria-label="Close"
@@ -10285,7 +10243,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""

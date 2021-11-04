@@ -28,7 +28,7 @@ beforeEach(() => {
       },
       {
         connectorName: 'MQTT',
-        category: 'IoT',
+        category: 'MMM',
       },
       {
         connectorName: 'FolderScanner',

@@ -12,8 +12,8 @@
   font-size: 13px;
   font-weight: 400;
   overflow: hidden;
-  textOverflow: ellipsis;
   text-align: center;
+  text-overflow: ellipsis;
 }
 
 .oi-dropdown-toggle {

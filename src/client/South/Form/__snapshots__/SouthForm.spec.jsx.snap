@@ -11012,7 +11012,9 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div />
+      <div>
+        emptyDataSource
+      </div>
       <button
         aria-label="Close"
         class="close"

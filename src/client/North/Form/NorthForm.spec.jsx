@@ -45,7 +45,7 @@ describe('NorthForm', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <NorthForm application={{ api: 'Console' }} applicationIndex={0} onChange={() => 1} />
+          <NorthForm application={{ api: 'Console', name: 'emptyApplication' }} applicationIndex={0} onChange={() => 1} />
         </BrowserRouter>,
         container,
       )

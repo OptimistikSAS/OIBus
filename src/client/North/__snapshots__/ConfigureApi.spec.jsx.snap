@@ -5,15 +5,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          monoiconnect
-        </div>
+      <div>
+        monoiconnect
       </div>
       <button
         aria-label="Close"
@@ -35,7 +31,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""
@@ -1084,15 +1080,11 @@ exports[`ConfigureApi check update 1`] = `
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
-    <div
+    <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
     >
-      <div
-        class="oi-sub-nav-connector-name"
-      >
-        <div>
-          monoiconnect
-        </div>
+      <div>
+        monoiconnect
       </div>
       <button
         aria-label="Close"
@@ -1114,7 +1106,7 @@ exports[`ConfigureApi check update 1`] = `
           />
         </svg>
       </button>
-    </div>
+    </h6>
   </div>
   <form
     class=""

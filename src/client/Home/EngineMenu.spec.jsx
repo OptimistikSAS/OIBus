@@ -95,7 +95,7 @@ describe('EngineMenu', () => {
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('shutdown'))
     Simulate.click(document.getElementById('cancel'))
-    // expect(shutdownFunction).not.toBeCalled()
+    expect(shutdownFunction).not.toBeCalled()
     expect(container).toMatchSnapshot()
   })
 
@@ -109,6 +109,19 @@ describe('EngineMenu', () => {
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
     expect(mockHistoryPush).toBeCalledWith({ pathname: '/engine/' })
+    expect(container).toMatchSnapshot()
+  })
+
+  test('go to about section', () => {
+    act(() => {
+      ReactDOM.render(
+        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />,
+        container,
+      )
+    })
+    Simulate.click(document.getElementById('dropdown-toggle'))
+    Simulate.click(document.getElementById('oi-about'))
+    expect(mockHistoryPush).toBeCalledWith({ pathname: '/about/' })
     expect(container).toMatchSnapshot()
   })
 })

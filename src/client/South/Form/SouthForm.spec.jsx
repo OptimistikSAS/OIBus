@@ -45,7 +45,7 @@ describe('SouthForm', () => {
     act(() => {
       ReactDOM.render(
         <BrowserRouter>
-          <SouthForm dataSource={{ protocol: 'MQTT' }} dataSourceIndex={0} onChange={() => 1} />
+          <SouthForm dataSource={{ protocol: 'MQTT', name: 'emptyDataSource' }} dataSourceIndex={0} onChange={() => 1} />
         </BrowserRouter>,
         container,
       )

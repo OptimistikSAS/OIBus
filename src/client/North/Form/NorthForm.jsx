@@ -37,20 +37,18 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   return (
     <>
       <div className="d-flex align-items-center w-100 oi-sub-nav">
-        <div className="text-muted d-flex align-items-center pl-3 pt-1">
-          <div className="oi-sub-nav-connector-name">
-            <EditableIdField
-              connectorName={application.name}
-              editing={renamingConnector === `north-${application.id}`}
-              fromList={applications}
-              valid={validation.application.isValidName}
-              nameChanged={handleConnectorNameChanged(
-                `north.applications.${applications.findIndex(
-                  (element) => element.id === application.id,
-                )}.name`,
-              )}
-            />
-          </div>
+        <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
+          <EditableIdField
+            connectorName={application.name}
+            editing={renamingConnector === `north-${application.id}`}
+            fromList={applications}
+            valid={validation.application.isValidName}
+            nameChanged={handleConnectorNameChanged(
+              `north.applications.${applications.findIndex(
+                (element) => element.id === application.id,
+              )}.name`,
+            )}
+          />
           {pencil
           && (
             <Button
@@ -63,7 +61,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
               <FaPencilAlt className="oi-icon ml-2" />
             </Button>
           )}
-        </div>
+        </h6>
       </div>
       <Form>
         <OIbTitle label="General settings">
