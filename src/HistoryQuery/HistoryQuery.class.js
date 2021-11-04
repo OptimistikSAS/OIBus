@@ -1,13 +1,13 @@
 const ProtocolFactory = require('../south/ProtocolFactory.class')
 
 class HistoryQuery {
-  static STATUS_PENDING = 'pending';
+  static STATUS_PENDING = 'pending'
 
-  static STATUS_EXPORTING = 'exporting';
+  static STATUS_EXPORTING = 'exporting'
 
-  static STATUS_IMPORTING = 'importing';
+  static STATUS_IMPORTING = 'importing'
 
-  static STATUS_FINISHED = 'finished';
+  static STATUS_FINISHED = 'finished'
 
   constructor(engine, logger, folder, startTimestamp, endTimestamp, filenamePattern, dataSource, status) {
     this.engine = engine

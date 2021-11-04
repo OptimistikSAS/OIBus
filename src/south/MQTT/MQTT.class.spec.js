@@ -394,7 +394,7 @@ describe('MQTT south', () => {
     expect(formattedValue)
       .toBeNull()
     expect(mqttSouth.logger.error)
-      .toBeCalledWith(`PointId cant be determined. The following value ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
+      .toBeCalledWith(`PointId can't be determined. The following value ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
   })
   it('should properly handle message parsing error', () => {
     mqttSouth.getTimestamp = jest.fn()

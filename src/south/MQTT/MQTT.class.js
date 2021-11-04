@@ -161,7 +161,7 @@ class MQTT extends ProtocolHandler {
   formatValue(data, topic) {
     const dataPointId = this.getPointId(topic, data)
     if (dataPointId) {
-      const dataTimestamp = this.getTimestamp(data[this.timestampPath], this.timeStampOrigin, this.timeStampFormat, this.timezone)
+      const dataTimestamp = this.getTimestamp(data[this.timestampPath], this.timestampOrigin, this.timestampFormat, this.timezone)
       const dataValue = data[this.valuePath]
       const dataQuality = data[this.qualityPath]
       delete data[this.timestampPath] // delete fields to avoid duplicates in the returned object
