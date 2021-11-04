@@ -19,7 +19,7 @@ const Bulk = () => {
    * @param {number} indexInTable the index of a point in the table
    * @returns {number} the index in the config file of the chosen point
    */
-  const findIndexBasedOnVirtualIndex = (indexInTable) => {
+  const findIndexBasedOnOrderNumber = (indexInTable) => {
     const bulkToOperate = bulks[indexInTable]
     const index = unorderedBulks.findIndex((bulk) => bulk.order === bulkToOperate.order)
     return index
@@ -32,7 +32,7 @@ const Bulk = () => {
    * @return {void}
    */
   const handleEdit = (position) => {
-    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(position)]
+    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(position)]
     const link = `/bulk/${bulk.id}`
     history.push({ pathname: link })
   }
@@ -65,7 +65,12 @@ const Bulk = () => {
    * @returns {void}
    */
   const handleDelete = (position) => {
-    dispatchNewHistoryConfig({ type: 'deleteRow', name: findIndexBasedOnVirtualIndex(position) })
+    unorderedBulks.forEach((currentBulk, index) => {
+      if (currentBulk.order > position + 1) {
+        dispatchNewHistoryConfig({ type: 'update', name: `${index}.order`, value: currentBulk.order - 1 })
+      }
+    })
+    dispatchNewHistoryConfig({ type: 'deleteRow', name: findIndexBasedOnOrderNumber(position) })
   }
 
   /**
@@ -74,7 +79,7 @@ const Bulk = () => {
    * @returns {void}
    */
   const handleDuplicate = (position) => {
-    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(position)]
+    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(position)]
     const newName = `${bulk.name} copy`
     const countCopies = bulks.filter((e) => e.name.startsWith(newName)).length
     dispatchNewHistoryConfig({
@@ -88,20 +93,26 @@ const Bulk = () => {
     })
   }
 
+  /**
+   * Updates the order if one of the arrow was pressed
+   * @param {string} type The type of order (up or down)
+   * @param {number} positionInTable The position of the bulk in the table
+   * @returns {void}
+   */
   const handleOrder = (type, positionInTable) => {
-    const bulk = unorderedBulks[findIndexBasedOnVirtualIndex(positionInTable)]
+    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(positionInTable)]
     switch (type) {
       case 'up': {
         if (positionInTable > 0) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable)}.order`, value: bulk.order - 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable - 1)}.order`, value: bulk.order })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: bulk.order - 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable - 1)}.order`, value: bulk.order })
         }
         break
       }
       case 'down': {
         if (positionInTable < bulks.length - 1) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable)}.order`, value: bulk.order + 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnVirtualIndex(positionInTable + 1)}.order`, value: bulk.order })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: bulk.order + 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable + 1)}.order`, value: bulk.order })
         }
         break
       }
@@ -109,6 +120,11 @@ const Bulk = () => {
     }
   }
 
+  /**
+   * Returns the text color for each status
+   * @param {string} status The status of the current bulk
+   * @returns {string} The color represented by the status
+   */
   const statusColor = (status) => {
     switch (status) {
       case 'pending': return 'text-warning'

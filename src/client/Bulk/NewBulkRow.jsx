@@ -12,6 +12,7 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
   const schema = protocol === 'SQLDbToFile'
     ? ProtocolSchemas.SQLDbToFile.withDriver(southHandler.SQLDbToFile.driver)
     : ProtocolSchemas[protocol]
+
   /**
    * Creates a new bulk with the chosen north and south handler
    * @returns {void}
@@ -29,6 +30,12 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
     })
   }
 
+  /**
+   * Sets the new value for the south or north handler
+   * @param {string} attributeName The name of the attribute that will be changed
+   * @param {string} value The value of the attribute name
+   * @returns {void}
+   */
   const handleChange = (attributeName, value) => {
     switch (attributeName) {
       case 'southHandler':
@@ -40,6 +47,7 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
         break
     }
   }
+
   return (
     <Form>
       <Row>
