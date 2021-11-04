@@ -15,6 +15,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.decryptPassword = (password) => password
+engine.eventEmitters = {}
 
 beforeEach(() => {
   jest.resetAllMocks()

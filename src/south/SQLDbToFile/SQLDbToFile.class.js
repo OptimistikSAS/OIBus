@@ -96,6 +96,8 @@ class SQLDbToFile extends ProtocolHandler {
 
   async connect() {
     await super.connect()
+    this.statusData['Connected at'] = new Date().toISOString()
+    this.updateStatusDataStream()
     this.lastCompletedAt = await this.getConfig('lastCompletedAt')
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString()
@@ -175,6 +177,8 @@ class SQLDbToFile extends ProtocolHandler {
     if (result.length > 0) {
       this.lastCompletedAt = this.setLastCompletedAt(result)
       await this.setConfig('lastCompletedAt', this.lastCompletedAt)
+      this.statusData['Last Completed At '] = new Date().toISOString()
+      this.updateStatusDataStream()
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
         const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
@@ -242,6 +246,8 @@ class SQLDbToFile extends ProtocolHandler {
         result = await pool.request()
           .query(adaptedQuery)
       }
+      this.statusData['Last MSSQL Request'] = adaptedQuery
+      this.updateStatusDataStream()
       const [first] = result.recordsets
       data = first
     } catch (error) {
@@ -280,6 +286,8 @@ class SQLDbToFile extends ProtocolHandler {
         { sql: adaptedQuery, timeout: this.requestTimeout },
         params,
       )
+      this.statusData['Last MySQL Request'] = adaptedQuery
+      this.updateStatusDataStream()
       data = rows
     } catch (error) {
       this.logger.error(error)
@@ -317,6 +325,8 @@ class SQLDbToFile extends ProtocolHandler {
       await connection.connect()
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
       const { rows } = await connection.query(adaptedQuery, params)
+      this.statusData['Last PostgreSQL Request'] = adaptedQuery
+      this.updateStatusDataStream()
       data = rows
     } catch (error) {
       this.logger.error(error)
@@ -356,6 +366,8 @@ class SQLDbToFile extends ProtocolHandler {
       connection.callTimeout = this.requestTimeout
       const params = this.containsLastCompletedDate ? [new Date(this.lastCompletedAt)] : []
       const { rows } = await connection.execute(adaptedQuery, params)
+      this.statusData['Last Oracle Request'] = adaptedQuery
+      this.updateStatusDataStream()
       data = rows
     } catch (error) {
       this.logger.error(error)
@@ -384,6 +396,8 @@ class SQLDbToFile extends ProtocolHandler {
       const preparedParameters = this.containsLastCompletedDate ? { '@LastCompletedDate': new Date(this.lastCompletedAt) } : {}
       data = await stmt.all(preparedParameters)
       await stmt.finalize()
+      this.statusData['Last SQlite Request'] = adaptedQuery
+      this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
     } finally {

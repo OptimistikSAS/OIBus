@@ -382,6 +382,8 @@ class OPCUA_HA extends ProtocolHandler {
       await this.session.close()
       await this.client.disconnect()
       this.connected = false
+      this.statusData['Connected at'] = 'Not connected'
+      this.updateStatusDataStream()
     }
     super.disconnect()
   }
@@ -419,6 +421,8 @@ class OPCUA_HA extends ProtocolHandler {
       this.session = await this.client.createSession(userIdentity)
       this.connected = true
       this.logger.info('OPCUA_HA Connected')
+      this.statusData['Connected at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)

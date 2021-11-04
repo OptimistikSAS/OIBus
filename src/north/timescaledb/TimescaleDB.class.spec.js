@@ -14,6 +14,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 

@@ -16,6 +16,7 @@ jest.mock('../../engine/Logger.class')
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.eventEmitters = {}
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })

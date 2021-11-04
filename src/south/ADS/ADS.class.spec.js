@@ -20,6 +20,7 @@ jest.mock('../../engine/Logger.class')
 const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
+engine.eventEmitters = {}
 
 // Global variable used to simulate ADS library returned values
 const GVLTestByte = {

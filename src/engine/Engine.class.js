@@ -89,6 +89,7 @@ class Engine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.jobs = []
+    this.eventEmitters = {}
 
     this.memoryStats = {}
     this.addValuesMessages = 0
@@ -201,6 +202,7 @@ class Engine {
       if (enabled) {
         if (ProtocolHandler) {
           this.activeProtocols[id] = new ProtocolHandler(dataSource, this)
+          this.activeProtocols[id].initializeStatusData()
           this.activeProtocols[id].connect()
         } else {
           this.logger.error(`Protocol for ${name} is not found : ${protocol}`)

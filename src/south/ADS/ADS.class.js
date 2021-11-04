@@ -198,9 +198,13 @@ class ADS extends ProtocolHandler {
     try {
       const result = await this.client.connect()
       this.connected = true
+      this.statusData['Connected at'] = new Date().toISOString()
+      this.updateStatusDataStream()
       this.logger.info(`Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`)
     } catch (error) {
       this.connected = false
+      this.statusData['Connected at'] = 'Not connected'
+      this.updateStatusDataStream()
       this.logger.error(`ADS connect error: ${JSON.stringify(error)}`)
       this.reconnectTimeout = setTimeout(this.connectToAdsServer.bind(this), this.retryInterval)
     }
@@ -219,6 +223,8 @@ class ADS extends ProtocolHandler {
         .finally(() => {
           this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
           this.connected = false
+          this.statusData['Connected at'] = 'Not connected'
+          this.updateStatusDataStream()
         })
     }
     super.disconnect()

@@ -69,6 +69,8 @@ class OPCHDA extends ProtocolHandler {
       this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logger)
       this.tcpServer.start(() => {
         this.launchAgent(agentFilename, tcpPort, logLevel)
+        this.statusData['Connected at'] = new Date().toISOString()
+        this.updateStatusDataStream()
       })
     } else {
       this.logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`)
@@ -95,6 +97,8 @@ class OPCHDA extends ProtocolHandler {
 
     this.sendStopMessage()
     super.disconnect()
+    this.statusData['Connected at'] = 'Not connected'
+    this.updateStatusDataStream()
   }
 
   /**
@@ -248,6 +252,8 @@ class OPCHDA extends ProtocolHandler {
       const messageString = JSON.stringify(message)
       this.logger.silly(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
+      this.statusData['Last message sent at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     } else {
       this.logger.debug(`sendMessage ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
