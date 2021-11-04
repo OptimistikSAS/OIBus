@@ -93,7 +93,7 @@ class ProtocolHandler {
             }
           })
         } else {
-          this.logger.error(`${this.dataSource.dataSourceId} scanGroups are not defined. This South driver will not work`)
+          this.logger.error(`${this.dataSource.name} scanGroups are not defined. This South driver will not work`)
           this.scanGroups = []
         }
       }
@@ -114,7 +114,7 @@ class ProtocolHandler {
   async connect() {
     const { id, name, protocol, startTime } = this.dataSource
 
-    const databasePath = `${this.engineConfig.caching.cacheFolder}/${dataSourceId}.db`
+    const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
 
     if (this.supportedModes?.supportHistory) {
@@ -190,14 +190,14 @@ class ProtocolHandler {
     this.lastOnScanAt = new Date().getTime()
     try {
       if (this.supportedModes?.supportLastPoint) {
-          await this.lastPointQuery(scanMode)
-        }
-        if (this.supportedModes?.supportFile) {
-          await this.fileQuery(scanMode)
-        }
-        if (this.supportedModes?.supportHistory) {
-          await this.historyQueryHandler(scanMode)
-        }
+        await this.lastPointQuery(scanMode)
+      }
+      if (this.supportedModes?.supportFile) {
+        await this.fileQuery(scanMode)
+      }
+      if (this.supportedModes?.supportHistory) {
+        await this.historyQueryHandler(scanMode)
+      }
     } catch (error) {
       this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
     }
