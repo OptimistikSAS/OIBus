@@ -19,6 +19,7 @@ const Table = ({
   handleStatus,
   handleDuplicate,
   handleSort,
+  handleOrder,
 }) => (
   <>
     {help && (
@@ -37,8 +38,16 @@ const Table = ({
         handleAdd={handleAdd}
         handleDelete={handleDelete}
         handleSort={handleSort}
+        handleOrder={handleOrder}
       />
-      <TableRows rows={rows} handleDelete={handleDelete} handleEdit={handleEdit} handleStatus={handleStatus} handleDuplicate={handleDuplicate} />
+      <TableRows
+        rows={rows}
+        handleDelete={handleDelete}
+        handleEdit={handleEdit}
+        handleStatus={handleStatus}
+        handleDuplicate={handleDuplicate}
+        handleOrder={handleOrder}
+      />
     </BsTable>
   </>
 )
@@ -56,6 +65,7 @@ Table.propTypes = {
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
   handleSort: PropTypes.func,
+  handleOrder: PropTypes.func,
 }
 
 Table.defaultProps = {
@@ -69,6 +79,7 @@ Table.defaultProps = {
   handleStatus: null,
   handleDuplicate: null,
   handleSort: null,
+  handleOrder: null,
 }
 
 export default Table

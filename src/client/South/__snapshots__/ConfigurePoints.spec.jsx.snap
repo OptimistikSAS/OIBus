@@ -44,35 +44,43 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -562,35 +570,43 @@ exports[`ConfigurePoints check add new point 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -1080,35 +1096,43 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -1598,35 +1622,43 @@ exports[`ConfigurePoints check delete all points 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -2116,35 +2148,43 @@ exports[`ConfigurePoints check delete first point 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -2634,35 +2674,43 @@ exports[`ConfigurePoints check edit filter input 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -3152,35 +3200,43 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -3670,35 +3726,43 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -4188,35 +4252,43 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -4706,35 +4778,43 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -5224,35 +5304,43 @@ exports[`ConfigurePoints check export points 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -5742,35 +5830,43 @@ exports[`ConfigurePoints check import points file input 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -6260,35 +6356,43 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -6778,35 +6882,43 @@ exports[`ConfigurePoints check import points press 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -7296,35 +7408,43 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -7814,35 +7934,43 @@ exports[`ConfigurePoints check import points success 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -8352,35 +8480,43 @@ exports[`ConfigurePoints check no points 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -8560,35 +8696,43 @@ exports[`ConfigurePoints check pagination 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value=""
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
@@ -9078,35 +9222,43 @@ exports[`ConfigurePoints check render with filterText 1`] = `
   <div
     class="points"
   >
-    <div>
-      <div
-        class="form-group"
+    <div
+      class="row"
+    >
+      <h5>
+        Points
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="form-group"
+    >
+      <label
+        class=""
+        for="filterText"
       >
-        <label
-          class=""
-          for="filterText"
-        >
-          Filter
-        </label>
-        <input
-          aria-invalid="false"
-          class="oi-form-input form-control"
-          id="filterText"
-          name="filterText"
-          type="text"
-          value="filter"
-        />
-        <div
-          class="invalid-feedback"
-        />
-        <small
-          class="form-text text-muted"
-        >
-          <div>
-            Type any points related data
-          </div>
-        </small>
-      </div>
+        Filter
+      </label>
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="filterText"
+        name="filterText"
+        type="text"
+        value="filter"
+      />
+      <div
+        class="invalid-feedback"
+      />
+      <small
+        class="form-text text-muted"
+      >
+        <div>
+          Type any points related data
+        </div>
+      </small>
     </div>
     <div
       class="row"
