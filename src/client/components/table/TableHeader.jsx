@@ -2,8 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { FaPlusCircle, FaLongArrowAltDown, FaLongArrowAltUp } from 'react-icons/fa'
 
-const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleAdd, handleDelete, handleSort }) => {
-  const decoratedHeaders = headers
+const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleAdd, handleDelete, handleSort, handleOrder }) => {
+  let decoratedHeaders = headers
   if (handleAdd) {
     decoratedHeaders[0] = ( // add Icon in the header
       <>
@@ -15,6 +15,10 @@ const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleA
   if (handleDelete) {
     decoratedHeaders.push('') // add column for the delete icon
     // headers.push('actions') // used for the unique key
+  }
+
+  if (handleOrder) {
+    decoratedHeaders = [''].concat(decoratedHeaders)
   }
 
   const renderSorting = (index) => {
@@ -64,7 +68,16 @@ TableHeader.propTypes = {
   handleAdd: PropTypes.func,
   handleDelete: PropTypes.func,
   handleSort: PropTypes.func,
+  handleOrder: PropTypes.func,
 }
-TableHeader.defaultProps = { sortableProperties: null, sortBy: null, isAscending: null, handleAdd: null, handleDelete: null, handleSort: null }
+TableHeader.defaultProps = {
+  sortableProperties: null,
+  sortBy: null,
+  isAscending: null,
+  handleAdd: null,
+  handleDelete: null,
+  handleSort: null,
+  handleOrder: null,
+}
 
 export default TableHeader
