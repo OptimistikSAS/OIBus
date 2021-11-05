@@ -17,6 +17,15 @@ const getStatusForSouth = async (ctx) => {
   const status = await ctx.app.engine.getStatusForSouth(ctx.params.id)
   ctx.ok(status)
 }
+/**
+ * Get live status for a given North
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getStatusForNorth = async (ctx) => {
+  const status = await ctx.app.engine.getStatusForNorth(ctx.params.id)
+  ctx.ok(status)
+}
 
 /**
  * Get North List.
@@ -120,6 +129,7 @@ const aliveSignal = async (ctx) => {
 module.exports = {
   getStatus,
   getStatusForSouth,
+  getStatusForNorth,
   getNorthList,
   getSouthList,
   reload,

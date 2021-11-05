@@ -218,6 +218,7 @@ class Engine {
       if (enabled) {
         if (ApiHandler) {
           this.activeApis[id] = new ApiHandler(application, this)
+          this.activeApis[id].initializeStatusData()
           this.activeApis[id].connect()
         } else {
           this.logger.error(`API for ${name} is not found : ${api}`)
@@ -501,6 +502,16 @@ class Engine {
   getStatusForSouth(id) {
     const south = this.activeProtocols[id]
     return south ? south.getStatus() : {}
+  }
+
+  /**
+   * Get live status for a given North.
+   * @param {string} id - The application id
+   * @returns {object} - The live status
+   */
+  getStatusForNorth(id) {
+    const north = this.activeApis[id]
+    return north ? north.getStatus() : {}
   }
 }
 

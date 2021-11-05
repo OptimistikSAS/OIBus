@@ -40,6 +40,8 @@ class MongoDB extends ApiHandler {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
+      this.statusData['Last handled Values at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
@@ -65,7 +67,8 @@ class MongoDB extends ApiHandler {
         this.clientDB = null
       } else {
         this.logger.info('Connection To MongoDB : OK')
-
+        this.statusData['Connected at'] = new Date().toISOString()
+        this.updateStatusDataStream()
         // open database db
         this.clientDB = this.client.db(db)
 
@@ -92,6 +95,8 @@ class MongoDB extends ApiHandler {
   disconnect() {
     this.client.close()
     super.disconnect()
+    this.statusData['Connected at'] = 'Not connected'
+    this.updateStatusDataStream()
   }
 
   /**

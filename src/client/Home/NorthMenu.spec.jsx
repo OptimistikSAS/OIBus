@@ -139,6 +139,18 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
+  test('check status first application', () => {
+    act(() => {
+      ReactDOM.render(
+        <NorthMenu application={application} />, container,
+      )
+    })
+    Simulate.click(document.getElementById('dropdown-toggle'))
+    Simulate.click(document.getElementById('oi-status'))
+    expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}/live`)
+    expect(container).toMatchSnapshot()
+  })
+
   test('check delete first application', () => {
     act(() => {
       ReactDOM.render(<NorthMenu application={application} />, container)
