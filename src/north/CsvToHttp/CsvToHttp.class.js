@@ -93,7 +93,6 @@ class CsvToHttp extends ApiHandler {
         })
       }
     }
-
     return ApiHandler.STATUS.SUCCESS
   }
 
@@ -121,6 +120,8 @@ class CsvToHttp extends ApiHandler {
         },
         complete: () => {
           this.logger.silly(`File ${filePath} parsed`)
+          this.statusData['Last Parsed file'] = filePath
+          this.updateStatusDataStream()
           resolve(csvDataParsed)
         },
       })

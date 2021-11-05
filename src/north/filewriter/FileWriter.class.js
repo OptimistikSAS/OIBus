@@ -40,6 +40,8 @@ class FileWriter extends ApiHandler {
     try {
       await fs.writeFile(path.join(this.outputFolder, fileName), data)
       this.logger.debug(`FileWriter ${fileName} created in "${this.outputFolder}"`)
+      this.statusData['Last handled values at'] = new Date().toISOString()
+      this.updateStatusDataStream()
       return values.length
     } catch (error) {
       this.logger.error(`Error handling values: ${error}`)
@@ -61,6 +63,8 @@ class FileWriter extends ApiHandler {
       fileName = `${this.prefixFileName}${fileName}${this.suffixFileName}${extension}`
       await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
       this.logger.debug(`FileWriter copied file ${fileName}`)
+      this.statusData['Last uploaded file'] = filePath
+      this.updateStatusDataStream()
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
       this.logger.error(`Error handling file, ${error}`)

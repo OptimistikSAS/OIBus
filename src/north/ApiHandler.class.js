@@ -47,7 +47,7 @@ class ApiHandler {
     const { logParameters } = this.application
     this.logger = new Logger()
     this.logger.changeParameters(this.engineConfig, logParameters)
-
+    this.statusData = {}
     this.sseData = {}
   }
 
@@ -57,14 +57,27 @@ class ApiHandler {
    * @return {void}
    */
   connect() {
-    const { name, api, id } = this.application
+    const { name, api } = this.application
     this.logger.info(`North API ${name} started with protocol ${api}`)
+    this.statusData['Connected at'] = new Date().toISOString()
+    this.updateStatusDataStream()
+  }
 
-    if (!this.engine.eventEmitters[`/north/${id}/sse`]) {
-      this.engine.eventEmitters[`/north/${id}/sse`] = {}
-      this.engine.eventEmitters[`/north/${id}/sse`].events = new EventEmitter()
-      this.engine.eventEmitters[`/north/${id}/sse`].events.setMaxListeners(0)
-      this.engine.eventEmitters[`/north/${id}/sse`].events.on('data', this.listener)
+  initializeStatusData() {
+    const initialStatusData = { }
+    if (this.canHandleValues) {
+      initialStatusData['Number of values received since OIBus has started'] = 0
+    }
+    if (this.canHandleFiles) {
+      initialStatusData['Number of files received since OIBus has started'] = 0
+    }
+    this.statusData = initialStatusData
+    if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.setMaxListeners(0)
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
+      this.updateStatusDataStream()
     }
   }
 
@@ -76,12 +89,18 @@ class ApiHandler {
   disconnect() {
     const { name, id } = this.application
     this.logger.info(`North API ${name} (${id}) disconnected`)
-    this.engine.eventEmitters[`/north/${id}/sse`].events.off('data', this.listener)
+    this.engine.eventEmitters[`/north/${id}/sse`]?.events?.off('data', this.listener)
+    this.statusData['Connected at'] = 'Not connected'
+    this.updateStatusDataStream()
   }
 
   listener = (data) => {
     if (data) this.sseData = data
-    this.engine.eventEmitters[`/north/${this.application.id}/sse`].stream?.write(`data: ${JSON.stringify(this.sseData)}\n\n`)
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.stream?.write(`data: ${JSON.stringify(this.sseData)}\n\n`)
+  }
+
+  updateStatusDataStream() {
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.events.emit('data', this.statusData)
   }
 
   /**

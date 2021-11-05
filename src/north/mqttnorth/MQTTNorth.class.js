@@ -61,6 +61,8 @@ class MQTTNorth extends ApiHandler {
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
+    this.statusData['Last handled Values at'] = new Date().toISOString()
+    this.updateStatusDataStream()
     return successCount
   }
 
@@ -133,6 +135,8 @@ class MQTTNorth extends ApiHandler {
    */
   handleConnectEvent() {
     this.logger.info(`North MQTT Connector connected to ${this.url}`)
+    this.statusData['Connected at'] = new Date().toISOString()
+    this.updateStatusDataStream()
   }
 
   /**
@@ -151,6 +155,8 @@ class MQTTNorth extends ApiHandler {
   disconnect() {
     this.logger.info(`Disconnecting North MQTT Connector from ${this.url}`)
     this.client.end(true)
+    this.statusData['Connected at'] = 'Not connected'
+    this.updateStatusDataStream()
     super.disconnect()
   }
 

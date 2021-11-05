@@ -119,6 +119,8 @@ class TimescaleDB extends ApiHandler {
     query += 'COMMIT'
 
     await client.query(query)
+    this.statusData['Last handled Values at'] = new Date().toISOString()
+    this.updateStatusDataStream()
     await client.end()
   }
 }

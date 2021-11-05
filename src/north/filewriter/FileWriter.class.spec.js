@@ -34,7 +34,11 @@ describe('FileWriter north', () => {
 
   it('should properly handle values', async () => {
     const RealDate = Date
-    global.Date = jest.fn(() => ({ getTime: () => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs }))
+    global.Date = jest.fn(() => ({
+      getTime: () => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs,
+      toISOString: () => new RealDate(nowDateString).toISOString(),
+    }))
+
     const values = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',

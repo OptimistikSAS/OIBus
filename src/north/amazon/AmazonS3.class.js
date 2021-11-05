@@ -71,7 +71,8 @@ class AmazonS3 extends ApiHandler {
       this.logger.error(error)
       return ApiHandler.STATUS.COMMUNICATION_ERROR
     }
-
+    this.statusData['Last uploaded file'] = filePath
+    this.updateStatusDataStream()
     return ApiHandler.STATUS.SUCCESS
   }
 

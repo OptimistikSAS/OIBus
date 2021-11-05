@@ -42,6 +42,8 @@ class InfluxDB extends ApiHandler {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
+      this.statusData['Last handled Values at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
       throw error

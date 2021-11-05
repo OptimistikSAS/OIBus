@@ -27,8 +27,12 @@ class Console extends ApiHandler {
   async handleValues(values) {
     if (this.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data'])
+      this.statusData['Last handled Values at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     } else {
       process.stdout.write(`(${values.length})`)
+      this.statusData['Last handled Values at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     }
     return values.length
   }
@@ -47,6 +51,8 @@ class Console extends ApiHandler {
       fileSize,
     }]
     console.table(data)
+    this.statusData['Last uploaded file'] = filePath
+    this.updateStatusDataStream()
     return ApiHandler.STATUS.SUCCESS
   }
 }

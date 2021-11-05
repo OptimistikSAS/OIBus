@@ -57,13 +57,21 @@ const NorthMenu = ({ application }) => {
           Settings
         </DropdownItem>
         <DropdownItem
-          id="oi-duplicate"
-          onClick={() => {
-            handleDuplicateNorth(application.id)
-          }}
-        >
-          Duplicate
-        </DropdownItem>
+          id="oi-status"
+            onClick={() => {
+              navigate(`/north/${application.id}/live`)
+            }}
+          >
+            Status
+          </DropdownItem>
+          <DropdownItem
+            id="oi-duplicate"
+            onClick={() => {
+              handleDuplicateNorth(application.id)
+            }}
+          >
+            Duplicate
+          </DropdownItem>
 
         <DropdownItem id="oi-delete" onClick={() => setModal(true)}>
           <div>Delete</div>

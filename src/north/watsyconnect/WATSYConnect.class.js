@@ -95,6 +95,8 @@ class WATSYConnect extends ApiHandler {
 
     this.client.on('connect', () => {
       this.logger.info(`Connection WATSYConnect North MQTT Connector to ${this.url}`)
+      this.statusData['Connected at'] = new Date().toISOString()
+      this.updateStatusDataStream()
     })
   }
 
@@ -104,6 +106,8 @@ class WATSYConnect extends ApiHandler {
    */
   disconnect() {
     this.client.end(true)
+    this.statusData['Connected at'] = 'Not connected'
+    this.updateStatusDataStream()
     super.disconnect()
   }
 
@@ -136,6 +140,8 @@ class WATSYConnect extends ApiHandler {
         allWATSYMessages.forEach((message) => {
           this.publishWATSYMQTTMessage(message)
         })
+        this.statusData['Last handled values at'] = new Date().toISOString()
+        this.updateStatusDataStream()
       }
     } catch (error) {
       this.logger.error(error)
