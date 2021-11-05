@@ -413,7 +413,6 @@ label {
 .oi-icon-breadcrumb {
   width: 35px;
   margin-left: 10px;
-  margin-top: 12px;
   color: #627187;
 }
 
@@ -434,8 +433,8 @@ label {
 }
 
 .status-text-breadcrumb {
-  margin-top: 10px;
-  font-size: medium;
+  margin-top: 5px;
+  font-size: small;
 }
 
 .oi-log td{
