@@ -1,6 +1,6 @@
 import React from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Col, Spinner, Breadcrumb, BreadcrumbItem } from 'reactstrap'
+import { useNavigate } from 'react-router-dom'
+import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import { HistoryConfigContext } from '../context/historyContext.jsx'
@@ -155,14 +155,6 @@ const Bulk = () => {
 
   return tableRows ? (
     <Col md="8" className="bulk">
-      <Breadcrumb tag="h5">
-        <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-          Home
-        </BreadcrumbItem>
-        <BreadcrumbItem active tag="span">
-          Bulk
-        </BreadcrumbItem>
-      </Breadcrumb>
       <Table
         headers={tableHeaders}
         rows={tableRows}

@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col, Breadcrumb, BreadcrumbItem, Label } from 'reactstrap'
-import { Link } from 'react-router-dom'
-import { FaPauseCircle, FaPlayCircle } from 'react-icons/fa'
+import { Form, Row, Col, Label, Button } from 'reactstrap'
+import { useNavigate } from 'react-router-dom'
+import { FaPauseCircle, FaPlayCircle, FaArrowLeft } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbText, OIbTextArea } from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/configContext.jsx'
@@ -13,7 +13,7 @@ const BulkForm = ({ bulkIndex, bulk, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === bulk.southId)
   const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === bulk.northId)
-
+  const navigate = useNavigate()
   const handlePause = () => {
     onChange('paused', !paused)
   }
@@ -21,44 +21,46 @@ const BulkForm = ({ bulkIndex, bulk, onChange }) => {
   return (
     <Form>
       <Row>
-        <Breadcrumb tag="h5">
-          <BreadcrumbItem tag={Link} to="/" className="oi-breadcrumb">
-            Home
-          </BreadcrumbItem>
-          <BreadcrumbItem tag={Link} to="/bulk" className="oi-breadcrumb">
-            Bulk
-          </BreadcrumbItem>
-          <BreadcrumbItem active tag="span">
-            {name}
-          </BreadcrumbItem>
-        </Breadcrumb>
-        {paused
-          ? (
-            <>
-              <FaPauseCircle
-                className="oi-icon-breadcrumb"
-                size={20}
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePause()
-                }}
-              />
-              <Label className="status-text-breadcrumb text-success">Ongoing</Label>
-            </>
-          )
-          : (
-            <>
-              <FaPlayCircle
-                className="oi-icon-breadcrumb"
-                size={20}
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePause()
-                }}
-              />
-              <Label className="status-text-breadcrumb text-warning">Paused</Label>
-            </>
-          )}
+        <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+          <h6 className="text-muted d-flex align-items-center pl-3 pt-1 ml-2">
+            <Button
+              close
+              onClick={() => {
+                navigate(-1)
+              }}
+            >
+              <FaArrowLeft className="oi-icon mr-2" />
+            </Button>
+            {`| ${name}`}
+            {paused
+              ? (
+                <>
+                  <FaPauseCircle
+                    className="oi-icon-breadcrumb"
+                    size={15}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handlePause()
+                    }}
+                  />
+                  <Label className="status-text-breadcrumb text-success">Ongoing</Label>
+                </>
+              )
+              : (
+                <>
+                  <FaPlayCircle
+                    className="oi-icon-breadcrumb"
+                    size={15}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handlePause()
+                    }}
+                  />
+                  <Label className="status-text-breadcrumb text-warning">Paused</Label>
+                </>
+              )}
+          </h6>
+        </div>
       </Row>
       <OIbTitle label="Handlers" />
       <Row>
