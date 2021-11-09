@@ -8,7 +8,7 @@ import utils from '../../helpers/utils'
 import { HistoryConfigContext } from '../../context/historyContext.jsx'
 import PointsComponent from '../../components/PointsComponent.jsx'
 
-const PointsSection = ({ bulk, bulkIndex }) => {
+const PointsSection = ({ query, queryIndex }) => {
   const { newConfig } = React.useContext(ConfigContext)
   const { dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
 
@@ -23,19 +23,19 @@ const PointsSection = ({ bulk, bulkIndex }) => {
     )
   }
   const dataSourceIndex = newConfig.south.dataSources.findIndex(
-    (dataSource) => dataSource.id === bulk.southId,
+    (dataSource) => dataSource.id === query.southId,
   )
   const dataSource = newConfig.south.dataSources[dataSourceIndex]
 
   const { protocol } = dataSource
-  const { points: pointsOrdered = [] } = bulk
+  const { points: pointsOrdered = [] } = query
 
   /**
    * add point
    * @returns {void}
    */
   const handleAdd = () => {
-    dispatchNewHistoryConfig({ type: 'addRow', name: `${bulkIndex}.points`, value: {} })
+    dispatchNewHistoryConfig({ type: 'addRow', name: `${queryIndex}.points`, value: {} })
   }
 
   /**
@@ -44,7 +44,7 @@ const PointsSection = ({ bulk, bulkIndex }) => {
    * @returns {void}
    */
   const handleDelete = (index) => {
-    dispatchNewHistoryConfig({ type: 'deleteRow', name: `${bulkIndex}.points.${index}` })
+    dispatchNewHistoryConfig({ type: 'deleteRow', name: `${queryIndex}.points.${index}` })
   }
 
   /**
@@ -52,7 +52,7 @@ const PointsSection = ({ bulk, bulkIndex }) => {
    * @returns {void}
    */
   const handleDeleteAllPoint = () => {
-    dispatchNewHistoryConfig({ type: 'deleteAllRows', name: `${bulkIndex}.points` })
+    dispatchNewHistoryConfig({ type: 'deleteAllRows', name: `${queryIndex}.points` })
   }
 
   /**
@@ -68,7 +68,7 @@ const PointsSection = ({ bulk, bulkIndex }) => {
         .then((newPoints) => {
           dispatchNewHistoryConfig({
             type: 'importPoints',
-            name: `${bulkIndex}.points`,
+            name: `${queryIndex}.points`,
             value: newPoints,
           })
         })
@@ -85,7 +85,7 @@ const PointsSection = ({ bulk, bulkIndex }) => {
   const onChange = (name, value, validity) => {
     dispatchNewHistoryConfig({
       type: 'update',
-      name: `${bulkIndex}.${name}`,
+      name: `${queryIndex}.${name}`,
       value,
       validity,
     })
@@ -93,7 +93,7 @@ const PointsSection = ({ bulk, bulkIndex }) => {
 
   return (
     <PointsComponent
-      southId={bulk.southId}
+      southId={query.southId}
       protocol={protocol}
       points={pointsOrdered}
       handleAdd={handleAdd}
@@ -106,8 +106,8 @@ const PointsSection = ({ bulk, bulkIndex }) => {
 }
 
 PointsSection.propTypes = {
-  bulkIndex: PropTypes.number.isRequired,
-  bulk: PropTypes.object.isRequired,
+  queryIndex: PropTypes.number.isRequired,
+  query: PropTypes.object.isRequired,
 }
 
 export default PointsSection

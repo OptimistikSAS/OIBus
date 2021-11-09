@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OIbDate check date with value="2021-11-20" 1`] = `
+<div>
+  <div
+    class="form-group"
+  >
+    <label
+      class=""
+      for="endTime"
+    >
+      To date
+    </label>
+    <input
+      class="oi-form-input form-control"
+      id="endTime"
+      placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+      required=""
+      type="datetime-local"
+      value="2021-11-20"
+    />
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
