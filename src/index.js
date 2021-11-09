@@ -72,7 +72,7 @@ if (cluster.isMaster) {
   migrationService.migrate(configFile).then(() => {
     // this condition is reached only for a worker (i.e. not master)
     // so this is here where we execute the OIBusEngine and HistoryQueryEngine
-    const oibusEngine = new OIBusEngine(configFile)
+    const oibusEngine = new OIBusEngine(configFile, check)
     oibusEngine.start(process.env.SAFE_MODE === 'true')
 
     const historyQueryEngine = new HistoryQueryEngine(configFile, check)
