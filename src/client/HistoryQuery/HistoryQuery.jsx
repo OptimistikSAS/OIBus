@@ -4,9 +4,9 @@ import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { ConfigContext } from '../context/configContext.jsx'
 import { HistoryConfigContext } from '../context/historyContext.jsx'
-import NewBulkRow from './NewBulkRow.jsx'
+import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
 
-const Bulk = () => {
+const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
   const { newHistoryConfig: unorderedBulks, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const applications = newConfig?.north?.applications
@@ -33,7 +33,7 @@ const Bulk = () => {
    */
   const handleEdit = (position) => {
     const bulk = unorderedBulks[findIndexBasedOnOrderNumber(position)]
-    const link = `/bulk/${bulk.id}`
+    const link = `/historyQuery/${bulk.id}`
     navigate(link)
   }
 
@@ -164,7 +164,7 @@ const Bulk = () => {
         handleOrder={handleOrder}
       />
       {applications && dataSources
-      && <NewBulkRow northHandlers={applications} southHandlers={dataSources} addBulk={addBulk} bulksNumber={bulks.length} />}
+      && <NewHistoryQueryRow northHandlers={applications} southHandlers={dataSources} addBulk={addBulk} bulksNumber={bulks.length} />}
     </Col>
   ) : (
     <div className="spinner-container">
@@ -174,4 +174,4 @@ const Bulk = () => {
   )
 }
 
-export default Bulk
+export default HistoryQuery

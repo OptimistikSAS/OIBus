@@ -8,7 +8,7 @@ import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/configContext.jsx'
 import PointsSection from './PointsSection.jsx'
 
-const BulkForm = ({ bulkIndex, bulk, onChange }) => {
+const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
   const { name, paused } = bulk
   const { newConfig } = React.useContext(ConfigContext)
   const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === bulk.southId)
@@ -146,10 +146,10 @@ const BulkForm = ({ bulkIndex, bulk, onChange }) => {
   )
 }
 
-BulkForm.propTypes = {
+HistoryQueryForm.propTypes = {
   bulkIndex: PropTypes.number.isRequired,
   bulk: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
 }
 
-export default BulkForm
+export default HistoryQueryForm

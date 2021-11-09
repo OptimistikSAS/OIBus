@@ -60,8 +60,8 @@ const TopHeader = () => {
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
         <Nav navbar>
-          <NavItem className="oi-navitem" active={isActive('bulk')} tag={Link} to="/bulk">
-            Bulk
+          <NavItem className="oi-navitem" active={isActive('historyQuery')} tag={Link} to="/historyQuery">
+            History query
           </NavItem>
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs

@@ -10,7 +10,7 @@ const Activation = () => (
     <ActivationHeader />
     <OIbTitle label="OIBus config" />
     <MainConfigActivation />
-    <OIbTitle label="Bulk config" />
+    <OIbTitle label="History query config" />
     <HistoryConfigActivation />
   </>
 )
