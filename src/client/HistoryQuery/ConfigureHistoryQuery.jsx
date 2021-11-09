@@ -2,21 +2,21 @@ import React from 'react'
 import { useParams } from 'react-router'
 import { Spinner } from 'reactstrap'
 import { HistoryConfigContext } from '../context/historyContext.jsx'
-import BulkForm from './Form/BulkForm.jsx'
+import HistoryQueryForm from './Form/HistoryQueryForm.jsx'
 
-const ConfigureBulk = () => {
+const ConfigureHistoryQuery = () => {
   const { newHistoryConfig, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const { id } = useParams()
-  const bulkIndex = newHistoryConfig.findIndex((bulk) => bulk.id === id)
-  const bulkToUpdate = newHistoryConfig[bulkIndex]
+  const queryIndex = newHistoryConfig.findIndex((query) => query.id === id)
+  const queryToUpdate = newHistoryConfig[queryIndex]
   const onChange = (name, value, validity) => {
-    dispatchNewHistoryConfig({ type: 'update', name: `${bulkIndex}.${name}`, value, validity })
+    dispatchNewHistoryConfig({ type: 'update', name: `${queryIndex}.${name}`, value, validity })
   }
 
-  return bulkToUpdate ? (
-    <BulkForm
-      bulk={bulkToUpdate}
-      bulkIndex={bulkIndex}
+  return queryToUpdate ? (
+    <HistoryQueryForm
+      query={queryToUpdate}
+      queryIndex={queryIndex}
       onChange={onChange}
     />
   ) : (
@@ -27,4 +27,4 @@ const ConfigureBulk = () => {
   )
 }
 
-export default ConfigureBulk
+export default ConfigureHistoryQuery

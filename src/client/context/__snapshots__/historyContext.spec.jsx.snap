@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`HistoryConfigProvider check HistoryConfigProvider 1`] = `
+<div>
+  <div />
+</div>
+`;
+
+exports[`HistoryConfigProvider check initial data setup 1`] = `
+<div>
+  <div />
+</div>
+`;

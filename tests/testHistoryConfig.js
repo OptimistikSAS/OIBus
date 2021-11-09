@@ -10,7 +10,20 @@ const testHistoryConfig = [
     northId: 'northId-1',
     order: 2,
     query: 'SELECT timestamp,temperature FROM history WHERE timestamp >= @StartTime AND timestamp <= @EndTime',
-    points: [],
+    points: [
+      {
+        pointId: 'A13518/AI1/PV.CV',
+        scanMode: 'everySecond',
+      },
+      {
+        pointId: '_FC42404/PID1/OUT.CV',
+        scanMode: 'everySecond',
+      },
+      {
+        pointId: '_FC42404/PID1/PV.CV',
+        scanMode: 'every10Seconds',
+      },
+    ],
     enabled: true,
     paused: true,
     status: 'exporting',

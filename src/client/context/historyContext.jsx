@@ -80,4 +80,4 @@ const HistoryConfigProvider = ({ children }) => {
 }
 
 HistoryConfigProvider.propTypes = { children: PropTypes.element.isRequired }
-export { HistoryConfigContext, HistoryConfigProvider }
+export { HistoryConfigContext, HistoryConfigProvider, reducer }
