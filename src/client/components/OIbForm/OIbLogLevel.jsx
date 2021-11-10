@@ -57,7 +57,7 @@ OIbLogLevel.defaultProps = {
     fileLevel: 'engine',
     sqliteLevel: 'engine',
   },
-  logOptions: ['engine', 'debug', 'info', 'warning', 'error', 'silly'],
+  logOptions: ['engine', 'debug', 'info', 'warning', 'error', 'silly', 'none'],
   help: (
     <>
       <p>OIBus can send logs to 3 different supports:</p>

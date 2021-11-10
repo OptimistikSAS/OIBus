@@ -75,7 +75,7 @@ schema.form = {
   },
   consoleLevel: {
     type: 'OIbSelect',
-    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
     md: 3,
     defaultValue: 'info',
     help: <div>The level for the Console log</div>,
@@ -83,7 +83,7 @@ schema.form = {
   fileLevel: {
     type: 'OIbSelect',
     newRow: false,
-    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
     md: 3,
     defaultValue: 'info',
     help: <div>The level for the file log</div>,
@@ -92,7 +92,7 @@ schema.form = {
     newRow: false,
     type: 'OIbSelect',
     md: 3,
-    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
     defaultValue: 'info',
     help: <div>The level for the sqlite log</div>,
   },

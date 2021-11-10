@@ -328,6 +328,11 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -382,6 +387,11 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -435,6 +445,11 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -1978,6 +1993,11 @@ exports[`ConfigureProtocol check update 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2032,6 +2052,11 @@ exports[`ConfigureProtocol check update 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2085,6 +2110,11 @@ exports[`ConfigureProtocol check update 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
