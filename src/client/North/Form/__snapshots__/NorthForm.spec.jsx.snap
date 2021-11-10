@@ -308,6 +308,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -362,6 +367,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -415,6 +425,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -1799,6 +1814,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1853,6 +1873,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1906,6 +1931,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -2859,6 +2889,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2913,6 +2948,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2966,6 +3006,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -3719,6 +3764,11 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -3773,6 +3823,11 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -3826,6 +3881,11 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -4799,6 +4859,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -4853,6 +4918,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -4906,6 +4976,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -5639,6 +5714,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -5693,6 +5773,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -5746,6 +5831,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -6431,6 +6521,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6485,6 +6580,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6538,6 +6638,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -7522,6 +7627,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -7576,6 +7686,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -7629,6 +7744,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -8494,6 +8614,11 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -8548,6 +8673,11 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -8601,6 +8731,11 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div

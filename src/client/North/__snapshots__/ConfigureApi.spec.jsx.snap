@@ -308,6 +308,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -362,6 +367,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -415,6 +425,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -1418,6 +1433,11 @@ exports[`ConfigureApi check update 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1472,6 +1492,11 @@ exports[`ConfigureApi check update 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1525,6 +1550,11 @@ exports[`ConfigureApi check update 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div

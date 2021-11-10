@@ -329,6 +329,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -383,6 +388,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -436,6 +446,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -1558,6 +1573,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1612,6 +1632,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -1665,6 +1690,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -2251,6 +2281,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2305,6 +2340,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -2358,6 +2398,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -3767,6 +3812,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -3821,6 +3871,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -3874,6 +3929,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -5397,6 +5457,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -5451,6 +5516,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -5504,6 +5574,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -6122,6 +6197,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6176,6 +6256,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6229,6 +6314,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -6885,6 +6975,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6939,6 +7034,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -6992,6 +7092,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -8412,6 +8517,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -8466,6 +8576,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -8519,6 +8634,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -9453,6 +9573,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -9507,6 +9632,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -9560,6 +9690,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -10281,6 +10416,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -10335,6 +10475,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -10388,6 +10533,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -11085,6 +11235,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -11139,6 +11294,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             >
               silly
             </option>
+            <option
+              value="none"
+            >
+              none
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -11192,6 +11352,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               value="silly"
             >
               silly
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
