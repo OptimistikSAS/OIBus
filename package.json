@@ -47,7 +47,7 @@
     "@koa/multer": "3.0.0",
     "@koa/router": "10.1.1",
     "ads-client": "1.11.4",
-    "aws-sdk": "2.1028.0",
+    "aws-sdk": "2.1030.0",
     "axios": "0.24.0",
     "basic-auth": "2.0.1",
     "bootstrap": "4.6.1",
