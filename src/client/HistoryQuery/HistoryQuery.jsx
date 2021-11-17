@@ -8,39 +8,39 @@ import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
 
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
-  const { newHistoryConfig: unorderedBulks, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
+  const { newHistoryConfig: unorderedHistoryQueries, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const applications = newConfig?.north?.applications
   const dataSources = newConfig?.south?.dataSources
   const navigate = useNavigate()
 
-  const bulks = unorderedBulks.slice().sort((a, b) => (a.order > b.order ? 1 : -1))
+  const historyQueries = unorderedHistoryQueries.slice().sort((a, b) => (a.order > b.order ? 1 : -1))
 
   /**
    * @param {number} indexInTable the index of a point in the table
    * @returns {number} the index in the config file of the chosen point
    */
   const findIndexBasedOnOrderNumber = (indexInTable) => {
-    const bulkToOperate = bulks[indexInTable]
-    const index = unorderedBulks.findIndex((bulk) => bulk.order === bulkToOperate.order)
+    const queryToOperate = historyQueries[indexInTable]
+    const index = unorderedHistoryQueries.findIndex((historyQuery) => historyQuery.order === queryToOperate.order)
     return index
   }
 
   /**
-   * Handles the edit of bulk and redirects the
-   * user to the selected north bulk's configuration page
+   * Handles the edit of history query and redirects the
+   * user to the selected north history query's configuration page
    * @param {integer} position The id to edit
    * @return {void}
    */
   const handleEdit = (position) => {
-    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(position)]
-    const link = `/historyQuery/${bulk.id}`
+    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(position)]
+    const link = `/historyQuery/${historyQuery.id}`
     navigate(link)
   }
 
   /**
-   * Calculates the status of bulk read based on the end time and start time in percent
-   * @param {Date} startTime The start time of bulk
-   * @param {Date} endTime The end time of bulk
+   * Calculates the status of history query read based on the end time and start time in percent
+   * @param {Date} startTime The start time of history query
+   * @param {Date} endTime The end time of history query
    * @return {number} The status percent
    */
   const percentageCalculator = (startTime, endTime) => {
@@ -51,44 +51,44 @@ const HistoryQuery = () => {
   }
 
   /**
-   * Adds a new bulk row to the table
-   * @param {Object} bulkObject A bulk object containing
+   * Adds a new history query row to the table
+   * @param {Object} queryObject A history query object containing
    * @returns {void}
    */
-  const addBulk = (bulkObject) => {
-    dispatchNewHistoryConfig({ type: 'addRow', name: '', value: bulkObject })
+  const addHistoryQuery = (queryObject) => {
+    dispatchNewHistoryConfig({ type: 'addRow', name: '', value: queryObject })
   }
 
   /**
-   * Deletes the chosen bulk
+   * Deletes the chosen history query
    * @param {integer} position The index to delete
    * @returns {void}
    */
   const handleDelete = (position) => {
-    unorderedBulks.forEach((currentBulk, index) => {
-      if (currentBulk.order > position + 1) {
-        dispatchNewHistoryConfig({ type: 'update', name: `${index}.order`, value: currentBulk.order - 1 })
+    unorderedHistoryQueries.forEach((currentQuery, index) => {
+      if (currentQuery.order > position + 1) {
+        dispatchNewHistoryConfig({ type: 'update', name: `${index}.order`, value: currentQuery.order - 1 })
       }
     })
     dispatchNewHistoryConfig({ type: 'deleteRow', name: findIndexBasedOnOrderNumber(position) })
   }
 
   /**
-   * Copy the chosen bulk
+   * Copy the chosen history query
    * @param {integer} position The id to copy
    * @returns {void}
    */
   const handleDuplicate = (position) => {
-    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(position)]
-    const newName = `${bulk.name} copy`
-    const countCopies = bulks.filter((e) => e.name.startsWith(newName)).length
+    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(position)]
+    const newName = `${historyQuery.name} copy`
+    const countCopies = historyQueries.filter((e) => e.name.startsWith(newName)).length
     dispatchNewHistoryConfig({
       type: 'addRow',
       value: {
-        ...bulk,
+        ...historyQuery,
         name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
-        order: bulks.length + 1,
+        order: historyQueries.length + 1,
       },
     })
   }
@@ -96,23 +96,23 @@ const HistoryQuery = () => {
   /**
    * Updates the order if one of the arrow was pressed
    * @param {string} type The type of order (up or down)
-   * @param {number} positionInTable The position of the bulk in the table
+   * @param {number} positionInTable The position of the history query in the table
    * @returns {void}
    */
   const handleOrder = (type, positionInTable) => {
-    const bulk = unorderedBulks[findIndexBasedOnOrderNumber(positionInTable)]
+    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(positionInTable)]
     switch (type) {
       case 'up': {
         if (positionInTable > 0) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: bulk.order - 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable - 1)}.order`, value: bulk.order })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: historyQuery.order - 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable - 1)}.order`, value: historyQuery.order })
         }
         break
       }
       case 'down': {
-        if (positionInTable < bulks.length - 1) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: bulk.order + 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable + 1)}.order`, value: bulk.order })
+        if (positionInTable < historyQueries.length - 1) {
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: historyQuery.order + 1 })
+          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable + 1)}.order`, value: historyQuery.order })
         }
         break
       }
@@ -122,7 +122,7 @@ const HistoryQuery = () => {
 
   /**
    * Returns the text color for each status
-   * @param {string} status The status of the current bulk
+   * @param {string} status The status of the current history query
    * @returns {string} The color represented by the status
    */
   const statusColor = (status) => {
@@ -135,8 +135,8 @@ const HistoryQuery = () => {
     }
   }
 
-  const tableHeaders = ['Order', 'Bulk', 'Status', 'Period', 'Percentage']
-  const tableRows = bulks?.map(({ name, status, startTime, endTime, order }) => [
+  const tableHeaders = ['Order', 'Query', 'Status', 'Period', 'Percentage']
+  const tableRows = historyQueries?.map(({ name, status, startTime, endTime, order }) => [
     {
       name: order,
       value: `${order}.`,
@@ -164,7 +164,14 @@ const HistoryQuery = () => {
         handleOrder={handleOrder}
       />
       {applications && dataSources
-      && <NewHistoryQueryRow northHandlers={applications} southHandlers={dataSources} addBulk={addBulk} bulksNumber={bulks.length} />}
+      && (
+      <NewHistoryQueryRow
+        northHandlers={applications}
+        southHandlers={dataSources}
+        addQuery={addHistoryQuery}
+        queriesNumber={historyQueries.length}
+      />
+      )}
     </Col>
   ) : (
     <div className="spinner-container">

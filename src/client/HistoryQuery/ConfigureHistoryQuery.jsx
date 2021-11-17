@@ -7,16 +7,16 @@ import HistoryQueryForm from './Form/HistoryQueryForm.jsx'
 const ConfigureHistoryQuery = () => {
   const { newHistoryConfig, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
   const { id } = useParams()
-  const bulkIndex = newHistoryConfig.findIndex((bulk) => bulk.id === id)
-  const bulkToUpdate = newHistoryConfig[bulkIndex]
+  const queryIndex = newHistoryConfig.findIndex((query) => query.id === id)
+  const queryToUpdate = newHistoryConfig[queryIndex]
   const onChange = (name, value, validity) => {
-    dispatchNewHistoryConfig({ type: 'update', name: `${bulkIndex}.${name}`, value, validity })
+    dispatchNewHistoryConfig({ type: 'update', name: `${queryIndex}.${name}`, value, validity })
   }
 
-  return bulkToUpdate ? (
+  return queryToUpdate ? (
     <HistoryQueryForm
-      bulk={bulkToUpdate}
-      bulkIndex={bulkIndex}
+      query={queryToUpdate}
+      queryIndex={queryIndex}
       onChange={onChange}
     />
   ) : (

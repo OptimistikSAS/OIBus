@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 import { OIbSelect } from '../components/OIbForm/index'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
-const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
+const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNumber }) => {
   const [southHandler, setSouthHandler] = React.useState(southHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
@@ -14,11 +14,11 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
     : ProtocolSchemas[protocol]
 
   /**
-   * Creates a new bulk with the chosen north and south handler
+   * Creates a new history query with the chosen north and south handler
    * @returns {void}
    */
-  const handleAddBulk = () => {
-    addBulk({
+  const handleAddHistoryQuery = () => {
+    addQuery({
       id: nanoid(),
       name: `${northHandler.name} -> ${southHandler.name}`,
       enabled: false,
@@ -26,7 +26,7 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
       southId: southHandler.id,
       northId: northHandler.id,
       ...(schema.points ? { points: [] } : { query: '' }),
-      order: bulksNumber + 1,
+      order: queriesNumber + 1,
     })
   }
 
@@ -74,7 +74,7 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
           />
         </Col>
         <Col md="2">
-          <Button size="sm" className="oi-add-bulk" color="primary" onClick={() => handleAddBulk()}>
+          <Button size="sm" className="oi-add-bulk" color="primary" onClick={() => handleAddHistoryQuery()}>
             Add
           </Button>
         </Col>
@@ -83,11 +83,11 @@ const NewBulkRow = ({ northHandlers, southHandlers, addBulk, bulksNumber }) => {
   )
 }
 
-NewBulkRow.propTypes = {
+NewHistoryQueryRow.propTypes = {
   northHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
   southHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
-  addBulk: PropTypes.func.isRequired,
-  bulksNumber: PropTypes.number.isRequired,
+  addQuery: PropTypes.func.isRequired,
+  queriesNumber: PropTypes.number.isRequired,
 }
 
-export default NewBulkRow
+export default NewHistoryQueryRow

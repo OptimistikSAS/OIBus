@@ -8,11 +8,11 @@ import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/configContext.jsx'
 import PointsSection from './PointsSection.jsx'
 
-const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
-  const { name, paused } = bulk
+const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
+  const { name, paused } = query
   const { newConfig } = React.useContext(ConfigContext)
-  const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === bulk.southId)
-  const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === bulk.northId)
+  const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === query.southId)
+  const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === query.northId)
   const navigate = useNavigate()
   const handlePause = () => {
     onChange('paused', !paused)
@@ -66,13 +66,13 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
       <Row>
         <Col md={1}>
           {'South handler: '}
-          <a href={`/south/${bulk.southId}`}>{dataSource?.name}</a>
+          <a href={`/south/${query.southId}`}>{dataSource?.name}</a>
         </Col>
       </Row>
       <Row>
         <Col md={1}>
           {'North handler: '}
-          <a href={`/north/${bulk.northId}`}>{application?.name}</a>
+          <a href={`/north/${query.northId}`}>{application?.name}</a>
         </Col>
       </Row>
       <OIbTitle label="General settings" />
@@ -82,8 +82,8 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
             name="enabled"
             label="Enabled"
             defaultValue={false}
-            value={bulk.enabled}
-            help={<div>Enable this bulk</div>}
+            value={query.enabled}
+            help={<div>Enable this history query</div>}
             onChange={onChange}
             switchButton
           />
@@ -93,7 +93,7 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
         <Col md={2}>
           <OIbDate
             name="startTime"
-            value={bulk.startTime}
+            value={query.startTime}
             label="From date"
             onChange={onChange}
           />
@@ -101,7 +101,7 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
         <Col md={2}>
           <OIbDate
             name="endTime"
-            value={bulk.endTime}
+            value={query.endTime}
             label="To date"
             onChange={onChange}
           />
@@ -110,7 +110,7 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
           <OIbText
             label="File pattern"
             name="filePattern"
-            value={bulk.filePattern}
+            value={query.filePattern}
             defaultValue="./cache"
             onChange={onChange}
           />
@@ -120,7 +120,7 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
             name="compress"
             label="Compress"
             defaultValue={false}
-            value={bulk.compress}
+            value={query.compress}
             onChange={onChange}
           />
         </Col>
@@ -132,12 +132,12 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
       </Row>
       <Row>
         <Col md={8}>
-          {bulk.points ? (
-            <PointsSection bulk={bulk} bulkIndex={bulkIndex} />
+          {query.points ? (
+            <PointsSection query={query} queryIndex={queryIndex} />
           ) : (
             <>
               <OIbTitle label="Request" />
-              <OIbTextArea label="Query" name="query" value={bulk.query} onChange={onChange} />
+              <OIbTextArea label="Query" name="query" value={query.query} onChange={onChange} />
             </>
           )}
         </Col>
@@ -147,8 +147,8 @@ const HistoryQueryForm = ({ bulkIndex, bulk, onChange }) => {
 }
 
 HistoryQueryForm.propTypes = {
-  bulkIndex: PropTypes.number.isRequired,
-  bulk: PropTypes.object.isRequired,
+  queryIndex: PropTypes.number.isRequired,
+  query: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
 }
 
