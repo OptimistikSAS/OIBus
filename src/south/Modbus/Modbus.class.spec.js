@@ -39,6 +39,7 @@ jest.mock('../../engine/Logger.class')
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 
 beforeEach(() => {
   jest.resetAllMocks()

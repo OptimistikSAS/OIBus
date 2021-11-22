@@ -44,6 +44,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -62,6 +63,7 @@ describe('sql-db-to-file', () => {
 
     await sqlSouth.connect()
 
+    console.log(engine.getCacheFolder())
     expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
     expect(sqlSouth.lastCompletedAt[sqlConfig.scanMode]).toEqual(new Date('2020-04-23T11:09:01.001Z'))
