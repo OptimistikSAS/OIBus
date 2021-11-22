@@ -9,6 +9,7 @@ const config = require('../../../tests/testConfig').default
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 // Mock the logger

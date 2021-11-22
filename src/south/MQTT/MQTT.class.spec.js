@@ -16,6 +16,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.engineName = 'Test MQTT'
 engine.logger = { error: jest.fn() }

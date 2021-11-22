@@ -536,6 +536,15 @@ class OIBusEngine extends BaseEngine {
   }
 
   /**
+   * Get cache folder
+   * @return {string} - The cache folder
+   */
+  getCacheFolder() {
+    const { engineConfig } = this.configService.getConfig()
+    return engineConfig.caching.cacheFolder
+  }
+
+  /**
    * Get live status for a given North.
    * @param {string} id - The application id
    * @returns {object} - The live status
