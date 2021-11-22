@@ -114,7 +114,7 @@ class ProtocolHandler {
   async connect() {
     const { id, name, protocol, startTime } = this.dataSource
 
-    const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
+    const databasePath = `${this.engine.getCacheFolder()}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
 
     if (this.supportedModes?.supportHistory) {
@@ -286,7 +286,7 @@ class ProtocolHandler {
   /**
    * Read a given key in the config db of the protocol handler
    * @param {string} configKey - key to retrieve
-   * @returns {string} - The value of the key
+   * @returns {Promise<string>} - The value of the key
    */
 
   async getConfig(configKey) {
@@ -299,7 +299,6 @@ class ProtocolHandler {
    * @param {string} value - value of the key
    * @returns {Promise} - the value to update the key
    */
-
   async setConfig(configKey, value) {
     return databaseService.upsertConfig(
       this.southDatabase,

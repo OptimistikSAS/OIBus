@@ -462,6 +462,15 @@ class OIBusEngine extends BaseEngine {
     const south = this.activeProtocols[id]
     return south ? south.getStatus() : {}
   }
+
+  /**
+   * Get cache folder
+   * @return {string} - The cache folder
+   */
+  getCacheFolder() {
+    const { engineConfig } = this.configService.getConfig()
+    return engineConfig.caching.cacheFolder
+  }
 }
 
 module.exports = OIBusEngine
