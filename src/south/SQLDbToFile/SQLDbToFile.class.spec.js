@@ -60,6 +60,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.logger = { error: jest.fn() }
 engine.eventEmitters = {}
 

@@ -107,6 +107,14 @@ class BaseEngine {
   getVersion() {
     return this.version
   }
+
+  /**
+   * Get cache folder
+   * @return {string} - The cache folder
+   */
+  getCacheFolder() {
+    this.logger.warn('getCacheFolder() should be surcharged')
+  }
 }
 
 module.exports = BaseEngine

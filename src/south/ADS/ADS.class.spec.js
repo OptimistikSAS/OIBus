@@ -24,6 +24,7 @@ jest.mock('../../engine/logger/Logger.class')
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 // Global variable used to simulate ADS library returned values

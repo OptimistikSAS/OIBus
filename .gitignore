@@ -14,3 +14,4 @@ historyQuery-*.json
 historyQuery.json
 local-development/data
 .env
+tests/historyQuery/
