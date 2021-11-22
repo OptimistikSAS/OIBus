@@ -140,7 +140,7 @@ class ProtocolHandler {
       startTime
     } = this.dataSource
 
-    const databasePath = `${this.engineConfig.caching.cacheFolder}/${id}.db`
+    const databasePath = `${this.engine.getCacheFolder()}/${id}.db`
     this.southDatabase = await databaseService.createConfigDatabase(databasePath)
 
     if (this.supportedModes?.supportHistory) {
@@ -362,7 +362,7 @@ class ProtocolHandler {
   /**
    * Read a given key in the config db of the protocol handler
    * @param {string} configKey - key to retrieve
-   * @returns {string} - The value of the key
+   * @returns {Promise<string>} - The value of the key
    */
   async getConfig(configKey) {
     return databaseService.getConfig(this.southDatabase, configKey)

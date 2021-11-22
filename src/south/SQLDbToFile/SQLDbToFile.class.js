@@ -85,8 +85,7 @@ class SQLDbToFile extends ProtocolHandler {
       this.logger.error(`Invalid timezone supplied: ${timezone}`)
     }
 
-    const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
-    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.id)
+    this.tmpFolder = path.resolve(this.engine.getCacheFolder(), this.dataSource.id)
 
     this.canHandleHistory = true
     this.handlesFiles = true
