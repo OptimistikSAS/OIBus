@@ -21,6 +21,7 @@ jest.mock('../../engine/Logger.class')
 // Mock engine
 const engine = jest.createMockFromModule('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 
 // Mock database service used in super constructor
 jest.mock('../../services/database.service', () => ({
