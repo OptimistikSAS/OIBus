@@ -101,11 +101,11 @@ class Engine extends BaseEngine {
     const historyQueryConfigs = this.configService.getActiveHistoryQueryConfiguration()
     const activeHistoryQueryConfigs = historyQueryConfigs.filter((historyQueryConfig) => historyQueryConfig.enabled && !historyQueryConfig.paused)
 
-    const exportingHistoryQueries = activeHistoryQueryConfigs.filter(
+    const ongoingHistoryQueries = activeHistoryQueryConfigs.filter(
       (historyQueryConfig) => [HistoryQuery.STATUS_EXPORTING, HistoryQuery.STATUS_IMPORTING].includes(historyQueryConfig.status),
     )
-    if (exportingHistoryQueries.length > 0) {
-      return exportingHistoryQueries.sort((a, b) => a.order - b.order)[0]
+    if (ongoingHistoryQueries.length > 0) {
+      return ongoingHistoryQueries.sort((a, b) => a.order - b.order)[0]
     }
 
     const pendingHistoryQueries = activeHistoryQueryConfigs.filter((historyQueryConfig) => historyQueryConfig.status === HistoryQuery.STATUS_PENDING)
