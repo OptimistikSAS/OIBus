@@ -12,6 +12,7 @@ const BaseEngine = require('./BaseEngine.class')
 const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const HealthSignal = require('./HealthSignal.class')
+const fs = require('fs')
 
 /**
  *
@@ -470,6 +471,35 @@ class OIBusEngine extends BaseEngine {
   getCacheFolder() {
     const { engineConfig } = this.configService.getConfig()
     return engineConfig.caching.cacheFolder
+  }
+
+
+  /**
+   * Get live status for a given HistoryQuery.
+   * @param {string} id - The HistoryQuery id
+   * @returns {object} - The live status
+   */
+  async getStatusForHistoryQuery(id) {
+    const data = {
+      north: { numberOfFilesToSend: 0 },
+      south: [],
+    }
+    const { engineConfig } = this.configService.getConfig()
+    const historyQueryConfigs = this.configService.getActiveHistoryQueryConfiguration()
+    const selectedHistoryQueryConfig = historyQueryConfigs.find((historyQueryConfig) => historyQueryConfig.id === id)
+    if (selectedHistoryQueryConfig) {
+      const { historyQuery: { folder } } = engineConfig
+      const databasePath = `${folder}/${selectedHistoryQueryConfig.southId}.db`
+      if (fs.existsSync(databasePath)) {
+        const entries = await databaseService.getHistoryQuerySouthData(databasePath)
+        data.south = entries.map((entry) => ({
+          scanMode: entry.name.replace('lastCompletedAt-', ''),
+          lastCompletedDate: entry.value,
+        }))
+      }
+    }
+
+    return data
   }
 }
 
