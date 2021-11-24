@@ -1,12 +1,14 @@
-const ProtocolFactory = require('../south/ProtocolFactory.class')
-
 class HistoryQuery {
+  // Waiting to be starteds
   static STATUS_PENDING = 'pending'
 
+  // Exporting data from south
   static STATUS_EXPORTING = 'exporting'
 
+  // Importing data into North
   static STATUS_IMPORTING = 'importing'
 
+  // History query finished
   static STATUS_FINISHED = 'finished'
 
   constructor(engine, logger, config, dataSource, application) {
@@ -64,18 +66,17 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async startExport() {
+    this.logger.info(`Start the export phase for HistoryQuery ${this.id}`)
     if (this.status !== HistoryQuery.STATUS_EXPORTING) {
       await this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
 
     this.dataSource.startTime = this.config.startTime
     this.dataSource.points = this.config.points
-    if (this.dataSource.protocol === 'SQLDbToFile') {
-      this.dataSource.SQLDbToFile.query = this.config.query
-    }
+    this.dataSource[this.dataSource.protocol].query = this.config.query
 
     const { protocol, enabled, name } = this.dataSource
-    this.south = enabled ? ProtocolFactory.create(protocol, this.dataSource, this.engine) : null
+    this.south = enabled ? this.engine.createSouth(protocol, this.dataSource) : null
     if (this.south) {
       await this.south.connect()
       this.export()
@@ -90,6 +91,7 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async startImport() {
+    this.logger.info(`Start the import phase for HistoryQuery ${this.id}`)
     await this.finish()
     this.engine.runNextHistoryQuery()
 
@@ -98,7 +100,7 @@ class HistoryQuery {
     // }
 
     // const { api, enabled, name } = this.application
-    // this.north = enabled ? ApiFactory.create(api, this.application, this.engine) : null
+    // this.north = enabled ? thi.createNorth(api, this.application) : null
     // if (this.north) {
     //   await this.north.connect()
     // } else {
@@ -112,6 +114,7 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async finish() {
+    this.logger.info(`Finish HistoryQuery ${this.id}`)
     await this.setStatus(HistoryQuery.STATUS_FINISHED)
     await this.stop()
   }
@@ -172,7 +175,7 @@ class HistoryQuery {
     } while (intervalEndTime !== this.endTime)
   }
 
-  async setStatus(status) {
+  setStatus(status) {
     this.status = status
     this.engine.configService.saveStatusForHistoryQuery(this.id, status)
   }
