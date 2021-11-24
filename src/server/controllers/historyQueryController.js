@@ -35,8 +35,19 @@ const activateConfiguration = (ctx) => {
   }
 }
 
+/**
+ * Get status for the given HistoryQuery.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getStatus = async (ctx) => {
+  const status = await ctx.app.engine.getStatusForHistoryQuery(ctx.params.id)
+  ctx.ok(status)
+}
+
 module.exports = {
   getActiveConfiguration,
   updateConfig,
   activateConfiguration,
+  getStatus,
 }
