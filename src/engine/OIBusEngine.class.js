@@ -3,12 +3,8 @@ const path = require('path')
 const os = require('os')
 const EventEmitter = require('events')
 const humanizeDuration = require('humanize-duration')
+const fs = require('fs')
 const databaseService = require('../services/database.service')
-
-const ProtocolFactory = require('../south/ProtocolFactory.class')
-protocolList.RestApi = require('../south/RestApi/RestApi.class')
-
-const ApiFactory = require('../north/ApiFactory.class')
 
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
@@ -198,7 +194,7 @@ class OIBusEngine extends BaseEngine {
       } = dataSource
       if (enabled) {
         // Initiate the correct Protocol
-        const south = ProtocolFactory.create(protocol, dataSource, this)
+        const south = this.createSouth(protocol, dataSource)
         if (south) {
           this.activeProtocols[id] = south
           // eslint-disable-next-line no-await-in-loop
@@ -222,7 +218,7 @@ class OIBusEngine extends BaseEngine {
       // select the right api handler
       if (enabled) {
         // Initiate the correct API
-        const north = ApiFactory.create(api, application, this)
+        const north = this.createNorth(api, application)
         if (north) {
           this.activeApis[id] = north
           // eslint-disable-next-line no-await-in-loop
@@ -400,7 +396,7 @@ class OIBusEngine extends BaseEngine {
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.entries(ApiFactory.getNorthList())
+    return Object.entries(this.getNorthList())
       .map(([connectorName, { category }]) => ({
         connectorName,
         category,
@@ -415,7 +411,7 @@ class OIBusEngine extends BaseEngine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.entries(ProtocolFactory.getSouthList())
+    return Object.entries(this.getSouthList())
       .map(([connectorName, { category }]) => ({
         connectorName,
         category,
@@ -542,6 +538,34 @@ class OIBusEngine extends BaseEngine {
   getCacheFolder() {
     const { engineConfig } = this.configService.getConfig()
     return engineConfig.caching.cacheFolder
+  }
+
+  /**
+   * Get live status for a given HistoryQuery.
+   * @param {string} id - The HistoryQuery id
+   * @returns {object} - The live status
+   */
+  async getStatusForHistoryQuery(id) {
+    const data = {
+      north: { numberOfFilesToSend: 0 },
+      south: [],
+    }
+    const { engineConfig } = this.configService.getConfig()
+    const historyQueryConfigs = this.configService.getActiveHistoryQueryConfiguration()
+    const selectedHistoryQueryConfig = historyQueryConfigs.find((historyQueryConfig) => historyQueryConfig.id === id)
+    if (selectedHistoryQueryConfig) {
+      const { historyQuery: { folder } } = engineConfig
+      const databasePath = `${folder}/${selectedHistoryQueryConfig.southId}.db`
+      if (fs.existsSync(databasePath)) {
+        const entries = await databaseService.getHistoryQuerySouthData(databasePath)
+        data.south = entries.map((entry) => ({
+          scanMode: entry.name.replace('lastCompletedAt-', ''),
+          lastCompletedDate: entry.value,
+        }))
+      }
+    }
+
+    return data
   }
 
   /**

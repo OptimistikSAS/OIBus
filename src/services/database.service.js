@@ -381,6 +381,21 @@ const getErroredFilesCount = async (databasePath) => {
   return results.length > 0 ? results[0].count : 0
 }
 
+/**
+ * Get South related data for HistoryQuery.
+ * @param {string} databasePath - The database path
+ * @returns {Promise<object>} - The data
+ */
+const getHistoryQuerySouthData = async (databasePath) => {
+  const database = await sqlite.open({
+    filename: databasePath,
+    driver: sqlite3.cached.Database,
+  })
+  const query = `SELECT * FROM ${CACHE_TABLE_NAME}`
+  const stmt = await database.prepare(query)
+  return stmt.all()
+}
+
 module.exports = {
   createValuesDatabase,
   createFilesDatabase,
@@ -402,4 +417,5 @@ module.exports = {
   getLogsCount,
   getErroredValuesCount,
   getErroredFilesCount,
+  getHistoryQuerySouthData,
 }
