@@ -1,5 +1,28 @@
 const VERSION = require('../../package.json').version
 
+const apiList = {}
+apiList.Console = require('../north/console/Console.class')
+apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
+apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
+apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
+apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
+apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
+apiList.MongoDB = require('../north/mongodb/MongoDB.class')
+apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
+apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
+apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
+apiList.FileWriter = require('../north/filewriter/FileWriter.class')
+
+const protocolList = {}
+protocolList.ADS = require('../south/ADS/ADS.class')
+protocolList.Modbus = require('../south/Modbus/Modbus.class')
+protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
+protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
+protocolList.MQTT = require('../south/MQTT/MQTT.class')
+protocolList.SQLDbToFile = require('../south/SQLDbToFile/SQLDbToFile.class')
+protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
+protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
+
 // BaseEngine classes
 const ConfigService = require('../services/config.service.class')
 const Logger = require('./Logger.class')
@@ -114,6 +137,54 @@ class BaseEngine {
    */
   getCacheFolder() {
     this.logger.warn('getCacheFolder() should be surcharged')
+  }
+
+  /**
+   * Create a new South instance
+   *
+   * @param {string} protocol - The protocol
+   * @param {object} dataSource - The data source
+   * @returns {ProtocolHandler|null} - The South
+   */
+  createSouth(protocol, dataSource) {
+    const SouthHandler = protocolList[protocol]
+    if (SouthHandler) {
+      return new SouthHandler(dataSource, this)
+    }
+    return null
+  }
+
+  /**
+   * Return available South protocols
+   * @return {Object} - Available South protocols
+   */
+  // eslint-disable-next-line class-methods-use-this
+  getSouthList() {
+    return protocolList
+  }
+
+  /**
+   * Return the South class
+   *
+   * @param {string} api - The api
+   * @param {object} application - The application
+   * @returns {ProtocolHandler|null} - The South
+   */
+  createNorth(api, application) {
+    const NorthHandler = apiList[api]
+    if (NorthHandler) {
+      return new NorthHandler(application, this)
+    }
+    return null
+  }
+
+  /**
+   * Return available North applications
+   * @return {Object} - Available North applications
+   */
+  // eslint-disable-next-line class-methods-use-this
+  getNorthList() {
+    return apiList
   }
 }
 

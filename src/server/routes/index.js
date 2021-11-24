@@ -32,5 +32,6 @@ router.get('/logs', logController.getLogs)
 router.get('/historyQuery/config', historyQueryController.getActiveConfiguration)
 router.put('/historyQuery/config', historyQueryController.updateConfig)
 router.put('/historyQuery/config/activate', historyQueryController.activateConfiguration)
+router.get('/historyQuery/:id/status', historyQueryController.getStatus)
 
 module.exports = router
