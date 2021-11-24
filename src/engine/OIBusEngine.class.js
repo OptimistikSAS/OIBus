@@ -2,6 +2,7 @@ const timexe = require('timexe')
 const path = require('path')
 const os = require('os')
 const moment = require('moment-timezone')
+const fs = require('fs')
 const databaseService = require('../services/database.service')
 
 const ProtocolFactory = require('../south/ProtocolFactory.class')
@@ -12,7 +13,6 @@ const BaseEngine = require('./BaseEngine.class')
 const Server = require('../server/Server.class')
 const Cache = require('./Cache.class')
 const HealthSignal = require('./HealthSignal.class')
-const fs = require('fs')
 
 /**
  *
@@ -472,7 +472,6 @@ class OIBusEngine extends BaseEngine {
     const { engineConfig } = this.configService.getConfig()
     return engineConfig.caching.cacheFolder
   }
-
 
   /**
    * Get live status for a given HistoryQuery.
