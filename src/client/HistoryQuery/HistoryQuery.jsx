@@ -41,13 +41,16 @@ const HistoryQuery = () => {
    * Calculates the status of history query read based on the end time and start time in percent
    * @param {Date} startTime The start time of history query
    * @param {Date} endTime The end time of history query
+   * @param {Date} lastCompleted The lastCompleted date of history query
    * @return {number} The status percent
    */
-  const percentageCalculator = (startTime, endTime) => {
+  const percentageCalculator = (startTime, endTime, lastCompleted) => {
+    if (!lastCompleted) {
+      return 0
+    }
     const differenceFromStartToEnd = new Date(endTime).getTime() - new Date(startTime).getTime()
-    // TODO: The current date should be replaced with the last completed date
-    const differenceFromNowToEnd = new Date(endTime).getTime() - new Date().getTime()
-    return differenceFromNowToEnd > 0 ? (100 - ((differenceFromNowToEnd * 100) / differenceFromStartToEnd)).toFixed(2) : 100
+    const differenceFromLastCompletedToEnd = new Date(endTime).getTime() - new Date(lastCompleted).getTime()
+    return differenceFromLastCompletedToEnd > 0 ? (100 - ((differenceFromLastCompletedToEnd * 100) / differenceFromStartToEnd)).toFixed(2) : 100
   }
 
   /**
@@ -150,7 +153,7 @@ const HistoryQuery = () => {
       value: <div className={statusColor(status || 'pending')}>{status || 'pending'}</div>,
     },
     { name: 'period', value: startTime && endTime ? `${startTime} -> ${endTime}` : 'Dates not specified' },
-    { name: 'percentage', value: `${percentageCalculator(startTime, endTime)} %` },
+    { name: 'percentage', value: `${percentageCalculator(startTime, endTime, new Date())} %` },
   ])
 
   return tableRows ? (

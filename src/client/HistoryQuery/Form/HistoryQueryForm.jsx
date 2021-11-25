@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col, Label, Button } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
@@ -7,16 +7,26 @@ import { OIbTitle, OIbCheckBox, OIbText, OIbTextArea } from '../../components/OI
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/configContext.jsx'
 import PointsSection from './PointsSection.jsx'
+import apis from '../../services/apis'
 
 const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
   const { name, paused } = query
   const { newConfig } = React.useContext(ConfigContext)
+  const [lastCompleted, setLastCompleted] = useState()
   const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === query.southId)
   const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === query.northId)
   const navigate = useNavigate()
   const handlePause = () => {
     onChange('paused', !paused)
   }
+
+  useEffect(() => {
+    apis.getLastCompletedForHistoryQuery().then((response) => {
+      setLastCompleted(response)
+    }).catch((error) => {
+      console.error(error)
+    })
+  }, [])
 
   return (
     <Form>
@@ -127,7 +137,10 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
       </Row>
       <Row>
         <Col md={4}>
-          <p><strong>Last completed date: </strong></p>
+          <p>
+            <strong>Last completed date: </strong>
+            {lastCompleted?.toString()}
+          </p>
         </Col>
       </Row>
       <Row>
