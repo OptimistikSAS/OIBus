@@ -8,11 +8,9 @@ schema.form = {
     label: 'OIFileWriter settings',
     md: 12,
     children: (
-      <>
-        <p>
-          FileWriter just writes what is received from the South on the specified folder.
-        </p>
-      </>
+      <p>
+        FileWriter just writes what is received from the South on the specified folder.
+      </p>
     ),
   },
   outputFolder: {

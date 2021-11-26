@@ -74,17 +74,13 @@ afterEach(() => {
 describe('ConfigurePoints', () => {
   test('check ConfigurePoints', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check edit filter input', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('filterText'), { target: { value: 'A13518/AI1/PV.CV' } })
     expect(setFilterText).toBeCalledWith('A13518/AI1/PV.CV')
@@ -93,18 +89,14 @@ describe('ConfigurePoints', () => {
   test('check render with filterText', () => {
     filterText = 'filter'
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     expect(container).toMatchSnapshot()
     filterText = ''
   })
   test('check add new point', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.querySelector('th path'))
     expect(dispatchNewConfig).toBeCalledWith({
@@ -116,9 +108,7 @@ describe('ConfigurePoints', () => {
   })
   test('check edit first pointId', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_point_id' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -131,9 +121,7 @@ describe('ConfigurePoints', () => {
   })
   test('check edit first scanMode', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'everySecond' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -146,9 +134,7 @@ describe('ConfigurePoints', () => {
   })
   test('check edit first pointId', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('points.0.pointId'), { target: { value: 'new_value' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -161,9 +147,7 @@ describe('ConfigurePoints', () => {
   })
   test('check edit first scanMode', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('points.0.scanMode'), { target: { value: 'every1Min' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -176,9 +160,7 @@ describe('ConfigurePoints', () => {
   })
   test('check import points press', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[0])
     expect(container).toMatchSnapshot()
@@ -186,9 +168,7 @@ describe('ConfigurePoints', () => {
   test('check import points file input', () => {
     console.error = jest.fn()
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
@@ -197,9 +177,7 @@ describe('ConfigurePoints', () => {
     console.error = jest.fn()
 
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
@@ -212,9 +190,7 @@ describe('ConfigurePoints', () => {
     console.error = jest.fn()
 
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
@@ -231,9 +207,7 @@ describe('ConfigurePoints', () => {
     console.error = jest.fn()
 
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.change(document.getElementById('importFile'), { target: { files: ['new_file'] } })
     expect(container).toMatchSnapshot()
@@ -258,9 +232,7 @@ describe('ConfigurePoints', () => {
     const originalUrlCreateObjectURL = URL.createObjectURL
     URL.createObjectURL = jest.fn()
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.getElementsByClassName('inline-button btn btn-primary')[1])
     expect(container).toMatchSnapshot()
@@ -271,9 +243,7 @@ describe('ConfigurePoints', () => {
   })
   test('check pagination', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     const pagination = document.getElementsByClassName('pagination')[0]
     const items = pagination.getElementsByClassName('page-item')
@@ -283,9 +253,7 @@ describe('ConfigurePoints', () => {
   })
   test('check delete all points', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
     expect(container).toMatchSnapshot()
@@ -293,9 +261,7 @@ describe('ConfigurePoints', () => {
   test('check no config', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     expect(container).toMatchSnapshot()
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
@@ -305,9 +271,7 @@ describe('ConfigurePoints', () => {
     configNoPoints.south.dataSources[8].points = undefined
     React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     expect(container).toMatchSnapshot()
     React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
@@ -315,9 +279,7 @@ describe('ConfigurePoints', () => {
   test('check confirm on delete all points', () => {
     React.useState = originalUseState
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.getElementsByClassName('inline-button btn btn-danger')[0])
     Simulate.click(document.getElementsByClassName('btn btn-primary')[2])
@@ -329,9 +291,7 @@ describe('ConfigurePoints', () => {
   })
   test('check delete first point', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigurePoints />, container,
-      )
+      ReactDOM.render(<ConfigurePoints />, container)
     })
     Simulate.click(document.querySelector('td path')) // click on delete icon
     Simulate.click(document.getElementsByClassName('btn btn-primary')[3])

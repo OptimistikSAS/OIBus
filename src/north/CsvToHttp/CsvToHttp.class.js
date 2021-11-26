@@ -55,7 +55,7 @@ class CsvToHttp extends ApiHandler {
    */
   async handleFile(filePath) {
     // Verify that the file receive is a csv one
-    const regexExp = RegExp('.csv$')
+    const regexExp = /.csv$/
 
     if (!regexExp.test(filePath)) {
       this.logger.error(`Invalid file format (.csv file expected), file (${filePath} skipped`)

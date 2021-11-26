@@ -12,15 +12,16 @@ const func = jest.fn()
 const callback = { func }
 const setCallback = jest.fn()
 const setState = jest.fn()
-React.useState = jest.fn().mockImplementation((init) => {
-  if (init === null) {
-    return [callback, setCallback]
-  }
-  if (init === true) {
-    return [init, setOpen]
-  }
-  return [init, setState]
-})
+React.useState = jest.fn()
+  .mockImplementation((init) => {
+    if (init === null) {
+      return [callback, setCallback]
+    }
+    if (init === true) {
+      return [init, setOpen]
+    }
+    return [init, setState]
+  })
 
 let container
 beforeEach(() => {
@@ -45,10 +46,12 @@ describe('Modal', () => {
           denyLabel="deny"
         >
           {() => (1)}
-        </Modal>, container,
+        </Modal>,
+        container,
       )
     })
-    expect(container).toMatchSnapshot()
+    expect(container)
+      .toMatchSnapshot()
   })
   test('check confirm press', () => {
     act(() => {
@@ -61,14 +64,19 @@ describe('Modal', () => {
           denyLabel="deny"
         >
           {() => (1)}
-        </Modal>, container,
+        </Modal>,
+        container,
       )
     })
     Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
-    expect(callback.func).toBeCalledWith()
-    expect(setOpen).toBeCalledWith(false)
-    expect(setCallback).toBeCalledWith(null)
-    expect(container).toMatchSnapshot()
+    expect(callback.func)
+      .toBeCalledWith()
+    expect(setOpen)
+      .toBeCalledWith(false)
+    expect(setCallback)
+      .toBeCalledWith(null)
+    expect(container)
+      .toMatchSnapshot()
   })
   test('check cancel press', () => {
     act(() => {
@@ -81,12 +89,16 @@ describe('Modal', () => {
           denyLabel="deny"
         >
           {() => (1)}
-        </Modal>, container,
+        </Modal>,
+        container,
       )
     })
     Simulate.click(document.getElementsByClassName('btn btn-secondary')[0])
-    expect(setOpen).toBeCalledWith(false)
-    expect(setCallback).toBeCalledWith(null)
-    expect(container).toMatchSnapshot()
+    expect(setOpen)
+      .toBeCalledWith(false)
+    expect(setCallback)
+      .toBeCalledWith(null)
+    expect(container)
+      .toMatchSnapshot()
   })
 })

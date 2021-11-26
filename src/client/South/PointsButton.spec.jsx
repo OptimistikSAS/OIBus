@@ -34,32 +34,26 @@ describe('PointsButton', () => {
   test('check PointsButton disabled', () => {
     dataSource.enabled = false
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={dataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={dataSource}
+      />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check PointsButton enabled', () => {
     dataSource.enabled = true
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={dataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={dataSource}
+      />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check points button click', () => {
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={dataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={dataSource}
+      />, container)
     })
     Simulate.click(document.querySelector('button.oi-points-button'))
     expect(mockNavigate).toBeCalledWith(`/south/${dataSource.id}/points`)
@@ -67,32 +61,26 @@ describe('PointsButton', () => {
   })
   test('check if points array is empty', () => {
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={emptyPointsDataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={emptyPointsDataSource}
+      />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check no points', () => {
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={nullPointsDataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={nullPointsDataSource}
+      />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check if enabled with no points', () => {
     nullPointsDataSource.enabled = true
     act(() => {
-      ReactDOM.render(
-        <PointsButton
-          dataSource={nullPointsDataSource}
-        />, container,
-      )
+      ReactDOM.render(<PointsButton
+        dataSource={nullPointsDataSource}
+      />, container)
     })
     expect(container).toMatchSnapshot()
   })

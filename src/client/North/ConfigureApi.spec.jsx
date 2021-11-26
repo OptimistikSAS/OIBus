@@ -33,17 +33,13 @@ afterEach(() => {
 describe('ConfigureApi', () => {
   test('check ConfigureApi', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigureApi />, container,
-      )
+      ReactDOM.render(<ConfigureApi />, container)
     })
     expect(container).toMatchSnapshot()
   })
   test('check update', () => {
     act(() => {
-      ReactDOM.render(
-        <ConfigureApi />, container,
-      )
+      ReactDOM.render(<ConfigureApi />, container)
     })
     Simulate.change(document.getElementById('north.applications.1.OIConnect.host'), { target: { value: 'http://new_host' } })
     expect(dispatchNewConfig).toBeCalledWith({
@@ -61,9 +57,7 @@ describe('ConfigureApi', () => {
     config.north.applications = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
-      ReactDOM.render(
-        <ConfigureApi />, container,
-      )
+      ReactDOM.render(<ConfigureApi />, container)
     })
     expect(container).toMatchSnapshot()
     React.useContext = reactUseContextMock

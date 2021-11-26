@@ -235,9 +235,7 @@ describe('NewNorth', () => {
     })
 
     act(() => {
-      ReactDOM.render(
-        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container,
-      )
+      ReactDOM.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('add-north'))
@@ -250,9 +248,7 @@ describe('NewNorth', () => {
 
   test('check add connector without protocol & without new name', () => {
     act(() => {
-      ReactDOM.render(
-        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container,
-      )
+      ReactDOM.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('add-north'))
@@ -262,9 +258,7 @@ describe('NewNorth', () => {
 
   test('check add connector without protocol & with new name', () => {
     act(() => {
-      ReactDOM.render(
-        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container,
-      )
+      ReactDOM.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('add-north'))
@@ -275,9 +269,7 @@ describe('NewNorth', () => {
 
   test('check add connector without name & with protocol', () => {
     act(() => {
-      ReactDOM.render(
-        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container,
-      )
+      ReactDOM.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('add-north'))

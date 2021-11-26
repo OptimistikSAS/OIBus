@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormText, Label, Input } from 'reactstrap'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 
 const OIbProxy = ({ label, help, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)

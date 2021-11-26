@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbText, OIbTitle } from '../components/OIbForm'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import validation from './Engine.validation'
 
 const Filters = ({ filters }) => {

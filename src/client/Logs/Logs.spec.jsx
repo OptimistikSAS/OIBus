@@ -28,6 +28,7 @@ global.Date = class {
   }
 
   constructor() {
+    // eslint-disable-next-line no-constructor-return
     return new RealDate(constantDate)
   }
 }

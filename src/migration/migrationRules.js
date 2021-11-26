@@ -614,9 +614,11 @@ module.exports = {
       // eslint-disable-next-line max-len
       logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Renaming column name "application_id" into "application"`)
       try {
-        await databaseMigrationService.changeColumnName(valueCacheErrorDbPath,
+        await databaseMigrationService.changeColumnName(
+          valueCacheErrorDbPath,
           'application_id',
-          'application')
+          'application',
+        )
       } catch (error) {
         logger.error(`Error during column name migration of value error database ${valueCacheErrorDbPath}: ${error}`)
       }
@@ -663,9 +665,11 @@ module.exports = {
         // eslint-disable-next-line max-len
         logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
         try {
-          await databaseMigrationService.changeColumnName(newApplicationPath,
+          await databaseMigrationService.changeColumnName(
+            newApplicationPath,
             'data_source_id',
-            'data_source')
+            'data_source',
+          )
         } catch (error) {
           logger.error(`Error during column name migration of ${newApplicationPath}: ${error}`)
         }
@@ -674,10 +678,12 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file database ${fileCacheDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(fileCacheDbPath,
+            await databaseMigrationService.changeColumnValue(
+              fileCacheDbPath,
               'application',
               application.name,
-              application.id)
+              application.id,
+            )
           } catch (error) {
             logger.error(`Error during column value migration of ${fileCacheDbPath}: ${error}`)
           }
@@ -687,10 +693,12 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file error database ${fileCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(fileCacheErrorDbPath,
+            await databaseMigrationService.changeColumnValue(
+              fileCacheErrorDbPath,
               'application',
               application.name,
-              application.id)
+              application.id,
+            )
           } catch (error) {
             logger.error(`Error during column value migration of ${fileCacheErrorDbPath}: ${error}`)
           }
@@ -700,10 +708,12 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(valueCacheErrorDbPath,
+            await databaseMigrationService.changeColumnValue(
+              valueCacheErrorDbPath,
               'application',
               application.name,
-              application.id)
+              application.id,
+            )
           } catch (error) {
             logger.error(`Error during column value migration of ${valueCacheErrorDbPath}: ${error}`)
           }
