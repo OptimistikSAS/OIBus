@@ -105,12 +105,14 @@ class ADS extends ProtocolHandler {
           const structure = this.structureFiltering?.find((element) => element.name === dataType)
           if (structure) {
             subItems.filter((item) => structure.fields === '*' || structure.fields.split(',').includes(item.name)).forEach((subItem) => {
-              this.parseValues(`${nodeId}.${subItem.name}`,
+              this.parseValues(
+                `${nodeId}.${subItem.name}`,
                 subItem.type,
                 valueToParse[subItem.name],
                 timestamp,
                 subItem.subItems,
-                subItem.enumInfo)
+                subItem.enumInfo,
+              )
             })
           } else {
             this.logger.debug(`Data Structure ${dataType} not parsed for data ${nodeId}. To parse it, please specify it in the connector settings.`)

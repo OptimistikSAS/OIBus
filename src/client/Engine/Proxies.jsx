@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
 import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import validation from './Engine.validation'
 
 const Proxies = ({ proxies }) => {

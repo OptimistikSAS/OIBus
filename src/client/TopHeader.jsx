@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Badge, Collapse, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem } from 'reactstrap'
 import { FaNetworkWired } from 'react-icons/fa'
 import apis from './services/apis'
-import { ConfigContext } from './context/configContext.jsx'
+import { ConfigContext } from './context/ConfigContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
 

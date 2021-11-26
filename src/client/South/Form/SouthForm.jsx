@@ -7,7 +7,7 @@ import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../component
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import validation from './South.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
 import StatusButton from '../StatusButton.jsx'

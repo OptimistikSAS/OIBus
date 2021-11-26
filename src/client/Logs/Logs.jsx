@@ -146,72 +146,70 @@ const Log = () => {
 
   const maxDateString = new Date().toISOString().substr(0, 16)
   return (
-    <>
-      <Row>
-        <Col className="log-left-panel">
-          <Card>
-            <Label className="label-card-title">Filters</Label>
-            <CardBody className="card-body">
-              <FormGroup>
-                <Label for="fromDate">From date</Label>
-                <Input
-                  className="oi-form-input"
-                  type="datetime-local"
-                  id="fromDate"
-                  max={maxDateString}
-                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-                  required
-                  onChange={(event) => {
-                    const date = new Date(event.target.value).toISOString()
-                    setFromDate(date)
-                  }}
-                />
-                <FormText color="muted">default: Current datetime - 24 hours (now - 24 hours)</FormText>
-              </FormGroup>
+    <Row>
+      <Col className="log-left-panel">
+        <Card>
+          <Label className="label-card-title">Filters</Label>
+          <CardBody className="card-body">
+            <FormGroup>
+              <Label for="fromDate">From date</Label>
+              <Input
+                className="oi-form-input"
+                type="datetime-local"
+                id="fromDate"
+                max={maxDateString}
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required
+                onChange={(event) => {
+                  const date = new Date(event.target.value).toISOString()
+                  setFromDate(date)
+                }}
+              />
+              <FormText color="muted">default: Current datetime - 24 hours (now - 24 hours)</FormText>
+            </FormGroup>
 
-              <FormGroup>
-                <Label for="toDate">To date</Label>
-                <Input
-                  className="oi-form-input"
-                  type="datetime-local"
-                  id="toDate"
-                  max={maxDateString}
-                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-                  required
-                  onChange={(event) => {
-                    const date = new Date(event.target.value).toISOString()
-                    setToDate(date)
-                  }}
-                />
-                <FormText color="muted">default: Current datetime (now)</FormText>
-              </FormGroup>
+            <FormGroup>
+              <Label for="toDate">To date</Label>
+              <Input
+                className="oi-form-input"
+                type="datetime-local"
+                id="toDate"
+                max={maxDateString}
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required
+                onChange={(event) => {
+                  const date = new Date(event.target.value).toISOString()
+                  setToDate(date)
+                }}
+              />
+              <FormText color="muted">default: Current datetime (now)</FormText>
+            </FormGroup>
 
-              <FormGroup>
-                <Label for="verbosity">Verbosity</Label>
-                {verbosityOptions.map((item) => (
-                  <FormGroup check className={`${selectStyle(item)}`} key={item}>
-                    <Label check>
-                      <Input
-                        className="oi-form-input"
-                        type="checkbox"
-                        id="verbosity"
-                        onChange={() => handleVerbosityChange(item)}
-                        checked={verbosity.includes(item)}
-                      />
-                      {item}
-                    </Label>
-                  </FormGroup>
-                ))}
-              </FormGroup>
-              <Button id="showLog" color="primary" onClick={handleSubmit}>
-                Show log
-              </Button>
-            </CardBody>
-          </Card>
-        </Col>
-        {logs && renderLogs()}
-      </Row>
-    </>
+            <FormGroup>
+              <Label for="verbosity">Verbosity</Label>
+              {verbosityOptions.map((item) => (
+                <FormGroup check className={`${selectStyle(item)}`} key={item}>
+                  <Label check>
+                    <Input
+                      className="oi-form-input"
+                      type="checkbox"
+                      id="verbosity"
+                      onChange={() => handleVerbosityChange(item)}
+                      checked={verbosity.includes(item)}
+                    />
+                    {item}
+                  </Label>
+                </FormGroup>
+              ))}
+            </FormGroup>
+            <Button id="showLog" color="primary" onClick={handleSubmit}>
+              Show log
+            </Button>
+          </CardBody>
+        </Card>
+      </Col>
+      {logs && renderLogs()}
+    </Row>
   )
 }
 export default Log

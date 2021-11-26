@@ -7,7 +7,7 @@ import { act } from 'react-dom/test-utils'
 
 import utils from '../helpers/utils'
 import testConfig from '../../../tests/testConfig'
-import { ConfigProvider, reducer } from './configContext.jsx'
+import { ConfigProvider, reducer } from './ConfigContext.jsx'
 
 // mock fetch
 global.fetch = jest.fn().mockImplementation((uri) => {

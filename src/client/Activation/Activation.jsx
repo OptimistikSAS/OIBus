@@ -6,7 +6,7 @@ import 'jsondiffpatch/dist/formatters-styles/html.css'
 import Modal from '../components/Modal.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import utils from '../helpers/utils'
 import { OIbTitle } from '../components/OIbForm'
 

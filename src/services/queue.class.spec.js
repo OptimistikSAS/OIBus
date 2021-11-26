@@ -4,10 +4,12 @@ jest.mock('../engine/Logger.class')
 
 describe('Queue services', () => {
   jest.useFakeTimers()
-  const functionWithDelay = async (cb) => new Promise((resolve) => setTimeout(() => {
-    cb()
-    resolve()
-  }, 1000))
+  const functionWithDelay = async (cb) => new Promise((resolve) => {
+    setTimeout(() => {
+      cb()
+      resolve()
+    }, 1000)
+  })
 
   const queue = new Queue()
   it('should run appropriately when using queue', async () => {

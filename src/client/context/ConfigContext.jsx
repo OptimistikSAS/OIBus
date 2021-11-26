@@ -122,6 +122,11 @@ const ConfigProvider = ({ children }) => {
       mounted = false
     }
   }, [])
+
+  const configValueProvided = React.useMemo(
+    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort }),
+    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort],
+  )
   // the provider return the new and active config and their respective setters
   /**
    * @todo: component using this context (.i.e the whole application) will rerender
@@ -130,7 +135,7 @@ const ConfigProvider = ({ children }) => {
    */
   return (
     <ConfigContext.Provider
-      value={{ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort }}
+      value={configValueProvided}
     >
       {children}
     </ConfigContext.Provider>

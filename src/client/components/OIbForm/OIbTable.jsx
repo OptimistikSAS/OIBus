@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import Table from '../table/Table.jsx'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 import * as Controls from './index'
 
 const OIbTable = ({ name, rows, value }) => {
@@ -30,9 +30,7 @@ const OIbTable = ({ name, rows, value }) => {
     )
   }))
   return (
-    <>
-      <Table headers={tableHeaders} rows={tableRows} onChange={onChange} handleDelete={handleDelete} handleAdd={handleAdd} />
-    </>
+    <Table headers={tableHeaders} rows={tableRows} onChange={onChange} handleDelete={handleDelete} handleAdd={handleAdd} />
   )
 }
 

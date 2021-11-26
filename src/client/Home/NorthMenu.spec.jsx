@@ -91,9 +91,7 @@ describe('NorthMenu', () => {
 
   test('check duplicate application', () => {
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={application} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-duplicate'))
@@ -114,9 +112,7 @@ describe('NorthMenu', () => {
     const applicationWithCopyInName = newConfig.north.applications[8]
 
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={applicationWithCopyInName} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={applicationWithCopyInName} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-duplicate'))
@@ -135,9 +131,7 @@ describe('NorthMenu', () => {
 
   test('check edit first application', () => {
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={application} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
@@ -147,9 +141,7 @@ describe('NorthMenu', () => {
 
   test('check delete first application', () => {
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={application} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-delete'))
@@ -163,9 +155,7 @@ describe('NorthMenu', () => {
 
   test('check cancel delete first application', () => {
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={application} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-delete'))

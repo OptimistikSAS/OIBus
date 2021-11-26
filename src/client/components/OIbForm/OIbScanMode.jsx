@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { useParams } from 'react-router-dom'
 import { FormGroup, FormText, Label, Input, FormFeedback } from 'reactstrap'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 
 const OIbScanMode = ({ label, help, valid, value, name, onChange }) => {
   const { newConfig } = React.useContext(ConfigContext)

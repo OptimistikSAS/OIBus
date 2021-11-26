@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
 const SouthMenu = ({ dataSource }) => {
@@ -40,53 +40,51 @@ const SouthMenu = ({ dataSource }) => {
   }
 
   return (
-    <>
-      <Dropdown
-        isOpen={dropdownOpen}
-        toggle={() => setDropdownOpen((prevState) => !prevState)}
-        direction="down"
-      >
-        <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
-          <FaEllipsisV />
-        </DropdownToggle>
-        <DropdownMenu>
-          <DropdownItem
-            id="oi-settings"
-            onClick={() => {
-              navigate(`/south/${dataSource.id}`)
-            }}
-          >
-            Settings
-          </DropdownItem>
-          <DropdownItem
-            id="oi-status"
-            onClick={() => {
-              navigate(`/south/${dataSource.id}/live`)
-            }}
-          >
-            Status
-          </DropdownItem>
-          <DropdownItem
-            id="oi-duplicate"
-            onClick={() => {
-              handleDuplicateSouth(dataSource.id)
-            }}
-          >
-            Duplicate
-          </DropdownItem>
-          <DropdownItem className="dropdown-item" id="oi-delete" onClick={() => setModal(true)}>
-            Delete
-          </DropdownItem>
-          <ConfirmationModal
-            title="Delete"
-            body={`Are you sure you want to delete ${dataSource.name}?`}
-            onConfirm={onConfirm}
-            isOpen={modal}
-            toggle={() => setModal(false)}
-          />
-        </DropdownMenu>
-      </Dropdown>
-    </>
+    <Dropdown
+      isOpen={dropdownOpen}
+      toggle={() => setDropdownOpen((prevState) => !prevState)}
+      direction="down"
+    >
+      <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+        <FaEllipsisV />
+      </DropdownToggle>
+      <DropdownMenu>
+        <DropdownItem
+          id="oi-settings"
+          onClick={() => {
+            navigate(`/south/${dataSource.id}`)
+          }}
+        >
+          Settings
+        </DropdownItem>
+        <DropdownItem
+          id="oi-status"
+          onClick={() => {
+            navigate(`/south/${dataSource.id}/live`)
+          }}
+        >
+          Status
+        </DropdownItem>
+        <DropdownItem
+          id="oi-duplicate"
+          onClick={() => {
+            handleDuplicateSouth(dataSource.id)
+          }}
+        >
+          Duplicate
+        </DropdownItem>
+        <DropdownItem className="dropdown-item" id="oi-delete" onClick={() => setModal(true)}>
+          Delete
+        </DropdownItem>
+        <ConfirmationModal
+          title="Delete"
+          body={`Are you sure you want to delete ${dataSource.name}?`}
+          onConfirm={onConfirm}
+          isOpen={modal}
+          toggle={() => setModal(false)}
+        />
+      </DropdownMenu>
+    </Dropdown>
   )
 }
 

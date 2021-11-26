@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
 const NorthMenu = ({ application }) => {
@@ -39,46 +39,44 @@ const NorthMenu = ({ application }) => {
   }
 
   return (
-    <>
-      <Dropdown
-        isOpen={dropdownOpen}
-        toggle={() => setDropdownOpen((prevState) => !prevState)}
-        direction="down"
-      >
-        <DropdownToggle size="sm" caret={false} id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
-          <FaEllipsisV />
-        </DropdownToggle>
-        <DropdownMenu>
-          <DropdownItem
-            id="oi-settings"
-            onClick={() => {
-              navigate(`/north/${application.id}`)
-            }}
-          >
-            Settings
-          </DropdownItem>
-          <DropdownItem
-            id="oi-duplicate"
-            onClick={() => {
-              handleDuplicateNorth(application.id)
-            }}
-          >
-            Duplicate
-          </DropdownItem>
+    <Dropdown
+      isOpen={dropdownOpen}
+      toggle={() => setDropdownOpen((prevState) => !prevState)}
+      direction="down"
+    >
+      <DropdownToggle size="sm" caret={false} id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+        <FaEllipsisV />
+      </DropdownToggle>
+      <DropdownMenu>
+        <DropdownItem
+          id="oi-settings"
+          onClick={() => {
+            navigate(`/north/${application.id}`)
+          }}
+        >
+          Settings
+        </DropdownItem>
+        <DropdownItem
+          id="oi-duplicate"
+          onClick={() => {
+            handleDuplicateNorth(application.id)
+          }}
+        >
+          Duplicate
+        </DropdownItem>
 
-          <DropdownItem id="oi-delete" onClick={() => setModal(true)}>
-            <div>Delete</div>
-          </DropdownItem>
-          <ConfirmationModal
-            title="Delete"
-            body={`Are you sure you want to delete ${application.name}?`}
-            onConfirm={onConfirm}
-            isOpen={modal}
-            toggle={() => setModal(false)}
-          />
-        </DropdownMenu>
-      </Dropdown>
-    </>
+        <DropdownItem id="oi-delete" onClick={() => setModal(true)}>
+          <div>Delete</div>
+        </DropdownItem>
+        <ConfirmationModal
+          title="Delete"
+          body={`Are you sure you want to delete ${application.name}?`}
+          onConfirm={onConfirm}
+          isOpen={modal}
+          toggle={() => setModal(false)}
+        />
+      </DropdownMenu>
+    </Dropdown>
   )
 }
 

@@ -11,8 +11,12 @@ jest.mock('../../engine/Logger.class')
 
 // Mock fs
 jest.mock('fs/promises', () => ({
-  exists: jest.fn(() => new Promise((resolve) => resolve(true))),
-  readFile: jest.fn(() => new Promise((resolve) => resolve('fileContent'))),
+  exists: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+  readFile: jest.fn(() => new Promise((resolve) => {
+    resolve('fileContent')
+  })),
 }))
 
 // Mock EncryptionService

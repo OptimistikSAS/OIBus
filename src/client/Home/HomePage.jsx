@@ -2,7 +2,7 @@ import React from 'react'
 import { Spinner } from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import NodeView from './NodeView.jsx'
 import utils from '../helpers/utils'
 

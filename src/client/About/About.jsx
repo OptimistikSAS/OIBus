@@ -4,7 +4,7 @@ import { FaSync } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from './OIBus.png'
 
 const About = () => {

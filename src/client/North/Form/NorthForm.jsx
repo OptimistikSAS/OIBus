@@ -6,7 +6,7 @@ import { OIbTitle, OIbCheckBox, OIbInteger, OIbLogLevel } from '../../components
 import SubscribedTo from './SubscribedTo.jsx'
 import validation from './North.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ApiSchemas from '../Apis.jsx'
 

@@ -66,12 +66,14 @@ class HealthSignal {
     try {
       const data = JSON.stringify(healthStatus)
       const headers = { 'Content-Type': 'application/json' }
-      await this.engine.requestService.httpSend(`${this.http.host}${this.http.endpoint}`,
+      await this.engine.requestService.httpSend(
+        `${this.http.host}${this.http.endpoint}`,
         'POST',
         this.http.authentication,
         this.http.proxy,
         data,
-        headers)
+        headers,
+      )
       this.logger.debug('Health signal successful')
     } catch (error) {
       this.logger.error(`sendRequest error status: ${error}`)

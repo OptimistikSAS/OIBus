@@ -6,7 +6,7 @@ import Table from '../components/table/Table.jsx'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import PointsButton from './PointsButton.jsx'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 
 const SouthStatus = () => {
   const [status, setStatus] = React.useState({})

@@ -91,9 +91,7 @@ describe('SouthMenu', () => {
 
   test('check duplicate dataSource', async () => {
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-duplicate'))
@@ -114,9 +112,7 @@ describe('SouthMenu', () => {
     const dataSourceWithCopyInName = newConfig.south.dataSources[2]
 
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSourceWithCopyInName} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSourceWithCopyInName} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-duplicate'))
@@ -135,9 +131,7 @@ describe('SouthMenu', () => {
 
   test('check edit first dataSource', () => {
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-settings'))
@@ -147,9 +141,7 @@ describe('SouthMenu', () => {
 
   test('check status first dataSource', () => {
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-status'))
@@ -159,9 +151,7 @@ describe('SouthMenu', () => {
 
   test('check delete first dataSource', () => {
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-delete'))
@@ -175,9 +165,7 @@ describe('SouthMenu', () => {
 
   test('check cancel delete first dataSource', () => {
     act(() => {
-      ReactDOM.render(
-        <SouthMenu dataSource={dataSource} />, container,
-      )
+      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-delete'))

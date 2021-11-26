@@ -94,7 +94,7 @@ const OIbAuthentication = ({ value, name, onChange, mode, label }) => {
           </Row>
         )
       default:
-        return (<></>)
+        return null
     }
   }
 

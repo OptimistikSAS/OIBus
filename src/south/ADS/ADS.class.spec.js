@@ -633,8 +633,12 @@ beforeEach(() => {
   jest.useFakeTimers()
   // Mock ads Client constructor and the used function
   ads.Client.mockReturnValue({
-    connect: () => new Promise((resolve) => resolve({})),
-    disconnect: () => new Promise((resolve) => resolve()),
+    connect: () => new Promise((resolve) => {
+      resolve({})
+    }),
+    disconnect: () => new Promise((resolve) => {
+      resolve()
+    }),
     readSymbol: jest.fn(), // () => new Promise((resolve) => resolve()),
   })
   databaseService.getConfig.mockReturnValue('1587640141001.0')
@@ -666,7 +670,11 @@ describe('ADS south', () => {
 
   it('should retry to connect in case of failure', async () => {
     const adsSouth = new ADS(adsConfig, engine)
-    adsSouth.client = { connect: () => new Promise((resolve, reject) => reject()) }
+    adsSouth.client = {
+      connect: () => new Promise((resolve, reject) => {
+        reject()
+      }),
+    }
     await adsSouth.connectToAdsServer()
 
     expect(adsSouth.connected)
@@ -686,12 +694,24 @@ describe('ADS south', () => {
     const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestENUM)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSTRING)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLTestENUM)
+    }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestSTRING)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY2)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestTimer)
+      }))
 
     await adsSouth.onScanImplementation('every10Seconds')
     jest.runOnlyPendingTimers()
@@ -836,7 +856,9 @@ describe('ADS south', () => {
         ],
       )
 
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLExampleSTRUCT)
+    }))
 
     await adsSouth.onScanImplementation('everySecond')
 
@@ -857,7 +879,9 @@ describe('ADS south', () => {
       },
     ]
 
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLExampleSTRUCT)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLExampleSTRUCT)
+    }))
     await adsSouth.onScanImplementation('everySecond')
 
     expect(adsSouth.logger.debug)
@@ -866,12 +890,24 @@ describe('ADS south', () => {
     adsSouth.boolAsText = 'Text'
     adsSouth.enumAsText = 'Integer'
 
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestENUM)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSTRING)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestARRAY2)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimer)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLTestENUM)
+    }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestSTRING)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY2)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestTimer)
+      }))
     await adsSouth.onScanImplementation('every10Seconds')
 
     // Test boolean value as text
@@ -1127,28 +1163,62 @@ describe('ADS south', () => {
       ],
     )
 
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestBadType)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLTestBadType)
+    }))
     await adsSouth.onScanImplementation('every1Hour')
     expect(adsSouth.logger.warn)
       .toHaveBeenCalledWith('dataType BAD_TYPE not supported yet for point PLC_TEST.GVL_Test.TestBadType. Value was 1234')
 
     // Tests other data types
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestByte)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestWord)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDWord)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestSINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUSINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestUDINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestLINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestULINT)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTIME)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestTimeOfDay)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestREAL)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestLREAL)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDATE)))
-      .mockReturnValueOnce(new Promise((resolve) => resolve(GVLTestDateAndTime)))
+    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLTestByte)
+    }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestWord)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestDWord)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestSINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestUSINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestUINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestDINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestUDINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestLINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestULINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestTIME)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestTimeOfDay)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestREAL)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestLREAL)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestDATE)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestDateAndTime)
+      }))
 
     engine.addValues.mockClear()
     await adsSouth.onScanImplementation('every3Hours')
@@ -1175,7 +1245,9 @@ describe('ADS south', () => {
 
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
-    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => reject(new Error('test'))))
+    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => {
+      reject(new Error('test'))
+    }))
     await adsSouth.onScanImplementation('every10Seconds')
 
     expect(adsSouth.logger.error)
@@ -1187,7 +1259,9 @@ describe('ADS south', () => {
     const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
-    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => resolve()))
+    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => {
+      resolve()
+    }))
 
     adsSouth.reconnectTimeout = true
     await adsSouth.disconnect()
@@ -1209,7 +1283,9 @@ describe('ADS south', () => {
     adsSouth.connected = false
 
     adsSouth.client = { disconnect: jest.fn() }
-    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => resolve()))
+    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => {
+      resolve()
+    }))
     await adsSouth.disconnect()
 
     expect(adsSouth.connected)

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Spinner } from 'reactstrap'
-import { ConfigContext } from '../context/configContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
 import NorthForm from './Form/NorthForm.jsx'
 
 const ConfigureApi = () => {
