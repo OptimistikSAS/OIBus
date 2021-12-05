@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`OIbText check Texte with value="a text" 1`] = `
+exports[`OIbDate check date with value="2021-11-20" 1`] = `
 <div>
   <div
     class="form-group"
