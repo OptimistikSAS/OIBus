@@ -1,0 +1,806 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Console 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+      >
+        <h6
+          class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
+        >
+          <button
+            aria-label="Close"
+            class="close"
+            type="button"
+          >
+            <svg
+              class="oi-icon mr-2"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+              />
+            </svg>
+          </button>
+          | MSSQL South -&gt; Console
+          <svg
+            class="oi-icon-breadcrumb"
+            fill="currentColor"
+            height="15"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="15"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm-16 328c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160zm112 0c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160z"
+            />
+          </svg>
+          <label
+            class="status-text-breadcrumb text-success"
+          >
+            Ongoing
+          </label>
+        </h6>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        Handlers
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        South handler: 
+        <a
+          href="/south/southId-2"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        North handler: 
+        <a
+          href="/north/northId-2"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        General settings
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        <div
+          class="form-group"
+        >
+          <div
+            class="custom-switch custom-control"
+          >
+            <input
+              checked=""
+              class="custom-control-input"
+              color="secondary"
+              id="enabled"
+              name="enabled"
+              type="checkbox"
+            />
+            <label
+              class="custom-control-label"
+              for="enabled"
+            >
+              Enabled
+            </label>
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this history query
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="startTime"
+          >
+            From date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="startTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value="2021-10-15T14:18"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="endTime"
+          >
+            To date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="endTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value="2021-10-16T14:18"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="filePattern"
+          >
+            File pattern
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="filePattern"
+            name="filePattern"
+            type="text"
+            value="history1-@date.csvy"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            Compress
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="compress"
+              name="compress"
+              type="checkbox"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <p>
+          <strong>
+            Last completed date: 
+          </strong>
+        </p>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-8"
+      >
+        <div
+          class="spinner-container"
+        >
+          <div
+            class="spinner-grow text-primary"
+            role="status"
+          >
+            <span
+              class="sr-only"
+            >
+              Loading...
+            </span>
+          </div>
+          ...loading points from OIBus server...
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAnalytics North 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+      >
+        <h6
+          class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
+        >
+          <button
+            aria-label="Close"
+            class="close"
+            type="button"
+          >
+            <svg
+              class="oi-icon mr-2"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+              />
+            </svg>
+          </button>
+          | MSSQL South -&gt; OIAnalytics North
+          <svg
+            class="oi-icon-breadcrumb"
+            fill="currentColor"
+            height="15"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="15"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm-16 328c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160zm112 0c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160z"
+            />
+          </svg>
+          <label
+            class="status-text-breadcrumb text-success"
+          >
+            Ongoing
+          </label>
+        </h6>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        Handlers
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        South handler: 
+        <a
+          href="/south/southId-1"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        North handler: 
+        <a
+          href="/north/northId-1"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        General settings
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        <div
+          class="form-group"
+        >
+          <div
+            class="custom-switch custom-control"
+          >
+            <input
+              checked=""
+              class="custom-control-input"
+              color="secondary"
+              id="enabled"
+              name="enabled"
+              type="checkbox"
+            />
+            <label
+              class="custom-control-label"
+              for="enabled"
+            >
+              Enabled
+            </label>
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this history query
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="startTime"
+          >
+            From date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="startTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value="2021-10-15T14:18"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="endTime"
+          >
+            To date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="endTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value="2021-10-16T14:18"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="filePattern"
+          >
+            File pattern
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="filePattern"
+            name="filePattern"
+            type="text"
+            value="history1-@date.csvy"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-check"
+        >
+          <label
+            class="form-check-label"
+          >
+            Compress
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="compress"
+              name="compress"
+              type="checkbox"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <p>
+          <strong>
+            Last completed date: 
+          </strong>
+        </p>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-8"
+      >
+        <div
+          class="spinner-container"
+        >
+          <div
+            class="spinner-grow text-primary"
+            role="status"
+          >
+            <span
+              class="sr-only"
+            >
+              Loading...
+            </span>
+          </div>
+          ...loading points from OIBus server...
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+`;
+
+exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
+<div>
+  <form
+    class=""
+  >
+    <div
+      class="row"
+    >
+      <div
+        class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+      >
+        <h6
+          class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
+        >
+          <button
+            aria-label="Close"
+            class="close"
+            type="button"
+          >
+            <svg
+              class="oi-icon mr-2"
+              fill="currentColor"
+              height="1em"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+              />
+            </svg>
+          </button>
+          | north -&gt; south
+          <svg
+            class="oi-icon-breadcrumb"
+            fill="currentColor"
+            height="15"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="15"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm115.7 272l-176 101c-15.8 8.8-35.7-2.5-35.7-21V152c0-18.4 19.8-29.8 35.7-21l176 107c16.4 9.2 16.4 32.9 0 42z"
+            />
+          </svg>
+          <label
+            class="status-text-breadcrumb text-warning"
+          >
+            Paused
+          </label>
+        </h6>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        Handlers
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        South handler: 
+        <a
+          href="/south/southId"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        North handler: 
+        <a
+          href="/north/northId"
+        />
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <h5>
+        General settings
+      </h5>
+    </div>
+    <div
+      class="container-fluid"
+    />
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-1"
+      >
+        <div
+          class="form-group"
+        >
+          <div
+            class="custom-switch custom-control"
+          >
+            <input
+              class="custom-control-input"
+              color="secondary"
+              id="enabled"
+              name="enabled"
+              type="checkbox"
+            />
+            <label
+              class="custom-control-label"
+              for="enabled"
+            >
+              Enabled
+            </label>
+          </div>
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              Enable this history query
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="startTime"
+          >
+            From date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="startTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="endTime"
+          >
+            To date
+          </label>
+          <input
+            class="oi-form-input form-control"
+            id="endTime"
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required=""
+            type="datetime-local"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-2"
+      />
+      <div
+        class="col-md-2"
+      />
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-4"
+      >
+        <p>
+          <strong>
+            Last completed date: 
+          </strong>
+        </p>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
+      <div
+        class="col-md-8"
+      >
+        <div
+          class="row"
+        >
+          <h5>
+            Request
+          </h5>
+        </div>
+        <div
+          class="container-fluid"
+        />
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="query"
+          >
+            Query
+          </label>
+          <textarea
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="query"
+            name="query"
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+`;
