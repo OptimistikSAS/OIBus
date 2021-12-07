@@ -43,7 +43,7 @@ describe('FileLogging', () => {
       />, container)
     })
     Simulate.change(document.getElementById('engine.logParameters.fileLog.level'), { target: { value: 'warning', selectedIndex: 4 } })
-    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.level', 'warning', null, null)
+    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.level', 'error', null, null)
     expect(container).toMatchSnapshot()
   })
   test('check change file name to "new_filename"', () => {

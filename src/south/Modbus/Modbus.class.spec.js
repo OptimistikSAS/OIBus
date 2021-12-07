@@ -41,193 +41,136 @@ const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+const modbusConfig = {
+  name: 'Modbus',
+  protocol: 'Modbus',
+  enabled: true,
+  Modbus: {
+    port: 502,
+    host: '127.0.0.1',
+    slaveId: 1,
+    addressOffset: 'Modbus',
+    endianness: 'Big Endian',
+    swapBytesinWords: false,
+    swapWordsInDWords: false,
+  },
+  points: [
+    {
+      pointId: 'HoldingRegister',
+      modbusType: 'holdingRegister',
+      dataType: 'UInt16',
+      address: '0x4E80',
+      multiplierCoefficient: 1,
+      type: 'number',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'HoldingRegister2',
+      modbusType: 'holdingRegister',
+      dataType: 'UInt16',
+      address: '0x4E81',
+      multiplierCoefficient: 1,
+      type: 'number',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'InputRegister',
+      modbusType: 'inputRegister',
+      dataType: 'UInt16',
+      scanMode: 'every10Seconds',
+      address: '0x3E81',
+      multiplierCoefficient: 1,
+      type: 'number',
+    },
+    {
+      pointId: 'DiscreteInput',
+      modbusType: 'discreteInput',
+      dataType: 'UInt16',
+      scanMode: 'every10Seconds',
+      address: '0x1E82',
+      multiplierCoefficient: 1,
+      type: 'number',
+    },
+    {
+      pointId: 'Coil',
+      modbusType: 'coil',
+      dataType: 'UInt16',
+      scanMode: 'every10Seconds',
+      address: '0x0E83',
+      multiplierCoefficient: 1,
+      type: 'number',
+    },
+  ],
+}
+let modbusSouth = null
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
+  modbusSouth = new Modbus(modbusConfig, engine)
+  await modbusSouth.init()
 })
 
-describe('Modbus south', () => {
-  const modbusConfig = {
-    name: 'Modbus',
-    protocol: 'Modbus',
-    enabled: true,
-    Modbus: {
-      port: 502,
-      host: '127.0.0.1',
-      slaveId: 1,
-      addressOffset: 'Modbus',
-      endianness: 'Big Endian',
-      swapBytesinWords: false,
-      swapWordsInDWords: false,
-    },
-    points: [
-      {
-        pointId: 'HoldingRegister',
-        modbusType: 'holdingRegister',
-        dataType: 'UInt16',
-        address: '0x4E80',
-        multiplierCoefficient: 1,
-        type: 'number',
-        scanMode: 'every10Seconds',
-      },
-      {
-        pointId: 'HoldingRegister2',
-        modbusType: 'holdingRegister',
-        dataType: 'UInt16',
-        address: '0x4E81',
-        multiplierCoefficient: 1,
-        type: 'number',
-        scanMode: 'every10Seconds',
-      },
-      {
-        pointId: 'InputRegister',
-        modbusType: 'inputRegister',
-        dataType: 'UInt16',
-        scanMode: 'every10Seconds',
-        address: '0x3E81',
-        multiplierCoefficient: 1,
-        type: 'number',
-      },
-      {
-        pointId: 'DiscreteInput',
-        modbusType: 'discreteInput',
-        dataType: 'UInt16',
-        scanMode: 'every10Seconds',
-        address: '0x1E82',
-        multiplierCoefficient: 1,
-        type: 'number',
-      },
-      {
-        pointId: 'Coil',
-        modbusType: 'coil',
-        dataType: 'UInt16',
-        scanMode: 'every10Seconds',
-        address: '0x0E83',
-        multiplierCoefficient: 1,
-        type: 'number',
-      },
-    ],
-  }
-
-  const optimizedScanModes = {
-    every10Seconds: {
-      coil: {
-        '3712-3728': [
-          {
-            address: 3715,
-            dataType: 'UInt16',
-            multiplierCoefficient: 1,
-            pointId: 'Coil',
-            type: 'boolean',
-          },
-        ],
-      },
-      discreteInput: {
-        '7808-7824': [
-          {
-            address: 7810,
-            dataType: 'UInt16',
-            multiplierCoefficient: 1,
-            pointId: 'DiscreteInput',
-            type: 'number',
-          },
-        ],
-      },
-      holdingRegister: {
-        '20080-20112': [
-          {
-            address: 20096,
-            dataType: 'UInt16',
-            multiplierCoefficient: 1,
-            pointId: 'HoldingRegister',
-            type: 'number',
-          },
-          {
-            address: 20097,
-            dataType: 'UInt16',
-            multiplierCoefficient: 1,
-            pointId: 'HoldingRegister2',
-            type: 'number',
-          },
-        ],
-      },
-      inputRegister: {
-        '16000-16016': [
-          {
-            address: 16001,
-            dataType: 'UInt16',
-            multiplierCoefficient: 1,
-            pointId: 'InputRegister',
-            type: 'number',
-          },
-        ],
-      },
-
-    },
-  }
-
-  const modbusConfigAddressOffset = {
-    name: 'Modbus',
-    protocol: 'Modbus',
-    enabled: true,
-    Modbus: {
-      port: 502,
-      host: '127.0.0.1',
-      slaveId: 1,
-      addressOffset: 'JBus',
-      endianness: 'Big Endian',
-      swapBytesinWords: false,
-      swapWordsInDWords: false,
-    },
-    points: [
-      {
-        pointId: 'EtatBB2T0',
-        modbusType: 'holdingRegister',
-        dataType: 'UInt16',
-        address: '0x3E80',
-        multiplierCoefficient: 1,
-        type: 'number',
-        scanMode: 'every10Seconds',
-      },
-      {
-        pointId: 'EtatBB2T1',
-        modbusType: 'holdingRegister',
-        dataType: 'UInt16',
-        scanMode: 'every10Seconds',
-        address: '0x3E81',
-        multiplierCoefficient: 1,
-        type: 'number',
-      },
-    ],
-  }
-
-  const optimizedScanModesAddressOffset = {
-    every10Seconds: {
-      holdingRegister: {
-        '15984-16016': [
-          {
-            pointId: 'EtatBB2T0',
-            dataType: 'UInt16',
-            address: 15999,
-            multiplierCoefficient: 1,
-            type: 'number',
-          },
-          {
-            pointId: 'EtatBB2T1',
-            dataType: 'UInt16',
-            address: 16000,
-            multiplierCoefficient: 1,
-            type: 'number',
-          },
-        ],
-      },
-    },
-  }
-
+describe('Modbus', () => {
   it('should be properly initialized', () => {
-    const modbusSouth = new Modbus(modbusConfig, engine)
     expect(modbusSouth.url)
       .toEqual(modbusConfig.Modbus.url)
+    const optimizedScanModes = {
+      every10Seconds: {
+        coil: {
+          '3712-3728': [
+            {
+              address: 3715,
+              dataType: 'UInt16',
+              multiplierCoefficient: 1,
+              pointId: 'Coil',
+              type: 'boolean',
+            },
+          ],
+        },
+        discreteInput: {
+          '7808-7824': [
+            {
+              address: 7810,
+              dataType: 'UInt16',
+              multiplierCoefficient: 1,
+              pointId: 'DiscreteInput',
+              type: 'number',
+            },
+          ],
+        },
+        holdingRegister: {
+          '20080-20112': [
+            {
+              address: 20096,
+              dataType: 'UInt16',
+              multiplierCoefficient: 1,
+              pointId: 'HoldingRegister',
+              type: 'number',
+            },
+            {
+              address: 20097,
+              dataType: 'UInt16',
+              multiplierCoefficient: 1,
+              pointId: 'HoldingRegister2',
+              type: 'number',
+            },
+          ],
+        },
+        inputRegister: {
+          '16000-16016': [
+            {
+              address: 16001,
+              dataType: 'UInt16',
+              multiplierCoefficient: 1,
+              pointId: 'InputRegister',
+              type: 'number',
+            },
+          ],
+        },
+
+      },
+    }
     expect(modbusSouth.optimizedScanModes)
       .toEqual(optimizedScanModes)
     expect(modbusSouth.dataSource.Modbus.slaveId)
@@ -235,28 +178,77 @@ describe('Modbus south', () => {
   })
 
   it('should be properly initialized with addressOffset', () => {
-    const modbusSouth = new Modbus(modbusConfigAddressOffset, engine)
-    expect(modbusSouth.optimizedScanModes)
+    const modbusConfigAddressOffset = {
+      name: 'Modbus',
+      protocol: 'Modbus',
+      enabled: true,
+      Modbus: {
+        port: 502,
+        host: '127.0.0.1',
+        slaveId: 1,
+        addressOffset: 'JBus',
+        endianness: 'Big Endian',
+        swapBytesinWords: false,
+        swapWordsInDWords: false,
+      },
+      points: [
+        {
+          pointId: 'EtatBB2T0',
+          modbusType: 'holdingRegister',
+          dataType: 'UInt16',
+          address: '0x3E80',
+          multiplierCoefficient: 1,
+          type: 'number',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'EtatBB2T1',
+          modbusType: 'holdingRegister',
+          dataType: 'UInt16',
+          scanMode: 'every10Seconds',
+          address: '0x3E81',
+          multiplierCoefficient: 1,
+          type: 'number',
+        },
+      ],
+    }
+    const modbusSouthOffset = new Modbus(modbusConfigAddressOffset, engine)
+    const optimizedScanModesAddressOffset = {
+      every10Seconds: {
+        holdingRegister: {
+          '15984-16016': [
+            {
+              pointId: 'EtatBB2T0',
+              dataType: 'UInt16',
+              address: 15999,
+              multiplierCoefficient: 1,
+              type: 'number',
+            },
+            {
+              pointId: 'EtatBB2T1',
+              dataType: 'UInt16',
+              address: 16000,
+              multiplierCoefficient: 1,
+              type: 'number',
+            },
+          ],
+        },
+      },
+    }
+    expect(modbusSouthOffset.optimizedScanModes)
       .toEqual(optimizedScanModesAddressOffset)
   })
 
   it('should properly connect', async () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
-
-    const modbusSouth = new Modbus(modbusConfig, engine)
-
     await modbusSouth.connect()
-
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.id}.db`)
-
     expect(modbusSouth.connected)
       .toBeTruthy()
   })
 
   it('should properly onScan', async () => {
-    const modbusSouth = new Modbus(modbusConfig, engine)
-
     await modbusSouth.connect()
     modbusSouth.modbusClient = {
       readHoldingRegisters: jest.fn(),
@@ -277,8 +269,6 @@ describe('Modbus south', () => {
   })
 
   it('should properly disconnect', async () => {
-    const modbusSouth = new Modbus(modbusConfig, engine)
-
     // activate flag connect
     modbusSouth.connected = true
     modbusSouth.socket = { end: jest.fn() }

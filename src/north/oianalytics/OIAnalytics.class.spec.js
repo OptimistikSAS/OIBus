@@ -3,7 +3,7 @@ const OIAnalytics = require('./OIAnalytics.class')
 const config = require('../../../tests/testConfig').default
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
@@ -11,11 +11,18 @@ engine.eventEmitters = {}
 // Mock the logger
 jest.mock('../../engine/Logger.class')
 
-describe('oi-analytics', () => {
-  const timestamp = new Date().toISOString()
-  const oiAnalyticsConfig = config.north.applications[2]
-  const oiAnalytics = new OIAnalytics(oiAnalyticsConfig, engine)
+let oiAnalytics = null
+const timestamp = new Date().toISOString()
+const oiAnalyticsConfig = config.north.applications[2]
 
+beforeEach(async () => {
+  jest.resetAllMocks()
+  jest.clearAllMocks()
+  oiAnalytics = new OIAnalytics(oiAnalyticsConfig, engine)
+  await oiAnalytics.init()
+})
+
+describe('OIAnalytics', () => {
   it('should be properly initialized', () => {
     expect(oiAnalytics.canHandleValues).toBeTruthy()
     expect(oiAnalytics.canHandleFiles).toBeTruthy()

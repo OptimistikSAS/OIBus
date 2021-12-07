@@ -48,18 +48,18 @@ describe('LokiLogging', () => {
         selectedIndex: 4,
       },
     })
-    expect(onChange).toBeCalledWith('engine.logParameters.lokiLog.level', 'warning', null, null)
+    expect(onChange).toBeCalledWith('engine.logParameters.lokiLog.level', 'error', null, null)
     expect(container).toMatchSnapshot()
   })
-  test('check change lokiLog host name to "http://test.loki.fr"', () => {
+  test('check change lokiLog address name to "http://test.loki.fr"', () => {
     act(() => {
       ReactDOM.render(<LokiLogging
         logParameters={testConfig.engine.logParameters.lokiLog}
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.lokiLog.host'), { target: { value: 'http://test.loki.fr' } })
-    expect(onChange).toBeCalledWith('engine.logParameters.lokiLog.host', 'http://test.loki.fr', null)
+    Simulate.change(document.getElementById('engine.logParameters.lokiLog.lokiAddress'), { target: { value: 'http://test.loki.fr' } })
+    expect(onChange).toBeCalledWith('engine.logParameters.lokiLog.lokiAddress', 'http://test.loki.fr', null)
     expect(container).toMatchSnapshot()
   })
   test('check change lokiLog interval to 10', () => {

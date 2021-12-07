@@ -185,31 +185,20 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -309,6 +298,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -329,9 +323,9 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -363,6 +357,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -383,9 +382,9 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -417,6 +416,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -437,9 +441,9 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -1421,31 +1425,20 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -1545,6 +1538,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -1565,9 +1563,9 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -1599,6 +1597,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -1619,9 +1622,9 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -1653,6 +1656,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -1673,9 +1681,9 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -2121,31 +2129,20 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -2245,6 +2242,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -2265,9 +2267,9 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -2299,6 +2301,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -2319,9 +2326,9 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -2353,6 +2360,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -2373,9 +2385,9 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -3799,31 +3811,20 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -3923,6 +3924,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -3943,9 +3949,9 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -3977,6 +3983,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -3997,9 +4008,9 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -4031,6 +4042,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -4051,9 +4067,9 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -5436,31 +5452,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -5560,6 +5565,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -5580,9 +5590,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -5614,6 +5624,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -5634,9 +5649,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -5668,6 +5683,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -5688,9 +5708,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -6172,31 +6192,20 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -6296,6 +6305,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -6316,9 +6330,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -6350,6 +6364,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -6370,9 +6389,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -6404,6 +6423,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -6424,9 +6448,9 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -6946,31 +6970,20 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -7070,6 +7083,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -7090,9 +7108,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -7124,6 +7142,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -7144,9 +7167,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -7178,6 +7201,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -7198,9 +7226,9 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -8480,31 +8508,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -8604,6 +8621,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -8624,9 +8646,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -8658,6 +8680,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -8678,9 +8705,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -8712,6 +8739,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -8732,9 +8764,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -9528,31 +9560,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -9652,6 +9673,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -9672,9 +9698,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -9706,6 +9732,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -9726,9 +9757,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -9760,6 +9791,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -9780,9 +9816,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -10363,31 +10399,20 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -10487,6 +10512,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -10507,9 +10537,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -10541,6 +10571,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -10561,9 +10596,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -10595,6 +10630,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -10615,9 +10655,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -11169,31 +11209,20 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             class="col"
           >
             <p>
-              OIBus can send logs to 3 different supports:
+              OIBus can send logs to 4 different supports:
             </p>
             <ul>
               <li>
-                The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service
+                The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service
               </li>
               <li>
-                The File logs logs message on the chosen folder of the server
+                The File logs writes messages on the chosen folder of the OIBus machine
               </li>
-              <ul>
-                <li>
-                  filename: The filename of the logfile to write output to.
-                </li>
-                <li>
-                  maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter will become a suffix of the log file.
-                </li>
-                <li>
-                  maxFiles: Limit the number of files created when the size of the logfile is exceeded.
-                </li>
-                <li>
-                  tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires maxFiles to be set, or it will be ignored.
-                </li>
-              </ul>
               <li>
-                The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs remotely using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+              </li>
+              <li>
+                The loki logs send the logs to a loki instance. This allows to access the logs remotely.
               </li>
             </ul>
             <table>
@@ -11293,6 +11322,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -11313,9 +11347,9 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -11347,6 +11381,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -11367,9 +11406,9 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div
@@ -11401,6 +11440,11 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               engine
             </option>
             <option
+              value="silly"
+            >
+              silly
+            </option>
+            <option
               value="debug"
             >
               debug
@@ -11421,9 +11465,9 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               error
             </option>
             <option
-              value="silly"
+              value="none"
             >
-              silly
+              none
             </option>
           </select>
           <div

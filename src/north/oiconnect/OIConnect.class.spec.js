@@ -12,14 +12,17 @@ engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+let oiconnectNorth = null
+const oiconnectConfig = config.north.applications[1]
+const timestamp = new Date().toISOString()
+
+beforeEach(async () => {
   jest.resetAllMocks()
+  oiconnectNorth = new OIConnect(oiconnectConfig, engine)
+  await oiconnectNorth.init()
 })
 
-describe('Console north', () => {
-  const timestamp = new Date().toISOString()
-  const oiconnectNorth = new OIConnect(config.north.applications[1], engine)
-
+describe('OIConnect', () => {
   it('should be properly initialized', () => {
     expect(oiconnectNorth.canHandleFiles).toBeTruthy()
     expect(oiconnectNorth.canHandleFiles).toBeTruthy()

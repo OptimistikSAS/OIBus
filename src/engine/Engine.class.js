@@ -59,32 +59,6 @@ class Engine {
     this.configService = new ConfigService(this, configFile)
     const { engineConfig } = this.configService.getConfig()
 
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
-    // Configure the logger
-    this.logger = Logger.getDefaultLogger()
-    this.logger.setEncryptionService(this.encryptionService)
-    this.logger.changeParameters(engineConfig, {})
-
-    // Configure the Cache
-    this.cache = new Cache(this)
-    this.cache.initialize()
-
-    this.logger.info(`
-    Starting Engine ${this.version}
-    architecture: ${process.arch}
-    This platform is ${process.platform}
-    Current directory: ${process.cwd()}
-    Version Node: ${process.version}
-    Config file: ${this.configService.configFile}
-    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
-
-    // Request service
-    this.requestService = createRequestService(this)
-
     // Will only contain protocols/application used
     // based on the config file
     this.activeProtocols = {}
@@ -106,6 +80,38 @@ class Engine {
     // these parameters could be settings from OIBus UI
     this.bufferMax = engineConfig.caching.bufferMax
     this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
+  }
+
+  /**
+   * Method used to init async services (like logger when loki is used with Bearer token auth)
+   * @param {object} engineConfig - the config retrieved from the file
+   * @returns {Promise<void>} - The promise returns when the services are set
+   */
+  async initEngineServices(engineConfig) {
+    // Check for private key
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
+
+    // Configure the logger
+    this.logger = new Logger('Engine')
+    this.logger.setEncryptionService(this.encryptionService)
+    await this.logger.changeParameters(engineConfig, {})
+
+    this.logger.info(`Starting Engine ${this.version}
+    architecture: ${process.arch}
+    This platform is ${process.platform}
+    Current directory: ${process.cwd()}
+    Version Node: ${process.version}
+    Config file: ${this.configService.configFile}
+    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
+
+    // Configure the Cache
+    this.cache = new Cache(this)
+    this.cache.initialize()
+
+    // Request service
+    this.requestService = createRequestService(this)
   }
 
   /**
@@ -185,6 +191,7 @@ class Engine {
       northConfig,
       engineConfig,
     } = this.configService.getConfig()
+    await this.initEngineServices(engineConfig)
     // 1. start web server
     const server = new Server(this)
     server.listen()
@@ -203,7 +210,8 @@ class Engine {
     }
 
     // 2. start Protocol for each data sources
-    southConfig.dataSources.forEach((dataSource) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const dataSource of southConfig.dataSources) {
       const {
         id,
         protocol,
@@ -215,16 +223,19 @@ class Engine {
       if (enabled) {
         if (ProtocolHandler) {
           this.activeProtocols[id] = new ProtocolHandler(dataSource, this)
+          // eslint-disable-next-line no-await-in-loop
+          await this.activeProtocols[id].init()
           this.activeProtocols[id].initializeStatusData()
           this.activeProtocols[id].connect()
         } else {
           this.logger.error(`Protocol for ${name} is not found : ${protocol}`)
         }
       }
-    })
+    }
 
     // 3. start Applications
-    northConfig.applications.forEach((application) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const application of northConfig.applications) {
       const {
         id,
         api,
@@ -236,13 +247,15 @@ class Engine {
       if (enabled) {
         if (ApiHandler) {
           this.activeApis[id] = new ApiHandler(application, this)
+          // eslint-disable-next-line no-await-in-loop
+          await this.activeApis[id].init()
           this.activeApis[id].initializeStatusData()
           this.activeApis[id].connect()
         } else {
           this.logger.error(`API for ${name} is not found : ${api}`)
         }
       }
-    })
+    }
 
     // 4. Initiate the cache for every North
     await this.cache.initializeApis(this.activeApis)
@@ -340,7 +353,9 @@ class Engine {
     }
 
     // Stop HealthSignal
-    this.healthSignal.stop()
+    if (this.healthSignal) {
+      this.healthSignal.stop()
+    }
 
     // Stop timers
     this.jobs.forEach((id) => {
@@ -350,14 +365,14 @@ class Engine {
     // Stop Protocols
     Object.entries(this.activeProtocols)
       .forEach(([id, protocol]) => {
-        this.logger.info(`Stopping south ${id}`)
+        this.logger.info(`Stopping south ${protocol.dataSource.name} (${id})`)
         protocol.disconnect()
       })
 
     // Stop Applications
     Object.entries(this.activeApis)
       .forEach(([id, application]) => {
-        this.logger.info(`Stopping north ${id}`)
+        this.logger.info(`Stopping north ${application.application.name} (${id})`)
         application.disconnect()
       })
 

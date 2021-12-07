@@ -4,7 +4,7 @@ const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 const Logger = require('../engine/Logger.class')
 
-const logger = new Logger('migration')
+const logger = new Logger()
 
 const REQUIRED_SCHEMA_VERSION = 25
 const DEFAULT_VERSION = 1

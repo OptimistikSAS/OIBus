@@ -36,17 +36,21 @@ class ApiHandler {
     this.canHandleValues = false
     this.canHandleFiles = false
 
-    this.encryptionService = EncryptionService.getInstance()
-
     this.application = applicationParameters
     this.engine = engine
-    this.scanModes = this.engine.scanModes
+    this.encryptionService = EncryptionService.getInstance()
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
 
+    this.logger = engine.logger
+    this.scanModes = this.engine.scanModes
+  }
+
+  async init() {
     const { logParameters } = this.application
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig, logParameters)
+    this.logger = new Logger(`North:${this.application.name}`)
+    this.logger.setEncryptionService(this.encryptionService)
+    await this.logger.changeParameters(this.engineConfig, logParameters)
     this.statusData = {}
   }
 

@@ -2,6 +2,10 @@ const ads = require('ads-client')
 const ADS = require('./ADS.class')
 const databaseService = require('../../services/database.service')
 const config = require('../../../tests/testConfig').default
+const EncryptionService = require('../../services/EncryptionService.class')
+
+// Mock ads client
+jest.mock('ads-client')
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -10,14 +14,14 @@ jest.mock('../../services/database.service', () => ({
   upsertConfig: jest.fn(),
 }))
 
-// Mock ads client
-jest.mock('ads-client')
+// Mock EncryptionService
+EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock logger
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 engine.eventEmitters = {}
@@ -629,7 +633,10 @@ const GVLTestBadType = {
 const nowDateString = '2020-02-02T02:02:02.222Z'
 // End of global variables
 
-beforeEach(() => {
+const adsConfig = config.south.dataSources[9]
+let adsSouth = null
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
   // Mock ads Client constructor and the used function
@@ -643,14 +650,12 @@ beforeEach(() => {
     readSymbol: jest.fn(), // () => new Promise((resolve) => resolve()),
   })
   databaseService.getConfig.mockReturnValue('1587640141001.0')
+  adsSouth = new ADS(adsConfig, engine)
+  await adsSouth.init()
 })
 
 describe('ADS south', () => {
-  const adsConfig = config.south.dataSources[9]
-
   it('should be properly initialized', () => {
-    const adsSouth = new ADS(adsConfig, engine)
-
     expect(adsSouth.netId)
       .toEqual(adsConfig.ADS.netId)
     expect(adsSouth.port)
@@ -658,7 +663,6 @@ describe('ADS south', () => {
   })
 
   it('should properly connect', async () => {
-    const adsSouth = new ADS(adsConfig, engine)
     await adsSouth.connect()
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.id}.db`)
@@ -670,7 +674,6 @@ describe('ADS south', () => {
   })
 
   it('should retry to connect in case of failure', async () => {
-    const adsSouth = new ADS(adsConfig, engine)
     adsSouth.client = {
       connect: () => new Promise((resolve, reject) => {
         reject()
@@ -692,7 +695,6 @@ describe('ADS south', () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
-    const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
     adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
@@ -1232,8 +1234,6 @@ describe('ADS south', () => {
   })
 
   it('should not read when no point', async () => {
-    const adsSouth = new ADS(adsConfig, engine)
-
     await adsSouth.connect()
     await adsSouth.onScanImplementation('every5Seconds')
     // no point for every5Seconds
@@ -1242,8 +1242,6 @@ describe('ADS south', () => {
   })
 
   it('should catch errors on scan', async () => {
-    const adsSouth = new ADS(adsConfig, engine)
-
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn() }
     adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => {
@@ -1257,7 +1255,6 @@ describe('ADS south', () => {
 
   it('should properly disconnect and clearTimeout', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
-    const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = true
     adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
     adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => {
@@ -1280,7 +1277,6 @@ describe('ADS south', () => {
   })
 
   it('disconnect should do nothing if not connected', async () => {
-    const adsSouth = new ADS(adsConfig, engine)
     adsSouth.connected = false
 
     adsSouth.client = { disconnect: jest.fn() }

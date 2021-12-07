@@ -27,35 +27,37 @@ jest.mock('aws-sdk', () => ({ S3: jest.fn(), config: { update: jest.fn() } }))
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
+let amazonS3 = null
+const amazonS3Config = config.north.applications[8]
+
 beforeEach(() => {
+  jest.clearAllMocks()
   jest.resetAllMocks()
+  jest.restoreAllMocks()
   ProxyAgent.mockClear()
+  amazonS3 = new AmazonS3(amazonS3Config, engine)
+  amazonS3.init()
 })
 
 describe('Amazone S3 north', () => {
   it('should be properly initialized', () => {
-    const AmazonS3Config = config.north.applications[8]
-    delete AmazonS3Config.AmazonS3.proxy
-    const AmazonS3North = new AmazonS3(AmazonS3Config, engine)
-
-    expect(AmazonS3North.bucket).toEqual(AmazonS3Config.AmazonS3.bucket)
-    expect(AmazonS3North.folder).toEqual(AmazonS3Config.AmazonS3.folder)
+    expect(amazonS3.bucket).toEqual(amazonS3Config.AmazonS3.bucket)
+    expect(amazonS3.folder).toEqual(amazonS3Config.AmazonS3.folder)
 
     expect(AWS.config.update).toHaveBeenCalledWith({
-      accessKeyId: AmazonS3Config.AmazonS3.authentication.key,
-      secretAccessKey: AmazonS3Config.AmazonS3.authentication.secretKey,
+      accessKeyId: amazonS3Config.AmazonS3.authentication.key,
+      secretAccessKey: amazonS3Config.AmazonS3.authentication.secretKey,
     })
     expect(AWS.S3).toHaveBeenCalledTimes(1)
-    expect(AmazonS3North.canHandleFiles).toBeTruthy()
+    expect(amazonS3.canHandleFiles).toBeTruthy()
   })
 
   it('should be properly initialized with a proxy', () => {
-    const AmazonS3Config = config.north.applications[8]
-    AmazonS3Config.AmazonS3.proxy = 'sss'
-    const AmazonS3North = new AmazonS3(AmazonS3Config, engine)
-
-    expect(AmazonS3North.bucket).toEqual(AmazonS3Config.AmazonS3.bucket)
-    expect(AmazonS3North.folder).toEqual(AmazonS3Config.AmazonS3.folder)
+    const amazonS3WithProxyConfig = amazonS3Config
+    amazonS3WithProxyConfig.AmazonS3.proxy = 'sss'
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
+    expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.AmazonS3.bucket)
+    expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.AmazonS3.folder)
 
     const expectedAgent = {
       auth: 'uuu:pppppppppp',
@@ -73,21 +75,18 @@ describe('Amazone S3 north', () => {
     }
     expect(ProxyAgent).toHaveBeenCalledWith(expectedAgent)
     expect(AWS.config.update).toHaveBeenCalledWith({
-      accessKeyId: AmazonS3Config.AmazonS3.authentication.key,
-      secretAccessKey: AmazonS3Config.AmazonS3.authentication.secretKey,
+      accessKeyId: amazonS3WithProxyConfig.AmazonS3.authentication.key,
+      secretAccessKey: amazonS3WithProxyConfig.AmazonS3.authentication.secretKey,
     })
-    expect(AWS.S3).toHaveBeenCalledTimes(1)
-    expect(AWS.config.update).toHaveBeenCalledTimes(2)
-    expect(AmazonS3North.canHandleFiles).toBeTruthy()
+    expect(amazonS3WithProxy.canHandleFiles).toBeTruthy()
   })
 
   it('should be properly initialized with a proxy without authentication', () => {
-    const AmazonS3Config = config.north.applications[8]
-    AmazonS3Config.AmazonS3.proxy = 'no-auth'
-    const AmazonS3North = new AmazonS3(AmazonS3Config, engine)
-
-    expect(AmazonS3North.bucket).toEqual(AmazonS3Config.AmazonS3.bucket)
-    expect(AmazonS3North.folder).toEqual(AmazonS3Config.AmazonS3.folder)
+    const amazonS3WithProxyConfig = amazonS3Config
+    amazonS3WithProxyConfig.AmazonS3.proxy = 'no-auth'
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
+    expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.AmazonS3.bucket)
+    expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.AmazonS3.folder)
 
     const expectedAgent = {
       auth: null,
@@ -105,47 +104,41 @@ describe('Amazone S3 north', () => {
     }
     expect(ProxyAgent).toHaveBeenCalledWith(expectedAgent)
     expect(AWS.config.update).toHaveBeenCalledWith({
-      accessKeyId: AmazonS3Config.AmazonS3.authentication.key,
-      secretAccessKey: AmazonS3Config.AmazonS3.authentication.secretKey,
+      accessKeyId: amazonS3WithProxyConfig.AmazonS3.authentication.key,
+      secretAccessKey: amazonS3WithProxyConfig.AmazonS3.authentication.secretKey,
     })
-    expect(AWS.S3).toHaveBeenCalledTimes(1)
-    expect(AWS.config.update).toHaveBeenCalledTimes(2)
-    expect(AmazonS3North.canHandleFiles).toBeTruthy()
+    expect(amazonS3WithProxy.canHandleFiles).toBeTruthy()
   })
 
   it('should properly handle file', async () => {
-    const AmazonS3Config = config.north.applications[8]
-    const AmazonS3North = new AmazonS3(AmazonS3Config, engine)
     const filePath = '/csv/test/file-789.csv'
     jest.spyOn(fs, 'createReadStream').mockImplementation(() => [])
 
     const expectedParams = {
-      Bucket: AmazonS3Config.AmazonS3.bucket,
+      Bucket: amazonS3Config.AmazonS3.bucket,
       Body: [],
-      Key: `${AmazonS3Config.AmazonS3.folder}/file.csv`,
+      Key: `${amazonS3Config.AmazonS3.folder}/file.csv`,
     }
 
-    AmazonS3North.s3.upload = jest.fn(() => ({ promise: jest.fn() }))
-    const expectedResult = await AmazonS3North.handleFile(filePath)
+    amazonS3.s3.upload = jest.fn(() => ({ promise: jest.fn() }))
+    const expectedResult = await amazonS3.handleFile(filePath)
 
     expect(fs.createReadStream).toHaveBeenCalledWith(filePath)
-    expect(AmazonS3North.s3.upload).toHaveBeenCalledWith(expectedParams)
+    expect(amazonS3.s3.upload).toHaveBeenCalledWith(expectedParams)
     expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
   })
 
   it('should properly catch handle file error', async () => {
-    const AmazonS3Config = config.north.applications[8]
-    const AmazonS3North = new AmazonS3(AmazonS3Config, engine)
     const filePath = '/csv/test/file-789.csv'
     jest.spyOn(fs, 'createReadStream').mockImplementation(() => [])
 
-    AmazonS3North.s3.upload = jest.fn(() => ({
+    amazonS3.s3.upload = jest.fn(() => ({
       promise: () => {
         throw new Error('test')
       },
     }))
-    const expectedResult = await AmazonS3North.handleFile(filePath)
-    expect(AmazonS3North.logger.error).toHaveBeenCalledTimes(1)
+    const expectedResult = await amazonS3.handleFile(filePath)
+    expect(amazonS3.logger.error).toHaveBeenCalledTimes(1)
     expect(expectedResult).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
   })
 })

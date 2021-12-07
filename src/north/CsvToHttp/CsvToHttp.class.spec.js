@@ -20,29 +20,30 @@ engine.decryptPassword = (password) => password
 engine.eventEmitters = {}
 
 // Define the CsvToHttp North
-const CsvToHttpConfig = config.north.applications[6]
-let CsvToHttpNorth = new CsvToHttp(CsvToHttpConfig, engine)
+const csvToHttpConfig = config.north.applications[6]
+let csvToHttpNorth = null
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
-  CsvToHttpNorth = new CsvToHttp(CsvToHttpConfig, engine)
+  csvToHttpNorth = new CsvToHttp(csvToHttpConfig, engine)
+  await csvToHttpNorth.init()
 })
 
 describe('CsvToHttp', () => {
   it('should be properly initialized', () => {
-    expect(CsvToHttpNorth.canHandleValues).toBeFalsy()
-    expect(CsvToHttpNorth.canHandleFiles).toBeTruthy()
+    expect(csvToHttpNorth.canHandleValues).toBeFalsy()
+    expect(csvToHttpNorth.canHandleFiles).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    const response = await CsvToHttpNorth.handleFile('../../../tests/csvToHttpTest')
+    const response = await csvToHttpNorth.handleFile('../../../tests/csvToHttpTest')
 
     expect(response).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
   })
 
   it('should properly handle csv files', async () => {
-    const response = await CsvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
+    const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
 
     expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
   })
@@ -50,15 +51,15 @@ describe('CsvToHttp', () => {
   it('should properly test validity of header', async () => {
     const jsonObject = {}
 
-    CsvToHttpNorth.mapping.forEach((mapping) => {
+    csvToHttpNorth.mapping.forEach((mapping) => {
       jsonObject[mapping.csvField] = 'testValue'
     })
 
-    let mappingValues = CsvToHttpNorth.getOnlyValidMappingValue(jsonObject)
+    let mappingValues = csvToHttpNorth.getOnlyValidMappingValue(jsonObject)
 
-    expect(CsvToHttpNorth.mapping.length).toEqual(mappingValues.length)
+    expect(csvToHttpNorth.mapping.length).toEqual(mappingValues.length)
 
-    CsvToHttpNorth.mapping.push(
+    csvToHttpNorth.mapping.push(
       {
         csvField: 'unvalid header',
         httpField: 'IdentificationBy template',
@@ -66,7 +67,7 @@ describe('CsvToHttp', () => {
       },
     )
 
-    CsvToHttpNorth.mapping.push(
+    csvToHttpNorth.mapping.push(
       {
         // eslint-disable-next-line no-template-curly-in-string
         csvField: '${unvalid header}',
@@ -75,22 +76,22 @@ describe('CsvToHttp', () => {
       },
     )
 
-    mappingValues = CsvToHttpNorth.getOnlyValidMappingValue(jsonObject)
+    mappingValues = csvToHttpNorth.getOnlyValidMappingValue(jsonObject)
 
-    expect(CsvToHttpNorth.mapping.length).toBeGreaterThan(mappingValues.length)
+    expect(csvToHttpNorth.mapping.length).toBeGreaterThan(mappingValues.length)
   })
 
   it('should properly handle csv files with template string', async () => {
-    CsvToHttpNorth.mapping.push({
+    csvToHttpNorth.mapping.push({
       // eslint-disable-next-line no-template-curly-in-string
       csvField: '${id}',
       httpField: 'IdentificationBy template',
       type: 'string',
     })
-    const response = await CsvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
+    const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
 
     expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
-    CsvToHttpNorth.mapping.pop()
+    csvToHttpNorth.mapping.pop()
   })
 
   it('should properly convert values', async () => {
@@ -172,41 +173,41 @@ describe('CsvToHttp', () => {
     const jsonObject = {}
     const mappingValues = []
 
-    CsvToHttpNorth.mapping.forEach((mapping) => {
+    csvToHttpNorth.mapping.forEach((mapping) => {
       jsonObject[mapping.csvField] = 'testValue'
       mappingValues.push(mapping)
     })
 
     const response = await CsvToHttp.convertCSVRowIntoHttpBody(jsonObject, mappingValues)
 
-    CsvToHttpNorth.mapping.forEach((mapping) => {
+    csvToHttpNorth.mapping.forEach((mapping) => {
       expect(response.value[mapping.httpField]).toEqual('testValue')
     })
   })
 
   it('should properly send data (body.length > bodyMaxLength)', async () => {
     const httpBody = []
-    for (let i = 0; i < CsvToHttpNorth.bodyMaxLength + 1; i += 1) {
+    for (let i = 0; i < csvToHttpNorth.bodyMaxLength + 1; i += 1) {
       httpBody.push({ test: 'test' })
     }
 
-    await CsvToHttpNorth.sendData(httpBody)
+    await csvToHttpNorth.sendData(httpBody)
 
     expect(engine.requestService.httpSend).toHaveBeenCalledTimes(2)
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
     const httpBody = []
-    for (let i = 0; i < CsvToHttpNorth.bodyMaxLength - 1; i += 1) {
+    for (let i = 0; i < csvToHttpNorth.bodyMaxLength - 1; i += 1) {
       httpBody.push({ test: 'test' })
     }
 
-    await CsvToHttpNorth.sendData(httpBody)
+    await csvToHttpNorth.sendData(httpBody)
 
-    const expectedUrl = CsvToHttpConfig.CsvToHttp.applicativeHostUrl
-    const expectedRequestMethod = CsvToHttpConfig.CsvToHttp.requestMethod
+    const expectedUrl = csvToHttpConfig.CsvToHttp.applicativeHostUrl
+    const expectedRequestMethod = csvToHttpConfig.CsvToHttp.requestMethod
     const expectedbody = JSON.stringify(httpBody)
-    const expectedAuthentication = CsvToHttpConfig.CsvToHttp.authentication
+    const expectedAuthentication = csvToHttpConfig.CsvToHttp.authentication
     const expectedHeaders = { 'Content-Type': 'application/json' }
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(
       expectedUrl,

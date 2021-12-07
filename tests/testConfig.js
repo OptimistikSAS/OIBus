@@ -21,7 +21,11 @@ const testConfig = {
       },
       lokiLog: {
         level: 'debug',
-        host: 'localhost:3100',
+        lokiAddress: 'localhost:3100',
+        interval: 60,
+        password: '',
+        username: '',
+        tokenAddress: '',
       },
     },
     caching: {

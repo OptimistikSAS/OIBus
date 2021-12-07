@@ -67,31 +67,20 @@ OIbLogLevel.defaultProps = {
     fileLevel: 'engine',
     sqliteLevel: 'engine',
   },
-  logOptions: ['engine', 'debug', 'info', 'warning', 'error', 'silly'],
+  logOptions: ['engine', 'silly', 'debug', 'info', 'warning', 'error', 'none'],
   help: (
     <>
-      <p>OIBus can send logs to 3 different supports:</p>
+      <p>OIBus can send logs to 4 different supports:</p>
 
       <ul>
-        <li>The Console logs message on the terminal. It cannot be used when OIBus runs as a Windows service</li>
-        <li>The File logs logs message on the chosen folder of the server</li>
-        <ul>
-          <li>filename: The filename of the logfile to write output to.</li>
-          <li>
-            maxsize: Max size in bytes of the logfile, if the size is exceeded then a new file is created, a counter
-            will become a suffix of the log file.
-          </li>
-          <li>maxFiles: Limit the number of files created when the size of the logfile is exceeded.</li>
-          <li>
-            tailable: If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The
-            filename will always have the most recent log lines. The larger the appended number, the older the log
-            file. This option requires maxFiles to be set, or it will be ignored.
-          </li>
-        </ul>
+        <li>The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service</li>
+        <li>The File logs writes messages on the chosen folder of the OIBus machine</li>
         <li>
-          The sqlite logs will be used to store logs on the chosen database of the server. This allows to see logs
-          remotely using the Logs menu. The maximum size can be defined so older message will be deleted
-          automatically.
+          The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs
+          using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+        </li>
+        <li>
+          The loki logs send the logs to a loki instance. This allows to access the logs remotely.
         </li>
       </ul>
 

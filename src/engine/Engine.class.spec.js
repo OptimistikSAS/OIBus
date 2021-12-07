@@ -22,20 +22,23 @@ EncryptionService.getInstance = () => ({
 // Mock configService
 jest.mock('../services/config.service.class')
 
-const mockConfigService = { getConfig: jest.fn() }
-mockConfigService.getConfig.mockReturnValue({
-  engineConfig: config.engine,
-  southConfig: config.south,
-})
+let engine = null
 
-ConfigService.mockImplementation(() => mockConfigService)
-
-beforeEach(() => {
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
-})
 
-const engine = new Engine('../config/defaultConfig.json', false)
+  const mockConfigService = { getConfig: jest.fn() }
+  mockConfigService.getConfig.mockReturnValue({
+    engineConfig: config.engine,
+    southConfig: config.south,
+  })
+
+  ConfigService.mockImplementation(() => mockConfigService)
+
+  engine = new Engine('../config/defaultConfig.json', false)
+  await engine.initEngineServices(config.engine)
+})
 
 describe('Engine', () => {
   it('should be properly initialized', () => {

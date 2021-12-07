@@ -8,7 +8,7 @@ schema.form = {
   level: {
     type: 'OIbSelect',
     md: 3,
-    options: ['none', 'silly', 'debug', 'info', 'warning', 'error'],
+    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
     defaultValue: 'info',
     help: <div>The level for the sqlite log</div>,
   },

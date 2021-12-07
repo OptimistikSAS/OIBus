@@ -12,93 +12,92 @@ Logger.getDefaultLogger = () => new Logger()
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.decryptPassword = (password) => password
 engine.eventEmitters = {}
 
-beforeEach(() => {
+let WATSYNorth = null
+const WATSYConfig = config.north.applications[5]
+// Data for tests
+const values = [
+  {
+    timestamp: '1998-07-12T21:00:00.000Z',
+    pointId: 'atipik-solutions/WATSY/protocol',
+    data: { value: 'web' },
+  },
+  {
+    timestamp: '1998-07-12T21:00:00.000Z',
+    pointId: 'atipik-solutions/WATSY/device_model',
+    data: { value: 'oibusWATSYConnect' },
+  },
+  {
+    timestamp: '1998-07-12T21:00:00.000Z',
+    pointId: 'atipik-solutions/WATSY/device_id',
+    data: { value: 'demo-capteur' },
+  },
+  {
+    timestamp: '1998-07-12T23:45:00.000Z',
+    pointId: 'atipik-solutions/WATSY/protocol',
+    data: { value: 'web' },
+  },
+  {
+    timestamp: '1998-07-12T23:45:00.000Z',
+    pointId: 'atipik-solutions/WATSY/device_model',
+    data: { value: 'oibusWATSYConnect' },
+  },
+  {
+    timestamp: '1998-07-12T23:45:00.000Z',
+    pointId: 'atipik-solutions/WATSY/device_id',
+    data: { value: 'demo-capteur' },
+  },
+  {
+    timestamp: '2018-07-15T20:00:00.000Z',
+    pointId: 'atipik-solutions/WATSY/device_id',
+    data: { value: 'demo-capteur' },
+  },
+]
+
+const allWATSYMessages = [
+  {
+    timestamp: 900277200000000000,
+    tags: {},
+    fields: {
+      'atipik-solutions/WATSY/device_id': 'demo-capteur',
+      'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
+      'atipik-solutions/WATSY/protocol': 'web',
+    },
+    host: WATSYConfig.WATSYConnect.applicativeHostUrl,
+    token: WATSYConfig.WATSYConnect.secretKey,
+  },
+  {
+    timestamp: 900287100000000000,
+    tags: {},
+    fields: {
+      'atipik-solutions/WATSY/device_id': 'demo-capteur',
+      'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
+      'atipik-solutions/WATSY/protocol': 'web',
+    },
+    host: WATSYConfig.WATSYConnect.applicativeHostUrl,
+    token: WATSYConfig.WATSYConnect.secretKey,
+  },
+  {
+    timestamp: 1531684800000000000,
+    tags: {},
+    fields: { 'atipik-solutions/WATSY/device_id': 'demo-capteur' },
+    host: WATSYConfig.WATSYConnect.applicativeHostUrl,
+    token: WATSYConfig.WATSYConnect.secretKey,
+  },
+]
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
+  WATSYNorth = new WATSYConnect(WATSYConfig, engine)
+  await WATSYNorth.init()
 })
 
 describe('WATSY Connect', () => {
-  const WATSYConfig = config.north.applications[5]
-  const WATSYNorth = new WATSYConnect(WATSYConfig, engine)
-
-  // Data for tests
-  const values = [
-    {
-      timestamp: '1998-07-12T21:00:00.000Z',
-      pointId: 'atipik-solutions/WATSY/protocol',
-      data: { value: 'web' },
-    },
-    {
-      timestamp: '1998-07-12T21:00:00.000Z',
-      pointId: 'atipik-solutions/WATSY/device_model',
-      data: { value: 'oibusWATSYConnect' },
-    },
-    {
-      timestamp: '1998-07-12T21:00:00.000Z',
-      pointId: 'atipik-solutions/WATSY/device_id',
-      data: { value: 'demo-capteur' },
-    },
-    {
-      timestamp: '1998-07-12T23:45:00.000Z',
-      pointId: 'atipik-solutions/WATSY/protocol',
-      data: { value: 'web' },
-    },
-    {
-      timestamp: '1998-07-12T23:45:00.000Z',
-      pointId: 'atipik-solutions/WATSY/device_model',
-      data: { value: 'oibusWATSYConnect' },
-    },
-    {
-      timestamp: '1998-07-12T23:45:00.000Z',
-      pointId: 'atipik-solutions/WATSY/device_id',
-      data: { value: 'demo-capteur' },
-    },
-    {
-      timestamp: '2018-07-15T20:00:00.000Z',
-      pointId: 'atipik-solutions/WATSY/device_id',
-      data: { value: 'demo-capteur' },
-    },
-  ]
-
-  const allWATSYMessages = [
-    {
-      timestamp: 900277200000000000,
-      tags: {},
-      fields: {
-        'atipik-solutions/WATSY/device_id': 'demo-capteur',
-        'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
-        'atipik-solutions/WATSY/protocol': 'web',
-      },
-      host: WATSYNorth.host,
-      token: WATSYNorth.token,
-    },
-    {
-      timestamp: 900287100000000000,
-      tags: {},
-      fields: {
-        'atipik-solutions/WATSY/device_id': 'demo-capteur',
-        'atipik-solutions/WATSY/device_model': 'oibusWATSYConnect',
-        'atipik-solutions/WATSY/protocol': 'web',
-      },
-      host: WATSYNorth.host,
-      token: WATSYNorth.token,
-    },
-    {
-      timestamp: 1531684800000000000,
-      tags: {},
-      fields: { 'atipik-solutions/WATSY/device_id': 'demo-capteur' },
-      host: WATSYNorth.host,
-      token: WATSYNorth.token,
-    },
-  ]
-
-  // End of data for tests
-
   // Begin of test functions
   it('Should properly connect', () => {
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
