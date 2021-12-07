@@ -28,11 +28,6 @@ exports[`FileLogging check FileLogging 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -56,6 +51,11 @@ exports[`FileLogging check FileLogging 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -223,11 +223,6 @@ exports[`FileLogging check change file level to "warning" 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -251,6 +246,11 @@ exports[`FileLogging check change file level to "warning" 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -418,11 +418,6 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -446,6 +441,11 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -613,11 +613,6 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -641,6 +636,11 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -808,11 +808,6 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -836,6 +831,11 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -1003,11 +1003,6 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -1031,6 +1026,11 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div

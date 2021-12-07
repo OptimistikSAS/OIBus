@@ -27,15 +27,18 @@ const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+const mqttConfig = config.north.applications[3]
+let mqttNorth = null
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
+  mqttNorth = new MQTTNorth(mqttConfig, engine)
+  await mqttNorth.init()
 })
 
 describe('MQTTNorth north', () => {
   it('should properly connect', () => {
-    const mqttConfig = config.north.applications[3]
-    const mqttNorth = new MQTTNorth(mqttConfig, engine)
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
     mqttNorth.connect()
 
@@ -58,7 +61,6 @@ describe('MQTTNorth north', () => {
   })
 
   it('should properly connect when cert files do not exist', async () => {
-    const mqttConfig = config.north.applications[3]
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
     const RealMath = global.Math
     const mockMath = Object.create(global.Math)
@@ -76,8 +78,9 @@ describe('MQTTNorth north', () => {
         rejectUnauthorized: true,
       },
     }
-    const mqttNorth = new MQTTNorth(testMqttConfigWithFiles, engine)
-    await mqttNorth.connect()
+    const mqttNorthCert = new MQTTNorth(testMqttConfigWithFiles, engine)
+    await mqttNorthCert.init()
+    await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
       clientId: 'OIBus-1f9a6b50',
@@ -90,18 +93,16 @@ describe('MQTTNorth north', () => {
     }
     expect(mqtt.connect)
       .toBeCalledWith(testMqttConfigWithFiles.MQTTNorth.url, expectedOptionsWithFiles)
-    expect(mqttNorth.logger.error)
+    expect(mqttNorthCert.logger.error)
       .toBeCalledWith('Key file myKeyFile does not exist')
-    expect(mqttNorth.logger.error)
+    expect(mqttNorthCert.logger.error)
       .toBeCalledWith('Cert file myCertFile does not exist')
-    expect(mqttNorth.logger.error)
+    expect(mqttNorthCert.logger.error)
       .toBeCalledWith('CA file myCaFile does not exist')
     global.Math = RealMath
   })
 
   it('should properly connect with cert files', async () => {
-    const mqttConfig = config.north.applications[3]
-
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
     jest.spyOn(fs, 'exists').mockImplementation(() => true)
     jest.spyOn(fs, 'readFile').mockImplementation(() => 'fileContent')
@@ -116,8 +117,9 @@ describe('MQTTNorth north', () => {
       },
     }
 
-    const mqttNorth = new MQTTNorth(testMqttConfigWithFiles, engine)
-    await mqttNorth.connect()
+    const mqttNorthCert = new MQTTNorth(testMqttConfigWithFiles, engine)
+    await mqttNorthCert.init()
+    await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
       clientId: mqttConfig.MQTTNorth.clientId,
@@ -133,9 +135,6 @@ describe('MQTTNorth north', () => {
   })
 
   it('should properly handle the connect error event', async () => {
-    const mqttConfig = config.north.applications[3]
-
-    const mqttNorth = new MQTTNorth(mqttConfig, engine)
     const error = new Error('test')
 
     mqttNorth.handleConnectError(error)
@@ -155,6 +154,7 @@ describe('MQTTNorth north', () => {
       },
     }
     const mqttSouthError1 = new MQTTNorth(testMqttConfigError1, engine)
+    await mqttSouthError1.init()
 
     await mqttSouthError1.connect()
 
@@ -169,6 +169,7 @@ describe('MQTTNorth north', () => {
       },
     }
     const mqttSouthError2 = new MQTTNorth(testMqttConfig2, engine)
+    await mqttSouthError2.init()
 
     await mqttSouthError2.connect()
 
@@ -183,6 +184,7 @@ describe('MQTTNorth north', () => {
       },
     }
     const mqttSouthError3 = new MQTTNorth(testMqttConfig3, engine)
+    await mqttSouthError3.init()
 
     await mqttSouthError3.connect()
 
@@ -191,8 +193,6 @@ describe('MQTTNorth north', () => {
   })
 
   it('should properly handle values and publish them', async () => {
-    const mqttConfig = config.north.applications[3]
-    const mqttNorth = new MQTTNorth(mqttConfig, engine)
     mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback()) }
     const values = [{
       pointId: 'paris/sensor1',
@@ -213,8 +213,6 @@ describe('MQTTNorth north', () => {
   })
 
   it('should properly handle values with publish error', async () => {
-    const mqttConfig = config.north.applications[3]
-    const mqttNorth = new MQTTNorth(mqttConfig, engine)
     mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback(true)) }
     const values = [{
       pointId: 'paris/sensor1',
@@ -235,8 +233,6 @@ describe('MQTTNorth north', () => {
   })
 
   it('should properly disconnect', () => {
-    const mqttConfig = config.north.applications[3]
-    const mqttNorth = new MQTTNorth(mqttConfig, engine)
     mqttNorth.client = { end: jest.fn() }
 
     mqttNorth.disconnect()

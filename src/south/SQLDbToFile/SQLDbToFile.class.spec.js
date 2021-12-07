@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 
 const mssql = require('mssql')
@@ -19,6 +19,22 @@ const SQLDbToFile = require('./SQLDbToFile.class')
 const databaseService = require('../../services/database.service')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
+
+// Mock fs
+jest.mock('fs/promises', () => ({
+  exists: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+  mkdir: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+  writeFile: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+  unlink: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+}))
 
 jest.mock('pg', () => ({
   Client: jest.fn(),
@@ -41,26 +57,28 @@ jest.mock('../../engine/Logger.class')
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addFile = jest.fn()
+engine.logger = { error: jest.fn() }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+let sqlSouth = null
+const nowDateString = '2020-02-02T02:02:02.222Z'
+const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
+const sqlConfig = config.south.dataSources[7]
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
+  sqlSouth = new SQLDbToFile(sqlConfig, engine)
+  await sqlSouth.init()
 })
 
-describe('sql-db-to-file', () => {
-  const sqlConfig = config.south.dataSources[7]
-  const sqlSouth = new SQLDbToFile(sqlConfig, engine)
-  const nowDateString = '2020-02-02T02:02:02.222Z'
-  const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
-
+describe('SQLDbToFile', () => {
   it('should properly connect and set lastCompletedAt from database', async () => {
     databaseService.getConfig.mockReturnValue('2020-08-07T06:48:12.852Z')
-
     await sqlSouth.connect()
 
     expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
@@ -72,24 +90,22 @@ describe('sql-db-to-file', () => {
     const tempConfig = { ...sqlConfig }
     tempConfig.SQLDbToFile.startDate = '2010-01-01T08:00:00.000Z'
     const tempSqlSouth = new SQLDbToFile(tempConfig, engine)
-
+    await tempSqlSouth.init()
     await tempSqlSouth.connect()
 
     expect(tempSqlSouth.lastCompletedAt).toEqual('2010-01-01T08:00:00.000Z')
   })
 
   it('should trigger an error on connection if timezone is invalid and create folder', async () => {
-    jest.spyOn(fs, 'existsSync').mockImplementation(() => false)
-    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => true)
-
-    const badConfig = { ...sqlConfig }
-    badConfig.SQLDbToFile.timezone = undefined
-    badConfig.SQLDbToFile.databasePath = undefined
+    const badConfig = {
+      ...sqlConfig,
+      SQLDbToFile: { ...sqlConfig.SQLDbToFile, timezone: undefined, databasePath: undefined },
+    }
     const badSqlSouth = new SQLDbToFile(badConfig, engine)
 
     expect(badSqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone supplied: undefined')
 
-    expect(fs.mkdirSync).toHaveBeenCalledTimes(1)
+    expect(fs.mkdir).toHaveBeenCalledTimes(1)
   })
 
   it('should properly connect and set lastCompletedAt now', async () => {
@@ -528,7 +544,7 @@ describe('sql-db-to-file', () => {
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
     csv.unparse.mockReturnValue(csvContent)
-    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => true)
+    jest.spyOn(fs, 'writeFile').mockImplementation(() => true)
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
@@ -536,7 +552,7 @@ describe('sql-db-to-file', () => {
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
     const expectedPath = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     expect(csv.unparse).toBeCalledTimes(1)
-    expect(fs.writeFileSync).toBeCalledWith(expectedPath, csvContent)
+    expect(fs.writeFile).toBeCalledWith(expectedPath, csvContent)
     expect(engine.addFile).toBeCalledWith('datasource-uuid-8', expectedPath, false)
     global.Date = RealDate
   })
@@ -554,28 +570,22 @@ describe('sql-db-to-file', () => {
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
     csv.unparse.mockReturnValue(csvContent)
-    jest.spyOn(fs, 'writeFileSync')
+    jest.spyOn(fs, 'writeFile')
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
-    fs.mkdirSync(tmpFolder, { recursive: true })
+    fs.mkdir(tmpFolder, { recursive: true })
     const targetCsv = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv')
     const targetGzip = path.join(tmpFolder, 'sql-2020_02_02_02_02_02.csv.gz')
-    const decompressedCsv = path.join(tmpFolder, 'decompressed.csv')
     sqlSouth.compression = true
+    sqlSouth.compress = jest.fn()
 
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(csv.unparse).toBeCalledTimes(1)
-    expect(fs.writeFileSync).toBeCalledWith(targetCsv, csvContent)
+    expect(fs.writeFile).toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile).toBeCalledWith('datasource-uuid-8', targetGzip, false)
 
-    await sqlSouth.decompress(targetGzip, decompressedCsv)
-    const targetBuffer = fs.readFileSync(decompressedCsv)
-    expect(targetBuffer.toString()).toEqual(csvContent)
-
-    sqlSouth.compression = false
-    fs.rmdirSync(tmpFolder, { recursive: true })
     global.Date = RealDate
   })
 
@@ -589,11 +599,8 @@ describe('sql-db-to-file', () => {
     const csvContent = `value,timestamp${'\n'}${rows[0].value},${rows[0].timestamp}`
     sqlSouth.getDataFromMySQL = () => rows
     csv.unparse.mockReturnValue(csvContent)
-    jest.spyOn(fs, 'writeFileSync')
-    jest.spyOn(fs, 'unlink')
-    const mError = new Error('unlink Error')
-    fs.unlink.mockImplementationOnce((filename, callback) => {
-      callback(mError)
+    fs.unlink = jest.fn(() => {
+      throw Error('unlink Error')
     })
 
     engine.addFile.mockImplementationOnce(() => {
@@ -602,16 +609,16 @@ describe('sql-db-to-file', () => {
 
     const { engineConfig: { caching: { cacheFolder } } } = sqlSouth.engine.configService.getConfig()
     const tmpFolder = path.resolve(cacheFolder, sqlSouth.dataSource.id)
-    fs.mkdirSync(tmpFolder, { recursive: true })
+    await fs.mkdir(tmpFolder, { recursive: true })
     sqlSouth.compression = true
 
+    sqlSouth.compress = jest.fn()
     await sqlSouth.onScanImplementation(sqlConfig.scanMode)
 
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('unlink Error'))
     expect(sqlSouth.logger.error).toHaveBeenCalledWith(new Error('add file error'))
 
     sqlSouth.compression = false
-    fs.rmdirSync(tmpFolder, { recursive: true })
   })
 
   it('should format date properly', () => {

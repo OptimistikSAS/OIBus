@@ -45,9 +45,7 @@ class ProtocolHandler {
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
 
-    const { logParameters } = this.dataSource
-    this.logger = new Logger()
-    this.logger.changeParameters(this.engineConfig, logParameters)
+    this.logger = engine.logger
 
     this.lastOnScanAt = null
     this.lastAddFileAt = null
@@ -58,6 +56,13 @@ class ProtocolHandler {
     this.buffer = []
     this.bufferTimeout = null
     this.statusData = {}
+  }
+
+  async init() {
+    const { logParameters } = this.dataSource
+    this.logger = new Logger(`South:${this.dataSource.name}`)
+    this.logger.setEncryptionService(this.encryptionService)
+    await this.logger.changeParameters(this.engineConfig, logParameters)
   }
 
   async connect() {

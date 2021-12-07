@@ -15,15 +15,18 @@ const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+let fileWriterNorth = null
+const nowDateString = '2020-02-02T02:02:02.222Z'
+const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
+const fileWriterConfig = config.north.applications[7]
+
+beforeEach(async () => {
   jest.resetAllMocks()
+  fileWriterNorth = new FileWriter(fileWriterConfig, engine)
+  await fileWriterNorth.init()
 })
 
 describe('FileWriter north', () => {
-  const nowDateString = '2020-02-02T02:02:02.222Z'
-  const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
-  const fileWriterConfig = config.north.applications[7]
-  const fileWriterNorth = new FileWriter(fileWriterConfig, engine)
   it('should be properly initialized', () => {
     expect(fileWriterNorth.canHandleFiles).toBeTruthy()
     expect(fileWriterNorth.canHandleValues).toBeTruthy()

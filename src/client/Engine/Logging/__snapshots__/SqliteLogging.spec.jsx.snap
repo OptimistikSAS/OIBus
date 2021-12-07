@@ -28,11 +28,6 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
             name="engine.logParameters.sqliteLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -56,6 +51,11 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -171,11 +171,6 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
             name="engine.logParameters.sqliteLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -199,6 +194,11 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -314,11 +314,6 @@ exports[`SqliteLogging check change sqliteLog fileName to "new_sqliteFilename" 1
             name="engine.logParameters.sqliteLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -342,6 +337,11 @@ exports[`SqliteLogging check change sqliteLog fileName to "new_sqliteFilename" 1
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -457,11 +457,6 @@ exports[`SqliteLogging check change sqliteLog maxSize to 10000000 1`] = `
             name="engine.logParameters.sqliteLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -485,6 +480,11 @@ exports[`SqliteLogging check change sqliteLog maxSize to 10000000 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div

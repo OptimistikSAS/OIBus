@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 const sqlite = require('sqlite')
 const sqlite3 = require('sqlite3')
@@ -85,13 +85,17 @@ class SQLDbToFile extends ProtocolHandler {
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
     this.tmpFolder = path.resolve(cacheFolder, this.dataSource.id)
 
-    // Create tmp folder if not exists
-    if (!fs.existsSync(this.tmpFolder)) {
-      fs.mkdirSync(this.tmpFolder, { recursive: true })
-    }
-
     this.canHandleHistory = true
     this.handlesFiles = true
+  }
+
+  async init() {
+    await super.init()
+    try {
+      await fs.mkdir(this.tmpFolder, { recursive: true })
+    } catch (mkdirError) {
+      this.logger.error(mkdirError)
+    }
   }
 
   async connect() {
@@ -185,20 +189,19 @@ class SQLDbToFile extends ProtocolHandler {
         const filePath = path.join(this.tmpFolder, filename)
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
-          fs.writeFileSync(filePath, csvContent)
+          await fs.writeFile(filePath, csvContent)
 
           if (this.compression) {
             // Compress and send the compressed file
             const gzipPath = `${filePath}.gz`
             await this.compress(filePath, gzipPath)
 
-            fs.unlink(filePath, (unlinkError) => {
-              if (unlinkError) {
-                this.logger.error(unlinkError)
-              } else {
-                this.logger.info(`File ${filePath} compressed and deleted`)
-              }
-            })
+            try {
+              await fs.unlink(filePath)
+              this.logger.info(`File ${filePath} compressed and deleted`)
+            } catch (unlinkError) {
+              this.logger.error(unlinkError)
+            }
 
             this.logger.debug(`Sending compressed ${gzipPath} to Engine.`)
             this.addFile(gzipPath, this.preserveFiles)

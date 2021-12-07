@@ -43,7 +43,7 @@ describe('SqliteLogging', () => {
       />, container)
     })
     Simulate.change(document.getElementById('engine.logParameters.sqliteLog.level'), { target: { value: 'warning', selectedIndex: 4 } })
-    expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.level', 'warning', null, null)
+    expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.level', 'error', null, null)
     expect(container).toMatchSnapshot()
   })
   test('check change sqliteLog fileName to "new_sqliteFilename"', () => {

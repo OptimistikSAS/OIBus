@@ -17,23 +17,25 @@ const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
-beforeEach(() => {
+let consoleNorth = null
+const timestamp = new Date().toISOString()
+
+beforeEach(async () => {
   jest.resetAllMocks()
+  consoleNorth = new Console({ Console: {} }, engine)
+  await consoleNorth.init()
 })
 
-describe('Console north', () => {
-  const timestamp = new Date().toISOString()
-
+describe('Console', () => {
   it('should be properly initialized', () => {
-    const consoleNorth = new Console({ Console: {} }, engine)
-
     expect(consoleNorth.canHandleFiles).toBeTruthy()
     expect(consoleNorth.canHandleValues).toBeTruthy()
     expect(consoleNorth.verbose).toBeFalsy()
   })
 
-  it('should properly handle values in non verbose mode', () => {
-    const consoleNorth = new Console({ Console: { verbose: false } }, engine)
+  it('should properly handle values in non verbose mode', async () => {
+    const consoleNorthTest = new Console({ Console: { verbose: false } }, engine)
+    await consoleNorthTest.init()
     const values = [
       {
         pointId: 'pointId',
@@ -41,14 +43,15 @@ describe('Console north', () => {
         data: { value: 666, quality: 'good' },
       },
     ]
-    consoleNorth.handleValues(values)
+    consoleNorthTest.handleValues(values)
 
     expect(process.stdout.write).toBeCalledWith('(1)')
     expect(console.table).not.toHaveBeenCalled()
   })
 
-  it('should properly handle values in verbose mode', () => {
-    const consoleNorth = new Console({ Console: { verbose: true } }, engine)
+  it('should properly handle values in verbose mode', async () => {
+    const consoleNorthTest = new Console({ Console: { verbose: true } }, engine)
+    await consoleNorthTest.init()
     const values = [
       {
         pointId: 'pointId',
@@ -56,14 +59,13 @@ describe('Console north', () => {
         data: { value: 666, quality: 'good' },
       },
     ]
-    consoleNorth.handleValues(values)
+    consoleNorthTest.handleValues(values)
 
     expect(console.table).toBeCalledWith(values, ['pointId', 'timestamp', 'data'])
     expect(process.stdout.write).not.toHaveBeenCalled()
   })
 
   it('should properly handle file', () => {
-    const consoleNorth = new Console({ Console: {} }, engine)
     const filePath = '/path/to/file/example.file'
     jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
 

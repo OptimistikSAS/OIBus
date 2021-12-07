@@ -8,11 +8,11 @@ schema.form = {
   level: {
     type: 'OIbSelect',
     md: 3,
-    options: ['none', 'silly', 'debug', 'info', 'warning', 'error'],
+    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
     defaultValue: 'info',
     help: <div>The level for the sqlite log</div>,
   },
-  host: {
+  lokiAddress: {
     type: 'OIbText',
     label: 'Host',
     md: 4,
@@ -27,6 +27,14 @@ schema.form = {
     valid: minValue(10),
     defaultValue: 60,
     help: <div>Interval between batch of logs (in s)</div>,
+  },
+  tokenAddress: {
+    type: 'OIbText',
+    label: 'Token address',
+    md: 4,
+    valid: optional(),
+    defaultValue: '',
+    help: <div>The address of the token provider (need username and password)</div>,
   },
   username: {
     type: 'OIbText',

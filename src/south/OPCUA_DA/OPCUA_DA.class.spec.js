@@ -19,7 +19,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 jest.mock('../../engine/Logger.class')
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/Engine.class')
+const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 
@@ -30,33 +30,34 @@ jest.mock('../../services/database.service', () => ({
   upsertConfig: jest.fn(),
 }))
 
-beforeEach(() => {
+let opcuaSouth = null
+const opcuaConfig = {
+  name: 'OPCUA-DA',
+  protocol: 'OPCUA_DA',
+  enabled: true,
+  startTime: '2020-02-02 02:02:02',
+  OPCUA_DA: {
+    maxAge: 10,
+    url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+    retryInterval: 10000,
+    timeOrigin: 'server',
+    maxReadInterval: 3600,
+  },
+  points: [{
+    nodeId: 'ns=3;s=Random',
+    scanMode: 'every10Second',
+  }],
+}
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
+  opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
+  await opcuaSouth.init()
 })
 
 describe('OPCUA-DA south', () => {
-  const opcuaConfig = {
-    name: 'OPCUA-DA',
-    protocol: 'OPCUA_DA',
-    enabled: true,
-    startTime: '2020-02-02 02:02:02',
-    OPCUA_DA: {
-      maxAge: 10,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      timeOrigin: 'server',
-      maxReadInterval: 3600,
-    },
-    points: [{
-      nodeId: 'ns=3;s=Random',
-      scanMode: 'every10Second',
-    }],
-  }
-
   it('should be properly initialized', () => {
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
-
     expect(opcuaSouth.url)
       .toEqual(opcuaConfig.OPCUA_DA.url)
     expect(opcuaSouth.retryInterval)
@@ -64,7 +65,6 @@ describe('OPCUA-DA south', () => {
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     opcuaSouth.connectToOpcuaServer = jest.fn()
     await opcuaSouth.connect()
 
@@ -88,7 +88,6 @@ describe('OPCUA-DA south', () => {
       connect: jest.fn().mockReturnValue({}),
       createSession: jest.fn().mockReturnValue({}),
     })
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
     expect(Opcua.OPCUAClient.create)
@@ -120,10 +119,9 @@ describe('OPCUA-DA south', () => {
       connect: jest.fn(),
       createSession: jest.fn(),
     })
-    opcuaConfig.OPCUA_DA.username = 'username'
-    opcuaConfig.OPCUA_DA.password = 'password'
+    opcuaSouth.username = 'username'
+    opcuaSouth.password = 'password'
 
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
     delete opcuaConfig.OPCUA_DA.username
@@ -163,7 +161,6 @@ describe('OPCUA-DA south', () => {
       createSession: jest.fn(),
     })
 
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
 
     expect(Opcua.OPCUAClient.create)
@@ -180,7 +177,6 @@ describe('OPCUA-DA south', () => {
   })
 
   it('should quit onScan if not connected', async () => {
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
     await opcuaSouth.disconnect()
     opcuaSouth.session = { readHistoryValue: jest.fn() }
@@ -199,13 +195,15 @@ describe('OPCUA-DA south', () => {
         scanMode: 'every1minute',
       }],
     }
-    const opcuaSouth = new OPCUA_DA(testOpcuaConfig, engine)
-    await opcuaSouth.connect()
-    opcuaSouth.connected = true
-    opcuaSouth.session = { readVariableValue: jest.fn() }
-    await opcuaSouth.onScanImplementation(opcuaConfig.points[0].scanMode)
 
-    expect(opcuaSouth.session.readVariableValue)
+    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, engine)
+    await opcuaSouthTest.init()
+    await opcuaSouthTest.connect()
+    opcuaSouthTest.connected = true
+    opcuaSouthTest.session = { readVariableValue: jest.fn() }
+    await opcuaSouthTest.onScanImplementation(opcuaConfig.points[0].scanMode)
+
+    expect(opcuaSouthTest.session.readVariableValue)
       .not
       .toBeCalled()
   })
@@ -215,7 +213,6 @@ describe('OPCUA-DA south', () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     opcuaSouth.connected = true
     opcuaSouth.session = {
       readVariableValue: jest.fn()
@@ -252,7 +249,6 @@ describe('OPCUA-DA south', () => {
       disconnect: jest.fn(),
     })
 
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
     opcuaSouth.reconnectTimeout = true
     opcuaSouth.connected = false
@@ -277,7 +273,6 @@ describe('OPCUA-DA south', () => {
       disconnect: jest.fn(),
     })
 
-    const opcuaSouth = new OPCUA_DA(opcuaConfig, engine)
     await opcuaSouth.connect()
     opcuaSouth.reconnectTimeout = false
     opcuaSouth.connected = true

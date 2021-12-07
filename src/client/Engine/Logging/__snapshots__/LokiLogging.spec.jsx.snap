@@ -28,11 +28,6 @@ exports[`LokiLogging check LokiLogging 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -56,6 +51,11 @@ exports[`LokiLogging check LokiLogging 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -82,15 +82,15 @@ exports[`LokiLogging check LokiLogging 1`] = `
         >
           <label
             class=""
-            for="engine.logParameters.lokiLog.host"
+            for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.logParameters.lokiLog.host"
-            name="engine.logParameters.lokiLog.host"
+            id="engine.logParameters.lokiLog.lokiAddress"
+            name="engine.logParameters.lokiLog.lokiAddress"
             type="text"
             value="localhost:3100"
           />
@@ -119,18 +119,16 @@ exports[`LokiLogging check LokiLogging 1`] = `
             Interval
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="engine.logParameters.lokiLog.interval"
             name="engine.logParameters.lokiLog.interval"
             type="integer"
-            value=""
+            value="60"
           />
           <div
             class="invalid-feedback"
-          >
-            Value must be greater than 10
-          </div>
+          />
           <small
             class="form-text text-muted"
           >
@@ -145,17 +143,102 @@ exports[`LokiLogging check LokiLogging 1`] = `
       class="row"
     >
       <div
-        class="col-md-3"
-      />
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.tokenAddress"
+          >
+            Token address
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.tokenAddress"
+            name="engine.logParameters.lokiLog.tokenAddress"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The address of the token provider (need username and password)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-3"
-      />
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.username"
+          >
+            Username
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.username"
+            name="engine.logParameters.lokiLog.username"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.password"
+          >
+            Password
+          </label>
+          <div
+            class="input-group"
+          >
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="engine.logParameters.lokiLog.password"
+              name="engine.logParameters.lokiLog.password"
+              type="password"
+              value=""
+            />
+          </div>
+          <div
+            class="invalid-feedback"
+            style="display: inline;"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>
 `;
 
-exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`] = `
+exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 1`] = `
 <div>
   <div>
     <h6>
@@ -183,11 +266,6 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -211,6 +289,11 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -237,15 +320,15 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
         >
           <label
             class=""
-            for="engine.logParameters.lokiLog.host"
+            for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.logParameters.lokiLog.host"
-            name="engine.logParameters.lokiLog.host"
+            id="engine.logParameters.lokiLog.lokiAddress"
+            name="engine.logParameters.lokiLog.lokiAddress"
             type="text"
             value="localhost:3100"
           />
@@ -274,18 +357,16 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
             Interval
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="engine.logParameters.lokiLog.interval"
             name="engine.logParameters.lokiLog.interval"
             type="integer"
-            value=""
+            value="60"
           />
           <div
             class="invalid-feedback"
-          >
-            Value must be greater than 10
-          </div>
+          />
           <small
             class="form-text text-muted"
           >
@@ -300,11 +381,96 @@ exports[`LokiLogging check change lokiLog host name to "http://test.loki.fr" 1`]
       class="row"
     >
       <div
-        class="col-md-3"
-      />
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.tokenAddress"
+          >
+            Token address
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.tokenAddress"
+            name="engine.logParameters.lokiLog.tokenAddress"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The address of the token provider (need username and password)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-3"
-      />
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.username"
+          >
+            Username
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.username"
+            name="engine.logParameters.lokiLog.username"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.password"
+          >
+            Password
+          </label>
+          <div
+            class="input-group"
+          >
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="engine.logParameters.lokiLog.password"
+              name="engine.logParameters.lokiLog.password"
+              type="password"
+              value=""
+            />
+          </div>
+          <div
+            class="invalid-feedback"
+            style="display: inline;"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -338,11 +504,6 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -366,6 +527,11 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -392,15 +558,15 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
         >
           <label
             class=""
-            for="engine.logParameters.lokiLog.host"
+            for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.logParameters.lokiLog.host"
-            name="engine.logParameters.lokiLog.host"
+            id="engine.logParameters.lokiLog.lokiAddress"
+            name="engine.logParameters.lokiLog.lokiAddress"
             type="text"
             value="localhost:3100"
           />
@@ -429,18 +595,16 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
             Interval
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="engine.logParameters.lokiLog.interval"
             name="engine.logParameters.lokiLog.interval"
             type="integer"
-            value=""
+            value="60"
           />
           <div
             class="invalid-feedback"
-          >
-            Value must be greater than 10
-          </div>
+          />
           <small
             class="form-text text-muted"
           >
@@ -455,11 +619,96 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
       class="row"
     >
       <div
-        class="col-md-3"
-      />
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.tokenAddress"
+          >
+            Token address
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.tokenAddress"
+            name="engine.logParameters.lokiLog.tokenAddress"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The address of the token provider (need username and password)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-3"
-      />
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.username"
+          >
+            Username
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.username"
+            name="engine.logParameters.lokiLog.username"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.password"
+          >
+            Password
+          </label>
+          <div
+            class="input-group"
+          >
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="engine.logParameters.lokiLog.password"
+              name="engine.logParameters.lokiLog.password"
+              type="password"
+              value=""
+            />
+          </div>
+          <div
+            class="invalid-feedback"
+            style="display: inline;"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -493,11 +742,6 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="none"
-            >
-              none
-            </option>
-            <option
               value="silly"
             >
               silly
@@ -521,6 +765,11 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="none"
+            >
+              none
             </option>
           </select>
           <div
@@ -547,15 +796,15 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
         >
           <label
             class=""
-            for="engine.logParameters.lokiLog.host"
+            for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
           </label>
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="engine.logParameters.lokiLog.host"
-            name="engine.logParameters.lokiLog.host"
+            id="engine.logParameters.lokiLog.lokiAddress"
+            name="engine.logParameters.lokiLog.lokiAddress"
             type="text"
             value="localhost:3100"
           />
@@ -584,18 +833,16 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
             Interval
           </label>
           <input
-            aria-invalid="true"
-            class="oi-form-input is-invalid form-control"
+            aria-invalid="false"
+            class="oi-form-input form-control"
             id="engine.logParameters.lokiLog.interval"
             name="engine.logParameters.lokiLog.interval"
             type="integer"
-            value=""
+            value="60"
           />
           <div
             class="invalid-feedback"
-          >
-            Value must be greater than 10
-          </div>
+          />
           <small
             class="form-text text-muted"
           >
@@ -610,11 +857,96 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
       class="row"
     >
       <div
-        class="col-md-3"
-      />
+        class="col-md-4"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.tokenAddress"
+          >
+            Token address
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.tokenAddress"
+            name="engine.logParameters.lokiLog.tokenAddress"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+          <small
+            class="form-text text-muted"
+          >
+            <div>
+              The address of the token provider (need username and password)
+            </div>
+          </small>
+        </div>
+      </div>
+    </div>
+    <div
+      class="row"
+    >
       <div
         class="col-md-3"
-      />
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.username"
+          >
+            Username
+          </label>
+          <input
+            aria-invalid="false"
+            class="oi-form-input form-control"
+            id="engine.logParameters.lokiLog.username"
+            name="engine.logParameters.lokiLog.username"
+            type="text"
+            value=""
+          />
+          <div
+            class="invalid-feedback"
+          />
+        </div>
+      </div>
+      <div
+        class="col-md-3"
+      >
+        <div
+          class="form-group"
+        >
+          <label
+            class=""
+            for="engine.logParameters.lokiLog.password"
+          >
+            Password
+          </label>
+          <div
+            class="input-group"
+          >
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="engine.logParameters.lokiLog.password"
+              name="engine.logParameters.lokiLog.password"
+              type="password"
+              value=""
+            />
+          </div>
+          <div
+            class="invalid-feedback"
+            style="display: inline;"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>

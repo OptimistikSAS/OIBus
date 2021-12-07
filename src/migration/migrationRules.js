@@ -6,7 +6,7 @@ const path = require('path')
 const Logger = require('../engine/Logger.class')
 const databaseMigrationService = require('./database.migration.service')
 
-const logger = new Logger('migration')
+const logger = new Logger()
 
 module.exports = {
   2: (config) => {
@@ -430,7 +430,18 @@ module.exports = {
         level: 'none',
         host: '',
         interval: 60,
+        username: '',
+        password: '',
+        tokenAddress: '',
       },
+    }
+
+    const logDatabase = config.engine.logParameters.sqliteLog.fileName
+    try {
+      await fs.access(logDatabase)
+      await databaseMigrationService.addColumn(logDatabase, 'logs', 'scope')
+    } catch {
+      logger.info(`No log db file to migrate (file name: ${logDatabase})`)
     }
 
     if (typeof config.engine.safeMode === 'undefined') {

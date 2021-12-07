@@ -28,6 +28,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
+engine.logger = { error: jest.fn() }
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -36,53 +37,54 @@ jest.mock('../../services/database.service', () => ({
   upsertConfig: jest.fn(),
 }))
 
-beforeEach(() => {
+const mqttConfig = {
+  name: 'MQTTServer',
+  enabled: true,
+  protocol: 'MQTT',
+  MQTT: {
+    url: 'mqtt://localhost:1883',
+    qos: 1,
+    persistent: true,
+    clientId: 'OIBus-s57fvl9',
+    username: 'bai',
+    password: 'password',
+    dataArrayPath: null,
+    pointIdPath: 'name',
+    qualityPath: 'quality',
+    valuePath: 'value',
+    timestampOrigin: 'oibus',
+    timestampPath: 'timestamp',
+    timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+    timestampTimezone: 'Europe/Paris',
+    keyFile: '',
+    certFile: '',
+    caFile: '',
+    rejectUnauthorized: false,
+  },
+  points: [
+    {
+      pointId: 'France/+/temperatureTank1',
+      scanMode: 'listen',
+      topic: 'France/+/temperatureTank1',
+    },
+    {
+      pointId: 'France/#',
+      scanMode: 'listen',
+      topic: 'France/#',
+    },
+  ],
+}
+let mqttSouth = null
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
+  mqttSouth = new MQTT(mqttConfig, engine)
+  await mqttSouth.init()
 })
 
 describe('MQTT south', () => {
-  const mqttConfig = {
-    name: 'MQTTServer',
-    enabled: true,
-    protocol: 'MQTT',
-    MQTT: {
-      url: 'mqtt://localhost:1883',
-      qos: 1,
-      persistent: true,
-      clientId: 'OIBus-s57fvl9',
-      username: 'bai',
-      password: 'password',
-      dataArrayPath: null,
-      pointIdPath: 'name',
-      qualityPath: 'quality',
-      valuePath: 'value',
-      timestampOrigin: 'oibus',
-      timestampPath: 'timestamp',
-      timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-      timestampTimezone: 'Europe/Paris',
-      keyFile: '',
-      certFile: '',
-      caFile: '',
-      rejectUnauthorized: false,
-    },
-    points: [
-      {
-        pointId: 'France/+/temperatureTank1',
-        scanMode: 'listen',
-        topic: 'France/+/temperatureTank1',
-      },
-      {
-        pointId: 'France/#',
-        scanMode: 'listen',
-        topic: 'France/#',
-      },
-    ],
-  }
-
   it('should be properly initialized with correct timezone', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
     expect(mqttSouth.url)
       .toEqual(mqttConfig.MQTT.url)
     expect(mqttSouth.qos)
@@ -115,40 +117,37 @@ describe('MQTT south', () => {
         timestampTimezone: 'invalid',
       },
     }
-    const mqttSouth = new MQTT(testMqttConfig, engine)
+    const mqttInvalidSouth = new MQTT(testMqttConfig, engine)
 
-    expect(mqttSouth.url)
+    expect(mqttInvalidSouth.url)
       .toEqual(testMqttConfig.MQTT.url)
-    expect(mqttSouth.qos)
+    expect(mqttInvalidSouth.qos)
       .toEqual(testMqttConfig.MQTT.qos)
-    expect(mqttSouth.persistent)
+    expect(mqttInvalidSouth.persistent)
       .toEqual(mqttConfig.MQTT.persistent)
-    expect(mqttSouth.clientId)
+    expect(mqttInvalidSouth.clientId)
       .toEqual(mqttConfig.MQTT.clientId)
-    expect(mqttSouth.username)
+    expect(mqttInvalidSouth.username)
       .toEqual(testMqttConfig.MQTT.username)
-    expect(mqttSouth.password)
+    expect(mqttInvalidSouth.password)
       .toEqual(Buffer.from(testMqttConfig.MQTT.password))
-    expect(mqttSouth.timestampOrigin)
+    expect(mqttInvalidSouth.timestampOrigin)
       .toEqual(testMqttConfig.MQTT.timestampOrigin)
-    expect(mqttSouth.timestampPath)
+    expect(mqttInvalidSouth.timestampPath)
       .toEqual(testMqttConfig.MQTT.timestampPath)
-    expect(mqttSouth.timestampFormat)
+    expect(mqttInvalidSouth.timestampFormat)
       .toEqual(testMqttConfig.MQTT.timestampFormat)
-    expect(mqttSouth.timezone)
+    expect(mqttInvalidSouth.timezone)
       .toBeUndefined()
-    expect(mqttSouth.logger.error)
+    expect(mqttInvalidSouth.logger.error)
       .toBeCalledWith(`Invalid timezone supplied: ${testMqttConfig.MQTT.timestampTimezone}`)
-    expect(mqttSouth.client)
+    expect(mqttInvalidSouth.client)
       .toBeUndefined()
   })
 
   it('should properly connect', async () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqtt.connect.mockReturnValue({ on: jest.fn() })
-
     await mqttSouth.connect()
-
     const expectedOptions = {
       clean: !mqttConfig.MQTT.persistent,
       clientId: mqttConfig.MQTT.clientId,
@@ -189,6 +188,7 @@ describe('MQTT south', () => {
     }
 
     const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, engine)
+    await mqttSouthWithFiles.init()
     await mqttSouthWithFiles.connect()
 
     const expectedOptionsWithFiles = {
@@ -228,6 +228,7 @@ describe('MQTT south', () => {
     }
 
     const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, engine)
+    await mqttSouthWithFiles.init()
     await mqttSouthWithFiles.connect()
 
     const expectedOptionsWithFiles = {
@@ -245,7 +246,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly handle the connect error event', async () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     const error = new Error('test')
 
     mqttSouth.handleConnectError(error)
@@ -265,7 +265,7 @@ describe('MQTT south', () => {
       },
     }
     const mqttSouthError1 = new MQTT(testMqttConfigError1, engine)
-
+    await mqttSouthError1.init()
     await mqttSouthError1.connect()
 
     expect(mqttSouthError1.logger.error)
@@ -279,7 +279,7 @@ describe('MQTT south', () => {
       },
     }
     const mqttSouthError2 = new MQTT(testMqttConfig2, engine)
-
+    await mqttSouthError2.init()
     await mqttSouthError2.connect()
 
     expect(mqttSouthError2.logger.error)
@@ -293,7 +293,7 @@ describe('MQTT south', () => {
       },
     }
     const mqttSouthError3 = new MQTT(testMqttConfig3, engine)
-
+    await mqttSouthError3.init()
     await mqttSouthError3.connect()
 
     expect(mqttSouthError3.logger.error)
@@ -301,7 +301,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly handle the connect success event', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.client = {
       on: jest.fn(),
       subscribe: jest.fn(),
@@ -324,19 +323,14 @@ describe('MQTT south', () => {
   })
 
   it('should not log error in subscribe callback when successfully subscribed', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
     mqttSouth.subscribeCallback(null)
-
     expect(mqttSouth.logger.error)
       .not
       .toBeCalled()
   })
 
   it('should properly log error in subscribe callback', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     const error = new Error('test')
-
     mqttSouth.subscribeCallback({ pointId: 'point Id' }, error)
 
     expect(mqttSouth.logger.error)
@@ -347,7 +341,6 @@ describe('MQTT south', () => {
     const pointId = 'pointId'
     const timestamp = 'timestamp'
 
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.getTimestamp = jest.fn()
     mqttSouth.getTimestamp.mockReturnValue(timestamp)
     mqttSouth.getPointId = jest.fn()
@@ -372,7 +365,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly handle message and call addValues for several values', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.dataArrayPath = 'metrics'
     mqttSouth.pointIdPath = 'customName'
     mqttSouth.timestampOrigin = 'payload'
@@ -426,7 +418,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly handle error when data array is not found', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.dataArrayPath = 'badArray'
     mqttSouth.pointIdPath = 'customName'
     mqttSouth.timestampOrigin = 'payload'
@@ -463,7 +454,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly handle error when pointIdPath is not found', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = 'badPointId'
     mqttSouth.timestampOrigin = 'payload'
     mqttSouth.timestampPath = 'customTimestamp'
@@ -490,7 +480,6 @@ describe('MQTT south', () => {
       .toBeCalledWith(`PointId cant be determined. The following value ${JSON.stringify(data)} is not saved. Configuration needs to be changed`)
   })
   it('should properly handle message parsing error', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.getTimestamp = jest.fn()
     mqttSouth.getPointId = jest.fn()
     mqttSouth.addValues = jest.fn()
@@ -517,7 +506,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly disconnect', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.client = { end: jest.fn() }
 
     mqttSouth.disconnect()
@@ -530,8 +518,6 @@ describe('MQTT south', () => {
     const nowDateString = '2020-02-02T02:02:02.222Z'
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
-
-    const mqttSouth = new MQTT(mqttConfig, engine)
 
     mqttSouth.timeStampOrigin = 'oibus'
     const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
@@ -558,8 +544,6 @@ describe('MQTT south', () => {
   it('should properly return timestamp when timestampOrigin is payload and timestamp field is present', () => {
     const timestamp = '2020-02-02 02:02:02'
 
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
     mqttSouth.timestampOrigin = 'payload'
     const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
     const data = {
@@ -580,8 +564,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload but timezone is not properly set', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
     mqttSouth.timestampOrigin = 'payload'
     mqttSouth.timezone = undefined
     const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
@@ -597,8 +579,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload but the timestamp field is missing', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
-
     mqttSouth.timestampOrigin = 'payload'
     const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
     mqttSouth.getTimestamp(null)
@@ -613,7 +593,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get pointId without wildcards', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/t2/t3',
@@ -627,7 +606,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get pointId with +', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/+/t3',
@@ -641,7 +619,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get pointId with #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/#',
@@ -655,7 +632,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get pointId with + and #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/+/#',
@@ -668,7 +644,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId without wildcards', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/t2/t3',
@@ -682,7 +657,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with +', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/t2/t3',
@@ -698,7 +672,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with +', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/+/t3',
@@ -714,7 +687,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/#',
@@ -730,7 +702,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/t2/t3',
@@ -746,7 +717,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with + and #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/+/+/#',
@@ -762,7 +732,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId with + and #', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [{
       topic: 't1/+/#',
@@ -778,7 +747,6 @@ describe('MQTT south', () => {
   })
 
   it('should properly get null as pointId and detect duplicate point matching', () => {
-    const mqttSouth = new MQTT(mqttConfig, engine)
     mqttSouth.pointIdPath = null
     mqttSouth.dataSource.points = [
       {

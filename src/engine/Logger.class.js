@@ -1,34 +1,18 @@
 const path = require('path')
-
-const { createLogger, format, transports } = require('winston')
-const LokiTransport = require('winston-loki')
-
-const SqliteTransport = require('./SqliteWinstonTransport.class')
-
-const { combine, timestamp, printf, colorize } = format
+const pino = require('pino')
 
 const ENGINE_LOG_LEVEL_ENTRY = 'engine'
 
 class Logger {
-  constructor() {
-    const defaultFormat = combine(timestamp(), printf((info) => `${info.source} - ${info.timestamp} ${info.level}: ${info.message}`))
-    const consoleFormat = combine(timestamp(), printf((info) => {
-      const logPrefix = `${info.source} - ${info.timestamp}-${info.level}:`
-      return `${colorize().colorize(info.level, logPrefix)} ${info.message}`
-    }))
-    this.logger = createLogger({
-      level: 'info',
-      format: defaultFormat,
-      transports: [
-        new transports.Console({ format: consoleFormat, handleExceptions: true }),
-      ],
-    })
+  constructor(scope = 'main') {
+    this.logger = null
     this.encryptionService = null
+    this.scope = scope
   }
 
-  static getDefaultLogger() {
+  static getDefaultLogger(scope) {
     if (!Logger.instance) {
-      Logger.instance = new Logger()
+      Logger.instance = new Logger(scope)
     }
     return Logger.instance
   }
@@ -37,17 +21,15 @@ class Logger {
     this.encryptionService = encryptionService
   }
 
-  changeParameters(engineConfig, specificParameters = {}) {
-    const logParameters = { ...engineConfig.logParameters }
+  async changeParameters(engineConfig, specificParameters = {}) {
+    const logParameters = JSON.parse(JSON.stringify(engineConfig.logParameters))
 
     /**
      * Replacing global log parameters by specific one if not set to engine level
      */
+
     if (specificParameters.consoleLevel && specificParameters.consoleLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.consoleLog.level = specificParameters.consoleLevel
-    }
-    if (specificParameters.fileLevel && specificParameters.fileLevel !== ENGINE_LOG_LEVEL_ENTRY) {
-      logParameters.fileLog.level = specificParameters.fileLevel
     }
     if (specificParameters.sqliteLevel && specificParameters.sqliteLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.sqliteLog.level = specificParameters.sqliteLevel
@@ -55,59 +37,74 @@ class Logger {
     if (specificParameters.lokiLevel && specificParameters.lokiLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.lokiLog.level = specificParameters.lokiLevel
     }
+
+    const targets = []
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
-    this.logger.level = consoleLog.level
+    if (consoleLog.level !== 'none') {
+      targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
+    }
+
     if (fileLog.level !== 'none') {
-      this.logger.add(new transports.File({
-        filename: fileLog.fileName,
-        level: fileLog.level,
-        maxsize: fileLog.maxSize,
-        maxFiles: fileLog.numberOfFiles,
-        tailable: fileLog.tailable,
-        handleExceptions: true,
-      }))
+      targets.push({ target: 'pino/file', options: { destination: fileLog.fileName, mkdir: true }, level: fileLog.level })
     }
 
     if (sqliteLog.level !== 'none') {
-      this.logger.add(new SqliteTransport({
-        fileName: sqliteLog.fileName,
-        level: sqliteLog.level,
-        maxFileSize: sqliteLog.maxSize,
-        handleExceptions: true,
-      }))
+      targets.push({
+        target: `${__dirname}/SqliteLoggerTransport.class.js`,
+        options: {
+          fileName: sqliteLog.fileName,
+          maxFileSize: sqliteLog.maxSize,
+        },
+        level: consoleLog.level,
+      })
     }
 
-    if (lokiLog.level !== 'none' && this.encryptionService) {
-      this.logger.add(new LokiTransport({
-        host: lokiLog.host,
-        json: true,
-        batching: true,
-        replaceTimestamp: true,
-        interval: lokiLog.interval,
-        basicAuth: lokiLog.username ? `${lokiLog.username}:${this.encryptionService?.decryptText(lokiLog.password)}` : null,
-        labels: { oibus: engineConfig.engineName },
-      }))
+    if (lokiLog.level !== 'none') {
+      targets.push({
+        target: `${__dirname}/LokiLoggerTransport.class.js`,
+        options: {
+          username: lokiLog.username,
+          password: this.encryptionService.decryptText(lokiLog.password),
+          tokenAddress: lokiLog.tokenAddress,
+          lokiAddress: lokiLog.lokiAddress,
+          engineName: engineConfig.engineName,
+          interval: lokiLog.interval,
+        },
+        level: consoleLog.level,
+      })
+    }
+
+    if (targets.length > 0) {
+      this.logger = await pino({
+        mixin: () => ({
+          source: this.getSource(),
+          scope: this.scope,
+        }),
+        base: undefined,
+        timestamp: pino.stdTimeFunctions.isoTime,
+        transport: { targets },
+      })
     }
   }
 
   info(message) {
-    this.logger.info(message, { source: this.getSource() })
+    this.logger?.info(message)
   }
 
   warn(message) {
-    this.logger.warn(message, { source: this.getSource() })
+    this.logger?.warn(message)
   }
 
   error(message) {
-    this.logger.error(message.stack || message, { source: this.getSource() })
+    this.logger?.error(message.stack || message)
   }
 
   debug(message) {
-    this.logger.debug(message, { source: this.getSource() })
+    this.logger?.debug(message)
   }
 
   silly(message) {
-    this.logger.silly(message, { source: this.getSource() })
+    this.logger?.trace(message)
   }
 
   /**

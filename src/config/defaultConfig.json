@@ -24,10 +24,11 @@
       },
       "lokiLog": {
         "level": "none",
-        "host": "",
+        "lokiAddress": "",
         "interval": 60,
         "password": "",
-        "username": ""
+        "username": "",
+        "tokenAddress": ""
       }
     },
     "caching": {

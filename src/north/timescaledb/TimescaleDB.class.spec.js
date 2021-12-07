@@ -18,25 +18,26 @@ engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 
-beforeEach(() => {
+let timescaleDbNorth = null
+const timescaleDbConfig = config.north.applications[4]
+const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
+const values = [
+  {
+    pointId: 'ANA/BL1RCP05',
+    timestamp,
+    data: { value: 666, quality: 'good' },
+  },
+]
+
+beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
+  timescaleDbNorth = new InfluxDB(timescaleDbConfig, engine)
+  await timescaleDbNorth.init()
 })
 
 describe('TimescaleDB north', () => {
-  const timescaleDbConfig = config.north.applications[4]
-  const timescaleDbNorth = new InfluxDB(timescaleDbConfig, engine)
-
-  const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
-  const values = [
-    {
-      pointId: 'ANA/BL1RCP05',
-      timestamp,
-      data: { value: 666, quality: 'good' },
-    },
-  ]
-
   it('should be properly initialized', () => {
     expect(timescaleDbNorth.canHandleValues).toBeTruthy()
     expect(timescaleDbNorth.canHandleFiles).toBeFalsy()
