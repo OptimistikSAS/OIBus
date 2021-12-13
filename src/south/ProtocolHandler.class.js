@@ -54,48 +54,9 @@ class ProtocolHandler {
     this.logger.changeParameters(this.engineConfig, logParameters)
 
     if (this.supportedModes) {
-      const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
-      if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
-        this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
-      }
-      if (supportListen && typeof this.listen !== 'function') {
-        this.logger.error(`${this.constructor.name} should implement the listen() method.`)
-      }
-      if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
-        this.logger.error(`${this.constructor.name} should implement the lastPointQuery() method.`)
-      }
-      if (supportFile && typeof this.fileQuery !== 'function') {
-        this.logger.error(`${this.constructor.name} should implement the fileQuery() method.`)
-      }
-      if (supportHistory && typeof this.historyQuery !== 'function') {
-        this.logger.error(`${this.constructor.name} should implement the historyQuery() method.`)
-      }
-
-      if (supportHistory) {
-        this.lastCompletedAt = {}
-        this.ongoingReads = {}
-        if (this.dataSource.scanMode) {
-          this.lastCompletedAt[this.dataSource.scanMode] = new Date().getTime()
-          this.ongoingReads[this.dataSource.scanMode] = false
-        } else if (this.dataSource[this.constructor.name].scanGroups) {
-          // Group all points in their respective scanGroup
-          // Each scanGroup is also initialized with a default "last completed date" equal to current Time
-          this.scanGroups = this.dataSource[this.constructor.name].scanGroups.map((scanGroup) => {
-            const points = this.dataSource.points
-              .filter((point) => point.scanMode === scanGroup.scanMode)
-              .map((point) => point.pointId)
-            this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
-            this.ongoingReads[scanGroup.scanMode] = false
-            return {
-              name: scanGroup.scanMode,
-              ...scanGroup,
-              points,
-            }
-          })
-        } else {
-          this.logger.error(`${this.dataSource.name} scanGroups are not defined. This South driver will not work`)
-          this.scanGroups = []
-        }
+      this.checkSupportedModes()
+      if (this.supportedModes.supportHistory) {
+        this.prepareHistorySupport()
       }
     }
 
@@ -109,6 +70,52 @@ class ProtocolHandler {
     this.currentlyOnScan = {}
     this.buffer = []
     this.bufferTimeout = null
+  }
+
+  checkSupportedModes() {
+    const { supportListen, supportLastPoint, supportFile, supportHistory } = this.supportedModes
+    if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
+      this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
+    }
+    if (supportListen && typeof this.listen !== 'function') {
+      this.logger.error(`${this.constructor.name} should implement the listen() method.`)
+    }
+    if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
+      this.logger.error(`${this.constructor.name} should implement the lastPointQuery() method.`)
+    }
+    if (supportFile && typeof this.fileQuery !== 'function') {
+      this.logger.error(`${this.constructor.name} should implement the fileQuery() method.`)
+    }
+    if (supportHistory && typeof this.historyQuery !== 'function') {
+      this.logger.error(`${this.constructor.name} should implement the historyQuery() method.`)
+    }
+  }
+
+  prepareHistorySupport() {
+    this.lastCompletedAt = {}
+    this.ongoingReads = {}
+    if (this.dataSource.scanMode) {
+      this.lastCompletedAt[this.dataSource.scanMode] = new Date().getTime()
+      this.ongoingReads[this.dataSource.scanMode] = false
+    } else if (this.dataSource[this.constructor.name].scanGroups) {
+      // Group all points in their respective scanGroup
+      // Each scanGroup is also initialized with a default "last completed date" equal to current Time
+      this.scanGroups = this.dataSource[this.constructor.name].scanGroups.map((scanGroup) => {
+        const points = this.dataSource.points
+          .filter((point) => point.scanMode === scanGroup.scanMode)
+          .map((point) => point.pointId)
+        this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
+        this.ongoingReads[scanGroup.scanMode] = false
+        return {
+          name: scanGroup.scanMode,
+          ...scanGroup,
+          points,
+        }
+      })
+    } else {
+      this.logger.error(`${this.dataSource.name} scanGroups are not defined. This South driver will not work`)
+      this.scanGroups = []
+    }
   }
 
   async connect() {

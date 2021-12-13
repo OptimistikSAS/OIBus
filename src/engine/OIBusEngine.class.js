@@ -5,9 +5,6 @@ const moment = require('moment-timezone')
 const fs = require('fs')
 const databaseService = require('../services/database.service')
 
-const ProtocolFactory = require('../south/ProtocolFactory.class')
-const ApiFactory = require('../north/ApiFactory.class')
-
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
 const Server = require('../server/Server.class')
@@ -161,7 +158,7 @@ class OIBusEngine extends BaseEngine {
       const { id, protocol, enabled, name } = dataSource
       if (enabled) {
         // Initiate the correct Protocol
-        const south = ProtocolFactory.create(protocol, dataSource, this)
+        const south = this.createSouth(protocol, dataSource)
         if (south) {
           this.activeProtocols[id] = south
           this.activeProtocols[id].connect()
@@ -177,7 +174,7 @@ class OIBusEngine extends BaseEngine {
       // select the right api handler
       if (enabled) {
         // Initiate the correct API
-        const north = ApiFactory.create(api, application, this)
+        const north = this.createNorth(api, application)
         if (north) {
           this.activeApis[id] = north
           this.activeApis[id].connect()
@@ -338,7 +335,7 @@ class OIBusEngine extends BaseEngine {
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.entries(ApiFactory.getNorthList()).map(([connectorName, { category }]) => ({
+    return Object.entries(this.getNorthList()).map(([connectorName, { category }]) => ({
       connectorName,
       category,
     }))
@@ -351,7 +348,7 @@ class OIBusEngine extends BaseEngine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.entries(ProtocolFactory.getSouthList()).map(([connectorName, { category }]) => ({
+    return Object.entries(this.getSouthList()).map(([connectorName, { category }]) => ({
       connectorName,
       category,
     }))

@@ -8,9 +8,9 @@ const BaseEngine = require('../engine/BaseEngine.class')
 /**
  *
  * at startup, handles initialization of applications, protocols and config.
- * @class Engine
+ * @class HistoryQueryEngine
  */
-class Engine extends BaseEngine {
+class HistoryQueryEngine extends BaseEngine {
   /**
    * Constructor for Engine
    * Reads the config file and create the corresponding Object.
@@ -77,7 +77,7 @@ class Engine extends BaseEngine {
   async start(safeMode = false) {
     this.logger.info('Starting HistoryQueryEngine')
     if (safeMode || this.check) {
-      this.logger.warn('HistoryQuery is not executed in safe mode')
+      this.logger.warn('HistoryQuery is not executed in safe (or check) mode')
       return
     }
     this.runNextHistoryQuery()
@@ -175,4 +175,4 @@ class Engine extends BaseEngine {
   }
 }
 
-module.exports = Engine
+module.exports = HistoryQueryEngine
