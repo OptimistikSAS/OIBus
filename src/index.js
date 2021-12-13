@@ -9,6 +9,10 @@ const OIBusEngine = require('./engine/OIBusEngine.class')
 const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/Logger.class')
 
+// In case there is an error the worker process will exit.
+// If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
+// it means that there is probably a configuration error, so we restart in safe mode to
+// prevent restart loop and make possible changing the configuration
 const MAX_RESTART_COUNT = 3
 const MAX_INTERVAL_MILLISECOND = 30 * 1000
 

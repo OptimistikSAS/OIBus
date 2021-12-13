@@ -33,10 +33,10 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
-   * @param {string} _scanMode - The scan mode
+   * @param {string} scanMode - The scan mode
    * @return {void}
    */
-  async fileQuery(_scanMode) {
+  async fileQuery(scanMode) {
     // List files in the inputFolder
     let files = []
     try {
@@ -48,20 +48,20 @@ class FolderScanner extends ProtocolHandler {
     }
 
     if (files.length === 0) {
-      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${_scanMode})`)
+      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${scanMode})`)
       return
     }
     // filters file that don't match the regex
     const filteredFiles = files.filter((file) => file.match(this.regex))
     if (filteredFiles.length === 0) {
-      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${_scanMode})is empty.`)
+      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${scanMode})is empty.`)
       return
     }
     // filters file that may still currently modified (based on last modifcation date)
     const promisesResults = await Promise.allSettled(filteredFiles.map(this.checkAge.bind(this)))
     const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index].value)
     if (matchedFiles.length === 0) {
-      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${_scanMode}).`)
+      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${scanMode}).`)
       return
     }
     // the files remaining after these checks need to be sent to the bus
