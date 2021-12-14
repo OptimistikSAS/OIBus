@@ -94,7 +94,7 @@
     "tunnel": "0.0.6",
     "winston": "3.3.3",
     "winston-loki": "6.0.3",
-    "winston-transport": "4.4.0"
+    "winston-transport": "4.4.1"
   },
   "devDependencies": {
     "@babel/cli": "7.16.0",
