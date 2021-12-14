@@ -122,6 +122,10 @@ class WATSYConnect extends ApiHandler {
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
+    this.statusData['Last handled values at'] = new Date().toISOString()
+    this.statusData['Number of values sent since OIBus has started'] += messages.length
+    this.statusData['Last added point id (value)'] = `${messages[messages.length - 1].pointId} (${messages[messages.length - 1].data.value})`
+    this.updateStatusDataStream()
     return successCount
   }
 
@@ -140,8 +144,6 @@ class WATSYConnect extends ApiHandler {
         allWATSYMessages.forEach((message) => {
           this.publishWATSYMQTTMessage(message)
         })
-        this.statusData['Last handled values at'] = new Date().toISOString()
-        this.updateStatusDataStream()
       }
     } catch (error) {
       this.logger.error(error)

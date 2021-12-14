@@ -1,17 +1,16 @@
 import React from 'react'
-import { ListGroup, ListGroupItem, Row, Breadcrumb, BreadcrumbItem, Container } from 'reactstrap'
-import { FaSync } from 'react-icons/fa'
-import Table from '../components/table/Table.jsx'
+import { ListGroup, ListGroupItem, Row, Container } from 'reactstrap'
 import apis from '../services/apis'
+import OIbTitle from '../components/OIbForm/OIbTitle.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from './OIBus.png'
 
 const About = () => {
-  const [status, setStatus] = React.useState({})
+  const [staticStatus, setstaticStatus] = React.useState({})
+  const [dynamicStatus, setdynamicStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
-  const engineName = activeConfig?.engine.engineName ?? ''
 
   /**
    * Acquire the status
@@ -21,7 +20,7 @@ const About = () => {
     apis
       .getStatus()
       .then((response) => {
-        setStatus(response)
+        setstaticStatus(response)
       })
       .catch((error) => {
         console.error(error)
@@ -30,7 +29,7 @@ const About = () => {
   }
 
   /**
-   * Fetch status after render
+   * Fetch static status after render
    * @returns {void}
    */
   React.useEffect(() => {
@@ -38,67 +37,76 @@ const About = () => {
   }, [])
 
   /**
-   * Generate string value from on object.
-   * @param {Object[]} data - The object
-   * @return {string} - The string value
+   * Fetch live status after render
+   * @returns {void}
    */
-  const generateStringValueFromObject = (data) => {
-    let stringValue = ''
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'name') {
-        stringValue += stringValue ? ` / ${key}: ${value}` : `${key}: ${value}`
-      }
-    })
-    return stringValue
-  }
-
-  /**
-   * Generate row entry for the status table.
-   * @param {string} key - The key
-   * @param {string} value - The value
-   * @return {[{name: *, value: *}, {name: string, value: *}]} - The table row
-   */
-  const generateRowEntry = (key, value) => [
-    {
-      name: key,
-      value: key,
-    },
-    {
-      name: 'value',
-      value,
-    },
-  ]
-
-  const tableRows = []
-  Object.keys(status).forEach((key) => {
-    if (Array.isArray(status[key])) {
-      status[key].forEach((entry) => {
-        tableRows.push(generateRowEntry(entry.name, generateStringValueFromObject(entry)))
+  React.useEffect(() => {
+    const source = new EventSource('/engine/sse')
+    source.onerror = (error) => {
+      setAlert({
+        text: error.message,
+        type: 'danger',
       })
-    } else {
-      tableRows.push(generateRowEntry(key, status[key]))
     }
-  })
+    source.onmessage = (event) => {
+      if (event && event.data) {
+        const myData = JSON.parse(event.data)
+        setdynamicStatus(myData)
+      }
+    }
+    return (() => source.close())
+  }, [activeConfig])
 
   return (
     <>
+
       <Row>
         <Container fluid>
-          {status && (
+          {staticStatus && (
           <ListGroup>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               <img src={logo} alt="logo" height="100px" />
             </ListGroupItem>
             <ListGroupItem>
-              Version:
-              {status.version}
+              <b className="mr-2">Version:</b>
+              {staticStatus.version}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">Architecture:</b>
+              {staticStatus.architecture}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">currentDirectory:</b>
+              {staticStatus.currentDirectory}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">nodeVersion:</b>
+              {staticStatus.nodeVersion}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">Executable:</b>
+              {staticStatus.executable}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">ConfigurationFile:</b>
+              {staticStatus.configurationFile}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">Hostname:</b>
+              {staticStatus.hostname}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="mr-2">Operating System:</b>
+              {staticStatus.osType}
+              {' '}
+              {staticStatus.osRelease}
             </ListGroupItem>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               Official site
             </ListGroupItem>
             <ListGroupItem>
               Copyright:
-              {status.copyright}
+              {staticStatus.copyright}
             </ListGroupItem>
             <ListGroupItem tag="a" href="https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt">
               Licensed under the EUPL-1.2-or-later
@@ -108,18 +116,25 @@ const About = () => {
         </Container>
       </Row>
       <br />
-      <Row>
-        <Breadcrumb tag="h5">
-          <BreadcrumbItem active tag="span">
-            {`${engineName} health status`}
-                    &nbsp;
-            <FaSync className="oi-icon" onClick={fetchStatus} />
-          </BreadcrumbItem>
-        </Breadcrumb>
-      </Row>
-      <Row>
-        <Container>{tableRows && <Table headers={[]} rows={tableRows} />}</Container>
-      </Row>
+      <OIbTitle label="Monitoring" />
+      <Container fluid>
+        <div className="d-flex flex-wrap justify-content-between">
+          <ListGroup>
+            {Object.entries(dynamicStatus)
+              .map(([key, value]) => (
+                <ListGroupItem key={key}>
+                  <div key={key}>
+                    <b className="mr-2">
+                      {key}
+                      :
+                    </b>
+                    <span>{value}</span>
+                  </div>
+                </ListGroupItem>
+              ))}
+          </ListGroup>
+        </div>
+      </Container>
     </>
   )
 }

@@ -141,9 +141,7 @@ describe('NorthMenu', () => {
 
   test('check status first application', () => {
     act(() => {
-      ReactDOM.render(
-        <NorthMenu application={application} />, container,
-      )
+      ReactDOM.render(<NorthMenu application={application} />, container)
     })
     Simulate.click(document.getElementById('dropdown-toggle'))
     Simulate.click(document.getElementById('oi-status'))

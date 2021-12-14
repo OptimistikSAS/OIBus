@@ -8,35 +8,10 @@ import utils from '../helpers/utils'
 
 const HomePage = () => {
   const [loading, setLoading] = React.useState(false)
-  const [status, setStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
   const config = utils.jsonCopy(activeConfig)
   utils.replaceValues(config, ['password', 'secretKey'], '******')
-
-  /**
-   * Acquire the status
-   * @returns {void}
-   */
-  const fetchStatus = () => {
-    apis
-      .getStatus()
-      .then((response) => {
-        setStatus(response)
-      })
-      .catch((error) => {
-        console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
-      })
-  }
-
-  /**
-   * Fetch status after render
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    fetchStatus()
-  }, [])
 
   // Disable loading when server reachable
   const stopLoadingWhenReachable = () => {
@@ -79,7 +54,7 @@ const HomePage = () => {
 
   return (
     <>
-      <NodeView status={status} onRestart={handleRestart} onShutdown={handleShutdown} />
+      <NodeView onRestart={handleRestart} onShutdown={handleShutdown} />
       {loading && (
         <div className="spinner-container">
           <Spinner color="primary" />

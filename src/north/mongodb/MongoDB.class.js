@@ -40,7 +40,9 @@ class MongoDB extends ApiHandler {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
-      this.statusData['Last handled Values at'] = new Date().toISOString()
+      this.statusData['Last handled values at'] = new Date().toISOString()
+      this.statusData['Number of values sent since OIBus has started'] += values.length
+      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)

@@ -11,6 +11,11 @@ import About from './About.jsx'
 import activeConfig from '../../../tests/testConfig'
 
 let container
+global.EventSource = class {
+  constructor() {
+    this.close = () => {}
+  }
+}
 
 beforeEach(() => {
   container = document.createElement('div')

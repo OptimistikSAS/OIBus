@@ -8,6 +8,13 @@ import { act } from 'react-dom/test-utils'
 import newConfig from '../../../../tests/testConfig'
 import NorthForm from './NorthForm.jsx'
 
+const mockNavigate = jest.fn()
+
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  useParams: jest.fn().mockReturnValue({ id: 'north-id' }),
+}))
+
 React.useContext = jest.fn().mockReturnValue({ newConfig })
 
 const mockMath = Object.create(global.Math)

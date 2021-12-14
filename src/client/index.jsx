@@ -35,7 +35,7 @@ const Main = () => (
             <Route exact path="/south/:id" element={<ConfigureProtocol />} />
             <Route exact path="/south/:id/live" element={<SouthStatus />} />
             <Route exact path="/north/:id/live" element={<NorthStatus />} />
-              <Route exact path="/south/:id/points" element={<ConfigurePoints />} />
+            <Route exact path="/south/:id/points" element={<ConfigurePoints />} />
             <Route exact path="/north/:id" element={<ConfigureApi />} />
             <Route exact path="/log" element={<Logs />} />
             <Route exact path="/about" element={<About />} />

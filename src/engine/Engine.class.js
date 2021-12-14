@@ -1,6 +1,7 @@
 const timexe = require('timexe')
 const path = require('path')
 const os = require('os')
+const EventEmitter = require('events')
 const moment = require('moment-timezone')
 const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
@@ -90,6 +91,7 @@ class Engine {
     this.activeApis = {}
     this.jobs = []
     this.eventEmitters = {}
+    this.statusData = {}
 
     this.memoryStats = {}
     this.addValuesMessages = 0
@@ -178,7 +180,11 @@ class Engine {
    * @return {void}
    */
   async start(safeMode = false) {
-    const { southConfig, northConfig, engineConfig } = this.configService.getConfig()
+    const {
+      southConfig,
+      northConfig,
+      engineConfig,
+    } = this.configService.getConfig()
     // 1. start web server
     const server = new Server(this)
     server.listen()
@@ -190,13 +196,20 @@ class Engine {
       await this.shutdown(500)
       return
     }
+    this.initializeStatusData()
     if (engineConfig.safeMode || safeMode) {
       this.logger.warn('Starting in safe mode!')
       return
     }
+
     // 2. start Protocol for each data sources
     southConfig.dataSources.forEach((dataSource) => {
-      const { id, protocol, enabled, name } = dataSource
+      const {
+        id,
+        protocol,
+        enabled,
+        name,
+      } = dataSource
       // select the correct Handler
       const ProtocolHandler = protocolList[protocol]
       if (enabled) {
@@ -212,7 +225,12 @@ class Engine {
 
     // 3. start Applications
     northConfig.applications.forEach((application) => {
-      const { id, api, enabled, name } = application
+      const {
+        id,
+        api,
+        enabled,
+        name,
+      } = application
       // select the right api handler
       const ApiHandler = apiList[api]
       if (enabled) {
@@ -271,7 +289,10 @@ class Engine {
     this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
 
     // 6. Start the timers for each scan modes
-    engineConfig.scanModes.forEach(({ scanMode, cronTime }) => {
+    engineConfig.scanModes.forEach(({
+      scanMode,
+      cronTime,
+    }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
@@ -314,6 +335,10 @@ class Engine {
       return
     }
 
+    if (this.liveStatusInterval) {
+      clearInterval(this.liveStatusInterval)
+    }
+
     // Stop HealthSignal
     this.healthSignal.stop()
 
@@ -323,16 +348,18 @@ class Engine {
     })
 
     // Stop Protocols
-    Object.entries(this.activeProtocols).forEach(([id, protocol]) => {
-      this.logger.info(`Stopping south ${id}`)
-      protocol.disconnect()
-    })
+    Object.entries(this.activeProtocols)
+      .forEach(([id, protocol]) => {
+        this.logger.info(`Stopping south ${id}`)
+        protocol.disconnect()
+      })
 
     // Stop Applications
-    Object.entries(this.activeApis).forEach(([id, application]) => {
-      this.logger.info(`Stopping north ${id}`)
-      application.disconnect()
-    })
+    Object.entries(this.activeApis)
+      .forEach(([id, application]) => {
+        this.logger.info(`Stopping north ${id}`)
+        application.disconnect()
+      })
 
     // Log cache data
     const apisCacheStats = await this.cache.getCacheStatsForApis()
@@ -340,6 +367,9 @@ class Engine {
 
     const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
     this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
+
+    // Stop the listener
+    this.eventEmitters['/engine/sse']?.events?.off('data', this.listener)
   }
 
   /**
@@ -376,32 +406,36 @@ class Engine {
    * Return available North applications
    * @return {String[]} - Available North applications
    */
+
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.entries(apiList).map(([connectorName, { category }]) => ({
-      connectorName,
-      category,
-    }))
+    return Object.entries(apiList)
+      .map(([connectorName, { category }]) => ({
+        connectorName,
+        category,
+      }))
   }
 
   /**
    * Return available South protocols
    * @return {String[]} - Available South protocols
    */
+
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.entries(protocolList).map(([connectorName, { category }]) => ({
-      connectorName,
-      category,
-    }))
+    return Object.entries(protocolList)
+      .map(([connectorName, { category }]) => ({
+        connectorName,
+        category,
+      }))
   }
 
   /**
-    * Get OIBus version
-    * @returns {string} - The OIBus version
-    */
+   * Get OIBus version
+   * @returns {string} - The OIBus version
+   */
   getVersion() {
     return this.version
   }
@@ -420,27 +454,33 @@ class Engine {
    */
   getMemoryUsage() {
     const memoryUsage = process.memoryUsage()
-    Object.entries(memoryUsage).forEach(([key, value]) => {
-      if (!Object.keys(this.memoryStats).includes(key)) {
-        this.memoryStats[key] = {
-          min: value,
-          current: value,
-          max: value,
+    Object.entries(memoryUsage)
+      .forEach(([key, value]) => {
+        if (!Object.keys(this.memoryStats)
+          .includes(key)) {
+          this.memoryStats[key] = {
+            min: value,
+            current: value,
+            max: value,
+          }
+        } else {
+          this.memoryStats[key].min = (value < this.memoryStats[key].min) ? value : this.memoryStats[key].min
+          this.memoryStats[key].current = value
+          this.memoryStats[key].max = (value > this.memoryStats[key].max) ? value : this.memoryStats[key].max
         }
-      } else {
-        this.memoryStats[key].min = (value < this.memoryStats[key].min) ? value : this.memoryStats[key].min
-        this.memoryStats[key].current = value
-        this.memoryStats[key].max = (value > this.memoryStats[key].max) ? value : this.memoryStats[key].max
-      }
-    })
+      })
 
-    return Object.keys(this.memoryStats).reduce((result, key) => {
-      const min = Number(this.memoryStats[key].min / 1024 / 1024).toFixed(2)
-      const current = Number(this.memoryStats[key].current / 1024 / 1024).toFixed(2)
-      const max = Number(this.memoryStats[key].max / 1024 / 1024).toFixed(2)
-      result[key] = `${min}/${current}/${max} MB`
-      return result
-    }, {})
+    return Object.keys(this.memoryStats)
+      .reduce((result, key) => {
+        const min = Number(this.memoryStats[key].min / 1024 / 1024)
+          .toFixed(2)
+        const current = Number(this.memoryStats[key].current / 1024 / 1024)
+          .toFixed(2)
+        const max = Number(this.memoryStats[key].max / 1024 / 1024)
+          .toFixed(2)
+        result[key] = `${min} / ${current} / ${max} MB`
+        return result
+      }, {})
   }
 
   /**
@@ -512,6 +552,66 @@ class Engine {
   getStatusForNorth(id) {
     const north = this.activeApis[id]
     return north ? north.getStatus() : {}
+  }
+
+  /**
+   * Update engine status data to be displayed on the home screen
+   * @returns {void}
+   */
+  initializeStatusData() {
+    this.updateEngineStatusData()
+    if (!this.eventEmitters['/engine/sse']) {
+      this.eventEmitters['/engine/sse'] = {}
+      this.eventEmitters['/engine/sse'].events = new EventEmitter()
+      this.eventEmitters['/engine/sse'].events.setMaxListeners(0)
+      this.eventEmitters['/engine/sse'].events.on('data', this.listener)
+      this.eventEmitters['/engine/sse'].statusData = this.statusData
+      this.updateStatusDataStream()
+    }
+    this.liveStatusInterval = setInterval(() => {
+      this.updateEngineStatusData()
+      this.updateStatusDataStream()
+    }, 5000)
+  }
+
+  updateEngineStatusData() {
+    const processCpuUsage = process.cpuUsage()
+    const processUptime = 1000 * 1000 * process.uptime()
+    const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime)
+      .toFixed(2)
+    const freeMemory = Number(os.freemem() / 1024 / 1024)
+      .toFixed(2)
+    const totalMemory = Number(os.totalmem() / 1024 / 1024)
+      .toFixed(2)
+    const percentMemory = Number((freeMemory / totalMemory) * 100)
+      .toFixed(2)
+    const memoryUsage = this.getMemoryUsage()
+
+    this.statusData['Up time'] = moment.duration(process.uptime(), 'seconds')
+      .humanize()
+    this.statusData['CPU usage'] = `${cpuUsagePercentage}%`
+    this.statusData['Global memory usage'] = `${freeMemory} MB / ${os.totalmem() / 1024 / 1024 / 1024} GB (${percentMemory} %)`
+    this.statusData['Resident set size (min / current / max)'] = memoryUsage.rss
+    this.statusData['Total heap size (min / current / max)'] = memoryUsage.heapTotal
+    this.statusData['Heap used (min / current / max)'] = memoryUsage.heapUsed
+    this.statusData['External C++ V8 memory (min / current / max)'] = memoryUsage.external
+    this.statusData['Array buffers memory (min / current / max)'] = memoryUsage.arrayBuffers
+    this.updateStatusDataStream()
+  }
+
+  updateStatusDataStream() {
+    this.eventEmitters['/engine/sse']?.events?.emit('data', this.statusData)
+  }
+
+  /**
+   * Method used by the eventEmmiter of the current protocol to write data to the socket and send them to the frontend
+   * @param {object} data - The json object of data to send
+   * @return {void}
+   */
+  listener = (data) => {
+    if (data) {
+      this.eventEmitters['/engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
   }
 }
 

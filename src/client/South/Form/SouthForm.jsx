@@ -10,7 +10,7 @@ import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import ProtocolSchemas from '../Protocols.jsx'
 import PointsButton from '../PointsButton.jsx'
-import StatusButton from '../StatusButton.jsx'
+import StatusButton from '../../StatusButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { id, protocol } = dataSource
@@ -43,7 +43,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
 
   return (
     <>
-      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+      <div id="oi-sub-nav" className="d-flex align-items-center w-100 oi-sub-nav mb-2">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <EditableIdField
             connectorName={dataSource.name}

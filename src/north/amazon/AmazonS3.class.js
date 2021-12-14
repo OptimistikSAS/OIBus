@@ -72,6 +72,8 @@ class AmazonS3 extends ApiHandler {
       return ApiHandler.STATUS.COMMUNICATION_ERROR
     }
     this.statusData['Last uploaded file'] = filePath
+    this.statusData['Number of files sent since OIBus has started'] += 1
+    this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
     return ApiHandler.STATUS.SUCCESS
   }

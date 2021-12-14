@@ -4,6 +4,7 @@ import { Container } from 'reactstrap'
 import ReactFlow from 'react-flow-renderer'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
+import { AlertContext } from '../context/AlertContext.jsx'
 import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
 import ProtocolSchemas from '../South/Protocols.jsx'
@@ -28,17 +29,53 @@ const colors = {
   },
 }
 
-const NodeView = ({ status, onRestart, onShutdown }) => {
-  const { newConfig, dispatchNewConfig, activeConfig } = React.useContext(ConfigContext)
+const NodeView = ({
+  onRestart,
+  onShutdown,
+}) => {
+  const {
+    newConfig,
+    dispatchNewConfig,
+    activeConfig,
+  } = React.useContext(ConfigContext)
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
   const engineName = activeConfig ? activeConfig.engine.engineName : ''
+  const [connectorData, setConnectorData] = React.useState({})
+  const { setAlert } = React.useContext(AlertContext)
+
   const onLoad = (reactFlowInstance) => {
-    reactFlowInstance.setTransform({ y: 35, x: 0, zoom: 0.9 })
+    reactFlowInstance.setTransform({
+      y: 35,
+      x: 0,
+      zoom: 0.9,
+    })
   }
   const onChange = (name, value, validity) => {
-    dispatchNewConfig({ type: 'update', name, value, validity })
+    dispatchNewConfig({
+      type: 'update',
+      name,
+      value,
+      validity,
+    })
   }
+
+  React.useEffect(() => {
+    const source = new EventSource('/engine/sse')
+    source.onerror = (error) => {
+      setAlert({
+        text: error.message,
+        type: 'danger',
+      })
+    }
+    source.onmessage = (event) => {
+      if (event && event.data) {
+        const myData = JSON.parse(event.data)
+        setConnectorData(myData)
+      }
+    }
+    return (() => source.close())
+  }, [newConfig])
 
   const northNodes = applications.map((application, indexNorth) => (
     {
@@ -208,22 +245,20 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
               to="/engine"
               className="text-decoration-none text-muted"
             >
-              <div>
-                <b>Uptime: </b>
-                {status.uptime}
-              </div>
-              <div>
-                <b>Hostname: </b>
-                {status.hostname}
-              </div>
-              <div>
-                <b>CurrentDirectory: </b>
-                {status.currentDirectory}
-              </div>
-              <div>
-                <b>ConfigurationFile: </b>
-                {status.configurationFile}
-              </div>
+              <Container>
+                <div className="d-flex flex-wrap justify-content-between">
+                  {Object.entries(connectorData).filter(([key]) => key === 'Up time' || key === 'Global memory usage' || key === 'CPU usage')
+                    .map(([key, value]) => (
+                      <div key={key}>
+                        <b className="mr-2">
+                          {key}
+                          :
+                        </b>
+                        <span>{value}</span>
+                      </div>
+                    ))}
+                </div>
+              </Container>
             </Link>
           </div>
         ),
@@ -235,7 +270,6 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
       targetPosition: 'bottom',
       sourcePosition: 'top',
       style: {
-        background: colors.background.warning,
         color: 'black',
         border: colors.border.disabled,
         width: 1020,
@@ -268,7 +302,6 @@ const NodeView = ({ status, onRestart, onShutdown }) => {
 }
 
 NodeView.propTypes = {
-  status: PropTypes.object.isRequired,
   onRestart: PropTypes.func.isRequired,
   onShutdown: PropTypes.func.isRequired,
 }

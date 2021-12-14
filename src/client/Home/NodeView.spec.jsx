@@ -9,6 +9,12 @@ import newConfig from '../../../tests/testConfig'
 
 const dispatchNewConfig = jest.fn()
 
+global.EventSource = class {
+  constructor() {
+    this.close = () => {}
+  }
+}
+
 // ReactFlow does not seem to be working with jest.
 // so we have to mock this component
 jest.mock('../../../node_modules/react-flow-renderer/dist/ReactFlow.js', () => () => ('ReactFlow'))

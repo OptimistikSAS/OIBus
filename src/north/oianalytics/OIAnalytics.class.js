@@ -48,7 +48,9 @@ class OIAnalytics extends ApiHandler {
     }))
     await this.postJson(cleanedValues)
     this.logger.silly(`OIAnalytics has posted ${cleanedValues.length} values`)
-    this.statusData['Last handled Values at'] = new Date().toISOString()
+    this.statusData['Last handled values at'] = new Date().toISOString()
+    this.statusData['Number of values sent since OIBus has started'] += values.length
+    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
     this.updateStatusDataStream()
     return values.length
   }
@@ -62,6 +64,8 @@ class OIAnalytics extends ApiHandler {
     const stats = fs.statSync(filePath)
     this.logger.silly(`OIAnalytics handleFile(${filePath}) (${stats.size} bytes)`)
     this.statusData['Last uploaded file'] = filePath
+    this.statusData['Number of files sent since OIBus has started'] += 1
+    this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
     return this.postFile(filePath)
   }
