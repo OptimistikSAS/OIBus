@@ -230,12 +230,14 @@ class ConfigService {
    * Save the new status for HistoryQuery with the given ID
    * @param {string} historyQueryId - The HistoryQuery ID to store the new status for
    * @param {string} status - The new status
+   * @param {boolean} enabled - Enabled
    * @return {void}
    */
-  saveStatusForHistoryQuery(historyQueryId, status) {
+  saveStatusForHistoryQuery(historyQueryId, status, enabled = true) {
     const activeHistoryQueryConfig = this.historyQueryConfig.find((historyQueryConfig) => historyQueryConfig.id === historyQueryId)
     if (activeHistoryQueryConfig) {
       activeHistoryQueryConfig.status = status
+      activeHistoryQueryConfig.enabled = enabled
       ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryConfig)
       this.historyQueryModifiedConfig = this.duplicateConfig(this.historyQueryConfig)
     }

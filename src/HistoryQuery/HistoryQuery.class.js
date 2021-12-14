@@ -1,5 +1,5 @@
 class HistoryQuery {
-  // Waiting to be starteds
+  // Waiting to be started
   static STATUS_PENDING = 'pending'
 
   // Exporting data from south
@@ -18,7 +18,9 @@ class HistoryQuery {
     this.id = config.id
     this.status = config.status
     this.dataSource = dataSource
+    this.south = null
     this.application = application
+    this.north = null
     this.startTime = new Date(config.startTime)
     this.endTime = new Date(config.endTime)
     this.filePattern = config.filePattern
@@ -68,7 +70,7 @@ class HistoryQuery {
   async startExport() {
     this.logger.info(`Start the export phase for HistoryQuery ${this.id}`)
     if (this.status !== HistoryQuery.STATUS_EXPORTING) {
-      await this.setStatus(HistoryQuery.STATUS_EXPORTING)
+      this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
 
     this.dataSource.startTime = this.config.startTime
@@ -82,6 +84,7 @@ class HistoryQuery {
       this.export()
     } else {
       this.logger.error(`South ${name} is not enabled or not found`)
+      this.disable()
       this.engine.runNextHistoryQuery()
     }
   }
@@ -105,6 +108,7 @@ class HistoryQuery {
     //   await this.north.connect()
     // } else {
     //   this.logger.error(`Application ${name} is enabled or not found`)
+    //   this.disable()
     //   this.engine.runNextHistoryQuery()
     // }
   }
@@ -115,7 +119,7 @@ class HistoryQuery {
    */
   async finish() {
     this.logger.info(`Finish HistoryQuery ${this.id}`)
-    await this.setStatus(HistoryQuery.STATUS_FINISHED)
+    this.setStatus(HistoryQuery.STATUS_FINISHED)
     await this.stop()
   }
 
@@ -175,9 +179,22 @@ class HistoryQuery {
     } while (intervalEndTime !== this.endTime)
   }
 
+  /**
+   * Set new status for HistoryQuery
+   * @param {string} status - The new status
+   * @return {void}
+   */
   setStatus(status) {
     this.status = status
     this.engine.configService.saveStatusForHistoryQuery(this.id, status)
+  }
+
+  /**
+   * Disable HistoryQuery
+   * @return {void}
+   */
+  disable() {
+    this.engine.configService.saveStatusForHistoryQuery(this.id, this.status, false)
   }
 }
 
