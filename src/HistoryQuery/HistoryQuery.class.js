@@ -103,7 +103,7 @@ class HistoryQuery {
     // }
 
     // const { api, enabled, name } = this.application
-    // this.north = enabled ? thi.createNorth(api, this.application) : null
+    // this.north = enabled ? this.createNorth(api, this.application) : null
     // if (this.north) {
     //   await this.north.connect()
     // } else {
