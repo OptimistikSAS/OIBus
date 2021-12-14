@@ -32,6 +32,16 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -1488,6 +1498,16 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -2508,6 +2528,16 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -3378,6 +3408,16 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -4467,6 +4507,16 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -4935,13 +4985,6 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
     <div
       class="row"
     >
-      <div
-        class="col-md-2"
-      />
-    </div>
-    <div
-      class="row"
-    >
       <h5>
         Caching
         <button
@@ -5324,6 +5367,16 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -6127,6 +6180,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -7182,6 +7245,16 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -8401,6 +8474,16 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -9326,6 +9409,16 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -10251,6 +10344,16 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -10678,13 +10781,6 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           </div>
         </div>
       </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      />
     </div>
     <div
       class="row"

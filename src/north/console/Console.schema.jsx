@@ -20,12 +20,6 @@ schema.form = {
     newRow: true,
     defaultValue: false,
   },
-  viewer: {
-    type: 'OIbCheckBox',
-    md: 2,
-    newRow: true,
-    defaultValue: true,
-  },
 }
 schema.category = 'Debug'
 export default schema

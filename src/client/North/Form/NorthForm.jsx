@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
+import { useNavigate } from 'react-router-dom'
 import { Form, Row, Col, Button } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbInteger, OIbLogLevel } from '../../components/OIbForm'
@@ -9,13 +10,15 @@ import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import ApiSchemas from '../Apis.jsx'
+import StatusButton from '../../StatusButton.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
-  const { api } = application
+  const { id, api } = application
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
   const applications = newConfig?.north?.applications ?? []
+  const navigate = useNavigate()
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
   if (!application.caching) application.caching = {}
@@ -62,6 +65,14 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             </Button>
           )}
         </h6>
+        <div className="pull-right mr-3">
+          <StatusButton
+            handler={() => {
+              navigate(`/north/${id}/live`)
+            }}
+            enabled={application.enabled}
+          />
+        </div>
       </div>
       <Form>
         <OIbTitle label="General settings">

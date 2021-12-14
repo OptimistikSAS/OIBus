@@ -22,7 +22,6 @@ jest.mock('../../engine/Logger.class')
 const engine = jest.createMockFromModule('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
-engine.eventEmitters = {}
 
 // Mock database service used in super constructor
 jest.mock('../../services/database.service', () => ({

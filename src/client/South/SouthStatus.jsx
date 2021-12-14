@@ -7,6 +7,11 @@ import PointsButton from './PointsButton.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import Table from '../components/table/Table.jsx'
 
+function isIsoDate(str) {
+  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false
+  const d = new Date(str)
+  return d.toISOString() === str
+}
 /**
  * Generate row entry for the status table.
  * @param {string} key - The key
@@ -20,7 +25,7 @@ const generateRowEntry = (key, value) => [
   },
   {
     name: 'value',
-    value,
+    value: isIsoDate(value) ? new Date(value).toLocaleString() : value,
   },
 ]
 
@@ -31,32 +36,42 @@ const SouthStatus = () => {
   const navigate = useNavigate()
   const { id } = useParams() // the dataSource id passed in the url
   const [dataSource, setDataSource] = React.useState(null)
+  const [sseSource, setSseSource] = React.useState(null)
 
   React.useEffect(() => {
     const currentDataSource = newConfig.south?.dataSources?.find((element) => element.id === id)
     setDataSource(currentDataSource)
-    const source = new EventSource(`/south/${id}/sse`)
-    source.onerror = (error) => {
-      setAlert({ text: error.message, type: 'danger' })
-    }
-    source.onmessage = (event) => {
-      if (event && event.data) {
-        const myData = JSON.parse(event.data)
-        const tableRows = []
-        Object.keys(myData).forEach((key) => {
-          tableRows.push(generateRowEntry(key, myData[key]))
-        })
-        setConnectorData(tableRows)
+
+    if (currentDataSource && currentDataSource.enabled) {
+      const source = new EventSource(`/south/${id}/sse`)
+      source.onerror = (error) => {
+        setAlert({ text: error.message, type: 'danger' })
       }
+      source.onmessage = (event) => {
+        if (event && event.data) {
+          const myData = JSON.parse(event.data)
+          const tableRows = []
+          Object.keys(myData).forEach((key) => {
+            tableRows.push(generateRowEntry(key, myData[key]))
+          })
+          setConnectorData(tableRows)
+        }
+      }
+      setSseSource(source)
     }
-    return (() => source.close())
+    return (() => {
+      if (sseSource) {
+        sseSource.close()
+      }
+    })
   }, [newConfig])
 
   return dataSource ? (
     <>
-      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+      <div id="oi-sub-nav" className="d-flex align-items-center w-100 oi-sub-nav mb-2">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <Button
+            id="oi-navigate"
             close
             onClick={() => {
               navigate(-1)
@@ -70,7 +85,12 @@ const SouthStatus = () => {
           <PointsButton dataSource={dataSource} />
         </div>
       </div>
-      <Container>{connectorData.length > 0 && <Table headers={[]} rows={connectorData} />}</Container>
+
+      <Container>
+        {connectorData.length > 0 ? (
+          <Table headers={[]} rows={connectorData} />
+        ) : <div className="oi-status-error"> No Information displayed because the connector is disabled </div>}
+      </Container>
     </>
   ) : null
 }

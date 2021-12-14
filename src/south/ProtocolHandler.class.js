@@ -81,6 +81,7 @@ class ProtocolHandler {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.setMaxListeners(0)
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].statusData = this.statusData
       this.updateStatusDataStream()
     }
   }
@@ -97,7 +98,7 @@ class ProtocolHandler {
   }
 
   updateStatusDataStream() {
-    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.events.emit('data', this.statusData)
+    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]?.events?.emit('data', this.statusData)
   }
 
   onScanImplementation(scanMode) {

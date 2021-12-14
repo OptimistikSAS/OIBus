@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { FaTrashAlt, FaCog, FaCopy } from 'react-icons/fa'
-import StatusButton from '../../South/StatusButton.jsx'
+import StatusButton from '../../StatusButton.jsx'
 import Modal from '../Modal.jsx'
 
 const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate }) => (

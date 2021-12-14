@@ -50,7 +50,7 @@ class Server {
       ctx.status = 200
       this.app.engine.eventEmitters[ctx.path].stream = new PassThrough()
       ctx.body = this.app.engine.eventEmitters[ctx.path].stream
-      this.app.engine.eventEmitters[ctx.path].events.emit('data', null)
+      this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
     })
 
     // capture the engine and logger under app for reuse in routes.

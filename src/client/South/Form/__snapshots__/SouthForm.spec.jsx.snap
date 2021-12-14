@@ -4,6 +4,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -1201,6 +1202,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -1939,6 +1941,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -3616,6 +3619,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -5252,6 +5256,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -5987,6 +5992,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -6722,6 +6728,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -8293,6 +8300,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -9340,6 +9348,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -10174,6 +10183,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -11008,6 +11018,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"

@@ -12,7 +12,7 @@ const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useParams: jest.fn().mockReturnValue({ id: 'south-id' }),
+  useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-1' }),
 }))
 
 const dispatchNewConfig = jest.fn()

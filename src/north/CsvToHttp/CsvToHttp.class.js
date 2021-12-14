@@ -121,6 +121,8 @@ class CsvToHttp extends ApiHandler {
         complete: () => {
           this.logger.silly(`File ${filePath} parsed`)
           this.statusData['Last Parsed file'] = filePath
+          this.statusData['Number of files sent since OIBus has started'] += 1
+          this.statusData['Last Parsed file at'] = new Date().toISOString()
           this.updateStatusDataStream()
           resolve(csvDataParsed)
         },

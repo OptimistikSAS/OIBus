@@ -4,6 +4,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"
@@ -1660,6 +1661,7 @@ exports[`ConfigureProtocol check update 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"
+    id="oi-sub-nav"
   >
     <h6
       class="text-muted d-flex align-items-center pl-3 pt-1"

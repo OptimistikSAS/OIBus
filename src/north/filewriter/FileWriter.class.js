@@ -41,6 +41,8 @@ class FileWriter extends ApiHandler {
       await fs.writeFile(path.join(this.outputFolder, fileName), data)
       this.logger.debug(`FileWriter ${fileName} created in "${this.outputFolder}"`)
       this.statusData['Last handled values at'] = new Date().toISOString()
+      this.statusData['Number of values sent since OIBus has started'] += values.length
+      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
       this.updateStatusDataStream()
       return values.length
     } catch (error) {
@@ -64,6 +66,8 @@ class FileWriter extends ApiHandler {
       await fs.copyFile(filePath, path.join(this.outputFolder, fileName))
       this.logger.debug(`FileWriter copied file ${fileName}`)
       this.statusData['Last uploaded file'] = filePath
+      this.statusData['Number of files sent since OIBus has started'] += 1
+      this.statusData['Last upload at'] = new Date().toISOString()
       this.updateStatusDataStream()
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {

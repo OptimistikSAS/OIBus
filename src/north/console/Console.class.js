@@ -27,13 +27,13 @@ class Console extends ApiHandler {
   async handleValues(values) {
     if (this.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data'])
-      this.statusData['Last handled Values at'] = new Date().toISOString()
-      this.updateStatusDataStream()
     } else {
       process.stdout.write(`(${values.length})`)
-      this.statusData['Last handled Values at'] = new Date().toISOString()
-      this.updateStatusDataStream()
     }
+    this.statusData['Last handled values at'] = new Date().toISOString()
+    this.statusData['Number of values sent since OIBus has started'] += values.length
+    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+    this.updateStatusDataStream()
     return values.length
   }
 
@@ -52,6 +52,8 @@ class Console extends ApiHandler {
     }]
     console.table(data)
     this.statusData['Last uploaded file'] = filePath
+    this.statusData['Number of files sent since OIBus has started'] += 1
+    this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
     return ApiHandler.STATUS.SUCCESS
   }

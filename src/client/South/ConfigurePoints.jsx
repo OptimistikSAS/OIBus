@@ -12,7 +12,7 @@ import ProtocolSchemas from './Protocols.jsx'
 import * as Controls from '../components/OIbForm'
 import utils from '../helpers/utils'
 import validation from './Form/South.validation'
-import StatusButton from './StatusButton.jsx'
+import StatusButton from '../StatusButton.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)

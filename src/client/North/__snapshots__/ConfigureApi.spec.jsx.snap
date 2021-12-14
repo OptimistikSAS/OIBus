@@ -32,6 +32,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""
@@ -1107,6 +1117,16 @@ exports[`ConfigureApi check update 1`] = `
         </svg>
       </button>
     </h6>
+    <div
+      class="pull-right mr-3"
+    >
+      <button
+        class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
+        type="button"
+      >
+        Status
+      </button>
+    </div>
   </div>
   <form
     class=""

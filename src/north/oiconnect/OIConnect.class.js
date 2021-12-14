@@ -34,7 +34,9 @@ class OIConnect extends ApiHandler {
    */
   async handleValues(values) {
     this.logger.silly(`Link handleValues() call with ${values.length} values`)
-    this.statusData['Last handled Values at'] = new Date().toISOString()
+    this.statusData['Last handled values at'] = new Date().toISOString()
+    this.statusData['Number of values sent since OIBus has started'] += values.length
+    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
     this.updateStatusDataStream()
     await this.postJson(values)
     return values.length
@@ -49,6 +51,8 @@ class OIConnect extends ApiHandler {
     const stats = fs.statSync(filePath)
     this.logger.debug(`handleFile(${filePath}) (${stats.size} bytes)`)
     this.statusData['Last uploaded file'] = filePath
+    this.statusData['Number of files sent since OIBus has started'] += 1
+    this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
     return this.postFile(filePath)
   }
