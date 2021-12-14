@@ -29,9 +29,9 @@ router.get('/reload', engineController.reload)
 router.get('/shutdown', engineController.shutdown)
 router.get('/logs', logController.getLogs)
 
-router.get('/historyQuery/config', historyQueryController.getActiveConfiguration)
-router.put('/historyQuery/config', historyQueryController.updateConfig)
-router.put('/historyQuery/config/activate', historyQueryController.activateConfiguration)
-router.get('/historyQuery/:id/status', historyQueryController.getStatus)
+router.get('/history-query/config', historyQueryController.getActiveConfiguration)
+router.put('/history-query/config', historyQueryController.updateConfig)
+router.put('/history-query/config/activate', historyQueryController.activateConfiguration)
+router.get('/history-query/:id/status', historyQueryController.getStatus)
 
 module.exports = router
