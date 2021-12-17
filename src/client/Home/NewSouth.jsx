@@ -67,6 +67,16 @@ const NewSouth = ({
       </ModalHeader>
 
       <ModalBody>
+        <Col className="oi-new-name" md="6">
+          <OIbText
+            label="New DataSource Name"
+            value={name}
+            name="name"
+            onChange={(fieldName, newName) => setName(newName)}
+            defaultValue=""
+            valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
+          />
+        </Col>
         <Container className="scrollBar">
           {southCategoryList?.map((category) => (
             <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
@@ -103,26 +113,16 @@ const NewSouth = ({
       </ModalBody>
 
       <ModalFooter className="oi-modal-footer">
-        <Col className="oi-new-name" md="6">
-          <OIbText
-            label="New DataSource Name"
-            value={name}
-            name="name"
-            onChange={(fieldName, newName) => setName(newName)}
-            defaultValue=""
-            valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
-          />
-          {protocolError && !protocol ? (
-            <div className="oi-error">
-              {protocolError}
-            </div>
-          ) : null}
-          {nameError && name === '' ? (
-            <div className="oi-error">
-              {nameError}
-            </div>
-          ) : null}
-        </Col>
+        {protocolError && !protocol ? (
+          <div className="oi-error">
+            {protocolError}
+          </div>
+        ) : null}
+        {nameError && name === '' ? (
+          <div className="oi-error">
+            {nameError}
+          </div>
+        ) : null}
         <Button
           className="oi-add-button"
           id="confirm"

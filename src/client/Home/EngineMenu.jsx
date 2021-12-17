@@ -61,14 +61,6 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
             isOpen={shutdownShow}
             toggle={() => setShutdownShow(false)}
           />
-          <DropdownItem
-            id="oi-about"
-            onClick={() => {
-              navigate('/about/')
-            }}
-          >
-            About
-          </DropdownItem>
         </DropdownMenu>
 
       </Dropdown>
