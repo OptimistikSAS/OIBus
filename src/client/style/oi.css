@@ -150,7 +150,8 @@ a:focus {
 .oi-error {
   color:#dc3545;
   font-size: 80%;
-  margin-top: 15px;
+  margin-bottom: 15px;
+  margin-right: 20%;
 }
 
 .oi-add-button {
@@ -164,14 +165,14 @@ margin-top: -7px;
   color: #fff;
   height: 32px;
   padding-top: 4px;
+  padding-bottom: 35px;
 }
 
 .oi-modal-footer {
-  height: 120px;
+  height: 80px;
 }
 
 .oi-new-name {
-  right: 240px;
   bottom: 10px;
 }
 

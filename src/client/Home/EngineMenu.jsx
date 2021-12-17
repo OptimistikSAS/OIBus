@@ -61,16 +61,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
             isOpen={shutdownShow}
             toggle={() => setShutdownShow(false)}
           />
-          <DropdownItem
-            id="oi-about"
-            onClick={() => {
-              history.push({ pathname: '/about/' })
-            }}
-          >
-            About
-          </DropdownItem>
         </DropdownMenu>
-
       </Dropdown>
       <NewSouth modal={southModal} toggle={() => setSouthModal(false)} />
       <NewNorth modal={northModal} toggle={() => setNorthModal(false)} />

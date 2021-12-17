@@ -8,7 +8,7 @@ exports[`Northmenu check cancel delete first application 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -74,7 +74,7 @@ exports[`Northmenu check delete first application 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -140,7 +140,7 @@ exports[`Northmenu check duplicate application 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -206,7 +206,7 @@ exports[`Northmenu check duplicate application already copied 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -272,7 +272,7 @@ exports[`Northmenu check edit first application 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -338,7 +338,7 @@ exports[`Northmenu display NorthMenu page based on config 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -404,7 +404,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -470,7 +470,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 2`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -536,7 +536,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 3`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -602,7 +602,7 @@ exports[`Northmenu display NorthMenu properly when empty newConfig 4`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 oi-dropdown-toggle  btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >

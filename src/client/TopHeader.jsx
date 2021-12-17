@@ -2,7 +2,6 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { Badge, Collapse, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem } from 'reactstrap'
-import { FaNetworkWired } from 'react-icons/fa'
 import apis from './services/apis'
 import { ConfigContext } from './context/configContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
@@ -63,9 +62,11 @@ const TopHeader = () => {
             {'Activation '}
             {configModified ? <Badge color="warning" pill>new</Badge> : null}
           </NavItem>
+          <NavItem className="oi-navitem" active={isActive('about')} tag={Link} to="/about">
+            About
+          </NavItem>
           <NavItem className="oi-navname">
-            <FaNetworkWired />
-            {` ${status.version}`}
+            {` version ${status.version}`}
           </NavItem>
         </Nav>
       </Collapse>

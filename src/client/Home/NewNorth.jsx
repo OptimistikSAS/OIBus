@@ -62,6 +62,16 @@ const NewNorth = ({ modal, toggle }) => {
         </ModalHeader>
 
         <ModalBody>
+          <Col className="oi-new-name" md="6">
+            <OIbText
+              label="Application Name"
+              value={name}
+              name="name"
+              onChange={(fieldName, newName) => setName(newName)}
+              defaultValue=""
+              valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
+            />
+          </Col>
           <Container className="scrollBar">
             {northCategoryList?.map((category) => (
               <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
@@ -97,26 +107,16 @@ const NewNorth = ({ modal, toggle }) => {
         </ModalBody>
 
         <ModalFooter className="oi-modal-footer">
-          <Col className="oi-new-name" md="6">
-            <OIbText
-              label="Application Name"
-              value={name}
-              name="name"
-              onChange={(fieldName, newName) => setName(newName)}
-              defaultValue=""
-              valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
-            />
-            {apiError && !api ? (
-              <div className="oi-error">
-                {apiError}
-              </div>
-            ) : null}
-            {nameError && name === '' ? (
-              <div className="oi-error">
-                {nameError}
-              </div>
-            ) : null}
-          </Col>
+          {apiError && !api ? (
+            <div className="oi-error">
+              {apiError}
+            </div>
+          ) : null}
+          {nameError && name === '' ? (
+            <div className="oi-error">
+              {nameError}
+            </div>
+          ) : null}
           <Button
             className="oi-add-button"
             id="confirm"
