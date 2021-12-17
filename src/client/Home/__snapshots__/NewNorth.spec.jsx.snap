@@ -77,15 +77,6 @@ exports[`NewNorth check add connector without name & with protocol 1`] = `
       >
         Shutdown
       </button>
-      <button
-        class="dropdown-item"
-        id="oi-about"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        About
-      </button>
     </div>
   </div>
 </div>
@@ -167,15 +158,6 @@ exports[`NewNorth check add connector without protocol & with new name 1`] = `
         type="button"
       >
         Shutdown
-      </button>
-      <button
-        class="dropdown-item"
-        id="oi-about"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        About
       </button>
     </div>
   </div>
@@ -259,15 +241,6 @@ exports[`NewNorth check add connector without protocol & without new name 1`] = 
       >
         Shutdown
       </button>
-      <button
-        class="dropdown-item"
-        id="oi-about"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        About
-      </button>
     </div>
   </div>
 </div>
@@ -349,15 +322,6 @@ exports[`NewNorth check change name with "new_application" id 1`] = `
         type="button"
       >
         Shutdown
-      </button>
-      <button
-        class="dropdown-item"
-        id="oi-about"
-        role="menuitem"
-        tabindex="0"
-        type="button"
-      >
-        About
       </button>
     </div>
   </div>

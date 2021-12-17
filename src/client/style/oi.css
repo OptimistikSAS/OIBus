@@ -150,7 +150,8 @@ a:focus {
 .oi-error {
   color:#dc3545;
   font-size: 80%;
-  margin-top: 15px;
+  margin-bottom: 15px;
+  margin-right: 20%;
 }
 .oi-status-error {
   text-align: center;
@@ -168,15 +169,14 @@ margin-top: -7px;
   background-color: #323e48;
   color: #fff;
   height: 32px;
-  padding-top: 4px;
+  padding-top: 1px;
 }
 
 .oi-modal-footer {
-  height: 120px;
+  height: 80px;
 }
 
 .oi-new-name {
-  right: 240px;
   bottom: 10px;
 }
 

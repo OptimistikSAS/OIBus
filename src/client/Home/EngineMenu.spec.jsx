@@ -111,17 +111,4 @@ describe('EngineMenu', () => {
     expect(mockNavigate).toBeCalledWith('/engine/')
     expect(container).toMatchSnapshot()
   })
-
-  test('go to about section', () => {
-    act(() => {
-      ReactDOM.render(
-        <EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />,
-        container,
-      )
-    })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-about'))
-    expect(mockNavigate).toBeCalledWith('/about/')
-    expect(container).toMatchSnapshot()
-  })
 })
