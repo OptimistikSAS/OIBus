@@ -9,12 +9,11 @@ import utils from '../helpers/utils'
 import testConfig from '../../../tests/testHistoryConfig'
 import { HistoryConfigProvider, reducer } from './historyContext.jsx'
 
-// console.log(JSON.parse(testConfig))
 // mock fetch
 global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
-    case '/historyQuery/config':
+    case '/history-query/config':
       jsonString = JSON.stringify({ config: testConfig })
       break
     default:
@@ -194,30 +193,6 @@ describe('HistoryConfigProvider', () => {
     // remove test error
     delete testConfig.errors
   })
-  // test('check deleteRow action with multiple previous error', () => {
-  //   // add some previuous error to test error cleaning
-  //   testConfig.errors = {
-  //     '0.compress': 'some previous error',
-  //     '0.enabled': 'some previous error',
-  //   }
-  //   act(() => {
-  //     ReactDOM.render(
-  //       <HistoryConfigProvider>
-  //         <div />
-  //       </HistoryConfigProvider>,
-  //       container,
-  //     )
-  //   })
-
-  //   const action = { type: 'deleteRow', name: '0' }
-  //   const newState = dispatchNewHistoryConfig(action)
-  //   const expectedState = utils.jsonCopy(testConfig)
-  //   delete expectedState.errors['0.enabled']
-  //   expect(newState).toEqual([expectedState[1]])
-
-  //   // remove test error
-  //   delete testConfig.errors
-  // })
   test('check deleteAllRows action', () => {
     act(() => {
       ReactDOM.render(

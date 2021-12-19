@@ -34,8 +34,8 @@ const Main = () => (
             <Routes>
               <Route exact path="/" element={<HomePage />} />
               <Route exact path="/engine" element={<Engine />} />
-              <Route exact path="/historyQuery" element={<HistoryQuery />} />
-              <Route exact path="/historyQuery/:id" element={<ConfigureHistoryQuery />} />
+              <Route exact path="/history-query" element={<HistoryQuery />} />
+              <Route exact path="/history-query/:id" element={<ConfigureHistoryQuery />} />
               <Route exact path="/south/:id" element={<ConfigureProtocol />} />
               <Route exact path="/south/:id/live" element={<SouthStatus />} />
               <Route exact path="/south/:id/points" element={<ConfigurePoints />} />

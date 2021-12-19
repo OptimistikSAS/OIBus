@@ -33,7 +33,7 @@ const HistoryQuery = () => {
    */
   const handleEdit = (position) => {
     const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(position)]
-    const link = `/historyQuery/${historyQuery.id}`
+    const link = `/history-query/${historyQuery.id}`
     navigate(link)
   }
 
@@ -157,7 +157,7 @@ const HistoryQuery = () => {
   ])
 
   return tableRows ? (
-    <Col md="8" className="bulk">
+    <Col md="8" className="history-query">
       <Table
         headers={tableHeaders}
         rows={tableRows}
