@@ -3,10 +3,16 @@ import PropTypes from 'prop-types'
 import objectPath from 'object-path'
 import apis from '../services/apis'
 import utils from '../helpers/utils'
-import { ConfigContext } from './configContext.jsx'
+import { ConfigContext } from './ConfigContext.jsx'
 
 const reducer = (state, action) => {
-  const { name, value, config, type, validity } = action
+  const {
+    name,
+    value,
+    config,
+    type,
+    validity,
+  } = action
   const newState = utils.jsonCopy(state)
   switch (type) {
     case 'reset':
@@ -21,10 +27,10 @@ const reducer = (state, action) => {
       }
       objectPath.set(newState, name, value)
       return newState
-    case 'deleteRow':
-    {
+    case 'deleteRow': {
       if (newState.errors) {
-        const keys = Object.keys(newState.errors).filter((key) => key.startsWith(name))
+        const keys = Object.keys(newState.errors)
+          .filter((key) => key.startsWith(name))
         keys.forEach((key) => delete newState.errors[key])
         if (Object.keys(newState.errors).length === 0) delete newState.errors
       }
@@ -49,7 +55,10 @@ const HistoryConfigContext = React.createContext(historyConfigInitialState)
 const HistoryConfigProvider = ({ children }) => {
   const [newHistoryConfig, dispatchNewHistoryConfig] = React.useReducer(reducer, historyConfigInitialState)
   const [activeHistoryConfig, setActiveHistoryConfig] = React.useState([])
-  const { protocolList, apiList } = React.useContext(ConfigContext)
+  const {
+    protocolList,
+    apiList,
+  } = React.useContext(ConfigContext)
 
   React.useEffect(() => {
     let mounted = true
@@ -57,7 +66,10 @@ const HistoryConfigProvider = ({ children }) => {
       try {
         const resp = await apis.getHistoryConfig()
         if (mounted && resp) {
-          dispatchNewHistoryConfig({ type: 'reset', config: resp.config })
+          dispatchNewHistoryConfig({
+            type: 'reset',
+            config: resp.config,
+          })
           setActiveHistoryConfig(utils.jsonCopy(resp.config))
         }
       } catch (error) {
@@ -70,9 +82,25 @@ const HistoryConfigProvider = ({ children }) => {
     }
   }, [])
 
+  const configValueProvided = React.useMemo(
+    () => ({
+      newHistoryConfig,
+      dispatchNewHistoryConfig,
+      activeHistoryConfig,
+      setActiveHistoryConfig,
+      apiList,
+      protocolList,
+    }),
+    [newHistoryConfig,
+      dispatchNewHistoryConfig,
+      activeHistoryConfig,
+      setActiveHistoryConfig,
+      apiList,
+      protocolList],
+  )
   return (
     <HistoryConfigContext.Provider
-      value={{ newHistoryConfig, dispatchNewHistoryConfig, activeHistoryConfig, setActiveHistoryConfig, apiList, protocolList }}
+      value={configValueProvided}
     >
       {children}
     </HistoryConfigContext.Provider>

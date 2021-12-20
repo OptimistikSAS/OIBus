@@ -2,8 +2,8 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Col, Spinner } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
-import { ConfigContext } from '../context/configContext.jsx'
-import { HistoryConfigContext } from '../context/historyContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
+import { HistoryConfigContext } from '../context/HistoryContext.jsx'
 import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
 
 const HistoryQuery = () => {
@@ -21,8 +21,7 @@ const HistoryQuery = () => {
    */
   const findIndexBasedOnOrderNumber = (indexInTable) => {
     const queryToOperate = historyQueries[indexInTable]
-    const index = unorderedHistoryQueries.findIndex((historyQuery) => historyQuery.order === queryToOperate.order)
-    return index
+    return unorderedHistoryQueries.findIndex((historyQuery) => historyQuery.order === queryToOperate.order)
   }
 
   /**

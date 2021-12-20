@@ -7,6 +7,7 @@ const engine = jest.genMockFromModule('../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 engine.addFile = jest.fn()
+engine.eventEmitters = {}
 
 beforeEach(() => {
   jest.resetAllMocks()

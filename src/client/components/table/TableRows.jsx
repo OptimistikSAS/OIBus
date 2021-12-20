@@ -10,24 +10,22 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
       <tr key={row[0].name}>
         {handleOrder && (
         <td>
-          <>
-            <FaLongArrowAltDown
-              className="oi-arrow-up-down"
-              size={15}
-              onClick={(e) => {
-                e.preventDefault()
-                handleOrder('down', index)
-              }}
-            />
-            <FaLongArrowAltUp
-              className="oi-arrow-up-down"
-              size={15}
-              onClick={(e) => {
-                e.preventDefault()
-                handleOrder('up', index)
-              }}
-            />
-          </>
+          <FaLongArrowAltDown
+            className="oi-arrow-up-down"
+            size={15}
+            onClick={(e) => {
+              e.preventDefault()
+              handleOrder('down', index)
+            }}
+          />
+          <FaLongArrowAltUp
+            className="oi-arrow-up-down"
+            size={15}
+            onClick={(e) => {
+              e.preventDefault()
+              handleOrder('up', index)
+            }}
+          />
         </td>
         )}
         {row.map((field) => (
