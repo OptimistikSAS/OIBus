@@ -4,16 +4,17 @@ import { Col, Row } from 'reactstrap'
 import { OIbText, OIbTitle } from '../components/OIbForm'
 import validation from './Engine.validation'
 
-const HistoryQuery = ({ onChange, historyQuery }) => (
+const HistoryQuery = ({
+  onChange,
+  historyQuery,
+}) => (
   <>
     <OIbTitle label="HistoryQuery parameters">
-      <>
-        <p>
-          HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA.
-          The export data is stored using CSV files in the specified folder.
-          When the export is finished the data will be sent to North applications capable of handling those data.
-        </p>
-      </>
+      <p>
+        HistoryQuery requests are used to export high amount of data from historical capable South protocols, like OPC HDA, OPCUA HA.
+        The export data is stored using CSV files in the specified folder.
+        When the export is finished the data will be sent to North applications capable of handling those data.
+      </p>
     </OIbTitle>
     <Row>
       <Col md={4}>

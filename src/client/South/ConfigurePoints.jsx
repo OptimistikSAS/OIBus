@@ -6,8 +6,8 @@ import { FaArrowLeft } from 'react-icons/fa'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import utils from '../helpers/utils'
-import StatusButton from './StatusButton.jsx'
 import PointsComponent from '../components/PointsComponent.jsx'
+import StatusButton from '../StatusButton.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)

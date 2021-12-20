@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router'
 import { Spinner } from 'reactstrap'
-import { HistoryConfigContext } from '../context/historyContext.jsx'
+import { HistoryConfigContext } from '../context/HistoryContext.jsx'
 import HistoryQueryForm from './Form/HistoryQueryForm.jsx'
 
 const ConfigureHistoryQuery = () => {

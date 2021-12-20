@@ -82,7 +82,7 @@ class ProtocolHandler {
       supportListen,
       supportLastPoint,
       supportFile,
-      supportHistory
+      supportHistory,
     } = this.supportedModes
     if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
       this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
@@ -144,7 +144,7 @@ class ProtocolHandler {
       id,
       name,
       protocol,
-      startTime
+      startTime,
     } = this.dataSource
 
     const databasePath = `${this.engine.getCacheFolder()}/${id}.db`
@@ -276,7 +276,7 @@ class ProtocolHandler {
   disconnect() {
     const {
       name,
-      id
+      id,
     } = this.dataSource
     this.logger.info(`Data source ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/south/${id}/sse`]?.events?.off('data', this.listener)

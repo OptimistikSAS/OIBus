@@ -6,7 +6,7 @@ import apis from './services/apis'
 import { ConfigContext } from './context/ConfigContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
-import { HistoryConfigContext } from './context/historyContext.jsx'
+import { HistoryConfigContext } from './context/HistoryContext.jsx'
 
 const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)

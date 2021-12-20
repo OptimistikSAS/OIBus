@@ -3,9 +3,9 @@ import { Spinner } from 'reactstrap'
 
 import PropTypes from 'prop-types'
 import { AlertContext } from '../../context/AlertContext.jsx'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 import utils from '../../helpers/utils'
-import { HistoryConfigContext } from '../../context/historyContext.jsx'
+import { HistoryConfigContext } from '../../context/HistoryContext.jsx'
 import PointsComponent from '../../components/PointsComponent.jsx'
 
 const PointsSection = ({ query, queryIndex }) => {

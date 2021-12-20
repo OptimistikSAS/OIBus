@@ -3,9 +3,10 @@ import PropTypes from 'prop-types'
 import { Form, Row, Col, Label, Button } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
 import { FaPauseCircle, FaPlayCircle, FaArrowLeft } from 'react-icons/fa'
+import { act } from 'react-dom/test-utils'
 import { OIbTitle, OIbCheckBox, OIbText, OIbTextArea } from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
-import { ConfigContext } from '../../context/configContext.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
 import PointsSection from './PointsSection.jsx'
 import apis from '../../services/apis'
 
@@ -22,7 +23,9 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
 
   useEffect(() => {
     apis.getLastCompletedForHistoryQuery().then((response) => {
-      setLastCompleted(response)
+      act(() => {
+        setLastCompleted(response)
+      })
     }).catch((error) => {
       console.error(error)
     })
