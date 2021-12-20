@@ -1,3 +1,9 @@
+/* eslint-disable no-await-in-loop */
+
+const fs = require('fs/promises')
+const path = require('path')
+const ApiHandler = require('../north/ApiHandler.class')
+
 class HistoryQuery {
   // Waiting to be started
   static STATUS_PENDING = 'pending'
@@ -10,6 +16,12 @@ class HistoryQuery {
 
   // History query finished
   static STATUS_FINISHED = 'finished'
+
+  // The folder to store the imported files
+  static IMPORTED_FOLDER = 'imported'
+
+  // The folder to store files not able to import
+  static ERROR_FOLDER = 'error'
 
   constructor(engine, logger, config, dataSource, application) {
     this.engine = engine
@@ -95,22 +107,21 @@ class HistoryQuery {
    */
   async startImport() {
     this.logger.info(`Start the import phase for HistoryQuery ${this.id}`)
-    await this.finish()
-    this.engine.runNextHistoryQuery()
 
-    // if (this.status !== HistoryQuery.STATUS_IMPORTING) {
-    //   await this.setStatus(HistoryQuery.STATUS_IMPORTING)
-    // }
+    if (this.status !== HistoryQuery.STATUS_IMPORTING) {
+      await this.setStatus(HistoryQuery.STATUS_IMPORTING)
+    }
 
-    // const { api, enabled, name } = this.application
-    // this.north = enabled ? this.createNorth(api, this.application) : null
-    // if (this.north) {
-    //   await this.north.connect()
-    // } else {
-    //   this.logger.error(`Application ${name} is enabled or not found`)
-    //   this.disable()
-    //   this.engine.runNextHistoryQuery()
-    // }
+    const { api, enabled, name } = this.application
+    this.north = enabled ? this.engine.createNorth(api, this.application) : null
+    if (this.north) {
+      await this.north.connect()
+      this.import()
+    } else {
+      this.logger.error(`Application ${name} is enabled or not found`)
+      this.disable()
+      this.engine.runNextHistoryQuery()
+    }
   }
 
   /**
@@ -144,6 +155,55 @@ class HistoryQuery {
     }
 
     this.startImport()
+  }
+
+  /**
+   * Import data into North.
+   * @return {Promise<void>} - The result promise
+   */
+  async import() {
+    let files = []
+    const cacheFolder = `${this.engine.getCacheFolder()}/${this.dataSource.id}`
+    try {
+      this.logger.silly(`Reading ${cacheFolder} directory`)
+      files = await fs.readdir(cacheFolder)
+    } catch (error) {
+      this.logger.error(`Could not read folder ${cacheFolder} - error: ${error})`)
+      return
+    }
+
+    // Filter out directories
+    files.filter(async (filename) => {
+      const stats = await fs.stat(path.join(cacheFolder, filename))
+      return stats.isFile()
+    })
+    if (files.length === 0) {
+      this.logger.debug(`No files in ${cacheFolder}`)
+      return
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const filename of files) {
+      const filePath = path.join(cacheFolder, filename)
+      let status
+      try {
+        status = await this.north.handleFile(filePath)
+      } catch (error) {
+        status = error
+      }
+
+      const archiveFolder = path.join(cacheFolder, HistoryQuery.IMPORTED_FOLDER)
+      const errorFolder = path.join(cacheFolder, HistoryQuery.ERROR_FOLDER)
+      if (status === ApiHandler.STATUS.SUCCESS) {
+        await HistoryQuery.createFolder(archiveFolder)
+        await fs.rename(filePath, path.join(cacheFolder, HistoryQuery.IMPORTED_FOLDER, filename))
+      } else {
+        await HistoryQuery.createFolder(errorFolder)
+        await fs.rename(filePath, path.join(cacheFolder, HistoryQuery.ERROR_FOLDER, filename))
+      }
+    }
+
+    await this.finish()
   }
 
   /**
@@ -195,6 +255,20 @@ class HistoryQuery {
    */
   disable() {
     this.engine.configService.saveStatusForHistoryQuery(this.id, this.status, false)
+  }
+
+  /**
+   * Create folder if not exists
+   * @param {string} folder - The folder to create
+   * @return {Promise<void>} - The result promise
+   */
+  static async createFolder(folder) {
+    const folderPath = path.resolve(folder)
+    try {
+      await fs.stat(folderPath)
+    } catch (error) {
+      await fs.mkdir(folderPath, { recursive: true })
+    }
   }
 }
 
