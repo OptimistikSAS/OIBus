@@ -84,8 +84,7 @@ class LokiTransport {
       fetchOptions.headers.Authorization = `Basic ${basic}`
     }
     try {
-      const response = await fetch(this.lokiAddress, fetchOptions)
-      console.log('sendLokiLogs response', response, fetchOptions)
+      await fetch(this.lokiAddress, fetchOptions)
     } catch (error) {
       console.log('error', error)
     }
