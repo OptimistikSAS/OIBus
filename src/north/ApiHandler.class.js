@@ -44,6 +44,7 @@ class ApiHandler {
 
     this.logger = engine.logger
     this.scanModes = this.engine.scanModes
+    this.statusData = {}
   }
 
   async init() {
@@ -51,7 +52,7 @@ class ApiHandler {
     this.logger = new Logger(`North:${this.application.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
-    this.statusData = {}
+    this.initializeStatusData()
   }
 
   /**

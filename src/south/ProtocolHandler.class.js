@@ -63,6 +63,7 @@ class ProtocolHandler {
     this.logger = new Logger(`South:${this.dataSource.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
+    this.initializeStatusData()
   }
 
   async connect() {
