@@ -7,7 +7,7 @@ import { act } from 'react-dom/test-utils'
 
 import utils from '../helpers/utils'
 import testConfig from '../../../tests/testHistoryConfig'
-import { HistoryConfigProvider, reducer } from './historyContext.jsx'
+import { HistoryConfigProvider, reducer } from './HistoryContext.jsx'
 
 // mock fetch
 global.fetch = jest.fn().mockImplementation((uri) => {

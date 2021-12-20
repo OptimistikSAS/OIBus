@@ -7,7 +7,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import utils from '../helpers/utils'
 import ConfigDiffRenderer from './components/ConfigDiffRenderer.jsx'
 import ConfigJsonRenderer from './components/ConfigJsonRenderer.jsx'
-import { HistoryConfigContext } from '../context/historyContext.jsx'
+import { HistoryConfigContext } from '../context/HistoryContext.jsx'
 import ActionButtons from './components/ActionButtons.jsx'
 
 const HistoryConfigActivation = () => {
