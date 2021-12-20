@@ -1,11 +1,19 @@
 {
-    "pkg": {
+  "pkg": {
     "assets": [
       "build/**/*",
       "node_modules/sqlite3/**/*.node",
       "node_modules/oracledb/**/*.node",
       "node_modules/vm2/lib/contextify.js",
       "src/config/*"
-    ]
+    ],
+    "scripts": [
+      "./node_modules/thread-stream/lib/worker.js",
+      "./node_modules/pino/lib/worker.js"
+    ],
+    "patches": {
+      "./node_modules/thread-stream/lib/worker.js": ["fn = (await realImport(workerData.filename)).default", "fn = realRequire(workerData.filename.replace('file://', ''))"],
+      "./node_modules/pino/lib/worker.js": ["fn = (await realImport(toLoad)).default", "fn = realRequire(t.target)"]
+    }
   }
 }
