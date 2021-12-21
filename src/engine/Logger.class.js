@@ -117,8 +117,9 @@ class Logger {
       // eslint-disable-next-line handle-callback-err
       Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace
       Error.captureStackTrace(this)
-      // Get the first CallSite outside the logger
-      const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(__filename)) === -1)
+      // Get the first CallSite outside the logger and outside pino library
+      const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(__filename)) === -1
+        && line.getFileName().indexOf('node_modules/pino') === -1)
       return `${path.parse(callSite.getFileName()).name}(${callSite.getLineNumber()})`
     } finally {
       Error.prepareStackTrace = oldStackTrace
