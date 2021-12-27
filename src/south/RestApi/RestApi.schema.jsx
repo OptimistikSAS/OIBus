@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange, minValue, notEmpty } from '../../services/validation.service'
+import { inRange, minValue, notEmpty, startsWith } from '../../services/validation.service'
 
 const schema = { name: 'RestApi' }
 schema.form = {
@@ -8,26 +8,24 @@ schema.form = {
     label: 'REST API',
     md: 12,
     children: (
-      <>
-        <p>
-          TODO
-        </p>
-      </>
+      <p>
+        TODO
+      </p>
     ),
   },
-  apiType: {
+  requestMethod: {
     type: 'OIbSelect',
+    options: ['GET', 'POST', 'PUT', 'PATCH'],
     md: 2,
-    options: ['octopus', 'custom'],
-    label: 'Select your API',
-    defaultValue: 'octopus',
-    help: <div>API to implement</div>,
+    defaultValue: 'GET',
   },
   host: {
     type: 'OIbText',
-    defaultValue: 'https://185.253.39.139',
+    newRow: false,
+    md: 4,
+    defaultValue: 'http://localhost',
     valid: notEmpty(),
-    help: <div>IP address of the API server</div>,
+    help: <div>IP address or host name of the API server</div>,
   },
   port: {
     type: 'OIbInteger',
@@ -37,14 +35,39 @@ schema.form = {
     defaultValue: 8443,
     help: <div>Port number of the API server</div>,
   },
-  entity: {
+  endpoint: {
     type: 'OIbText',
-    md: 3,
-    defaultValue: 'mac_148285',
-    valid: notEmpty(),
-    help: <div>Name of the entity to request</div>,
+    newRow: false,
+    md: 4,
+    valid: startsWith('/'),
+    help: <div>Endpoint to request</div>,
+  },
+  queryParams: {
+    type: 'OIbTable',
+    rows: {
+      queryParamKey: {
+        type: 'OIbText',
+        newRow: false,
+        label: 'Key',
+        valid: notEmpty(),
+        defaultValue: '',
+      },
+      queryParamValue: {
+        type: 'OIbText',
+        newRow: false,
+        label: 'Value',
+        valid: notEmpty(),
+        defaultValue: '',
+      },
+    },
   },
   authentication: { type: 'OIbAuthentication' },
+  acceptSelfSigned: {
+    type: 'OIbCheckBox',
+    label: 'Accept rejected certificates ?',
+    md: 2,
+    defaultValue: false,
+  },
   connectionTimeout: {
     type: 'OIbInteger',
     label: 'Connection timeout (ms)',
@@ -60,32 +83,60 @@ schema.form = {
     defaultValue: 1000,
     md: 3,
   },
-}
-schema.points = {
-  pointId: {
+  payloadParser: {
+    type: 'OIbSelect',
+    options: ['Raw', 'OIAnalytics time values'],
+    md: 2,
+    defaultValue: 'Raw',
+  },
+  convertToCsv: {
+    type: 'OIbCheckBox',
+    label: 'Convert payload into CSV ?',
+    md: 2,
+    defaultValue: true,
+  },
+  delimiter: {
     type: 'OIbText',
+    defaultValue: ',',
     valid: notEmpty(),
-    unique: true,
-    defaultValue: '',
-    help: (
-      <ul>
-        <li>
-          Point Id should be unique.
-        </li>
-        <li>
-          Ex.
-          <b> point.# </b>
-          covers
-          <b> point.id</b>
-        </li>
-      </ul>
-    ),
+    help: <div>Delimiter in the CSV file</div>,
+    md: 1,
   },
-  scanMode: {
-    type: 'OIbScanMode',
-    label: 'Scan Mode',
+  dateFormat: {
+    newRow: false,
+    type: 'OIbText',
+    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
     valid: notEmpty(),
+    help: <div>Date Format</div>,
+    md: 2,
+  },
+  fileName: {
+    type: 'OIbText',
+    defaultValue: 'rast-api-results_@CurrentDate.csv',
+    valid: notEmpty(),
+    help: <div>The name of the CSV file containing the results</div>,
+    md: 3,
+  },
+  timeColumn: {
+    type: 'OIbText',
+    md: 2,
+    defaultValue: 'timestamp',
+    valid: notEmpty(),
+    help: <div>Time Column</div>,
+  },
+  timezone: {
+    type: 'OIbTimezone',
+    newRow: false,
+    md: 2,
+  },
+  compression: {
+    type: 'OIbCheckBox',
+    label: 'Compress File?',
+    md: 2,
+    defaultValue: false,
   },
 }
+
+schema.category = 'IoT'
 
 export default schema

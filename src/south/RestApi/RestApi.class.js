@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 const csv = require('papaparse')
 const moment = require('moment-timezone')
@@ -7,10 +7,19 @@ const https = require('https')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
+const oiaTimeValues = require('./formatters/oia-time-values')
+
+const parsers = {
+  Raw: (results) => results,
+  'OIAnalytics time values': oiaTimeValues,
+}
+
 /**
  * Class RestApi
  */
 class RestApi extends ProtocolHandler {
+  static category = 'IoT'
+
   /**
    * Constructor for RestApi
    * @constructor
@@ -22,38 +31,57 @@ class RestApi extends ProtocolHandler {
     super(dataSource, engine)
 
     const {
-      apiType,
+      requestMethod,
       host,
       port,
-      entity,
+      endpoint,
+      queryParams,
       authentication,
       connectionTimeout,
       requestTimeout,
-      startDate,
+      fileName,
+      compression,
+      delimiter,
+      dateFormat,
+      timeColumn,
+      payloadParser,
+      convertToCsv,
+      acceptSelfSigned = false,
     } = this.dataSource.RestApi
 
-    this.apiType = apiType
+    this.requestMethod = requestMethod
     this.host = host
     this.port = port
-    this.entity = entity
+    this.endpoint = endpoint
+    this.queryParams = queryParams
     this.authentication = authentication
     this.connectionTimeout = connectionTimeout
     this.requestTimeout = requestTimeout
-    this.startDate = startDate // "startDate" is currently a "hidden" parameter of oibus.json
+    this.fileName = fileName
+    this.compression = compression
+    this.delimiter = delimiter
+    this.dateFormat = dateFormat
+    this.timeColumn = timeColumn
+    this.acceptSelfSigned = acceptSelfSigned
+    this.payloadParser = payloadParser
+    this.convertToCsv = convertToCsv
 
     const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
-    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.dataSourceId)
+    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.id)
 
-    // Create tmp folder if not exists
-    if (!fs.existsSync(this.tmpFolder)) {
-      fs.mkdirSync(this.tmpFolder, { recursive: true })
-    }
-
-    this.handlesPoints = true
+    this.canHandleHistory = true
+    this.handlesFiles = true
   }
 
   async connect() {
     await super.connect()
+    // Create tmp folder if not exists
+    try {
+      await fs.stat(this.tmpFolder)
+    } catch (error) {
+      await fs.mkdir(this.tmpFolder, { recursive: true })
+    }
+
     this.lastCompletedAt = await this.getConfig('lastCompletedAt')
     if (!this.lastCompletedAt) {
       this.lastCompletedAt = this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString()
@@ -66,43 +94,63 @@ class RestApi extends ProtocolHandler {
    * @return {void}
    */
   async onScanImplementation(_scanMode) {
-    let result = []
+    let results = null
     try {
-      switch (this.apiType) {
-        case 'octopus':
-          result = await this.getDataFromOctopus()
-          break
-        default:
-          this.logger.error(`Api type ${this.apiType} not supported by ${this.dataSource.dataSourceId}`)
-          result = []
-      }
+      this.currentDate = new Date().toISOString()
+      results = await this.getDataFromRestApi()
     } catch (error) {
       this.logger.error(JSON.stringify(error))
     }
 
-    this.logger.debug(`Found ${result.length} results`)
+    if (results) {
+      // Use a formatter to format the retrieved data before converting it into csv or adding values
+      let formattedResults = null
+      try {
+        formattedResults = parsers[this.payloadParser](results)
+      } catch {
+        this.logger.error(`Could not format the results with parser ${this.payloadParser}`)
+      }
 
-    if (result.length > 0) {
-      this.lastCompletedAt = this.setLastCompletedAt(result)
+      if (this.convertToCsv) {
+        const filename = this.fileName.replace('@CurrentDate', moment()
+          .format('YYYY_MM_DD_HH_mm_ss'))
+        const filePath = path.join(this.tmpFolder, filename)
+        this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`)
+        const csvContent = await this.generateCSV(formattedResults)
+        try {
+          await fs.writeFile(filePath, csvContent)
+          if (this.compression) {
+            try {
+              // Compress and send the compressed file
+              const gzipPath = `${filePath}.gz`
+              await this.compress(filePath, gzipPath)
+              await this.addFile(gzipPath, false)
+              await fs.unlink(filePath)
+            } catch (compressionError) {
+              this.logger.error(`Error compressing file ${filename}. Sending it raw instead`)
+              await this.addFile(filePath, false)
+            }
+          } else {
+            await this.addFile(filePath, false)
+          }
+        } catch (error) {
+          this.logger.error(error)
+        }
+      } else {
+        await this.addValues(formattedResults)
+      }
+
+      this.lastCompletedAt = this.currentDate
       await this.setConfig('lastCompletedAt', this.lastCompletedAt)
-      // send the packet immediately to the engine
-      this.addValues(result)
     }
   }
 
   /**
-   * Get new entries from Octopus.
-   * @returns {void}
+   * Get new entries from a REST API.
+   * @return {object} results - the retrieved results
    */
-  async getDataFromOctopus() {
-    const data = { property: this.dataSource.points[0].pointId }
-    this.logger.silly(`Requesting point ${JSON.stringify(data)}`)
-
-    const headers = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    }
-
+  async getDataFromRestApi() {
+    const headers = {}
     switch (this.authentication.type) {
       case 'Basic': {
         const decryptedPassword = this.engine.encryptionService.decryptText(this.authentication.password)
@@ -121,19 +169,16 @@ class RestApi extends ProtocolHandler {
       default:
         break
     }
-
-    const agent = new https.Agent({ rejectUnauthorized: false })
-
     const fetchOptions = {
-      method: 'POST',
+      method: this.requestMethod,
       headers,
-      body: JSON.stringify(data),
-      agent,
+      agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
       timeout: this.connectionTimeout,
     }
+    const requestUrl = `${this.host}:${this.port}${this.endpoint}${this.formatQueryParams()}`
 
-    const requestUrl = `${this.host}:${this.port}/Thingworx/Things/${this.entity}/Services/ODAgetPropertyValues`
-
+    // eslint-disable-next-line max-len
+    this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} authentication and ${this.requestMethod} method: ${requestUrl}`)
     let results = null
     try {
       const response = await fetch(requestUrl, fetchOptions)
@@ -154,58 +199,32 @@ class RestApi extends ProtocolHandler {
       return Promise.reject(connectError)
     }
 
-    return results.array.map((point) => {
-      const resultPoint = {}
-      Object.entries(point).forEach(([key, value]) => {
-        if (key === 'timestamp') {
-          resultPoint.timestamp = value
-        } else {
-          resultPoint.pointId = key
-          resultPoint.data = { value }
+    return results
+  }
+
+  formatQueryParams() {
+    if (this.queryParams?.length > 0) {
+      let queryParamsString = '?'
+      this.queryParams.forEach((queryParam, index) => {
+        let value
+        switch (queryParam.queryParamValue) {
+          case '@LastCompletedDate':
+            value = new Date(this.lastCompletedAt).toISOString()
+            break
+          case '@CurrentDate':
+            value = this.currentDate
+            break
+          default:
+            value = queryParam.queryParamValue
+        }
+        queryParamsString += `${encodeURIComponent(queryParam.queryParamKey)}=${encodeURIComponent(value)}`
+        if (index < this.queryParams.length - 1) {
+          queryParamsString += '&'
         }
       })
-      return resultPoint
-    })
-  }
-
-  /**
-   * Function used to parse an entry and update the lastCompletedAt if needed
-   * @param {*} entryList - on sql result item
-   * @return {string} date - the updated date in iso string format
-   */
-  setLastCompletedAt(entryList) {
-    let newLastCompletedAt = this.lastCompletedAt
-    entryList.forEach((entry) => {
-      if (entry[this.timeColumn] instanceof Date && entry[this.timeColumn] > new Date(newLastCompletedAt)) {
-        newLastCompletedAt = entry[this.timeColumn].toISOString()
-      } else if (entry[this.timeColumn]) {
-        const entryDate = new Date(entry[this.timeColumn])
-        if (entryDate.toString() !== 'Invalid Date') {
-          // When of type string, We need to take back the js added timezone since it is not in the original string coming from the database
-          // When of type number, no need to take back the timezone offset because it represents the number of seconds from 01/01/1970
-          // eslint-disable-next-line max-len
-          const entryDateWithoutTimezoneOffset = typeof entry[this.timeColumn] === 'string' ? new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000) : entryDate
-          if (entryDateWithoutTimezoneOffset > new Date(newLastCompletedAt)) {
-            newLastCompletedAt = entryDateWithoutTimezoneOffset.toISOString()
-          }
-        }
-      }
-    })
-  }
-
-  /**
-   * Format date taking into account the timezone configuration.
-   * Since we don't know how the date is actually stored in the database, we read it as UTC time
-   * and format it as it would be in the configured timezone.
-   * Ex: With timezone "Europe/Paris" the date "2019-01-01 00:00:00" will be converted to "Tue Jan 01 2019 00:00:00 GMT+0100"
-   * @param {Date} date - The date to format
-   * @param {String} timezone - The timezone to use to replace the timezone of the date
-   * @param {String} dateFormat - The format of the date to use for the return result
-   * @returns {string} - The formatted date with timezone
-   */
-  static formatDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone).format(dateFormat)
+      return queryParamsString
+    }
+    return ''
   }
 
   /**
@@ -214,15 +233,6 @@ class RestApi extends ProtocolHandler {
    * @returns {Promise<string>} - The CSV content
    */
   generateCSV(result) {
-    // loop through each value and format date to timezone if value is Date
-    result.forEach((row) => {
-      Object.keys(row).forEach((key) => {
-        const value = row[key]
-        if (value instanceof Date) {
-          row[key] = RestApi.formatDateWithTimezone(value, this.timezone, this.dateFormat)
-        }
-      })
-    })
     const options = {
       header: true,
       delimiter: this.delimiter,
