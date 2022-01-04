@@ -85,7 +85,7 @@ schema.form = {
   },
   payloadParser: {
     type: 'OIbSelect',
-    options: ['Raw', 'OIAnalytics time values'],
+    options: ['Raw', 'OIAnalytics time values', 'SLIMS'],
     md: 2,
     defaultValue: 'Raw',
   },

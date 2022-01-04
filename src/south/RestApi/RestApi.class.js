@@ -1,10 +1,10 @@
 const fs = require('fs/promises')
 const path = require('path')
 const csv = require('papaparse')
-const moment = require('moment-timezone')
 const fetch = require('node-fetch')
 const https = require('https')
 
+const { DateTime } = require('luxon')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 const oiaTimeValues = require('./formatters/oia-time-values')
@@ -12,6 +12,7 @@ const oiaTimeValues = require('./formatters/oia-time-values')
 const parsers = {
   Raw: (results) => results,
   'OIAnalytics time values': oiaTimeValues,
+  SLIMS: (results) => results,
 }
 
 /**
@@ -46,7 +47,7 @@ class RestApi extends ProtocolHandler {
       timeColumn,
       payloadParser,
       convertToCsv,
-      acceptSelfSigned = false,
+      acceptSelfSigned,
     } = this.dataSource.RestApi
 
     this.requestMethod = requestMethod
@@ -66,8 +67,7 @@ class RestApi extends ProtocolHandler {
     this.payloadParser = payloadParser
     this.convertToCsv = convertToCsv
 
-    const { engineConfig: { caching: { cacheFolder } } } = this.engine.configService.getConfig()
-    this.tmpFolder = path.resolve(cacheFolder, this.dataSource.id)
+    this.tmpFolder = path.resolve(this.engineConfig.caching.cacheFolder, this.dataSource.id)
 
     this.canHandleHistory = true
     this.handlesFiles = true
@@ -84,7 +84,7 @@ class RestApi extends ProtocolHandler {
 
     this.lastCompletedAt = await this.getConfig('lastCompletedAt')
     if (!this.lastCompletedAt) {
-      this.lastCompletedAt = this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString()
+      this.lastCompletedAt = new Date().toISOString()
     }
   }
 
@@ -108,13 +108,13 @@ class RestApi extends ProtocolHandler {
       try {
         formattedResults = parsers[this.payloadParser](results)
       } catch {
-        this.logger.error(`Could not format the results with parser ${this.payloadParser}`)
+        this.logger.error(`Could not format the results with parser "${this.payloadParser}"`)
+        return
       }
 
       if (this.convertToCsv) {
-        const filename = this.fileName.replace('@CurrentDate', moment()
-          .format('YYYY_MM_DD_HH_mm_ss'))
-        const filePath = path.join(this.tmpFolder, filename)
+        const fileName = this.fileName.replace('@CurrentDate', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss'))
+        const filePath = path.join(this.tmpFolder, fileName)
         this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`)
         const csvContent = await this.generateCSV(formattedResults)
         try {
@@ -127,7 +127,7 @@ class RestApi extends ProtocolHandler {
               await this.addFile(gzipPath, false)
               await fs.unlink(filePath)
             } catch (compressionError) {
-              this.logger.error(`Error compressing file ${filename}. Sending it raw instead`)
+              this.logger.error(`Error compressing file ${fileName}. Sending it raw instead`)
               await this.addFile(filePath, false)
             }
           } else {
@@ -135,6 +135,7 @@ class RestApi extends ProtocolHandler {
           }
         } catch (error) {
           this.logger.error(error)
+          return
         }
       } else {
         await this.addValues(formattedResults)
