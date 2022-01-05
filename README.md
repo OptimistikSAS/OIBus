@@ -4,6 +4,7 @@
 
 ![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/OIBus.png)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/OptimistikSAS/OIBus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OptimistikSAS/OIBus/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OptimistikSAS/OIBus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OptimistikSAS/OIBus/context:javascript)
 
 ## What OIBus does
 OIBus is an executable (Windows, Linux and MacOS) able to query data from your industrial sources using various protocols (including OPCUA-HA, OPCHDA, Modbus, MQTT) or simply by scanning folders and will send them to your enterprise applications.
