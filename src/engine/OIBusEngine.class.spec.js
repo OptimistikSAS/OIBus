@@ -36,11 +36,9 @@ beforeEach(async () => {
 
   ConfigService.mockImplementation(() => mockConfigService)
 
-  engine = new Engine('../config/defaultConfig.json', false)
+  engine = new OIBusEngine('../config/defaultConfig.json', false)
   await engine.initEngineServices(config.engine)
 })
-
-const engine = new OIBusEngine('../config/defaultConfig.json', false)
 
 describe('Engine', () => {
   it('should be properly initialized', () => {

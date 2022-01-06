@@ -214,7 +214,7 @@ describe('OPCUA-DA south', () => {
     await opcuaSouthTest.connect()
     opcuaSouthTest.connected = true
     opcuaSouthTest.session = { readVariableValue: jest.fn() }
-    await opcuaSouthTest.onScanImplementation(opcuaConfig.points[0].scanMode)
+    await opcuaSouthTest.lastPointQuery(opcuaConfig.points[0].scanMode)
 
     expect(opcuaSouthTest.session.readVariableValue)
       .not

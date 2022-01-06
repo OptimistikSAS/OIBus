@@ -25,7 +25,7 @@ protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
 // BaseEngine classes
 const ConfigService = require('../services/config.service.class')
-const Logger = require('./Logger.class')
+const Logger = require('./logger/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const { createRequestService } = require('../services/request')
 
@@ -46,6 +46,9 @@ class BaseEngine {
   constructor(configFile) {
     this.version = VERSION
 
+    this.eventEmitters = {}
+    this.statusData = {}
+
     this.configService = new ConfigService(this, configFile)
     const { engineConfig } = this.configService.getConfig()
 
@@ -58,6 +61,27 @@ class BaseEngine {
     this.logger = Logger.getDefaultLogger()
     this.logger.setEncryptionService(this.encryptionService)
     this.logger.changeParameters(engineConfig, {})
+
+    // Request service
+    this.requestService = createRequestService(this)
+  }
+
+  /**
+   * Method used to init async services (like logger when loki is used with Bearer token auth)
+   * @param {object} engineConfig - the config retrieved from the file
+   * @param {string} loggerScope - the scope used in the logger (for example 'OIBusEngine')
+   * @returns {Promise<void>} - The promise returns when the services are set
+   */
+  async initEngineServices(engineConfig, loggerScope) {
+    // Check for private key
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
+
+    // Configure the logger
+    this.logger = new Logger(loggerScope)
+    this.logger.setEncryptionService(this.encryptionService)
+    await this.logger.changeParameters(engineConfig, {})
 
     // Request service
     this.requestService = createRequestService(this)
@@ -159,7 +183,7 @@ class BaseEngine {
    * @return {Object} - Available South protocols
    */
   // eslint-disable-next-line class-methods-use-this
-  getSouthList() {
+  getSouthEngineList() {
     return protocolList
   }
 
@@ -183,7 +207,7 @@ class BaseEngine {
    * @return {Object} - Available North applications
    */
   // eslint-disable-next-line class-methods-use-this
-  getNorthList() {
+  getNorthEngineList() {
     return apiList
   }
 }
