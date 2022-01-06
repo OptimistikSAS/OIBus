@@ -1,7 +1,8 @@
 const csv = require('papaparse')
 const moment = require('moment-timezone')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs/promises')
+const EventEmitter = require('events')
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 
@@ -31,6 +32,48 @@ class HistoryQueryEngine extends BaseEngine {
   }
 
   /**
+   * Method used to init async services (like logger when loki is used with Bearer token auth)
+   * @param {object} engineConfig - the config retrieved from the file
+   * @param {string} loggerScope - the scope used for the logger
+   * @returns {Promise<void>} - The promise returns when the services are set
+   */
+  async initEngineServices(engineConfig, loggerScope = 'HistoryQueryEngine') {
+    await super.initEngineServices(engineConfig, loggerScope)
+
+    try {
+      await fs.stat(this.cacheFolder)
+    } catch (e) {
+      this.logger.warn(e)
+      this.logger.info(`Creating main history cache folder in ${this.cacheFolder}`)
+      await fs.mkdir(this.cacheFolder, { recursive: true })
+    }
+
+    this.logger.info('Starting HistoryQueryEngine')
+  }
+
+  /**
+   * Update engine status data to be displayed on the home screen
+   * @returns {void}
+   */
+  initializeStatusData() {
+    if (!this.eventEmitters['/history-query-engine/sse']) {
+      this.eventEmitters['/history-query-engine/sse'] = {}
+      this.eventEmitters['/history-query-engine/sse'].events = new EventEmitter()
+      this.eventEmitters['/history-query-engine/sse'].events.setMaxListeners(0)
+      this.eventEmitters['/history-query-engine/sse'].events.on('data', this.listener)
+      this.eventEmitters['/history-query-engine/sse'].statusData = this.statusData
+      this.updateStatusDataStream()
+    }
+    this.liveStatusInterval = setInterval(() => {
+      this.updateStatusDataStream()
+    }, 5000)
+  }
+
+  updateStatusDataStream() {
+    this.eventEmitters['/history-query-engine/sse']?.events?.emit('data', this.statusData)
+  }
+
+  /**
    * Add a new Value from a data source to the Engine.
    * The Engine will forward the Value to the Cache.
    * @param {string} dataSourceId - The South generating the value
@@ -45,12 +88,17 @@ class HistoryQueryEngine extends BaseEngine {
       const csvContent = csv.unparse(flattenedValues)
       const filename = this.historyQuery.filePattern.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
       const folder = path.join(this.cacheFolder, this.historyQuery.id)
-      if (!fs.existsSync(folder)) {
+
+      try {
+        await fs.stat(folder)
+      } catch (e) {
+        this.logger.warn(e)
         this.logger.info(`Creating HistoryQuery cache folder in ${folder}`)
-        fs.mkdirSync(folder, { recursive: true })
+        await fs.mkdir(folder, { recursive: true })
       }
+
       const filePath = path.join(folder, filename)
-      fs.writeFileSync(filePath, csvContent)
+      await fs.writeFile(filePath, csvContent)
     }
   }
 
@@ -75,10 +123,10 @@ class HistoryQueryEngine extends BaseEngine {
    * @return {void}
    */
   async start(safeMode = false) {
-    this.logger.info('Starting HistoryQueryEngine')
+    const { engineConfig } = this.configService.getConfig()
+    await this.initEngineServices(engineConfig)
     if (safeMode || this.check) {
       this.logger.warn('HistoryQuery is not executed in safe (or check) mode')
-      return
     }
     this.runNextHistoryQuery()
   }

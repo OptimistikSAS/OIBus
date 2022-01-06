@@ -9,8 +9,8 @@ const databaseService = require('../services/database.service')
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
 const Server = require('../server/Server.class')
-const Cache = require('./Cache.class')
 const HealthSignal = require('./HealthSignal.class')
+const Cache = require('./Cache.class')
 
 /**
  *
@@ -35,8 +35,6 @@ class OIBusEngine extends BaseEngine {
     this.activeProtocols = {}
     this.activeApis = {}
     this.jobs = []
-    this.eventEmitters = {}
-    this.statusData = {}
 
     this.memoryStats = {}
     this.addValuesMessages = 0
@@ -44,6 +42,16 @@ class OIBusEngine extends BaseEngine {
     this.addFileCount = 0
     this.forwardedHealthSignalMessages = 0
     this.check = check
+  }
+
+  /**
+   * Method used to init async services (like logger when loki is used with Bearer token auth)
+   * @param {object} engineConfig - the config retrieved from the file
+   * @param {string} loggerScope - the scope used for the logger
+   * @returns {Promise<void>} - The promise returns when the services are set
+   */
+  async initEngineServices(engineConfig, loggerScope = 'OIBusEngine') {
+    await super.initEngineServices(engineConfig, loggerScope)
 
     // Buffer delay in ms: when a protocol generates a lot of values at the same time, it may be better to accumulate them
     // in a buffer before sending them to the engine
@@ -53,23 +61,10 @@ class OIBusEngine extends BaseEngine {
     this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
 
     this.engineName = engineConfig.engineName
-  }
 
-  /**
-   * Method used to init async services (like logger when loki is used with Bearer token auth)
-   * @param {object} engineConfig - the config retrieved from the file
-   * @returns {Promise<void>} - The promise returns when the services are set
-   */
-  async initEngineServices(engineConfig) {
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
-    // Configure the logger
-    this.logger = new Logger('Engine')
-    this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(engineConfig, {})
+    // Configure the Cache
+    this.cache = new Cache(this)
+    this.cache.initialize()
 
     this.logger.info(`Starting Engine ${this.version}
     architecture: ${process.arch}
@@ -79,13 +74,6 @@ class OIBusEngine extends BaseEngine {
     Config file: ${this.configService.configFile}
     HistoryQuery config file: ${this.configService.historyQueryConfigFile},
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
-
-    // Configure the Cache
-    this.cache = new Cache(this)
-    await this.cache.initialize()
-
-    // Request service
-    this.requestService = createRequestService(this)
   }
 
   /**
@@ -117,7 +105,7 @@ class OIBusEngine extends BaseEngine {
    * Send values to a North application.
    * @param {string} id - The application id
    * @param {object[]} values - The values to send
-   * @return {Promise<number>} - The send status
+   * @return {Promise<number>} - The sent status
    */
   async handleValuesFromCache(id, values) {
     this.logger.silly(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
@@ -393,11 +381,10 @@ class OIBusEngine extends BaseEngine {
    * Return available North applications
    * @return {String[]} - Available North applications
    */
-
   /* eslint-disable-next-line class-methods-use-this */
   getNorthList() {
     this.logger.debug('Getting North applications')
-    return Object.entries(this.getNorthList())
+    return Object.entries(this.getNorthEngineList())
       .map(([connectorName, { category }]) => ({
         connectorName,
         category,
@@ -412,7 +399,7 @@ class OIBusEngine extends BaseEngine {
   /* eslint-disable-next-line class-methods-use-this */
   getSouthList() {
     this.logger.debug('Getting South protocols')
-    return Object.entries(this.getSouthList())
+    return Object.entries(this.getSouthEngineList())
       .map(([connectorName, { category }]) => ({
         connectorName,
         category,
@@ -620,7 +607,6 @@ class OIBusEngine extends BaseEngine {
     this.statusData['Heap used (min / current / max)'] = memoryUsage.heapUsed
     this.statusData['External C++ V8 memory (min / current / max)'] = memoryUsage.external
     this.statusData['Array buffers memory (min / current / max)'] = memoryUsage.arrayBuffers
-    this.updateStatusDataStream()
   }
 
   updateStatusDataStream() {

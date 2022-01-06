@@ -1,13 +1,17 @@
 const config = require('../config/defaultConfig.json')
 const ProtocolHandler = require('./ProtocolHandler.class')
 
-jest.mock('../engine/Logger.class')
+jest.mock('../engine/logger/Logger.class')
 
 const engine = jest.genMockFromModule('../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 engine.addFile = jest.fn()
 engine.eventEmitters = {}
+engine.logger = {
+  error: jest.fn(),
+  silly: jest.fn(),
+}
 
 beforeEach(() => {
   jest.resetAllMocks()
