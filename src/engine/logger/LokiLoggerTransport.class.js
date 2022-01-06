@@ -86,7 +86,7 @@ class LokiTransport {
     try {
       await fetch(this.lokiAddress, fetchOptions)
     } catch (error) {
-      console.log('error', error)
+      console.error(error)
     }
   }
 
