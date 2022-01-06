@@ -19,7 +19,7 @@ class Cache {
    * archiveMode: File mode only: decide if the file is deleted or archived after being sent to the North.
    * archiveFolder: in 'archive' mode, specifies where the file is archived.
    * @constructor
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(engine) {

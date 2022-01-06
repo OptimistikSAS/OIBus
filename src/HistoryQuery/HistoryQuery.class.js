@@ -81,6 +81,7 @@ class HistoryQuery {
    */
   async startExport() {
     this.logger.info(`Start the export phase for HistoryQuery ${this.id}`)
+
     if (this.status !== HistoryQuery.STATUS_EXPORTING) {
       this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
@@ -92,6 +93,7 @@ class HistoryQuery {
     const { protocol, enabled, name } = this.dataSource
     this.south = enabled ? this.engine.createSouth(protocol, this.dataSource) : null
     if (this.south) {
+      await this.south.init()
       await this.south.connect()
       this.export()
     } else {
@@ -115,6 +117,7 @@ class HistoryQuery {
     const { api, enabled, name } = this.application
     this.north = enabled ? this.engine.createNorth(api, this.application) : null
     if (this.north) {
+      await this.north.init()
       await this.north.connect()
       this.import()
     } else {
@@ -163,7 +166,7 @@ class HistoryQuery {
    */
   async import() {
     let files = []
-    const cacheFolder = `${this.engine.getCacheFolder()}/${this.dataSource.id}`
+    const cacheFolder = `${this.engine.getCacheFolder()}/${this.id}`
     try {
       this.logger.silly(`Reading ${cacheFolder} directory`)
       files = await fs.readdir(cacheFolder)

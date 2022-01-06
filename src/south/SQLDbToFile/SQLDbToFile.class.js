@@ -104,20 +104,6 @@ class SQLDbToFile extends ProtocolHandler {
     await super.connect()
     this.statusData['Connected at'] = new Date().toISOString()
     this.updateStatusDataStream()
-    this.lastCompletedAt = await this.getConfig('lastCompletedAt')
-    if (!this.lastCompletedAt) {
-      this.lastCompletedAt = this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString()
-    }
-  }
-
-  /**
-   * Connect.
-   * @return {Promise<void>} The connection promise
-   */
-  async connect() {
-    await super.connect()
-
-    this.connected = true
   }
 
   /**

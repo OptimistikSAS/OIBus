@@ -20,7 +20,7 @@ class Server {
   /**
    * Constructor for Protocol
    * @constructor
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
   constructor(engine) {
