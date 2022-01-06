@@ -27,7 +27,6 @@ class SqliteTransport {
   log = async (payload) => {
     await this.addLog(payload.time, payload.level, payload.scope, payload.source, payload.msg)
     const numberOfLogs = await this.countLogs()
-    console.log('numberOfLogs', numberOfLogs)
     if (numberOfLogs > this.maxNumberOfLogs) {
       await this.deleteOldLogs()
     }
