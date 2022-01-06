@@ -12,7 +12,7 @@ engine.addFile = jest.fn()
 engine.eventEmitters = {}
 
 // Mock the logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 
 // Mock database service
 jest.mock('../../services/database.service')

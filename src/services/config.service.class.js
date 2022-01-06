@@ -4,7 +4,7 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const EncryptionService = require('./EncryptionService.class')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 /**
  * Class responsible for managing the configuration.

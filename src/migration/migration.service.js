@@ -2,7 +2,7 @@ const fs = require('fs')
 
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 const logger = new Logger()
 

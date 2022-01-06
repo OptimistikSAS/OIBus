@@ -3,7 +3,7 @@
 const fs = require('fs/promises')
 const { nanoid } = require('nanoid')
 const path = require('path')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 const databaseMigrationService = require('./database.migration.service')
 
 const logger = new Logger()
@@ -424,7 +424,7 @@ module.exports = {
       sqliteLog: {
         level: config.engine.logParameters.sqliteLevel,
         fileName: config.engine.logParameters.sqliteFilename,
-        maxSize: config.engine.logParameters.sqliteMaxFileSize,
+        maxNumberOfLogs: 1000000,
       },
       lokiLog: {
         level: 'none',

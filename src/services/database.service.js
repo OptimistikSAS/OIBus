@@ -1,7 +1,7 @@
 const sqlite = require('sqlite')
 const sqlite3 = require('sqlite3')
 
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 const logger = Logger.getDefaultLogger()
 

@@ -4,7 +4,7 @@ const EventEmitter = require('events')
 
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 /**
  * Class Protocol : provides general attributes and methods for protocols.

@@ -16,7 +16,7 @@ jest.mock('node-opcua', () => ({
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')

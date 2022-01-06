@@ -1,8 +1,8 @@
 const HealthSignal = require('./HealthSignal.class')
-const Logger = require('./Logger.class')
+const Logger = require('./logger/Logger.class')
 
 // Mock logger
-jest.mock('./Logger.class')
+jest.mock('./logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine

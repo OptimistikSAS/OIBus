@@ -1,10 +1,9 @@
 const build = require('pino-abstract-transport')
 const db = require('better-sqlite3')
-const fs = require('fs/promises')
 
 const LOGS_TABLE_NAME = 'logs'
-const NUMBER_OF_RECORDS_TO_DELETE = 1
-const DEFAULT_MAX_FILE_SIZE = 2000000
+const NUMBER_OF_RECORDS_TO_DELETE = 10000
+const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000
 const LEVEL_FORMAT = { 10: 'silly', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
 
 /**
@@ -17,7 +16,7 @@ class SqliteTransport {
     this.database = null
     this.fileName = options.fileName || ':memory:'
     this.tableName = options.tableName || LOGS_TABLE_NAME
-    this.maxFileSize = options.maxSize || DEFAULT_MAX_FILE_SIZE
+    this.maxNumberOfLogs = options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS
   }
 
   /**
@@ -27,8 +26,9 @@ class SqliteTransport {
    */
   log = async (payload) => {
     await this.addLog(payload.time, payload.level, payload.scope, payload.source, payload.msg)
-    const logFile = await fs.stat(this.fileName)
-    if (logFile.size > this.maxFileSize) {
+    const numberOfLogs = await this.countLogs()
+    console.log('numberOfLogs', numberOfLogs)
+    if (numberOfLogs > this.maxNumberOfLogs) {
       await this.deleteOldLogs()
     }
   }
@@ -45,6 +45,16 @@ class SqliteTransport {
   addLog = async (timestamp, level, scope, source, message) => {
     const query = `INSERT INTO ${this.tableName} (timestamp, level, scope, source, message) VALUES (?, ?, ?, ?, ?);`
     await this.database.prepare(query).run(timestamp, LEVEL_FORMAT[level], scope, source, message)
+  }
+
+  /**
+   * Count the number of logs stored in the database
+   * @returns {Promise<number>} - the number of logs
+   */
+  countLogs = async () => {
+    const query = `SELECT COUNT(*) AS count FROM ${this.tableName}`
+    const result = await this.database.prepare(query).get()
+    return result.count
   }
 
   /**

@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const FormData = require('form-data')
 
-const Logger = require('../../engine/Logger.class')
+const Logger = require('../../engine/logger/Logger.class')
 const ApiHandler = require('../../north/ApiHandler.class')
 
 class BaseRequest {

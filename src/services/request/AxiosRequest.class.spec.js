@@ -2,7 +2,7 @@ const axios = require('axios').default
 const tunnel = require('tunnel')
 
 const AxiosRequest = require('./AxiosRequest.class')
-const Logger = require('../../engine/Logger.class')
+const Logger = require('../../engine/logger/Logger.class')
 
 // Mock axios
 jest.mock('axios', () => ({
@@ -16,7 +16,7 @@ jest.mock('axios', () => ({
 jest.mock('proxy-agent')
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine

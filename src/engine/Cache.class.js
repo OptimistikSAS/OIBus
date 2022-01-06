@@ -3,7 +3,7 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
-const Logger = require('./Logger.class')
+const Logger = require('./logger/Logger.class')
 const ApiHandler = require('../north/ApiHandler.class')
 
 // Time between two checks of the Archive Folder

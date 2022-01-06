@@ -20,7 +20,7 @@ schema.form = {
     defaultValue: '',
     help: <div>The file name of the database file</div>,
   },
-  maxSize: {
+  maxNumberOfLogs: {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
