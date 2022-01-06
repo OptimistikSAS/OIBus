@@ -9,7 +9,7 @@ engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 
 // Mock the logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 
 let oiAnalytics = null
 const timestamp = new Date().toISOString()

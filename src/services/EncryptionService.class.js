@@ -2,7 +2,7 @@ const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 class EncryptionService {
   /**

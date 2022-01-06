@@ -8,7 +8,7 @@ const config = require('../../../tests/testConfig').default
 jest.mock('../../services/database.service', () => {})
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')

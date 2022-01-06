@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 
 const EncryptionService = require('../services/EncryptionService.class')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 class ApiHandler {
   static STATUS = {

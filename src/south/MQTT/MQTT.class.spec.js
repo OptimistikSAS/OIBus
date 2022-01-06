@@ -19,7 +19,7 @@ jest.mock('fs/promises', () => ({
 }))
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })

@@ -1,4 +1,4 @@
-const Logger = require('./Logger.class')
+const Logger = require('./logger/Logger.class')
 
 /**
  * Class HealthSignal - sends health signal to a remote host

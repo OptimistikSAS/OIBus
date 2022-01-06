@@ -57,15 +57,15 @@ describe('SqliteLogging', () => {
     expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.fileName', 'new_sqliteFilename', null)
     expect(container).toMatchSnapshot()
   })
-  test('check change sqliteLog maxSize to 10000000', () => {
+  test('check change sqliteLog maxNumberOfLogs to 10000000', () => {
     act(() => {
       ReactDOM.render(<SqliteLogging
         logParameters={testConfig.engine.logParameters.sqliteLog}
         onChange={onChange}
       />, container)
     })
-    Simulate.change(document.getElementById('engine.logParameters.sqliteLog.maxSize'), { target: { value: 10000000 } })
-    expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.maxSize', 10000000, null)
+    Simulate.change(document.getElementById('engine.logParameters.sqliteLog.maxNumberOfLogs'), { target: { value: 10000000 } })
+    expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.maxNumberOfLogs', 10000000, null)
     expect(container).toMatchSnapshot()
   })
 })

@@ -512,21 +512,23 @@ exports[`Logging check Logging 1`] = `
           >
             <label
               class=""
-              for="engine.logParameters.sqliteLog.maxSize"
+              for="engine.logParameters.sqliteLog.maxNumberOfLogs"
             >
               Database max size
             </label>
             <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.logParameters.sqliteLog.maxSize"
-              name="engine.logParameters.sqliteLog.maxSize"
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="engine.logParameters.sqliteLog.maxNumberOfLogs"
+              name="engine.logParameters.sqliteLog.maxNumberOfLogs"
               type="integer"
-              value="50000000"
+              value=""
             />
             <div
               class="invalid-feedback"
-            />
+            >
+              Value must be greater than 10000
+            </div>
             <small
               class="form-text text-muted"
             >

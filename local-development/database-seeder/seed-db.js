@@ -2,7 +2,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client } = require('pg')
 const oracledb = require('oracledb')
-const Logger = require('../../src/engine/Logger.class')
+const Logger = require('../../src/engine/logger/Logger.class')
 
 const host = '127.0.0.1'
 const user = 'oibus'

@@ -9,7 +9,7 @@ const { PassThrough } = require('stream')
 const authCrypto = require('./middlewares/auth') // ./auth
 const ipFilter = require('./middlewares/ipFilter')
 const clientController = require('./controllers/clientController')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 const router = require('./routes')
 

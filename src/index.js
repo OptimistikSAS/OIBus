@@ -6,7 +6,7 @@ const VERSION = require('../package.json').version
 const migrationService = require('./migration/migration.service')
 const ConfigService = require('./services/config.service.class')
 const Engine = require('./engine/Engine.class')
-const Logger = require('./engine/Logger.class')
+const Logger = require('./engine/logger/Logger.class')
 
 const MAX_RESTART_COUNT = 3
 const MAX_INTERVAL_MILLISECOND = 30 * 1000

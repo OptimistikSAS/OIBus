@@ -2,10 +2,10 @@ const fs = require('fs')
 const crypto = require('crypto')
 
 const EncryptionService = require('./EncryptionService.class')
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 // Mock logger
-jest.mock('../engine/Logger.class')
+jest.mock('../engine/logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 beforeEach(() => {

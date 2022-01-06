@@ -2,10 +2,10 @@ const FormData = require('form-data')
 
 const BaseRequest = require('./BaseRequest.class')
 const ApiHandler = require('../../north/ApiHandler.class')
-const Logger = require('../../engine/Logger.class')
+const Logger = require('../../engine/logger/Logger.class')
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine

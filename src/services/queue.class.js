@@ -1,4 +1,4 @@
-const Logger = require('../engine/Logger.class')
+const Logger = require('../engine/logger/Logger.class')
 
 /**
  * Create a Queue with auto

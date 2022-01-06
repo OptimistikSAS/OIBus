@@ -2,7 +2,7 @@ const fetch = require('node-fetch')
 const ProxyAgent = require('proxy-agent')
 
 const FetchRequest = require('./FetchRequest.class')
-const Logger = require('../../engine/Logger.class')
+const Logger = require('../../engine/logger/Logger.class')
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -12,7 +12,7 @@ const { Response } = jest.requireActual('node-fetch')
 jest.mock('proxy-agent')
 
 // Mock logger
-jest.mock('../../engine/Logger.class')
+jest.mock('../../engine/logger/Logger.class')
 Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
