@@ -1,6 +1,6 @@
-| master      | ![master](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg)      |
-| ----------- | ----------- |
-| **release**   | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=release)        |
+| develop             | ![master](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=develop) |
+|---------------------|------------------------------------------------------------------------------------------------|
+| **release (master)** | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=master)        |
 
 ![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/OIBus.png)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/OptimistikSAS/OIBus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OptimistikSAS/OIBus/alerts/)
