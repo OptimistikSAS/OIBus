@@ -3,304 +3,308 @@
 exports[`Logs check Logs 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -311,304 +315,308 @@ exports[`Logs check Logs 1`] = `
 exports[`Logs check change filterText 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -619,304 +627,308 @@ exports[`Logs check change filterText 1`] = `
 exports[`Logs check change fromDate 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -927,304 +939,308 @@ exports[`Logs check change fromDate 1`] = `
 exports[`Logs check change toDate 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1235,304 +1251,308 @@ exports[`Logs check change toDate 1`] = `
 exports[`Logs check change verbosity, check silly 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1543,304 +1563,308 @@ exports[`Logs check change verbosity, check silly 1`] = `
 exports[`Logs check change verbosity, uncheck debug 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1851,304 +1875,308 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
 exports[`Logs check press Show Logs, success in logs call 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2159,304 +2187,308 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
 exports[`Logs check press Show Logs, success in logs call 2`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-success"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-danger"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    error
-                  </td>
-                  <td>
-                    Testing error logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-danger"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      error
+                    </td>
+                    <td>
+                      Testing error logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2467,304 +2499,308 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
 exports[`Logs check press showMore 1`] = `
 <div>
   <div
-    class="row"
+    class="container-fluid"
   >
     <div
-      class="log-left-panel col"
+      class="p-3 row"
     >
       <div
-        class="card"
+        class="log-left-panel col"
       >
-        <label
-          class="label-card-title"
-        >
-          Filters
-        </label>
         <div
-          class="card-body card-body"
+          class="card"
         >
+          <label
+            class="label-card-title"
+          >
+            Filters
+          </label>
           <div
-            class="form-group"
+            class="card-body card-body"
           >
-            <label
-              class=""
-              for="fromDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="fromDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime - 24 hours (now - 24 hours)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="toDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="toDate"
-              max="2020-02-01T00:00"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="datetime-local"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              default: Current datetime (now)
-            </small>
-          </div>
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="verbosity"
-            >
-              Verbosity
-            </label>
             <div
-              class="text-success form-check"
+              class="form-group"
             >
               <label
-                class="form-check-label"
+                class=""
+                for="fromDate"
               >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                debug
+                From date
               </label>
-            </div>
-            <div
-              class="text-info form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                info
-              </label>
-            </div>
-            <div
-              class="text-warning form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                warning
-              </label>
-            </div>
-            <div
-              class="text-danger form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  checked=""
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                error
-              </label>
-            </div>
-            <div
-              class="text-primary form-check"
-            >
-              <label
-                class="form-check-label"
-              >
-                <input
-                  class="oi-form-input form-check-input"
-                  id="verbosity"
-                  type="checkbox"
-                />
-                silly
-              </label>
-            </div>
-          </div>
-          <button
-            class="btn btn-primary"
-            id="showLog"
-            type="button"
-          >
-            Show log
-          </button>
-        </div>
-      </div>
-    </div>
-    <div
-      class="log-right-panel col"
-    >
-      <div
-        class="card"
-      >
-        <label
-          class="label-card-title"
-        >
-          Logs
-        </label>
-        <div
-          class="card-body card-body"
-        >
-          <div
-            class="row form-group"
-          >
-            <label
-              class="col-sm-1 col-form-label"
-              for="filterText"
-            >
-              Filter
-            </label>
-            <div
-              class="col-sm-11"
-            >
               <input
                 class="oi-form-input form-control"
-                id="filterText"
-                placeholder="message contains..."
-                type="text"
-                value=""
+                id="fromDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
               />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime - 24 hours (now - 24 hours)
+              </small>
             </div>
-          </div>
-          <div
-            class="table-responsive"
-          >
-            <table
-              class="table table-small table-bordered table-hover"
+            <div
+              class="form-group"
             >
-              <tbody>
-                <tr
-                  class="oi-log text-primary"
+              <label
+                class=""
+                for="toDate"
+              >
+                To date
+              </label>
+              <input
+                class="oi-form-input form-control"
+                id="toDate"
+                max="2020-02-01T00:00"
+                placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                required=""
+                type="datetime-local"
+              />
+              <small
+                class="form-text text-muted"
+              >
+                default: Current datetime (now)
+              </small>
+            </div>
+            <div
+              class="form-group"
+            >
+              <label
+                class=""
+                for="verbosity"
+              >
+                Verbosity
+              </label>
+              <div
+                class="text-success form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs on page 2
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-primary"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  debug
+                </label>
+              </div>
+              <div
+                class="text-info form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    silly
-                  </td>
-                  <td>
-                    Testing silly logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-success"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  info
+                </label>
+              </div>
+              <div
+                class="text-warning form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    debug
-                  </td>
-                  <td>
-                    Testing debug logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-info"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  warning
+                </label>
+              </div>
+              <div
+                class="text-danger form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    info
-                  </td>
-                  <td>
-                    Testing info logs
-                  </td>
-                </tr>
-                <tr
-                  class="oi-log text-warning"
+                  <input
+                    checked=""
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  error
+                </label>
+              </div>
+              <div
+                class="text-primary form-check"
+              >
+                <label
+                  class="form-check-label"
                 >
-                  <td
-                    style="width: 120px;"
-                  >
-                    Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
-                  </td>
-                  <td>
-                    Source
-                  </td>
-                  <td>
-                    warning
-                  </td>
-                  <td>
-                    Testing warning logs
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <input
+                    class="oi-form-input form-check-input"
+                    id="verbosity"
+                    type="checkbox"
+                  />
+                  silly
+                </label>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showLog"
+              type="button"
+            >
+              Show log
+            </button>
           </div>
-          <button
-            class="btn btn-primary"
-            id="showMore"
-            type="button"
+        </div>
+      </div>
+      <div
+        class="log-right-panel col"
+      >
+        <div
+          class="card"
+        >
+          <label
+            class="label-card-title"
           >
-            Show more...
-          </button>
+            Logs
+          </label>
+          <div
+            class="card-body card-body"
+          >
+            <div
+              class="row form-group"
+            >
+              <label
+                class="col-sm-1 col-form-label"
+                for="filterText"
+              >
+                Filter
+              </label>
+              <div
+                class="col-sm-11"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="filterText"
+                  placeholder="message contains..."
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="table-responsive"
+            >
+              <table
+                class="table table-small table-bordered table-hover"
+              >
+                <tbody>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs on page 2
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-primary"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      silly
+                    </td>
+                    <td>
+                      Testing silly logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-success"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      debug
+                    </td>
+                    <td>
+                      Testing debug logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-info"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      info
+                    </td>
+                    <td>
+                      Testing info logs
+                    </td>
+                  </tr>
+                  <tr
+                    class="oi-log text-warning"
+                  >
+                    <td
+                      style="width: 120px;"
+                    >
+                      Sat, 01 Feb 2020 00:00:00 GMT-Sat, 01 Feb 2020 00:00:00 GMT
+                    </td>
+                    <td>
+                      Source
+                    </td>
+                    <td>
+                      warning
+                    </td>
+                    <td>
+                      Testing warning logs
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary"
+              id="showMore"
+              type="button"
+            >
+              Show more...
+            </button>
+          </div>
         </div>
       </div>
     </div>

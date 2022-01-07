@@ -8,7 +8,7 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -90,7 +90,7 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -172,7 +172,7 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -254,7 +254,7 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >

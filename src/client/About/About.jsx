@@ -1,7 +1,6 @@
 import React from 'react'
-import { ListGroup, ListGroupItem, Row, Container } from 'reactstrap'
+import { Container, ListGroup, ListGroupItem } from 'reactstrap'
 import apis from '../services/apis'
-import OIbTitle from '../components/OIbForm/OIbTitle.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from './OIBus.png'
@@ -24,7 +23,10 @@ const About = () => {
       })
       .catch((error) => {
         console.error(error)
-        setAlert({ text: error.message, type: 'danger' })
+        setAlert({
+          text: error.message,
+          type: 'danger',
+        })
       })
   }
 
@@ -58,11 +60,9 @@ const About = () => {
   }, [activeConfig])
 
   return (
-    <>
-
-      <Row>
-        <Container fluid>
-          {staticStatus && (
+    <div className="p-3">
+      <Container fluid>
+        {staticStatus && (
           <ListGroup>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               <img src={logo} alt="logo" height="100px" />
@@ -111,15 +111,6 @@ const About = () => {
             <ListGroupItem tag="a" href="https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt">
               Licensed under the EUPL-1.2-or-later
             </ListGroupItem>
-          </ListGroup>
-          )}
-        </Container>
-      </Row>
-      <br />
-      <OIbTitle label="Monitoring" />
-      <Container fluid>
-        <div className="d-flex flex-wrap justify-content-between">
-          <ListGroup>
             {Object.entries(dynamicStatus)
               .map(([key, value]) => (
                 <ListGroupItem key={key}>
@@ -133,9 +124,9 @@ const About = () => {
                 </ListGroupItem>
               ))}
           </ListGroup>
-        </div>
+        )}
       </Container>
-    </>
+    </div>
   )
 }
 export default About

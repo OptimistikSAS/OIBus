@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import { Container } from 'reactstrap'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './style/oi.css'
@@ -27,7 +26,7 @@ const Main = () => (
     <ConfigProvider>
       <AlertProvider>
         <TopHeader />
-        <Container className="oi-container-with-top-nav" fluid>
+        <div className="oi-container-with-top-nav">
           <AlertContainer />
           <Routes>
             <Route exact path="/" element={<HomePage />} />
@@ -42,7 +41,7 @@ const Main = () => (
             <Route exact path="/activation" element={<Activation />} />
             <Route element={<NotFound />} />
           </Routes>
-        </Container>
+        </div>
       </AlertProvider>
     </ConfigProvider>
   </Router>
