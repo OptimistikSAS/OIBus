@@ -1,5 +1,5 @@
 import React from 'react'
-import { Label, Button, Spinner } from 'reactstrap'
+import { Label, Button, Spinner, Container } from 'reactstrap'
 import ReactJson from 'react-json-view'
 import { formatters, create } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
@@ -87,15 +87,17 @@ const Activation = () => {
   const isModified = delta !== undefined || diffError !== undefined
   const deltaHTML = isModified && removeSecretValues(delta)
   return (
-    <>
-      <OIbTitle label="Modifications">
-        <div>
-          <p>Modifications requested on the OIBus configuration are listed below</p>
-          <p>The ACTIVE configuration is the one currently used by the OIBus server</p>
-          <p>It will be replaced with the new configuration if you use the activate button</p>
-          <p>The NEW configuration is the one that will be used OIBus server AFTER the activation</p>
-        </div>
-      </OIbTitle>
+    <Container fluid>
+      <div className="ml-3 pt-3">
+        <OIbTitle label="Modifications">
+          <div>
+            <p>Modifications requested on the OIBus configuration are listed below</p>
+            <p>The ACTIVE configuration is the one currently used by the OIBus server</p>
+            <p>It will be replaced with the new configuration if you use the activate button</p>
+            <p>The NEW configuration is the one that will be used OIBus server AFTER the activation</p>
+          </div>
+        </OIbTitle>
+      </div>
       <pre>{newConfig && JSON.stringify(newConfig.errors)}</pre>
       {isModified ? (
         <>
@@ -156,7 +158,7 @@ const Activation = () => {
           collapseStringsAfterLength={100}
         />
       )}
-    </>
+    </Container>
   )
 }
 export default Activation

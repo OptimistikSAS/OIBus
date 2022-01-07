@@ -23,7 +23,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
         toggle={toggle}
         direction="down"
       >
-        <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
+        <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 btn btn-secondary oi-dropdown-toggle">
           <FaEllipsisV />
         </DropdownToggle>
         <DropdownMenu>

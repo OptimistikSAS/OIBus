@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Button, Input, Spinner } from 'reactstrap'
+import { Button, Container, Input, Spinner } from 'reactstrap'
 import humanizeString from 'humanize-string'
 import { FaArrowLeft } from 'react-icons/fa'
 import Table from '../components/table/Table.jsx'
@@ -189,10 +189,7 @@ const ConfigurePoints = () => {
       const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
       const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
-      rest.valid = (val) => {
-        const result = oldValid(val) || validation.points.isUnique(val, pointIds) || validation.points.noUnintendedTrailingSpaces(val)
-        return result
-      }
+      rest.valid = (val) => oldValid(val) || validation.points.isUnique(val, pointIds) || validation.points.noUnintendedTrailingSpaces(val)
     }
     const name = `points.${index}.${key}`
     return (
@@ -203,7 +200,7 @@ const ConfigurePoints = () => {
 
   return (
     <>
-      <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+      <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <Button
             close
@@ -224,55 +221,57 @@ const ConfigurePoints = () => {
           />
         </div>
       </div>
-      <div className="points">
-        <div>
-          <Controls.OIbText
-            label="Filter"
-            name="filterText"
-            value={filterText}
-            help={<div>Type any points related data</div>}
-            onChange={(_name, val) => updateFilterText(val)}
-          />
-        </div>
-        <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
-        {filteredPoints.length && (
+      <Container fluid>
+        <div className="m-2">
+          <div>
+            <Controls.OIbText
+              label="Filter"
+              name="filterText"
+              value={filterText}
+              help={<div>Type any points related data</div>}
+              onChange={(_name, val) => updateFilterText(val)}
+            />
+          </div>
+          <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAdd} handleDelete={handleDelete} />
+          {filteredPoints.length && (
           <TablePagination
             maxToDisplay={MAX_PAGINATION_DISPLAY}
             selected={selectedPage}
             total={Math.ceil(filteredPoints.length / MAX_ON_PAGE)}
             onPagePressed={(page) => setSelectedPage(page)}
           />
-        )}
-        <div className="force-row-display">
-          <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
-            Import
-          </Button>
-          <Input
-            className="oi-form-input"
-            type="file"
-            id="importFile"
-            accept=".csv, text/plain"
-            hidden
-            onChange={(event) => handleImportPoints(event.target.files[0])}
-          />
-          <Button className="inline-button" color="primary" onClick={handleExportPoints}>
-            Export
-          </Button>
-          <Modal
-            show={false}
-            title="Delete All Points"
-            body="Are you sure you want to delete All Points from this Data Source?"
-          >
-            {(confirm) => (
-              <div>
-                <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
-                  Delete All Points
-                </Button>
-              </div>
-            )}
-          </Modal>
+          )}
+          <div className="force-row-display">
+            <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
+              Import
+            </Button>
+            <Input
+              className="oi-form-input"
+              type="file"
+              id="importFile"
+              accept=".csv, text/plain"
+              hidden
+              onChange={(event) => handleImportPoints(event.target.files[0])}
+            />
+            <Button className="inline-button" color="primary" onClick={handleExportPoints}>
+              Export
+            </Button>
+            <Modal
+              show={false}
+              title="Delete All Points"
+              body="Are you sure you want to delete All Points from this Data Source?"
+            >
+              {(confirm) => (
+                <div>
+                  <Button className="inline-button" color="danger" onClick={confirm(() => handleDeleteAllPoint())}>
+                    Delete All Points
+                  </Button>
+                </div>
+              )}
+            </Modal>
+          </div>
         </div>
-      </div>
+      </Container>
     </>
   )
 }

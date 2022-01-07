@@ -3,7 +3,7 @@
 exports[`About display About page based on config and status 1`] = `
 <div>
   <div
-    class="row"
+    class="p-3"
   >
     <div
       class="container-fluid"
@@ -114,35 +114,13 @@ exports[`About display About page based on config and status 1`] = `
       </ul>
     </div>
   </div>
-  <br />
-  <div
-    class="row"
-  >
-    <h5>
-      Monitoring
-    </h5>
-  </div>
-  <div
-    class="container-fluid"
-  />
-  <div
-    class="container-fluid"
-  >
-    <div
-      class="d-flex flex-wrap justify-content-between"
-    >
-      <ul
-        class="list-group"
-      />
-    </div>
-  </div>
 </div>
 `;
 
 exports[`About display About page based on config and status 2`] = `
 <div>
   <div
-    class="row"
+    class="p-3"
   >
     <div
       class="container-fluid"
@@ -263,35 +241,13 @@ exports[`About display About page based on config and status 2`] = `
       </ul>
     </div>
   </div>
-  <br />
-  <div
-    class="row"
-  >
-    <h5>
-      Monitoring
-    </h5>
-  </div>
-  <div
-    class="container-fluid"
-  />
-  <div
-    class="container-fluid"
-  >
-    <div
-      class="d-flex flex-wrap justify-content-between"
-    >
-      <ul
-        class="list-group"
-      />
-    </div>
-  </div>
 </div>
 `;
 
 exports[`About display About with config null 1`] = `
 <div>
   <div
-    class="row"
+    class="p-3"
   >
     <div
       class="container-fluid"
@@ -400,28 +356,6 @@ exports[`About display About with config null 1`] = `
           Licensed under the EUPL-1.2-or-later
         </a>
       </ul>
-    </div>
-  </div>
-  <br />
-  <div
-    class="row"
-  >
-    <h5>
-      Monitoring
-    </h5>
-  </div>
-  <div
-    class="container-fluid"
-  />
-  <div
-    class="container-fluid"
-  >
-    <div
-      class="d-flex flex-wrap justify-content-between"
-    >
-      <ul
-        class="list-group"
-      />
     </div>
   </div>
 </div>

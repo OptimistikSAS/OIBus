@@ -21,10 +21,6 @@
   border: none;
 }
 
-.oi-dropdown-toggle:after {
-  display: none;
-}
-
 .oi-node-footer {
   left: 15px;
   bottom: -5px;
@@ -33,13 +29,11 @@
 
 .oi-sub-nav {
   background-color: rgba(219, 220, 223, 0.36);
-  margin-top: -20px;
-  margin-left: -25px;
 }
 
 .pull-right {
   position: absolute;
-  right: 0px;
+  right: 0;
 }
 
 .custom-control-input:checked~.custom-control-label::before {
@@ -63,13 +57,11 @@ a:focus {
   font-size: 11px;
 }
 .oi-container-with-top-nav {
-  margin-top: 52px;
+  margin: 35px 0 0 0;
   background-color: #ffffff;
   border: 0;
   font-size: 11px;
-  /* max-width: 600px; */
-  margin-left: 10px;
-  margin-right: 10px;
+  width: 100%;
 }
 
 .oi-navbar {
@@ -80,6 +72,7 @@ a:focus {
   width: 100%;
   z-index: 20;
 }
+
 .oi-navbar-top {
   border: 0;
   top: 0;
@@ -88,15 +81,12 @@ a:focus {
   font-weight: 400;
   min-height: 35px;
   height: 35px;
-  margin-bottom: 0px;
+  margin-bottom: 0;
   background-color: #323e48;
 }
 
 .oi-navitem {
-  padding-top: 10px;
-  padding-bottom: 5px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding: 10px 8px 5px;
   line-height: 20px;
   text-decoration: none;
   color: #ffffff;
@@ -157,7 +147,7 @@ a:focus {
   text-align: center;
   font-size: 20px;
   color: #dc3545;
-} 
+}
 
 .oi-add-button {
 float: right;
@@ -188,7 +178,7 @@ margin-top: -7px;
   background-color:  #dee2e6;
   text-align: center;
   height: 70px;
-  margin: 15px 5px 0px 5px;
+  margin: 15px 5px 0 5px;
   width: 125px;
   border:none;
   border-radius:5px;
@@ -198,7 +188,7 @@ margin-top: -7px;
   color: #fff;
   text-align: center;
   height: 70px;
-  margin: 15px 5px 0px 5px;
+  margin: 15px 5px 0 5px;
   width: 125px;
   border:none;
   border-radius:5px;
@@ -219,7 +209,7 @@ margin-top: -7px;
   border-color:#323e48;
   flex-grow: 0;
   line-height: 25px;
-  margin: 0px 10px 0px 0px;
+  margin: 0 10px 0 0;
 }
 
 .icon-center-modal {
@@ -264,8 +254,9 @@ margin-top: -7px;
 }
 
 .btn:hover {
-  background-color: #f5bb51;
+  color: #f5bb51;
   border-color: #f5bb51;
+  background-color: inherit;
 }
 
 .btn:disabled {
@@ -427,7 +418,7 @@ label {
 
 .oi-form-append {
   padding: 0 5px 0 5px;
-  margin: 2px 0 0px 5px;
+  margin: 2px 0 0 5px;
   display: flex;
   justify-content: center;
   align-items: center;

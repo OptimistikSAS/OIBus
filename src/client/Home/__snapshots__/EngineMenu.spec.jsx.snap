@@ -8,7 +8,7 @@ exports[`EngineMenu check cancel restart 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -90,7 +90,7 @@ exports[`EngineMenu check cancel shutdown 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -172,7 +172,7 @@ exports[`EngineMenu check restart engine 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -254,7 +254,7 @@ exports[`EngineMenu check shutdown engine 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -336,7 +336,7 @@ exports[`EngineMenu display EngineMenu page based on config 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >
@@ -418,7 +418,7 @@ exports[`EngineMenu go to engine settings 1`] = `
     <button
       aria-expanded="false"
       aria-haspopup="true"
-      class="p-0 m-0 oi-dropdown-toggle btn btn-secondary btn-sm"
+      class="p-0 m-0 btn btn-secondary oi-dropdown-toggle btn btn-secondary btn-sm"
       id="dropdown-toggle"
       type="button"
     >

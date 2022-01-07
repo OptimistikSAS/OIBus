@@ -5,7 +5,6 @@ import ReactFlow from 'react-flow-renderer'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import { AlertContext } from '../context/AlertContext.jsx'
-import PointsButton from '../South/PointsButton.jsx'
 import ApiSchemas from '../North/Apis.jsx'
 import ProtocolSchemas from '../South/Protocols.jsx'
 import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
@@ -105,16 +104,12 @@ const NodeView = ({
                 <NorthMenu application={application} />
               </div>
             </div>
-            <div
-              className="p-1 text-muted text-center justify-content-center"
+            <Link
+              to={`/north/${application.id}`}
+              className="text-decoration-none text-muted"
             >
-              <Link
-                to={`/north/${application.id}`}
-                className="text-decoration-none text-muted"
-              >
-                {application.api}
-              </Link>
-            </div>
+              {application.api}
+            </Link>
             <div className="oi-node-footer">
               <OIbCheckBox
                 name={`${`north.applications.${applications.findIndex(
@@ -177,17 +172,19 @@ const NodeView = ({
                 <SouthMenu dataSource={dataSource} />
               </div>
             </div>
-            <div className="p-1 text-muted text-center justify-content-center">
-              <div>
-                <Link
-                  to={`/south/${dataSource.id}`}
-                  className="text-decoration-none text-muted"
-                >
+            <Link
+              to={`/south/${dataSource.id}`}
+              className="text-decoration-none text-muted"
+            >
+              <div className="p-1 text-muted text-center justify-content-center">
+                <div>
                   {dataSource.protocol}
-                </Link>
+                </div>
+                <div>
+                  {`Points ${dataSource.points ? `(${dataSource.points.length})` : '(0)'}`}
+                </div>
               </div>
-              <PointsButton dataSource={dataSource} />
-            </div>
+            </Link>
             <div className="oi-node-footer">
               <OIbCheckBox
                 name={`${`south.dataSources.${dataSources.findIndex(
@@ -246,8 +243,9 @@ const NodeView = ({
               className="text-decoration-none text-muted"
             >
               <Container>
-                <div className="d-flex flex-wrap justify-content-between">
-                  {Object.entries(connectorData).filter(([key]) => key === 'Up time' || key === 'Global memory usage' || key === 'CPU usage')
+                <div className="d-flex flex-column justify-content-between">
+                  {Object.entries(connectorData)
+                    .filter(([key]) => key === 'Up time' || key === 'Global memory usage' || key === 'CPU usage')
                     .map(([key, value]) => (
                       <div key={key}>
                         <b className="mr-2">

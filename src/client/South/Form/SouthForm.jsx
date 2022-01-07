@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useNavigate } from 'react-router-dom'
-import { Form, Row, Col, Button } from 'reactstrap'
+import { Form, Row, Col, Button, Container } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
 import { OIbTitle, OIbCheckBox, OIbScanMode, OIbLogLevel } from '../../components/OIbForm'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
@@ -43,7 +43,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
 
   return (
     <>
-      <div id="oi-sub-nav" className="d-flex align-items-center w-100 oi-sub-nav mb-2">
+      <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <EditableIdField
             connectorName={dataSource.name}
@@ -79,38 +79,40 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           <PointsButton dataSource={dataSource} />
         </div>
       </div>
-      <Form>
-        <OIbTitle label="General settings">
-          <ul>
-            <li>This form allows to configure protocol-specific parameters.</li>
-            <li>You need to activate the protocol with the enabled checkbox.</li>
-          </ul>
-        </OIbTitle>
-        <Row>
-          <Col md={4}>
-            <OIbCheckBox
-              name={`${prefix}.enabled`}
-              label={dataSource.enabled ? 'Enabled' : 'Disabled'}
-              defaultValue={false}
-              value={dataSource.enabled}
-              help={<div>Enable this application</div>}
-              onChange={onChange}
-              switchButton
-            />
-          </Col>
-          {!schema.points && (
+      <Container fluid>
+        <Form className="m-2">
+          <OIbTitle label="General settings">
+            <ul>
+              <li>This form allows to configure protocol-specific parameters.</li>
+              <li>You need to activate the protocol with the enabled checkbox.</li>
+            </ul>
+          </OIbTitle>
+          <Row>
+            <Col md={4}>
+              <OIbCheckBox
+                name={`${prefix}.enabled`}
+                label={dataSource.enabled ? 'Enabled' : 'Disabled'}
+                defaultValue={false}
+                value={dataSource.enabled}
+                help={<div>Enable this application</div>}
+                onChange={onChange}
+                switchButton
+              />
+            </Col>
+            {!schema.points && (
             <Col md={4}>
               <OIbScanMode name={`${prefix}.scanMode`} value={dataSource.scanMode} onChange={onChange} />
             </Col>
-          )}
-        </Row>
-        <OIbLogLevel
-          name={`${prefix}.logParameters`}
-          value={dataSource.logParameters}
-          onChange={onChange}
-        />
-        <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
-      </Form>
+            )}
+          </Row>
+          <OIbLogLevel
+            name={`${prefix}.logParameters`}
+            value={dataSource.logParameters}
+            onChange={onChange}
+          />
+          <OIbForm onChange={onChange} schema={schema} name={`${prefix}.${protocol}`} values={dataSource[protocol]} />
+        </Form>
+      </Container>
     </>
 
   )
