@@ -100,15 +100,24 @@ describe('WATSY Connect', () => {
 
   // Begin of test functions
   it('Should properly connect', () => {
-    jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
+    jest.spyOn(mqtt, 'connect')
+      .mockImplementation(() => ({ on: jest.fn() }))
 
     WATSYNorth.connect()
 
-    const expectedOptions = { username: WATSYConfig.WATSYConnect.username, password: Buffer.from(WATSYConfig.WATSYConnect.password) }
-    expect(mqtt.connect).toBeCalledWith(WATSYNorth.url, expectedOptions)
-    expect(WATSYNorth.client.on).toHaveBeenCalledTimes(2)
-    expect(WATSYNorth.client.on).toHaveBeenCalledWith('error', expect.any(Function))
-    expect(WATSYNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
+    const expectedOptions = {
+      port: WATSYNorth.port,
+      username: WATSYConfig.WATSYConnect.username,
+      password: WATSYConfig.WATSYConnect.password,
+    }
+    expect(mqtt.connect)
+      .toBeCalledWith(WATSYNorth.url, expectedOptions)
+    expect(WATSYNorth.client.on)
+      .toHaveBeenCalledTimes(2)
+    expect(WATSYNorth.client.on)
+      .toHaveBeenCalledWith('error', expect.any(Function))
+    expect(WATSYNorth.client.on)
+      .toHaveBeenCalledWith('connect', expect.any(Function))
   })
 
   it('Should properly handle values and publish them', async () => {
@@ -122,18 +131,24 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(WATSYNorth.client.publish).toBeCalledWith(
-      WATSYNorth.mqttTopic,
-      JSON.stringify(allWATSYMessages[0]),
-      { qos: WATSYNorth.qos },
-      expect.any(Function),
-    )
-    expect(expectedResult).toEqual(values.length)
-    expect(expectedError).toBeNull()
+    expect(WATSYNorth.client.publish)
+      .toBeCalledWith(
+        WATSYNorth.mqttTopic,
+        JSON.stringify(allWATSYMessages[0]),
+        { qos: WATSYNorth.qos },
+        expect.any(Function),
+      )
+    expect(expectedResult)
+      .toEqual(values.length)
+    expect(expectedError)
+      .toBeNull()
   })
 
   it('Should properly not handle unexpected values ', async () => {
-    WATSYNorth.client = { publish: jest.fn().mockImplementation((callback) => callback()) }
+    WATSYNorth.client = {
+      publish: jest.fn()
+        .mockImplementation((callback) => callback()),
+    }
 
     let expectedResult = null
     let expectedError = null
@@ -143,8 +158,11 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult).toBeNull()
-    expect(expectedError).not.toBeNull()
+    expect(expectedResult)
+      .toBeNull()
+    expect(expectedError)
+      .not
+      .toBeNull()
   })
 
   it('Should properly split message in  WATSY messages', () => {
@@ -157,8 +175,10 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult).toEqual(allWATSYMessages)
-    expect(expectedError).toBeNull()
+    expect(expectedResult)
+      .toEqual(allWATSYMessages)
+    expect(expectedError)
+      .toBeNull()
   })
 
   it('Send an empty array an received an empty array ', () => {
@@ -171,8 +191,10 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult.length).toEqual(0) // No message receive
-    expect(expectedError).toBeNull()
+    expect(expectedResult.length)
+      .toEqual(0) // No message receive
+    expect(expectedError)
+      .toBeNull()
   })
 
   it('Send only message in the same sendInterval ', () => {
@@ -185,8 +207,10 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult.length).toEqual(1) // Only one message receive
-    expect(expectedError).toBeNull()
+    expect(expectedResult.length)
+      .toEqual(1) // Only one message receive
+    expect(expectedError)
+      .toBeNull()
   })
 
   it('Should properly disconnect', () => {
@@ -194,6 +218,7 @@ describe('WATSY Connect', () => {
 
     WATSYNorth.disconnect()
 
-    expect(WATSYNorth.client.end).toBeCalledWith(true)
+    expect(WATSYNorth.client.end)
+      .toBeCalledWith(true)
   })
 })

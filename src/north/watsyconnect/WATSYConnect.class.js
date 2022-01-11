@@ -42,9 +42,10 @@ class WATSYConnect extends ApiHandler {
     super(applicationParameters, engine)
 
     const { MQTTUrl, port, username, password, applicativeHostUrl, secretKey } = this.application.WATSYConnect
-    this.url = `${MQTTUrl}:${port}`
+    this.url = MQTTUrl
+    this.port = port
     this.username = username
-    this.password = Buffer.from(this.encryptionService.decryptText(password))
+    this.password = password
     this.qos = 1
     this.host = applicativeHostUrl
     this.token = this.encryptionService.decryptText(secretKey)
@@ -80,13 +81,12 @@ class WATSYConnect extends ApiHandler {
 
   /**
    * Connection to Broker MQTT
-   * TODO: Change the parameters (url) with port number
    * @return {void}
    */
   connect() {
     super.connect()
     this.logger.info(`Connecting WATSYConnect North MQTT Connector to ${this.url}...`)
-    this.client = mqtt.connect(this.url, { username: this.username, password: this.password })
+    this.client = mqtt.connect(this.url, { port: this.port, username: this.username, password: this.encryptionService.decryptText(this.password) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
