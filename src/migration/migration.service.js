@@ -1,38 +1,67 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 
+const path = require('path')
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 const Logger = require('../engine/logger/Logger.class')
 
-const logger = new Logger()
-
-const REQUIRED_SCHEMA_VERSION = 25
+const REQUIRED_SCHEMA_VERSION = 24
 const DEFAULT_VERSION = 1
+
+/**
+ * Default parameters for migration service logger
+ * Dedicated migrations settings to avoid migration errors when migrating logger
+ */
+const engineConfigLogParameters = {
+  engineName: 'OIBus-migration',
+  logParameters: {
+    consoleLog: { level: 'debug' },
+    fileLog: {
+      level: 'debug',
+      fileName: './migration-journal.log',
+      maxSize: 1000000,
+      numberOfFiles: 5,
+      tailable: true,
+    },
+    sqliteLog: {
+      level: 'debug',
+      fileName: './migration-journal.db',
+      maxNumberOfLogs: 1000000,
+    },
+    lokiLog: { level: 'none' },
+  },
+}
 
 /**
  * Migration implementation.
  * Iterate through versions and migrate until we reach actual OIBus version.
- * @param {string} configVersion - The config file version
+ * @param {number} configVersion - The config file version
  * @param {object} config - The configuration
  * @param {string} configFile - The config file
+ * @param {object} logger - The logger
  * @returns {void}
  */
-const migrateImpl = async (configVersion, config, configFile) => {
+const migrateImpl = async (configVersion, config, configFile, logger) => {
   let iterateVersion = configVersion
-  // eslint-disable-next-line no-restricted-syntax
-  for (const version of Object.keys(migrationRules)) {
-    const intVersion = parseInt(version, 10)
-    if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
-      if (migrationRules[version] instanceof Function) {
-        logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
-        config.schemaVersion = intVersion
-        // eslint-disable-next-line no-await-in-loop
-        await migrationRules[version](config)
-      } else {
-        logger.info(`Invalid rules definition to migrate to version ${version}`)
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const version of Object.keys(migrationRules)) {
+      const intVersion = parseInt(version, 10)
+      if ((intVersion > iterateVersion) && (intVersion <= REQUIRED_SCHEMA_VERSION)) {
+        if (migrationRules[version] instanceof Function) {
+          logger.info(`Migrating from version ${iterateVersion} to version ${intVersion}`)
+          config.schemaVersion = intVersion
+          // eslint-disable-next-line no-await-in-loop
+          await migrationRules[version](config, logger)
+        } else {
+          logger.info(`Invalid rules definition to migrate to version ${version}`)
+        }
+        iterateVersion = intVersion
       }
-      iterateVersion = intVersion
     }
+  } catch (error) {
+    logger.error(error)
+    throw new Error(`Migration error exception: ${error}`)
   }
 
   if (iterateVersion !== REQUIRED_SCHEMA_VERSION) {
@@ -49,17 +78,24 @@ const migrateImpl = async (configVersion, config, configFile) => {
  * @returns {void}
  */
 const migrate = async (configFile) => {
-  if (fs.existsSync(configFile)) {
-    const config = ConfigService.tryReadFile(configFile, logger)
+  let fileStat
+  try {
+    fileStat = await fs.stat(configFile)
+  } catch (error) {
+    // no migration needed
+    return
+  }
+  if (fileStat) {
+    const config = ConfigService.tryReadFile(configFile)
     const configVersion = config.schemaVersion || DEFAULT_VERSION
     if (configVersion < REQUIRED_SCHEMA_VERSION) {
+      const logger = new Logger('Migration')
+      engineConfigLogParameters.logParameters.fileLog.fileName = `${path.dirname(configFile)}/logs/migration.log`
+      engineConfigLogParameters.logParameters.sqliteLog.fileName = `${path.dirname(configFile)}/logs/migration.db`
+      await logger.changeParameters(engineConfigLogParameters)
       logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
-      await migrateImpl(configVersion, config, configFile)
-    } else {
-      logger.info('Config file is up-to-date, no migrating needed.')
+      await migrateImpl(configVersion, config, configFile, logger)
     }
-  } else {
-    logger.info(`${configFile} doesn't exists. No migration needed.`)
   }
 }
 

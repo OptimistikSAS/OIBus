@@ -51,6 +51,7 @@ const validation = {
       timeout: minValue(1),
       retryCount: minValue(0),
     },
+    externalSources: { id: notEmpty('External source') },
   },
 }
 
