@@ -83,7 +83,7 @@
     "thread-stream": "git://github.com/rokku-x/thread-stream.git#54a424fa4a555385502ffacdcc039c5da44ba2bd",
     "pino-abstract-transport": "0.5.0",
     "pino-pretty": "7.3.0",
-    "prop-types": "15.7.2",
+    "prop-types": "15.8.1",
     "proxy-agent": "5.0.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
