@@ -2,7 +2,7 @@ const timexe = require('timexe')
 const path = require('path')
 const os = require('os')
 const EventEmitter = require('events')
-const moment = require('moment-timezone')
+const humanizeDuration = require('humanize-duration')
 const VERSION = require('../../package.json').version
 const databaseService = require('../services/database.service')
 
@@ -532,7 +532,7 @@ class Engine {
       ...memoryUsage,
       cpuUsage: `${cpuUsagePercentage}%`,
       processId: process.pid,
-      uptime: moment.duration(process.uptime(), 'seconds').humanize(),
+      uptime: humanizeDuration(1000 * process.uptime(), { round: true }),
       hostname: os.hostname(),
       osRelease: os.release(),
       osType: os.type(),
@@ -602,8 +602,7 @@ class Engine {
       .toFixed(2)
     const memoryUsage = this.getMemoryUsage()
 
-    this.statusData['Up time'] = moment.duration(process.uptime(), 'seconds')
-      .humanize()
+    this.statusData['Up time'] = humanizeDuration(1000 * process.uptime(), { round: true })
     this.statusData['CPU usage'] = `${cpuUsagePercentage}%`
     this.statusData['Global memory usage'] = `${freeMemory} MB / ${os.totalmem() / 1024 / 1024 / 1024} GB (${percentMemory} %)`
     this.statusData['Resident set size (min / current / max)'] = memoryUsage.rss

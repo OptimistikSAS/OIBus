@@ -147,7 +147,7 @@ schema.form = {
   dateFormat: {
     newRow: false,
     type: 'OIbText',
-    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
+    defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
     valid: notEmpty(),
     help: <div>Date Format</div>,
     md: 2,

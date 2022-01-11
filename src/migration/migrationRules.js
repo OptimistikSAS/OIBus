@@ -859,4 +859,20 @@ module.exports = {
       }
     }
   },
+  25: (config) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'SQLDbToFile') {
+        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
+          logger.info('Update date format from moment to luxon for SQLDbToFile')
+          dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
+        }
+      }
+      if (dataSource.protocol === 'MQTT') {
+        if (Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'timestampFormat')) {
+          logger.info('Update date format from moment to luxon for MQTT')
+          dataSource.MQTT.timestampFormat = dataSource.MQTT.timestampFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
+        }
+      }
+    })
+  },
 }

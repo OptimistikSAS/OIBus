@@ -533,6 +533,13 @@ describe('SQLDbToFile', () => {
 
   it('should send uncompressed file when the result is not empty and compression is false', async () => {
     const RealDate = Date
+    global.Date = (...args) => {
+      if (args.length === 0) {
+        return new RealDate(nowDateString)
+      }
+      return new RealDate(...args)
+    }
+    global.Date.UTC = RealDate.UTC
     global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs)
 
     sqlSouth.driver = 'mysql'
@@ -559,6 +566,13 @@ describe('SQLDbToFile', () => {
 
   it('should send compressed file when the result is not empty and compression is true', async () => {
     const RealDate = Date
+    global.Date = (...args) => {
+      if (args.length === 0) {
+        return new RealDate(nowDateString)
+      }
+      return new RealDate(...args)
+    }
+    global.Date.UTC = RealDate.UTC
     global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs)
 
     sqlSouth.driver = 'mysql'
@@ -625,7 +639,7 @@ describe('SQLDbToFile', () => {
     const actual = SQLDbToFile.formatDateWithTimezone(
       new Date('2019-01-01T00:00:00Z'),
       'UTC',
-      'YYYY-MM-DD HH:mm:ss',
+      'yyyy-MM-dd HH:mm:ss',
     )
     const expected = '2019-01-01 00:00:00'
     expect(actual).toBe(expected)

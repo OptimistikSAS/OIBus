@@ -257,7 +257,7 @@ schema.form = {
     type: 'OIbText',
     newRow: false,
     valid: notEmpty(),
-    defaultValue: 'YYYY-MM-DD HH:mm:ss.SSS',
+    defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
   },
   timestampTimezone: {
     type: 'OIbTimezone',
