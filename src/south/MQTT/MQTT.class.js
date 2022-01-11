@@ -1,7 +1,7 @@
 const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
-const moment = require('moment-timezone')
+const { DateTime } = require('luxon')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -41,7 +41,7 @@ class MQTT extends ProtocolHandler {
       timestampTimezone,
     } = this.dataSource.MQTT
 
-    if (moment.tz.zone(timestampTimezone)) {
+    if (timestampTimezone && DateTime.local().setZone(timestampTimezone).isValid) {
       this.timezone = timestampTimezone
     } else {
       this.logger.error(`Invalid timezone supplied: ${timestampTimezone}`)
@@ -274,10 +274,7 @@ class MQTT extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date, dateFormat)
-      .format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone)
-      .toISOString()
+    return DateTime.fromFormat(date, dateFormat, { zone: timezone }).toJSDate().toISOString()
   }
 }
 

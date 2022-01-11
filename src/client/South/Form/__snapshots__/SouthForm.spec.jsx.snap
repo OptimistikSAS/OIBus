@@ -3096,7 +3096,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               id="south.dataSources.0.MQTT.timestampFormat"
               name="south.dataSources.0.MQTT.timestampFormat"
               type="text"
-              value="YYYY-MM-DD HH:mm:ss.SSS"
+              value="yyyy-MM-dd HH:mm:ss.SSS"
             />
             <div
               class="invalid-feedback"
@@ -7499,7 +7499,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               id="south.dataSources.0.SQLDbToFile.dateFormat"
               name="south.dataSources.0.SQLDbToFile.dateFormat"
               type="text"
-              value="YYYY-MM-DD HH:mm:ss.SSS"
+              value="yyyy-MM-dd HH:mm:ss.SSS"
             />
             <div
               class="invalid-feedback"

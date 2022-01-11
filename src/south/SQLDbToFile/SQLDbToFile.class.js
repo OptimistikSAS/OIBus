@@ -6,7 +6,7 @@ const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client, types } = require('pg')
 const csv = require('papaparse')
-const moment = require('moment-timezone')
+const { DateTime } = require('luxon')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 let oracledb
@@ -76,7 +76,7 @@ class SQLDbToFile extends ProtocolHandler {
     this.compression = compression
     this.startDate = startDate // "startDate" is currently a "hidden" parameter of oibus.json
 
-    if (moment.tz.zone(timezone)) {
+    if (timezone && DateTime.local().setZone(timezone).isValid) {
       this.timezone = timezone
     } else {
       this.logger.error(`Invalid timezone supplied: ${timezone}`)
@@ -121,10 +121,26 @@ class SQLDbToFile extends ProtocolHandler {
   setLastCompletedAt(entryList) {
     let newLastCompletedAt = this.lastCompletedAt
     entryList.forEach((entry) => {
-      if (entry[this.timeColumn] instanceof Date && entry[this.timeColumn] > new Date(newLastCompletedAt)) {
-        newLastCompletedAt = entry[this.timeColumn].toISOString()
-      } else if (entry[this.timeColumn] && new Date(entry[this.timeColumn]).toString() !== 'Invalid Date') {
-        const entryDate = new Date(moment.tz(entry[this.timeColumn], this.timezone).tz('UTC').toISOString())
+      if (entry[this.timeColumn]) {
+        let entryDate
+        if (entry[this.timeColumn] instanceof Date) {
+          entryDate = entry[this.timeColumn]
+        } else if (typeof entry[this.timeColumn] === 'number') {
+          entryDate = DateTime.fromMillis(entry[this.timeColumn], { zone: this.timezone })
+            .setZone('utc')
+            .toJSDate()
+        } else {
+          if (DateTime.fromISO(entry[this.timeColumn], { zone: this.timezone }).isValid) {
+            entryDate = DateTime.fromISO(entry[this.timeColumn], { zone: this.timezone })
+              .setZone('utc')
+              .toJSDate()
+          }
+          if (DateTime.fromSQL(entry[this.timeColumn], { zone: this.timezone }).isValid) {
+            entryDate = DateTime.fromSQL(entry[this.timeColumn], { zone: this.timezone })
+              .setZone('utc')
+              .toJSDate()
+          }
+        }
         if (entryDate > new Date(newLastCompletedAt)) {
           newLastCompletedAt = entryDate.toISOString()
         }
@@ -185,7 +201,7 @@ class SQLDbToFile extends ProtocolHandler {
       this.updateStatusDataStream()
       const csvContent = await this.generateCSV(result)
       if (csvContent) {
-        const filename = this.filename.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
+        const filename = this.filename.replace('@date', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss'))
         const filePath = path.join(this.tmpFolder, filename)
         try {
           this.logger.debug(`Writing CSV file at ${filePath}`)
@@ -423,8 +439,7 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static formatDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date).format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone).format(dateFormat)
+    return DateTime.fromJSDate(date, { zone: 'utc' }).toFormat(dateFormat)
   }
 
   /**

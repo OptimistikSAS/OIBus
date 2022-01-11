@@ -48,7 +48,7 @@ const mqttConfig = {
     valuePath: 'value',
     timestampOrigin: 'oibus',
     timestampPath: 'timestamp',
-    timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+    timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
     timestampTimezone: 'Europe/Paris',
     connectTimeout: 1000,
     keepalive: true,
@@ -286,7 +286,7 @@ describe('MQTT south', () => {
     mqttSouth.pointIdPath = 'customName'
     mqttSouth.timestampOrigin = 'payload'
     mqttSouth.timestampPath = 'customTimestamp'
-    mqttSouth.timestampFormat = 'YYYY-MM-DD HH:mm:ss'
+    mqttSouth.timestampFormat = 'yyyy-MM-dd HH:mm:ss'
     mqttSouth.valuePath = 'customValue'
     mqttSouth.qualityPath = 'customQuality'
 
@@ -339,7 +339,7 @@ describe('MQTT south', () => {
     mqttSouth.pointIdPath = 'customName'
     mqttSouth.timestampOrigin = 'payload'
     mqttSouth.timestampPath = 'customTimestamp'
-    mqttSouth.timestampFormat = 'YYYY-MM-DD HH:mm:ss'
+    mqttSouth.timestampFormat = 'yyyy-MM-dd HH:mm:ss'
     mqttSouth.valuePath = 'customValue'
     mqttSouth.qualityPath = 'customQuality'
 
@@ -374,7 +374,7 @@ describe('MQTT south', () => {
     mqttSouth.pointIdPath = 'badPointId'
     mqttSouth.timestampOrigin = 'payload'
     mqttSouth.timestampPath = 'customTimestamp'
-    mqttSouth.timestampFormat = 'YYYY-MM-DD HH:mm:ss'
+    mqttSouth.timestampFormat = 'yyyy-MM-dd HH:mm:ss'
     mqttSouth.valuePath = 'customValue'
     mqttSouth.qualityPath = 'customQuality'
 
@@ -459,7 +459,7 @@ describe('MQTT south', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload and timestamp field is present', () => {
-    const timestamp = '2020-02-02 02:02:02'
+    const timestamp = '2020-02-02 02:02:02.666'
 
     mqttSouth.timestampOrigin = 'payload'
     const mockGenerateDateWithTimezone = jest.spyOn(MQTT, 'generateDateWithTimezone')
@@ -690,7 +690,7 @@ describe('MQTT south', () => {
     const actual = MQTT.generateDateWithTimezone(
       '2020-02-22 22:22:22.666',
       'Europe/Paris',
-      'YYYY-MM-DD HH:mm:ss.SSS',
+      'yyyy-MM-dd HH:mm:ss.SSS',
     )
     const expected = '2020-02-22T21:22:22.666Z'
     expect(actual)
