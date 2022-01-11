@@ -13,20 +13,8 @@ import SouthMenu from './SouthMenu.jsx'
 import EngineMenu from './EngineMenu.jsx'
 import imageCategories from './imageCategories'
 
-const colors = {
-  border: {
-    enabled: '1px solid #2ea948',
-    disabled: '1px solid #eaecef',
-    warning: '1px solid #ffc107',
-    success: '1px solid #2ea948',
-  },
-  background: {
-    enabled: '#e1ffe15c',
-    disabled: '#eaecef5c',
-    warning: '#eaecef5c',
-    success: '#e1ffe15c',
-  },
-}
+const NODE_BACKGROUND_COLOR = '#eaecef5c'
+const NODE_BORDER = '1px solid #eaecef'
 
 const NodeView = ({
   onRestart,
@@ -35,12 +23,9 @@ const NodeView = ({
   const {
     newConfig,
     dispatchNewConfig,
-    activeConfig,
   } = React.useContext(ConfigContext)
-  const applications = newConfig?.north?.applications ?? []
-  const dataSources = newConfig?.south?.dataSources ?? []
-  const engineName = activeConfig ? activeConfig.engine.engineName : ''
   const [connectorData, setConnectorData] = React.useState({})
+  const [sseSource, setSseSource] = React.useState(null)
   const { setAlert } = React.useContext(AlertContext)
 
   const onLoad = (reactFlowInstance) => {
@@ -73,8 +58,18 @@ const NodeView = ({
         setConnectorData(myData)
       }
     }
-    return (() => source.close())
-  }, [newConfig])
+    setSseSource(source)
+
+    return (() => {
+      if (sseSource) {
+        sseSource.close()
+      }
+    })
+  }, [])
+
+  const engineName = newConfig?.engine?.engineName ?? ''
+  const applications = newConfig?.north?.applications ?? []
+  const dataSources = newConfig?.south?.dataSources ?? []
 
   const northNodes = applications.map((application, indexNorth) => (
     {
@@ -82,16 +77,17 @@ const NodeView = ({
       type: 'output',
       targetPosition: 'bottom',
       style: {
-        background: colors.background.disabled,
-        border: colors.border.disabled,
+        background: NODE_BACKGROUND_COLOR,
+        border: NODE_BORDER,
         width: 180,
         height: 130,
+        padding: 0,
         borderRadius: 5,
       },
       data: {
         label: (
-          <div className="d-flex flex-column">
-            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+          <div className="d-flex flex-column h-100 w-100">
+            <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
               <img
                 src={`${imageCategories[ApiSchemas[application.api].category].image}` ?? imageCategories.Default.image}
                 alt="logo"
@@ -100,22 +96,25 @@ const NodeView = ({
               <div className="oi-node-title">
                 {`${application.name}`}
               </div>
-              <div>
+              <div className="oi-node-click-item">
                 <NorthMenu application={application} />
               </div>
             </div>
             <Link
               to={`/north/${application.id}`}
-              className="text-decoration-none text-muted"
+              className="w-100 text-decoration-none text-muted flex-grow-1"
             >
-              {application.api}
+              <div className="d-flex flex-column h-100 justify-content-center py-2 oi-node-click-item">
+                <div>
+                  {application.api}
+                </div>
+              </div>
             </Link>
             <div className="oi-node-footer">
               <OIbCheckBox
-                name={`${`north.applications.${applications.findIndex(
+                name={`north.applications.${applications.findIndex(
                   (element) => element.id === application.id,
-                )}`
-                }.enabled`}
+                )}.enabled`}
                 defaultValue={false}
                 value={application.enabled}
                 onChange={onChange}
@@ -150,47 +149,51 @@ const NodeView = ({
       type: 'input',
       sourcePosition: 'top',
       style: {
-        background: colors.background.disabled,
-        border: colors.border.disabled,
+        background: NODE_BACKGROUND_COLOR,
+        border: NODE_BORDER,
         width: 180,
         height: 130,
+        padding: 0,
         borderRadius: 5,
       },
       data: {
         label: (
-          <div className="d-flex flex-column">
-            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+          <div className="d-flex flex-column h-100 w-100">
+            <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
               <img
                 src={`${imageCategories[ProtocolSchemas[dataSource.protocol].category].image}` ?? imageCategories.Default.image}
                 alt="logo"
                 height="25px"
               />
-              <div className="oi-node-title">
-                {`${dataSource.name}`}
+              <div id={`title-${dataSource.name}`} className="oi-node-title">
+                {dataSource.name}
               </div>
-              <div>
+              <div
+                className="oi-node-click-item"
+              >
                 <SouthMenu dataSource={dataSource} />
               </div>
             </div>
             <Link
               to={`/south/${dataSource.id}`}
-              className="text-decoration-none text-muted"
+              className="w-100 text-decoration-none text-muted flex-grow-1"
             >
-              <div className="p-1 text-muted text-center justify-content-center">
+              <div className="d-flex flex-column h-100 justify-content-center py-2 oi-node-click-item">
                 <div>
                   {dataSource.protocol}
                 </div>
-                <div>
-                  {`Points ${dataSource.points ? `(${dataSource.points.length})` : '(0)'}`}
-                </div>
+                {dataSource.points?.length > 0 ? (
+                  <div>
+                    {`Points (${dataSource.points.length})`}
+                  </div>
+                ) : null}
               </div>
             </Link>
             <div className="oi-node-footer">
               <OIbCheckBox
-                name={`${`south.dataSources.${dataSources.findIndex(
+                name={`south.dataSources.${dataSources.findIndex(
                   (element) => element.id === dataSource.id,
-                )}`
-                }.enabled`}
+                )}.enabled`}
                 defaultValue={false}
                 value={dataSource.enabled}
                 onChange={onChange}
@@ -200,7 +203,7 @@ const NodeView = ({
           </div>
         ),
       },
-      // postion the node with an offset to center and then an offset for each node
+      // position the node with an offset to center and then an offset for each node
       // 5 per line max => potentially render on several lines with y
       position: {
         x: 620 - (100 * Math.min(dataSources.length, 5)) + (indexSouth % 5) * 200,
@@ -227,36 +230,33 @@ const NodeView = ({
       id: 'engine',
       data: {
         label: (
-          <div className="d-flex flex-column">
-            <div className="d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
+          <div className="d-flex flex-column h-100 w-100">
+            <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
               <div />
               <div className="oi-node-title">
                 {`Engine ${engineName}`}
               </div>
-              <div>
+              <div className="oi-node-click-item">
                 <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
               </div>
             </div>
-
             <Link
               to="/engine"
-              className="text-decoration-none text-muted"
+              className="w-100 text-decoration-none text-muted flex-grow-1"
             >
-              <Container>
-                <div className="d-flex flex-column justify-content-between">
-                  {Object.entries(connectorData)
-                    .filter(([key]) => key === 'Up time' || key === 'Global memory usage' || key === 'CPU usage')
-                    .map(([key, value]) => (
-                      <div key={key}>
-                        <b className="mr-2">
-                          {key}
-                          :
-                        </b>
-                        <span>{value}</span>
-                      </div>
-                    ))}
-                </div>
-              </Container>
+              <div className="d-flex flex-column h-100 justify-content-between py-2 oi-node-click-item">
+                {Object.entries(connectorData)
+                  .filter(([key]) => key === 'Up time' || key === 'Global memory usage' || key === 'CPU usage')
+                  .map(([key, value]) => (
+                    <div key={key}>
+                      <b className="mr-2">
+                        {key}
+                        :
+                      </b>
+                      <span>{value}</span>
+                    </div>
+                  ))}
+              </div>
             </Link>
           </div>
         ),
@@ -268,10 +268,11 @@ const NodeView = ({
       targetPosition: 'bottom',
       sourcePosition: 'top',
       style: {
-        color: 'black',
-        border: colors.border.disabled,
+        background: NODE_BACKGROUND_COLOR,
+        border: NODE_BORDER,
         width: 1020,
         height: 130,
+        padding: 0,
         borderRadius: 5,
       },
     },
@@ -282,15 +283,19 @@ const NodeView = ({
   return (
     <Container>
       <div style={{
-        height: 410 + 150 * (Math.trunc((applications.length - 1) / 5) + 1) + 150 * (Math.trunc((dataSources.length - 1) / 5) + 1),
+        height: 410 + 150 * (Math.trunc((northNodes.length - 1) / 5) + 1) + 150 * (Math.trunc((southNodes.length - 1) / 5) + 1),
         width: '100%',
       }}
       >
         <ReactFlow
           elements={elements}
           zoomOnScroll={false}
+          zoomOnDoubleClick={false}
+          selectNodesOnDrag={false}
+          paneMoveable={false}
+          preventScrolling={false}
           nodesConnectable={false}
-          elementsSelectable
+          elementsSelectable={false}
           nodesDraggable={false}
           onLoad={onLoad}
         />

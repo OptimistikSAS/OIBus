@@ -3,7 +3,6 @@
 .oi-node-header {
   color: #fff;
   background-color: #323e48;
-  margin: -10px -10px 10px;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
 }
@@ -14,6 +13,13 @@
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Activate click for dropdown menu or the link inside a react flow node */
+.oi-node-click-item {
+  pointer-events: all;
+  cursor: pointer;
 }
 
 .oi-dropdown-toggle {
@@ -22,9 +28,15 @@
 }
 
 .oi-node-footer {
-  left: 15px;
-  bottom: -5px;
+  left: 10px;
+  bottom: -10px;
   position: absolute;
+}
+
+/* Activate click for switch elements inside a react flow node */
+.oi-node-footer > .form-group > .custom-switch {
+  pointer-events: all;
+  cursor: pointer;
 }
 
 .oi-sub-nav {
