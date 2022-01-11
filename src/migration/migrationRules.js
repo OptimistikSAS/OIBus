@@ -3,13 +3,10 @@
 const fs = require('fs/promises')
 const { nanoid } = require('nanoid')
 const path = require('path')
-const Logger = require('../engine/logger/Logger.class')
 const databaseMigrationService = require('./database.migration.service')
 
-const logger = new Logger()
-
 module.exports = {
-  2: (config) => {
+  2: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'RawFile') {
         logger.info('Rename RawFile to FolderScanner')
@@ -80,7 +77,7 @@ module.exports = {
       }
     })
   },
-  3: async (config) => {
+  3: async (config, logger) => {
     config.engine.engineName = 'OIBus'
     logger.info('Add engineName: OIBus')
     const { sqliteFilename } = config.engine.logParameters
@@ -96,7 +93,7 @@ module.exports = {
       await fs.rename(sqliteFilename, `${sqliteFilename}.old`)
     }
   },
-  4: (config) => {
+  4: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'OPCHDA') {
         logger.info('Add maxReturnValues and maxReadInterval to OPCHDA')
@@ -105,7 +102,7 @@ module.exports = {
       }
     })
   },
-  5: (config) => {
+  5: (config, logger) => {
     config.north.applications.forEach((application) => {
       if (application.api === 'OIConnect') {
         logger.info('Set timeout for OIConnect')
@@ -117,7 +114,7 @@ module.exports = {
       }
     })
   },
-  6: (config) => {
+  6: (config, logger) => {
     const aliveSignalConfig = {
       enabled: false,
       host: '',
@@ -157,7 +154,7 @@ module.exports = {
     logger.info('Add aliveSignal to engine config')
     config.engine.aliveSignal = aliveSignalConfig
   },
-  7: (config) => {
+  7: (config, logger) => {
     let stack = 'fetch'
     let timeout = 30
 
@@ -179,7 +176,7 @@ module.exports = {
       timeout,
     }
   },
-  8: (config) => {
+  8: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'FolderScanner') {
         if (Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'preserveFiles')) {
@@ -190,11 +187,11 @@ module.exports = {
       }
     })
   },
-  9: (config) => {
+  9: (config, logger) => {
     logger.info('Add retry count setting for the HTTP request')
     config.engine.httpRequest.retryCount = 3
   },
-  10: (config) => {
+  10: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'SQLDbToFile') {
         logger.info('Add encryption field to SQLDbToFile')
@@ -202,11 +199,11 @@ module.exports = {
       }
     })
   },
-  11: (config) => {
+  11: (config, logger) => {
     logger.info('Add verbose mode for AliveSignal')
     config.engine.aliveSignal.verbose = false
   },
-  12: (config) => {
+  12: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'MQTT') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'qos')) {
@@ -224,7 +221,7 @@ module.exports = {
       }
     })
   },
-  13: (config) => {
+  13: (config, logger) => {
     config.north.applications.forEach((application) => {
       if (application.api === 'MQTTNorth') {
         if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'regExp')) {
@@ -238,7 +235,7 @@ module.exports = {
       }
     })
   },
-  14: (config) => {
+  14: (config, logger) => {
     config.north.applications.forEach((application) => {
       if (application.api === 'OIConnect') {
         if (Object.prototype.hasOwnProperty.call(application.OIConnect, 'endpoint')) {
@@ -250,7 +247,7 @@ module.exports = {
       }
     })
   },
-  15: (config) => {
+  15: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'FolderScanner') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'compress')) {
@@ -260,7 +257,7 @@ module.exports = {
       }
     })
   },
-  16: (config) => {
+  16: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'SQLDbToFile') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'compress')) {
@@ -270,7 +267,7 @@ module.exports = {
       }
     })
   },
-  17: (config) => {
+  17: (config, logger) => {
     config.north.applications.forEach((application) => {
       if (application.api === 'OIAnalyticsFile') {
         logger.info('Rename OIAnalyticsFile to OIAnalytics')
@@ -283,11 +280,11 @@ module.exports = {
       }
     })
   },
-  18: (config) => {
+  18: (config, logger) => {
     logger.info('Remove listen scan mode')
     config.engine.scanModes = config.engine.scanModes.filter((scanMode) => scanMode.cronTime !== 'listen')
   },
-  19: (config) => {
+  19: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'OPCUA') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'readIntervalDelay')) {
@@ -319,7 +316,7 @@ module.exports = {
       }
     })
   },
-  20: (config) => {
+  20: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'OPCUA') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'maxReturnValues')) {
@@ -333,7 +330,7 @@ module.exports = {
       }
     })
   },
-  21: (config) => {
+  21: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'OPCUA') {
         logger.info('Rename OPCUA to OPCUA_HA')
@@ -345,7 +342,7 @@ module.exports = {
       }
     })
   },
-  22: (config) => {
+  22: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'Modbus') {
         const modbusTypes = {
@@ -395,7 +392,7 @@ module.exports = {
       }
     })
   },
-  23: (config) => {
+  23: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'FolderScanner') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.FolderScanner, 'ignoreModifiedDate')) {
@@ -410,7 +407,7 @@ module.exports = {
       }
     })
   },
-  24: async (config) => {
+  24: async (config, logger) => {
     logger.info('Migrating logParameters and adding lokiLog')
     config.engine.logParameters = {
       consoleLog: { level: config.engine.logParameters.consoleLevel },
@@ -428,7 +425,7 @@ module.exports = {
       },
       lokiLog: {
         level: 'none',
-        host: '',
+        lokiAddress: '',
         interval: 60,
         username: '',
         password: '',
@@ -479,7 +476,11 @@ module.exports = {
     delete config.engine.caching.archiveMode
     delete config.engine.caching.archiveFolder
 
+    // Remove empty external sources
+    config.engine.externalSources = config.engine.externalSources?.filter((externalSource) => externalSource !== '') || []
+
     for (const dataSource of config.south.dataSources) {
+      logger.info(`Fixing log parameters for data source ${dataSource.dataSourceId}`)
       if (!dataSource.logParameters) {
         dataSource.logParameters = {
           consoleLevel: 'engine',
@@ -491,6 +492,7 @@ module.exports = {
         dataSource.logParameters.lokiLevel = 'engine'
       }
       if (dataSource.protocol === 'FolderScanner') {
+        logger.info(`Fixing Folder Scanner settings for data source ${dataSource.dataSourceId}`)
         // a previous migration forgot to update the compression parameter (called "compress" before)
         if (typeof dataSource.FolderScanner.compression === 'undefined') {
           if (typeof dataSource.FolderScanner.compress !== 'undefined') {
@@ -511,6 +513,7 @@ module.exports = {
         }
       }
       if (dataSource.protocol === 'SQLDbToFile') {
+        logger.info(`Fixing SQL settings for data source ${dataSource.dataSourceId}`)
         // when the driver sqlite was added to SQLDbToFile, the databasePath was forgotten in the migration, causing the
         // config to change (adding the databasePath default value) after an update when the user visit a SQLDbToFile
         // connector page
@@ -519,7 +522,7 @@ module.exports = {
         }
       }
       if (dataSource.protocol === 'MQTT') {
-        logger.info('Fixing MQTT settings typo')
+        logger.info(`Fixing MQTT settings for data source ${dataSource.dataSourceId}`)
         dataSource.MQTT.timestampOrigin = dataSource.MQTT.timeStampOrigin
         delete dataSource.MQTT.timeStampOrigin
         dataSource.MQTT.timestampFormat = dataSource.MQTT.timeStampFormat
@@ -530,15 +533,59 @@ module.exports = {
         delete dataSource.MQTT.nodeIdPath
 
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'certificate')) {
-          logger.info('Add certificate field to MQTT')
+          logger.info(`Add certificate fields to MQTT settings for data source ${dataSource.dataSourceId}`)
           dataSource.MQTT.certFile = ''
           dataSource.MQTT.keyFile = ''
           dataSource.MQTT.caFile = ''
           dataSource.MQTT.rejectUnauthorized = false
         }
       }
+
+      if (dataSource.protocol === 'OPCHDA') {
+        logger.info(`Fixing OPCHDA settings for data source ${dataSource.dataSourceId}`)
+        if (dataSource.agentFilename) {
+          if (!dataSource.OPCHDA.agentFilename) {
+            dataSource.OPCHDA.agentFilename = dataSource.agentFilename
+          }
+          delete dataSource.agentFilename
+        }
+        if (dataSource.tcpPort) {
+          if (!dataSource.OPCHDA.tcpPort) {
+            dataSource.OPCHDA.tcpPort = dataSource.tcpPort
+          }
+          delete dataSource.tcpPort
+        }
+        if (dataSource.logLevel) {
+          if (!dataSource.OPCHDA.logLevel) {
+            dataSource.OPCHDA.logLevel = dataSource.logLevel
+          }
+          delete dataSource.logLevel
+        }
+        if (dataSource.host) {
+          if (!dataSource.OPCHDA.host) {
+            dataSource.OPCHDA.host = dataSource.host
+          }
+          delete dataSource.host
+        }
+        if (dataSource.serverName) {
+          if (!dataSource.OPCHDA.serverName) {
+            dataSource.OPCHDA.serverName = dataSource.serverName
+          }
+          delete dataSource.serverName
+        }
+        if (dataSource.scanGroups) {
+          if (!dataSource.OPCHDA.scanGroups) {
+            dataSource.OPCHDA.scanGroups = dataSource.scanGroups
+          }
+          delete dataSource.scanGroups
+        }
+        if (!dataSource.OPCHDA.retryInterval) {
+          dataSource.OPCHDA.retryInterval = 10000
+        }
+      }
     }
     for (const application of config.north.applications) {
+      logger.info(`Fixing log parameters for application ${application.applicationId}`)
       if (!application.logParameters) {
         application.logParameters = {
           consoleLevel: 'engine',
@@ -549,21 +596,62 @@ module.exports = {
       } else if (!application.logParameters.lokiLevel) {
         application.logParameters.lokiLevel = 'engine'
       }
-      if (application.api === 'AmazonS3') {
-        application.AmazonS3.key = application.AmazonS3.accessKey
+
+      if (!application.subscribedTo) {
+        application.subscribedTo = []
       }
 
-      if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'certificate')) {
-        logger.info('Add certificate field to MQTTNorth')
-        application.MQTTNorth.certFile = ''
-        application.MQTTNorth.keyFile = ''
-        application.MQTTNorth.caFile = ''
-        application.MQTTNorth.rejectUnauthorized = false
+      if (application.api === 'AmazonS3') {
+        logger.info(`Fixing Amazon S3 parameters for application ${application.applicationId}`)
+        application.AmazonS3.key = application.AmazonS3.accessKey
+        if (!application.AmazonS3.proxy) {
+          application.AmazonS3.proxy = ''
+        }
+      }
+
+      if (application.api === 'Console') {
+        logger.info(`Fixing Console parameters for application ${application.applicationId}`)
+        if (application.Console.verbose === undefined) {
+          application.Console.verbose = false
+        }
+      }
+
+      if (application.api === 'OIAnalytics') {
+        logger.info(`Fixing OIAnalytics parameters for application ${application.applicationId}`)
+        if (!application.OIAnalytics.proxy) {
+          application.OIAnalytics.proxy = ''
+        }
+
+        // The groupCount and maxSendCount were omitted when OIAnalyticsFiles data source became OIAnalytics
+        // that supports both files and values
+        if (!application.caching.groupCount) {
+          application.caching.groupCount = 1000
+        }
+        if (!application.caching.maxSendCount) {
+          application.caching.maxSendCount = 10000
+        }
+      }
+
+      if (application.api === 'OIConnect') {
+        logger.info(`Fixing OIConnect parameters for application ${application.applicationId}`)
+        if (!application.OIConnect.proxy) {
+          application.OIConnect.proxy = ''
+        }
+      }
+
+      if (application.api === 'MQTTNorth') {
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'certificate')) {
+          logger.info(`Add certificate field to MQTTNorth parameters for application ${application.applicationId}`)
+          application.MQTTNorth.certFile = ''
+          application.MQTTNorth.keyFile = ''
+          application.MQTTNorth.caFile = ''
+          application.MQTTNorth.rejectUnauthorized = false
+        }
       }
     }
 
     const cachePath = config.engine.caching.cacheFolder
-    logger.info('Migrating dataSources cache and temp folders')
+    logger.info('Migrating dataSources name/id and cache/temp folders')
     for (const dataSource of config.south.dataSources) {
       // Generate new id for each connector
       dataSource.id = nanoid()
@@ -635,6 +723,7 @@ module.exports = {
       }
     }
 
+    logger.info('Migrating applications name/id and cache/temp folders')
     const fileCacheDbPath = `${cachePath}/fileCache.db`
     let fileCacheDbExists = false
     try {
@@ -734,7 +823,7 @@ module.exports = {
 
       if (application.subscribedTo?.length > 0) {
         // eslint-disable-next-line max-len
-        logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}. Obsolete subscription will be removed`)
+        logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}`)
         // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
         application.subscribedTo = application.subscribedTo
         // eslint-disable-next-line max-len

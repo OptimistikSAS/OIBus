@@ -4162,434 +4162,290 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                     >
                       <tbody>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Non-Specific]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000004
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Configuration Error]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000008
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Not Connected]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0000000c
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Device Failure]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000010
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Sensor Failure]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000014
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Last Known Value]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000018
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Communication Failure]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0000001C
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Out of Service]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000040
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000041
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000042
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000043
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000044
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Last Usable]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000045
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Last Usable] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000046
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Last Usable] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000047
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Last Usable] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000050
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sensor Not Accurate]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000051
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sensor Not Accurate] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000052
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sensor Not Accurate] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000053
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sensor Not Accurate] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000054
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [EU Exceeded]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000055
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [EU Exceeded] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000056
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [EU Exceeded] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000057
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [EU Exceeded] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000058
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sub-Normal]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00000059
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sub-Normal] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0000005a
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sub-Normal] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0000005b
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Sub-Normal] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000c0
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Non-Specific]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000c1
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Non-Specific] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000c2
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Non-Specific] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000c3
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Non-Specific] (Constant)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000d8
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Local Override]
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000d9
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Local Override] (Low Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000da
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Local Override] (High Limited)
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x000000db
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Good [Local Override] (Constant)
                           </td>
                         </tr>
@@ -4605,194 +4461,130 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                     >
                       <tbody>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Non-Specific] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010004
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Configuration Error] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010008
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Not Connected] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0001000c
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Device Failure] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010010
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Sensor Failure] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010014
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Last Known Value] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010018
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Communication Failure] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x0001001c
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Bad [Out of Service] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010040
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010041
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] (Low Limited) : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00010042
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Uncertain [Non-Specific] (High Limited) : Extra Data
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00040000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Indicates the quality of raw data transmission.
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00080000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             Indicates the quality of calculated data transmission.
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00100000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             No bounding values were found at the starting or ending point.
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00200000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             No raw data were found for the specified time interval.
                           </td>
                         </tr>
                         <tr>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             0x00400000
                           </td>
-                          <td
-                            vertical-align="middle"
-                          >
+                          <td>
                             The raw data in the selected interval were not completely archived.
                           </td>
                         </tr>
@@ -5259,7 +5051,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 <th
                   scope="col"
                 >
-                  Aggregate
+                  aggregate
                 </th>
                 <th
                   scope="col"

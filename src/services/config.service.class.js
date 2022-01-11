@@ -52,12 +52,10 @@ class ConfigService {
   /**
    * Tries to read a file at a given path
    * @param {string} filePath - The location of the config file
-   * @param {Object} logger - The logger
    * @return {*} Content of the file
    */
-  static tryReadFile(filePath, logger) {
+  static tryReadFile(filePath) {
     if (!filePath.endsWith('.json')) {
-      logger.error('You must provide a json file for the configuration!')
       throw new Error('You must provide a json file for the configuration!')
     }
 

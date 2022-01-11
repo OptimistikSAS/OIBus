@@ -37,7 +37,7 @@ const ExternalSources = ({ externalSources }) => {
                     <OIbText
                       name={`engine.externalSources.${i}`}
                       value={filter}
-                      valid={validation.engine.externalSources}
+                      valid={validation.engine.externalSources.id}
                       onChange={onChange}
                       defaultValue=""
                     />
