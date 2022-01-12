@@ -1,5 +1,4 @@
 const Opcua = require('node-opcua')
-const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -179,35 +178,6 @@ class OPCUA_DA extends ProtocolHandler {
     this.reconnectTimeout = null
 
     try {
-      let keyFileContent = ''
-      let certFileContent = ''
-      if (this.keyFile) {
-        try {
-          const stat = await fs.stat(this.keyFile)
-          if (stat) {
-            keyFileContent = await fs.readFile(this.keyFile, 'utf-8')
-          } else {
-            this.logger.error(`Key file ${this.keyFile} does not exist`)
-          }
-        } catch (error) {
-          this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
-          return
-        }
-      }
-      if (this.certFile) {
-        try {
-          const stat = await fs.stat(this.certFile)
-          if (stat) {
-            certFileContent = await fs.readFile(this.certFile)
-          } else {
-            this.logger.error(`Cert file ${this.certFile} does not exist`)
-          }
-        } catch (error) {
-          this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
-          return
-        }
-      }
-
       // define OPCUA_DA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
@@ -225,11 +195,11 @@ class OPCUA_DA extends ProtocolHandler {
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
       let userIdentity = null
-      if (certFileContent && keyFileContent) {
+      if (this.certificate.privateKey && this.certificate.cert) {
         userIdentity = {
           type: Opcua.UserTokenType.Certificate,
-          certificateData: certFileContent,
-          privateKey: keyFileContent,
+          certificateData: this.certificate.cert,
+          privateKey: Buffer.from(this.certificate.privateKey, 'utf-8').toString(),
         }
       } else if (this.username) {
         userIdentity = {

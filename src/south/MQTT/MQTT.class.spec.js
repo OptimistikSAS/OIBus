@@ -1,4 +1,3 @@
-const fs = require('fs/promises')
 const mqtt = require('mqtt')
 
 const MQTT = require('./MQTT.class')
@@ -7,16 +6,6 @@ const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
-
-// Mock fs
-jest.mock('fs/promises', () => ({
-  stat: jest.fn(() => new Promise((resolve) => {
-    resolve(true)
-  })),
-  readFile: jest.fn(() => new Promise((resolve) => {
-    resolve('fileContent')
-  })),
-}))
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -30,6 +19,10 @@ engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
 engine.engineName = 'Test MQTT'
 engine.logger = { error: jest.fn() }
+
+const CertificateService = jest.mock('../../services/CertificateService.class')
+CertificateService.init = jest.fn()
+CertificateService.logger = engine.logger
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -57,6 +50,9 @@ const mqttConfig = {
     timestampPath: 'timestamp',
     timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
     timestampTimezone: 'Europe/Paris',
+    connectTimeout: 1000,
+    keepalive: true,
+    reconnectPeriod: 1000,
     keyFile: '',
     certFile: '',
     caFile: '',
@@ -154,10 +150,13 @@ describe('MQTT south', () => {
       clientId: engine.engineName,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
-      key: '',
-      cert: '',
-      ca: '',
       rejectUnauthorized: false,
+      connectTimeout: 1000,
+      keepalive: true,
+      reconnectPeriod: 1000,
+      ca: null,
+      cert: null,
+      key: null,
     }
     expect(mqtt.connect)
       .toBeCalledWith(mqttConfig.MQTT.url, expectedOptions)
@@ -169,54 +168,12 @@ describe('MQTT south', () => {
       .toHaveBeenCalledWith('connect', expect.any(Function))
   })
 
-  it('should properly connect when cert files do not exist', async () => {
-    mqtt.connect.mockReturnValue({ on: jest.fn() })
-    const RealMath = global.Math
-    const mockMath = Object.create(global.Math)
-    mockMath.random = () => 0.12345
-    global.Math = mockMath
-    jest.spyOn(fs, 'stat').mockImplementation(() => false)
-    const testMqttConfigWithFiles = {
-      ...mqttConfig,
-      MQTT: {
-        ...mqttConfig.MQTT,
-        clientId: '',
-        caFile: 'myCaFile',
-        keyFile: 'myKeyFile',
-        certFile: 'myCertFile',
-        rejectUnauthorized: true,
-      },
-    }
-
-    const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, engine)
-    await mqttSouthWithFiles.init()
-    await mqttSouthWithFiles.connect()
-
-    const expectedOptionsWithFiles = {
-      clean: !mqttConfig.MQTT.persistent,
-      clientId: engine.engineName,
-      username: mqttConfig.MQTT.username,
-      password: Buffer.from(mqttConfig.MQTT.password),
-      key: '',
-      cert: '',
-      ca: '',
-      rejectUnauthorized: true,
-    }
-    expect(mqtt.connect)
-      .toBeCalledWith(testMqttConfigWithFiles.MQTT.url, expectedOptionsWithFiles)
-    expect(mqttSouthWithFiles.logger.error)
-      .toBeCalledWith('Key file myKeyFile does not exist')
-    expect(mqttSouthWithFiles.logger.error)
-      .toBeCalledWith('Cert file myCertFile does not exist')
-    expect(mqttSouthWithFiles.logger.error)
-      .toBeCalledWith('CA file myCaFile does not exist')
-    global.Math = RealMath
-  })
-
   it('should properly connect with cert files', async () => {
+    CertificateService.privateKey = 'fileContent'
+    CertificateService.cert = 'fileContent'
+    CertificateService.ca = 'fileContent'
+
     mqtt.connect.mockReturnValue({ on: jest.fn() })
-    jest.spyOn(fs, 'stat').mockImplementation(() => true)
-    jest.spyOn(fs, 'readFile').mockImplementation(() => 'fileContent')
     const testMqttConfigWithFiles = {
       ...mqttConfig,
       MQTT: {
@@ -230,6 +187,7 @@ describe('MQTT south', () => {
 
     const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, engine)
     await mqttSouthWithFiles.init()
+    mqttSouthWithFiles.certificate = CertificateService
     await mqttSouthWithFiles.connect()
 
     const expectedOptionsWithFiles = {
@@ -241,6 +199,9 @@ describe('MQTT south', () => {
       cert: 'fileContent',
       ca: 'fileContent',
       rejectUnauthorized: true,
+      connectTimeout: 1000,
+      keepalive: true,
+      reconnectPeriod: 1000,
     }
     expect(mqtt.connect)
       .toBeCalledWith(testMqttConfigWithFiles.MQTT.url, expectedOptionsWithFiles)
@@ -248,57 +209,12 @@ describe('MQTT south', () => {
 
   it('should properly handle the connect error event', async () => {
     const error = new Error('test')
+    mqtt.connect.mockReturnValue({ on: jest.fn() })
 
     mqttSouth.handleConnectError(error)
 
     expect(mqttSouth.logger.error)
       .toBeCalledWith(error)
-
-    jest.spyOn(fs, 'stat').mockImplementation(() => {
-      throw new Error('test')
-    })
-
-    const testMqttConfigError1 = {
-      ...mqttConfig,
-      MQTT: {
-        ...mqttConfig.MQTT,
-        caFile: 'myCaFile',
-      },
-    }
-    const mqttSouthError1 = new MQTT(testMqttConfigError1, engine)
-    await mqttSouthError1.init()
-    await mqttSouthError1.connect()
-
-    expect(mqttSouthError1.logger.error)
-      .toBeCalledWith('Error reading ca file myCaFile: Error: test')
-
-    const testMqttConfig2 = {
-      ...mqttConfig,
-      MQTT: {
-        ...mqttConfig.MQTT,
-        certFile: 'myCertFile',
-      },
-    }
-    const mqttSouthError2 = new MQTT(testMqttConfig2, engine)
-    await mqttSouthError2.init()
-    await mqttSouthError2.connect()
-
-    expect(mqttSouthError2.logger.error)
-      .toBeCalledWith('Error reading cert file myCertFile: Error: test')
-
-    const testMqttConfig3 = {
-      ...mqttConfig,
-      MQTT: {
-        ...mqttConfig.MQTT,
-        keyFile: 'myKeyFile',
-      },
-    }
-    const mqttSouthError3 = new MQTT(testMqttConfig3, engine)
-    await mqttSouthError3.init()
-    await mqttSouthError3.connect()
-
-    expect(mqttSouthError3.logger.error)
-      .toBeCalledWith('Error reading key file myKeyFile: Error: test')
   })
 
   it('should properly handle the connect success event', () => {
