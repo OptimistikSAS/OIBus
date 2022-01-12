@@ -10,7 +10,7 @@ jest.mock('mqtt', () => ({ connect: jest.fn() }))
 
 // Mock fs
 jest.mock('fs/promises', () => ({
-  exists: jest.fn(() => new Promise((resolve) => {
+  stat: jest.fn(() => new Promise((resolve) => {
     resolve(true)
   })),
   readFile: jest.fn(() => new Promise((resolve) => {
@@ -28,6 +28,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.eventEmitters = {}
+engine.engineName = 'Test MQTT'
 engine.logger = { error: jest.fn() }
 
 // Mock database service
@@ -92,7 +93,7 @@ describe('MQTT south', () => {
     expect(mqttSouth.persistent)
       .toEqual(mqttConfig.MQTT.persistent)
     expect(mqttSouth.clientId)
-      .toEqual(mqttConfig.MQTT.clientId)
+      .toEqual(engine.engineName)
     expect(mqttSouth.username)
       .toEqual(mqttConfig.MQTT.username)
     expect(mqttSouth.password)
@@ -126,7 +127,7 @@ describe('MQTT south', () => {
     expect(mqttInvalidSouth.persistent)
       .toEqual(mqttConfig.MQTT.persistent)
     expect(mqttInvalidSouth.clientId)
-      .toEqual(mqttConfig.MQTT.clientId)
+      .toEqual(engine.engineName)
     expect(mqttInvalidSouth.username)
       .toEqual(testMqttConfig.MQTT.username)
     expect(mqttInvalidSouth.password)
@@ -150,7 +151,7 @@ describe('MQTT south', () => {
     await mqttSouth.connect()
     const expectedOptions = {
       clean: !mqttConfig.MQTT.persistent,
-      clientId: mqttConfig.MQTT.clientId,
+      clientId: engine.engineName,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
       key: '',
@@ -174,7 +175,7 @@ describe('MQTT south', () => {
     const mockMath = Object.create(global.Math)
     mockMath.random = () => 0.12345
     global.Math = mockMath
-    jest.spyOn(fs, 'exists').mockImplementation(() => false)
+    jest.spyOn(fs, 'stat').mockImplementation(() => false)
     const testMqttConfigWithFiles = {
       ...mqttConfig,
       MQTT: {
@@ -193,7 +194,7 @@ describe('MQTT south', () => {
 
     const expectedOptionsWithFiles = {
       clean: !mqttConfig.MQTT.persistent,
-      clientId: 'OIBus-1f9a6b50',
+      clientId: engine.engineName,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
       key: '',
@@ -214,7 +215,7 @@ describe('MQTT south', () => {
 
   it('should properly connect with cert files', async () => {
     mqtt.connect.mockReturnValue({ on: jest.fn() })
-    jest.spyOn(fs, 'exists').mockImplementation(() => true)
+    jest.spyOn(fs, 'stat').mockImplementation(() => true)
     jest.spyOn(fs, 'readFile').mockImplementation(() => 'fileContent')
     const testMqttConfigWithFiles = {
       ...mqttConfig,
@@ -233,7 +234,7 @@ describe('MQTT south', () => {
 
     const expectedOptionsWithFiles = {
       clean: !mqttConfig.MQTT.persistent,
-      clientId: mqttConfig.MQTT.clientId,
+      clientId: engine.engineName,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
       key: 'fileContent',
@@ -253,7 +254,7 @@ describe('MQTT south', () => {
     expect(mqttSouth.logger.error)
       .toBeCalledWith(error)
 
-    jest.spyOn(fs, 'exists').mockImplementation(() => {
+    jest.spyOn(fs, 'stat').mockImplementation(() => {
       throw new Error('test')
     })
 

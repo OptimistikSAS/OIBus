@@ -1,4 +1,5 @@
 const Opcua = require('node-opcua')
+const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -21,12 +22,28 @@ class OPCUA_DA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, retryInterval } = dataSource.OPCUA_DA
+    const {
+      url,
+      username,
+      password,
+      retryInterval,
+      securityMode,
+      securityPolicy,
+      keepSessionAlive,
+      certFile,
+      keyFile,
+    } = dataSource.OPCUA_DA
 
     this.url = url
     this.username = username
     this.password = this.encryptionService.decryptText(password)
-    this.retryInterval = retryInterval // retry interval before trying to connect again
+    this.securityMode = securityMode
+    this.securityPolicy = securityPolicy
+    this.retryInterval = retryInterval
+    this.clientName = engine.engineName
+    this.keepSessionAlive = keepSessionAlive
+    this.certFile = certFile
+    this.keyFile = keyFile
     this.reconnectTimeout = null
 
     this.handlesPoints = true
@@ -162,22 +179,59 @@ class OPCUA_DA extends ProtocolHandler {
     this.reconnectTimeout = null
 
     try {
+      let keyFileContent = ''
+      let certFileContent = ''
+      if (this.keyFile) {
+        try {
+          const stat = await fs.stat(this.keyFile)
+          if (stat) {
+            keyFileContent = await fs.readFile(this.keyFile, 'utf-8')
+          } else {
+            this.logger.error(`Key file ${this.keyFile} does not exist`)
+          }
+        } catch (error) {
+          this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
+          return
+        }
+      }
+      if (this.certFile) {
+        try {
+          const stat = await fs.stat(this.certFile)
+          if (stat) {
+            certFileContent = await fs.readFile(this.certFile)
+          } else {
+            this.logger.error(`Cert file ${this.certFile} does not exist`)
+          }
+        } catch (error) {
+          this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
+          return
+        }
+      }
+
       // define OPCUA_DA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
         maxRetry: 1,
       }
       const options = {
-        applicationName: 'OIBus',
+        applicationName: this.clientName,
         connectionStrategy,
-        securityMode: Opcua.MessageSecurityMode.None,
-        securityPolicy: Opcua.SecurityPolicy.None,
-        endpoint_must_exist: false,
+        securityMode: Opcua.MessageSecurityMode[this.securityMode],
+        securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
+        endpointMustExist: false,
+        keepSessionAlive: this.keepSessionAlive,
+        clientName: this.clientName,
       }
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
       let userIdentity = null
-      if (this.username && this.password) {
+      if (certFileContent && keyFileContent) {
+        userIdentity = {
+          type: Opcua.UserTokenType.Certificate,
+          certificateData: certFileContent,
+          privateKey: keyFileContent,
+        }
+      } else if (this.username) {
         userIdentity = {
           type: Opcua.UserTokenType.UserName,
           userName: this.username,

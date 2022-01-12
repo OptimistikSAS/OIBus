@@ -32,7 +32,6 @@ class MQTT extends ProtocolHandler {
       connectTimeout,
       qos,
       persistent,
-      clientId,
       dataArrayPath,
       valuePath,
       pointIdPath,
@@ -61,7 +60,7 @@ class MQTT extends ProtocolHandler {
     this.connectTimeout = connectTimeout
     this.qos = qos
     this.persistent = persistent
-    this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
+    this.clientId = engine.engineName
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath
     this.pointIdPath = pointIdPath
@@ -89,7 +88,8 @@ class MQTT extends ProtocolHandler {
     let caFileContent = ''
     if (this.keyFile) {
       try {
-        if (await fs.exists(this.keyFile)) {
+        const stat = await fs.stat(this.keyFile)
+        if (stat) {
           keyFileContent = await fs.readFile(this.keyFile)
         } else {
           this.logger.error(`Key file ${this.keyFile} does not exist`)
@@ -101,7 +101,8 @@ class MQTT extends ProtocolHandler {
     }
     if (this.certFile) {
       try {
-        if (await fs.exists(this.certFile)) {
+        const stat = await fs.stat(this.certFile)
+        if (stat) {
           certFileContent = await fs.readFile(this.certFile)
         } else {
           this.logger.error(`Cert file ${this.certFile} does not exist`)
@@ -113,7 +114,8 @@ class MQTT extends ProtocolHandler {
     }
     if (this.caFile) {
       try {
-        if (await fs.exists(this.caFile)) {
+        const stat = await fs.stat(this.caFile)
+        if (stat) {
           caFileContent = await fs.readFile(this.caFile)
         } else {
           this.logger.error(`CA file ${this.caFile} does not exist`)

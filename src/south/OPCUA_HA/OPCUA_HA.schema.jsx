@@ -4,19 +4,26 @@ import validation from '../../client/South/Form/South.validation'
 
 const schema = { name: 'OPCUA_HA' }
 schema.form = {
-  opcuaSettings: {
+  opcuaNetworkSettings: {
     type: 'OIbTitle',
     children: (
       <>
-        <p>This protocol is in restricted release. Please contact Optimistik</p>
         <p>
-          By default, when you restart, OPCUA HA South will query from the last succesful timestamp (for each scan group)
+          By default, when you restart, OPCUA-HA South will query from the last successful timestamp (for each scan group)
           so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first
           startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
-          accessible by editing manually the oibus configuration time) indicates a different start time. This feature
+          accessible by editing manually the OIBus configuration time) indicates a different start time. This feature
           has been added to be allow recovering of values from the past when needed.
-          example: starTime: &quot;2020-01-15T23:59:00.000Z&quot;
+          Example: starTime: &quot;2020-01-15T23:59:00.000Z&quot;
           Please use the ISO format even if other format are supported.
+        </p>
+        <p>
+          <b>URL:</b>
+          The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
+          {' '}
+          <br />
+          Note that opc.https is not supported for now.
+          Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
         </p>
         <p>
           <b>Retry interval:</b>
@@ -25,7 +32,8 @@ schema.form = {
         <p>
           <b>Max read interval:</b>
           Max read interval will divide a huge request (for example 1 year of data) into smaller
-          requests (for example only one hour if maxReadInterval is 3600).
+          requests (for example only one hour if maxReadInterval is 3600). It is useful when requesting from a startTime
+          or when reconnecting to a server after a while.
         </p>
         <p>
           <b>Read interval delay:</b>
@@ -49,24 +57,14 @@ schema.form = {
     type: 'OIbLink',
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
-    help: <div>The URL of OPC-UA server</div>,
+    help: <div>The URL of the OPCUA server</div>,
     md: 6,
   },
-  username: {
-    type: 'OIbText',
+  keepSessionAlive: {
+    type: 'OIbCheckBox',
+    md: 1,
     newRow: false,
-    md: 2,
-    valid: optional(),
-    defaultValue: '',
-    help: <div>authorized user</div>,
-  },
-  password: {
-    type: 'OIbPassword',
-    newRow: false,
-    md: 2,
-    valid: optional(),
-    defaultValue: '',
-    help: <div>password</div>,
+    defaultValue: false,
   },
   retryInterval: {
     type: 'OIbInteger',
@@ -82,7 +80,7 @@ schema.form = {
     md: 2,
     valid: minValue(60),
     defaultValue: 3600,
-    help: <div>Max read interval (s)</div>,
+    help: <div>Split the time interval into smaller intervals of this duration (in s)</div>,
   },
   readIntervalDelay: {
     type: 'OIbInteger',
@@ -107,6 +105,67 @@ schema.form = {
     valid: minValue(0),
     defaultValue: 180000,
     help: <div>Read timeout (ms)</div>,
+  },
+  opcuaSecuritySettings: {
+    type: 'OIbTitle',
+    children: (
+      <>
+      </>
+    ),
+  },
+  username: {
+    type: 'OIbText',
+    md: 2,
+    valid: optional(),
+    defaultValue: '',
+  },
+  password: {
+    type: 'OIbPassword',
+    newRow: false,
+    md: 2,
+    valid: optional(),
+    defaultValue: '',
+  },
+  securityMode: {
+    type: 'OIbSelect',
+    newRow: false,
+    md: 2,
+    options: ['None', 'Sign', 'SignAndEncrypt'],
+    defaultValue: 'None',
+  },
+  securityPolicy: {
+    type: 'OIbSelect',
+    newRow: false,
+    md: 2,
+    options: [
+      'None',
+      'Basic128',
+      'Basic192',
+      'Basic256',
+      'Basic128Rsa15',
+      'Basic192Rsa15',
+      'Basic256Rsa15',
+      'Basic256Sha256',
+      'Aes128_Sha256_RsaOaep',
+      'PubSub_Aes128_CTR',
+      'PubSub_Aes256_CTR',
+    ],
+    defaultValue: 'None',
+  },
+  certFile: {
+    type: 'OIbText',
+    label: 'Cert File',
+    valid: optional(),
+    defaultValue: '',
+    help: <div>Client certificate (PEM format)</div>,
+  },
+  keyFile: {
+    type: 'OIbText',
+    label: 'Key File',
+    newRow: false,
+    valid: optional(),
+    defaultValue: '',
+    help: <div>OPCUA client private key (PEM format)</div>,
   },
   scanGroupsSection: {
     type: 'OIbTitle',

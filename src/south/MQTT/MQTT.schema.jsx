@@ -31,10 +31,7 @@ schema.form = {
             With a non persistent connection the broker does not store any subscription information or
             undelivered messages for the client.
             For this option to take effect QoS must be set to 1 or 2.
-          </li>
-          <li>
-            <b>Client ID:</b>
-            In order for the broker to store session information for a client a client id must be used.
+            In order for the broker to store session information the engine name is used as MQTT client id .
           </li>
           <li>
             <b>Username:</b>
@@ -96,13 +93,6 @@ schema.form = {
     md: 1,
     newRow: false,
     defaultValue: false,
-  },
-  clientId: {
-    type: 'OIbText',
-    valid: optional(),
-    md: 2,
-    newRow: false,
-    defaultValue: `OIBus-${Math.random().toString(16).substr(2, 8)}`,
   },
   username: {
     type: 'OIbText',

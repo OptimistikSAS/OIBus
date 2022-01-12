@@ -1,3 +1,4 @@
+const fs = require('fs/promises')
 const Opcua = require('node-opcua')
 
 const OPCUA_HA = require('./OPCUA_HA.class')
@@ -5,12 +6,22 @@ const config = require('../../config/defaultConfig.json')
 const databaseService = require('../../services/database.service')
 const EncryptionService = require('../../services/EncryptionService.class')
 
+// Mock fs
+jest.mock('fs/promises', () => ({
+  stat: jest.fn(() => new Promise((resolve) => {
+    resolve(true)
+  })),
+  readFile: jest.fn(() => new Promise((resolve) => {
+    resolve('fileContent')
+  })),
+}))
+
 // Mock node-opcua
 jest.mock('node-opcua', () => ({
   OPCUAClient: { create: jest.fn() },
   MessageSecurityMode: { None: 1 },
   SecurityPolicy: { None: 'http://opcfoundation.org/UA/SecurityPolicy#None' },
-  UserTokenType: { UserName: 1 },
+  UserTokenType: { UserName: 1, Certificate: 2 },
 }))
 
 // Mock database service
@@ -29,7 +40,9 @@ jest.mock('../../engine/logger/Logger.class')
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }
 engine.eventEmitters = {}
+engine.engineName = 'Test OPCUA_DA'
 
 let opcuaSouth = null
 const opcuaConfig = {
@@ -38,13 +51,22 @@ const opcuaConfig = {
   enabled: true,
   startTime: '2020-02-02 02:02:02',
   OPCUA_HA: {
-    maxAge: 10,
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,
-    timeOrigin: 'server',
     maxReadInterval: 3600,
+    readIntervalDelay: 200,
+    maxReturnValues: 1000,
+    readTimeout: 180000,
+    username: '',
+    password: '',
+    securityMode: 'None',
+    securityPolicy: 'None',
+    keepSessionAlive: false,
+    clientName: 'OIBus-a59469d6',
+    certFile: '',
+    keyFile: '',
     scanGroups: [{
-      Aggregate: 'Raw',
+      aggregate: 'Raw',
       resampling: 'None',
       scanMode: 'every10Second',
     }],
@@ -56,7 +78,7 @@ const opcuaConfig = {
 }
 const opcuaScanGroups = [{
   name: 'every10Second',
-  Aggregate: 'Raw',
+  aggregate: 'Raw',
   resampling: 'None',
   scanMode: 'every10Second',
   points: ['ns=3;s=Random'],
@@ -79,6 +101,195 @@ describe('OPCUA-HA south', () => {
       .toEqual(opcuaConfig.OPCUA_HA.maxReadInterval)
     expect(opcuaSouth.reconnectTimeout)
       .toBeNull()
+  })
+
+  it('should manage connection with no scan groups and cert files do not exists', async () => {
+    jest.spyOn(fs, 'stat').mockImplementation(() => false)
+    const RealMath = global.Math
+    const mockMath = Object.create(global.Math)
+    mockMath.random = () => 0.12345
+    const opcuaConfigWithoutScanGroups = {
+      name: 'OPCUA-HA',
+      protocol: 'OPCUA_HA',
+      enabled: true,
+      startTime: '2020-02-02 02:02:02',
+      OPCUA_HA: {
+        maxAge: 10,
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        retryInterval: 10000,
+        maxReadInterval: 3600,
+        readIntervalDelay: 200,
+        maxReturnValues: 1000,
+        readTimeout: 180000,
+        username: '',
+        password: '',
+        securityMode: 'None',
+        securityPolicy: 'None',
+        keepSessionAlive: false,
+        clientName: 'OIBus-1f9a6b50',
+        certFile: 'myCertFile',
+        keyFile: 'myKeyFile',
+      },
+    }
+    const opcuaSouthWithoutScanGroups = new OPCUA_HA(opcuaConfigWithoutScanGroups, engine)
+
+    const expectedOptions = {
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
+      connectionStrategy: {
+        initialDelay: 1000,
+        maxRetry: 1,
+      },
+      securityMode: Opcua.MessageSecurityMode.None,
+      securityPolicy: Opcua.SecurityPolicy.None,
+      endpointMustExist: false,
+      keepSessionAlive: false,
+    }
+    Opcua.OPCUAClient.create.mockReturnValue({
+      connect: jest.fn(() => Promise.reject()),
+      createSession: jest.fn(),
+    })
+
+    await opcuaSouthWithoutScanGroups.connect()
+
+    expect(Opcua.OPCUAClient.create)
+      .toBeCalledWith(expectedOptions)
+    expect(opcuaSouthWithoutScanGroups.logger.error)
+      .toBeCalledWith('OPCUA_HA scanGroups are not defined. This South driver will not work')
+    expect(opcuaSouthWithoutScanGroups.logger.error)
+      .toBeCalledWith('Key file myKeyFile does not exist')
+    expect(opcuaSouthWithoutScanGroups.logger.error)
+      .toBeCalledWith('Cert file myCertFile does not exist')
+
+    global.Math = RealMath
+  })
+
+  it('should properly connect with cert files', async () => {
+    Opcua.OPCUAClient.create.mockReturnValue({
+      connect: jest.fn(() => Promise.resolve()),
+      createSession: jest.fn(() => ({ performMessageTransaction: jest.fn() })),
+    })
+    jest.spyOn(fs, 'stat').mockImplementation(() => true)
+    jest.spyOn(fs, 'readFile').mockImplementation(() => 'fileContent')
+    const opcuaConfigWithCertFiles = {
+      name: 'OPCUA-HA',
+      protocol: 'OPCUA_HA',
+      enabled: true,
+      startTime: '2020-02-02 02:02:02',
+      OPCUA_HA: {
+        maxAge: 10,
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        retryInterval: 10000,
+        maxReadInterval: 3600,
+        readIntervalDelay: 200,
+        maxReturnValues: 1000,
+        readTimeout: 180000,
+        username: '',
+        password: '',
+        securityMode: 'None',
+        securityPolicy: 'None',
+        keepSessionAlive: false,
+        certFile: 'myCertFile',
+        keyFile: 'myKeyFile',
+        scanGroups: [{
+          aggregate: 'badAggregate',
+          resampling: 'badResampling',
+          scanMode: 'every10Second',
+        }],
+      },
+      points: [{
+        nodeId: 'ns=3;s=Random',
+        scanMode: 'every10Second',
+      }],
+    }
+
+    const expectedOptions = {
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
+      connectionStrategy: {
+        initialDelay: 1000,
+        maxRetry: 1,
+      },
+      securityMode: Opcua.MessageSecurityMode.None,
+      securityPolicy: Opcua.SecurityPolicy.None,
+      endpointMustExist: false,
+      keepSessionAlive: false,
+    }
+
+    const expectedUserIdentity = {
+      type: 2,
+      certificateData: 'fileContent',
+      privateKey: 'fileContent',
+    }
+
+    const opcuaSouthWithCertFiles = new OPCUA_HA(opcuaConfigWithCertFiles, engine)
+    await opcuaSouthWithCertFiles.connect()
+
+    expect(Opcua.OPCUAClient.create)
+      .toBeCalledWith(expectedOptions)
+
+    expect(opcuaSouthWithCertFiles.client.createSession)
+      .toBeCalledWith(expectedUserIdentity)
+
+    await opcuaSouthWithCertFiles.onScanImplementation('every10Second')
+    expect(opcuaSouthWithCertFiles.logger.error)
+      .toBeCalledWith('unsupported resampling: badResampling')
+    expect(opcuaSouthWithCertFiles.logger.error)
+      .toBeCalledWith('unsupported aggregate: badAggregate')
+
+    await opcuaSouthWithCertFiles.onScanImplementation('test')
+
+    expect(opcuaSouthWithCertFiles.logger.error)
+      .toBeCalledWith('onScan ignored: no scanGroup for scan mode "test"')
+  })
+
+  it('should manage cert files errors', async () => {
+    jest.spyOn(fs, 'stat').mockImplementation(() => {
+      throw new Error('test')
+    })
+    const opcuaConfigWithCertFiles = {
+      name: 'OPCUA-HA',
+      protocol: 'OPCUA_HA',
+      enabled: true,
+      startTime: '2020-02-02 02:02:02',
+      OPCUA_HA: {
+        maxAge: 10,
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        retryInterval: 10000,
+        maxReadInterval: 3600,
+        readIntervalDelay: 200,
+        maxReturnValues: 1000,
+        readTimeout: 180000,
+        username: '',
+        password: '',
+        securityMode: 'None',
+        securityPolicy: 'None',
+        keepSessionAlive: false,
+        certFile: 'myCertFile',
+        keyFile: 'myKeyFile',
+        scanGroups: [{
+          aggregate: 'Raw',
+          resampling: 'None',
+          scanMode: 'every10Second',
+        }],
+      },
+      points: [{
+        nodeId: 'ns=3;s=Random',
+        scanMode: 'every10Second',
+      }],
+    }
+    const opcuaSouthWithCertFiles = new OPCUA_HA(opcuaConfigWithCertFiles, engine)
+
+    await opcuaSouthWithCertFiles.connect()
+    expect(opcuaSouthWithCertFiles.logger.error)
+      .toBeCalledWith('Error reading key file myKeyFile: Error: test')
+
+    opcuaConfigWithCertFiles.OPCUA_HA.keyFile = ''
+
+    const opcuaSouthWithCertFiles2 = new OPCUA_HA(opcuaConfigWithCertFiles, engine)
+    await opcuaSouthWithCertFiles2.connect()
+    expect(opcuaSouthWithCertFiles2.logger.error)
+      .toBeCalledWith('Error reading cert file myCertFile: Error: test')
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
@@ -142,14 +353,17 @@ describe('OPCUA-HA south', () => {
   it('should properly connect to OPC UA server without password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
+
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
@@ -174,14 +388,16 @@ describe('OPCUA-HA south', () => {
   it('should properly connect to OPC UA server with password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
@@ -215,14 +431,16 @@ describe('OPCUA-HA south', () => {
   it('should properly retry connection to OPC UA server', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(() => Promise.reject()),

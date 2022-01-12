@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-loop-func */
 const Opcua = require('node-opcua')
+const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -23,16 +24,35 @@ class OPCUA_HA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine)
 
-    const { url, username, password, retryInterval, maxReadInterval, readIntervalDelay, maxReturnValues, readTimeout } = dataSource.OPCUA_HA
+    const {
+      url,
+      username,
+      password,
+      retryInterval,
+      maxReadInterval,
+      readIntervalDelay,
+      maxReturnValues, readTimeout,
+      securityMode,
+      securityPolicy,
+      keepSessionAlive,
+      certFile,
+      keyFile,
+    } = dataSource.OPCUA_HA
 
     this.url = url
     this.username = username
     this.password = this.encryptionService.decryptText(password)
-    this.retryInterval = retryInterval // retry interval before trying to connect again
+    this.retryInterval = retryInterval
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
     this.maxReturnValues = maxReturnValues
     this.readTimeout = readTimeout
+    this.securityMode = securityMode
+    this.securityPolicy = securityPolicy
+    this.clientName = engine.engineName
+    this.keepSessionAlive = keepSessionAlive
+    this.certFile = certFile
+    this.keyFile = keyFile
     this.lastCompletedAt = {}
     this.ongoingReads = {}
     this.reconnectTimeout = null
@@ -91,7 +111,7 @@ class OPCUA_HA extends ProtocolHandler {
    * @param {array} dataValues - the list of values
    * @param {Array} nodesToRead - the list of nodes
    * @param {Date} opcStartTime - the start time of the period
-   * @param {String} scanMode - the current scanmode
+   * @param {String} scanMode - the current scanMode
    * @return {Promise<void>} The connection promise
    */
   manageDataValues = (dataValues, nodesToRead, opcStartTime, scanMode) => {
@@ -139,7 +159,7 @@ class OPCUA_HA extends ProtocolHandler {
     do {
       if (options?.aggregateFn) {
         if (!options.processingInterval) {
-          this.logger.error(`option aggregageFn ${options.aggregateFn} without processingInterval`)
+          this.logger.error(`option aggregateFn ${options.aggregateFn} without processingInterval`)
         }
         // we use the same aggregate for all nodes (OPCUA allows to have a different one for each)
         const aggregateType = Array(nodesToRead.length).fill(options.aggregateFn)
@@ -177,7 +197,7 @@ class OPCUA_HA extends ProtocolHandler {
          */
         if (result.statusCode.value !== 0) {
           // eslint-disable-next-line no-underscore-dangle
-          this.logger.debug(`${nodesToRead[i]}: ${result.statusCode.value} - ${result.statusCode._description}`)
+          this.logger.debug(`${nodesToRead[i].nodeId}: ${result.statusCode.value} - ${result.statusCode._description}`)
         }
         nodesToRead[i].continuationPoint = result.continuationPoint
       })
@@ -210,7 +230,7 @@ class OPCUA_HA extends ProtocolHandler {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
 
     if (!scanGroup) {
-      this.logger.error(`onScan ignored: no scanGroup for ${scanMode}`)
+      this.logger.error(`onScan ignored: no scanGroup for scan mode "${scanMode}"`)
       return
     }
 
@@ -290,7 +310,7 @@ class OPCUA_HA extends ProtocolHandler {
           case 'Raw':
             break
           default:
-            this.logger.error(`unsupported aggregage: ${scanGroup.aggregate}`)
+            this.logger.error(`unsupported aggregate: ${scanGroup.aggregate}`)
         }
 
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
@@ -394,24 +414,61 @@ class OPCUA_HA extends ProtocolHandler {
    */
   async connectToOpcuaServer() {
     this.reconnectTimeout = null
-
     try {
+      let keyFileContent = ''
+      let certFileContent = ''
+      if (this.keyFile) {
+        try {
+          const stat = await fs.stat(this.keyFile)
+          if (stat) {
+            keyFileContent = await fs.readFile(this.keyFile, 'utf-8')
+          } else {
+            this.logger.error(`Key file ${this.keyFile} does not exist`)
+          }
+        } catch (error) {
+          this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
+          return
+        }
+      }
+      if (this.certFile) {
+        try {
+          const stat = await fs.stat(this.certFile)
+          if (stat) {
+            certFileContent = await fs.readFile(this.certFile)
+          } else {
+            this.logger.error(`Cert file ${this.certFile} does not exist`)
+          }
+        } catch (error) {
+          this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
+          return
+        }
+      }
+
       // define OPCUA_HA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
         maxRetry: 1,
       }
       const options = {
-        applicationName: 'OIBus',
+        applicationName: this.clientName,
         connectionStrategy,
-        securityMode: Opcua.MessageSecurityMode.None,
-        securityPolicy: Opcua.SecurityPolicy.None,
-        endpoint_must_exist: false,
+        securityMode: Opcua.MessageSecurityMode[this.securityMode],
+        securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
+        endpointMustExist: false,
+        keepSessionAlive: this.keepSessionAlive,
+        clientName: this.clientName,
       }
+
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
       let userIdentity = null
-      if (this.username && this.password) {
+      if (certFileContent && keyFileContent) {
+        userIdentity = {
+          type: Opcua.UserTokenType.Certificate,
+          certificateData: certFileContent,
+          privateKey: keyFileContent,
+        }
+      } else if (this.username) {
         userIdentity = {
           type: Opcua.UserTokenType.UserName,
           userName: this.username,

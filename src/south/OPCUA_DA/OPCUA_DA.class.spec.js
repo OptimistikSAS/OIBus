@@ -9,7 +9,7 @@ jest.mock('node-opcua', () => ({
   OPCUAClient: { create: jest.fn() },
   MessageSecurityMode: { None: 1 },
   SecurityPolicy: { None: 'http://opcfoundation.org/UA/SecurityPolicy#None' },
-  UserTokenType: { UserName: 1 },
+  UserTokenType: { UserName: 1, Certificate: 2 },
 }))
 
 // Mock EncryptionService
@@ -21,7 +21,9 @@ jest.mock('../../engine/logger/Logger.class')
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }
 engine.eventEmitters = {}
+engine.engineName = 'Test OPCUA_DA'
 
 // Mock database service used in super constructor
 jest.mock('../../services/database.service', () => ({
@@ -37,11 +39,15 @@ const opcuaConfig = {
   enabled: true,
   startTime: '2020-02-02 02:02:02',
   OPCUA_DA: {
-    maxAge: 10,
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,
-    timeOrigin: 'server',
-    maxReadInterval: 3600,
+    username: '',
+    password: '',
+    securityMode: 'None',
+    securityPolicy: 'None',
+    keepSessionAlive: false,
+    certFile: '',
+    keyFile: '',
   },
   points: [{
     nodeId: 'ns=3;s=Random',
@@ -75,14 +81,16 @@ describe('OPCUA-DA south', () => {
   it('should properly connect to OPC UA server without password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn().mockReturnValue({}),
@@ -106,14 +114,16 @@ describe('OPCUA-DA south', () => {
   it('should properly connect to OPC UA server with password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
@@ -147,14 +157,16 @@ describe('OPCUA-DA south', () => {
   it('should properly retry connection to OPC UA server', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'OIBus',
+      applicationName: 'Test OPCUA_DA',
+      clientName: 'Test OPCUA_DA',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
       },
       securityMode: Opcua.MessageSecurityMode.None,
       securityPolicy: Opcua.SecurityPolicy.None,
-      endpoint_must_exist: false,
+      endpointMustExist: false,
+      keepSessionAlive: false,
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(() => Promise.reject()),

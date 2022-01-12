@@ -150,7 +150,6 @@ class ProtocolHandler {
     await this.engine.addValues(this.dataSource.id, bufferSave)
     this.statusData['Number of values since OIBus has started'] += bufferSave.length
     this.statusData['Last added points at'] = new Date().toISOString()
-    this.statusData['Last added point id (value)'] = `${bufferSave[bufferSave.length - 1].pointId} (${bufferSave[bufferSave.length - 1].data.value})`
     this.updateStatusDataStream()
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)

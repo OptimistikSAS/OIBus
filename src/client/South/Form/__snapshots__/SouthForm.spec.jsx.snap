@@ -2486,13 +2486,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                         <b>
                           Persistent:
                         </b>
-                        In this mode the broker will store subscription information, and undelivered messages for the client. With a non persistent connection the broker does not store any subscription information or undelivered messages for the client. For this option to take effect QoS must be set to 1 or 2.
-                      </li>
-                      <li>
-                        <b>
-                          Client ID:
-                        </b>
-                        In order for the broker to store session information for a client a client id must be used.
+                        In this mode the broker will store subscription information, and undelivered messages for the client. With a non persistent connection the broker does not store any subscription information or undelivered messages for the client. For this option to take effect QoS must be set to 1 or 2. In order for the broker to store session information the engine name is used as MQTT client id .
                       </li>
                       <li>
                         <b>
@@ -2597,31 +2591,6 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-1"
         />
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="south.dataSources.0.MQTT.clientId"
-            >
-              Client id
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.MQTT.clientId"
-              name="south.dataSources.0.MQTT.clientId"
-              type="text"
-              value="myClientId"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
       </div>
       <div
         class="row"
@@ -8603,7 +8572,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             class="row"
           >
             <h5>
-              Opcua settings
+              Opcua network settings
               <button
                 aria-label="Close"
                 class="close"
@@ -8641,10 +8610,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   class="col"
                 >
                   <p>
-                    This protocol is in restricted release. Please contact Optimistik
+                    By default, when you restart, OPCUA-HA South will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. Example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
                   </p>
                   <p>
-                    By default, when you restart, OPCUA HA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                    <b>
+                      URL:
+                    </b>
+                    The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
+                     
+                    <br />
+                    Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
                   <p>
                     <b>
@@ -8656,7 +8631,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     <b>
                       Max read interval:
                     </b>
-                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600). It is useful when requesting from a startTime or when reconnecting to a server after a while.
                   </p>
                   <p>
                     <b>
@@ -8689,10 +8664,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-6"
         />
         <div
-          class="col-md-2"
-        />
-        <div
-          class="col-md-2"
+          class="col-md-1"
         />
       </div>
       <div
@@ -8761,7 +8733,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Max read interval (s)
+                Split the time interval into smaller intervals of this duration (in s)
               </div>
             </small>
           </div>
@@ -8862,6 +8834,84 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Opcua security settings
+              <button
+                aria-label="Close"
+                class="close"
+                id="id"
+              >
+                <svg
+                  class="oi-help"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                  />
+                </svg>
+              </button>
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          >
+            <div
+              class="collapse"
+              toggler="id"
+            >
+              <div
+                class="row"
+                style="margin-bottom: 15px;"
+              >
+                <div
+                  class="col"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        />
+        <div
+          class="col-md-4"
+        />
       </div>
       <div
         class="row"
@@ -9658,7 +9708,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             class="row"
           >
             <h5>
-              Opcua settings
+              Opcua network settings
               <button
                 aria-label="Close"
                 class="close"
@@ -9696,10 +9746,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                   class="col"
                 >
                   <p>
-                    This protocol is in restricted release. Please contact Optimistik
+                    By default, when you restart, OPCUA-HA South will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. Example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
                   </p>
                   <p>
-                    By default, when you restart, OPCUA HA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                    <b>
+                      URL:
+                    </b>
+                    The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
+                     
+                    <br />
+                    Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
                   <p>
                     <b>
@@ -9711,7 +9767,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                     <b>
                       Max read interval:
                     </b>
-                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600). It is useful when requesting from a startTime or when reconnecting to a server after a while.
                   </p>
                   <p>
                     <b>
@@ -9744,10 +9800,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-6"
         />
         <div
-          class="col-md-2"
-        />
-        <div
-          class="col-md-2"
+          class="col-md-1"
         />
       </div>
       <div
@@ -9816,7 +9869,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Max read interval (s)
+                Split the time interval into smaller intervals of this duration (in s)
               </div>
             </small>
           </div>
@@ -9917,6 +9970,84 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Opcua security settings
+              <button
+                aria-label="Close"
+                class="close"
+                id="id"
+              >
+                <svg
+                  class="oi-help"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                  />
+                </svg>
+              </button>
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          >
+            <div
+              class="collapse"
+              toggler="id"
+            >
+              <div
+                class="row"
+                style="margin-bottom: 15px;"
+              >
+                <div
+                  class="col"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        />
+        <div
+          class="col-md-4"
+        />
       </div>
       <div
         class="row"
@@ -10500,7 +10631,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             class="row"
           >
             <h5>
-              Opcua settings
+              Opcua network settings
               <button
                 aria-label="Close"
                 class="close"
@@ -10538,10 +10669,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                   class="col"
                 >
                   <p>
-                    This protocol is in restricted release. Please contact Optimistik
+                    By default, when you restart, OPCUA-HA South will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. Example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
                   </p>
                   <p>
-                    By default, when you restart, OPCUA HA South will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed. example: starTime: "2020-01-15T23:59:00.000Z" Please use the ISO format even if other format are supported.
+                    <b>
+                      URL:
+                    </b>
+                    The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
+                     
+                    <br />
+                    Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
                   <p>
                     <b>
@@ -10553,7 +10690,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                     <b>
                       Max read interval:
                     </b>
-                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600).
+                    Max read interval will divide a huge request (for example 1 year of data) into smaller requests (for example only one hour if maxReadInterval is 3600). It is useful when requesting from a startTime or when reconnecting to a server after a while.
                   </p>
                   <p>
                     <b>
@@ -10586,10 +10723,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-6"
         />
         <div
-          class="col-md-2"
-        />
-        <div
-          class="col-md-2"
+          class="col-md-1"
         />
       </div>
       <div
@@ -10658,7 +10792,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="form-text text-muted"
             >
               <div>
-                Max read interval (s)
+                Split the time interval into smaller intervals of this duration (in s)
               </div>
             </small>
           </div>
@@ -10759,6 +10893,84 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Opcua security settings
+              <button
+                aria-label="Close"
+                class="close"
+                id="id"
+              >
+                <svg
+                  class="oi-help"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                  />
+                </svg>
+              </button>
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          >
+            <div
+              class="collapse"
+              toggler="id"
+            >
+              <div
+                class="row"
+                style="margin-bottom: 15px;"
+              >
+                <div
+                  class="col"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+        <div
+          class="col-md-2"
+        />
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        />
+        <div
+          class="col-md-4"
+        />
       </div>
       <div
         class="row"
@@ -11382,13 +11594,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                         <b>
                           Persistent:
                         </b>
-                        In this mode the broker will store subscription information, and undelivered messages for the client. With a non persistent connection the broker does not store any subscription information or undelivered messages for the client. For this option to take effect QoS must be set to 1 or 2.
-                      </li>
-                      <li>
-                        <b>
-                          Client ID:
-                        </b>
-                        In order for the broker to store session information for a client a client id must be used.
+                        In this mode the broker will store subscription information, and undelivered messages for the client. With a non persistent connection the broker does not store any subscription information or undelivered messages for the client. For this option to take effect QoS must be set to 1 or 2. In order for the broker to store session information the engine name is used as MQTT client id .
                       </li>
                       <li>
                         <b>
@@ -11463,9 +11669,6 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         />
         <div
           class="col-md-1"
-        />
-        <div
-          class="col-md-2"
         />
       </div>
       <div
