@@ -80,6 +80,8 @@ class Engine {
     // these parameters could be settings from OIBus UI
     this.bufferMax = engineConfig.caching.bufferMax
     this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
+
+    this.engineName = engineConfig.engineName
   }
 
   /**

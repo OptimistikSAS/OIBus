@@ -532,6 +532,11 @@ module.exports = {
         dataSource.MQTT.pointIdPath = dataSource.MQTT.nodeIdPath
         delete dataSource.MQTT.nodeIdPath
 
+        // engine name is used instead
+        if (dataSource.MQTT.clientId) {
+          delete dataSource.MQTT.clientId
+        }
+
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'certificate')) {
           logger.info(`Add certificate fields to MQTT settings for data source ${dataSource.dataSourceId}`)
           dataSource.MQTT.certFile = ''
@@ -539,6 +544,22 @@ module.exports = {
           dataSource.MQTT.caFile = ''
           dataSource.MQTT.rejectUnauthorized = false
         }
+      }
+      if (dataSource.protocol === 'OPCUA_HA') {
+        logger.info(`Add OPCUA_HA security fields for data source ${dataSource.dataSourceId}`)
+        dataSource.OPCUA_HA.securityMode = 'None'
+        dataSource.OPCUA_HA.securityPolicy = 'None'
+        dataSource.OPCUA_HA.keepSessionAlive = false
+        dataSource.OPCUA_HA.certFile = ''
+        dataSource.OPCUA_HA.keyFile = ''
+      }
+      if (dataSource.protocol === 'OPCUA_DA') {
+        logger.info(`Add OPCUA_DA security fields for data source ${dataSource.dataSourceId}`)
+        dataSource.OPCUA_DA.securityMode = 'None'
+        dataSource.OPCUA_DA.securityPolicy = 'None'
+        dataSource.OPCUA_DA.keepSessionAlive = false
+        dataSource.OPCUA_DA.certFile = ''
+        dataSource.OPCUA_DA.keyFile = ''
       }
 
       if (dataSource.protocol === 'OPCHDA') {
