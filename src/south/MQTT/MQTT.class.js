@@ -2,7 +2,6 @@ const mqtt = require('mqtt')
 const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const moment = require('moment-timezone')
-const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -83,55 +82,12 @@ class MQTT extends ProtocolHandler {
     await super.connect()
     this.logger.info(`Connecting to ${this.url}...`)
 
-    let keyFileContent = ''
-    let certFileContent = ''
-    let caFileContent = ''
-    if (this.keyFile) {
-      try {
-        const stat = await fs.stat(this.keyFile)
-        if (stat) {
-          keyFileContent = await fs.readFile(this.keyFile)
-        } else {
-          this.logger.error(`Key file ${this.keyFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
-        return
-      }
-    }
-    if (this.certFile) {
-      try {
-        const stat = await fs.stat(this.certFile)
-        if (stat) {
-          certFileContent = await fs.readFile(this.certFile)
-        } else {
-          this.logger.error(`Cert file ${this.certFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
-        return
-      }
-    }
-    if (this.caFile) {
-      try {
-        const stat = await fs.stat(this.caFile)
-        if (stat) {
-          caFileContent = await fs.readFile(this.caFile)
-        } else {
-          this.logger.error(`CA file ${this.caFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading ca file ${this.caFile}: ${error}`)
-        return
-      }
-    }
-
     const options = {
       username: this.username,
       password: this.password,
-      key: keyFileContent,
-      cert: certFileContent,
-      ca: caFileContent,
+      key: this.certificate.privateKey,
+      cert: this.certificate.cert,
+      ca: this.certificate.ca,
       rejectUnauthorized: this.rejectUnauthorized ? this.rejectUnauthorized : false,
       keepalive: this.keepalive,
       reconnectPeriod: this.reconnectPeriod,

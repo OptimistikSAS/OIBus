@@ -5,6 +5,7 @@ const EventEmitter = require('events')
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/logger/Logger.class')
+const CertificateService = require('../services/CertificateService.class')
 
 /**
  * Class Protocol : provides general attributes and methods for protocols.
@@ -56,6 +57,10 @@ class ProtocolHandler {
     this.buffer = []
     this.bufferTimeout = null
     this.statusData = {}
+
+    this.keyFile = null
+    this.certFile = null
+    this.caFile = null
   }
 
   async init() {
@@ -63,6 +68,9 @@ class ProtocolHandler {
     this.logger = new Logger(`South:${this.dataSource.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
+
+    this.certificate = new CertificateService(this.logger)
+    await this.certificate.init(this.keyFile, this.certFile, this.caFile)
     this.initializeStatusData()
   }
 

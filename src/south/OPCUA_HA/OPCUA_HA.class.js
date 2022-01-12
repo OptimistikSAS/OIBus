@@ -1,7 +1,4 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-loop-func */
 const Opcua = require('node-opcua')
-const fs = require('fs/promises')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 
@@ -185,10 +182,12 @@ class OPCUA_HA extends ProtocolHandler {
         timestampsToReturn: Opcua.TimestampsToReturn.Both,
       })
       if (options?.timeout) request.requestHeader.timeoutHint = options.timeout
+      // eslint-disable-next-line no-await-in-loop
       const response = await this.session.performMessageTransaction(request)
       if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
+      // eslint-disable-next-line no-loop-func
       response?.results?.forEach((result, i) => {
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
@@ -313,6 +312,7 @@ class OPCUA_HA extends ProtocolHandler {
             this.logger.error(`unsupported aggregate: ${scanGroup.aggregate}`)
         }
 
+        // eslint-disable-next-line no-await-in-loop
         const dataValues = await this.readHistoryValue(nodesToRead, opcStartTime, intervalOpcEndTime, options)
         /*
         Below are two example of responses
@@ -376,6 +376,7 @@ class OPCUA_HA extends ProtocolHandler {
         // eslint-disable-next-line no-await-in-loop
         await this.manageDataValues(dataValues, nodesToRead, opcStartTime, scanMode)
 
+        // eslint-disable-next-line no-await-in-loop
         await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode])
         this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
 
@@ -415,35 +416,6 @@ class OPCUA_HA extends ProtocolHandler {
   async connectToOpcuaServer() {
     this.reconnectTimeout = null
     try {
-      let keyFileContent = ''
-      let certFileContent = ''
-      if (this.keyFile) {
-        try {
-          const stat = await fs.stat(this.keyFile)
-          if (stat) {
-            keyFileContent = await fs.readFile(this.keyFile, 'utf-8')
-          } else {
-            this.logger.error(`Key file ${this.keyFile} does not exist`)
-          }
-        } catch (error) {
-          this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
-          return
-        }
-      }
-      if (this.certFile) {
-        try {
-          const stat = await fs.stat(this.certFile)
-          if (stat) {
-            certFileContent = await fs.readFile(this.certFile)
-          } else {
-            this.logger.error(`Cert file ${this.certFile} does not exist`)
-          }
-        } catch (error) {
-          this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
-          return
-        }
-      }
-
       // define OPCUA_HA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
@@ -462,11 +434,11 @@ class OPCUA_HA extends ProtocolHandler {
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
       let userIdentity = null
-      if (certFileContent && keyFileContent) {
+      if (this.certificate.privateKey && this.certificate.cert) {
         userIdentity = {
           type: Opcua.UserTokenType.Certificate,
-          certificateData: certFileContent,
-          privateKey: keyFileContent,
+          certificateData: this.certificate.cert,
+          privateKey: Buffer.from(this.certificate.privateKey, 'utf-8').toString(),
         }
       } else if (this.username) {
         userIdentity = {
