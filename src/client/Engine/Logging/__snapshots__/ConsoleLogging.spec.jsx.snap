@@ -13,17 +13,17 @@ exports[`ConsoleLogging check ConsoleLogging 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.consoleLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.consoleLog.level"
             name="engine.logParameters.consoleLog.level"
           >
@@ -83,17 +83,17 @@ exports[`ConsoleLogging check change console level to "warning" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.consoleLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.consoleLog.level"
             name="engine.logParameters.consoleLog.level"
           >

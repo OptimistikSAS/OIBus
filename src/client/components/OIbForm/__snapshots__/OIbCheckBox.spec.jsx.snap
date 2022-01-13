@@ -6,7 +6,7 @@ exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `
     class="form-check"
   >
     <label
-      class="form-check-label"
+      class="form-check-label form-label"
     >
       label
       <input
@@ -26,7 +26,7 @@ exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
     class="form-check"
   >
     <label
-      class="form-check-label"
+      class="form-check-label form-label"
     >
       label
       <input
@@ -44,26 +44,17 @@ exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
 exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
-    <div
-      class="custom-switch custom-control"
-    >
-      <input
-        checked=""
-        class="custom-control-input"
-        color="secondary"
-        id="name"
-        name="name"
-        type="checkbox"
-      />
-      <label
-        class="custom-control-label"
-        for="name"
-      >
-        label
-      </label>
-    </div>
+    <input
+      checked=""
+      class="form-check-input"
+      color="secondary"
+      id="name"
+      label="label"
+      name="name"
+      type="checkbox"
+    />
   </div>
 </div>
 `;

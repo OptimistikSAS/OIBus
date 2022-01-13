@@ -151,11 +151,11 @@ exports[`OIbTable check delete from table 1`] = `
       <tr>
         <td>
           <div
-            class="form-group"
+            class="mb-3"
           >
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="name.0.scanMode"
               name="name.0.scanMode"
             >

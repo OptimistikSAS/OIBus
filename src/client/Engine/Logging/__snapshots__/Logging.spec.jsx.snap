@@ -9,18 +9,17 @@ exports[`Logging check Logging 1`] = `
       <h5>
         Logging parameters
         <button
-          aria-label="Close"
-          class="close"
+          class="util-button btn btn-link"
           id="id"
         >
           <svg
             class="oi-help"
             fill="currentColor"
-            height="1em"
+            height="12"
             stroke="currentColor"
             stroke-width="0"
             viewBox="0 0 512 512"
-            width="1em"
+            width="12"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
@@ -156,17 +155,17 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.consoleLog.level"
             >
               Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="engine.logParameters.consoleLog.level"
               name="engine.logParameters.consoleLog.level"
             >
@@ -221,17 +220,17 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.fileLog.level"
             >
               Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="engine.logParameters.fileLog.level"
               name="engine.logParameters.fileLog.level"
             >
@@ -285,11 +284,11 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.fileLog.fileName"
             >
               File name for the log file
@@ -312,16 +311,16 @@ exports[`Logging check Logging 1`] = `
                 The file name of the log file
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.fileLog.maxSize"
             >
               File max size
@@ -350,10 +349,10 @@ exports[`Logging check Logging 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.fileLog.numberOfFiles"
             >
               Number of files
@@ -385,7 +384,7 @@ exports[`Logging check Logging 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Tailable
               <input
@@ -411,17 +410,17 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.sqliteLog.level"
             >
               Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="engine.logParameters.sqliteLog.level"
               name="engine.logParameters.sqliteLog.level"
             >
@@ -475,11 +474,11 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.sqliteLog.fileName"
             >
               File name of sqlite db
@@ -502,16 +501,16 @@ exports[`Logging check Logging 1`] = `
                 The file name of the database file
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.sqliteLog.maxNumberOfLogs"
             >
               Database max size
@@ -551,17 +550,17 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.level"
             >
               Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="engine.logParameters.lokiLog.level"
               name="engine.logParameters.lokiLog.level"
             >
@@ -615,11 +614,11 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.lokiAddress"
             >
               Host
@@ -642,16 +641,16 @@ exports[`Logging check Logging 1`] = `
                 The host name of the Loki instance
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.interval"
             >
               Interval
@@ -683,11 +682,11 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.tokenAddress"
             >
               Token address
@@ -710,7 +709,7 @@ exports[`Logging check Logging 1`] = `
                 The address of the token provider (need username and password)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -719,11 +718,11 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-3"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.username"
             >
               Username
@@ -739,16 +738,16 @@ exports[`Logging check Logging 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="engine.logParameters.lokiLog.password"
             >
               Password

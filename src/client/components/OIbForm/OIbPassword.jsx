@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input, InputGroup, InputGroupAddon } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, InputGroup } from 'reactstrap'
 import { FaEyeSlash, FaEye } from 'react-icons/fa'
 
 const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue, hidden }) => {
@@ -60,11 +60,11 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue, 
           value={value.replace(PREFIX, '')}
         />
         {edited && (
-          <InputGroupAddon className="oi-form-append" addonType="append">
+          <Input className="oi-form-append" addonType="append">
             {showPassword
               ? <FaEye onClick={() => setShowPassword(false)} />
               : <FaEyeSlash onClick={() => setShowPassword(true)} />}
-          </InputGroupAddon>
+          </Input>
         )}
       </InputGroup>
       <FormFeedback style={{ display: 'inline' }}>{validCheck}</FormFeedback>

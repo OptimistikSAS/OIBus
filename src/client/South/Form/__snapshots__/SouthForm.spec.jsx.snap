@@ -6,18 +6,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         ADS - Test
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -33,7 +32,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
@@ -61,18 +60,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -115,26 +113,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Enabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -151,18 +140,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -280,17 +268,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -339,17 +327,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -398,17 +386,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -469,18 +457,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -520,7 +507,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     </p>
                     <p>
                       The client ams net id must be set beforehand. See the official
-                       
+
                       <a
                         href="https://optimistik.fr/oibus/"
                         rel="noreferrer"
@@ -528,7 +515,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                       >
                         OIBus
                       </a>
-                       
+
                       documentation for more information.
                     </p>
                   </div>
@@ -544,11 +531,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.netId"
             >
               Net id
@@ -571,16 +558,16 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The ADS net id of the PLC
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.port"
             >
               Port
@@ -612,11 +599,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.routerAddress"
             >
               Router address
@@ -639,16 +626,16 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The IP address where the AMS router is
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.routerTcpPort"
             >
               Router tcp port
@@ -680,11 +667,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.clientAmsNetId"
             >
               Client ams net id
@@ -707,16 +694,16 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The AMS net id set to this client from the AMS router settings
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.clientAdsPort"
             >
               Client ads port
@@ -749,10 +736,10 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.retryInterval"
             >
               Retry interval
@@ -790,18 +777,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads data settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -832,7 +818,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                           PLC name:
                         </b>
                         You can add a prefix to your points ID by mentioning your PLC name. To separate this name from your points ID, you can add a separator.
-                         
+
                         <br />
                         For example, if you have a point ID TEST.MY_INTEGER and that I want to add something in front of it to better identify the data, you can add MY_PLC. in front of your point (dot included). That will give you MY_PLC.TEST.MY_INTEGER
                         <br />
@@ -887,11 +873,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.plcName"
             >
               Plc name
@@ -914,7 +900,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The name of the PLC that will be added to the points ID as prefix.
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -924,17 +910,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.enumAsText"
             >
               Enumeration value
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.ADS.enumAsText"
               name="south.dataSources.0.ADS.enumAsText"
             >
@@ -958,17 +944,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.ADS.boolAsText"
             >
               Boolean value
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.ADS.boolAsText"
               name="south.dataSources.0.ADS.boolAsText"
             >
@@ -1001,18 +987,17 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads structures
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1090,8 +1075,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <tbody>
               <tr>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1105,11 +1090,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1123,7 +1108,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
                   <svg
@@ -1144,8 +1129,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               </tr>
               <tr>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1159,11 +1144,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1177,7 +1162,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
                   <svg
@@ -1211,18 +1196,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         FolderScanner
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1238,7 +1222,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
@@ -1266,18 +1250,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1320,26 +1303,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Enabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -1353,11 +1327,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.scanMode"
               name="south.dataSources.0.scanMode"
             >
@@ -1394,18 +1368,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1523,17 +1496,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -1582,17 +1555,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -1641,17 +1614,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -1712,18 +1685,17 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             <h5>
               FolderScanner settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1785,11 +1757,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.FolderScanner.inputFolder"
             >
               Input folder
@@ -1812,7 +1784,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
                 Path to folder such as: c:/input/
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -1825,7 +1797,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Preserve File?
               <input
@@ -1845,7 +1817,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Ignore modified date
               <input
@@ -1865,10 +1837,10 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.FolderScanner.minAge"
             >
               Minimum Age
@@ -1893,11 +1865,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.FolderScanner.regex"
             >
               RegExp
@@ -1920,7 +1892,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
                 RegExp to filter the folder
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -1933,7 +1905,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Compress File?
               <input
@@ -1957,18 +1929,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         MQTTServer
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1984,7 +1955,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2012,18 +1983,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2066,25 +2036,16 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -2101,18 +2062,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2230,17 +2190,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -2289,17 +2249,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -2348,17 +2308,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -2419,18 +2379,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Mqtt settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2557,10 +2516,10 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.url"
             >
               Url
@@ -2598,11 +2557,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.username"
             >
               Username
@@ -2618,16 +2577,16 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.password"
             >
               Password
@@ -2657,11 +2616,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.certFile"
             >
               Cert File
@@ -2684,16 +2643,16 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 Server certificate (used for MQTTS protocol)
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.keyFile"
             >
               Key File
@@ -2716,16 +2675,16 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 MQTT client private key
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.caFile"
             >
               CA File
@@ -2748,7 +2707,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -2761,7 +2720,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Reject Unauthorized Connection
               <input
@@ -2781,10 +2740,10 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.keepalive"
             >
               Keep Alive Interval
@@ -2806,10 +2765,10 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.reconnectPeriod"
             >
               Reconnect period (ms)
@@ -2831,10 +2790,10 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.connectTimeout"
             >
               Connect Timeout (ms)
@@ -2865,18 +2824,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Mqtt payload
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2966,18 +2924,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Timestamp settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -3045,17 +3002,17 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.timestampOrigin"
             >
               Timestamp origin
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.MQTT.timestampOrigin"
               name="south.dataSources.0.MQTT.timestampOrigin"
             >
@@ -3081,11 +3038,11 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.timestampFormat"
             >
               Timestamp format
@@ -3101,23 +3058,23 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.timestampTimezone"
             >
               Timestamp timezone
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.MQTT.timestampTimezone"
               name="south.dataSources.0.MQTT.timestampTimezone"
             >
@@ -3611,18 +3568,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         OPC-HDA
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3638,7 +3594,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3666,18 +3622,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3720,25 +3675,16 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -3755,18 +3701,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3884,17 +3829,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -3943,17 +3888,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -4002,17 +3947,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -4073,18 +4018,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               HDA Agent
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -4572,11 +4516,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.agentFilename"
             >
               Agent filename
@@ -4599,16 +4543,16 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.tcpPort"
             >
               TCP Port
@@ -4637,17 +4581,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.logLevel"
             >
               Logging Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.OPCHDA.logLevel"
               name="south.dataSources.0.OPCHDA.logLevel"
             >
@@ -4702,18 +4646,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               HDA Server
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -4763,11 +4706,11 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.host"
             >
               Host
@@ -4790,16 +4733,16 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.serverName"
             >
               Server name
@@ -4822,7 +4765,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -4832,10 +4775,10 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.retryInterval"
             >
               Retry interval
@@ -4864,10 +4807,10 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.maxReturnValues"
             >
               Max return values
@@ -4896,10 +4839,10 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.maxReadInterval"
             >
               Max read interval
@@ -4937,18 +4880,17 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -5047,18 +4989,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         PLC-35
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5074,7 +5015,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -5102,18 +5043,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5156,25 +5096,16 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -5191,18 +5122,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5320,17 +5250,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -5379,17 +5309,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -5438,17 +5368,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -5509,18 +5439,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             <h5>
               Modbus settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -5623,11 +5552,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.host"
             >
               Host
@@ -5652,16 +5581,16 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
                 IP address of the Modbus source
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.port"
             >
               Port
@@ -5690,10 +5619,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.slaveId"
             >
               Slave id
@@ -5728,10 +5657,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.retryInterval"
             >
               Retry interval
@@ -5790,18 +5719,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         PLC-42
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5817,7 +5745,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -5845,18 +5773,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5899,25 +5826,16 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -5934,18 +5852,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6063,17 +5980,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -6122,17 +6039,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -6181,17 +6098,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -6252,18 +6169,17 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             <h5>
               Modbus settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -6366,11 +6282,11 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.host"
             >
               Host
@@ -6395,16 +6311,16 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
                 IP address of the Modbus source
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.port"
             >
               Port
@@ -6433,10 +6349,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.slaveId"
             >
               Slave id
@@ -6471,10 +6387,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.Modbus.retryInterval"
             >
               Retry interval
@@ -6533,18 +6449,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         SQLDbToFile
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -6560,7 +6475,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -6588,18 +6503,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6642,25 +6556,16 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -6674,11 +6579,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.scanMode"
               name="south.dataSources.0.scanMode"
             >
@@ -6715,18 +6620,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6844,17 +6748,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -6903,17 +6807,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -6962,17 +6866,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -7033,18 +6937,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             <h5>
               SQLDBtoFile Settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -7116,17 +7019,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.driver"
             >
               SQL Driver
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.SQLDbToFile.driver"
               name="south.dataSources.0.SQLDbToFile.driver"
             >
@@ -7182,11 +7085,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.host"
             >
               Host
@@ -7209,16 +7112,16 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 IP address of the SQLDbToFile server
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.port"
             >
               Port
@@ -7250,11 +7153,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-3"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.database"
             >
               Database
@@ -7277,7 +7180,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Name of the SQL database (SID or Service Name for Oracle)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -7286,11 +7189,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-3"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.username"
             >
               Username
@@ -7313,16 +7216,16 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 (Preferably with only readonly access to the database)
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.password"
             >
               Password
@@ -7363,10 +7266,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-8"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.query"
             >
               Query
@@ -7399,10 +7302,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.connectionTimeout"
             >
               Connection timeout (ms)
@@ -7424,10 +7327,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.requestTimeout"
             >
               Request timeout (ms)
@@ -7452,11 +7355,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-1"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.delimiter"
             >
               Delimiter
@@ -7479,16 +7382,16 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Delimiter in the CSV file
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.dateFormat"
             >
               Date format
@@ -7511,16 +7414,16 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Date Format
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-3"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.filename"
             >
               Filename
@@ -7543,7 +7446,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 The name of the CSV file
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -7552,11 +7455,11 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-2"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.timeColumn"
             >
               Time column
@@ -7579,23 +7482,23 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Time Column
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.timezone"
             >
               Timezone
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.SQLDbToFile.timezone"
               name="south.dataSources.0.SQLDbToFile.timezone"
             >
@@ -8088,7 +7991,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Compress File?
               <input
@@ -8112,18 +8015,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         SimulationServer
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8139,7 +8041,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8167,18 +8069,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8221,25 +8122,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -8256,18 +8148,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8385,17 +8276,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -8444,17 +8335,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -8503,17 +8394,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -8574,18 +8465,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             <h5>
               Opcua network settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -8617,7 +8507,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -8674,10 +8564,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
               Retry interval
@@ -8708,10 +8598,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
               Max read interval
@@ -8742,10 +8632,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
               Read interval delay
@@ -8774,10 +8664,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReturnValues"
             >
               Max return values
@@ -8806,10 +8696,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readTimeout"
             >
               Read timeout
@@ -8925,18 +8815,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -9024,11 +8913,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               <tr>
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="south.dataSources.0.OPCUA_HA.scanGroups.0.scanMode"
                       name="south.dataSources.0.OPCUA_HA.scanGroups.0.scanMode"
                     >
@@ -9061,11 +8950,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                 <td />
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="south.dataSources.0.OPCUA_HA.scanGroups.0.resampling"
                       name="south.dataSources.0.OPCUA_HA.scanGroups.0.resampling"
                     >
@@ -9130,11 +9019,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               <tr>
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="south.dataSources.0.OPCUA_HA.scanGroups.1.scanMode"
                       name="south.dataSources.0.OPCUA_HA.scanGroups.1.scanMode"
                     >
@@ -9167,11 +9056,11 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                 <td />
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="south.dataSources.0.OPCUA_HA.scanGroups.1.resampling"
                       name="south.dataSources.0.OPCUA_HA.scanGroups.1.resampling"
                     >
@@ -9248,18 +9137,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         SimulationServerBis
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -9275,7 +9163,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -9303,18 +9191,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9357,25 +9244,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -9392,18 +9270,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9521,17 +9398,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -9580,17 +9457,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -9639,17 +9516,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -9710,18 +9587,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             <h5>
               Opcua network settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -9753,7 +9629,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -9810,10 +9686,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
               Retry interval
@@ -9844,10 +9720,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
               Max read interval
@@ -9878,10 +9754,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
               Read interval delay
@@ -9910,10 +9786,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReturnValues"
             >
               Max return values
@@ -9942,10 +9818,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readTimeout"
             >
               Read timeout
@@ -10061,18 +9937,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -10171,18 +10046,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         SimulationServerBis copy
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -10198,7 +10072,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -10226,18 +10100,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10280,25 +10153,16 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.0.enabled"
-                name="south.dataSources.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.0.enabled"
+              label="Disabled"
+              name="south.dataSources.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -10315,18 +10179,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10444,17 +10307,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -10503,17 +10366,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -10562,17 +10425,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -10633,18 +10496,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             <h5>
               Opcua network settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -10676,7 +10538,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-                     
+
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -10733,10 +10595,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
               Retry interval
@@ -10767,10 +10629,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
               Max read interval
@@ -10801,10 +10663,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
               Read interval delay
@@ -10833,10 +10695,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReturnValues"
             >
               Max return values
@@ -10865,10 +10727,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.readTimeout"
             >
               Read timeout
@@ -10984,18 +10846,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -11094,18 +10955,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         emptyDataSource
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -11121,7 +10981,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -11149,18 +11009,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -11209,18 +11068,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -11338,17 +11196,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.consoleLevel"
               name="south.dataSources.0.logParameters.consoleLevel"
             >
@@ -11397,17 +11255,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.fileLevel"
               name="south.dataSources.0.logParameters.fileLevel"
             >
@@ -11456,17 +11314,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.0.logParameters.sqliteLevel"
               name="south.dataSources.0.logParameters.sqliteLevel"
             >
@@ -11527,18 +11385,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Mqtt settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -11708,10 +11565,10 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.keepalive"
             >
               Keep Alive Interval
@@ -11733,10 +11590,10 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.reconnectPeriod"
             >
               Reconnect period (ms)
@@ -11758,10 +11615,10 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.MQTT.connectTimeout"
             >
               Connect Timeout (ms)
@@ -11792,18 +11649,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Mqtt payload
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -11893,18 +11749,17 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Timestamp settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path

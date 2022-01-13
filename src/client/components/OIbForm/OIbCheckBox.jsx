@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, Label, FormText, Input, CustomInput } from 'reactstrap'
+import { FormGroup, Label, FormText, Input } from 'reactstrap'
 
 const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchButton }) => {
   // if no value was found, load the context with the default value
@@ -17,7 +17,7 @@ const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchB
   if (switchButton) {
     return (
       <FormGroup>
-        <CustomInput
+        <Input
           type="switch"
           id={name}
           name={name}
@@ -25,7 +25,7 @@ const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchB
           onChange={handleChange}
           checked={value}
           color="secondary"
-        />
+          />
         {help && <FormText>{help}</FormText>}
       </FormGroup>
     )

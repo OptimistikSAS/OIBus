@@ -3,17 +3,17 @@
 exports[`OIbTimezone check OIbTimezone with value="" and valid funtion 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >
@@ -502,17 +502,17 @@ exports[`OIbTimezone check OIbTimezone with value="" and valid funtion 1`] = `
 exports[`OIbTimezone check OIbTimezone with value="Europe/Paris" and help 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >
@@ -999,11 +999,11 @@ exports[`OIbTimezone check OIbTimezone with value="Europe/Paris" and help 1`] = 
 exports[`OIbTimezone check OIbTimezone with value="Europe/Paris" and no label 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >
@@ -1490,17 +1490,17 @@ exports[`OIbTimezone check OIbTimezone with value="Europe/Paris" and no label 1`
 exports[`OIbTimezone check Select with value="Europe/Paris" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >
@@ -1987,17 +1987,17 @@ exports[`OIbTimezone check Select with value="Europe/Paris" 1`] = `
 exports[`OIbTimezone check change 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >

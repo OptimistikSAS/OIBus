@@ -8,18 +8,17 @@ exports[`HttpRequest check HttpRequest 1`] = `
     <h5>
       Http request parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -60,17 +59,17 @@ exports[`HttpRequest check HttpRequest 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.stack"
         >
           Stack
         </label>
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
         >
@@ -101,10 +100,10 @@ exports[`HttpRequest check HttpRequest 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.timeout"
         >
           Timeout
@@ -133,10 +132,10 @@ exports[`HttpRequest check HttpRequest 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.retryCount"
         >
           Retry count
@@ -173,18 +172,17 @@ exports[`HttpRequest check change stack to "request" 1`] = `
     <h5>
       Http request parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -225,17 +223,17 @@ exports[`HttpRequest check change stack to "request" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.stack"
         >
           Stack
         </label>
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
         >
@@ -266,10 +264,10 @@ exports[`HttpRequest check change stack to "request" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.timeout"
         >
           Timeout
@@ -298,10 +296,10 @@ exports[`HttpRequest check change stack to "request" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.retryCount"
         >
           Retry count
@@ -338,18 +336,17 @@ exports[`HttpRequest check change timeout 1`] = `
     <h5>
       Http request parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -390,17 +387,17 @@ exports[`HttpRequest check change timeout 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.stack"
         >
           Stack
         </label>
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.httpRequest.stack"
           name="engine.httpRequest.stack"
         >
@@ -431,10 +428,10 @@ exports[`HttpRequest check change timeout 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.timeout"
         >
           Timeout
@@ -463,10 +460,10 @@ exports[`HttpRequest check change timeout 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.httpRequest.retryCount"
         >
           Retry count

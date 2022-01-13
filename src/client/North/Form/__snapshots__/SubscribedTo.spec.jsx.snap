@@ -8,18 +8,17 @@ exports[`SubscribedTo check SubscribedTo with application: CsvToHttp 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -102,18 +101,17 @@ exports[`SubscribedTo check SubscribedTo with application: RawFileSender 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -196,18 +194,17 @@ exports[`SubscribedTo check SubscribedTo with application: Timescale 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -290,18 +287,17 @@ exports[`SubscribedTo check SubscribedTo with application: WATSYConnect 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -384,18 +380,17 @@ exports[`SubscribedTo check SubscribedTo with application: c 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -467,11 +462,11 @@ exports[`SubscribedTo check SubscribedTo with application: c 1`] = `
           <tr>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="subscribedTo.0"
                   name="subscribedTo.0"
                 >
@@ -568,18 +563,17 @@ exports[`SubscribedTo check SubscribedTo with application: filewriter 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -662,18 +656,17 @@ exports[`SubscribedTo check SubscribedTo with application: monoiconnect 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -756,18 +749,17 @@ exports[`SubscribedTo check SubscribedTo with application: mqtt 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -850,18 +842,17 @@ exports[`SubscribedTo check SubscribedTo with application: test04 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -944,18 +935,17 @@ exports[`SubscribedTo check SubscribedTo with application: test04 copy 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1038,18 +1028,17 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1121,11 +1110,11 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
           <tr>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="subscribedTo.0"
                   name="subscribedTo.0"
                 >
@@ -1222,18 +1211,17 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1305,11 +1293,11 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
           <tr>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="subscribedTo.0"
                   name="subscribedTo.0"
                 >
@@ -1406,18 +1394,17 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1489,11 +1476,11 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
           <tr>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="subscribedTo.0"
                   name="subscribedTo.0"
                 >
@@ -1590,18 +1577,17 @@ exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] 
     <h5>
       Subscribed To
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1673,11 +1659,11 @@ exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] 
           <tr>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="subscribedTo.0"
                   name="subscribedTo.0"
                 />

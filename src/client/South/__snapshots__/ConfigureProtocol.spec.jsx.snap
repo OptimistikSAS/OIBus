@@ -6,18 +6,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         OPC-HDA
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -33,7 +32,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -61,18 +60,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -115,25 +113,16 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.8.enabled"
-                name="south.dataSources.8.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.8.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.8.enabled"
+              label="Disabled"
+              name="south.dataSources.8.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -150,18 +139,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -279,17 +267,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.consoleLevel"
               name="south.dataSources.8.logParameters.consoleLevel"
             >
@@ -338,17 +326,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.fileLevel"
               name="south.dataSources.8.logParameters.fileLevel"
             >
@@ -397,17 +385,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.sqliteLevel"
               name="south.dataSources.8.logParameters.sqliteLevel"
             >
@@ -468,18 +456,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               HDA Agent
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -967,11 +954,11 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.agentFilename"
             >
               Agent filename
@@ -994,16 +981,16 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.tcpPort"
             >
               TCP Port
@@ -1032,17 +1019,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.logLevel"
             >
               Logging Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.OPCHDA.logLevel"
               name="south.dataSources.8.OPCHDA.logLevel"
             >
@@ -1097,18 +1084,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               HDA Server
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1158,11 +1144,11 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.host"
             >
               Host
@@ -1185,16 +1171,16 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.serverName"
             >
               Server name
@@ -1217,7 +1203,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -1227,10 +1213,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.retryInterval"
             >
               Retry interval
@@ -1259,10 +1245,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.maxReturnValues"
             >
               Max return values
@@ -1291,10 +1277,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.maxReadInterval"
             >
               Max read interval
@@ -1332,18 +1318,17 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1446,7 +1431,7 @@ exports[`ConfigureProtocol check datasource not found 1`] = `
       role="status"
     >
       <span
-        class="sr-only"
+        class="visually-hidden"
       >
         Loading...
       </span>
@@ -1462,18 +1447,17 @@ exports[`ConfigureProtocol check update 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         OPC-HDA
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1489,7 +1473,7 @@ exports[`ConfigureProtocol check update 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1517,18 +1501,17 @@ exports[`ConfigureProtocol check update 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1571,25 +1554,16 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="south.dataSources.8.enabled"
-                name="south.dataSources.8.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="south.dataSources.8.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="south.dataSources.8.enabled"
+              label="Disabled"
+              name="south.dataSources.8.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -1606,18 +1580,17 @@ exports[`ConfigureProtocol check update 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1735,17 +1708,17 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.consoleLevel"
               name="south.dataSources.8.logParameters.consoleLevel"
             >
@@ -1794,17 +1767,17 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.fileLevel"
               name="south.dataSources.8.logParameters.fileLevel"
             >
@@ -1853,17 +1826,17 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.logParameters.sqliteLevel"
               name="south.dataSources.8.logParameters.sqliteLevel"
             >
@@ -1924,18 +1897,17 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               HDA Agent
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2423,11 +2395,11 @@ exports[`ConfigureProtocol check update 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.agentFilename"
             >
               Agent filename
@@ -2450,16 +2422,16 @@ exports[`ConfigureProtocol check update 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.tcpPort"
             >
               TCP Port
@@ -2488,17 +2460,17 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.logLevel"
             >
               Logging Level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="south.dataSources.8.OPCHDA.logLevel"
               name="south.dataSources.8.OPCHDA.logLevel"
             >
@@ -2553,18 +2525,17 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               HDA Server
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2614,11 +2585,11 @@ exports[`ConfigureProtocol check update 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.host"
             >
               Host
@@ -2641,16 +2612,16 @@ exports[`ConfigureProtocol check update 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.serverName"
             >
               Server name
@@ -2673,7 +2644,7 @@ exports[`ConfigureProtocol check update 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -2683,10 +2654,10 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.retryInterval"
             >
               Retry interval
@@ -2715,10 +2686,10 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.maxReturnValues"
             >
               Max return values
@@ -2747,10 +2718,10 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.maxReadInterval"
             >
               Max read interval
@@ -2788,18 +2759,17 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               ScanGroups
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path

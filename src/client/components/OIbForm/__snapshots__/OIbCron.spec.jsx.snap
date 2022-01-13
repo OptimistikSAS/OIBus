@@ -3,7 +3,7 @@
 exports[`OIbCron check Cron custom value change 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -13,12 +13,12 @@ exports[`OIbCron check Cron custom value change 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -59,7 +59,7 @@ exports[`OIbCron check Cron custom value change 1`] = `
 exports[`OIbCron check Cron every value change 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -69,12 +69,12 @@ exports[`OIbCron check Cron every value change 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -105,12 +105,12 @@ exports[`OIbCron check Cron every value change 1`] = `
         value="10"
       />
       <div
-        class="form-group"
+        class="mb-3"
         style="padding-bottom: 0px; margin-bottom: 0px;"
       >
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="name.interval"
           name="name.interval"
           style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -167,7 +167,7 @@ exports[`OIbCron check Cron every value change 1`] = `
 exports[`OIbCron check Cron every value change to 0 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -177,12 +177,12 @@ exports[`OIbCron check Cron every value change to 0 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -213,12 +213,12 @@ exports[`OIbCron check Cron every value change to 0 1`] = `
         value="10"
       />
       <div
-        class="form-group"
+        class="mb-3"
         style="padding-bottom: 0px; margin-bottom: 0px;"
       >
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="name.interval"
           name="name.interval"
           style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -275,7 +275,7 @@ exports[`OIbCron check Cron every value change to 0 1`] = `
 exports[`OIbCron check Cron with invalid value 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -285,12 +285,12 @@ exports[`OIbCron check Cron with invalid value 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -331,10 +331,10 @@ exports[`OIbCron check Cron with invalid value 1`] = `
 exports[`OIbCron check Cron with label 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
@@ -346,12 +346,12 @@ exports[`OIbCron check Cron with label 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -382,12 +382,12 @@ exports[`OIbCron check Cron with label 1`] = `
         value="10"
       />
       <div
-        class="form-group"
+        class="mb-3"
         style="padding-bottom: 0px; margin-bottom: 0px;"
       >
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="name.interval"
           name="name.interval"
           style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -446,7 +446,7 @@ exports[`OIbCron check Cron with no value 1`] = `<div />`;
 exports[`OIbCron check Cron with value="* * * /10" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -456,12 +456,12 @@ exports[`OIbCron check Cron with value="* * * /10" 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -492,12 +492,12 @@ exports[`OIbCron check Cron with value="* * * /10" 1`] = `
         value="10"
       />
       <div
-        class="form-group"
+        class="mb-3"
         style="padding-bottom: 0px; margin-bottom: 0px;"
       >
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="name.interval"
           name="name.interval"
           style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -554,7 +554,7 @@ exports[`OIbCron check Cron with value="* * * /10" 1`] = `
 exports[`OIbCron check Cron with value="* * w1-5 /3" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -564,12 +564,12 @@ exports[`OIbCron check Cron with value="* * w1-5 /3" 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -610,7 +610,7 @@ exports[`OIbCron check Cron with value="* * w1-5 /3" 1`] = `
 exports[`OIbCron check Cron with value="listen" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -620,12 +620,12 @@ exports[`OIbCron check Cron with value="listen" 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -666,7 +666,7 @@ exports[`OIbCron check Cron with value="listen" 1`] = `
 exports[`OIbCron check change cron interval when type is every 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -676,12 +676,12 @@ exports[`OIbCron check change cron interval when type is every 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -712,12 +712,12 @@ exports[`OIbCron check change cron interval when type is every 1`] = `
         value="1"
       />
       <div
-        class="form-group"
+        class="mb-3"
         style="padding-bottom: 0px; margin-bottom: 0px;"
       >
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="name.interval"
           name="name.interval"
           style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -774,7 +774,7 @@ exports[`OIbCron check change cron interval when type is every 1`] = `
 exports[`OIbCron check change cron type to custom 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -784,12 +784,12 @@ exports[`OIbCron check change cron type to custom 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -830,7 +830,7 @@ exports[`OIbCron check change cron type to custom 1`] = `
 exports[`OIbCron check change cron type to every 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -840,12 +840,12 @@ exports[`OIbCron check change cron type to every 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"
@@ -887,7 +887,7 @@ exports[`OIbCron check change cron type to every 1`] = `
 exports[`OIbCron check change cron type to invalide 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -908,7 +908,7 @@ exports[`OIbCron check change cron type to invalide 1`] = `
 exports[`OIbCron check change cron type to same type 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
     style="margin-bottom: 0px;"
   >
     <div
@@ -918,12 +918,12 @@ exports[`OIbCron check change cron type to same type 1`] = `
         style="padding-left: 10px; padding-right: 5px;"
       >
         <div
-          class="form-group"
+          class="mb-3"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="name.type"
             name="name.type"
             style="padding-bottom: 0px; margin-bottom: 0px;"

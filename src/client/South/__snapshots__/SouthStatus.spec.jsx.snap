@@ -7,16 +7,15 @@ exports[`South Status display SouthStatus page based on config 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-icon mr-2"
+          class="oi-icon me-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -33,7 +32,7 @@ exports[`South Status display SouthStatus page based on config 1`] = `
       | MQTTServer
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
@@ -49,7 +48,9 @@ exports[`South Status display SouthStatus page based on config 1`] = `
     <div
       class="oi-status-error"
     >
-       No Information displayed because the connector is disabled 
+       
+      No Information displayed because the connector is disabled
+       
     </div>
   </div>
 </div>
@@ -62,16 +63,15 @@ exports[`South Status go to previous page 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-icon mr-2"
+          class="oi-icon me-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -88,7 +88,7 @@ exports[`South Status go to previous page 1`] = `
       | MQTTServer
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
@@ -104,7 +104,9 @@ exports[`South Status go to previous page 1`] = `
     <div
       class="oi-status-error"
     >
-       No Information displayed because the connector is disabled 
+       
+      No Information displayed because the connector is disabled
+       
     </div>
   </div>
 </div>

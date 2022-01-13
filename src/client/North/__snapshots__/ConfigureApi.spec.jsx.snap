@@ -6,18 +6,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         monoiconnect
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -33,7 +32,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -55,18 +54,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -109,25 +107,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.1.enabled"
-                name="north.applications.1.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.1.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.1.enabled"
+              label="Disabled"
+              name="north.applications.1.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -144,18 +133,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -273,17 +261,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.consoleLevel"
               name="north.applications.1.logParameters.consoleLevel"
             >
@@ -332,17 +320,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.fileLevel"
               name="north.applications.1.logParameters.fileLevel"
             >
@@ -391,17 +379,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.sqliteLevel"
               name="north.applications.1.logParameters.sqliteLevel"
             >
@@ -462,18 +450,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <h5>
               OIConnect settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -519,10 +506,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.host"
             >
               Host
@@ -543,11 +530,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.valuesEndpoint"
             >
               Values endpoint
@@ -563,16 +550,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.fileEndpoint"
             >
               File endpoint
@@ -588,7 +575,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -607,17 +594,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               class="col-md-2"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="type"
                 >
                   Type
                 </label>
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="type"
                   name="type"
                 >
@@ -649,11 +636,11 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="username"
                 >
                   User name
@@ -671,16 +658,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                 >
                   Value should not be empty
                 </div>
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="password"
                 >
                   Password
@@ -718,18 +705,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -774,16 +760,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.OIConnect.proxy"
               name="north.applications.1.OIConnect.proxy"
             >
@@ -815,18 +801,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -878,10 +863,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.sendInterval"
             >
               Send interval (ms)
@@ -903,10 +888,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.retryInterval"
             >
               Retry interval (ms)
@@ -932,10 +917,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.groupCount"
             >
               Group count
@@ -957,10 +942,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.maxSendCount"
             >
               Max group count
@@ -985,18 +970,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1083,7 +1067,7 @@ exports[`ConfigureApi check application not found 1`] = `
       role="status"
     >
       <span
-        class="sr-only"
+        class="visually-hidden"
       >
         Loading...
       </span>
@@ -1099,18 +1083,17 @@ exports[`ConfigureApi check update 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         monoiconnect
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1126,7 +1109,7 @@ exports[`ConfigureApi check update 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1148,18 +1131,17 @@ exports[`ConfigureApi check update 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1202,25 +1184,16 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.1.enabled"
-                name="north.applications.1.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.1.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.1.enabled"
+              label="Disabled"
+              name="north.applications.1.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -1237,18 +1210,17 @@ exports[`ConfigureApi check update 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1366,17 +1338,17 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.consoleLevel"
               name="north.applications.1.logParameters.consoleLevel"
             >
@@ -1425,17 +1397,17 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.fileLevel"
               name="north.applications.1.logParameters.fileLevel"
             >
@@ -1484,17 +1456,17 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.logParameters.sqliteLevel"
               name="north.applications.1.logParameters.sqliteLevel"
             >
@@ -1555,18 +1527,17 @@ exports[`ConfigureApi check update 1`] = `
             <h5>
               OIConnect settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1612,10 +1583,10 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.host"
             >
               Host
@@ -1636,11 +1607,11 @@ exports[`ConfigureApi check update 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.valuesEndpoint"
             >
               Values endpoint
@@ -1656,16 +1627,16 @@ exports[`ConfigureApi check update 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.fileEndpoint"
             >
               File endpoint
@@ -1681,7 +1652,7 @@ exports[`ConfigureApi check update 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -1700,17 +1671,17 @@ exports[`ConfigureApi check update 1`] = `
               class="col-md-2"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="type"
                 >
                   Type
                 </label>
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="type"
                   name="type"
                 >
@@ -1742,11 +1713,11 @@ exports[`ConfigureApi check update 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="username"
                 >
                   User name
@@ -1764,16 +1735,16 @@ exports[`ConfigureApi check update 1`] = `
                 >
                   Value should not be empty
                 </div>
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="password"
                 >
                   Password
@@ -1811,18 +1782,17 @@ exports[`ConfigureApi check update 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1867,16 +1837,16 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.OIConnect.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.1.OIConnect.proxy"
               name="north.applications.1.OIConnect.proxy"
             >
@@ -1908,18 +1878,17 @@ exports[`ConfigureApi check update 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1971,10 +1940,10 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.sendInterval"
             >
               Send interval (ms)
@@ -1996,10 +1965,10 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.retryInterval"
             >
               Retry interval (ms)
@@ -2025,10 +1994,10 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.groupCount"
             >
               Group count
@@ -2050,10 +2019,10 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.1.caching.maxSendCount"
             >
               Max group count
@@ -2078,18 +2047,17 @@ exports[`ConfigureApi check update 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

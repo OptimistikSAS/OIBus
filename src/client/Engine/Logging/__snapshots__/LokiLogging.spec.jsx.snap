@@ -13,17 +13,17 @@ exports[`LokiLogging check LokiLogging 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.lokiLog.level"
             name="engine.logParameters.lokiLog.level"
           >
@@ -77,11 +77,11 @@ exports[`LokiLogging check LokiLogging 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
@@ -104,16 +104,16 @@ exports[`LokiLogging check LokiLogging 1`] = `
               The host name of the Loki instance
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.interval"
           >
             Interval
@@ -145,11 +145,11 @@ exports[`LokiLogging check LokiLogging 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.tokenAddress"
           >
             Token address
@@ -172,7 +172,7 @@ exports[`LokiLogging check LokiLogging 1`] = `
               The address of the token provider (need username and password)
             </div>
           </small>
-        </div>
+        </form>
       </div>
     </div>
     <div
@@ -181,11 +181,11 @@ exports[`LokiLogging check LokiLogging 1`] = `
       <div
         class="col-md-3"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.username"
           >
             Username
@@ -201,16 +201,16 @@ exports[`LokiLogging check LokiLogging 1`] = `
           <div
             class="invalid-feedback"
           />
-        </div>
+        </form>
       </div>
       <div
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.password"
           >
             Password
@@ -251,17 +251,17 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.lokiLog.level"
             name="engine.logParameters.lokiLog.level"
           >
@@ -315,11 +315,11 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
@@ -342,16 +342,16 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
               The host name of the Loki instance
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.interval"
           >
             Interval
@@ -383,11 +383,11 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.tokenAddress"
           >
             Token address
@@ -410,7 +410,7 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
               The address of the token provider (need username and password)
             </div>
           </small>
-        </div>
+        </form>
       </div>
     </div>
     <div
@@ -419,11 +419,11 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
       <div
         class="col-md-3"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.username"
           >
             Username
@@ -439,16 +439,16 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
           <div
             class="invalid-feedback"
           />
-        </div>
+        </form>
       </div>
       <div
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.password"
           >
             Password
@@ -489,17 +489,17 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.lokiLog.level"
             name="engine.logParameters.lokiLog.level"
           >
@@ -553,11 +553,11 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
@@ -580,16 +580,16 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
               The host name of the Loki instance
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.interval"
           >
             Interval
@@ -621,11 +621,11 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.tokenAddress"
           >
             Token address
@@ -648,7 +648,7 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
               The address of the token provider (need username and password)
             </div>
           </small>
-        </div>
+        </form>
       </div>
     </div>
     <div
@@ -657,11 +657,11 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
       <div
         class="col-md-3"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.username"
           >
             Username
@@ -677,16 +677,16 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
           <div
             class="invalid-feedback"
           />
-        </div>
+        </form>
       </div>
       <div
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.password"
           >
             Password
@@ -727,17 +727,17 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.lokiLog.level"
             name="engine.logParameters.lokiLog.level"
           >
@@ -791,11 +791,11 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.lokiAddress"
           >
             Host
@@ -818,16 +818,16 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
               The host name of the Loki instance
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.interval"
           >
             Interval
@@ -859,11 +859,11 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.tokenAddress"
           >
             Token address
@@ -886,7 +886,7 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
               The address of the token provider (need username and password)
             </div>
           </small>
-        </div>
+        </form>
       </div>
     </div>
     <div
@@ -895,11 +895,11 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
       <div
         class="col-md-3"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.username"
           >
             Username
@@ -915,16 +915,16 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
           <div
             class="invalid-feedback"
           />
-        </div>
+        </form>
       </div>
       <div
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.lokiLog.password"
           >
             Password
