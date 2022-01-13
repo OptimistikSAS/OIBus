@@ -8,18 +8,17 @@ exports[`Proxies check Proxies 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -115,8 +114,8 @@ exports[`Proxies check Proxies 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -130,15 +129,15 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -159,8 +158,8 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -174,11 +173,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -195,8 +194,8 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -210,11 +209,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -253,8 +252,8 @@ exports[`Proxies check Proxies 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -268,15 +267,15 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -297,8 +296,8 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -312,11 +311,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -333,8 +332,8 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -348,11 +347,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -391,8 +390,8 @@ exports[`Proxies check Proxies 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -406,15 +405,15 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -435,8 +434,8 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -450,11 +449,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -504,18 +503,17 @@ exports[`Proxies check add line to proxies 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -611,8 +609,8 @@ exports[`Proxies check add line to proxies 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -626,15 +624,15 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -655,8 +653,8 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -670,11 +668,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -691,8 +689,8 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -706,11 +704,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -749,8 +747,8 @@ exports[`Proxies check add line to proxies 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -764,15 +762,15 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -793,8 +791,8 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -808,11 +806,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -829,8 +827,8 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -844,11 +842,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -887,8 +885,8 @@ exports[`Proxies check add line to proxies 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -902,15 +900,15 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -931,8 +929,8 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -946,11 +944,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1000,18 +998,17 @@ exports[`Proxies check change first host 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1107,8 +1104,8 @@ exports[`Proxies check change first host 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1122,15 +1119,15 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -1151,8 +1148,8 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1166,11 +1163,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1187,8 +1184,8 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1202,11 +1199,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -1245,8 +1242,8 @@ exports[`Proxies check change first host 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1260,15 +1257,15 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -1289,8 +1286,8 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1304,11 +1301,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1325,8 +1322,8 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1340,11 +1337,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -1383,8 +1380,8 @@ exports[`Proxies check change first host 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1398,15 +1395,15 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -1427,8 +1424,8 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1442,11 +1439,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1496,18 +1493,17 @@ exports[`Proxies check change first name 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -1603,8 +1599,8 @@ exports[`Proxies check change first name 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1618,15 +1614,15 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -1647,8 +1643,8 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1662,11 +1658,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1683,8 +1679,8 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1698,11 +1694,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -1741,8 +1737,8 @@ exports[`Proxies check change first name 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1756,15 +1752,15 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -1785,8 +1781,8 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1800,11 +1796,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1821,8 +1817,8 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1836,11 +1832,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -1879,8 +1875,8 @@ exports[`Proxies check change first name 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1894,15 +1890,15 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -1923,8 +1919,8 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1938,11 +1934,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1992,18 +1988,17 @@ exports[`Proxies check change first password 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -2099,8 +2094,8 @@ exports[`Proxies check change first password 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2114,15 +2109,15 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -2143,8 +2138,8 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2158,11 +2153,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2179,8 +2174,8 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2194,11 +2189,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -2237,8 +2232,8 @@ exports[`Proxies check change first password 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2252,15 +2247,15 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -2281,8 +2276,8 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2296,11 +2291,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2317,8 +2312,8 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2332,11 +2327,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -2375,8 +2370,8 @@ exports[`Proxies check change first password 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2390,15 +2385,15 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -2419,8 +2414,8 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2434,11 +2429,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2488,18 +2483,17 @@ exports[`Proxies check change first port 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -2595,8 +2589,8 @@ exports[`Proxies check change first port 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2610,15 +2604,15 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -2639,8 +2633,8 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2654,11 +2648,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2675,8 +2669,8 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2690,11 +2684,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -2733,8 +2727,8 @@ exports[`Proxies check change first port 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2748,15 +2742,15 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -2777,8 +2771,8 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2792,11 +2786,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2813,8 +2807,8 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2828,11 +2822,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -2871,8 +2865,8 @@ exports[`Proxies check change first port 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2886,15 +2880,15 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -2915,8 +2909,8 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2930,11 +2924,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2984,18 +2978,17 @@ exports[`Proxies check change first protocol 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -3091,8 +3084,8 @@ exports[`Proxies check change first protocol 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3106,15 +3099,15 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -3135,8 +3128,8 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3150,11 +3143,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3171,8 +3164,8 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3186,11 +3179,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -3229,8 +3222,8 @@ exports[`Proxies check change first protocol 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3244,15 +3237,15 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -3273,8 +3266,8 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3288,11 +3281,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3309,8 +3302,8 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3324,11 +3317,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -3367,8 +3360,8 @@ exports[`Proxies check change first protocol 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3382,15 +3375,15 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -3411,8 +3404,8 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3426,11 +3419,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3480,18 +3473,17 @@ exports[`Proxies check change first username 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -3587,8 +3579,8 @@ exports[`Proxies check change first username 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3602,15 +3594,15 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -3631,8 +3623,8 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3646,11 +3638,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3667,8 +3659,8 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3682,11 +3674,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -3725,8 +3717,8 @@ exports[`Proxies check change first username 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3740,15 +3732,15 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -3769,8 +3761,8 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3784,11 +3776,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3805,8 +3797,8 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3820,11 +3812,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -3863,8 +3855,8 @@ exports[`Proxies check change first username 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3878,15 +3870,15 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -3907,8 +3899,8 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3922,11 +3914,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3976,18 +3968,17 @@ exports[`Proxies check delete first proxie 1`] = `
     <h5>
       Proxies
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -4083,8 +4074,8 @@ exports[`Proxies check delete first proxie 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4098,15 +4089,15 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.0.protocol"
                   name="engine.proxies.0.protocol"
                 >
@@ -4127,8 +4118,8 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4142,11 +4133,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4163,8 +4154,8 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4178,11 +4169,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -4221,8 +4212,8 @@ exports[`Proxies check delete first proxie 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4236,15 +4227,15 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.1.protocol"
                   name="engine.proxies.1.protocol"
                 >
@@ -4265,8 +4256,8 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4280,11 +4271,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4301,8 +4292,8 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4316,11 +4307,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <div
                   class="input-group"
@@ -4359,8 +4350,8 @@ exports[`Proxies check delete first proxie 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4374,15 +4365,15 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="engine.proxies.2.protocol"
                   name="engine.proxies.2.protocol"
                 >
@@ -4403,8 +4394,8 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4418,11 +4409,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <div
-                class="form-group"
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input

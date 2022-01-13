@@ -8,18 +8,17 @@ exports[`Caching check Caching 1`] = `
     <h5>
       Cache parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -65,11 +64,11 @@ exports[`Caching check Caching 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.cacheFolder"
         >
           Cache folder
@@ -92,16 +91,16 @@ exports[`Caching check Caching 1`] = `
             Where to store the cached data
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferMax"
         >
           Max buffer size
@@ -130,10 +129,10 @@ exports[`Caching check Caching 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferTimeoutInterval"
         >
           Buffer flush interval (in ms)
@@ -168,26 +167,17 @@ exports[`Caching check Caching 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.caching.archive.enabled"
-            name="engine.caching.archive.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.caching.archive.enabled"
-          >
-            Archive mode activated
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.caching.archive.enabled"
+          label="Archive mode activated"
+          name="engine.caching.archive.enabled"
+          type="checkbox"
+        />
         <small
           class="form-text text-muted"
         >
@@ -204,11 +194,11 @@ exports[`Caching check Caching 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.archiveFolder"
         >
           Archive folder
@@ -231,16 +221,16 @@ exports[`Caching check Caching 1`] = `
             Where to store the archived files
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.retentionDuration"
         >
           Retention duration
@@ -277,18 +267,17 @@ exports[`Caching check change archiveFolder 1`] = `
     <h5>
       Cache parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -334,11 +323,11 @@ exports[`Caching check change archiveFolder 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.cacheFolder"
         >
           Cache folder
@@ -361,16 +350,16 @@ exports[`Caching check change archiveFolder 1`] = `
             Where to store the cached data
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferMax"
         >
           Max buffer size
@@ -399,10 +388,10 @@ exports[`Caching check change archiveFolder 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferTimeoutInterval"
         >
           Buffer flush interval (in ms)
@@ -437,26 +426,17 @@ exports[`Caching check change archiveFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.caching.archive.enabled"
-            name="engine.caching.archive.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.caching.archive.enabled"
-          >
-            Archive mode activated
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.caching.archive.enabled"
+          label="Archive mode activated"
+          name="engine.caching.archive.enabled"
+          type="checkbox"
+        />
         <small
           class="form-text text-muted"
         >
@@ -473,11 +453,11 @@ exports[`Caching check change archiveFolder 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.archiveFolder"
         >
           Archive folder
@@ -500,16 +480,16 @@ exports[`Caching check change archiveFolder 1`] = `
             Where to store the archived files
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.retentionDuration"
         >
           Retention duration
@@ -546,18 +526,17 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
     <h5>
       Cache parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -603,11 +582,11 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.cacheFolder"
         >
           Cache folder
@@ -630,16 +609,16 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
             Where to store the cached data
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferMax"
         >
           Max buffer size
@@ -668,10 +647,10 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferTimeoutInterval"
         >
           Buffer flush interval (in ms)
@@ -706,26 +685,17 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.caching.archive.enabled"
-            name="engine.caching.archive.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.caching.archive.enabled"
-          >
-            Archive mode activated
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.caching.archive.enabled"
+          label="Archive mode activated"
+          name="engine.caching.archive.enabled"
+          type="checkbox"
+        />
         <small
           class="form-text text-muted"
         >
@@ -742,11 +712,11 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.archiveFolder"
         >
           Archive folder
@@ -769,16 +739,16 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
             Where to store the archived files
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.retentionDuration"
         >
           Retention duration
@@ -815,18 +785,17 @@ exports[`Caching check change cacheFolder 1`] = `
     <h5>
       Cache parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -872,11 +841,11 @@ exports[`Caching check change cacheFolder 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.cacheFolder"
         >
           Cache folder
@@ -899,16 +868,16 @@ exports[`Caching check change cacheFolder 1`] = `
             Where to store the cached data
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferMax"
         >
           Max buffer size
@@ -937,10 +906,10 @@ exports[`Caching check change cacheFolder 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.bufferTimeoutInterval"
         >
           Buffer flush interval (in ms)
@@ -975,26 +944,17 @@ exports[`Caching check change cacheFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.caching.archive.enabled"
-            name="engine.caching.archive.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.caching.archive.enabled"
-          >
-            Archive mode activated
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.caching.archive.enabled"
+          label="Archive mode activated"
+          name="engine.caching.archive.enabled"
+          type="checkbox"
+        />
         <small
           class="form-text text-muted"
         >
@@ -1011,11 +971,11 @@ exports[`Caching check change cacheFolder 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.archiveFolder"
         >
           Archive folder
@@ -1038,16 +998,16 @@ exports[`Caching check change cacheFolder 1`] = `
             Where to store the archived files
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.caching.archive.retentionDuration"
         >
           Retention duration

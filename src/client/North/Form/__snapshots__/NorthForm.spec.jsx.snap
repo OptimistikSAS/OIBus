@@ -6,18 +6,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         CsvToHttp
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -33,7 +32,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -55,18 +54,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -109,25 +107,16 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -144,18 +133,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -273,17 +261,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -332,17 +320,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -391,17 +379,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -462,18 +450,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Http Endpoint Parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -526,10 +513,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.CsvToHttp.applicativeHostUrl"
             >
               Host url
@@ -551,17 +538,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.CsvToHttp.requestMethod"
             >
               Request method
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.CsvToHttp.requestMethod"
               name="north.applications.0.CsvToHttp.requestMethod"
             >
@@ -590,10 +577,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.CsvToHttp.bodyMaxLength"
             >
               Max Length of the body
@@ -635,17 +622,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
               class="col-md-2"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="type"
                 >
                   Type
                 </label>
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="type"
                   name="type"
                 >
@@ -677,11 +664,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="key"
                 >
                   Key
@@ -697,16 +684,16 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="secretKey"
                 >
                   Secret
@@ -744,18 +731,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Mapping Parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -826,17 +812,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.CsvToHttp.csvDelimiter"
             >
               Csv delimiter
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.CsvToHttp.csvDelimiter"
               name="north.applications.0.CsvToHttp.csvDelimiter"
             >
@@ -907,8 +893,8 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <tbody>
               <tr>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -922,11 +908,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -940,15 +926,15 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="north.applications.0.CsvToHttp.mapping.0.type"
                       name="north.applications.0.CsvToHttp.mapping.0.type"
                     >
@@ -1007,8 +993,8 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
               </tr>
               <tr>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1022,11 +1008,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
-                  <div
-                    class="form-group"
+                  <form
+                    class=""
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1040,15 +1026,15 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </div>
+                  </form>
                 </td>
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="north.applications.0.CsvToHttp.mapping.1.type"
                       name="north.applications.0.CsvToHttp.mapping.1.type"
                     >
@@ -1121,18 +1107,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -1175,16 +1160,16 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.CsvToHttp.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.CsvToHttp.proxy"
               name="north.applications.0.CsvToHttp.proxy"
             >
@@ -1216,18 +1201,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1279,10 +1263,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -1304,10 +1288,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -1333,10 +1317,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -1358,10 +1342,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -1386,18 +1370,17 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1480,18 +1463,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         RawFileSender
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1507,7 +1489,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1529,18 +1511,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1583,25 +1564,16 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -1618,18 +1590,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1747,17 +1718,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -1806,17 +1777,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -1865,17 +1836,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -1936,18 +1907,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <h5>
               OIAnalytics settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2041,10 +2011,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.OIAnalytics.host"
             >
               Host
@@ -2079,17 +2049,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
               class="col-md-2"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="type"
                 >
                   Type
                 </label>
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="type"
                   name="type"
                 >
@@ -2121,11 +2091,11 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="username"
                 >
                   User name
@@ -2141,16 +2111,16 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="password"
                 >
                   Password
@@ -2188,18 +2158,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -2250,18 +2219,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2313,10 +2281,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -2338,10 +2306,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -2367,10 +2335,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -2394,10 +2362,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -2424,18 +2392,17 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2518,18 +2485,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         Timescale
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -2545,7 +2511,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2567,18 +2533,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2621,25 +2586,16 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -2656,18 +2612,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2785,17 +2740,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -2844,17 +2799,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -2903,17 +2858,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -2974,18 +2929,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <h5>
               TimeScale parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -3027,11 +2981,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.user"
             >
               User
@@ -3047,16 +3001,16 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.password"
             >
               Password
@@ -3087,10 +3041,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.host"
             >
               Host
@@ -3113,11 +3067,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.db"
             >
               Database
@@ -3133,7 +3087,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -3142,18 +3096,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3205,10 +3158,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -3230,10 +3183,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -3259,10 +3212,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -3284,10 +3237,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -3312,18 +3265,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3406,18 +3358,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         WATSYConnect
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3433,7 +3384,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3455,18 +3406,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3509,25 +3459,16 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -3544,18 +3485,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3673,17 +3613,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -3732,17 +3672,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -3791,17 +3731,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -3862,18 +3802,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               WATSY Connect Parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -3931,18 +3870,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               MQTT Authentication
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -4009,10 +3947,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.MQTTUrl"
             >
               Mqtt url
@@ -4034,10 +3972,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.port"
             >
               Port
@@ -4062,11 +4000,11 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.username"
             >
               Username
@@ -4082,16 +4020,16 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.password"
             >
               Password
@@ -4127,18 +4065,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               Web Service Authentication
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -4191,10 +4128,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.applicativeHostUrl"
             >
               Applicative host url
@@ -4216,10 +4153,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.WATSYConnect.secretKey"
             >
               Token
@@ -4249,18 +4186,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4312,10 +4248,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -4337,10 +4273,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -4366,10 +4302,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -4391,10 +4327,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -4419,18 +4355,17 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4513,18 +4448,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         c
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -4540,7 +4474,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
@@ -4562,18 +4496,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4616,26 +4549,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Enabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -4652,18 +4576,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4781,17 +4704,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -4840,17 +4763,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -4899,17 +4822,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -4970,18 +4893,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             <h5>
               OIConsole settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -5027,18 +4949,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5090,10 +5011,10 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -5115,10 +5036,10 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -5144,10 +5065,10 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -5169,10 +5090,10 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -5197,18 +5118,17 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5280,11 +5200,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
               <tr>
                 <td>
                   <div
-                    class="form-group"
+                    class="mb-3"
                   >
                     <select
                       aria-invalid="false"
-                      class="oi-form-input form-control"
+                      class="oi-form-input form-select"
                       id="subscribedTo.0"
                       name="subscribedTo.0"
                     >
@@ -5381,18 +5301,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         filewriter
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5408,7 +5327,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
@@ -5430,18 +5349,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5484,26 +5402,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Enabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -5520,18 +5429,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5649,17 +5557,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -5708,17 +5616,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -5767,17 +5675,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -5838,18 +5746,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             <h5>
               OIFileWriter settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -5888,11 +5795,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.FileWriter.outputFolder"
             >
               Output folder
@@ -5915,7 +5822,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
                 Path to the output folder
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -5938,18 +5845,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6001,10 +5907,10 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -6026,10 +5932,10 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -6055,10 +5961,10 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -6080,10 +5986,10 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -6108,18 +6014,17 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6202,18 +6107,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         monoiconnect
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -6229,7 +6133,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -6251,18 +6155,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6305,25 +6208,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -6340,18 +6234,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6469,17 +6362,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -6528,17 +6421,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -6587,17 +6480,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -6658,18 +6551,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <h5>
               OIConnect settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -6715,10 +6607,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.OIConnect.host"
             >
               Host
@@ -6739,11 +6631,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.OIConnect.valuesEndpoint"
             >
               Values endpoint
@@ -6759,16 +6651,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.OIConnect.fileEndpoint"
             >
               File endpoint
@@ -6784,7 +6676,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -6803,17 +6695,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
               class="col-md-2"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="type"
                 >
                   Type
                 </label>
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-control"
+                  class="oi-form-input form-select"
                   id="type"
                   name="type"
                 >
@@ -6845,11 +6737,11 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="username"
                 >
                   User name
@@ -6867,16 +6759,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                 >
                   Value should not be empty
                 </div>
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="password"
                 >
                   Password
@@ -6914,18 +6806,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -6970,16 +6861,16 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.OIConnect.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.OIConnect.proxy"
               name="north.applications.0.OIConnect.proxy"
             >
@@ -7011,18 +6902,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7074,10 +6964,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -7099,10 +6989,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -7128,10 +7018,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -7153,10 +7043,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -7181,18 +7071,17 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7275,18 +7164,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         mqtt
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -7302,7 +7190,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-success btn-sm"
@@ -7324,18 +7212,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7378,26 +7265,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Enabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -7414,18 +7292,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7543,17 +7420,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -7602,17 +7479,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -7661,17 +7538,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -7732,18 +7609,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <h5>
               Mqtt parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -7880,10 +7756,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.url"
             >
               Url
@@ -7912,17 +7788,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.qos"
             >
               Qos
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.MQTTNorth.qos"
               name="north.applications.0.MQTTNorth.qos"
             >
@@ -7954,11 +7830,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.clientId"
             >
               Client id
@@ -7981,7 +7857,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 clientId information for mqtt and mqtts connection
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -7990,11 +7866,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.username"
             >
               Username
@@ -8010,16 +7886,16 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.password"
             >
               Password
@@ -8049,11 +7925,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.certFile"
             >
               Cert File
@@ -8076,7 +7952,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 Server certificate (used for MQTTS protocol)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8085,11 +7961,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.keyFile"
             >
               Key File
@@ -8112,7 +7988,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 MQTT client private key
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8121,11 +7997,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.caFile"
             >
               CA File
@@ -8148,7 +8024,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
               </div>
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8161,7 +8037,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Reject Unauthorized Connection
               <input
@@ -8180,11 +8056,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.regExp"
             >
               Reg exp
@@ -8205,7 +8081,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               for example (.*)\\/(.{2})(.)(.*) to split in 4 groups
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8214,11 +8090,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.topic"
             >
               Topic
@@ -8239,7 +8115,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)
             </small>
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8248,18 +8124,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8311,10 +8186,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -8336,10 +8211,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -8365,10 +8240,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -8390,10 +8265,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -8418,18 +8293,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8512,18 +8386,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         test04
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8539,7 +8412,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8561,18 +8434,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8615,25 +8487,16 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -8650,18 +8513,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8779,17 +8641,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -8838,17 +8700,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -8897,17 +8759,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -8962,11 +8824,11 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.bucket"
             >
               Bucket
@@ -8982,7 +8844,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -8991,11 +8853,11 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.folder"
             >
               Folder
@@ -9011,7 +8873,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -9029,11 +8891,11 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="key"
                 >
                   Key
@@ -9049,16 +8911,16 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="secretKey"
                 >
                   Secret
@@ -9096,18 +8958,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -9150,16 +9011,16 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.AmazonS3.proxy"
               name="north.applications.0.AmazonS3.proxy"
             >
@@ -9191,18 +9052,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9254,10 +9114,10 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -9279,10 +9139,10 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -9308,10 +9168,10 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -9333,10 +9193,10 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -9361,18 +9221,17 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9455,18 +9314,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         test04 copy
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -9482,7 +9340,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -9504,18 +9362,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9558,25 +9415,16 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="north.applications.0.enabled"
-                name="north.applications.0.enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="north.applications.0.enabled"
-              >
-                Disabled
-              </label>
-            </div>
+            <input
+              class="form-check-input"
+              color="secondary"
+              id="north.applications.0.enabled"
+              label="Disabled"
+              name="north.applications.0.enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -9593,18 +9441,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9722,17 +9569,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -9781,17 +9628,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -9840,17 +9687,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -9905,11 +9752,11 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.bucket"
             >
               Bucket
@@ -9925,7 +9772,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -9934,11 +9781,11 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.folder"
             >
               Folder
@@ -9954,7 +9801,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
       </div>
       <div
@@ -9972,11 +9819,11 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="col-md-4"
             >
-              <div
-                class="form-group"
+              <form
+                class=""
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="key"
                 >
                   Key
@@ -9992,16 +9839,16 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </div>
             <div
               class="col-md-4"
             >
               <div
-                class="form-group"
+                class="mb-3"
               >
                 <label
-                  class=""
+                  class="form-label"
                   for="secretKey"
                 >
                   Secret
@@ -10039,18 +9886,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <h5>
               Network
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -10093,16 +9939,16 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.AmazonS3.proxy"
             >
               Proxy
             </label>
             <select
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.AmazonS3.proxy"
               name="north.applications.0.AmazonS3.proxy"
             >
@@ -10134,18 +9980,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10197,10 +10042,10 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -10222,10 +10067,10 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -10251,10 +10096,10 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -10276,10 +10121,10 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -10304,18 +10149,17 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10398,18 +10242,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-1"
     >
       <div>
         emptyApplication
       </div>
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-outline-secondary"
         type="button"
       >
         <svg
-          class="oi-icon ml-2"
+          class="oi-icon ms-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -10425,7 +10268,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
       </button>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -10447,18 +10290,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           General settings
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10507,18 +10349,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Logging parameters
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10636,17 +10477,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.consoleLevel"
               name="north.applications.0.logParameters.consoleLevel"
             >
@@ -10695,17 +10536,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.fileLevel"
               name="north.applications.0.logParameters.fileLevel"
             >
@@ -10754,17 +10595,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="north.applications.0.logParameters.sqliteLevel"
               name="north.applications.0.logParameters.sqliteLevel"
             >
@@ -10825,18 +10666,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             <h5>
               OIConsole settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -10882,18 +10722,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Caching
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -10945,10 +10784,10 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
@@ -10972,10 +10811,10 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
@@ -11003,10 +10842,10 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.groupCount"
             >
               Group count
@@ -11030,10 +10869,10 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.caching.maxSendCount"
             >
               Max group count
@@ -11060,18 +10899,17 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Subscribed To
           <button
-            aria-label="Close"
-            class="close"
+            class="util-button btn btn-link"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="1em"
+              height="12"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="1em"
+              width="12"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

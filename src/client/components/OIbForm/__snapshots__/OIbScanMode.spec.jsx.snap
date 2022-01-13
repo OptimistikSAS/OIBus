@@ -3,11 +3,11 @@
 exports[`OIbScanMode check ScanMode with no label 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >
@@ -32,17 +32,17 @@ exports[`OIbScanMode check ScanMode with no label 1`] = `
 exports[`OIbScanMode check ScanMode with value="value" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >
@@ -67,17 +67,17 @@ exports[`OIbScanMode check ScanMode with value="value" 1`] = `
 exports[`OIbScanMode check ScanMode with value="value" and help 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >

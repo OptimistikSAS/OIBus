@@ -11,11 +11,11 @@ exports[`OIbAuthentication check Authentication with mode API Key 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="key"
         >
           Key
@@ -31,16 +31,16 @@ exports[`OIbAuthentication check Authentication with mode API Key 1`] = `
         <div
           class="invalid-feedback"
         />
-      </div>
+      </form>
     </div>
     <div
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="secretKey"
         >
           Secret
@@ -78,11 +78,11 @@ exports[`OIbAuthentication check Authentication with mode Basic 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="username"
         >
           User name
@@ -98,16 +98,16 @@ exports[`OIbAuthentication check Authentication with mode Basic 1`] = `
         <div
           class="invalid-feedback"
         />
-      </div>
+      </form>
     </div>
     <div
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="password"
         >
           Password
@@ -146,10 +146,10 @@ exports[`OIbAuthentication check Authentication with mode Bearer 1`] = `
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="token"
         >
           Token
@@ -188,17 +188,17 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="type"
         >
           Type
         </label>
         <select
           aria-invalid="false"
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="type"
           name="type"
         >
@@ -230,11 +230,11 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
     <div
       class="col-md-4"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="username"
         >
           User name
@@ -250,16 +250,16 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
         <div
           class="invalid-feedback"
         />
-      </div>
+      </form>
     </div>
     <div
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="password"
         >
           Password

@@ -22,7 +22,7 @@ exports[`TablePagination check TablePagination 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -41,7 +41,7 @@ exports[`TablePagination check TablePagination 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -150,7 +150,7 @@ exports[`TablePagination check TablePagination 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -169,7 +169,7 @@ exports[`TablePagination check TablePagination 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -202,7 +202,7 @@ exports[`TablePagination check maxToDisplay > total 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -221,7 +221,7 @@ exports[`TablePagination check maxToDisplay > total 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -321,7 +321,7 @@ exports[`TablePagination check maxToDisplay > total 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -340,7 +340,7 @@ exports[`TablePagination check maxToDisplay > total 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -373,7 +373,7 @@ exports[`TablePagination check press first page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -392,7 +392,7 @@ exports[`TablePagination check press first page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -501,7 +501,7 @@ exports[`TablePagination check press first page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -520,7 +520,7 @@ exports[`TablePagination check press first page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -553,7 +553,7 @@ exports[`TablePagination check press last page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -572,7 +572,7 @@ exports[`TablePagination check press last page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -618,7 +618,7 @@ exports[`TablePagination check press last page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -637,7 +637,7 @@ exports[`TablePagination check press last page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -670,7 +670,7 @@ exports[`TablePagination check press next page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -689,7 +689,7 @@ exports[`TablePagination check press next page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -735,7 +735,7 @@ exports[`TablePagination check press next page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -754,7 +754,7 @@ exports[`TablePagination check press next page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -787,7 +787,7 @@ exports[`TablePagination check press next page incorect selected 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -806,7 +806,7 @@ exports[`TablePagination check press next page incorect selected 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -852,7 +852,7 @@ exports[`TablePagination check press next page incorect selected 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -871,7 +871,7 @@ exports[`TablePagination check press next page incorect selected 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -904,7 +904,7 @@ exports[`TablePagination check press prev page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -923,7 +923,7 @@ exports[`TablePagination check press prev page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -1032,7 +1032,7 @@ exports[`TablePagination check press prev page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -1051,7 +1051,7 @@ exports[`TablePagination check press prev page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -1084,7 +1084,7 @@ exports[`TablePagination check press prev page incorect selected 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -1103,7 +1103,7 @@ exports[`TablePagination check press prev page incorect selected 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -1212,7 +1212,7 @@ exports[`TablePagination check press prev page incorect selected 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -1231,7 +1231,7 @@ exports[`TablePagination check press prev page incorect selected 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -1264,7 +1264,7 @@ exports[`TablePagination check press second page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -1283,7 +1283,7 @@ exports[`TablePagination check press second page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -1392,7 +1392,7 @@ exports[`TablePagination check press second page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -1411,7 +1411,7 @@ exports[`TablePagination check press second page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>
@@ -1444,7 +1444,7 @@ exports[`TablePagination check when not first page 1`] = `
             «
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             First
           </span>
@@ -1463,7 +1463,7 @@ exports[`TablePagination check when not first page 1`] = `
             ‹
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Previous
           </span>
@@ -1572,7 +1572,7 @@ exports[`TablePagination check when not first page 1`] = `
             ›
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Next
           </span>
@@ -1591,7 +1591,7 @@ exports[`TablePagination check when not first page 1`] = `
             »
           </span>
           <span
-            class="sr-only"
+            class="visually-hidden"
           >
             Last
           </span>

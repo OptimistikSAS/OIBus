@@ -8,18 +8,17 @@ exports[`Filters check Filters 1`] = `
     <h5>
       IP Filters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -90,8 +89,8 @@ exports[`Filters check Filters 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -105,7 +104,7 @@ exports[`Filters check Filters 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -126,8 +125,8 @@ exports[`Filters check Filters 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -141,7 +140,7 @@ exports[`Filters check Filters 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -162,8 +161,8 @@ exports[`Filters check Filters 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -177,7 +176,7 @@ exports[`Filters check Filters 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -198,8 +197,8 @@ exports[`Filters check Filters 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -213,7 +212,7 @@ exports[`Filters check Filters 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -247,18 +246,17 @@ exports[`Filters check add line 1`] = `
     <h5>
       IP Filters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -329,8 +327,8 @@ exports[`Filters check add line 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -344,7 +342,7 @@ exports[`Filters check add line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -365,8 +363,8 @@ exports[`Filters check add line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -380,7 +378,7 @@ exports[`Filters check add line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -401,8 +399,8 @@ exports[`Filters check add line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -416,7 +414,7 @@ exports[`Filters check add line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -437,8 +435,8 @@ exports[`Filters check add line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -452,7 +450,7 @@ exports[`Filters check add line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -486,18 +484,17 @@ exports[`Filters check change line 1`] = `
     <h5>
       IP Filters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -568,8 +565,8 @@ exports[`Filters check change line 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -583,7 +580,7 @@ exports[`Filters check change line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -604,8 +601,8 @@ exports[`Filters check change line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -619,7 +616,7 @@ exports[`Filters check change line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -640,8 +637,8 @@ exports[`Filters check change line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -655,7 +652,7 @@ exports[`Filters check change line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -676,8 +673,8 @@ exports[`Filters check change line 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -691,7 +688,7 @@ exports[`Filters check change line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -725,18 +722,17 @@ exports[`Filters check delete Filter 1`] = `
     <h5>
       IP Filters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -807,8 +803,8 @@ exports[`Filters check delete Filter 1`] = `
         <tbody>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -822,7 +818,7 @@ exports[`Filters check delete Filter 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -843,8 +839,8 @@ exports[`Filters check delete Filter 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -858,7 +854,7 @@ exports[`Filters check delete Filter 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -879,8 +875,8 @@ exports[`Filters check delete Filter 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -894,7 +890,7 @@ exports[`Filters check delete Filter 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg
@@ -915,8 +911,8 @@ exports[`Filters check delete Filter 1`] = `
           </tr>
           <tr>
             <td>
-              <div
-                class="form-group"
+              <form
+                class=""
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -930,7 +926,7 @@ exports[`Filters check delete Filter 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </div>
+              </form>
             </td>
             <td>
               <svg

@@ -14,9 +14,10 @@ const OIbTitle = ({ label, children }) => {
           {label}
           {children && (
             // remove spaces so it can used as an Id
-            <Button close color="link" id={id}>
+            <Button color="link" id={id} className="util-button">
               <FaRegQuestionCircle
                 className="oi-help"
+                size={12}
               />
             </Button>
           )}

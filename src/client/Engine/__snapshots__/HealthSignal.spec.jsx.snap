@@ -8,18 +8,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
     <h5>
       Health signal
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -70,26 +69,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.logging.enabled"
-            name="engine.healthSignal.logging.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.logging.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.logging.enabled"
+          label="Enabled"
+          name="engine.healthSignal.logging.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -100,10 +90,10 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.logging.frequency"
         >
           Frequency
@@ -143,26 +133,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.http.enabled"
-            name="engine.healthSignal.http.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.http.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.http.enabled"
+          label="Enabled"
+          name="engine.healthSignal.http.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -172,11 +153,11 @@ exports[`HealthSignal check HealthSignal 1`] = `
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.host"
         >
           Host
@@ -199,16 +180,16 @@ exports[`HealthSignal check HealthSignal 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.endpoint"
         >
           Endpoint
@@ -231,16 +212,16 @@ exports[`HealthSignal check HealthSignal 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.frequency"
         >
           Frequency
@@ -269,16 +250,16 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.proxy"
         >
           Proxy
         </label>
         <select
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.healthSignal.http.proxy"
           name="engine.healthSignal.http.proxy"
         >
@@ -315,17 +296,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="type"
             >
               Type
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="type"
               name="type"
             >
@@ -357,11 +338,11 @@ exports[`HealthSignal check HealthSignal 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="username"
             >
               User name
@@ -377,16 +358,16 @@ exports[`HealthSignal check HealthSignal 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="password"
             >
               Password
@@ -423,18 +404,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     <h5>
       Health signal
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -485,26 +465,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.logging.enabled"
-            name="engine.healthSignal.logging.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.logging.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.logging.enabled"
+          label="Enabled"
+          name="engine.healthSignal.logging.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -515,10 +486,10 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.logging.frequency"
         >
           Frequency
@@ -558,26 +529,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.http.enabled"
-            name="engine.healthSignal.http.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.http.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.http.enabled"
+          label="Enabled"
+          name="engine.healthSignal.http.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -587,11 +549,11 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.host"
         >
           Host
@@ -614,16 +576,16 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.endpoint"
         >
           Endpoint
@@ -646,16 +608,16 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.frequency"
         >
           Frequency
@@ -684,16 +646,16 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.proxy"
         >
           Proxy
         </label>
         <select
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.healthSignal.http.proxy"
           name="engine.healthSignal.http.proxy"
         >
@@ -730,17 +692,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="type"
             >
               Type
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="type"
               name="type"
             >
@@ -772,11 +734,11 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="username"
             >
               User name
@@ -792,16 +754,16 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="password"
             >
               Password
@@ -838,18 +800,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     <h5>
       Health signal
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -900,26 +861,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.logging.enabled"
-            name="engine.healthSignal.logging.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.logging.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.logging.enabled"
+          label="Enabled"
+          name="engine.healthSignal.logging.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -930,10 +882,10 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.logging.frequency"
         >
           Frequency
@@ -973,26 +925,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-3"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
-        <div
-          class="custom-switch custom-control"
-        >
-          <input
-            checked=""
-            class="custom-control-input"
-            color="secondary"
-            id="engine.healthSignal.http.enabled"
-            name="engine.healthSignal.http.enabled"
-            type="checkbox"
-          />
-          <label
-            class="custom-control-label"
-            for="engine.healthSignal.http.enabled"
-          >
-            Enabled
-          </label>
-        </div>
+        <input
+          checked=""
+          class="form-check-input"
+          color="secondary"
+          id="engine.healthSignal.http.enabled"
+          label="Enabled"
+          name="engine.healthSignal.http.enabled"
+          type="checkbox"
+        />
       </div>
     </div>
   </div>
@@ -1002,11 +945,11 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.host"
         >
           Host
@@ -1029,16 +972,16 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
-      <div
-        class="form-group"
+      <form
+        class=""
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.endpoint"
         >
           Endpoint
@@ -1061,16 +1004,16 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </div>
+      </form>
     </div>
     <div
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.frequency"
         >
           Frequency
@@ -1099,16 +1042,16 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.healthSignal.http.proxy"
         >
           Proxy
         </label>
         <select
-          class="oi-form-input form-control"
+          class="oi-form-input form-select"
           id="engine.healthSignal.http.proxy"
           name="engine.healthSignal.http.proxy"
         >
@@ -1145,17 +1088,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="type"
             >
               Type
             </label>
             <select
               aria-invalid="false"
-              class="oi-form-input form-control"
+              class="oi-form-input form-select"
               id="type"
               name="type"
             >
@@ -1187,11 +1130,11 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
         <div
           class="col-md-4"
         >
-          <div
-            class="form-group"
+          <form
+            class=""
           >
             <label
-              class=""
+              class="form-label"
               for="username"
             >
               User name
@@ -1207,16 +1150,16 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
+          </form>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="password"
             >
               Password

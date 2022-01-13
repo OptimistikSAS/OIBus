@@ -11,12 +11,11 @@ exports[`EditableIdField check EditableIdField editing = false 1`] = `
 exports[`EditableIdField check EditableIdField editing = true 1`] = `
 <div>
   <button
-    aria-label="Close"
-    class="close"
+    class="util-button btn btn-outline-secondary"
     type="button"
   >
     <svg
-      class="oi-icon ml-2"
+      class="oi-icon ms-2"
       fill="currentColor"
       height="1em"
       stroke="currentColor"
@@ -36,12 +35,11 @@ exports[`EditableIdField check EditableIdField editing = true 1`] = `
 exports[`EditableIdField check editing done 1`] = `
 <div>
   <button
-    aria-label="Close"
-    class="close"
+    class="util-button btn btn-outline-secondary"
     type="button"
   >
     <svg
-      class="oi-icon ml-2"
+      class="oi-icon ms-2"
       fill="currentColor"
       height="1em"
       stroke="currentColor"
@@ -61,12 +59,11 @@ exports[`EditableIdField check editing done 1`] = `
 exports[`EditableIdField check editing done with error 1`] = `
 <div>
   <button
-    aria-label="Close"
-    class="close"
+    class="util-button btn btn-outline-secondary"
     type="button"
   >
     <svg
-      class="oi-icon ml-2"
+      class="oi-icon ms-2"
       fill="currentColor"
       height="1em"
       stroke="currentColor"

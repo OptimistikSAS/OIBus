@@ -15,7 +15,7 @@ exports[`Logs check Logs 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -23,10 +23,10 @@ exports[`Logs check Logs 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -46,10 +46,10 @@ exports[`Logs check Logs 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -69,10 +69,10 @@ exports[`Logs check Logs 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -81,7 +81,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -96,7 +96,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -111,7 +111,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -126,7 +126,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -141,7 +141,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -169,7 +169,7 @@ exports[`Logs check Logs 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -177,7 +177,7 @@ exports[`Logs check Logs 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -327,7 +327,7 @@ exports[`Logs check change filterText 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -335,10 +335,10 @@ exports[`Logs check change filterText 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -358,10 +358,10 @@ exports[`Logs check change filterText 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -381,10 +381,10 @@ exports[`Logs check change filterText 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -393,7 +393,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -408,7 +408,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -423,7 +423,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -438,7 +438,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -453,7 +453,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -481,7 +481,7 @@ exports[`Logs check change filterText 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -489,7 +489,7 @@ exports[`Logs check change filterText 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -639,7 +639,7 @@ exports[`Logs check change fromDate 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -647,10 +647,10 @@ exports[`Logs check change fromDate 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -670,10 +670,10 @@ exports[`Logs check change fromDate 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -693,10 +693,10 @@ exports[`Logs check change fromDate 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -705,7 +705,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -720,7 +720,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -735,7 +735,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -750,7 +750,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -765,7 +765,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -793,7 +793,7 @@ exports[`Logs check change fromDate 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -801,7 +801,7 @@ exports[`Logs check change fromDate 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -951,7 +951,7 @@ exports[`Logs check change toDate 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -959,10 +959,10 @@ exports[`Logs check change toDate 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -982,10 +982,10 @@ exports[`Logs check change toDate 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -1005,10 +1005,10 @@ exports[`Logs check change toDate 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -1017,7 +1017,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1032,7 +1032,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1047,7 +1047,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1062,7 +1062,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1077,7 +1077,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -1105,7 +1105,7 @@ exports[`Logs check change toDate 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -1113,7 +1113,7 @@ exports[`Logs check change toDate 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -1263,7 +1263,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -1271,10 +1271,10 @@ exports[`Logs check change verbosity, check silly 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -1294,10 +1294,10 @@ exports[`Logs check change verbosity, check silly 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -1317,10 +1317,10 @@ exports[`Logs check change verbosity, check silly 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -1329,7 +1329,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1344,7 +1344,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1359,7 +1359,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1374,7 +1374,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1389,7 +1389,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -1417,7 +1417,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -1425,7 +1425,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -1575,7 +1575,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -1583,10 +1583,10 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -1606,10 +1606,10 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -1629,10 +1629,10 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -1641,7 +1641,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1656,7 +1656,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1671,7 +1671,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1686,7 +1686,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1701,7 +1701,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -1729,7 +1729,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -1737,7 +1737,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -1887,7 +1887,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -1895,10 +1895,10 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -1918,10 +1918,10 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -1941,10 +1941,10 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -1953,7 +1953,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1968,7 +1968,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1983,7 +1983,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -1998,7 +1998,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2013,7 +2013,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -2041,7 +2041,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -2049,7 +2049,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -2199,7 +2199,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -2207,10 +2207,10 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -2230,10 +2230,10 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -2253,10 +2253,10 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -2265,7 +2265,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2280,7 +2280,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2295,7 +2295,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2310,7 +2310,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2325,7 +2325,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -2353,7 +2353,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -2361,7 +2361,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"
@@ -2511,7 +2511,7 @@ exports[`Logs check press showMore 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Filters
           </label>
@@ -2519,10 +2519,10 @@ exports[`Logs check press showMore 1`] = `
             class="card-body card-body"
           >
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="fromDate"
               >
                 From date
@@ -2542,10 +2542,10 @@ exports[`Logs check press showMore 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="toDate"
               >
                 To date
@@ -2565,10 +2565,10 @@ exports[`Logs check press showMore 1`] = `
               </small>
             </div>
             <div
-              class="form-group"
+              class="mb-3"
             >
               <label
-                class=""
+                class="form-label"
                 for="verbosity"
               >
                 Verbosity
@@ -2577,7 +2577,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2592,7 +2592,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2607,7 +2607,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2622,7 +2622,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     checked=""
@@ -2637,7 +2637,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label"
+                  class="form-check-label form-label"
                 >
                   <input
                     class="oi-form-input form-check-input"
@@ -2665,7 +2665,7 @@ exports[`Logs check press showMore 1`] = `
           class="card"
         >
           <label
-            class="label-card-title"
+            class="label-card-title form-label"
           >
             Logs
           </label>
@@ -2673,7 +2673,7 @@ exports[`Logs check press showMore 1`] = `
             class="card-body card-body"
           >
             <div
-              class="row form-group"
+              class="row mb-3"
             >
               <label
                 class="col-sm-1 col-form-label"

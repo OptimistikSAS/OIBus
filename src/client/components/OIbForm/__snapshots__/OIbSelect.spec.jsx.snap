@@ -3,17 +3,17 @@
 exports[`OIbSelect check Select with short value="text" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="true"
-      class="oi-form-input is-invalid form-control"
+      class="oi-form-input is-invalid form-select"
       id="name"
       name="name"
     >
@@ -40,17 +40,17 @@ exports[`OIbSelect check Select with short value="text" 1`] = `
 exports[`OIbSelect check Select with value="some text" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >
@@ -75,17 +75,17 @@ exports[`OIbSelect check Select with value="some text" 1`] = `
 exports[`OIbSelect check Select with value="some text" and help 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="name"
     >
       label
     </label>
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >
@@ -117,11 +117,11 @@ exports[`OIbSelect check Select with value="some text" and help 1`] = `
 exports[`OIbSelect check Select with value="some text" and no label 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <select
       aria-invalid="false"
-      class="oi-form-input form-control"
+      class="oi-form-input form-select"
       id="name"
       name="name"
     >

@@ -13,17 +13,17 @@ exports[`FileLogging check FileLogging 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -77,11 +77,11 @@ exports[`FileLogging check FileLogging 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -104,16 +104,16 @@ exports[`FileLogging check FileLogging 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -142,10 +142,10 @@ exports[`FileLogging check FileLogging 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -177,7 +177,7 @@ exports[`FileLogging check FileLogging 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
@@ -208,17 +208,17 @@ exports[`FileLogging check change file level to "warning" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -272,11 +272,11 @@ exports[`FileLogging check change file level to "warning" 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -299,16 +299,16 @@ exports[`FileLogging check change file level to "warning" 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -337,10 +337,10 @@ exports[`FileLogging check change file level to "warning" 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -372,7 +372,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
@@ -403,17 +403,17 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -467,11 +467,11 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -494,16 +494,16 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -532,10 +532,10 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -567,7 +567,7 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
@@ -598,17 +598,17 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -662,11 +662,11 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -689,16 +689,16 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -727,10 +727,10 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -762,7 +762,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
@@ -793,17 +793,17 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -857,11 +857,11 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -884,16 +884,16 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -922,10 +922,10 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -957,7 +957,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
@@ -988,17 +988,17 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.level"
           >
             Level
           </label>
           <select
             aria-invalid="false"
-            class="oi-form-input form-control"
+            class="oi-form-input form-select"
             id="engine.logParameters.fileLog.level"
             name="engine.logParameters.fileLog.level"
           >
@@ -1052,11 +1052,11 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
       <div
         class="col-md-4"
       >
-        <div
-          class="form-group"
+        <form
+          class=""
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.fileName"
           >
             File name for the log file
@@ -1079,16 +1079,16 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
               The file name of the log file
             </div>
           </small>
-        </div>
+        </form>
       </div>
       <div
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
             File max size
@@ -1117,10 +1117,10 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
         class="col-md-2"
       >
         <div
-          class="form-group"
+          class="mb-3"
         >
           <label
-            class=""
+            class="form-label"
             for="engine.logParameters.fileLog.numberOfFiles"
           >
             Number of files
@@ -1152,7 +1152,7 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
           class="form-check"
         >
           <label
-            class="form-check-label"
+            class="form-check-label form-label"
           >
             Tailable
             <input
