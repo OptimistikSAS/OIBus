@@ -60,11 +60,9 @@ const OIbPassword = ({ label, help, value, name, onChange, valid, defaultValue, 
           value={value.replace(PREFIX, '')}
         />
         {edited && (
-          <Input className="oi-form-append" addonType="append">
-            {showPassword
-              ? <FaEye onClick={() => setShowPassword(false)} />
-              : <FaEyeSlash onClick={() => setShowPassword(true)} />}
-          </Input>
+          showPassword
+            ? <FaEye onClick={() => setShowPassword(false)} />
+            : <FaEyeSlash onClick={() => setShowPassword(true)} />
         )}
       </InputGroup>
       <FormFeedback style={{ display: 'inline' }}>{validCheck}</FormFeedback>

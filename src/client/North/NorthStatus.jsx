@@ -1,15 +1,15 @@
-import React from "react";
-import { Container, Button } from "reactstrap";
-import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
-import { AlertContext } from "../context/AlertContext.jsx";
-import { ConfigContext } from "../context/ConfigContext.jsx";
-import Table from "../components/table/Table.jsx";
+import React from 'react'
+import { Container, Button } from 'reactstrap'
+import { useParams, useNavigate } from 'react-router-dom'
+import { FaArrowLeft } from 'react-icons/fa'
+import { AlertContext } from '../context/AlertContext.jsx'
+import { ConfigContext } from '../context/ConfigContext.jsx'
+import Table from '../components/table/Table.jsx'
 
 function isIsoDate(str) {
-  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
-  const d = new Date(str);
-  return d.toISOString() === str;
+  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false
+  const d = new Date(str)
+  return d.toISOString() === str
 }
 /**
  * Generate row entry for the status table.
@@ -23,48 +23,48 @@ const generateRowEntry = (key, value) => [
     value: key,
   },
   {
-    name: "value",
+    name: 'value',
     value: isIsoDate(value) ? new Date(value).toLocaleString() : value,
   },
-];
+]
 
 const NorthStatus = () => {
-  const [connectorData, setConnectorData] = React.useState([]);
-  const { setAlert } = React.useContext(AlertContext);
-  const { newConfig } = React.useContext(ConfigContext);
-  const navigate = useNavigate();
-  const { id } = useParams(); // the application id passed in the url
-  const [application, setApplication] = React.useState(null);
-  const [sseSource, setSseSource] = React.useState(null);
+  const [connectorData, setConnectorData] = React.useState([])
+  const { setAlert } = React.useContext(AlertContext)
+  const { newConfig } = React.useContext(ConfigContext)
+  const navigate = useNavigate()
+  const { id } = useParams() // the application id passed in the url
+  const [application, setApplication] = React.useState(null)
+  const [sseSource, setSseSource] = React.useState(null)
 
   React.useEffect(() => {
     const currentApplication = newConfig.north?.applications?.find(
-      (element) => element.id === id
-    );
-    setApplication(currentApplication);
+      (element) => element.id === id,
+    )
+    setApplication(currentApplication)
     if (currentApplication && currentApplication.enabled) {
-      const source = new EventSource(`/north/${id}/sse`);
+      const source = new EventSource(`/north/${id}/sse`)
       source.onerror = (error) => {
-        setAlert({ text: error.message, type: "danger" });
-      };
+        setAlert({ text: error.message, type: 'danger' })
+      }
       source.onmessage = (event) => {
         if (event && event.data) {
-          const myData = JSON.parse(event.data);
-          const tableRows = [];
+          const myData = JSON.parse(event.data)
+          const tableRows = []
           Object.keys(myData).forEach((key) => {
-            tableRows.push(generateRowEntry(key, myData[key]));
-          });
-          setConnectorData(tableRows);
+            tableRows.push(generateRowEntry(key, myData[key]))
+          })
+          setConnectorData(tableRows)
         }
-      };
-      setSseSource(source);
+      }
+      setSseSource(source)
     }
     return () => {
       if (sseSource) {
-        sseSource.close();
+        sseSource.close()
       }
-    };
-  }, [newConfig]);
+    }
+  }, [newConfig])
 
   return application ? (
     <>
@@ -77,7 +77,7 @@ const NorthStatus = () => {
             id="oi-navigate"
             outline
             onClick={() => {
-              navigate(-1);
+              navigate(-1)
             }}
             className="util-button"
           >
@@ -91,12 +91,13 @@ const NorthStatus = () => {
           <Table headers={[]} rows={connectorData} />
         ) : (
           <div className="oi-status-error">
-            {" "}
-            No Information displayed because the connector is disabled{" "}
+            {' '}
+            No Information displayed because the connector is disabled
+            {' '}
           </div>
         )}
       </Container>
     </>
-  ) : null;
-};
-export default NorthStatus;
+  ) : null
+}
+export default NorthStatus

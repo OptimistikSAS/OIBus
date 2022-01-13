@@ -25,6 +25,7 @@
     "start-client": "webpack --mode development --watch",
     "test": "jest --coverage",
     "lint": "eslint src --ext .jsx --ext .js",
+    "lint-fix": "eslint src --ext .jsx --ext .js --fix",
     "version": "npm run build && gulp build-archives",
     "postversion": "git push && git push --tags",
     "bump": "standard-version -i CHANGELOG.md",
