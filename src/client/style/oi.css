@@ -5,6 +5,7 @@
   background-color: #323e48;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
+  cursor: default;
 }
 
 .oi-node-title {
