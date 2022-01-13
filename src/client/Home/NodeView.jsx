@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Container } from 'reactstrap'
+import { Container, Tooltip } from 'reactstrap'
 import ReactFlow from 'react-flow-renderer'
 import { Link } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
@@ -26,6 +26,8 @@ const NodeView = ({
   } = React.useContext(ConfigContext)
   const [connectorData, setConnectorData] = React.useState({})
   const [sseSource, setSseSource] = React.useState(null)
+  const [tooltipOpenedId, setTooltipOpenedId] = React.useState()
+
   const { setAlert } = React.useContext(AlertContext)
 
   const onLoad = (reactFlowInstance) => {
@@ -93,9 +95,17 @@ const NodeView = ({
                 alt="logo"
                 height="25px"
               />
-              <div className="oi-node-title">
+              <div className="oi-node-title" id={`north-connector-title-${application.id}`}>
                 {`${application.name}`}
               </div>
+              <Tooltip
+                isOpen={application.id === tooltipOpenedId}
+                placement="top"
+                target={`north-connector-title-${application.id}`}
+                toggle={() => { setTooltipOpenedId((oldValue) => (oldValue === application.id ? null : application.id)) }}
+              >
+                {`${application.name}`}
+              </Tooltip>
               <div className="oi-node-click-item">
                 <NorthMenu application={application} />
               </div>
@@ -165,9 +175,17 @@ const NodeView = ({
                 alt="logo"
                 height="25px"
               />
-              <div id={`title-${dataSource.name}`} className="oi-node-title">
-                {dataSource.name}
+              <div className="oi-node-title" id={`south-connector-title-${dataSource.id}`}>
+                {`${dataSource.name}`}
               </div>
+              <Tooltip
+                isOpen={dataSource.id === tooltipOpenedId}
+                placement="top"
+                target={`south-connector-title-${dataSource.id}`}
+                toggle={() => { setTooltipOpenedId((oldValue) => (oldValue === dataSource.id ? null : dataSource.id)) }}
+              >
+                {`${dataSource.name}`}
+              </Tooltip>
               <div
                 className="oi-node-click-item"
               >
@@ -295,7 +313,7 @@ const NodeView = ({
           paneMoveable={false}
           preventScrolling={false}
           nodesConnectable={false}
-          elementsSelectable={false}
+          elementsSelectable
           nodesDraggable={false}
           onLoad={onLoad}
         />
