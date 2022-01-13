@@ -1,47 +1,46 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
-import { Form, Row, Col, Button, Container } from "reactstrap";
-import { FaPencilAlt } from "react-icons/fa";
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { useNavigate } from 'react-router-dom'
+import { Form, Row, Col, Button, Container } from 'reactstrap'
+import { FaPencilAlt } from 'react-icons/fa'
 import {
   OIbTitle,
   OIbCheckBox,
   OIbInteger,
   OIbLogLevel,
-} from "../../components/OIbForm";
-import SubscribedTo from "./SubscribedTo.jsx";
-import validation from "./North.validation";
-import EditableIdField from "../../components/EditableIdField.jsx";
-import { ConfigContext } from "../../context/ConfigContext.jsx";
-import OIbForm from "../../components/OIbForm/OIbForm.jsx";
-import ApiSchemas from "../Apis.jsx";
-import StatusButton from "../../StatusButton.jsx";
+} from '../../components/OIbForm'
+import SubscribedTo from './SubscribedTo.jsx'
+import validation from './North.validation'
+import EditableIdField from '../../components/EditableIdField.jsx'
+import { ConfigContext } from '../../context/ConfigContext.jsx'
+import OIbForm from '../../components/OIbForm/OIbForm.jsx'
+import ApiSchemas from '../Apis.jsx'
+import StatusButton from '../../StatusButton.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
-  const { id, api } = application;
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext);
-  const [renamingConnector, setRenamingConnector] = useState(null);
-  const [pencil, setPencil] = useState(true);
-  const applications = newConfig?.north?.applications ?? [];
-  const navigate = useNavigate();
+  const { id, api } = application
+  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const [renamingConnector, setRenamingConnector] = useState(null)
+  const [pencil, setPencil] = useState(true)
+  const applications = newConfig?.north?.applications ?? []
+  const navigate = useNavigate()
   // Create the sections for the api (for example application.Link) for application not yet initialized
-  if (!application[api]) application[api] = {};
-  if (!application.caching) application.caching = {};
-  if (!application.subscribedTo) application.subscribedTo = [];
+  if (!application[api]) application[api] = {}
+  if (!application.caching) application.caching = {}
+  if (!application.subscribedTo) application.subscribedTo = []
 
   // load the proper schema based on the api name.
-  const schema = ApiSchemas[api];
-  const prefix = `north.applications.${applicationIndex}`;
-  const handleConnectorNameChanged =
-    (name) => (oldConnectorName, newConnectorName) => {
-      setRenamingConnector(null);
-      dispatchNewConfig({
-        type: "update",
-        name,
-        value: newConnectorName,
-      });
-      setPencil(true);
-    };
+  const schema = ApiSchemas[api]
+  const prefix = `north.applications.${applicationIndex}`
+  const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
+    setRenamingConnector(null)
+    dispatchNewConfig({
+      type: 'update',
+      name,
+      value: newConnectorName,
+    })
+    setPencil(true)
+  }
 
   return (
     <>
@@ -54,16 +53,16 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             valid={validation.application.isValidName}
             nameChanged={handleConnectorNameChanged(
               `north.applications.${applications.findIndex(
-                (element) => element.id === application.id
-              )}.name`
+                (element) => element.id === application.id,
+              )}.name`,
             )}
           />
           {pencil && (
             <Button
               outline
               onClick={() => {
-                setRenamingConnector(`north-${application.id}`);
-                setPencil(false);
+                setRenamingConnector(`north-${application.id}`)
+                setPencil(false)
               }}
               className="util-button"
             >
@@ -74,7 +73,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         <div className="pull-right me-3">
           <StatusButton
             handler={() => {
-              navigate(`/north/${id}/live`);
+              navigate(`/north/${id}/live`)
             }}
             enabled={application.enabled}
           />
@@ -94,7 +93,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md={2}>
               <OIbCheckBox
                 name={`${prefix}.enabled`}
-                label={application.enabled ? "Enabled" : "Disabled"}
+                label={application.enabled ? 'Enabled' : 'Disabled'}
                 defaultValue={false}
                 value={application.enabled}
                 help={<div>Enable this application</div>}
@@ -203,13 +202,13 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         </Form>
       </Container>
     </>
-  );
-};
+  )
+}
 
 NorthForm.propTypes = {
   application: PropTypes.object.isRequired,
   applicationIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
-};
+}
 
-export default NorthForm;
+export default NorthForm

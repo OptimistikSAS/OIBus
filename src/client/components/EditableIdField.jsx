@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
-import PropTypes from "prop-types";
-import { Button } from "reactstrap";
-import { FaCheck } from "react-icons/fa";
-import { OIbText } from "./OIbForm";
+import React, { useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { Button } from 'reactstrap'
+import { FaCheck } from 'react-icons/fa'
+import { OIbText } from './OIbForm'
 
 const EditableIdField = ({
   connectorName,
@@ -11,31 +11,31 @@ const EditableIdField = ({
   nameChanged,
   editing,
 }) => {
-  const [editingConnectorName, setEditingConnectorName] = React.useState();
+  const [editingConnectorName, setEditingConnectorName] = React.useState()
   const [otherConnectorNames, setOtherConnectorNames] = React.useState(
-    fromList.filter((e) => e.name !== connectorName).map((e) => e.name)
-  );
+    fromList.filter((e) => e.name !== connectorName).map((e) => e.name),
+  )
 
   useEffect(() => {
     if (editing) {
-      setEditingConnectorName(connectorName);
+      setEditingConnectorName(connectorName)
     }
-  }, [editing]);
+  }, [editing])
 
   const onChange = (_, value) => {
-    setEditingConnectorName(value);
-  };
+    setEditingConnectorName(value)
+  }
 
   const handleDoneEditName = () => {
-    const editingError = valid(editingConnectorName, otherConnectorNames);
+    const editingError = valid(editingConnectorName, otherConnectorNames)
     if (!editingError) {
-      nameChanged(connectorName, editingConnectorName);
+      nameChanged(connectorName, editingConnectorName)
       const list = fromList
         .filter((e) => e.name !== connectorName)
-        .map((e) => e.name);
-      setOtherConnectorNames(list);
+        .map((e) => e.name)
+      setOtherConnectorNames(list)
     }
-  };
+  }
 
   return editing ? (
     <>
@@ -52,8 +52,8 @@ const EditableIdField = ({
     </>
   ) : (
     <div>{connectorName}</div>
-  );
-};
+  )
+}
 
 EditableIdField.propTypes = {
   connectorName: PropTypes.string.isRequired,
@@ -61,6 +61,6 @@ EditableIdField.propTypes = {
   valid: PropTypes.func.isRequired,
   nameChanged: PropTypes.func.isRequired,
   editing: PropTypes.bool.isRequired,
-};
+}
 
-export default EditableIdField;
+export default EditableIdField

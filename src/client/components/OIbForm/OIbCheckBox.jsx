@@ -25,7 +25,7 @@ const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchB
           onChange={handleChange}
           checked={value}
           color="secondary"
-          />
+        />
         {help && <FormText>{help}</FormText>}
       </FormGroup>
     )
