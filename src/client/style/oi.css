@@ -423,9 +423,10 @@ label {
 
 .checkbox {
   position: relative;
-  margin-top: 10px;
+  margin-top: 0px;
   width: 14px;
-  margin-left: 0;
+  height: 14px;
+  margin-right: 8px;
 }
 
 .oi-form-append {
