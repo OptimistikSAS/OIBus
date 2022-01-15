@@ -179,11 +179,17 @@ class TimescaleDB extends ApiHandler {
       // Converts data into fields for CLI
       try {
         Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
-          if (!fields) fields = `"${escapeSpace(fieldKey)}"`
-          else fields = `${fields},"${escapeSpace(fieldKey)}"`
+          if (!fields) {
+            fields = `"${escapeSpace(fieldKey)}"`
+          } else {
+            fields = `${fields},"${escapeSpace(fieldKey)}"`
+          }
 
-          if (!values) values = `'${fieldValue}'`
-          else values = `${values},'${fieldValue}'`
+          if (!values) {
+            values = `'${fieldValue}'`
+          } else {
+            values = `${values},'${fieldValue}'`
+          }
         })
         fields += ',"created_at"'
         values += `,'${timestamp}'`

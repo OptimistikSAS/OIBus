@@ -753,6 +753,14 @@ module.exports = {
           application.MongoDB.timestampKey = application.MongoDB.timeStampKey
           delete application.MongoDB.timeStampKey
         }
+
+        if (Object.prototype.hasOwnProperty.call(application.MongoDB, 'createCollectionIndex')) {
+          delete application.MongoDB.createCollectionIndex
+        }
+
+        if (Object.prototype.hasOwnProperty.call(application.MongoDB, 'addTimestampToIndex')) {
+          delete application.MongoDB.addTimestampToIndex
+        }
       }
 
       if (application.api === 'TimescaleDB') {

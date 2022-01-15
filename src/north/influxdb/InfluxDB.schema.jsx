@@ -40,7 +40,7 @@ schema.form = {
   },
   precision: {
     type: 'OIbSelect',
-    defaultValue: 's',
+    defaultValue: 'ms',
     options: ['ns', 'u', 'ms', 's', 'm', 'h'],
   },
   pointIdParameters: {
