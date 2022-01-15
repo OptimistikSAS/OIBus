@@ -788,13 +788,13 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     </p>
                     <p>
                       <b>
-                        Example 1: 
+                        Example 1:
                       </b>
                       If the CSV file contains 2 headers called header1 and header2, it is possible to specify the name for each field in the http request. It‘s possible to have in the body of the request a field called "AfterMapping" which contains the value of the header1 for each row. We can do the same for each header present in the CSV file
                     </p>
                     <p>
                       <b>
-                        Example 2: 
+                        Example 2:
                       </b>
                       It is possible to specify the name for each header in the http request using template string (references to other headers as a variable). Thanks to it we can reference headers present in the CSV file as variables. For it, the syntax to use is the javascript one (such as: $
                       {name of your header}
@@ -3181,17 +3181,93 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.TimescaleDB.regExp"
+            >
+              Reg exp
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.TimescaleDB.regExp"
+              name="north.applications.0.TimescaleDB.regExp"
+              type="text"
+              value="(.*)"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              for example (.*)\\/(.{2})(.)(.*) to split in 4 groups
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.TimescaleDB.table"
+            >
+              Table
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.TimescaleDB.table"
+              name="north.applications.0.TimescaleDB.table"
+              type="text"
+              value="%1$s"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.TimescaleDB.optFields"
+            >
+              Opt fields
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.TimescaleDB.optFields"
+              name="north.applications.0.TimescaleDB.optFields"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
@@ -3241,7 +3317,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                   class="col"
                 >
                   <p>
-                    data value to process by north connector is a Json object which contains :  
+                    data value to process by north connector is a Json object which contains :
                   </p>
                   <ul>
                     <li>
@@ -3252,7 +3328,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                     </li>
                   </ul>
                   <p>
-                    When value is Json object it can be written in two format: 
+                    When value is Json object it can be written in two format:
                   </p>
                   <ul>
                     <li>
@@ -3263,7 +3339,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                     </li>
                   </ul>
                   <p>
-                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters: 
+                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters:
                   </p>
                   <ul>
                     <li>
@@ -3302,14 +3378,62 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-check"
+          >
+            <label
+              class="form-check-label"
+            >
+              use key "value" of Json "data"
+              <input
+                class="oi-form-input checkbox form-check-input"
+                id="north.applications.0.TimescaleDB.useDataKeyValue"
+                name="north.applications.0.TimescaleDB.useDataKeyValue"
+                type="checkbox"
+              />
+            </label>
+            <small
+              class="form-text text-muted"
+            >
+              when checked means we use value key of data Json object (but not the quality key)
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.TimescaleDB.keyParentValue"
+            >
+              Key parent value
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.TimescaleDB.keyParentValue"
+              name="north.applications.0.TimescaleDB.keyParentValue"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              indicate the key of Json object which contains value data (empty value mean Json object root)
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
@@ -4061,13 +4185,13 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          MQTT Parameters: 
+                          MQTT Parameters:
                         </b>
                         Configure Mqtt in order to send WATSY message to your Mqtt url
                       </li>
                       <li>
                         <b>
-                          Web Service Parameters: 
+                          Web Service Parameters:
                         </b>
                         Configure your applicative host(url) thanks to: a url and a token. Thanks to it, WATSYConnect will be able to send process your data and create loss if it is needed
                       </li>
@@ -4129,19 +4253,19 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          MQTT Url: 
+                          MQTT Url:
                         </b>
                         Url which will be used in order to send messages
                       </li>
                       <li>
                         <b>
-                          MQTT Port: 
+                          MQTT Port:
                         </b>
                         The port use by RabbitMQ in order to send messages
                       </li>
                       <li>
                         <b>
-                          Authentication parameters: 
+                          Authentication parameters:
                         </b>
                         This paramaters allow WATSYConnect North to connect into mqtt Url thanks to:
                         <ul>
@@ -4324,13 +4448,13 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          HTTP/HTTPS Url: 
+                          HTTP/HTTPS Url:
                         </b>
                         Url which will be used in order to process data
                       </li>
                       <li>
                         <b>
-                          HTTP/HTTPS Token: 
+                          HTTP/HTTPS Token:
                         </b>
                         Token which permits to connect into the applicative website
                       </li>
@@ -7942,7 +8066,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                         Regexp will be used to identify token in the pointId that will be used to get data used by MQTT North Connector.
                         <ul>
                           <li>
-                            (.*)\\/(.{2})(.)(.*) 
+                            (.*)\\/(.{2})(.)(.*)
                             This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
                           </li>
                           <li>
@@ -7958,11 +8082,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                         <br />
                         For example, RegExp
                         <b>
-                           .* 
+                           .*
                         </b>
                         and topic
                         <b>
-                           %1$s 
+                           %1$s
                         </b>
                         means that the topic equals the point ID.
                       </li>
@@ -8046,42 +8170,6 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <div
               class="invalid-feedback"
             />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.0.MQTTNorth.clientId"
-            >
-              Client id
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.clientId"
-              name="north.applications.0.MQTTNorth.clientId"
-              type="text"
-              value="myClientId"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                clientId information for mqtt and mqtts connection
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -8391,7 +8479,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                   class="col"
                 >
                   <p>
-                    data value to process by north connector is a Json object which contains :  
+                    data value to process by north connector is a Json object which contains :
                   </p>
                   <ul>
                     <li>
@@ -8402,7 +8490,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                     </li>
                   </ul>
                   <p>
-                    When value is Json object it can be written in two format: 
+                    When value is Json object it can be written in two format:
                   </p>
                   <ul>
                     <li>
@@ -8413,7 +8501,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                     </li>
                   </ul>
                   <p>
-                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters: 
+                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters:
                   </p>
                   <ul>
                     <li>
@@ -8452,14 +8540,62 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-check"
+          >
+            <label
+              class="form-check-label"
+            >
+              use key "value" of Json "data"
+              <input
+                class="oi-form-input checkbox form-check-input"
+                id="north.applications.0.MQTTNorth.useDataKeyValue"
+                name="north.applications.0.MQTTNorth.useDataKeyValue"
+                type="checkbox"
+              />
+            </label>
+            <small
+              class="form-text text-muted"
+            >
+              when checked means we use value key of data Json object (but not the quality key)
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.MQTTNorth.keyParentValue"
+            >
+              Key parent value
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.MQTTNorth.keyParentValue"
+              name="north.applications.0.MQTTNorth.keyParentValue"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              indicate the key of Json object which contains value data (empty value mean Json object root)
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"

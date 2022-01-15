@@ -94,12 +94,6 @@ schema.form = {
     options: [0, 1, 2],
     defaultValue: 1,
   },
-  clientId: {
-    type: 'OIbText',
-    valid: optional(),
-    defaultValue: '',
-    help: <div>clientId information for mqtt and mqtts connection</div>,
-  },
   username: {
     type: 'OIbText',
     valid: optional(),

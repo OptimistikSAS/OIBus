@@ -8,12 +8,7 @@ const ApiHandler = require('../ApiHandler.class')
  * @param {*} chars - The content to escape
  * @return {*} The escaped or the original content
  */
-const escapeSpace = (chars) => {
-  if (typeof chars === 'string') {
-    return chars.replace(/ /g, '\\ ')
-  }
-  return chars
-}
+const escapeSpace = (chars) => chars.replace(/ /g, '\\ ')
 
 /**
  * function return the content of value, that could be a Json object with path keys given by string value
@@ -102,10 +97,10 @@ class TimescaleDB extends ApiHandler {
     this.timescaleClient = new Client(url)
     this.timescaleClient.connect((error) => {
       if (error) {
-        this.logger.error(`Error during connection to TimescaleDB : ${error}`)
+        this.logger.error(`Error during connection to TimescaleDB: ${error}`)
         this.clientPG = null
       } else {
-        this.logger.info('Connection To TimescaleDB : OK')
+        this.logger.info('Connection To TimescaleDB: OK')
       }
     })
   }
@@ -121,7 +116,6 @@ class TimescaleDB extends ApiHandler {
     }
   }
 
-  // TODO: check here
   /**
    * Makes a TimescaleDB request with the parameters in the Object arg.
    * @param {object[]} entries - The entry from the event
@@ -133,7 +127,7 @@ class TimescaleDB extends ApiHandler {
     let optFieldsValue = ''
 
     entries.forEach((entry) => {
-      const { pointId, data } = entry
+      const { pointId, data, timestamp } = entry
 
       const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
@@ -145,15 +139,15 @@ class TimescaleDB extends ApiHandler {
       // optFieldsValue is used to identify fields which are determined from pointId string
       optFieldsValue = vsprintf(this.optFields, groups)
 
-      // If there are less groups than placeholders, vsprintf will put undefined.
-      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      // If there are fewer groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replacement to see if this is the case
       if ((tableValue.match(/undefined/g) || []).length > (this.table.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for table`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for table ${this.table}`)
         return
       }
 
       if ((optFieldsValue.match(/undefined/g) || []).length > (this.optFields.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for optionals fields`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for optionals fields ${this.optFields}`)
         return
       }
 
@@ -164,11 +158,9 @@ class TimescaleDB extends ApiHandler {
       let fields = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      // In fact, as some usecases can produce value structured as Json Object, code is modified to process value which could be
+      // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
       // simple value (integer, float, ...) or Json object
-      let dataValue = null
-
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      let dataValue
       if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
@@ -193,10 +185,10 @@ class TimescaleDB extends ApiHandler {
           if (!values) values = `'${fieldValue}'`
           else values = `${values},'${fieldValue}'`
         })
-        // fields += ',created_at'
-        // values += `,'${timestamp}'`
+        fields += ',"created_at"'
+        values += `,'${timestamp}'`
 
-        // Some of optionnals fields are not presents in values, because they are calculated from pointId
+        // Some of optional fields are not presents in values, because they are calculated from pointId
         // Those fields must be added in values inserting in table
         optFieldsValue.split(',').forEach((optValueString) => {
           const optItems = optValueString.split(':')
@@ -219,7 +211,6 @@ class TimescaleDB extends ApiHandler {
     })
 
     query += 'COMMIT'
-
     await this.timescaleClient.query(query)
   }
 }

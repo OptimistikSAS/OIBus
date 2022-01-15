@@ -3,7 +3,7 @@ const fs = require('fs/promises')
 const ApiHandler = require('../ApiHandler.class')
 
 /**
- * Class OIAnalytics - sends files through a POST Multipart HTTP
+ * Class OIAnalytics - sends files through a POST Multipart HTTP and values as json payload
  */
 class OIAnalytics extends ApiHandler {
   static category = 'OI'
@@ -24,7 +24,7 @@ class OIAnalytics extends ApiHandler {
     const {
       host,
       authentication,
-      proxy = null,
+      proxy,
     } = applicationParameters.OIAnalytics
     this.valuesUrl = `${host}${valuesEndpoint}${queryParam}`
     this.fileUrl = `${host}${fileEndpoint}${queryParam}`
