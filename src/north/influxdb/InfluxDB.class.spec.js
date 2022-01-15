@@ -25,6 +25,8 @@ const influxDbConfig = {
   regExp: '(.*)/(.{2})(.)(.*)',
   measurement: '%1$s',
   tags: 'site=%2$s,unit=%3$s,sensor=%4$s',
+  useDataKeyValue: false,
+  keyParentValue: '',
 }
 const values = [
   {

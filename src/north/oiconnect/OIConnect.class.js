@@ -14,7 +14,7 @@ class OIConnect extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-    const { host, valuesEndpoint, fileEndpoint, authentication, proxy = null } = applicationParameters.OIConnect
+    const { host, valuesEndpoint, fileEndpoint, authentication, proxy } = applicationParameters.OIConnect
     const name = `${this.engineConfig.engineName}:${this.application.name}`
     this.valuesUrl = `${host}${valuesEndpoint}?name=${name}`
     this.fileUrl = `${host}${fileEndpoint}?name=${name}`

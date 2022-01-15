@@ -712,6 +712,9 @@ module.exports = {
           application.MQTTNorth.caFile = ''
           application.MQTTNorth.rejectUnauthorized = false
         }
+
+        delete application.MQTTNorth.clientId // replaced by engineName
+
         // adding the default value for the new parameters for MQTTNorth connector (useDataKeyValue and keyParentValue)
         if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'useDataKeyValue')) {
           logger.info(`Add useDataKeyValue field to ${application.name}`)

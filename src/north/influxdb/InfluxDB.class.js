@@ -94,7 +94,6 @@ class InfluxDB extends ApiHandler {
     return values.length
   }
 
-  // TODO: check here
   /**
    * Makes an InfluxDB request with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event
@@ -135,9 +134,7 @@ class InfluxDB extends ApiHandler {
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
       // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
       // simple value (integer, float, ...) or Json object
-      let dataValue = null
-
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      let dataValue
       if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)

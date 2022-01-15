@@ -2,6 +2,7 @@ const EventEmitter = require('events')
 
 const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
+const CertificateService = require('../services/CertificateService.class')
 
 class ApiHandler {
   static STATUS = {
@@ -45,6 +46,10 @@ class ApiHandler {
     this.logger = engine.logger
     this.scanModes = this.engine.scanModes
     this.statusData = {}
+
+    this.keyFile = null
+    this.certFile = null
+    this.caFile = null
   }
 
   async init() {
@@ -52,6 +57,9 @@ class ApiHandler {
     this.logger = new Logger(`North:${this.application.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
+
+    this.certificate = new CertificateService(this.logger)
+    await this.certificate.init(this.keyFile, this.certFile, this.caFile)
     this.initializeStatusData()
   }
 

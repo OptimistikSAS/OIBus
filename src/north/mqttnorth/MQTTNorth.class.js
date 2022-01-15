@@ -1,5 +1,4 @@
 const { vsprintf } = require('sprintf-js')
-const fs = require('fs/promises')
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -39,11 +38,9 @@ class MQTTNorth extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    // eslint-disable-next-line max-len
     const {
       url,
       qos,
-      clientId,
       username,
       password,
       keyFile,
@@ -58,7 +55,7 @@ class MQTTNorth extends ApiHandler {
 
     this.url = url
     this.qos = qos
-    this.clientId = clientId || `OIBus-${Math.random().toString(16).substr(2, 8)}`
+    this.clientId = engine.engineName
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.keyFile = keyFile
@@ -98,57 +95,14 @@ class MQTTNorth extends ApiHandler {
   async connect() {
     super.connect()
     this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
-    let keyFileContent = ''
-    let certFileContent = ''
-    let caFileContent = ''
-
-    if (this.keyFile) {
-      try {
-        const statFile = await fs.stat(this.keyFile)
-        if (statFile) {
-          keyFileContent = await fs.readFile(this.keyFile)
-        } else {
-          this.logger.error(`Key file ${this.keyFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading key file ${this.keyFile}: ${error}`)
-        return
-      }
-    }
-    if (this.certFile) {
-      try {
-        const statFile = await fs.stat(this.certFile)
-        if (statFile) {
-          certFileContent = await fs.readFile(this.certFile)
-        } else {
-          this.logger.error(`Cert file ${this.certFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading cert file ${this.certFile}: ${error}`)
-        return
-      }
-    }
-    if (this.caFile) {
-      try {
-        const statFile = await fs.stat(this.caFile)
-        if (statFile) {
-          caFileContent = await fs.readFile(this.caFile)
-        } else {
-          this.logger.error(`CA file ${this.caFile} does not exist`)
-        }
-      } catch (error) {
-        this.logger.error(`Error reading ca file ${this.caFile}: ${error}`)
-        return
-      }
-    }
 
     const options = {
       username: this.username,
       password: this.password,
       clientId: this.clientId,
-      key: keyFileContent,
-      cert: certFileContent,
-      ca: caFileContent,
+      key: this.certificate.privateKey,
+      cert: this.certificate.cert,
+      ca: this.certificate.ca,
       rejectUnauthorized: this.rejectUnauthorized ? this.rejectUnauthorized : false,
     }
     this.client = mqtt.connect(this.url, options)
@@ -188,7 +142,6 @@ class MQTTNorth extends ApiHandler {
     super.disconnect()
   }
 
-  // TODO: check here
   /**
    * Publish MQTT message.
    * @param {object} entry - The entry to publish
@@ -206,11 +159,11 @@ class MQTTNorth extends ApiHandler {
       const topicValue = vsprintf(this.topic, groups)
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      let dataValue = null
+      let dataValue
       if (this.useDataKeyValue) {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
-        // If it's a json the function return data where "adress" is given by keyParentValue parametrer
+        // If it's a json the function return data where "address" is given by keyParentValue parameter
         dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
@@ -227,7 +180,6 @@ class MQTTNorth extends ApiHandler {
     })
   }
 
-  // TODO: check here
   /**
    * Makes an MQTT publish message with the parameters in the Object arg.
    * @param {Object[]} entries - The entry from the event
