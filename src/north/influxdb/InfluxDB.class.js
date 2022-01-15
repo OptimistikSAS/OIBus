@@ -53,7 +53,7 @@ class InfluxDB extends ApiHandler {
       user,
       password,
       db,
-      precision = 'ms',
+      precision,
       regExp,
       measurement,
       tags,
@@ -160,8 +160,11 @@ class InfluxDB extends ApiHandler {
           if (typeof escapedFieldValue === 'string') {
             escapedFieldValue = `"${escapedFieldValue}"`
           }
-          if (!fields) fields = `${escapedFieldKey}=${escapedFieldValue}`
-          else fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
+          if (!fields) {
+            fields = `${escapedFieldKey}=${escapedFieldValue}`
+          } else {
+            fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
+          }
         }
       })
 

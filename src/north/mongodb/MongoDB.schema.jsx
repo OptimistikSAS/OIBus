@@ -87,17 +87,7 @@ schema.form = {
   },
   createCollection: {
     type: 'OIbCheckBox',
-    label: 'Create collection when collection does not exist',
-    defaultValue: false,
-  },
-  createCollectionIndex: {
-    type: 'OIbCheckBox',
-    label: 'Create collection index when collection is created',
-    defaultValue: false,
-  },
-  addTimestampToIndex: {
-    type: 'OIbCheckBox',
-    label: 'Add timestamp field to index fields',
+    label: 'Create collection with its indexes when collection does not exist',
     defaultValue: false,
   },
   timeStampKey: {
