@@ -91,7 +91,7 @@
     "react-json-view": "1.21.3",
     "react-router": "6.2.1",
     "react-router-dom": "6.2.1",
-    "reactstrap": "8.10.1",
+    "reactstrap": "9.0.1",
     "real-require": "git://github.com/rokku-x/real-require.git#8e7f2185df5a8ac0b9a276766c580e330bc202d6",
     "sprintf-js": "1.1.2",
     "sqlite": "4.0.23",
