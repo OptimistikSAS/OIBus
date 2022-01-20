@@ -48,7 +48,7 @@
     "@koa/router": "10.1.1",
     "ads-client": "1.12.0",
     "aws-sdk": "2.1060.0",
-    "axios": "0.24.0",
+    "axios": "0.25.0",
     "basic-auth": "2.0.1",
     "better-sqlite3": "^7.4.5",
     "bootstrap": "4.6.1",
