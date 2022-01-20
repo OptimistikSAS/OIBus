@@ -59,7 +59,7 @@ describe('TimescaleDB north', () => {
     const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
       + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
     const expectedQuery = 'BEGIN;'
-      + 'insert into "ANA/BL1RCP05"("value","quality","created_at") values(\'666\',\'good\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP05"("value","quality","timestamp") values(\'666\',\'good\',\'2020-02-29T12:12:12.000Z\');'
       + 'COMMIT'
 
     expect(pg.Client).toBeCalledWith(expectedUrl)
@@ -148,7 +148,7 @@ describe('TimescaleDB north', () => {
 
     const expectedQuery = 'BEGIN;'
       // eslint-disable-next-line max-len
-      + 'insert into "SENSOR_TABLE"("value","quality","created_at","site","unit","sensor") values(\'666\',\'good\',\'2020-02-29T12:12:12.000Z\',\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\');'
+      + 'insert into "SENSOR_TABLE"("value","quality","site","unit","sensor","timestamp") values(\'666\',\'good\',\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-29T12:12:12.000Z\');'
       + 'COMMIT'
 
     await timescaleDbNorth.handleValues([
@@ -156,6 +156,31 @@ describe('TimescaleDB north', () => {
         pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
         timestamp,
         data: { value: 666, quality: 'good' },
+      },
+    ])
+
+    expect(client.query).toBeCalledWith(expectedQuery)
+  })
+
+  it('should properly handle values with only optional fields and timestamp', async () => {
+    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    const client = { connect: jest.fn(), query: jest.fn() }
+    pg.Client.mockReturnValue(client)
+    await timescaleDbNorth.connect()
+
+    timescaleDbNorth.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
+    timescaleDbNorth.regExp = '(.*)-(.*)-(.*)-(.*)'
+
+    const expectedQuery = 'BEGIN;'
+      // eslint-disable-next-line max-len
+      + 'insert into "SENSOR_TABLE"("site","unit","sensor","timestamp") values(\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-29T12:12:12.000Z\');'
+      + 'COMMIT'
+
+    await timescaleDbNorth.handleValues([
+      {
+        pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
+        data: {},
+        timestamp,
       },
     ])
 
@@ -192,11 +217,81 @@ describe('TimescaleDB north', () => {
     const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
       + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
     const expectedQuery = 'BEGIN;'
-      + 'insert into "ANA/BL1RCP05"("value","created_at") values(\'666\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP05"("value","timestamp") values(\'666\',\'2020-02-29T12:12:12.000Z\');'
       + 'COMMIT'
 
     expect(pg.Client).toBeCalledWith(expectedUrl)
     expect(expectedResult).toEqual(values.length)
+    expect(expectedError).toBeNull()
+    expect(client.connect).toBeCalledTimes(1)
+    expect(client.query).toBeCalledWith(expectedQuery)
+
+    await timescaleDbNorth.disconnect()
+    expect(client.end).toBeCalledTimes(1)
+  })
+
+  it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
+    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    const client = {
+      connect: jest.fn((callback) => callback()),
+      query: jest.fn(),
+      end: jest.fn(),
+    }
+    pg.Client.mockReturnValue(client)
+    await timescaleDbNorth.connect()
+    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('Connection To TimescaleDB: OK')
+
+    timescaleDbNorth.timestampPathInDataValue = 'associatedTimestamp.timestamp'
+    timescaleDbNorth.useDataKeyValue = true
+    const valuesWithTimestamp = [
+      {
+        pointId: 'ANA/BL1RCP05',
+        data: {
+          value: { numericValue: 555, anotherNumericValue: 444, associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP06',
+        data: {
+          value: { numericValue: '666', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP07',
+        data: {
+          value: { numericValue: '777', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP08',
+        data: {
+          value: { numericValue: 888, associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+    ]
+
+    let expectedResult = null
+    let expectedError = null
+    try {
+      expectedResult = await timescaleDbNorth.handleValues(valuesWithTimestamp)
+    } catch (error) {
+      expectedError = error
+    }
+    const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
+      + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
+    const expectedQuery = 'BEGIN;'
+      + 'insert into "ANA/BL1RCP05"("numericValue","anotherNumericValue","timestamp") values(\'555\',\'444\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP06"("numericValue","timestamp") values(\'666\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP07"("numericValue","timestamp") values(\'777\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP08"("numericValue","timestamp") values(\'888\',\'2020-02-29T12:12:12.000Z\');'
+      + 'COMMIT'
+
+    expect(pg.Client).toBeCalledWith(expectedUrl)
+    expect(expectedResult).toEqual(valuesWithTimestamp.length)
     expect(expectedError).toBeNull()
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery)

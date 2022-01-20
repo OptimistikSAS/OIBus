@@ -525,6 +525,7 @@ const testConfig = {
           table: '%1$s',
           optFields: '',
           keyParentValue: '',
+          timestampPathInDataValue: '',
         },
         caching: {
           sendInterval: 10000,

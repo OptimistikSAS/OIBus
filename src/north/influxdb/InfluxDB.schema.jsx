@@ -38,6 +38,13 @@ schema.form = {
     valid: notEmpty(),
     defaultValue: '',
   },
+  timestampPathInDataValue: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: optional(),
+    newRow: false,
+    help: 'Timestamp field extracted from data value. Keep it empty to retrieve it from the data',
+  },
   precision: {
     type: 'OIbSelect',
     defaultValue: 'ms',

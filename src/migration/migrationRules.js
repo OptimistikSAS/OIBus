@@ -736,6 +736,10 @@ module.exports = {
           logger.info(`Add keyParentValue field to ${application.name}`)
           application.InfluxDB.keyParentValue = ''
         }
+        if (!Object.prototype.hasOwnProperty.call(application.InfluxDB, 'timestampPathInDataValue')) {
+          logger.info(`Add timestampPathInDataValue field to ${application.name}`)
+          application.InfluxDB.timestampPathInDataValue = ''
+        }
       }
 
       if (application.api === 'MongoDB') {
@@ -783,6 +787,10 @@ module.exports = {
         if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'keyParentValue')) {
           logger.info(`Add keyParentValue field to ${application.name}`)
           application.TimescaleDB.keyParentValue = ''
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.TimescaleDB, 'timestampPathInDataValue')) {
+          logger.info(`Add timestampPathInDataValue field to ${application.name}`)
+          application.TimescaleDB.timestampPathInDataValue = ''
         }
       }
     }

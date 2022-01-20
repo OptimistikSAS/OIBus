@@ -26,6 +26,7 @@ const influxDbConfig = {
   tags: 'site=%2$s,unit=%3$s,sensor=%4$s',
   useDataKeyValue: false,
   keyParentValue: '',
+  timestampPathInDataValue: '',
 }
 const values = [
   {
@@ -198,5 +199,100 @@ describe('InfluxDB north', () => {
 
     influxDbNorth.precision = 'bad'
     await influxDbNorth.handleValues(valueWithDataLevel)
+  })
+
+  it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
+    const influxDbNorth = new InfluxDB({ InfluxDB: influxDbConfig }, engine)
+    await influxDbNorth.init()
+
+    influxDbNorth.timestampPathInDataValue = 'associatedTimestamp.timestamp'
+    influxDbNorth.useDataKeyValue = true
+
+    const valuesWithTimestamp = [
+      {
+        pointId: 'ANA/BL1RCP05',
+        data: {
+          value: { numericValue: 555, anotherNumericValue: 444, associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP06',
+        data: {
+          value: { numericValue: '666', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP07',
+        data: {
+          value: { numericValue: '777', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP08',
+        data: {
+          value: { numericValue: 888, associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+    ]
+
+    await influxDbNorth.handleValues(valuesWithTimestamp)
+
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+      'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
+      'POST',
+      null,
+      null,
+      // eslint-disable-next-line max-len
+      'ANA,site=BL,unit=1,sensor=RCP05 numericValue=555,anotherNumericValue=444 1582978332\nANA,site=BL,unit=1,sensor=RCP06 numericValue="666" 1582978332\nANA,site=BL,unit=1,sensor=RCP07 numericValue="777" 1582978332\nANA,site=BL,unit=1,sensor=RCP08 numericValue=888 1582978332\n',
+      { 'Content-Type': 'application/x-www-form-urlencoded' },
+    )
+
+    const valuesWithTimestamp2 = [
+      {
+        pointId: 'ANA/BL1RCP06',
+        data: {
+          value: { numericValue: '666', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP05',
+        data: {
+          value: { numericValue: 555, unit: 'unit2', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP07',
+        data: {
+          value: { numericValue: '777', unit: 'unit2', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+      {
+        pointId: 'ANA/BL1RCP08',
+        data: {
+          value: { numericValue: 888, unit: 'unit2', associatedTimestamp: { timestamp } },
+          quality: 'good',
+        },
+      },
+    ]
+
+    // unit should be ignored
+    await influxDbNorth.handleValues(valuesWithTimestamp2)
+
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+      'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
+      'POST',
+      null,
+      null,
+      // eslint-disable-next-line max-len
+      'ANA,site=BL,unit=1,sensor=RCP06 numericValue="666" 1582978332\nANA,site=BL,unit=1,sensor=RCP05 numericValue=555 1582978332\nANA,site=BL,unit=1,sensor=RCP07 numericValue="777" 1582978332\nANA,site=BL,unit=1,sensor=RCP08 numericValue=888 1582978332\n',
+      { 'Content-Type': 'application/x-www-form-urlencoded' },
+    )
   })
 })
