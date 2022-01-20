@@ -1,26 +1,8 @@
 const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
+const objectPath = require('object-path')
 
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * function return the content of value, that could be a Json object with path keys given by string value
- * without using eval function
- * @param {*} value - simple value (integer or float or string, ...) or Json object
- * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
- * @return {*} The content of value depending on value type (object or simple value)
- */
-const getJsonValueByStringPath = (value, pathValue) => {
-  let tmpValue = value
-
-  if (typeof value === 'object') {
-    if (pathValue !== '') {
-      const arrValue = pathValue.split('.')
-      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
-    }
-  }
-  return tmpValue
-}
 
 /**
  * Class MQTT - generates and sends MQTT messages
@@ -164,7 +146,7 @@ class MQTTNorth extends ApiHandler {
         // data to use is value key of Json object data (data.value)
         // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
         // If it's a json the function return data where "address" is given by keyParentValue parameter
-        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
+        dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data

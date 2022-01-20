@@ -1,32 +1,8 @@
 const { Client } = require('pg')
 const { vsprintf } = require('sprintf-js')
+const objectPath = require('object-path')
 
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * Escape spaces.
- * @param {*} chars - The content to escape
- * @return {*} The escaped or the original content
- */
-const escapeSpace = (chars) => chars.replace(/ /g, '\\ ')
-
-/**
- * function return the content of value, that could be a Json object with path keys given by string value
- * @param {*} value - simple value (integer or float or string, ...) or Json object
- * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
- * @return {*} The content of value depending on value type (object or simple value)
- */
-const getJsonValueByStringPath = (value, pathValue) => {
-  let tmpValue = value
-
-  if (typeof value === 'object') {
-    if (pathValue !== '') {
-      const arrValue = pathValue.split('.')
-      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
-    }
-  }
-  return tmpValue
-}
 
 class TimescaleDB extends ApiHandler {
   static category = 'DatabaseIn'
@@ -127,7 +103,7 @@ class TimescaleDB extends ApiHandler {
     let optFieldsValue = ''
 
     entries.forEach((entry) => {
-      const { pointId, data, timestamp } = entry
+      const { pointId, data } = entry
 
       const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
@@ -154,8 +130,6 @@ class TimescaleDB extends ApiHandler {
       // Make the query by rebuilding the Nodes
       const tableName = tableValue
       let statement = `insert into "${tableName}"(`
-      let values = null
-      let fields = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
       // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
@@ -169,8 +143,8 @@ class TimescaleDB extends ApiHandler {
         // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
-        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
+        //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
+        dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data
@@ -178,37 +152,41 @@ class TimescaleDB extends ApiHandler {
 
       // Converts data into fields for CLI
       try {
-        Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
-          if (!fields) {
-            fields = `"${escapeSpace(fieldKey)}"`
-          } else {
-            fields = `${fields},"${escapeSpace(fieldKey)}"`
-          }
+        let values = ''
+        let fields = ''
+        let timestamp
+        if (this.timestampPathInDataValue) {
+          // case where timestamp is within the dataValue fields received.
+          timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
+          // once taken into account, remove the timestamp from the fields to not take it again in the other fields
+          objectPath.del(dataValue, this.timestampPathInDataValue)
+        } else {
+          // case where timestamp is directly at the root of the data received
+          timestamp = entry.timestamp
+        }
 
-          if (!values) {
-            values = `'${fieldValue}'`
-          } else {
-            values = `${values},'${fieldValue}'`
+        Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
+          // Only insert string or number values
+          if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
+            fields = fields !== '' ? `${fields},"${fieldKey}"` : `"${fieldKey}"`
+            values = values !== '' ? `${values},'${fieldValue}'` : `'${fieldValue}'`
           }
         })
-        fields += ',"created_at"'
-        values += `,'${timestamp}'`
 
         // Some of optional fields are not presents in values, because they are calculated from pointId
         // Those fields must be added in values inserting in table
         optFieldsValue.split(',').forEach((optValueString) => {
           const optItems = optValueString.split(':')
-          const optField = escapeSpace(optItems[0])
-          if (!fields.includes(optField)) {
-            if (!fields) fields = `"${optField}"`
-            else fields = `${fields},"${optField}"`
-
-            if (!values) values = `'${escapeSpace(optItems[1])}'`
-            else values = `${values},'${escapeSpace(optItems[1])}'`
+          if (!fields.includes(optItems[0])) {
+            fields = fields !== '' ? `${fields},"${optItems[0]}"` : `"${optItems[0]}"`
+            values = values !== '' ? `${values},'${optItems[1]}'` : `'${optItems[1]}'`
           }
         })
 
-        statement += `${fields}) values(${values});`
+        fields += ',"timestamp"'
+        values += `,'${timestamp}'`
+
+        statement += `${fields.replace(/ /g, '\\ ')}) values(${values.replace(/ /g, '\\ ')});`
 
         query += statement
       } catch (error) {

@@ -3268,6 +3268,36 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             </small>
           </div>
         </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="form-group"
+          >
+            <label
+              class=""
+              for="north.applications.0.TimescaleDB.timestampPathInDataValue"
+            >
+              Timestamp path in data value
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.TimescaleDB.timestampPathInDataValue"
+              name="north.applications.0.TimescaleDB.timestampPathInDataValue"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              Timestamp field extracted from data value. Keep it empty to retrieve it from the data
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"

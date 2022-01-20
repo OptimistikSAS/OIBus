@@ -72,6 +72,13 @@ schema.form = {
     newRow: false,
     help: 'field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s',
   },
+  timestampPathInDataValue: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: optional(),
+    newRow: false,
+    help: 'Timestamp field extracted from data value. Keep it empty to retrieve it from the data',
+  },
   valueParameters: {
     type: 'OIbTitle',
     children: (

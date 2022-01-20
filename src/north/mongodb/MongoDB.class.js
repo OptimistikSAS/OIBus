@@ -1,28 +1,8 @@
 const mongo = require('mongodb')
 const { vsprintf } = require('sprintf-js')
+const objectPath = require('object-path')
 
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * function return the content of value, that could be a Json object with path keys given by string value
- * without using eval function
- * @param {*} value - simple value (integer or float or string, ...) or Json object
- * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
- * @return {*} The content of value depending on value type (object or simple value)
- */
-const getJsonValueByStringPath = (value, pathValue) => {
-  let tmpValue = value
-
-  if (typeof value === 'object') {
-    if (pathValue !== '') {
-      const arrValue = pathValue.split('.')
-      arrValue.forEach((k) => {
-        tmpValue = tmpValue[k]
-      })
-    }
-  }
-  return tmpValue
-}
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
@@ -192,8 +172,8 @@ class MongoDB extends ApiHandler {
         // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
-        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
+        //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
+        dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data

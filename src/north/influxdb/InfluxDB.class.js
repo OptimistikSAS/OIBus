@@ -1,37 +1,7 @@
 const { vsprintf } = require('sprintf-js')
+const objectPath = require('object-path')
 
 const ApiHandler = require('../ApiHandler.class')
-
-/**
- * function return the content of value, that could be a Json object with path keys given by string value
- * without using eval function
- * @param {*} value - simple value (integer or float or string, ...) or Json object
- * @param {*} pathValue - The string path of value we want to retrieve in the Json Object
- * @return {*} The content of value depending on value type (object or simple value)
- */
-const getJsonValueByStringPath = (value, pathValue) => {
-  let tmpValue = value
-
-  if (typeof value === 'object') {
-    if (pathValue !== '') {
-      const arrValue = pathValue.split('.')
-      arrValue.forEach((k) => { tmpValue = tmpValue[k] })
-    }
-  }
-  return tmpValue
-}
-
-/**
- * Escape spaces.
- * @param {*} chars - The content to escape
- * @return {*} The escaped or the original content
- */
-const escapeSpace = (chars) => {
-  if (typeof chars === 'string') {
-    return chars.replace(/ /g, '\\ ')
-  }
-  return chars
-}
 
 /**
  * Class InfluxDB - generates and sends InfluxDB requests
@@ -59,6 +29,7 @@ class InfluxDB extends ApiHandler {
       tags,
       useDataKeyValue,
       keyParentValue,
+      timestampPathInDataValue,
     } = this.application.InfluxDB
     this.host = host
     this.user = user
@@ -70,6 +41,7 @@ class InfluxDB extends ApiHandler {
     this.tags = tags
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
+    this.timestampPathInDataValue = timestampPathInDataValue
 
     this.canHandleValues = true
   }
@@ -107,7 +79,10 @@ class InfluxDB extends ApiHandler {
     let body = ''
 
     entries.forEach((entry) => {
-      const { pointId, data, timestamp } = entry
+      const {
+        pointId,
+        data,
+      } = entry
 
       const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
@@ -117,8 +92,8 @@ class InfluxDB extends ApiHandler {
       const measurementValue = vsprintf(this.measurement, groups)
       const tagsValue = vsprintf(this.tags, groups)
 
-      // If there are less groups than placeholders, vsprintf will put undefined.
-      // We look for the number of 'undefined' before and after the replace to see if this is the case
+      // If there are fewer groups than placeholders, vsprintf will put undefined.
+      // We look for the number of 'undefined' before and after the replacement to see if this is the case
       if ((measurementValue.match(/undefined/g) || []).length > (this.measurement.match(/undefined/g) || []).length) {
         this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for measurement`)
         return
@@ -127,9 +102,6 @@ class InfluxDB extends ApiHandler {
         this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for tags`)
         return
       }
-
-      // Converts data into fields for CLI
-      let fields = null
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
       // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
@@ -143,62 +115,70 @@ class InfluxDB extends ApiHandler {
         // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
         // in this context :
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
-        //   - To retrieve this object, we use getJsonValueByStringPath with parameters : (data.value, 'level1.level2')
-        dataValue = getJsonValueByStringPath(data.value, this.keyParentValue)
+        //   - To retrieve this object, we use getJsonValueByStringPath with parameters: (data.value, 'level1.level2')
+        dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
         // data to use is Json object data
         dataValue = data
       }
 
-      Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
-        // Before inserting fieldKey in fields string, we must verify that fieldKey isn't store in tagsValue string
-        // The reason is: in InfluxDB it's not useful to store value in tags ans in fields
-        if (!tagsValue.includes(fieldKey)) {
-          const escapedFieldKey = escapeSpace(fieldKey)
-          let escapedFieldValue = escapeSpace(fieldValue)
-
-          if (typeof escapedFieldValue === 'string') {
-            escapedFieldValue = `"${escapedFieldValue}"`
-          }
-          if (!fields) {
-            fields = `${escapedFieldKey}=${escapedFieldValue}`
-          } else {
-            fields = `${fields},${escapedFieldKey}=${escapedFieldValue}`
-          }
-        }
-      })
-
-      // Convert timestamp to the configured precision
-      const timestampTime = (new Date(timestamp)).getTime()
-      let preciseTimestamp
-      switch (this.precision) {
-        case 'ns':
-          preciseTimestamp = 1000 * 1000 * timestampTime
-          break
-        case 'u':
-          preciseTimestamp = 1000 * timestampTime
-          break
-        case 'ms':
-          preciseTimestamp = timestampTime
-          break
-        case 's':
-          preciseTimestamp = Math.floor(timestampTime / 1000)
-          break
-        case 'm':
-          preciseTimestamp = Math.floor(timestampTime / 1000 / 60)
-          break
-        case 'h':
-          preciseTimestamp = Math.floor(timestampTime / 1000 / 60 / 60)
-          break
-        default:
-          preciseTimestamp = timestampTime
+      let timestamp
+      if (this.timestampPathInDataValue) {
+        // case where timestamp is within the dataValue fields received.
+        timestamp = this.getConvertedTimestamp(new Date(objectPath.get(dataValue, this.timestampPathInDataValue)).getTime())
+        // once taken into account, remove the timestamp from the fields to not take it again in the other fields
+        objectPath.del(dataValue, this.timestampPathInDataValue)
+      } else {
+        // case where timestamp is directly at the root of the data received
+        timestamp = this.getConvertedTimestamp(new Date(entry.timestamp).getTime())
       }
+
+      // Converts data into fields for CLI
+      let fields = ''
+      Object.entries(dataValue)
+        .forEach(([fieldKey, fieldValue]) => {
+          // Before inserting fieldKey in fields string, we must verify that fieldKey isn't store in tagsValue string
+          // The reason is: in InfluxDB it's not useful to store value in tags and in fields
+          if (!tagsValue.includes(fieldKey)) {
+            // Only insert string or number fields
+            if (typeof fieldValue === 'string') {
+              fields = fields !== '' ? `${fields},${fieldKey}="${fieldValue}"` : `${fieldKey}="${fieldValue}"`
+            } else if (typeof fieldValue === 'number') {
+              fields = fields !== '' ? `${fields},${fieldKey}=${fieldValue}` : `${fieldKey}=${fieldValue}`
+            }
+          }
+        })
+
       // Append entry to body
-      body += `${measurementValue},${tagsValue} ${fields} ${preciseTimestamp}\n`
+      body += `${measurementValue.replace(/ /g, '\\ ')},${tagsValue.replace(/ /g, '\\ ')} ${fields.replace(/ /g, '\\ ')} ${timestamp}\n`
     })
 
     const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
     return this.engine.requestService.httpSend(url, 'POST', null, null, body, headers)
+  }
+
+  /**
+   * Convert timestamp to the configured precision
+   * @param {number} timestampTime - the original timestamp
+   * @returns {number} - The converted timestamp
+   */
+  getConvertedTimestamp(timestampTime) {
+    switch (this.precision) {
+      case 'ns':
+        return 1000 * 1000 * timestampTime
+      case 'u':
+        return 1000 * timestampTime
+      case 'ms':
+        return timestampTime
+      case 's':
+        return Math.floor(timestampTime / 1000)
+      case 'm':
+        return Math.floor(timestampTime / 1000 / 60)
+      case 'h':
+        return Math.floor(timestampTime / 1000 / 60 / 60)
+      default:
+        return timestampTime
+    }
   }
 }
 
