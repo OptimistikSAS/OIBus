@@ -29,13 +29,13 @@ jest.mock('https', () => ({ Agent: jest.fn() }))
 jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
-const engine = jest.mock('../../engine/Engine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.addFile = jest.fn()
 engine.addValues = jest.fn()
 engine.encryptionService = { decryptText: (password) => password }
-engine.logger = { error: jest.fn(), info: jest.fn(), debug: jest.fn() }
 
 // Mock database service
 jest.mock('../../services/database.service', () => ({
@@ -99,6 +99,7 @@ describe('RestAPI south', () => {
 
   it('should create RestApi connector and connect', async () => {
     const southRestApi = new RestApi(restApiConfig, engine)
+    await southRestApi.init()
 
     expect(southRestApi.requestMethod)
       .toEqual(restApiConfig.RestApi.requestMethod)
@@ -165,6 +166,7 @@ describe('RestAPI south', () => {
 
     // Test fetch status error with basic auth
     const southRestApi = new RestApi(restApiConfig, engine)
+    await southRestApi.init()
     await southRestApi.connect()
     fetch.mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }))
     await southRestApi.onScanImplementation()
@@ -254,6 +256,7 @@ describe('RestAPI south', () => {
       }],
     }]
     const southRestApi = new RestApi(restApiConfig, engine)
+    await southRestApi.init()
     await southRestApi.connect()
     fetch.mockReturnValue(Promise.resolve({
       ok: true,

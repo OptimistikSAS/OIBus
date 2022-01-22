@@ -136,10 +136,7 @@ const PointsComponent = ({
       const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
       const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
-      rest.valid = (val) => {
-        const result = oldValid(val) || validation.points.isUnique(val, pointIds) || validation.points.noUnintendedTrailingSpaces(val)
-        return result
-      }
+      rest.valid = (val) => oldValid(val) || validation.points.isUnique(val, pointIds) || validation.points.noUnintendedTrailingSpaces(val)
     }
     const name = `points.${index}.${key}`
     return (
@@ -149,7 +146,7 @@ const PointsComponent = ({
   }))
 
   return (
-    <div className="points">
+    <div className="m-2">
       <Controls.OIbTitle label="Points" />
       <Controls.OIbText
         label="Filter"

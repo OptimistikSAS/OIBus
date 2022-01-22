@@ -1,7 +1,6 @@
 import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Button, Container, Input, Spinner } from 'reactstrap'
-import humanizeString from 'humanize-string'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Button, Container, Spinner } from 'reactstrap'
 import { FaArrowLeft } from 'react-icons/fa'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
@@ -115,16 +114,18 @@ const ConfigurePoints = () => {
           />
         </div>
       </div>
-      <PointsComponent
-        southId={id}
-        protocol={protocol}
-        points={pointsOrdered}
-        handleAdd={handleAdd}
-        handleDelete={handleDelete}
-        handleDeleteAllPoint={handleDeleteAllPoint}
-        handleImportPoints={handleImportPoints}
-        onUpdate={onChange}
-      />
+      <Container fluid>
+        <PointsComponent
+          southId={id}
+          protocol={protocol}
+          points={pointsOrdered}
+          handleAdd={handleAdd}
+          handleDelete={handleDelete}
+          handleDeleteAllPoint={handleDeleteAllPoint}
+          handleImportPoints={handleImportPoints}
+          onUpdate={onChange}
+        />
+      </Container>
     </>
   )
 }

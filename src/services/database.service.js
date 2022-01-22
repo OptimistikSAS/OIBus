@@ -299,7 +299,7 @@ const upsertConfig = async (database, name, value) => {
  * Get configuration.
  * @param {sqlite.Database} database - The database to use
  * @param {string} name - The config name
- * @return {string} - The config value
+ * @return {Promise<string>} - The config value
  */
 const getConfig = async (database, name) => {
   const query = `SELECT value

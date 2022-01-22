@@ -1,6 +1,6 @@
 import React from 'react'
 import { Label } from 'reactstrap'
-import { formatters, create } from 'jsondiffpatch'
+import { create, formatters } from 'jsondiffpatch'
 import 'jsondiffpatch/dist/formatters-styles/html.css'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
@@ -90,10 +90,10 @@ const MainConfigActivation = () => {
     <>
       <pre>{newConfig && JSON.stringify(newConfig.errors)}</pre>
       {isModified ? (
-        <>
+        <div>
           <ActionButtons onConfirm={handleActivate} onDecline={handleDecline} errors={newConfig.errors} />
           <ConfigDiffRenderer deltaHTML={deltaHTML} diffError={diffError} />
-        </>
+        </div>
       ) : (
         <Label>No modifications on main configuration</Label>
       )}

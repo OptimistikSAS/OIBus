@@ -6,15 +6,15 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -31,7 +31,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -47,35 +47,43 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -83,17 +91,18 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -137,7 +146,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -174,11 +183,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -194,15 +201,13 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -232,9 +237,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -252,11 +255,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -272,15 +273,13 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -310,9 +309,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -330,11 +327,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -350,15 +345,13 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -388,9 +381,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -429,7 +420,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -448,7 +439,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -476,7 +467,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -495,7 +486,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -514,7 +505,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -545,15 +536,15 @@ exports[`ConfigurePoints check add new point 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -570,7 +561,7 @@ exports[`ConfigurePoints check add new point 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -586,35 +577,43 @@ exports[`ConfigurePoints check add new point 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -622,17 +621,18 @@ exports[`ConfigurePoints check add new point 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -676,7 +676,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -713,11 +713,9 @@ exports[`ConfigurePoints check add new point 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -733,15 +731,13 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -771,9 +767,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -791,11 +785,9 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -811,15 +803,13 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -849,9 +839,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -869,11 +857,9 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -889,15 +875,13 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -927,9 +911,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -968,7 +950,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -987,7 +969,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -1015,7 +997,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -1034,7 +1016,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -1053,7 +1035,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -1084,15 +1066,15 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1109,7 +1091,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1125,35 +1107,43 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -1161,17 +1151,18 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1215,7 +1206,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1252,11 +1243,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1272,15 +1261,13 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -1310,9 +1297,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1330,11 +1315,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1350,15 +1333,13 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -1388,9 +1369,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1408,11 +1387,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1428,15 +1405,13 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -1466,9 +1441,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1507,7 +1480,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -1526,7 +1499,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -1554,7 +1527,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -1573,7 +1546,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -1592,7 +1565,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -1623,15 +1596,15 @@ exports[`ConfigurePoints check delete all points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1648,7 +1621,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1664,35 +1637,43 @@ exports[`ConfigurePoints check delete all points 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -1700,17 +1681,18 @@ exports[`ConfigurePoints check delete all points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -1754,7 +1736,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1791,11 +1773,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1811,15 +1791,13 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -1849,9 +1827,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1869,11 +1845,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1889,15 +1863,13 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -1927,9 +1899,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1947,11 +1917,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1967,15 +1935,13 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -2005,9 +1971,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2046,7 +2010,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -2065,7 +2029,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -2093,7 +2057,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -2112,7 +2076,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -2131,7 +2095,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -2162,15 +2126,15 @@ exports[`ConfigurePoints check delete first point 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -2187,7 +2151,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2203,35 +2167,43 @@ exports[`ConfigurePoints check delete first point 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -2239,17 +2211,18 @@ exports[`ConfigurePoints check delete first point 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2293,7 +2266,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2330,11 +2303,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2350,15 +2321,13 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -2388,9 +2357,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2408,11 +2375,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2428,15 +2393,13 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -2466,9 +2429,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2486,11 +2447,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2506,15 +2465,13 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -2544,9 +2501,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2585,7 +2540,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -2604,7 +2559,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -2632,7 +2587,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -2651,7 +2606,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -2670,7 +2625,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -2701,15 +2656,15 @@ exports[`ConfigurePoints check edit filter input 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -2726,7 +2681,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2742,35 +2697,43 @@ exports[`ConfigurePoints check edit filter input 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -2778,17 +2741,18 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -2832,7 +2796,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2869,11 +2833,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2889,15 +2851,13 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -2927,9 +2887,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2947,11 +2905,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2967,15 +2923,13 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -3005,9 +2959,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3025,11 +2977,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3045,15 +2995,13 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -3083,9 +3031,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3124,7 +3070,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -3143,7 +3089,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -3171,7 +3117,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -3190,7 +3136,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -3209,7 +3155,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -3240,15 +3186,15 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3265,7 +3211,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3281,35 +3227,43 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -3317,17 +3271,18 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3371,7 +3326,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3408,11 +3363,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3428,15 +3381,13 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -3466,9 +3417,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3486,11 +3435,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3506,15 +3453,13 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -3544,9 +3489,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3564,11 +3507,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3584,15 +3525,13 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -3622,9 +3561,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3663,7 +3600,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -3682,7 +3619,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -3710,7 +3647,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -3729,7 +3666,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -3748,7 +3685,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -3779,15 +3716,15 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3804,7 +3741,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3820,35 +3757,43 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -3856,17 +3801,18 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -3910,7 +3856,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3947,11 +3893,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3967,15 +3911,13 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -4005,9 +3947,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4025,11 +3965,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4045,15 +3983,13 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -4083,9 +4019,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4103,11 +4037,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4123,15 +4055,13 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -4161,9 +4091,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4202,7 +4130,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -4221,7 +4149,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -4249,7 +4177,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -4268,7 +4196,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -4287,7 +4215,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -4318,15 +4246,15 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -4343,7 +4271,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -4359,35 +4287,43 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -4395,17 +4331,18 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4449,7 +4386,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -4486,11 +4423,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4506,15 +4441,13 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -4544,9 +4477,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4564,11 +4495,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4584,15 +4513,13 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -4622,9 +4549,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4642,11 +4567,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4662,15 +4585,13 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -4700,9 +4621,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4741,7 +4660,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -4760,7 +4679,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -4788,7 +4707,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -4807,7 +4726,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -4826,7 +4745,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -4857,15 +4776,15 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -4882,7 +4801,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -4898,35 +4817,43 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -4934,17 +4861,18 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -4988,7 +4916,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -5025,11 +4953,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5045,15 +4971,13 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -5083,9 +5007,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5103,11 +5025,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5123,15 +5043,13 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -5161,9 +5079,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5181,11 +5097,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5201,15 +5115,13 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -5239,9 +5151,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5280,7 +5190,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -5299,7 +5209,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -5327,7 +5237,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -5346,7 +5256,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -5365,7 +5275,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -5396,15 +5306,15 @@ exports[`ConfigurePoints check export points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5421,7 +5331,7 @@ exports[`ConfigurePoints check export points 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -5437,35 +5347,43 @@ exports[`ConfigurePoints check export points 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -5473,17 +5391,18 @@ exports[`ConfigurePoints check export points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -5527,7 +5446,7 @@ exports[`ConfigurePoints check export points 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -5564,11 +5483,9 @@ exports[`ConfigurePoints check export points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5584,15 +5501,13 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -5622,9 +5537,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5642,11 +5555,9 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5662,15 +5573,13 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -5700,9 +5609,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5720,11 +5627,9 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5740,15 +5645,13 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -5778,9 +5681,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5819,7 +5720,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -5838,7 +5739,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -5866,7 +5767,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -5885,7 +5786,7 @@ exports[`ConfigurePoints check export points 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -5904,7 +5805,7 @@ exports[`ConfigurePoints check export points 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -5935,15 +5836,15 @@ exports[`ConfigurePoints check import points file input 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5960,7 +5861,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -5976,35 +5877,43 @@ exports[`ConfigurePoints check import points file input 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -6012,17 +5921,18 @@ exports[`ConfigurePoints check import points file input 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6066,7 +5976,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -6103,11 +6013,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6123,15 +6031,13 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -6161,9 +6067,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6181,11 +6085,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6201,15 +6103,13 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -6239,9 +6139,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6259,11 +6157,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6279,15 +6175,13 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -6317,9 +6211,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6358,7 +6250,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -6377,7 +6269,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -6405,7 +6297,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -6424,7 +6316,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -6443,7 +6335,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -6474,15 +6366,15 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -6499,7 +6391,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -6515,35 +6407,43 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -6551,17 +6451,18 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -6605,7 +6506,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -6642,11 +6543,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6662,15 +6561,13 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -6700,9 +6597,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6720,11 +6615,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6740,15 +6633,13 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -6778,9 +6669,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6798,11 +6687,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6818,15 +6705,13 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -6856,9 +6741,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6897,7 +6780,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -6916,7 +6799,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -6944,7 +6827,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -6963,7 +6846,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -6982,7 +6865,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -7013,15 +6896,15 @@ exports[`ConfigurePoints check import points press 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -7038,7 +6921,7 @@ exports[`ConfigurePoints check import points press 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -7054,35 +6937,43 @@ exports[`ConfigurePoints check import points press 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -7090,17 +6981,18 @@ exports[`ConfigurePoints check import points press 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7144,7 +7036,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -7181,11 +7073,9 @@ exports[`ConfigurePoints check import points press 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7201,15 +7091,13 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -7239,9 +7127,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7259,11 +7145,9 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7279,15 +7163,13 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -7317,9 +7199,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7337,11 +7217,9 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7357,15 +7235,13 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -7395,9 +7271,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7436,7 +7310,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -7455,7 +7329,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -7483,7 +7357,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -7502,7 +7376,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -7521,7 +7395,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -7552,15 +7426,15 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -7577,7 +7451,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -7593,35 +7467,43 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -7629,17 +7511,18 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -7683,7 +7566,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -7720,11 +7603,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7740,15 +7621,13 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -7778,9 +7657,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7798,11 +7675,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7818,15 +7693,13 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -7856,9 +7729,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7876,11 +7747,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7896,15 +7765,13 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -7934,9 +7801,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7975,7 +7840,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -7994,7 +7859,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -8022,7 +7887,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -8041,7 +7906,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -8060,7 +7925,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -8091,15 +7956,15 @@ exports[`ConfigurePoints check import points success 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8116,7 +7981,7 @@ exports[`ConfigurePoints check import points success 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8132,35 +7997,43 @@ exports[`ConfigurePoints check import points success 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -8168,17 +8041,18 @@ exports[`ConfigurePoints check import points success 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8222,7 +8096,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -8259,11 +8133,9 @@ exports[`ConfigurePoints check import points success 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8279,15 +8151,13 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -8317,9 +8187,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8337,11 +8205,9 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8357,15 +8223,13 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -8395,9 +8259,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8415,11 +8277,9 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8435,15 +8295,13 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -8473,9 +8331,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8514,7 +8370,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -8533,7 +8389,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -8561,7 +8417,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -8580,7 +8436,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -8599,7 +8455,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -8634,7 +8490,7 @@ exports[`ConfigurePoints check no config 1`] = `
       role="status"
     >
       <span
-        class="visually-hidden"
+        class="sr-only"
       >
         Loading...
       </span>
@@ -8650,15 +8506,15 @@ exports[`ConfigurePoints check no points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8675,7 +8531,7 @@ exports[`ConfigurePoints check no points 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8691,35 +8547,43 @@ exports[`ConfigurePoints check no points 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -8727,17 +8591,18 @@ exports[`ConfigurePoints check no points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8781,7 +8646,7 @@ exports[`ConfigurePoints check no points 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -8830,7 +8695,7 @@ exports[`ConfigurePoints check no points 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -8861,15 +8726,15 @@ exports[`ConfigurePoints check pagination 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8886,7 +8751,7 @@ exports[`ConfigurePoints check pagination 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8902,35 +8767,43 @@ exports[`ConfigurePoints check pagination 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value=""
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value=""
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -8938,17 +8811,18 @@ exports[`ConfigurePoints check pagination 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -8992,7 +8866,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -9029,11 +8903,9 @@ exports[`ConfigurePoints check pagination 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -9049,15 +8921,13 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.0.scanMode"
                   name="points.0.scanMode"
                 >
@@ -9087,9 +8957,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -9107,11 +8975,9 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -9127,15 +8993,13 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.1.scanMode"
                   name="points.1.scanMode"
                 >
@@ -9165,9 +9029,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -9185,11 +9047,9 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
           </tr>
           <tr>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -9205,15 +9065,13 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <div
-                class="mb-3"
+                class="form-group"
               >
                 <select
                   aria-invalid="false"
-                  class="oi-form-input form-select"
+                  class="oi-form-input form-control"
                   id="points.2.scanMode"
                   name="points.2.scanMode"
                 >
@@ -9243,9 +9101,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td
-              class="align-top"
-            >
+            <td>
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -9284,7 +9140,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 «
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 First
               </span>
@@ -9303,7 +9159,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 ‹
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Previous
               </span>
@@ -9331,7 +9187,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 ›
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Next
               </span>
@@ -9350,7 +9206,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                 »
               </span>
               <span
-                class="visually-hidden"
+                class="sr-only"
               >
                 Last
               </span>
@@ -9369,7 +9225,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"
@@ -9400,15 +9256,15 @@ exports[`ConfigurePoints check render with filterText 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center pl-3 pt-1"
     >
       <button
         aria-label="Close"
-        class="btn-close"
+        class="close"
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -9425,7 +9281,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
       | OPC-HDA
     </h6>
     <div
-      class="pull-right me-3"
+      class="pull-right mr-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -9441,35 +9297,43 @@ exports[`ConfigurePoints check render with filterText 1`] = `
     <div
       class="m-2"
     >
-      <div>
-        <div
-          class="mb-3"
+      <div
+        class="row"
+      >
+        <h5>
+          Points
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="form-group"
+      >
+        <label
+          class=""
+          for="filterText"
         >
-          <label
-            class="form-label"
-            for="filterText"
-          >
-            Filter
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="filterText"
-            name="filterText"
-            type="text"
-            value="filter"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Type any points related data
-            </div>
-          </small>
-        </div>
+          Filter
+        </label>
+        <input
+          aria-invalid="false"
+          class="oi-form-input form-control"
+          id="filterText"
+          name="filterText"
+          type="text"
+          value="filter"
+        />
+        <div
+          class="invalid-feedback"
+        />
+        <small
+          class="form-text text-muted"
+        >
+          <div>
+            Type any points related data
+          </div>
+        </small>
       </div>
       <div
         class="row"
@@ -9477,17 +9341,18 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         <h5>
           Table help
           <button
-            class="util-button mt-1 btn btn-link"
+            aria-label="Close"
+            class="close"
             id="id"
           >
             <svg
               class="oi-help"
               fill="currentColor"
-              height="12"
+              height="1em"
               stroke="currentColor"
               stroke-width="0"
               viewBox="0 0 512 512"
-              width="12"
+              width="1em"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -9531,7 +9396,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         </div>
       </div>
       <table
-        class="table table table-sm table-striped table-hover"
+        class="table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -9580,7 +9445,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         </button>
         <input
           accept=".csv, text/plain"
-          class="oi-form-input form-control"
+          class="oi-form-input form-control-file"
           hidden=""
           id="importFile"
           type="file"

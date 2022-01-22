@@ -30,7 +30,7 @@ schema.form = {
           </li>
           <li>
             It is possible to specify the delimiter used in the CSV file, how to format the timestamp field
-            and also the name of the file with a template (currently only &apos;@date&apos; is accepted).
+            and also the name of the file with a template (currently only &apos;@CurrentDate&apos; is accepted).
           </li>
           <li>
             Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
@@ -157,7 +157,7 @@ schema.form = {
   filename: {
     type: 'OIbText',
     newRow: false,
-    defaultValue: 'sql-@date.csv',
+    defaultValue: 'sql-@CurrentDate.csv',
     valid: notEmpty(),
     help: <div>The name of the CSV file</div>,
     md: 3,

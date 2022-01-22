@@ -269,9 +269,10 @@ const testConfig = {
           username: 'oibus_user',
           database: 'oibus',
           query:
-            'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime LIMIT @MaxReturnValues',
+            'SELECT created_at AS timestamp, value1 AS temperature '
+            + 'FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime LIMIT @MaxReturnValues',
           delimiter: ',',
-          filename: 'sql-@date.csv',
+          filename: 'sql-@CurrentDate.csv',
           scanMode: 'everySecond',
           timeColumn: 'timestamp',
           timezone: 'Europe/Paris',

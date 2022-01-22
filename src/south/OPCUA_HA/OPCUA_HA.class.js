@@ -23,7 +23,7 @@ class OPCUA_HA extends ProtocolHandler {
       supportListen: false,
       supportLastPoint: false,
       supportFile: false,
-      supportHistory: true
+      supportHistory: true,
     })
 
     const {
@@ -111,7 +111,7 @@ class OPCUA_HA extends ProtocolHandler {
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
-    this.logger.silly(`read with options ${JSON.stringify(options)}`)
+    this.logger.silly(`Read with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
     let nodesToRead = nodes.map((nodeId) => ({
       continuationPoint: null,
@@ -125,7 +125,7 @@ class OPCUA_HA extends ProtocolHandler {
     do {
       if (options?.aggregateFn) {
         if (!options.processingInterval) {
-          this.logger.error(`option aggregateFn ${options.aggregateFn} without processingInterval`)
+          this.logger.error(`Option aggregateFn ${options.aggregateFn} without processingInterval`)
         }
         // we use the same aggregate for all nodes (OPCUA allows to have a different one for each)
         const aggregateType = Array(nodesToRead.length)
@@ -172,7 +172,7 @@ class OPCUA_HA extends ProtocolHandler {
       })
       // remove points fully retrieved
       nodesToRead = nodesToRead.filter((node) => !!node.continuationPoint)
-      this.logger.silly(`continue read for ${nodesToRead.length} points`)
+      this.logger.silly(`Continue read for ${nodesToRead.length} points`)
     } while (nodesToRead.length)
     // if all is retrieved, clean continuation points
     nodesToRead = nodes.map((nodeId) => ({
@@ -204,7 +204,7 @@ class OPCUA_HA extends ProtocolHandler {
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
       // eslint-disable-next-line max-len
-      this.logger.silly(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
+      this.logger.debug(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
       const options = {
         timeout: this.readTimeout,
         numValuesPerNode: this.maxReturnValues,
@@ -231,7 +231,7 @@ class OPCUA_HA extends ProtocolHandler {
         case 'None':
           break
         default:
-          this.logger.error(`unsupported resampling: ${scanGroup.resampling}`)
+          this.logger.error(`Unsupported resampling: ${scanGroup.resampling}`)
       }
       switch (scanGroup.aggregate) {
         case 'Average':
@@ -249,7 +249,7 @@ class OPCUA_HA extends ProtocolHandler {
         case 'Raw':
           break
         default:
-          this.logger.error(`unsupported aggregage: ${scanGroup.aggregate}`)
+          this.logger.error(`Unsupported aggregate: ${scanGroup.aggregate}`)
       }
 
       const dataValues = await this.readHistoryValue(nodesToRead, startTime, endTime, options)
@@ -310,13 +310,13 @@ class OPCUA_HA extends ProtocolHandler {
         ]
       */
       if (dataValues.length !== nodesToRead.length) {
-        this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
+        this.logger.error(`Received ${dataValues.length} data values, requested ${nodesToRead.length} nodes`)
       }
 
       await this.manageDataValues(dataValues, nodesToRead, startTime, scanMode)
 
       await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-      this.logger.silly(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
+      this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
     }
