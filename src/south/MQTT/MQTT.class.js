@@ -16,7 +16,12 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: true, supportLastPoint: false, supportFile: false, supportHistory: false })
+    super(dataSource, engine, {
+      supportListen: true,
+      supportLastPoint: false,
+      supportFile: false,
+      supportHistory: false,
+    })
 
     const {
       url,
@@ -41,12 +46,6 @@ class MQTT extends ProtocolHandler {
       timestampTimezone,
     } = this.dataSource.MQTT
 
-    if (timestampTimezone && DateTime.local().setZone(timestampTimezone).isValid) {
-      this.timezone = timestampTimezone
-    } else {
-      this.logger.error(`Invalid timezone supplied: ${timestampTimezone}`)
-    }
-
     this.url = url
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
@@ -66,9 +65,19 @@ class MQTT extends ProtocolHandler {
     this.qualityPath = qualityPath
     this.timestampOrigin = timestampOrigin
     this.timestampPath = timestampPath
+    this.timezone = timestampTimezone
     this.timestampFormat = timestampFormat
 
     this.handlesPoints = true
+  }
+
+  async init() {
+    await super.init()
+    if (!this.timezone || !DateTime.local()
+      .setZone(this.timezone).isValid) {
+      this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
+      this.timezone = null
+    }
   }
 
   /**

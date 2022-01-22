@@ -53,12 +53,13 @@ module.exports = {
     config.south.dataSources.forEach((dataSource) => {
       if (!Object.prototype.hasOwnProperty.call(dataSource, dataSource.protocol)) {
         const dataSourceRelatedFields = {}
-        Object.entries(dataSource).forEach(([key, value]) => {
-          if (!engineRelatedDataSourceFields.includes(key)) {
-            dataSourceRelatedFields[key] = value
-            delete dataSource[key]
-          }
-        })
+        Object.entries(dataSource)
+          .forEach(([key, value]) => {
+            if (!engineRelatedDataSourceFields.includes(key)) {
+              dataSourceRelatedFields[key] = value
+              delete dataSource[key]
+            }
+          })
         dataSource[dataSource.protocol] = dataSourceRelatedFields
       }
     })
@@ -68,12 +69,13 @@ module.exports = {
     config.north.applications.forEach((application) => {
       if (!Object.prototype.hasOwnProperty.call(application, application.api)) {
         const applicationRelatedFields = {}
-        Object.entries(application).forEach(([key, value]) => {
-          if (!engineRelatedApplicationFields.includes(key)) {
-            applicationRelatedFields[key] = value
-            delete application[key]
-          }
-        })
+        Object.entries(application)
+          .forEach(([key, value]) => {
+            if (!engineRelatedApplicationFields.includes(key)) {
+              applicationRelatedFields[key] = value
+              delete application[key]
+            }
+          })
         application[application.api] = applicationRelatedFields
       }
     })
@@ -300,7 +302,9 @@ module.exports = {
         }
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'clientId')) {
           logger.info('Add clientId field to MQTT')
-          dataSource.MQTT.clientId = `OIBus-${Math.random().toString(16).substr(2, 8)}`
+          dataSource.MQTT.clientId = `OIBus-${Math.random()
+            .toString(16)
+            .substr(2, 8)}`
         }
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keepalive')) {
           logger.info('Add keepalive field to MQTT')
@@ -540,6 +544,16 @@ module.exports = {
         if (typeof dataSource.SQLDbToFile.databasePath === 'undefined') {
           dataSource.SQLDbToFile.databasePath = './sqlite.db'
         }
+
+        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
+          logger.info('Update date format from moment to luxon for SQLDbToFile')
+          dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy')
+            .replace('DD', 'dd')
+        }
+        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
+          logger.info('Update date format from moment to luxon for SQLDbToFile')
+          dataSource.SQLDbToFile.filename = dataSource.SQLDbToFile.filename.replace('@date', '@CurrentDate')
+        }
       }
       if (dataSource.protocol === 'MQTT') {
         logger.info(`Fixing MQTT settings for data source ${dataSource.dataSourceId}`)
@@ -563,6 +577,12 @@ module.exports = {
           dataSource.MQTT.keyFile = ''
           dataSource.MQTT.caFile = ''
           dataSource.MQTT.rejectUnauthorized = false
+        }
+
+        if (Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'timestampFormat')) {
+          logger.info('Update date format from moment to luxon for MQTT')
+          dataSource.MQTT.timestampFormat = dataSource.MQTT.timestampFormat.replace('YYYY', 'yyyy')
+            .replace('DD', 'dd')
         }
       }
       if (dataSource.protocol === 'OPCUA_HA') {
@@ -747,6 +767,39 @@ module.exports = {
           throw error
         }
       }
+
+      if (dataSource.protocol === 'SQLDbToFile') {
+        logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
+        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
+        const database = await databaseService.createConfigDatabase(databasePath)
+        const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
+        await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
+
+        logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
+        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
+      }
+
+      if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
+        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
+        const database = await databaseService.createConfigDatabase(databasePath)
+        const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
+        // eslint-disable-next-line no-restricted-syntax
+        for (const scanMode of scanModes) {
+          logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
+          const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
+          if (lastCompletedAtString) {
+            const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
+            await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
+          }
+        }
+        logger.info(`Rename nodeId to pointId in the points for ${dataSource.name}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+            delete point.nodeId
+          }
+        })
+      }
       // This field can now be deleted
       delete dataSource.dataSourceId
     }
@@ -876,7 +929,7 @@ module.exports = {
         logger.info(`Changing 'subscribedTo' field from dataSourceName to dataSource.id for application ${application.name}`)
         // Change the names of subscribed data sources to its ids in the 'subscribedTo' list
         application.subscribedTo = application.subscribedTo
-        // eslint-disable-next-line max-len
+          // eslint-disable-next-line max-len
           .filter((dataSourceName) => config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName) || config.engine.externalSources.find((externalDataSourceName) => externalDataSourceName === dataSourceName))
           .map((dataSourceName) => {
             const subscribedDataSource = config.south.dataSources.find((dataSource) => dataSource.name === dataSourceName)
@@ -885,59 +938,6 @@ module.exports = {
             }
             return dataSourceName
           })
-      }
-    }
-  },
-  25: (config) => {
-    config.south.dataSources.forEach((dataSource) => {
-      if (dataSource.protocol === 'SQLDbToFile') {
-        if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'dateFormat')) {
-          logger.info('Update date format from moment to luxon for SQLDbToFile')
-          dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
-        }
-      }
-      if (dataSource.protocol === 'MQTT') {
-        if (Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'timestampFormat')) {
-          logger.info('Update date format from moment to luxon for MQTT')
-          dataSource.MQTT.timestampFormat = dataSource.MQTT.timestampFormat.replace('YYYY', 'yyyy').replace('DD', 'dd')
-        }
-      }
-    })
-  },
-  25: async (config) => {
-    logger.info('Add HistoryQuery setting to Engine')
-    config.engine.historyQuery = { folder: './historyQuery' }
-    for (const dataSource of config.south.dataSources) {
-      if (dataSource.protocol === 'SQLDbToFile') {
-        logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
-        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-        const database = await databaseService.createConfigDatabase(databasePath)
-        const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
-        await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
-
-        logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
-        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
-      }
-      if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
-        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-        const database = await databaseService.createConfigDatabase(databasePath)
-        const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
-        // eslint-disable-next-line no-restricted-syntax
-        for (const scanMode of scanModes) {
-          logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
-          const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
-          if (lastCompletedAtString) {
-            const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
-            await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
-          }
-        }
-        logger.info(`Rename nodeId to pointId in the points for ${dataSource.name}`)
-        dataSource.points?.forEach((point) => {
-          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
-            point.pointId = point.nodeId
-            delete point.nodeId
-          }
-        })
       }
     }
   },

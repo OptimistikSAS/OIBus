@@ -18,7 +18,6 @@ const Engine = () => {
     newConfig,
     dispatchNewConfig,
   } = React.useContext(ConfigContext)
-  // const { setAlert } = React.useContext(AlertContext)
   const onChange = (name, value, validity) => {
     dispatchNewConfig({
       type: 'update',
@@ -115,7 +114,7 @@ const Engine = () => {
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <HistoryQuery onChange={onChange} historyQuery={newConfig.engine.historyQuery} />
-      <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
+        <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
         <HealthSignal onChange={onChange} healthSignal={newConfig.engine.healthSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />
         <ExternalSources onChange={onChange} externalSources={newConfig.engine.externalSources} />

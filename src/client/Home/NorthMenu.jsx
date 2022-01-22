@@ -67,7 +67,7 @@ const NorthMenu = ({ application }) => {
         <DropdownItem
           id="oi-duplicate"
           onClick={() => {
-            handleDuplicateNorth(application.id)
+            handleDuplicateNorth()
           }}
         >
           Duplicate

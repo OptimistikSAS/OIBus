@@ -68,7 +68,7 @@ const SouthMenu = ({ dataSource }) => {
         <DropdownItem
           id="oi-duplicate"
           onClick={() => {
-            handleDuplicateSouth(dataSource.id)
+            handleDuplicateSouth()
           }}
         >
           Duplicate

@@ -42,14 +42,14 @@ class HistoryQuery {
    * Start history query
    * @returns {void}
    */
-  start() {
+  async start() {
     switch (this.status) {
       case HistoryQuery.STATUS_PENDING:
       case HistoryQuery.STATUS_EXPORTING:
-        this.startExport()
+        await this.startExport()
         break
       case HistoryQuery.STATUS_IMPORTING:
-        this.startImport()
+        await this.startImport()
         break
       case HistoryQuery.STATUS_FINISHED:
         this.engine.runNextHistoryQuery()
@@ -95,7 +95,7 @@ class HistoryQuery {
     if (this.south) {
       await this.south.init()
       await this.south.connect()
-      this.export()
+      await this.export()
     } else {
       this.logger.error(`South ${name} is not enabled or not found`)
       this.disable()
@@ -119,7 +119,7 @@ class HistoryQuery {
     if (this.north) {
       await this.north.init()
       await this.north.connect()
-      this.import()
+      await this.import()
     } else {
       this.logger.error(`Application ${name} is enabled or not found`)
       this.disable()
@@ -157,7 +157,7 @@ class HistoryQuery {
       await this.exportScanMode(this.dataSource.scanMode)
     }
 
-    this.startImport()
+    await this.startImport()
   }
 
   /**
@@ -166,7 +166,7 @@ class HistoryQuery {
    */
   async import() {
     let files = []
-    const cacheFolder = `${this.engine.getCacheFolder()}/${this.id}`
+    const cacheFolder = `${this.engine.getCacheFolder()}/${this.dataSource.id}`
     try {
       this.logger.silly(`Reading ${cacheFolder} directory`)
       files = await fs.readdir(cacheFolder)
@@ -216,7 +216,7 @@ class HistoryQuery {
    */
   async exportScanMode(scanMode) {
     let startTime = this.south.lastCompletedAt[scanMode]
-    let intervalEndTime = this.endTime
+    let intervalEndTime
     let firstIteration = true
     do {
       // Wait between the read interval iterations

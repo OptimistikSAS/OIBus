@@ -42,7 +42,6 @@ class ApiHandler {
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
 
-    this.logger = engine.logger
     this.scanModes = this.engine.scanModes
     this.statusData = {}
   }

@@ -9,8 +9,8 @@ import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
   const { newHistoryConfig: unorderedHistoryQueries, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
-  const applications = newConfig?.north?.applications
-  const dataSources = newConfig?.south?.dataSources
+  const applications = newConfig?.north?.applications ?? []
+  const dataSources = newConfig?.south?.dataSources ?? []
   const navigate = useNavigate()
 
   const historyQueries = unorderedHistoryQueries.slice().sort((a, b) => (a.order > b.order ? 1 : -1))
@@ -156,7 +156,7 @@ const HistoryQuery = () => {
   ])
 
   return tableRows ? (
-    <Col md="8" className="history-query">
+    <Col md="8">
       <Table
         headers={tableHeaders}
         rows={tableRows}
@@ -165,7 +165,7 @@ const HistoryQuery = () => {
         handleDuplicate={handleDuplicate}
         handleOrder={handleOrder}
       />
-      {applications && dataSources
+      {applications.length > 0 && dataSources.length > 0
       && (
       <NewHistoryQueryRow
         northHandlers={applications}

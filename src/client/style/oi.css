@@ -144,12 +144,6 @@ a:focus {
   margin-left: 10px;
 }
 
-.oi-full-width {
-  position: relative;
-  width: 90vw;
-  left: 0;
-}
-
 .oi-error {
   color:#dc3545;
   font-size: 80%;
@@ -529,7 +523,7 @@ h3 {
 .col-md-4 .table td .oi-icon,
 .col-md-6:not(.north) .table td .oi-icon,
 .col-md-8:not(.south) .table td .oi-icon,
-.points .table td .oi-icon {
+.table td .oi-icon {
   margin-top: 9px;
 }
 
