@@ -19,7 +19,6 @@ engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.engineName = 'Test MQTT'
-engine.logger = { error: jest.fn() }
 
 const CertificateService = jest.mock('../../services/CertificateService.class')
 CertificateService.init = jest.fn()
@@ -108,7 +107,7 @@ describe('MQTT south', () => {
       .toBeUndefined()
   })
 
-  it('should be properly initialized with invalid timezone', () => {
+  it('should be properly initialized with invalid timezone', async () => {
     const testMqttConfig = {
       ...mqttConfig,
       MQTT: {
@@ -117,6 +116,7 @@ describe('MQTT south', () => {
       },
     }
     const mqttInvalidSouth = new MQTT(testMqttConfig, engine)
+    await mqttInvalidSouth.init()
 
     expect(mqttInvalidSouth.url)
       .toEqual(testMqttConfig.MQTT.url)
@@ -137,7 +137,7 @@ describe('MQTT south', () => {
     expect(mqttInvalidSouth.timestampFormat)
       .toEqual(testMqttConfig.MQTT.timestampFormat)
     expect(mqttInvalidSouth.timezone)
-      .toBeUndefined()
+      .toBeNull()
     expect(mqttInvalidSouth.logger.error)
       .toBeCalledWith(`Invalid timezone supplied: ${testMqttConfig.MQTT.timestampTimezone}`)
     expect(mqttInvalidSouth.client)

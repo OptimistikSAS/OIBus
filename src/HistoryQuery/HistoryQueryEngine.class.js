@@ -1,8 +1,9 @@
 const csv = require('papaparse')
-const moment = require('moment-timezone')
 const path = require('path')
 const fs = require('fs/promises')
 const EventEmitter = require('events')
+const { DateTime } = require('luxon')
+
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 
@@ -43,7 +44,6 @@ class HistoryQueryEngine extends BaseEngine {
     try {
       await fs.stat(this.cacheFolder)
     } catch (e) {
-      this.logger.warn(e)
       this.logger.info(`Creating main history cache folder in ${this.cacheFolder}`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
@@ -86,13 +86,12 @@ class HistoryQueryEngine extends BaseEngine {
     if (sanitizedValues.length) {
       const flattenedValues = sanitizedValues.map((sanitizedValue) => this.flattenObject(sanitizedValue))
       const csvContent = csv.unparse(flattenedValues)
-      const filename = this.historyQuery.filePattern.replace('@date', moment().format('YYYY_MM_DD_HH_mm_ss'))
-      const folder = path.join(this.cacheFolder, this.historyQuery.id)
+      const filename = this.historyQuery.filePattern.replace('@CurrentDate', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      const folder = path.join(this.cacheFolder, this.historyQuery.dataSource.id)
 
       try {
         await fs.stat(folder)
       } catch (e) {
-        this.logger.warn(e)
         this.logger.info(`Creating HistoryQuery cache folder in ${folder}`)
         await fs.mkdir(folder, { recursive: true })
       }

@@ -1,8 +1,7 @@
 const fs = require('fs')
 const zlib = require('zlib')
 const EventEmitter = require('events')
-
-const moment = require('moment-timezone')
+const { DateTime } = require('luxon')
 
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
@@ -50,15 +49,6 @@ class ProtocolHandler {
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
     this.supportedModes = supportedModes
-
-    this.logger = engine.logger
-
-    if (this.supportedModes) {
-      this.checkSupportedModes()
-      if (this.supportedModes.supportHistory) {
-        this.prepareHistorySupport()
-      }
-    }
 
     this.connected = false
 
@@ -133,6 +123,12 @@ class ProtocolHandler {
     this.logger = new Logger(`South:${this.dataSource.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
+    if (this.supportedModes) {
+      this.checkSupportedModes()
+      if (this.supportedModes.supportHistory) {
+        this.prepareHistorySupport()
+      }
+    }
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -205,7 +201,7 @@ class ProtocolHandler {
 
   async historyQueryHandler(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
-      this.logger.silly(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      this.logger.debug(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
     }
 
@@ -225,7 +221,7 @@ class ProtocolHandler {
 
     let startTime = this.lastCompletedAt[scanMode]
     const endTime = new Date()
-    let intervalEndTime = endTime
+    let intervalEndTime
     let firstIteration = true
     do {
       // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
@@ -493,10 +489,7 @@ class ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
-    const timestampWithoutTZAsString = moment.utc(date, dateFormat)
-      .format('YYYY-MM-DD HH:mm:ss.SSS')
-    return moment.tz(timestampWithoutTZAsString, timezone)
-      .toISOString()
+    return DateTime.fromFormat(date, dateFormat, { zone: timezone }).toJSDate().toISOString()
   }
 }
 
