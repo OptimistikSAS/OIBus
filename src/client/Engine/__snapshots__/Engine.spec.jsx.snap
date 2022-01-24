@@ -602,7 +602,7 @@ exports[`Engine check Engine 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -644,9 +644,9 @@ exports[`Engine check Engine 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -709,9 +709,9 @@ exports[`Engine check Engine 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -746,7 +746,7 @@ exports[`Engine check Engine 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -899,9 +899,9 @@ exports[`Engine check Engine 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -936,7 +936,7 @@ exports[`Engine check Engine 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -1039,9 +1039,9 @@ exports[`Engine check Engine 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -1076,7 +1076,7 @@ exports[`Engine check Engine 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -1112,7 +1112,7 @@ exports[`Engine check Engine 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>
@@ -4022,7 +4022,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -4064,9 +4064,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -4129,9 +4129,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -4166,7 +4166,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -4319,9 +4319,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -4356,7 +4356,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -4459,9 +4459,9 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -4496,7 +4496,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -4532,7 +4532,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>
@@ -7070,7 +7070,7 @@ exports[`Engine check change engineName 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -7112,9 +7112,9 @@ exports[`Engine check change engineName 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -7177,9 +7177,9 @@ exports[`Engine check change engineName 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -7214,7 +7214,7 @@ exports[`Engine check change engineName 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -7367,9 +7367,9 @@ exports[`Engine check change engineName 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -7404,7 +7404,7 @@ exports[`Engine check change engineName 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -7507,9 +7507,9 @@ exports[`Engine check change engineName 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -7544,7 +7544,7 @@ exports[`Engine check change engineName 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -7580,7 +7580,7 @@ exports[`Engine check change engineName 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>
@@ -10490,7 +10490,7 @@ exports[`Engine check change password 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -10532,9 +10532,9 @@ exports[`Engine check change password 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -10597,9 +10597,9 @@ exports[`Engine check change password 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -10634,7 +10634,7 @@ exports[`Engine check change password 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -10787,9 +10787,9 @@ exports[`Engine check change password 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -10824,7 +10824,7 @@ exports[`Engine check change password 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -10927,9 +10927,9 @@ exports[`Engine check change password 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -10964,7 +10964,7 @@ exports[`Engine check change password 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -11000,7 +11000,7 @@ exports[`Engine check change password 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>
@@ -13910,7 +13910,7 @@ exports[`Engine check change port 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -13952,9 +13952,9 @@ exports[`Engine check change port 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -14017,9 +14017,9 @@ exports[`Engine check change port 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -14054,7 +14054,7 @@ exports[`Engine check change port 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -14207,9 +14207,9 @@ exports[`Engine check change port 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -14244,7 +14244,7 @@ exports[`Engine check change port 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -14347,9 +14347,9 @@ exports[`Engine check change port 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -14384,7 +14384,7 @@ exports[`Engine check change port 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -14420,7 +14420,7 @@ exports[`Engine check change port 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>
@@ -17330,7 +17330,7 @@ exports[`Engine check change user 1`] = `
                     </tr>
                     <tr>
                       <td>
-                        Silly
+                        Trace
                       </td>
                       <td>
                         Information useful to debug an issue but they will significantly impact performances
@@ -17372,9 +17372,9 @@ exports[`Engine check change user 1`] = `
                   name="engine.logParameters.consoleLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -17437,9 +17437,9 @@ exports[`Engine check change user 1`] = `
                   name="engine.logParameters.fileLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -17474,7 +17474,7 @@ exports[`Engine check change user 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the file log
+                    The level for the File log
                   </div>
                 </small>
               </div>
@@ -17627,9 +17627,9 @@ exports[`Engine check change user 1`] = `
                   name="engine.logParameters.sqliteLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -17664,7 +17664,7 @@ exports[`Engine check change user 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Sqlite log
                   </div>
                 </small>
               </div>
@@ -17767,9 +17767,9 @@ exports[`Engine check change user 1`] = `
                   name="engine.logParameters.lokiLog.level"
                 >
                   <option
-                    value="silly"
+                    value="trace"
                   >
-                    silly
+                    trace
                   </option>
                   <option
                     value="debug"
@@ -17804,7 +17804,7 @@ exports[`Engine check change user 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The level for the sqlite log
+                    The level for the Loki log
                   </div>
                 </small>
               </div>
@@ -17840,7 +17840,7 @@ exports[`Engine check change user 1`] = `
                   class="form-text text-muted"
                 >
                   <div>
-                    The host name of the loki instance
+                    The host name of the Loki instance
                   </div>
                 </small>
               </div>

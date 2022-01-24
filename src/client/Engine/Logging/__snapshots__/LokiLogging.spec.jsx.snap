@@ -28,9 +28,9 @@ exports[`LokiLogging check LokiLogging 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -65,7 +65,7 @@ exports[`LokiLogging check LokiLogging 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the sqlite log
+              The level for the Loki log
             </div>
           </small>
         </div>
@@ -101,7 +101,7 @@ exports[`LokiLogging check LokiLogging 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The host name of the loki instance
+              The host name of the Loki instance
             </div>
           </small>
         </div>
@@ -266,9 +266,9 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -303,7 +303,7 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
             class="form-text text-muted"
           >
             <div>
-              The level for the sqlite log
+              The level for the Loki log
             </div>
           </small>
         </div>
@@ -339,7 +339,7 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
             class="form-text text-muted"
           >
             <div>
-              The host name of the loki instance
+              The host name of the Loki instance
             </div>
           </small>
         </div>
@@ -504,9 +504,9 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -541,7 +541,7 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the sqlite log
+              The level for the Loki log
             </div>
           </small>
         </div>
@@ -577,7 +577,7 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The host name of the loki instance
+              The host name of the Loki instance
             </div>
           </small>
         </div>
@@ -742,9 +742,9 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
             name="engine.logParameters.lokiLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -779,7 +779,7 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the sqlite log
+              The level for the Loki log
             </div>
           </small>
         </div>
@@ -815,7 +815,7 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The host name of the loki instance
+              The host name of the Loki instance
             </div>
           </small>
         </div>

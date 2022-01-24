@@ -2,7 +2,6 @@ const fetch = require('node-fetch')
 const ProxyAgent = require('proxy-agent')
 
 const FetchRequest = require('./FetchRequest.class')
-const Logger = require('../../engine/logger/Logger.class')
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -11,14 +10,11 @@ const { Response } = jest.requireActual('node-fetch')
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
-
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
+engine.logger = { silly: jest.fn(), error: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()

@@ -8,9 +8,9 @@ schema.form = {
   level: {
     type: 'OIbSelect',
     md: 3,
-    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
+    options: ['trace', 'debug', 'info', 'warning', 'error', 'none'],
     defaultValue: 'info',
-    help: <div>The level for the sqlite log</div>,
+    help: <div>The level for the Loki log</div>,
   },
   lokiAddress: {
     type: 'OIbText',
@@ -18,7 +18,7 @@ schema.form = {
     md: 4,
     valid: optional(),
     defaultValue: '',
-    help: <div>The host name of the loki instance</div>,
+    help: <div>The host name of the Loki instance</div>,
   },
   interval: {
     type: 'OIbInteger',

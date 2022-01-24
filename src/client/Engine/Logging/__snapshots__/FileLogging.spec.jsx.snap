@@ -28,9 +28,9 @@ exports[`FileLogging check FileLogging 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -65,7 +65,7 @@ exports[`FileLogging check FileLogging 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>
@@ -223,9 +223,9 @@ exports[`FileLogging check change file level to "warning" 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -260,7 +260,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>
@@ -418,9 +418,9 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -455,7 +455,7 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>
@@ -613,9 +613,9 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -650,7 +650,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>
@@ -808,9 +808,9 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -845,7 +845,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>
@@ -1003,9 +1003,9 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
             name="engine.logParameters.fileLog.level"
           >
             <option
-              value="silly"
+              value="trace"
             >
-              silly
+              trace
             </option>
             <option
               value="debug"
@@ -1040,7 +1040,7 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
             class="form-text text-muted"
           >
             <div>
-              The level for the file log
+              The level for the File log
             </div>
           </small>
         </div>

@@ -432,6 +432,15 @@ module.exports = {
         tokenAddress: '',
       },
     }
+    if (config.engine.logParameters.consoleLog.level === 'silly') {
+      config.engine.logParameters.consoleLog.level = 'trace'
+    }
+    if (config.engine.logParameters.fileLog.level === 'silly') {
+      config.engine.logParameters.fileLog.level = 'trace'
+    }
+    if (config.engine.logParameters.sqliteLog.level === 'silly') {
+      config.engine.logParameters.sqliteLog.level = 'trace'
+    }
 
     const logDatabase = config.engine.logParameters.sqliteLog.fileName
     try {
@@ -491,6 +500,16 @@ module.exports = {
       } else if (!dataSource.logParameters.lokiLevel) {
         dataSource.logParameters.lokiLevel = 'engine'
       }
+      if (dataSource.logParameters.consoleLevel === 'silly') {
+        dataSource.logParameters.consoleLevel = 'trace'
+      }
+      if (dataSource.logParameters.fileLevel === 'silly') {
+        dataSource.logParameters.fileLevel = 'trace'
+      }
+      if (dataSource.logParameters.sqliteLevel === 'silly') {
+        dataSource.logParameters.sqliteLevel = 'trace'
+      }
+
       if (dataSource.protocol === 'FolderScanner') {
         logger.info(`Fixing Folder Scanner settings for data source ${dataSource.dataSourceId}`)
         // a previous migration forgot to update the compression parameter (called "compress" before)
@@ -616,6 +635,15 @@ module.exports = {
         }
       } else if (!application.logParameters.lokiLevel) {
         application.logParameters.lokiLevel = 'engine'
+      }
+      if (application.logParameters.consoleLevel === 'silly') {
+        application.logParameters.consoleLevel = 'trace'
+      }
+      if (application.logParameters.fileLevel === 'silly') {
+        application.logParameters.fileLevel = 'trace'
+      }
+      if (application.logParameters.sqliteLevel === 'silly') {
+        application.logParameters.sqliteLevel = 'trace'
       }
 
       if (!application.subscribedTo) {

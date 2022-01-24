@@ -196,10 +196,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                   The File logs writes messages on the chosen folder of the OIBus machine
                 </li>
                 <li>
-                  The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                  The Sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
                 </li>
                 <li>
-                  The loki logs send the logs to a loki instance. This allows to access the logs remotely.
+                  The Loki logs send the logs to a loki instance. This allows to access the logs remotely.
                 </li>
               </ul>
               <table>
@@ -219,7 +219,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                       Engine
                     </td>
                     <td>
-                      will use global log level selected on engine
+                      Use global log level selected on engine
                     </td>
                   </tr>
                   <tr>
@@ -227,7 +227,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                       Error
                     </td>
                     <td>
-                      these logs needs investigation in a production system
+                      These logs needs investigation in a production system
                     </td>
                   </tr>
                   <tr>
@@ -235,7 +235,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                       Warning
                     </td>
                     <td>
-                      unexpected behavior that will not impact significantly the system
+                      Unexpected behavior that will not impact significantly the system
                     </td>
                   </tr>
                   <tr>
@@ -243,7 +243,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                       Info
                     </td>
                     <td>
-                      information useful to the administrator
+                      Information useful to the administrator
                     </td>
                   </tr>
                   <tr>
@@ -251,15 +251,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                       Debug
                     </td>
                     <td>
-                      informations useful only to debug an issue
+                      Information useful only to debug an issue
                     </td>
                   </tr>
                   <tr>
                     <td>
-                      Silly
+                      Trace
                     </td>
                     <td>
-                      informations useful to debug an issue but they will significantly impact performances
+                      Information useful to debug an issue but they will significantly impact performances
                     </td>
                   </tr>
                 </tbody>
@@ -299,9 +299,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -358,9 +358,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -417,9 +417,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -1652,10 +1652,10 @@ exports[`ConfigureProtocol check update 1`] = `
                   The File logs writes messages on the chosen folder of the OIBus machine
                 </li>
                 <li>
-                  The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
+                  The Sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
                 </li>
                 <li>
-                  The loki logs send the logs to a loki instance. This allows to access the logs remotely.
+                  The Loki logs send the logs to a loki instance. This allows to access the logs remotely.
                 </li>
               </ul>
               <table>
@@ -1675,7 +1675,7 @@ exports[`ConfigureProtocol check update 1`] = `
                       Engine
                     </td>
                     <td>
-                      will use global log level selected on engine
+                      Use global log level selected on engine
                     </td>
                   </tr>
                   <tr>
@@ -1683,7 +1683,7 @@ exports[`ConfigureProtocol check update 1`] = `
                       Error
                     </td>
                     <td>
-                      these logs needs investigation in a production system
+                      These logs needs investigation in a production system
                     </td>
                   </tr>
                   <tr>
@@ -1691,7 +1691,7 @@ exports[`ConfigureProtocol check update 1`] = `
                       Warning
                     </td>
                     <td>
-                      unexpected behavior that will not impact significantly the system
+                      Unexpected behavior that will not impact significantly the system
                     </td>
                   </tr>
                   <tr>
@@ -1699,7 +1699,7 @@ exports[`ConfigureProtocol check update 1`] = `
                       Info
                     </td>
                     <td>
-                      information useful to the administrator
+                      Information useful to the administrator
                     </td>
                   </tr>
                   <tr>
@@ -1707,15 +1707,15 @@ exports[`ConfigureProtocol check update 1`] = `
                       Debug
                     </td>
                     <td>
-                      informations useful only to debug an issue
+                      Information useful only to debug an issue
                     </td>
                   </tr>
                   <tr>
                     <td>
-                      Silly
+                      Trace
                     </td>
                     <td>
-                      informations useful to debug an issue but they will significantly impact performances
+                      Information useful to debug an issue but they will significantly impact performances
                     </td>
                   </tr>
                 </tbody>
@@ -1755,9 +1755,9 @@ exports[`ConfigureProtocol check update 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -1814,9 +1814,9 @@ exports[`ConfigureProtocol check update 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -1873,9 +1873,9 @@ exports[`ConfigureProtocol check update 1`] = `
                 engine
               </option>
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"

@@ -2,16 +2,12 @@ const FormData = require('form-data')
 
 const BaseRequest = require('./BaseRequest.class')
 const ApiHandler = require('../../north/ApiHandler.class')
-const Logger = require('../../engine/logger/Logger.class')
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
 const engine = jest.mock('../../engine/Engine.class')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
+engine.logger = { silly: jest.fn(), error: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()
