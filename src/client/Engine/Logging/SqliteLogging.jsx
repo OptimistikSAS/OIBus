@@ -8,9 +8,9 @@ schema.form = {
   level: {
     type: 'OIbSelect',
     md: 3,
-    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
+    options: ['trace', 'debug', 'info', 'warning', 'error', 'none'],
     defaultValue: 'info',
-    help: <div>The level for the sqlite log</div>,
+    help: <div>The level for the Sqlite log</div>,
   },
   fileName: {
     type: 'OIbText',

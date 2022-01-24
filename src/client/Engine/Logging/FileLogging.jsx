@@ -7,10 +7,10 @@ const schema = { name: 'FileLogging' }
 schema.form = {
   level: {
     type: 'OIbSelect',
-    options: ['silly', 'debug', 'info', 'warning', 'error', 'none'],
+    options: ['trace', 'debug', 'info', 'warning', 'error', 'none'],
     md: 3,
     defaultValue: 'info',
-    help: <div>The level for the file log</div>,
+    help: <div>The level for the File log</div>,
   },
   fileName: {
     type: 'OIbText',

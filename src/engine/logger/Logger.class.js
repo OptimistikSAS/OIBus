@@ -55,7 +55,7 @@ class Logger {
           fileName: sqliteLog.fileName,
           maxFileSize: sqliteLog.maxSize,
         },
-        level: consoleLog.level,
+        level: sqliteLog.level,
       })
     }
 
@@ -70,7 +70,7 @@ class Logger {
           engineName: engineConfig.engineName,
           interval: lokiLog.interval,
         },
-        level: consoleLog.level,
+        level: lokiLog.level,
       })
     }
 
@@ -81,6 +81,7 @@ class Logger {
           scope: this.scope,
         }),
         base: undefined,
+        level: 'trace', // default to trace since each transport has its defined level
         timestamp: pino.stdTimeFunctions.isoTime,
         transport: { targets },
       })

@@ -91,9 +91,9 @@ class SqliteTransport {
    * Make sure the requests are done before closing the database
    * @returns {void}
    */
-  end = async () => {
+  end = () => {
     if (this.database) {
-      await this.database.close()
+      this.database.close()
     }
   }
 }
@@ -108,7 +108,7 @@ const createTransport = async (opts) => {
     }
   }, {
     close: async () => {
-      await sqliteTransport.end()
+      sqliteTransport.end()
     },
   })
 }

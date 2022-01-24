@@ -70,7 +70,7 @@ const Logging = ({ logParameters, onChange }) => (
               <td>Information useful only to debug an issue</td>
             </tr>
             <tr>
-              <td>Silly</td>
+              <td>Trace</td>
               <td>Information useful to debug an issue but they will significantly impact performances</td>
             </tr>
           </tbody>

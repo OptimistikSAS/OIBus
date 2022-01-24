@@ -3,7 +3,6 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
-const Logger = require('./logger/Logger.class')
 const ApiHandler = require('../north/ApiHandler.class')
 
 // Time between two checks of the Archive Folder
@@ -25,7 +24,7 @@ class Cache {
    */
   constructor(engine) {
     this.engine = engine
-    this.logger = Logger.getDefaultLogger()
+    this.logger = engine.logger
     // get parameters for the cache
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archive } = engineConfig.caching
@@ -327,7 +326,7 @@ class Cache {
   /**
    * handle the values for the callback
    * @param {object} application - The application to send the values to
-   * @return {void}
+   * @return {ApiHandler.Status} - The callback status
    */
   async sendCallbackForValues(application) {
     this.logger.silly(`Cache sendCallbackForValues() for ${application.name}`)
@@ -376,7 +375,7 @@ class Cache {
   /**
    * Handle files resending.
    * @param {object} application - The application to send the values to
-   * @return {void}
+   * @return {ApiHandler.Status} - The callback status
    */
   async sendCallbackForFiles(application) {
     const { id, name } = application

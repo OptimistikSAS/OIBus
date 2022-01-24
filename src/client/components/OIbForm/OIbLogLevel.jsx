@@ -67,7 +67,7 @@ OIbLogLevel.defaultProps = {
     fileLevel: 'engine',
     sqliteLevel: 'engine',
   },
-  logOptions: ['engine', 'silly', 'debug', 'info', 'warning', 'error', 'none'],
+  logOptions: ['engine', 'trace', 'debug', 'info', 'warning', 'error', 'none'],
   help: (
     <>
       <p>OIBus can send logs to 4 different supports:</p>
@@ -76,11 +76,11 @@ OIbLogLevel.defaultProps = {
         <li>The Console logs messages on the terminal. It cannot be used when OIBus runs as a Windows service</li>
         <li>The File logs writes messages on the chosen folder of the OIBus machine</li>
         <li>
-          The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs
+          The Sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs
           using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
         </li>
         <li>
-          The loki logs send the logs to a loki instance. This allows to access the logs remotely.
+          The Loki logs send the logs to a loki instance. This allows to access the logs remotely.
         </li>
       </ul>
 
@@ -94,27 +94,27 @@ OIbLogLevel.defaultProps = {
         <tbody>
           <tr>
             <td>Engine</td>
-            <td>will use global log level selected on engine</td>
+            <td>Use global log level selected on engine</td>
           </tr>
           <tr>
             <td>Error</td>
-            <td>these logs needs investigation in a production system</td>
+            <td>These logs needs investigation in a production system</td>
           </tr>
           <tr>
             <td>Warning</td>
-            <td>unexpected behavior that will not impact significantly the system</td>
+            <td>Unexpected behavior that will not impact significantly the system</td>
           </tr>
           <tr>
             <td>Info</td>
-            <td>information useful to the administrator</td>
+            <td>Information useful to the administrator</td>
           </tr>
           <tr>
             <td>Debug</td>
-            <td>informations useful only to debug an issue</td>
+            <td>Information useful only to debug an issue</td>
           </tr>
           <tr>
-            <td>Silly</td>
-            <td>informations useful to debug an issue but they will significantly impact performances</td>
+            <td>Trace</td>
+            <td>Information useful to debug an issue but they will significantly impact performances</td>
           </tr>
         </tbody>
       </table>

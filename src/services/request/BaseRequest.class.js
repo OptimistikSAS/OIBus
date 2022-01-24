@@ -2,13 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const FormData = require('form-data')
 
-const Logger = require('../../engine/logger/Logger.class')
 const ApiHandler = require('../../north/ApiHandler.class')
 
 class BaseRequest {
   constructor(engine) {
     this.engine = engine
-    this.logger = Logger.getDefaultLogger()
+    this.logger = engine.logger
 
     this.retryStatusCodes = [400, 500]
   }
