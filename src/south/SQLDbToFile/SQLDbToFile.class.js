@@ -64,7 +64,6 @@ class SQLDbToFile extends ProtocolHandler {
       compression,
       maxReadInterval,
       readIntervalDelay,
-      maxReturnValues,
     } = this.dataSource.SQLDbToFile
 
     this.preserveFiles = false
@@ -87,7 +86,6 @@ class SQLDbToFile extends ProtocolHandler {
     this.compression = compression
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
-    this.maxReturnValues = maxReturnValues
     this.timezone = timezone
     this.tmpFolder = path.resolve(this.engine.getCacheFolder(), this.dataSource.id)
 
@@ -152,7 +150,6 @@ class SQLDbToFile extends ProtocolHandler {
         }
       }
     })
-
     return newLastCompletedAt
   }
 
@@ -173,91 +170,78 @@ class SQLDbToFile extends ProtocolHandler {
     let updatedStartTime = startTime
     this.ongoingReads[scanMode] = true
     let result
-    do {
-      result = []
-      try {
-        this.logQuery(this.query, updatedStartTime, endTime, this.maxReturnValues)
-        const requestStartTime = new Date().getTime()
-        switch (this.driver) {
-          case 'mssql':
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.getDataFromMSSQL(updatedStartTime, endTime)
-            break
-          case 'mysql':
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.getDataFromMySQL(updatedStartTime, endTime)
-            break
-          case 'postgresql':
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.getDataFromPostgreSQL(updatedStartTime, endTime)
-            break
-          case 'oracle':
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.getDataFromOracle(updatedStartTime, endTime)
-            break
-          case 'sqlite':
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.getDataFromSqlite(updatedStartTime, endTime)
-            break
-          default:
-            this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
-            return
-        }
-        const requestFinishTime = new Date().getTime()
-        this.logger.info(`Found ${result.length} results in ${humanizeDuration(requestFinishTime - requestStartTime)}`)
-      } catch (error) {
-        this.logger.error(error)
+    result = []
+    try {
+      this.logQuery(this.query, updatedStartTime, endTime)
+      const requestStartTime = new Date().getTime()
+      switch (this.driver) {
+        case 'mssql':
+          result = await this.getDataFromMSSQL(updatedStartTime, endTime)
+          break
+        case 'mysql':
+          result = await this.getDataFromMySQL(updatedStartTime, endTime)
+          break
+        case 'postgresql':
+          result = await this.getDataFromPostgreSQL(updatedStartTime, endTime)
+          break
+        case 'oracle':
+          result = await this.getDataFromOracle(updatedStartTime, endTime)
+          break
+        case 'sqlite':
+          result = await this.getDataFromSqlite(updatedStartTime, endTime)
+          break
+        default:
+          this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
+          return
       }
+      const requestFinishTime = new Date().getTime()
+      this.logger.info(`Found ${result.length} results in ${humanizeDuration(requestFinishTime - requestStartTime)}`)
+    } catch (error) {
+      this.logger.error(error)
+    }
 
-      const oldLastCompletedAt = this.lastCompletedAt[scanMode]
-      updatedStartTime = this.getLatestDate(result, updatedStartTime)
-      this.lastCompletedAt[scanMode] = updatedStartTime
-      if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
-        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
-        // eslint-disable-next-line no-await-in-loop
-        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-      } else {
-        this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
-      }
+    if (result.length > 0) {
+      const csvContent = await this.generateCSV(result)
+      if (csvContent) {
+        const filename = this.replaceFilenameWithVariable(this.filename, this.queryParts[scanMode])
+        const filePath = path.join(this.tmpFolder, filename)
+        try {
+          this.logger.debug(`Writing CSV file at ${filePath}`)
+          await fs.writeFile(filePath, csvContent)
 
-      if (result.length > 0) {
-        // eslint-disable-next-line no-await-in-loop
-        const csvContent = await this.generateCSV(result)
-        if (csvContent) {
-          const filename = this.filename.replace('@CurrentDate', DateTime.local()
-            .toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-          const filePath = path.join(this.tmpFolder, filename)
-          try {
-            this.logger.debug(`Writing CSV file at ${filePath}`)
-            // eslint-disable-next-line no-await-in-loop
-            await fs.writeFile(filePath, csvContent)
+          if (this.compression) {
+            // Compress and send the compressed file
+            const gzipPath = `${filePath}.gz`
+            await this.compress(filePath, gzipPath)
 
-            if (this.compression) {
-              // Compress and send the compressed file
-              const gzipPath = `${filePath}.gz`
-              // eslint-disable-next-line no-await-in-loop
-              await this.compress(filePath, gzipPath)
-
-              try {
-                // eslint-disable-next-line no-await-in-loop
-                await fs.unlink(filePath)
-                this.logger.info(`File ${filePath} compressed and deleted`)
-              } catch (unlinkError) {
-                this.logger.error(unlinkError)
-              }
-
-              this.logger.debug(`Sending compressed ${gzipPath} to Engine.`)
-              this.addFile(gzipPath, this.preserveFiles)
-            } else {
-              this.logger.debug(`Sending ${filePath} to Engine.`)
-              this.addFile(filePath, this.preserveFiles)
+            try {
+              await fs.unlink(filePath)
+              this.logger.info(`File ${filePath} compressed and deleted`)
+            } catch (unlinkError) {
+              this.logger.error(unlinkError)
             }
-          } catch (error) {
-            this.logger.error(error)
+
+            this.logger.debug(`Sending compressed ${gzipPath} to Engine.`)
+            this.addFile(gzipPath, this.preserveFiles)
+          } else {
+            this.logger.debug(`Sending ${filePath} to Engine.`)
+            this.addFile(filePath, this.preserveFiles)
           }
+        } catch (error) {
+          this.logger.error(error)
         }
       }
-    } while (result.length > 0 && endTime > updatedStartTime)
+    }
+
+    const oldLastCompletedAt = this.lastCompletedAt[scanMode]
+    updatedStartTime = this.getLatestDate(result, updatedStartTime)
+    this.lastCompletedAt[scanMode] = updatedStartTime
+    if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
+      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
+      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+    } else {
+      this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
+    }
 
     this.ongoingReads[scanMode] = false
   }
@@ -297,9 +281,6 @@ class SQLDbToFile extends ProtocolHandler {
       if (this.query.indexOf('@EndTime') !== -1) {
         request.input('EndTime', mssql.DateTimeOffset, endTime)
       }
-      if (this.query.indexOf('@MaxReturnValues') !== -1) {
-        request.input('MaxReturnValues', mssql.Int, this.maxReturnValues)
-      }
       const result = await request.query(adaptedQuery)
       const [first] = result.recordsets
       data = first
@@ -321,7 +302,6 @@ class SQLDbToFile extends ProtocolHandler {
   async getDataFromMySQL(startTime, endTime) {
     const adaptedQuery = this.query.replace(/@StartTime/g, '?')
       .replace(/@EndTime/g, '?')
-      .replace(/@MaxReturnValues/g, '?')
 
     const config = {
       host: this.host,
@@ -338,7 +318,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = await mysql.createConnection(config)
 
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
       const [rows] = await connection.execute(
         {
           sql: adaptedQuery,
@@ -367,7 +347,6 @@ class SQLDbToFile extends ProtocolHandler {
   async getDataFromPostgreSQL(startTime, endTime) {
     const adaptedQuery = this.query.replace(/@StartTime/g, '$1')
       .replace(/@EndTime/g, '$2')
-      .replace(/@MaxReturnValues/g, '$3')
 
     const config = {
       host: this.host,
@@ -384,7 +363,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = new Client(config)
       await connection.connect()
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
       const { rows } = await connection.query(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -412,7 +391,6 @@ class SQLDbToFile extends ProtocolHandler {
 
     const adaptedQuery = this.query.replace(/@StartTime/g, ':date1')
       .replace(/@EndTime/g, ':date2')
-      .replace(/@MaxReturnValues/g, ':values')
 
     const config = {
       user: this.username,
@@ -427,7 +405,7 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime, this.maxReturnValues)
+      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
       const { rows } = await connection.execute(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -465,9 +443,6 @@ class SQLDbToFile extends ProtocolHandler {
       if (this.query.indexOf('@EndTime') !== -1) {
         preparedParameters['@EndTime'] = endTime
       }
-      if (this.query.indexOf('@MaxReturnValues') !== -1) {
-        preparedParameters['@MaxReturnValues'] = this.maxReturnValues
-      }
 
       data = await stmt.all(preparedParameters)
       await stmt.finalize()
@@ -492,7 +467,8 @@ class SQLDbToFile extends ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static formatDateWithTimezone(date, timezone, dateFormat) {
-    return DateTime.fromJSDate(date, { zone: 'utc' }).toFormat(dateFormat)
+    return DateTime.fromJSDate(date, { zone: 'utc' })
+      .toFormat(dateFormat)
   }
 
   /**
@@ -523,15 +499,13 @@ class SQLDbToFile extends ProtocolHandler {
    * @param {string} query - The query
    * @param {Date} startTime - The replaced StartTime
    * @param {Date} endTime - The replaced EndTime
-   * @param {number} maxReturnValues - The replaced MaxReturnValues
    * @returns {void}
    */
-  logQuery(query, startTime, endTime, maxReturnValues) {
+  logQuery(query, startTime, endTime) {
     const startTimeLog = query.indexOf('@StartTime') !== -1 ? `StartTime = ${startTime.toISOString()}` : ''
     const endTimeLog = query.indexOf('@EndTime') !== -1 ? `EndTime = ${endTime.toISOString()}` : ''
-    const maxReturnValuesLog = query.indexOf('@MaxReturnValues') !== -1 ? `MaxReturnValues = ${maxReturnValues}` : ''
-    this.logger.info(`Executing "${query}" with ${startTimeLog} ${endTimeLog} ${maxReturnValuesLog}`)
-    this.statusData['Last SQL request'] = `"${query}" with ${startTimeLog} ${endTimeLog} ${maxReturnValuesLog}`
+    this.logger.info(`Executing "${query}" with ${startTimeLog} ${endTimeLog}`)
+    this.statusData['Last SQL request'] = `"${query}" with ${startTimeLog} ${endTimeLog}`
     this.updateStatusDataStream()
   }
 
@@ -540,15 +514,12 @@ class SQLDbToFile extends ProtocolHandler {
    * @param {string} query - The query
    * @param {Date} startTime - The StartTime
    * @param {Date} endTime - The EndTime
-   * @param {number} maxReturnValues - The MaxReturnValues
    * @return {any[]} - The replacement parameters
    */
-  static generateReplacementParameters(query, startTime, endTime, maxReturnValues) {
+  static generateReplacementParameters(query, startTime, endTime) {
     const startTimeOccurrences = SQLDbToFile.getOccurrences(query, '@StartTime', startTime)
     const endTimeOccurrences = SQLDbToFile.getOccurrences(query, '@EndTime', endTime)
-    const maxReturnValuesOccurrences = SQLDbToFile.getOccurrences(query, '@MaxReturnValues', maxReturnValues)
     const occurrences = startTimeOccurrences.concat(endTimeOccurrences)
-      .concat(maxReturnValuesOccurrences)
     occurrences.sort((a, b) => (a.index - b.index))
     return occurrences.map((occurrence) => occurrence.value)
   }
