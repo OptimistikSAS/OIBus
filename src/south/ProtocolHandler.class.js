@@ -8,6 +8,8 @@ const databaseService = require('../services/database.service')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
 
+const COMPRESSION_LEVEL = 9
+
 /**
  * Class Protocol : provides general attributes and methods for protocols.
  * Building a new South Protocol means to extend this class, and to surcharge
@@ -52,10 +54,7 @@ class ProtocolHandler {
 
     this.connected = false
 
-    this.lastOnScanAt = null
-    this.lastAddFileAt = null
     this.addFileCount = 0
-    this.lastAddPointsAt = null
     this.addPointsCount = 0
     this.currentlyOnScan = {}
     this.buffer = []
@@ -93,9 +92,11 @@ class ProtocolHandler {
 
   prepareHistorySupport() {
     this.lastCompletedAt = {}
+    this.queryParts = {}
     this.ongoingReads = {}
     if (this.dataSource.scanMode) {
       this.lastCompletedAt[this.dataSource.scanMode] = new Date().getTime()
+      this.queryParts[this.dataSource.scanMode] = 0
       this.ongoingReads[this.dataSource.scanMode] = false
     } else if (this.dataSource[this.constructor.name].scanGroups) {
       // Group all points in their respective scanGroup
@@ -105,6 +106,7 @@ class ProtocolHandler {
           .filter((point) => point.scanMode === scanGroup.scanMode)
           .map((point) => point.pointId)
         this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
+        this.queryParts[scanGroup.scanMode] = 0
         this.ongoingReads[scanGroup.scanMode] = false
         return {
           name: scanGroup.scanMode,
@@ -157,7 +159,10 @@ class ProtocolHandler {
         // Disable ESLint check because we want to get the values one by one to avoid parallel access to the SQLite database
         // eslint-disable-next-line no-await-in-loop
         const lastCompletedAt = await this.getConfig(`lastCompletedAt-${scanMode}`)
+        // eslint-disable-next-line no-await-in-loop
+        const queryPart = await this.getConfig(`queryPart-${scanMode}`)
         this.lastCompletedAt[scanMode] = lastCompletedAt ? new Date(lastCompletedAt) : defaultLastCompletedAt
+        this.queryParts[scanMode] = queryPart ? parseInt(queryPart, 10) : 0
         this.logger.info(`Initializing lastCompletedAt for ${scanMode} with ${this.lastCompletedAt[scanMode]}`)
       }
     }
@@ -242,16 +247,21 @@ class ProtocolHandler {
       // eslint-disable-next-line no-await-in-loop
       await this.historyQuery(scanMode, startTime, intervalEndTime)
 
+      this.queryParts[scanMode] += 1
+      // eslint-disable-next-line no-await-in-loop
+      await this.setConfig(`queryPart-${scanMode}`, this.queryParts[scanMode])
+
       startTime = intervalEndTime
       firstIteration = false
     } while (intervalEndTime !== endTime)
+    this.queryParts[scanMode] = 0
+    await this.setConfig(`queryPart-${scanMode}`, this.queryParts[scanMode])
   }
 
   async onScan(scanMode) {
     this.currentlyOnScan[scanMode] = true
     this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
-    this.lastOnScanAt = new Date().getTime()
-    this.statusData['Last scan at'] = new Date().toISOString()
+    this.statusData['Last scan at'] = new Date().toLocaleString()
     this.updateStatusDataStream()
     try {
       if (this.supportedModes?.supportLastPoint) {
@@ -290,7 +300,7 @@ class ProtocolHandler {
     this.buffer = []
     await this.engine.addValues(this.dataSource.id, bufferSave)
     this.statusData['Number of values since OIBus has started'] += bufferSave.length
-    this.statusData['Last added points at'] = new Date().toISOString()
+    this.statusData['Last added points at'] = new Date().toLocaleString()
 
     // TODO: fix the following line since pointId and data are fields
     // used for OIA but not for every payload. To be fixed with PR https://github.com/OptimistikSAS/OIBus/pull/1383
@@ -310,7 +320,6 @@ class ProtocolHandler {
    */
   async addValues(values) {
     // used for status
-    this.lastAddPointsAt = new Date().getTime()
     this.addPointsCount += values.length
     // add new values to the protocol buffer
     this.buffer.push(...values)
@@ -332,10 +341,9 @@ class ProtocolHandler {
    * @return {void}
    */
   addFile(filePath, preserveFiles) {
-    this.lastAddFileAt = new Date().toISOString()
     this.addFileCount += 1
     this.statusData['Number of files since OIBus has started'] += 1
-    this.statusData['Last added file at'] = this.lastAddFileAt
+    this.statusData['Last added file at'] = new Date().toLocaleString()
     this.statusData['Last added file'] = filePath
     this.updateStatusDataStream()
 
@@ -348,11 +356,12 @@ class ProtocolHandler {
    * @param {string} output - The path to the compressed file
    * @returns {Promise} - The compression result
    */
+  // eslint-disable-next-line class-methods-use-this
   compress(input, output) {
     return new Promise((resolve, reject) => {
       const readStream = fs.createReadStream(input)
       const writeStream = fs.createWriteStream(output)
-      const gzip = zlib.createGzip({ level: this.compressionLevel })
+      const gzip = zlib.createGzip({ level: COMPRESSION_LEVEL })
       readStream
         .pipe(gzip)
         .pipe(writeStream)
@@ -394,7 +403,6 @@ class ProtocolHandler {
    * @param {string} output - The path to the decompressed file
    * @returns {Promise} - The decompression result
    */
-
   /* eslint-disable-next-line class-methods-use-this */
   decompress(input, output) {
     return new Promise((resolve, reject) => {
@@ -434,14 +442,14 @@ class ProtocolHandler {
     const status = {
       Name: this.dataSource.name,
       Id: this.dataSource.id,
-      'Last scan time': this.lastOnScanAt ? new Date(this.lastOnScanAt).toLocaleString() : 'Never',
+      'Last scan time': this.statusData['Last scan at'] ? this.statusData['Last scan at'] : 'Never',
     }
     if (this.handlesFiles) {
-      status['Last file added time'] = this.lastAddFileAt ? new Date(this.lastAddFileAt).toLocaleString() : 'Never'
+      status['Last file added time'] = this.statusData['Last added file at'] ? this.statusData['Last added file at'] : 'Never'
       status['Number of files added'] = this.addFileCount
     }
     if (this.handlesPoints) {
-      status['Last values added time'] = this.lastAddPointsAt ? new Date(this.lastAddPointsAt).toLocaleString() : 'Never'
+      status['Last values added time'] = this.statusData['Last added points at'] ? this.statusData['Last added points at'] : 'Never'
       status['Number of values added'] = this.addPointsCount
     }
     if (this.canHandleHistory) {
@@ -481,6 +489,19 @@ class ProtocolHandler {
     }
 
     return timestamp
+  }
+
+  /**
+   * Replace the variables such as @CurrentDate in the file name with their values
+   * @param {string} filename - The filename to change
+   * @param {number} queryPart - The part of the query being executed
+   * @return {string} newFilename - The renamed file name
+   */
+  replaceFilenameWithVariable(filename, queryPart) {
+    return filename.replace('@CurrentDate', DateTime.local()
+      .toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      .replace('@ConnectorName', `${this.dataSource.name}`)
+      .replace('@QueryPart', `${queryPart}`)
   }
 
   /**

@@ -99,7 +99,7 @@ const HistoryQueryForm = ({
           </Row>
           <OIbTitle label="General settings" />
           <Row>
-            <Col md={1}>
+            <Col md={2}>
               <OIbCheckBox
                 name="enabled"
                 label="Enabled"

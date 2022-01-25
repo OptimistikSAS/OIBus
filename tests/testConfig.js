@@ -270,7 +270,7 @@ const testConfig = {
           database: 'oibus',
           query:
             'SELECT created_at AS timestamp, value1 AS temperature '
-            + 'FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime LIMIT @MaxReturnValues',
+            + 'FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime',
           delimiter: ',',
           filename: 'sql-@CurrentDate.csv',
           scanMode: 'everySecond',
@@ -279,7 +279,6 @@ const testConfig = {
           dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
           timeFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
           compression: false,
-          maxReturnValues: 1000,
         },
         scanMode: 'every10Second',
         points: [],
