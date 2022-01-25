@@ -74,13 +74,19 @@ let sqlSouth = null
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const sqlConfig = config.south.dataSources[7]
 Settings.now = () => new Date(nowDateString).valueOf()
-
+const RealDate = Date
 beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
   sqlSouth = new SQLDbToFile(sqlConfig, engine)
+  global.Date = jest.fn(() => new RealDate(nowDateString))
+  global.Date.UTC = jest.fn(() => new RealDate(nowDateString).toUTCString())
+})
+
+afterEach(() => {
+  global.Date = RealDate
 })
 
 describe('SQLDbToFile', () => {
@@ -92,7 +98,7 @@ describe('SQLDbToFile', () => {
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig)
-      .toHaveBeenCalledTimes(1)
+      .toHaveBeenCalledTimes(2)
     expect(sqlSouth.lastCompletedAt[sqlConfig.scanMode])
       .toEqual(new Date('2020-04-23T11:09:01.001Z'))
   })
@@ -131,10 +137,6 @@ describe('SQLDbToFile', () => {
   })
 
   it('should properly connect and set lastCompletedAt to now', async () => {
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
-    global.Date.UTC = jest.fn(() => new RealDate(nowDateString).toUTCString())
-
     databaseService.getConfig.mockReturnValue(null)
     await sqlSouth.init()
     await sqlSouth.connect()
@@ -142,11 +144,10 @@ describe('SQLDbToFile', () => {
     expect(databaseService.createConfigDatabase)
       .toBeCalledWith(`${config.engine.caching.cacheFolder}/${sqlConfig.id}.db`)
     expect(databaseService.getConfig)
-      .toHaveBeenCalledTimes(1)
+      .toHaveBeenCalledTimes(2)
     expect(sqlSouth.lastCompletedAt)
       .not
       .toEqual(new Date(nowDateString).getTime())
-    global.Date = RealDate
   })
 
   it('should properly get the latest date', async () => {
@@ -238,6 +239,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should interact with MySQL server if driver is mysql', async () => {
+    global.Date = RealDate
     await sqlSouth.init()
     sqlSouth.driver = 'mysql'
     const startTime = new Date('2019-10-03T13:36:36.360Z')
@@ -269,13 +271,12 @@ describe('SQLDbToFile', () => {
       timezone: 'Z',
     }
     const expectedExecute = {
-      sql: 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ? LIMIT ?',
+      sql: 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ?',
       timeout: sqlConfig.SQLDbToFile.requestTimeout,
     }
     const expectedExecuteParams = [
       new Date('2019-10-03T13:36:36.360Z'),
       new Date('2019-10-03T13:40:40.400Z'),
-      sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(mysql.createConnection)
       .toHaveBeenCalledWith(expectedConfig)
@@ -285,7 +286,7 @@ describe('SQLDbToFile', () => {
       .toBeCalledTimes(1)
     expect(sqlSouth.logger.info)
       // eslint-disable-next-line max-len
-      .toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime LIMIT @MaxReturnValues" with StartTime = 2019-10-03T13:36:36.360Z EndTime = 2019-10-03T13:40:40.400Z MaxReturnValues = 1000')
+      .toBeCalledWith('Executing "SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime" with StartTime = 2019-10-03T13:36:36.360Z EndTime = 2019-10-03T13:40:40.400Z')
 
     mysql.createConnection.mockClear()
     connection.execute.mockClear()
@@ -363,22 +364,21 @@ describe('SQLDbToFile', () => {
       database: sqlConfig.SQLDbToFile.database,
       query_timeout: sqlConfig.SQLDbToFile.requestTimeout,
     }
-    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > $1 AND created_at <= $2 LIMIT $3'
+    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > $1 AND created_at <= $2'
     const expectedExecuteParams = [
       new Date('2019-10-03T13:36:36.360Z'),
       new Date('2019-10-03T13:40:40.400Z'),
-      sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(types.setTypeParser)
       .toBeCalledWith(1114, expect.any(Function))
     expect(Client)
       .toBeCalledWith(expectedConfig)
     expect(client.connect)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
     expect(client.query)
       .toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(client.end)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
   })
 
   it('should interact with PostgreSQL server and catch request error', async () => {
@@ -451,20 +451,19 @@ describe('SQLDbToFile', () => {
       connectString: `${sqlConfig.SQLDbToFile.host}:${sqlConfig.SQLDbToFile.port}/${sqlConfig.SQLDbToFile.database}`,
     }
     // eslint-disable-next-line
-    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > :date1 AND created_at <= :date2 LIMIT :values'
+    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > :date1 AND created_at <= :date2'
     const expectedExecuteParams = [
       new Date('2019-10-03T13:36:36.360Z'),
       new Date('2019-10-03T13:40:40.400Z'),
-      sqlConfig.SQLDbToFile.maxReturnValues,
     ]
     expect(oracledb.getConnection)
       .toHaveBeenCalledWith(expectedConfig)
     expect(connection.execute)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
     expect(connection.execute)
       .toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(connection.close)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
   })
 
   it('should interact with Oracle server and catch request error', async () => {
@@ -529,9 +528,9 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     expect(database.prepare)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
     expect(database.close)
-      .toBeCalledTimes(2)
+      .toBeCalledTimes(1)
 
     database.close.mockClear()
     database.prepare.mockClear()
@@ -597,6 +596,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should send uncompressed file when the result is not empty and compression is false', async () => {
+    global.Date = RealDate
     await sqlSouth.init()
     sqlSouth.driver = 'mysql'
 
@@ -637,6 +637,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should send compressed file when the result is not empty and compression is true', async () => {
+    global.Date = RealDate
     await sqlSouth.init()
     sqlSouth.driver = 'mysql'
 
@@ -675,6 +676,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should manage fs unlink error and catch error', async () => {
+    global.Date = RealDate
     await sqlSouth.init()
     sqlSouth.driver = 'mysql'
 
@@ -718,6 +720,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should format date properly without timezone', () => {
+    global.Date = RealDate
     const actual = SQLDbToFile.formatDateWithTimezone(
       new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
       'Europe/Paris',
@@ -728,6 +731,7 @@ describe('SQLDbToFile', () => {
   })
 
   it('should format date properly with timezone', () => {
+    global.Date = RealDate
     const actual = SQLDbToFile.formatDateWithTimezone(
       new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
       'Europe/Paris',
@@ -750,15 +754,15 @@ describe('SQLDbToFile', () => {
   })
 
   it('should generate proper replacement parameters when some parameters are used', () => {
+    global.Date = RealDate
     const query = 'SELECT timestamp,temperature FROM history WHERE timestamp > @StartTime LIMIT @MaxReturnValues'
     const startTime = new Date('2020-02-20 20:20:20.222')
     const endTime = new Date('2020-02-20 22:20:20.222')
-    const maxReturnValues = 666
 
-    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime)
 
     expect(replacementParameters)
-      .toEqual([startTime, maxReturnValues])
+      .toEqual([startTime])
   })
 
   it('should generate proper replacement parameters when all parameters are used', () => {
@@ -774,11 +778,10 @@ describe('SQLDbToFile', () => {
               LIMIT @MaxReturnValues`
     const startTime = new Date('2020-02-20 20:20:20.222')
     const endTime = new Date('2020-02-20 22:20:20.222')
-    const maxReturnValues = 666
 
-    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime)
 
     expect(replacementParameters)
-      .toEqual([startTime, endTime, startTime, maxReturnValues])
+      .toEqual([startTime, endTime, startTime])
   })
 })

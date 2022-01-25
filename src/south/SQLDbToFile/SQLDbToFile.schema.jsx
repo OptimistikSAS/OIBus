@@ -17,8 +17,6 @@ schema.form = {
         <ul>
           <li>
             The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime.
-            It can also contain a LIMIT clause with @MaxReturnValues to limit the number of results.
-            Note: The query should contain either all parameters or all none of them.
           </li>
           <li>
             To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
@@ -29,8 +27,27 @@ schema.form = {
             like this: &apos;SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms&apos;
           </li>
           <li>
-            It is possible to specify the delimiter used in the CSV file, how to format the timestamp field
-            and also the name of the file with a template (currently only &apos;@CurrentDate&apos; is accepted).
+            The query results are then converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format
+            the timestamp field and also the name of the file with a template.
+            <p>The file name can be adapted with the following parameters: </p>
+            <ul>
+              <li>
+                <b>@CurrentDate:</b>
+                {' '}
+                The date where the file is created. The date format is yyyy_MM_dd_HH_mm_ss_SSS
+              </li>
+              <li>
+                <b>@ConnectorName:</b>
+                {' '}
+                The name of the south connector
+              </li>
+              <li>
+                <b>@QueryPart:</b>
+                {' '}
+                When the query is split according the the MaxReadInterval field, we can use the @QueryPart parameter to name the file.
+                If the query is not split, @QueryPart is replaced by 0
+              </li>
+            </ul>
           </li>
           <li>
             Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
@@ -195,14 +212,6 @@ schema.form = {
     valid: minValue(0),
     defaultValue: 200,
     help: <div>Time to wait between the read interval iterations (ms)</div>,
-  },
-  maxReturnValues: {
-    type: 'OIbInteger',
-    newRow: false,
-    md: 2,
-    valid: minValue(0),
-    defaultValue: 1000,
-    help: <div>Max number of values returned for one point during a read interval</div>,
   },
 }
 schema.points = null

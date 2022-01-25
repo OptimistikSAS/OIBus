@@ -104,7 +104,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         class="row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
           <div
             class="form-group"
@@ -381,7 +381,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         class="row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
           <div
             class="form-group"
@@ -658,7 +658,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         class="row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
           <div
             class="form-group"

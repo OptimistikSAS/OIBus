@@ -36,6 +36,7 @@ class HistoryQuery {
     this.startTime = new Date(config.startTime)
     this.endTime = new Date(config.endTime)
     this.filePattern = config.filePattern
+    this.cacheFolder = `${this.engine.getCacheFolder()}/${this.id}`
   }
 
   /**
@@ -43,6 +44,7 @@ class HistoryQuery {
    * @returns {void}
    */
   async start() {
+    await HistoryQuery.createFolder(this.cacheFolder)
     switch (this.status) {
       case HistoryQuery.STATUS_PENDING:
       case HistoryQuery.STATUS_EXPORTING:
@@ -80,19 +82,22 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async startExport() {
-    this.logger.info(`Start the export phase for HistoryQuery ${this.id}`)
+    this.logger.info(`Start the export phase for HistoryQuery ${this.dataSource.name} -> ${this.application.name} (${this.id})`)
 
     if (this.status !== HistoryQuery.STATUS_EXPORTING) {
       this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
 
-    this.dataSource.startTime = this.config.startTime
-    this.dataSource.points = this.config.points
-    this.dataSource[this.dataSource.protocol].query = this.config.query
-
     const { protocol, enabled, name } = this.dataSource
     this.south = enabled ? this.engine.createSouth(protocol, this.dataSource) : null
     if (this.south) {
+      // override some parameters for history query
+      this.south.filename = this.filePattern
+      this.south.tmpFolder = this.cacheFolder
+      this.south.startTime = this.config.startTime
+      this.south.points = this.config.points
+      this.south.query = this.config.query
+      this.south.name = `${this.dataSource.name}-${this.application.name}`
       await this.south.init()
       await this.south.connect()
       await this.export()
@@ -108,13 +113,17 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async startImport() {
-    this.logger.info(`Start the import phase for HistoryQuery ${this.id}`)
+    this.logger.info(`Start the import phase for HistoryQuery ${this.dataSource.name} -> ${this.application.name} (${this.id})`)
 
     if (this.status !== HistoryQuery.STATUS_IMPORTING) {
       await this.setStatus(HistoryQuery.STATUS_IMPORTING)
     }
 
-    const { api, enabled, name } = this.application
+    const {
+      api,
+      enabled,
+      name,
+    } = this.application
     this.north = enabled ? this.engine.createNorth(api, this.application) : null
     if (this.north) {
       await this.north.init()
@@ -132,7 +141,7 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async finish() {
-    this.logger.info(`Finish HistoryQuery ${this.id}`)
+    this.logger.info(`Finish HistoryQuery ${this.dataSource.name} -> ${this.application.name} (${this.id})`)
     this.setStatus(HistoryQuery.STATUS_FINISHED)
     await this.stop()
   }
@@ -166,28 +175,27 @@ class HistoryQuery {
    */
   async import() {
     let files = []
-    const cacheFolder = `${this.engine.getCacheFolder()}/${this.dataSource.id}`
     try {
-      this.logger.silly(`Reading ${cacheFolder} directory`)
-      files = await fs.readdir(cacheFolder)
+      this.logger.silly(`Reading ${this.cacheFolder} directory`)
+      files = await fs.readdir(this.cacheFolder)
     } catch (error) {
-      this.logger.error(`Could not read folder ${cacheFolder} - error: ${error})`)
+      this.logger.error(`Could not read folder ${this.cacheFolder} - error: ${error})`)
       return
     }
 
     // Filter out directories
-    files.filter(async (filename) => {
-      const stats = await fs.stat(path.join(cacheFolder, filename))
+    files = files.filter(async (filename) => {
+      const stats = await fs.stat(path.join(this.cacheFolder, filename))
       return stats.isFile()
     })
     if (files.length === 0) {
-      this.logger.debug(`No files in ${cacheFolder}`)
+      this.logger.debug(`No files in ${this.cacheFolder}`)
       return
     }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const filename of files) {
-      const filePath = path.join(cacheFolder, filename)
+      const filePath = path.join(this.cacheFolder, filename)
       let status
       try {
         status = await this.north.handleFile(filePath)
@@ -195,14 +203,14 @@ class HistoryQuery {
         status = error
       }
 
-      const archiveFolder = path.join(cacheFolder, HistoryQuery.IMPORTED_FOLDER)
-      const errorFolder = path.join(cacheFolder, HistoryQuery.ERROR_FOLDER)
+      const archiveFolder = path.join(this.cacheFolder, HistoryQuery.IMPORTED_FOLDER)
+      const errorFolder = path.join(this.cacheFolder, HistoryQuery.ERROR_FOLDER)
       if (status === ApiHandler.STATUS.SUCCESS) {
         await HistoryQuery.createFolder(archiveFolder)
-        await fs.rename(filePath, path.join(cacheFolder, HistoryQuery.IMPORTED_FOLDER, filename))
+        await fs.rename(filePath, path.join(this.cacheFolder, HistoryQuery.IMPORTED_FOLDER, filename))
       } else {
         await HistoryQuery.createFolder(errorFolder)
-        await fs.rename(filePath, path.join(cacheFolder, HistoryQuery.ERROR_FOLDER, filename))
+        await fs.rename(filePath, path.join(this.cacheFolder, HistoryQuery.ERROR_FOLDER, filename))
       }
     }
 
@@ -238,8 +246,14 @@ class HistoryQuery {
       await this.south.historyQuery(scanMode, startTime, intervalEndTime)
 
       startTime = intervalEndTime
+      this.south.queryParts[scanMode] += 1
+      // eslint-disable-next-line no-await-in-loop
+      await this.south.setConfig(`queryPart-${scanMode}`, this.south.queryParts[scanMode])
       firstIteration = false
     } while (intervalEndTime !== this.endTime)
+    this.south.queryParts[scanMode] = 0
+    // eslint-disable-next-line no-await-in-loop
+    await this.south.setConfig(`queryPart-${scanMode}`, this.south.queryParts[scanMode])
   }
 
   /**

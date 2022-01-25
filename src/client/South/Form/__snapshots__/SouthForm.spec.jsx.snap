@@ -7022,7 +7022,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                   </p>
                   <ul>
                     <li>
-                      The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime. It can also contain a LIMIT clause with @MaxReturnValues to limit the number of results. Note: The query should contain either all parameters or all none of them.
+                      The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime.
                     </li>
                     <li>
                       To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout.
@@ -7030,7 +7030,33 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                       Note for Oracle: Connection timeout can be specified in the 'sqlnet.ora' file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora) like this: 'SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms'
                     </li>
                     <li>
-                      It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template (currently only '@CurrentDate' is accepted).
+                      The query results are then converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template.
+                      <p>
+                        The file name can be adapted with the following parameters: 
+                      </p>
+                      <ul>
+                        <li>
+                          <b>
+                            @CurrentDate:
+                          </b>
+                           
+                          The date where the file is created. The date format is yyyy_MM_dd_HH_mm_ss_SSS
+                        </li>
+                        <li>
+                          <b>
+                            @ConnectorName:
+                          </b>
+                           
+                          The name of the south connector
+                        </li>
+                        <li>
+                          <b>
+                            @QueryPart:
+                          </b>
+                           
+                          When the query is split according the the MaxReadInterval field, we can use the @QueryPart parameter to name the file. If the query is not split, @QueryPart is replaced by 0
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
@@ -7326,7 +7352,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               id="south.dataSources.0.SQLDbToFile.query"
               name="south.dataSources.0.SQLDbToFile.query"
             >
-              SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @StartTime AND created_at &lt;= @EndTime LIMIT @MaxReturnValues
+              SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at &gt; @StartTime AND created_at &lt;= @EndTime
             </textarea>
             <div
               class="invalid-feedback"
@@ -8115,38 +8141,6 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             >
               <div>
                 Time to wait between the read interval iterations (ms)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="form-group"
-          >
-            <label
-              class=""
-              for="south.dataSources.0.SQLDbToFile.maxReturnValues"
-            >
-              Max return values
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.maxReturnValues"
-              name="south.dataSources.0.SQLDbToFile.maxReturnValues"
-              type="integer"
-              value="1000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max number of values returned for one point during a read interval
               </div>
             </small>
           </div>
