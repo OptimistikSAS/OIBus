@@ -3,7 +3,7 @@
 exports[`NewNorth check add connector without name & with protocol 1`] = `
 <div>
   <div
-    class="dropdown"
+    class="dropdown dropstart"
   >
     <button
       aria-expanded="false"
@@ -85,7 +85,7 @@ exports[`NewNorth check add connector without name & with protocol 1`] = `
 exports[`NewNorth check add connector without protocol & with new name 1`] = `
 <div>
   <div
-    class="dropdown"
+    class="dropdown dropstart"
   >
     <button
       aria-expanded="false"
@@ -167,7 +167,7 @@ exports[`NewNorth check add connector without protocol & with new name 1`] = `
 exports[`NewNorth check add connector without protocol & without new name 1`] = `
 <div>
   <div
-    class="dropdown"
+    class="dropdown dropstart"
   >
     <button
       aria-expanded="false"
@@ -249,7 +249,7 @@ exports[`NewNorth check add connector without protocol & without new name 1`] = 
 exports[`NewNorth check change name with "new_application" id 1`] = `
 <div>
   <div
-    class="dropdown"
+    class="dropdown dropstart"
   >
     <button
       aria-expanded="false"
