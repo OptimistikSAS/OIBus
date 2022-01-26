@@ -82,7 +82,7 @@
     "pg": "8.7.1",
     "pino": "git://github.com/rokku-x/pino.git#95b1392dcb1feefec71469434da594a3f557ff11",
     "pino-abstract-transport": "0.5.0",
-    "pino-pretty": "7.5.0",
+    "pino-pretty": "7.5.1",
     "prop-types": "15.8.1",
     "proxy-agent": "5.0.0",
     "react": "17.0.2",
