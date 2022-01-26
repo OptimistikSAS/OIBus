@@ -17,7 +17,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
       type: 'update',
       name,
       value,
-      validity
+      validity,
     })
   }
 
@@ -35,23 +35,23 @@ const NodeView = ({ onRestart, onShutdown }) => {
       width: 180,
       height: 130,
       padding: 0,
-      borderRadius: 5
+      borderRadius: 5,
     },
-    data: { label: (<NorthNode application={application} indexNorth={indexNorth} onChange={onChange}/>) },
+    data: { label: (<NorthNode application={application} indexNorth={indexNorth} onChange={onChange} />) },
     // position the node with an offset to center and then an offset for each node
     position: {
       x: 620 - 100 * Math.min(applications.length, 5) + (indexNorth % 5) * 200,
-      y: 150 * Math.trunc(indexNorth / 5)
-    }
+      y: 150 * Math.trunc(indexNorth / 5),
+    },
   }))
-  const northLinks = applications.map(application => ({
+  const northLinks = applications.map((application) => ({
     id: `${application.id}-engine`,
     source: 'engine',
     target: application.id,
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    isHidden: !application.enabled
+    isHidden: !application.enabled,
   }))
 
   const southNodes = dataSources.map((dataSource, indexSouth) => ({
@@ -64,27 +64,27 @@ const NodeView = ({ onRestart, onShutdown }) => {
       width: 180,
       height: 130,
       padding: 0,
-      borderRadius: 5
+      borderRadius: 5,
     },
-    data: { label: ( <SouthNode dataSource={dataSource} onChange={onChange} indexSouth={indexSouth} /> ) },
+    data: { label: (<SouthNode dataSource={dataSource} onChange={onChange} indexSouth={indexSouth} />) },
     // position the node with an offset to center and then an offset for each node
     // 5 per line max => potentially render on several lines with y
     position: {
       x: 620 - 100 * Math.min(dataSources.length, 5) + (indexSouth % 5) * 200,
       y:
-        190 +
-        150 * Math.trunc(indexSouth / 5) +
-        150 * (Math.trunc((applications.length - 1) / 5) + 1)
-    }
+        190
+        + 150 * Math.trunc(indexSouth / 5)
+        + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+    },
   }))
-  const southLinks = dataSources.map(dataSource => ({
+  const southLinks = dataSources.map((dataSource) => ({
     id: `${dataSource.id}-engine`,
     target: 'engine',
     source: dataSource.id,
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    isHidden: !dataSource.enabled
+    isHidden: !dataSource.enabled,
   }))
 
   const nodes = [
@@ -98,11 +98,11 @@ const NodeView = ({ onRestart, onShutdown }) => {
             onRestart={onRestart}
             onShutdown={onShutdown}
           />
-        )
+        ),
       },
       position: {
         x: 100,
-        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1)
+        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
       },
       targetPosition: 'bottom',
       sourcePosition: 'top',
@@ -112,30 +112,30 @@ const NodeView = ({ onRestart, onShutdown }) => {
         width: 1020,
         height: 130,
         padding: 0,
-        borderRadius: 5
-      }
+        borderRadius: 5,
+      },
     },
-    ...southNodes,   
+    ...southNodes,
   ]
   const edges = [
     ...northLinks,
-    ...southLinks
+    ...southLinks,
   ]
   return (
     <Container>
       <div
         style={{
           height:
-            410 +
-            150 * (Math.trunc((northNodes.length - 1) / 5) + 1) +
-            150 * (Math.trunc((southNodes.length - 1) / 5) + 1),
-          width: '100%'
+            410
+            + 150 * (Math.trunc((northNodes.length - 1) / 5) + 1)
+            + 150 * (Math.trunc((southNodes.length - 1) / 5) + 1),
+          width: '100%',
         }}
       >
         <ReactFlow
           fitViewOnInit
-          nodes={nodes} 
-          edges={edges}
+          defaultNodes={nodes}
+          defaultEdges={edges}
           zoomOnScroll={false}
           zoomOnDoubleClick={false}
           selectNodesOnDrag={false}
@@ -152,7 +152,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
 
 NodeView.propTypes = {
   onRestart: PropTypes.func.isRequired,
-  onShutdown: PropTypes.func.isRequired
+  onShutdown: PropTypes.func.isRequired,
 }
 
 export default NodeView

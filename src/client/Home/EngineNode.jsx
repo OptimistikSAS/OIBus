@@ -11,13 +11,13 @@ const EngineNode = ({ engineName, onRestart, onShutdown }) => {
 
   React.useEffect(() => {
     const source = new EventSource('/engine/sse')
-    source.onerror = error => {
+    source.onerror = (error) => {
       setAlert({
         text: error.message,
-        type: 'danger'
+        type: 'danger',
       })
     }
-    source.onmessage = event => {
+    source.onmessage = (event) => {
       if (event && event.data) {
         const myData = JSON.parse(event.data)
         setConnectorData(myData)
@@ -29,29 +29,31 @@ const EngineNode = ({ engineName, onRestart, onShutdown }) => {
     }
   }, [])
   return (
-    <div className='d-flex flex-column h-100 w-100'>
-      <div className='w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header'>
+    <div className="d-flex flex-column h-100 w-100">
+      <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <div />
-        <div className='oi-node-title'>{`Engine ${engineName}`}</div>
-        <div className='oi-node-click-item'>
+        <div className="oi-node-title">{`Engine ${engineName}`}</div>
+        <div className="oi-node-click-item">
           <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
         </div>
       </div>
       <Link
-        to='/engine'
-        className='w-100 text-decoration-none text-muted flex-grow-1'
+        to="/engine"
+        className="w-100 text-decoration-none text-muted flex-grow-1"
       >
-        <div className='d-flex flex-column h-100 justify-content-between py-2 oi-node-click-item'>
+        <div className="d-flex flex-column h-100 justify-content-between py-2 oi-node-click-item">
           {Object.entries(connectorData)
             .filter(
-              ([key]) =>
-                key === 'Up time' ||
-                key === 'Global memory usage' ||
-                key === 'CPU usage'
+              ([key]) => key === 'Up time'
+                || key === 'Global memory usage'
+                || key === 'CPU usage',
             )
             .map(([key, value]) => (
               <div key={key}>
-                <b className='mr-2'>{key}:</b>
+                <b className="mr-2">
+                  {key}
+                  :
+                </b>
                 <span>{value}</span>
               </div>
             ))}
@@ -64,7 +66,7 @@ const EngineNode = ({ engineName, onRestart, onShutdown }) => {
 EngineNode.propTypes = {
   onRestart: PropTypes.func.isRequired,
   onShutdown: PropTypes.func.isRequired,
-  engineName: PropTypes.string.isRequired
+  engineName: PropTypes.string.isRequired,
 }
 
 export default EngineNode
