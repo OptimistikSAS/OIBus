@@ -35,7 +35,7 @@
 }
 
 /* Activate click for switch elements inside a react flow node */
-.oi-node-footer > .form-group > .custom-switch {
+.oi-node-footer>.form-group>.custom-switch {
   pointer-events: all;
   cursor: pointer;
 }
@@ -53,13 +53,15 @@
   border-color: #f5bb51;
   background-color: #f5bb51;
 }
+
 .custom-control-label {
   padding-top: 3px;
 }
+
 button:focus,
 input:focus,
 a:focus {
-   outline:0 !important;
+  outline: 0 !important;
 }
 
 .oi-container {
@@ -69,6 +71,7 @@ a:focus {
   border: 0;
   font-size: 11px;
 }
+
 .oi-container-with-top-nav {
   margin: 35px 0 0 0;
   background-color: #ffffff;
@@ -144,11 +147,12 @@ a:focus {
 }
 
 .oi-error {
-  color:#dc3545;
+  color: #dc3545;
   font-size: 80%;
   margin-bottom: 15px;
   margin-right: 20%;
 }
+
 .oi-status-error {
   text-align: center;
   font-size: 20px;
@@ -186,14 +190,15 @@ a:focus {
 }
 
 .connector {
-  background-color:  #dee2e6;
+  background-color: #dee2e6;
   text-align: center;
   height: 70px;
   margin: 15px 5px 0 5px;
   width: 125px;
-  border:none;
-  border-radius:5px;
+  border: none;
+  border-radius: 5px;
 }
+
 .connector-focus {
   background-color: #f5bb51;
   color: #fff;
@@ -201,23 +206,25 @@ a:focus {
   height: 70px;
   margin: 15px 5px 0 5px;
   width: 125px;
-  border:none;
-  border-radius:5px;
+  border: none;
+  border-radius: 5px;
 }
+
 .oi-header-modal {
   margin-left: -10px;
   margin-right: -10px;
-   display: flex;
-   flex-direction: row;
-   margin-top: -10px;
-   height: 27px;
-   border-top-left-radius: 5px;
-   border-top-right-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  margin-top: -10px;
+  height: 27px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
 
-  }
+}
+
 .icon-left-modal {
   background-color: #323e48;
-  border-color:#323e48;
+  border-color: #323e48;
   flex-grow: 0;
   line-height: 25px;
   margin: 0 10px 0 0;
@@ -227,7 +234,7 @@ a:focus {
   flex-grow: 4;
   font-size: 13px;
   font-weight: 700;
-  vertical-align:top;
+  vertical-align: top;
   line-height: 27px;
   padding-right: 15px;
   justify-content: left;
@@ -302,7 +309,7 @@ a:focus {
   border-color: #dedede;
 }
 
-td > div > .inline-button {
+td>div>.inline-button {
   height: 1rem;
   font-size: 0.65rem;
   padding: 0 0.5rem;
@@ -311,7 +318,7 @@ td > div > .inline-button {
   margin-bottom: 0;
 }
 
-td > div > .autosize {
+td>div>.autosize {
   width: auto;
 }
 
@@ -339,7 +346,7 @@ label {
   flex-direction: row;
 }
 
-.force-row-display > .inline-button {
+.force-row-display>.inline-button {
   margin-right: 0.5rem;
 }
 
@@ -355,7 +362,7 @@ label {
 }
 
 .form-check {
-  padding-left: 5;
+  padding-left: 5px;
 }
 
 /* log pannels */
@@ -402,7 +409,7 @@ label {
   color: #627187;
 }
 
-.oi-icon:hover,.oi-help:hover,.oi-up-down:hover, .oi-back-icon:hover {
+.oi-icon:hover, .oi-help:hover, .oi-up-down:hover, .oi-back-icon:hover {
   text-decoration: none;
   color: #F5BB51;
   cursor: pointer;
@@ -435,7 +442,7 @@ label {
   font-size: small;
 }
 
-.oi-log td{
+.oi-log td {
   padding: 1px;
 }
 
@@ -560,4 +567,11 @@ h3 {
 .last-completed-table th {
   border: 1px solid grey;
   padding: 5px;
+}
+
+/* remove default colors around nodes */
+.react-flow__node-default.selected,
+.react-flow__node-output.selected,
+.react-flow__node-input.selected {
+  box-shadow: unset !important;
 }
