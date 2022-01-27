@@ -165,7 +165,8 @@ class TimescaleDB extends ApiHandler {
           timestamp = entry.timestamp
         }
 
-        Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
+        // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main json object
+        Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp').forEach(([fieldKey, fieldValue]) => {
           // Only insert string or number values
           if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
             fields = fields !== '' ? `${fields},"${fieldKey}"` : `"${fieldKey}"`

@@ -131,7 +131,10 @@ class MongoDB extends ApiHandler {
     let indexFieldsValue = ''
 
     entries.forEach((entry) => {
-      const { pointId, data } = entry
+      const {
+        pointId,
+        data,
+      } = entry
 
       const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
@@ -179,12 +182,21 @@ class MongoDB extends ApiHandler {
         dataValue = data
       }
 
-      Object.entries(dataValue).forEach(([fieldKey, fieldValue]) => {
-        if (!mongoFields) {
-          mongoFields = `"${fieldKey}":"${fieldValue}"`
-        } else {
-          mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
-        }
+      let timestamp
+      if (this.timestampPathInDataValue) {
+        // case where timestamp is within the dataValue fields received.
+        timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
+        // once taken into account, remove the timestamp from the fields to not take it again in the other fields
+        objectPath.del(dataValue, this.timestampPathInDataValue)
+      } else {
+        // case where timestamp is directly at the root of the data received
+        timestamp = entry.timestamp
+      }
+
+      mongoFields = `"${this.timestampKey}":"${timestamp}"`
+      // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main json object
+      Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp').forEach(([fieldKey, fieldValue]) => {
+        mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
       })
 
       // Append entry to body
@@ -206,7 +218,8 @@ class MongoDB extends ApiHandler {
     const bodyJson = JSON.parse(`[${body}]`)
 
     // Inserting JSON Array in MongoDB
-    await this.mongoDatabase.collection(collectionValue).insertMany(bodyJson)
+    await this.mongoDatabase.collection(collectionValue)
+      .insertMany(bodyJson)
     return true
   }
 
