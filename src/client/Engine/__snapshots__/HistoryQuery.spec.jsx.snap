@@ -8,18 +8,17 @@ exports[`HistoryQuery check HistoryQuery 1`] = `
     <h5>
       HistoryQuery parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -57,10 +56,10 @@ exports[`HistoryQuery check HistoryQuery 1`] = `
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.historyQuery.folder"
         >
           HistoryQuery Folder
@@ -97,18 +96,17 @@ exports[`HistoryQuery check change folder 1`] = `
     <h5>
       HistoryQuery parameters
       <button
-        aria-label="Close"
-        class="close"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
           class="oi-help"
           fill="currentColor"
-          height="1em"
+          height="12"
           stroke="currentColor"
           stroke-width="0"
           viewBox="0 0 512 512"
-          width="1em"
+          width="12"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -146,10 +144,10 @@ exports[`HistoryQuery check change folder 1`] = `
       class="col-md-4"
     >
       <div
-        class="form-group"
+        class="mb-3"
       >
         <label
-          class=""
+          class="form-label"
           for="engine.historyQuery.folder"
         >
           HistoryQuery Folder

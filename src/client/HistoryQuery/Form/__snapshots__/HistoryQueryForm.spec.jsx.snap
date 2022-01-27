@@ -10,7 +10,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
     >
       <button
         aria-label="Close"
-        class="close"
+        class="btn-close"
         type="button"
       >
         <svg
@@ -44,7 +44,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         />
       </svg>
       <label
-        class="status-text-breadcrumb text-success"
+        class="status-text-breadcrumb text-success form-label"
       >
         Ongoing
       </label>
@@ -107,26 +107,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="form-check form-switch"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="enabled"
-                name="enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="mb-3 form-check-input"
+              color="secondary"
+              id="enabled"
+              label="Enabled"
+              name="enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -144,10 +135,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="startTime"
             >
               From date
@@ -169,10 +160,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="endTime"
             >
               To date
@@ -194,10 +185,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="filePattern"
             >
               File pattern
@@ -222,7 +213,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Compress
               <input
@@ -263,7 +254,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               role="status"
             >
               <span
-                class="sr-only"
+                class="visually-hidden"
               >
                 Loading...
               </span>
@@ -287,7 +278,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
     >
       <button
         aria-label="Close"
-        class="close"
+        class="btn-close"
         type="button"
       >
         <svg
@@ -321,7 +312,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         />
       </svg>
       <label
-        class="status-text-breadcrumb text-success"
+        class="status-text-breadcrumb text-success form-label"
       >
         Ongoing
       </label>
@@ -384,26 +375,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="form-check form-switch"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                checked=""
-                class="custom-control-input"
-                color="secondary"
-                id="enabled"
-                name="enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              checked=""
+              class="mb-3 form-check-input"
+              color="secondary"
+              id="enabled"
+              label="Enabled"
+              name="enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -421,10 +403,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="startTime"
             >
               From date
@@ -446,10 +428,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="endTime"
             >
               To date
@@ -471,10 +453,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="filePattern"
             >
               File pattern
@@ -499,7 +481,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               Compress
               <input
@@ -540,7 +522,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               role="status"
             >
               <span
-                class="sr-only"
+                class="visually-hidden"
               >
                 Loading...
               </span>
@@ -564,7 +546,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
     >
       <button
         aria-label="Close"
-        class="close"
+        class="btn-close"
         type="button"
       >
         <svg
@@ -598,7 +580,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         />
       </svg>
       <label
-        class="status-text-breadcrumb text-warning"
+        class="status-text-breadcrumb text-warning form-label"
       >
         Paused
       </label>
@@ -661,25 +643,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="form-check form-switch"
           >
-            <div
-              class="custom-switch custom-control"
-            >
-              <input
-                class="custom-control-input"
-                color="secondary"
-                id="enabled"
-                name="enabled"
-                type="checkbox"
-              />
-              <label
-                class="custom-control-label"
-                for="enabled"
-              >
-                Enabled
-              </label>
-            </div>
+            <input
+              class="mb-3 form-check-input"
+              color="secondary"
+              id="enabled"
+              label="Enabled"
+              name="enabled"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -697,10 +670,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="startTime"
             >
               From date
@@ -722,10 +695,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="endTime"
             >
               To date
@@ -780,10 +753,10 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             class="container-fluid"
           />
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="query"
             >
               Query

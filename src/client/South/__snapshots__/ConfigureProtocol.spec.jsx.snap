@@ -1084,7 +1084,6 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               HDA Server
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -1310,10 +1309,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.readIntervalDelay"
             >
               Read interval delay
@@ -1351,7 +1350,6 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               ScanGroups
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -1406,7 +1404,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-6"
         >
           <table
-            class="table tabletable-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -2559,7 +2557,6 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               HDA Server
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -2785,10 +2782,10 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.8.OPCHDA.readIntervalDelay"
             >
               Read interval delay
@@ -2826,7 +2823,6 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               ScanGroups
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -2881,7 +2877,7 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-6"
         >
           <table
-            class="table tabletable-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
