@@ -3,10 +3,10 @@
 exports[`OIbDate check date with value="2021-11-20" 1`] = `
 <div>
   <div
-    class="form-group"
+    class="mb-3"
   >
     <label
-      class=""
+      class="form-label"
       for="endTime"
     >
       To date

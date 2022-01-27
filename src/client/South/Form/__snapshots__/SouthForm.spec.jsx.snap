@@ -507,7 +507,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     </p>
                     <p>
                       The client ams net id must be set beforehand. See the official
-
+                       
                       <a
                         href="https://optimistik.fr/oibus/"
                         rel="noreferrer"
@@ -515,7 +515,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                       >
                         OIBus
                       </a>
-
+                       
                       documentation for more information.
                     </p>
                   </div>
@@ -818,7 +818,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                           PLC name:
                         </b>
                         You can add a prefix to your points ID by mentioning your PLC name. To separate this name from your points ID, you can add a separator.
-
+                         
                         <br />
                         For example, if you have a point ID TEST.MY_INTEGER and that I want to add something in front of it to better identify the data, you can add MY_PLC. in front of your point (dot included). That will give you MY_PLC.TEST.MY_INTEGER
                         <br />
@@ -4658,7 +4658,6 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               HDA Server
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -4884,10 +4883,10 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.OPCHDA.readIntervalDelay"
             >
               Read interval delay
@@ -4925,7 +4924,6 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               ScanGroups
               <button
-
                 class="util-button mt-1 btn btn-link"
                 id="id"
               >
@@ -4980,7 +4978,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-6"
         >
           <table
-            class="table tabletable-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -8083,10 +8081,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.maxReadInterval"
             >
               Max read interval
@@ -8117,10 +8115,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="south.dataSources.0.SQLDbToFile.readIntervalDelay"
             >
               Read interval delay
@@ -8649,7 +8647,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -9786,7 +9784,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -10694,7 +10692,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
