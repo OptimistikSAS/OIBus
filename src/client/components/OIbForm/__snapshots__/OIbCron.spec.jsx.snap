@@ -7,40 +7,36 @@ exports[`OIbCron check Cron custom value change 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"
@@ -63,40 +59,36 @@ exports[`OIbCron check Cron every value change 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -171,40 +163,36 @@ exports[`OIbCron check Cron every value change to 0 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -279,40 +267,36 @@ exports[`OIbCron check Cron with invalid value 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"
@@ -340,40 +324,36 @@ exports[`OIbCron check Cron with label 1`] = `
       label
     </label>
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -450,40 +430,36 @@ exports[`OIbCron check Cron with value="* * * /10" 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -558,40 +534,36 @@ exports[`OIbCron check Cron with value="* * w1-5 /3" 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"
@@ -614,40 +586,36 @@ exports[`OIbCron check Cron with value="listen" 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"
@@ -670,40 +638,36 @@ exports[`OIbCron check change cron interval when type is every 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -778,40 +742,36 @@ exports[`OIbCron check change cron type to custom 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"
@@ -834,40 +794,36 @@ exports[`OIbCron check change cron type to every 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-input form-control"
+        class="oi-form-input oi-cron-input ms-1 form-control"
         id="name.every.value"
         min="1"
         name="value"
@@ -891,12 +847,8 @@ exports[`OIbCron check change cron type to invalide 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
-    >
-      <div
-        style="padding-left: 10px; padding-right: 5px;"
-      />
-    </div>
+      style="display: flex; flex-direction: row; margin-left: 3px;"
+    />
     <div
       class="invalid-feedback"
       style="display: block;"
@@ -912,40 +864,36 @@ exports[`OIbCron check change cron type to same type 1`] = `
     style="margin-bottom: 0px;"
   >
     <div
-      class="row"
+      style="display: flex; flex-direction: row; margin-left: 3px;"
     >
       <div
-        style="padding-left: 10px; padding-right: 5px;"
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
       >
-        <div
-          class="mb-3"
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
           style="padding-bottom: 0px; margin-bottom: 0px;"
         >
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="name.type"
-            name="name.type"
-            style="padding-bottom: 0px; margin-bottom: 0px;"
+          <option
+            value="every"
           >
-            <option
-              value="every"
-            >
-              every
-            </option>
-            <option
-              value="custom"
-            >
-              custom
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-        </div>
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
       </div>
       <input
-        class="oi-form-input oi-cron-custom-input form-control"
+        class="oi-form-input oi-cron-custom-input ms-1 form-control"
         id="name.custom"
         name="value"
         placeholder="value"

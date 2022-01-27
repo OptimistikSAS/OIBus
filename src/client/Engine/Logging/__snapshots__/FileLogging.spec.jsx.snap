@@ -77,8 +77,8 @@ exports[`FileLogging check FileLogging 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -104,7 +104,7 @@ exports[`FileLogging check FileLogging 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -272,8 +272,8 @@ exports[`FileLogging check change file level to "warning" 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -299,7 +299,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -467,8 +467,8 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -494,7 +494,7 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -662,8 +662,8 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -689,7 +689,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -857,8 +857,8 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -884,7 +884,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -1052,8 +1052,8 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -1079,7 +1079,7 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
               The file name of the log file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"

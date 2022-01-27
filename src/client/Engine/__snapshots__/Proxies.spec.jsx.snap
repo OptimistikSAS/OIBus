@@ -8,7 +8,7 @@ exports[`Proxies check Proxies 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -56,7 +56,7 @@ exports[`Proxies check Proxies 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -113,9 +113,11 @@ exports[`Proxies check Proxies 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -129,9 +131,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -157,9 +161,11 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -173,9 +179,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -193,9 +201,11 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -209,9 +219,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -233,7 +245,9 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -251,9 +265,11 @@ exports[`Proxies check Proxies 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -267,9 +283,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -295,9 +313,11 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -311,9 +331,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -331,9 +353,11 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -347,9 +371,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -371,7 +397,9 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -389,9 +417,11 @@ exports[`Proxies check Proxies 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -405,9 +435,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -433,9 +465,11 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -449,9 +483,11 @@ exports[`Proxies check Proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -469,9 +505,15 @@ exports[`Proxies check Proxies 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -503,7 +545,7 @@ exports[`Proxies check add line to proxies 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -551,7 +593,7 @@ exports[`Proxies check add line to proxies 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -608,9 +650,11 @@ exports[`Proxies check add line to proxies 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -624,9 +668,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -652,9 +698,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -668,9 +716,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -688,9 +738,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -704,9 +756,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -728,7 +782,9 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -746,9 +802,11 @@ exports[`Proxies check add line to proxies 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -762,9 +820,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -790,9 +850,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -806,9 +868,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -826,9 +890,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -842,9 +908,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -866,7 +934,9 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -884,9 +954,11 @@ exports[`Proxies check add line to proxies 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -900,9 +972,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -928,9 +1002,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -944,9 +1020,11 @@ exports[`Proxies check add line to proxies 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -964,9 +1042,15 @@ exports[`Proxies check add line to proxies 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -998,7 +1082,7 @@ exports[`Proxies check change first host 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -1046,7 +1130,7 @@ exports[`Proxies check change first host 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1103,9 +1187,11 @@ exports[`Proxies check change first host 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1119,9 +1205,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1147,9 +1235,11 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1163,9 +1253,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1183,9 +1275,11 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1199,9 +1293,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1223,7 +1319,9 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1241,9 +1339,11 @@ exports[`Proxies check change first host 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1257,9 +1357,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1285,9 +1387,11 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1301,9 +1405,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1321,9 +1427,11 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1337,9 +1445,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1361,7 +1471,9 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1379,9 +1491,11 @@ exports[`Proxies check change first host 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1395,9 +1509,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1423,9 +1539,11 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1439,9 +1557,11 @@ exports[`Proxies check change first host 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1459,9 +1579,15 @@ exports[`Proxies check change first host 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1493,7 +1619,7 @@ exports[`Proxies check change first name 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -1541,7 +1667,7 @@ exports[`Proxies check change first name 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1598,9 +1724,11 @@ exports[`Proxies check change first name 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1614,9 +1742,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1642,9 +1772,11 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1658,9 +1790,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1678,9 +1812,11 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1694,9 +1830,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1718,7 +1856,9 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1736,9 +1876,11 @@ exports[`Proxies check change first name 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1752,9 +1894,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1780,9 +1924,11 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1796,9 +1942,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1816,9 +1964,11 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1832,9 +1982,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1856,7 +2008,9 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1874,9 +2028,11 @@ exports[`Proxies check change first name 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1890,9 +2046,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1918,9 +2076,11 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1934,9 +2094,11 @@ exports[`Proxies check change first name 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -1954,9 +2116,15 @@ exports[`Proxies check change first name 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1988,7 +2156,7 @@ exports[`Proxies check change first password 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -2036,7 +2204,7 @@ exports[`Proxies check change first password 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2093,9 +2261,11 @@ exports[`Proxies check change first password 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2109,9 +2279,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2137,9 +2309,11 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2153,9 +2327,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2173,9 +2349,11 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2189,9 +2367,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2213,7 +2393,9 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2231,9 +2413,11 @@ exports[`Proxies check change first password 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2247,9 +2431,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2275,9 +2461,11 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2291,9 +2479,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2311,9 +2501,11 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2327,9 +2519,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2351,7 +2545,9 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2369,9 +2565,11 @@ exports[`Proxies check change first password 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2385,9 +2583,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2413,9 +2613,11 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2429,9 +2631,11 @@ exports[`Proxies check change first password 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2449,9 +2653,15 @@ exports[`Proxies check change first password 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2483,7 +2693,7 @@ exports[`Proxies check change first port 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -2531,7 +2741,7 @@ exports[`Proxies check change first port 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2588,9 +2798,11 @@ exports[`Proxies check change first port 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2604,9 +2816,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2632,9 +2846,11 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2648,9 +2864,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2668,9 +2886,11 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2684,9 +2904,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2708,7 +2930,9 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2726,9 +2950,11 @@ exports[`Proxies check change first port 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2742,9 +2968,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2770,9 +2998,11 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2786,9 +3016,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2806,9 +3038,11 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2822,9 +3056,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2846,7 +3082,9 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2864,9 +3102,11 @@ exports[`Proxies check change first port 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2880,9 +3120,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2908,9 +3150,11 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2924,9 +3168,11 @@ exports[`Proxies check change first port 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -2944,9 +3190,15 @@ exports[`Proxies check change first port 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2978,7 +3230,7 @@ exports[`Proxies check change first protocol 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -3026,7 +3278,7 @@ exports[`Proxies check change first protocol 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3083,9 +3335,11 @@ exports[`Proxies check change first protocol 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3099,9 +3353,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3127,9 +3383,11 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3143,9 +3401,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3163,9 +3423,11 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3179,9 +3441,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3203,7 +3467,9 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3221,9 +3487,11 @@ exports[`Proxies check change first protocol 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3237,9 +3505,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3265,9 +3535,11 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3281,9 +3553,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3301,9 +3575,11 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3317,9 +3593,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3341,7 +3619,9 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3359,9 +3639,11 @@ exports[`Proxies check change first protocol 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3375,9 +3657,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3403,9 +3687,11 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3419,9 +3705,11 @@ exports[`Proxies check change first protocol 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3439,9 +3727,15 @@ exports[`Proxies check change first protocol 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3473,7 +3767,7 @@ exports[`Proxies check change first username 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -3521,7 +3815,7 @@ exports[`Proxies check change first username 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3578,9 +3872,11 @@ exports[`Proxies check change first username 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3594,9 +3890,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3622,9 +3920,11 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3638,9 +3938,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3658,9 +3960,11 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3674,9 +3978,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3698,7 +4004,9 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3716,9 +4024,11 @@ exports[`Proxies check change first username 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3732,9 +4042,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3760,9 +4072,11 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3776,9 +4090,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3796,9 +4112,11 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3812,9 +4130,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3836,7 +4156,9 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3854,9 +4176,11 @@ exports[`Proxies check change first username 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3870,9 +4194,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3898,9 +4224,11 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3914,9 +4242,11 @@ exports[`Proxies check change first username 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -3934,9 +4264,15 @@ exports[`Proxies check change first username 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3968,7 +4304,7 @@ exports[`Proxies check delete first proxie 1`] = `
     <h5>
       Proxies
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -4016,7 +4352,7 @@ exports[`Proxies check delete first proxie 1`] = `
       class="col"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -4073,9 +4409,11 @@ exports[`Proxies check delete first proxie 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4089,9 +4427,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4117,9 +4457,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4133,9 +4475,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -4153,9 +4497,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4169,9 +4515,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4193,7 +4541,9 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4211,9 +4561,11 @@ exports[`Proxies check delete first proxie 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4227,9 +4579,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4255,9 +4609,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4271,9 +4627,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -4291,9 +4649,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4307,9 +4667,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4331,7 +4693,9 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4349,9 +4713,11 @@ exports[`Proxies check delete first proxie 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4365,9 +4731,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4393,9 +4761,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4409,9 +4779,11 @@ exports[`Proxies check delete first proxie 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
@@ -4429,9 +4801,15 @@ exports[`Proxies check delete first proxie 1`] = `
                 />
               </div>
             </td>
-            <td />
-            <td />
-            <td>
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            />
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"

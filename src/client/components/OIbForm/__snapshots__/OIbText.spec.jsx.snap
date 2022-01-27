@@ -2,8 +2,8 @@
 
 exports[`OIbText check Texte with inline 1`] = `
 <div>
-  <form
-    class=""
+  <div
+    class="mb-3"
   >
     <label
       class="form-label"
@@ -22,14 +22,14 @@ exports[`OIbText check Texte with inline 1`] = `
     <div
       class="invalid-feedback"
     />
-  </form>
+  </div>
 </div>
 `;
 
 exports[`OIbText check Texte with too short value 1`] = `
 <div>
-  <form
-    class=""
+  <div
+    class="mb-3"
   >
     <label
       class="form-label"
@@ -50,14 +50,14 @@ exports[`OIbText check Texte with too short value 1`] = `
     >
       Value length should be at least 10
     </div>
-  </form>
+  </div>
 </div>
 `;
 
 exports[`OIbText check Texte with value="a text" 1`] = `
 <div>
-  <form
-    class=""
+  <div
+    class="mb-3"
   >
     <label
       class="form-label"
@@ -76,6 +76,6 @@ exports[`OIbText check Texte with value="a text" 1`] = `
     <div
       class="invalid-feedback"
     />
-  </form>
+  </div>
 </div>
 `;

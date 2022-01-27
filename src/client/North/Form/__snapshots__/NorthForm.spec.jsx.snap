@@ -6,7 +6,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         CsvToHttp
@@ -54,7 +54,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -107,10 +107,10 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -133,7 +133,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -450,7 +450,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Http Endpoint Parameters
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -664,8 +664,8 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <div
               class="col-md-4"
             >
-              <form
-                class=""
+              <div
+                class="mb-3"
               >
                 <label
                   class="form-label"
@@ -684,7 +684,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </div>
             <div
               class="col-md-4"
@@ -731,7 +731,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Mapping Parameters
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -850,7 +850,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -892,9 +892,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             </thead>
             <tbody>
               <tr>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -908,11 +910,13 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -926,9 +930,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -974,7 +980,9 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     />
                   </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -992,9 +1000,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                 </td>
               </tr>
               <tr>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1008,11 +1018,13 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1026,9 +1038,11 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -1074,7 +1088,9 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     />
                   </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -1107,7 +1123,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
             <h5>
               Network
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -1201,7 +1217,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1370,7 +1386,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1418,7 +1434,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -1463,7 +1479,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         RawFileSender
@@ -1511,7 +1527,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1564,10 +1580,10 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -1590,7 +1606,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1907,7 +1923,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <h5>
               OIAnalytics settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2091,8 +2107,8 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <div
               class="col-md-4"
             >
-              <form
-                class=""
+              <div
+                class="mb-3"
               >
                 <label
                   class="form-label"
@@ -2111,7 +2127,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </div>
             <div
               class="col-md-4"
@@ -2158,7 +2174,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
             <h5>
               Network
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2219,7 +2235,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2392,7 +2408,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2440,7 +2456,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -2485,7 +2501,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         Timescale
@@ -2533,7 +2549,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2586,10 +2602,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -2612,7 +2628,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2929,7 +2945,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <h5>
               TimeScale parameters
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2981,8 +2997,8 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -3001,7 +3017,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -3067,8 +3083,8 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -3087,7 +3103,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -3096,7 +3112,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3265,7 +3281,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3313,7 +3329,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -3358,7 +3374,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         WATSYConnect
@@ -3406,7 +3422,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3459,10 +3475,10 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -3485,7 +3501,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3802,7 +3818,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               WATSY Connect Parameters
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -3870,7 +3886,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               MQTT Authentication
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4000,8 +4016,8 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -4020,7 +4036,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -4065,7 +4081,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
             <h5>
               Web Service Authentication
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4186,7 +4202,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4355,7 +4371,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4403,7 +4419,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -4448,7 +4464,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         c
@@ -4496,7 +4512,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4549,11 +4565,11 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Enabled"
@@ -4576,7 +4592,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4893,7 +4909,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             <h5>
               OIConsole settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4949,7 +4965,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5118,7 +5134,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5166,7 +5182,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -5198,7 +5214,9 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
             </thead>
             <tbody>
               <tr>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -5269,7 +5287,9 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                     />
                   </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -5301,7 +5321,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         filewriter
@@ -5349,7 +5369,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5402,11 +5422,11 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Enabled"
@@ -5429,7 +5449,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5746,7 +5766,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
             <h5>
               OIFileWriter settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -5795,8 +5815,8 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -5822,7 +5842,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
                 Path to the output folder
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -5845,7 +5865,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6014,7 +6034,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6062,7 +6082,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -6107,7 +6127,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         monoiconnect
@@ -6155,7 +6175,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6208,10 +6228,10 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -6234,7 +6254,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6551,7 +6571,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <h5>
               OIConnect settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -6631,8 +6651,8 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -6651,13 +6671,13 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -6676,7 +6696,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -6737,8 +6757,8 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <div
               class="col-md-4"
             >
-              <form
-                class=""
+              <div
+                class="mb-3"
               >
                 <label
                   class="form-label"
@@ -6759,7 +6779,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
                 >
                   Value should not be empty
                 </div>
-              </form>
+              </div>
             </div>
             <div
               class="col-md-4"
@@ -6806,7 +6826,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
             <h5>
               Network
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -6902,7 +6922,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7071,7 +7091,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7119,7 +7139,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -7164,7 +7184,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         mqtt
@@ -7212,7 +7232,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7265,11 +7285,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Enabled"
@@ -7292,7 +7312,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7609,7 +7629,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <h5>
               Mqtt parameters
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -7830,8 +7850,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7857,7 +7877,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 clientId information for mqtt and mqtts connection
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -7866,8 +7886,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7886,7 +7906,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -7925,8 +7945,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7952,7 +7972,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 Server certificate (used for MQTTS protocol)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -7961,8 +7981,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7988,7 +8008,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 MQTT client private key
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -7997,8 +8017,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -8024,7 +8044,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                 Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -8056,8 +8076,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -8081,7 +8101,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               for example (.*)\\/(.{2})(.)(.*) to split in 4 groups
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -8090,8 +8110,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -8115,7 +8135,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             >
               Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -8124,7 +8144,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8293,7 +8313,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8341,7 +8361,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -8386,7 +8406,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         test04
@@ -8434,7 +8454,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8487,10 +8507,10 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -8513,7 +8533,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8824,8 +8844,8 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -8844,7 +8864,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -8853,8 +8873,8 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -8873,7 +8893,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -8891,8 +8911,8 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <div
               class="col-md-4"
             >
-              <form
-                class=""
+              <div
+                class="mb-3"
               >
                 <label
                   class="form-label"
@@ -8911,7 +8931,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </div>
             <div
               class="col-md-4"
@@ -8958,7 +8978,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             <h5>
               Network
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -9052,7 +9072,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9221,7 +9241,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9269,7 +9289,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -9314,7 +9334,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         test04 copy
@@ -9362,7 +9382,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9415,10 +9435,10 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="north.applications.0.enabled"
               label="Disabled"
@@ -9441,7 +9461,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9752,8 +9772,8 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -9772,7 +9792,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -9781,8 +9801,8 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -9801,7 +9821,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -9819,8 +9839,8 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <div
               class="col-md-4"
             >
-              <form
-                class=""
+              <div
+                class="mb-3"
               >
                 <label
                   class="form-label"
@@ -9839,7 +9859,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </div>
             <div
               class="col-md-4"
@@ -9886,7 +9906,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             <h5>
               Network
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -9980,7 +10000,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10149,7 +10169,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10197,7 +10217,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -10242,7 +10262,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         emptyApplication
@@ -10290,7 +10310,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10349,7 +10369,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10666,7 +10686,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             <h5>
               OIConsole settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -10722,7 +10742,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Caching
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10899,7 +10919,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
         <h5>
           Subscribed To
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10947,7 +10967,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>

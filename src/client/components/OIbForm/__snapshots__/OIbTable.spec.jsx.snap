@@ -3,7 +3,7 @@
 exports[`OIbTable check Table with help 1`] = `
 <div>
   <table
-    class="table table-sm table-striped table-hover"
+    class="table table table-sm table-striped table-hover"
   >
     <thead>
       <tr>
@@ -41,7 +41,7 @@ exports[`OIbTable check Table with help 1`] = `
 exports[`OIbTable check Table with name, label and rows 1`] = `
 <div>
   <table
-    class="table table-sm table-striped table-hover"
+    class="table table table-sm table-striped table-hover"
   >
     <thead>
       <tr>
@@ -79,7 +79,7 @@ exports[`OIbTable check Table with name, label and rows 1`] = `
 exports[`OIbTable check add to table 1`] = `
 <div>
   <table
-    class="table table-sm table-striped table-hover"
+    class="table table table-sm table-striped table-hover"
   >
     <thead>
       <tr>
@@ -117,7 +117,7 @@ exports[`OIbTable check add to table 1`] = `
 exports[`OIbTable check delete from table 1`] = `
 <div>
   <table
-    class="table table-sm table-striped table-hover"
+    class="table table table-sm table-striped table-hover"
   >
     <thead>
       <tr>
@@ -149,7 +149,9 @@ exports[`OIbTable check delete from table 1`] = `
     </thead>
     <tbody>
       <tr>
-        <td>
+        <td
+          class="align-top"
+        >
           <div
             class="mb-3"
           >
@@ -168,7 +170,9 @@ exports[`OIbTable check delete from table 1`] = `
             />
           </div>
         </td>
-        <td>
+        <td
+          class="align-top"
+        >
           <svg
             class="oi-icon"
             fill="currentColor"

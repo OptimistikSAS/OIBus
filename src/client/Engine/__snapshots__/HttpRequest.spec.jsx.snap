@@ -8,7 +8,7 @@ exports[`HttpRequest check HttpRequest 1`] = `
     <h5>
       Http request parameters
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -172,7 +172,7 @@ exports[`HttpRequest check change stack to "request" 1`] = `
     <h5>
       Http request parameters
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -336,7 +336,7 @@ exports[`HttpRequest check change timeout 1`] = `
     <h5>
       Http request parameters
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg

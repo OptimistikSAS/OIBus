@@ -8,7 +8,7 @@ exports[`ExternalSources check ExternalSources 1`] = `
     <h5>
       ExternalSources
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -56,7 +56,7 @@ exports[`ExternalSources check ExternalSources 1`] = `
       class="col-md-4"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -88,9 +88,11 @@ exports[`ExternalSources check ExternalSources 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -104,9 +106,11 @@ exports[`ExternalSources check ExternalSources 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -138,7 +142,7 @@ exports[`ExternalSources check add line 1`] = `
     <h5>
       ExternalSources
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -186,7 +190,7 @@ exports[`ExternalSources check add line 1`] = `
       class="col-md-4"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -218,9 +222,11 @@ exports[`ExternalSources check add line 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -234,9 +240,11 @@ exports[`ExternalSources check add line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -268,7 +276,7 @@ exports[`ExternalSources check change line 1`] = `
     <h5>
       ExternalSources
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -316,7 +324,7 @@ exports[`ExternalSources check change line 1`] = `
       class="col-md-4"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -348,9 +356,11 @@ exports[`ExternalSources check change line 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -364,9 +374,11 @@ exports[`ExternalSources check change line 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -398,7 +410,7 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
     <h5>
       ExternalSources
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -446,7 +458,7 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
       class="col-md-4"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -478,9 +490,11 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -494,9 +508,11 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"

@@ -75,7 +75,7 @@ const ScanModes = ({ scanModes }) => {
           </>
         </OIbTitle>
         <Row>
-          <Col md={6}>
+          <Col md={5}>
             <Table
               headers={['scanMode', 'cron']}
               rows={scanModes.map((scanMode, i) => [

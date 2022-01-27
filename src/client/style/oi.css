@@ -99,8 +99,7 @@ a:focus {
 }
 
 .oi-navitem {
-  padding: 10px 8px 5px;
-  line-height: 20px;
+  padding: 8px;
   text-decoration: none;
   color: #ffffff;
 }
@@ -139,9 +138,9 @@ a:focus {
 }
 
 .oi-navicon {
-  margin-top: 3px;
-  margin-right: 10px;
-  margin-left: 10px;
+  width: 25px;
+  padding: 1px;
+  margin-right: 5px;
 }
 
 .oi-full-width {
@@ -171,8 +170,8 @@ margin-top: -7px;
 .oi-modal-header {
   background-color: #323e48;
   color: #fff;
-  height: 32px;
-  padding-top: 1px;
+  height: 40px;
+  padding-top: 10px;
 }
 
 .oi-modal-footer {
@@ -396,6 +395,7 @@ label {
 .oi-icon {
   width: 12px;
   color: #627187;
+  margin-right: 2px;
 }
 
 .oi-icon:hover,.oi-help:hover,.oi-up-down:hover {
@@ -415,9 +415,8 @@ label {
 
 .oi-form-input {
   font-size: 11px;
-  padding: 0 6px;
   margin-top: 2px;
-  margin-bottom: 7px;
+  margin-bottom: 5px;
   overflow: hidden;
 }
 
@@ -518,4 +517,8 @@ h3 {
   outline: none;
   box-shadow: none;
   border-width: 0px;
+}
+
+.table > :not(:first-child) {
+  border-top: 0;
 }

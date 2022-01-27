@@ -45,7 +45,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   return (
     <>
       <div className="d-flex align-items-center w-100 oi-sub-nav">
-        <h6 className="text-muted d-flex align-items-center ps-3 pt-1">
+        <h6 className="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0">
           <EditableIdField
             connectorName={application.name}
             editing={renamingConnector === `north-${application.id}`}
