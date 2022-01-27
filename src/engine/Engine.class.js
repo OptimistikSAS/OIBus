@@ -111,7 +111,7 @@ class Engine {
 
     // Configure the Cache
     this.cache = new Cache(this)
-    this.cache.initialize()
+    await this.cache.initialize()
 
     // Request service
     this.requestService = createRequestService(this)
@@ -147,7 +147,7 @@ class Engine {
    * Send values to a North application.
    * @param {string} id - The application id
    * @param {object[]} values - The values to send
-   * @return {number} - The send status
+   * @return {Promise<number>} - The send status
    */
   async handleValuesFromCache(id, values) {
     this.logger.silly(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
@@ -166,7 +166,7 @@ class Engine {
    * Send file to a North application.
    * @param {string} id - The application id
    * @param {string} filePath - The file to send
-   * @return {number} - The send status
+   * @return {Promise<number>} - The sent status
    */
   async sendFile(id, filePath) {
     this.logger.silly(`Engine sendFile() call with "${this.activeApis[id]?.application.name || id}" and ${filePath}`)
@@ -619,7 +619,7 @@ class Engine {
   }
 
   /**
-   * Method used by the eventEmmiter of the current protocol to write data to the socket and send them to the frontend
+   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
    * @param {object} data - The json object of data to send
    * @return {void}
    */

@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 
 const databaseService = require('../services/database.service')
@@ -29,31 +29,20 @@ class Cache {
     const { engineConfig } = engine.configService.getConfig()
     const { cacheFolder, archive } = engineConfig.caching
     this.archiveMode = archive.enabled
+    this.archiveFolder = path.resolve(archive.archiveFolder)
     this.retentionDuration = (archive.retentionDuration) * 3600000
     // Create cache folder if not exists
     this.cacheFolder = path.resolve(cacheFolder)
-    if (!fs.existsSync(this.cacheFolder)) {
-      this.logger.info(`creating cache folder in ${this.cacheFolder}`)
-      fs.mkdirSync(this.cacheFolder, { recursive: true })
-    }
-    if (this.archiveMode) {
-      // Create archive folder if not exists
-      this.archiveFolder = path.resolve(archive.archiveFolder)
-      if (!fs.existsSync(this.archiveFolder)) {
-        this.logger.info(`creating archive folder in ${this.archiveFolder}`)
-        fs.mkdirSync(this.archiveFolder, { recursive: true })
-      }
-    }
-    // will contains the list of North apis
+
+    // will contain the list of North apis
     this.apis = {}
     // Queuing
     this.sendInProgress = {}
     this.resendImmediately = {}
     // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue()
+    this.queue = new Queue(engine.logger)
     // Cache stats
     this.cacheStats = {}
-    this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
     // Errored files/values database path
     this.filesErrorDatabasePath = `${this.cacheFolder}/fileCache-error.db`
     this.valuesErrorDatabasePath = `${this.cacheFolder}/valueCache-error.db`
@@ -89,7 +78,7 @@ class Cache {
     if (api && api.config && api.config.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
-      this.logger.warning(`api: ${api.name} has no sendInterval`)
+      this.logger.warn(`Application "${api.name}" has no sendInterval`)
     }
   }
 
@@ -110,6 +99,22 @@ class Cache {
    * @return {void}
    */
   async initialize() {
+    try {
+      await fs.stat(this.cacheFolder)
+    } catch (error) {
+      this.logger.info(`Creating cache folder: ${this.cacheFolder}`)
+      await fs.mkdir(this.cacheFolder, { recursive: true })
+    }
+
+    if (this.archiveMode) {
+      try {
+        await fs.stat(this.archiveFolder)
+      } catch (error) {
+        this.logger.info(`Creating archive folder: ${this.cacheFolder}`)
+        await fs.mkdir(this.cacheFolder, { recursive: true })
+      }
+    }
+    this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
     this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
     this.filesErrorDatabase = await databaseService.createFilesDatabase(this.filesErrorDatabasePath)
@@ -148,7 +153,7 @@ class Cache {
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
       // Queue saving values.
-      this.queue.add(databaseService.saveValues, database, this.engine.activeProtocols[id]?.dataSource.name || id, values)
+      await this.queue.add(databaseService.saveValues, database, this.engine.activeProtocols[id]?.dataSource.name || id, values)
 
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
@@ -258,36 +263,26 @@ class Cache {
    * @param {boolean} preserveFiles - Whether to preserve the file
    * @returns {Promise<*>} - The result promise
    */
-  transferFile(filePath, cachePath, preserveFiles) {
-    return new Promise((resolve, reject) => {
-      this.logger.debug(`transferFile(${filePath}) - preserveFiles:${preserveFiles}, cachePath:${cachePath}`)
+  async transferFile(filePath, cachePath, preserveFiles) {
+    this.logger.debug(`transferFile(${filePath}) - preserveFiles:${preserveFiles}, cachePath:${cachePath}`)
+
+    if (preserveFiles) {
+      await fs.copyFile(filePath, cachePath)
+    } else {
       try {
-        if (preserveFiles) {
-          fs.copyFile(filePath, cachePath, (copyError) => {
-            if (copyError) throw copyError
-            resolve()
-          })
-        } else {
-          fs.rename(filePath, cachePath, (renameError) => {
-            if (renameError) {
-              // In case of cross-device link error we copy+delete instead
-              if (renameError.code !== 'EXDEV') throw renameError
-              this.logger.debug('Cross-device link error during rename, copy+paste instead')
-              fs.copyFile(filePath, cachePath, (copyError) => {
-                if (copyError) throw copyError
-                fs.unlink(filePath, (unlinkError) => {
-                  // log error but does not throw so we try sending the file to S3
-                  if (unlinkError) this.logger.error(unlinkError)
-                })
-              })
-            }
-            resolve()
-          })
+        await fs.rename(filePath, cachePath)
+      } catch (renameError) {
+        // In case of cross-device link error we copy+delete instead
+        if (renameError.code !== 'EXDEV') throw renameError
+        this.logger.debug('Cross-device link error during rename, copy+paste instead')
+        await fs.copyFile(filePath, cachePath)
+        try {
+          await fs.unlink(filePath)
+        } catch (unlinkError) {
+          this.logger.error(unlinkError)
         }
-      } catch (error) {
-        reject(error)
       }
-    })
+    }
   }
 
   /**
@@ -384,14 +379,16 @@ class Cache {
     try {
       const fileToSend = await databaseService.getFileToSend(this.filesDatabase, id)
 
-      if (fileToSend === null) {
+      if (!fileToSend) {
         this.logger.silly('sendCallbackForFiles(): no file to send')
         return ApiHandler.STATUS.SUCCESS
       }
 
       this.logger.silly(`sendCallbackForFiles() file:${fileToSend.path}`)
 
-      if (!fs.existsSync(fileToSend.path)) {
+      try {
+        await fs.stat(fileToSend.path)
+      } catch (error) {
         // file in cache does not exist on filesystem
         await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
         this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
@@ -435,22 +432,20 @@ class Cache {
         const archivedFilename = path.basename(filePath)
         const archivePath = path.join(this.archiveFolder, archivedFilename)
         // Move original file into the archive folder
-        fs.rename(filePath, archivePath, (renameError) => {
-          if (renameError) {
-            this.logger.error(renameError)
-          } else {
-            this.logger.info(`File ${filePath} moved to ${archivePath}`)
-          }
-        })
+        try {
+          await fs.rename(filePath, archivePath)
+          this.logger.info(`File ${filePath} moved to ${archivePath}`)
+        } catch (renameError) {
+          this.logger.error(renameError)
+        }
       } else {
         // Delete original file
-        fs.unlink(filePath, (unlinkError) => {
-          if (unlinkError) {
-            this.logger.error(unlinkError)
-          } else {
-            this.logger.info(`File ${filePath} deleted`)
-          }
-        })
+        try {
+          await fs.unlink(filePath)
+          this.logger.info(`File ${filePath} deleted`)
+        } catch (unlinkError) {
+          this.logger.error(unlinkError)
+        }
       }
     }
   }
@@ -466,28 +461,23 @@ class Cache {
       clearTimeout(this.archiveTimeout)
     }
 
-    const files = fs.readdirSync(this.archiveFolder)
+    const files = await fs.readdir(this.archiveFolder)
     const timestamp = new Date().getTime()
     if (files.length > 0) {
-      files.forEach((file) => {
-        const stats = fs.statSync(path.join(this.archiveFolder, file))
-
+      // eslint-disable-next-line no-restricted-syntax
+      for (const file of files) {
+        // eslint-disable-next-line no-await-in-loop
+        const stats = await fs.stat(path.join(this.archiveFolder, file))
         if (stats.mtimeMs + this.retentionDuration < timestamp) {
-          // local try catch in case an error occurs on a file
-          // if so, the loop goes on with the other files
           try {
-            fs.unlink(path.join(this.archiveFolder, file), (unlinkError) => {
-              if (unlinkError) {
-                this.logger.error(unlinkError)
-              } else {
-                this.logger.debug(`File ${path.join(this.archiveFolder, file)} removed from archive`)
-              }
-            })
-          } catch (sendFileError) {
-            this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+            // eslint-disable-next-line no-await-in-loop
+            await fs.unlink(path.join(this.archiveFolder, file))
+            this.logger.debug(`File ${path.join(this.archiveFolder, file)} removed from archive`)
+          } catch (unlinkError) {
+            this.logger.error(unlinkError)
           }
         }
-      })
+      }
     } else {
       this.logger.debug(`The archive folder ${this.archiveFolder} is empty. Nothing to delete`)
     }
