@@ -788,13 +788,13 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                     </p>
                     <p>
                       <b>
-                        Example 1:
+                        Example 1: 
                       </b>
                       If the CSV file contains 2 headers called header1 and header2, it is possible to specify the name for each field in the http request. It‘s possible to have in the body of the request a field called "AfterMapping" which contains the value of the header1 for each row. We can do the same for each header present in the CSV file
                     </p>
                     <p>
                       <b>
-                        Example 2:
+                        Example 2: 
                       </b>
                       It is possible to specify the name for each header in the http request using template string (references to other headers as a variable). Thanks to it we can reference headers present in the CSV file as variables. For it, the syntax to use is the javascript one (such as: $
                       {name of your header}
@@ -2943,7 +2943,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             class="row"
           >
             <h5>
-              TimeScale parameters
+              Timescale parameters
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -2980,7 +2980,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                   class="col"
                 >
                   <p>
-                    TimeScaleDB North application is in Beta Mode
+                    Send points data to Timescale Database
                   </p>
                   <p>
                     Please enter here required information to access the database.
@@ -3123,18 +3123,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <h5>
               Point id parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -3183,10 +3182,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.regExp"
             >
               Reg exp
@@ -3217,10 +3216,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.table"
             >
               Table
@@ -3242,10 +3241,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.optFields"
             >
               Opt fields
@@ -3272,10 +3271,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.timestampPathInDataValue"
             >
               Timestamp path in data value
@@ -3294,7 +3293,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              Timestamp field extracted from data value. Keep it empty to retrieve it from the data
+              Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)
             </small>
           </div>
         </div>
@@ -3311,18 +3310,17 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <h5>
               Value parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -3347,7 +3345,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                   class="col"
                 >
                   <p>
-                    data value to process by north connector is a Json object which contains :
+                    data value to process by north connector is a Json object which contains :  
                   </p>
                   <ul>
                     <li>
@@ -3358,7 +3356,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                     </li>
                   </ul>
                   <p>
-                    When value is Json object it can be written in two format:
+                    When value is Json object it can be written in two format: 
                   </p>
                   <ul>
                     <li>
@@ -3369,7 +3367,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
                     </li>
                   </ul>
                   <p>
-                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters:
+                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters: 
                   </p>
                   <ul>
                     <li>
@@ -3413,7 +3411,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               use key "value" of Json "data"
               <input
@@ -3426,7 +3424,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              when checked means we use value key of data Json object (but not the quality key)
+              When checked, means that the field "value" will be parsed as JSON object
             </small>
           </div>
         </div>
@@ -3438,10 +3436,10 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.TimescaleDB.keyParentValue"
             >
               Key parent value
@@ -3460,7 +3458,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              indicate the key of Json object which contains value data (empty value mean Json object root)
+              Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
             </small>
           </div>
         </div>
@@ -4215,13 +4213,13 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          MQTT Parameters:
+                          MQTT Parameters: 
                         </b>
                         Configure Mqtt in order to send WATSY message to your Mqtt url
                       </li>
                       <li>
                         <b>
-                          Web Service Parameters:
+                          Web Service Parameters: 
                         </b>
                         Configure your applicative host(url) thanks to: a url and a token. Thanks to it, WATSYConnect will be able to send process your data and create loss if it is needed
                       </li>
@@ -4283,19 +4281,19 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          MQTT Url:
+                          MQTT Url: 
                         </b>
                         Url which will be used in order to send messages
                       </li>
                       <li>
                         <b>
-                          MQTT Port:
+                          MQTT Port: 
                         </b>
                         The port use by RabbitMQ in order to send messages
                       </li>
                       <li>
                         <b>
-                          Authentication parameters:
+                          Authentication parameters: 
                         </b>
                         This paramaters allow WATSYConnect North to connect into mqtt Url thanks to:
                         <ul>
@@ -4478,13 +4476,13 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
                     <ul>
                       <li>
                         <b>
-                          HTTP/HTTPS Url:
+                          HTTP/HTTPS Url: 
                         </b>
                         Url which will be used in order to process data
                       </li>
                       <li>
                         <b>
-                          HTTP/HTTPS Token:
+                          HTTP/HTTPS Token: 
                         </b>
                         Token which permits to connect into the applicative website
                       </li>
@@ -8096,7 +8094,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                         Regexp will be used to identify token in the pointId that will be used to get data used by MQTT North Connector.
                         <ul>
                           <li>
-                            (.*)\\/(.{2})(.)(.*)
+                            (.*)\\/(.{2})(.)(.*) 
                             This example will split into 4 groups: MMMMM/SSNCCC...CC gives %1=MMMMM %2=SS %3=N %4=CCC...CC
                           </li>
                           <li>
@@ -8112,11 +8110,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                         <br />
                         For example, RegExp
                         <b>
-                           .*
+                           .* 
                         </b>
                         and topic
                         <b>
-                           %1$s
+                           %1$s 
                         </b>
                         means that the topic equals the point ID.
                       </li>
@@ -8473,18 +8471,17 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <h5>
               Value parameters
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -8509,7 +8506,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                   class="col"
                 >
                   <p>
-                    data value to process by north connector is a Json object which contains :
+                    data value to process by north connector is a Json object which contains :  
                   </p>
                   <ul>
                     <li>
@@ -8520,7 +8517,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                     </li>
                   </ul>
                   <p>
-                    When value is Json object it can be written in two format:
+                    When value is Json object it can be written in two format: 
                   </p>
                   <ul>
                     <li>
@@ -8531,7 +8528,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
                     </li>
                   </ul>
                   <p>
-                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters:
+                    To simplify the oibus configuration and to make difference between the formats, presented above, we use two parameters: 
                   </p>
                   <ul>
                     <li>
@@ -8575,7 +8572,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="form-check"
           >
             <label
-              class="form-check-label"
+              class="form-check-label form-label"
             >
               use key "value" of Json "data"
               <input
@@ -8588,7 +8585,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <small
               class="form-text text-muted"
             >
-              when checked means we use value key of data Json object (but not the quality key)
+              When checked, means that the field "value" will be parsed as JSON object
             </small>
           </div>
         </div>
@@ -8600,10 +8597,10 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-group"
+            class="mb-3"
           >
             <label
-              class=""
+              class="form-label"
               for="north.applications.0.MQTTNorth.keyParentValue"
             >
               Key parent value
@@ -8622,7 +8619,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <small
               class="form-text text-muted"
             >
-              indicate the key of Json object which contains value data (empty value mean Json object root)
+              Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
             </small>
           </div>
         </div>

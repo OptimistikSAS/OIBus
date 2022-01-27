@@ -7,7 +7,7 @@ schema.form = {
     type: 'OIbTitle',
     children: (
       <>
-        <p>MongoDB North application is in Beta Mode</p>
+        <p>Send points data to MongoDB</p>
         <ul>
           <li>
             <b>Host and Port:</b>
@@ -155,14 +155,21 @@ schema.form = {
     type: 'OIbCheckBox',
     valid: notEmpty(),
     label: 'use key "value" of Json "data"',
-    help: 'when checked means we use value key of data Json object (but not the quality key)',
+    help: 'When checked, means that the field "value" will be parsed as JSON object',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: 'indicate the key of Json object which contains value data (empty value mean Json object root)',
+    help: 'Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)',
+  },
+  timestampPathInDataValue: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: optional(),
+    newRow: false,
+    help: 'Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)',
   },
 }
 schema.category = 'DatabaseIn'

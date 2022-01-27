@@ -5,10 +5,10 @@ const schema = { name: 'TimescaleDB' }
 schema.form = {
   TimescaledbParameters: {
     type: 'OIbTitle',
-    label: 'TimeScale parameters',
+    label: 'Timescale parameters',
     children: (
       <>
-        <p>TimeScaleDB North application is in Beta Mode</p>
+        <p>Send points data to Timescale Database</p>
         <p>
           Please enter here required information to access the database.
         </p>
@@ -77,7 +77,7 @@ schema.form = {
     defaultValue: '',
     valid: optional(),
     newRow: false,
-    help: 'Timestamp field extracted from data value. Keep it empty to retrieve it from the data',
+    help: 'Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)',
   },
   valueParameters: {
     type: 'OIbTitle',
@@ -137,14 +137,14 @@ schema.form = {
     type: 'OIbCheckBox',
     valid: notEmpty(),
     label: 'use key "value" of Json "data"',
-    help: 'when checked means we use value key of data Json object (but not the quality key)',
+    help: 'When checked, means that the field "value" will be parsed as JSON object',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: 'indicate the key of Json object which contains value data (empty value mean Json object root)',
+    help: 'Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)',
   },
 }
 schema.category = 'DatabaseIn'

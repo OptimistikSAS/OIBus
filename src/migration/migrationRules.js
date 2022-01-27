@@ -724,6 +724,10 @@ module.exports = {
           logger.info(`Add keyParentValue field to ${application.name}`)
           application.MQTTNorth.keyParentValue = ''
         }
+        if (!Object.prototype.hasOwnProperty.call(application.MQTTNorth, 'timestampPathInDataValue')) {
+          logger.info(`Add timestampPathInDataValue field to ${application.name}`)
+          application.MQTTNorth.timestampPathInDataValue = ''
+        }
       }
 
       if (application.api === 'InfluxDB') {
@@ -764,6 +768,10 @@ module.exports = {
 
         if (Object.prototype.hasOwnProperty.call(application.MongoDB, 'addTimestampToIndex')) {
           delete application.MongoDB.addTimestampToIndex
+        }
+        if (!Object.prototype.hasOwnProperty.call(application.MongoDB, 'timestampPathInDataValue')) {
+          logger.info(`Add timestampPathInDataValue field to ${application.name}`)
+          application.MongoDB.timestampPathInDataValue = ''
         }
       }
 

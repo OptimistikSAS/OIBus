@@ -146,27 +146,28 @@ describe('MongoDB north', () => {
     expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Collection "SENSOR_TABLE" successfully created')
     expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Collection indexes successfully created for collection "SENSOR_TABLE"')
     expect(mongoDbNorth.collectionChecked).toBeTruthy()
-    expect(inserManyFunction).toHaveBeenCalledWith([{ quality: 'good', sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666' }])
+    expect(inserManyFunction).toHaveBeenCalledWith(
+      [{ quality: 'good', sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: '2020-02-29T12:12:12.000Z' }],
+    )
 
     mongoDbNorth.useDataKeyValue = true
     mongoDbNorth.keyParentValue = 'level'
+    mongoDbNorth.timestampPathInDataValue = 'timestamp'
     await mongoDbNorth.handleValues([{
       pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
-      timestamp,
       data: {
-        value: { level: { value: 666 } },
+        value: { level: { value: 666, timestamp } },
         quality: 'good',
       },
     }, {
       pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
-      timestamp,
       data: {
-        value: { level: { value: 777 } },
+        value: { level: { value: 777, timestamp } },
         quality: 'good',
       },
     }])
     // eslint-disable-next-line max-len
-    expect(inserManyFunction).toHaveBeenCalledWith([{ sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666' }, { sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '777' }])
+    expect(inserManyFunction).toHaveBeenCalledWith([{ sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: '2020-02-29T12:12:12.000Z' }, { sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '777', timestamp: '2020-02-29T12:12:12.000Z' }])
   })
 
   it('should not create collection if it already exists', async () => {
