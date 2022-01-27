@@ -11,7 +11,7 @@ const CACHE_TABLE_NAME = 'cache'
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
  * @param {any} options - options
- * @return {Sqlite.Database} - The SQLite3 database
+ * @return {sqlite.Database} - The SQLite3 database
  */
 const createValuesDatabase = async (databasePath, options) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -35,7 +35,7 @@ const createValuesDatabase = async (databasePath, options) => {
 /**
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {BetterSqlite3.Database} - The SQLite3 database
+ * @return {sqlite.Database} - The SQLite3 database
  */
 const createFilesDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -55,7 +55,7 @@ const createFilesDatabase = async (databasePath) => {
 /**
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {BetterSqlite3.Database} - The SQLite3 database
+ * @return {sqlite.Database} - The SQLite3 database
  */
 const createConfigDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -74,7 +74,7 @@ const createConfigDatabase = async (databasePath) => {
 /**
  * Initiate SQLite3 database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {Sqlite.Database} - The SQLite3 database
+ * @return {sqlite.Database} - The SQLite3 database
  */
 const createValueErrorsDatabase = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -93,7 +93,7 @@ const createValueErrorsDatabase = async (databasePath) => {
 
 /**
  * Save values in database.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {String} dataSourceName - The name of the data source to be sent with the value
  * @param {object} values - The values to save
  * @return {void}
@@ -112,7 +112,7 @@ const saveValues = async (database, dataSourceName, values) => {
 
 /**
  * Save errored values in database.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {String} id - The application id
  * @param {object} values - The values to save
  * @return {void}
@@ -134,8 +134,8 @@ const saveErroredValues = async (database, id, values) => {
 
 /**
  * Get values count.
- * @param {BetterSqlite3.Database} database - The database to use
- * @return {number} - The values count
+ * @param {sqlite.Database} database - The database to use
+ * @return {Promise<number>} - The values count
  */
 const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
@@ -153,7 +153,7 @@ const getCount = async (database) => {
 
 /**
  * Get values to send to a given North application.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} count - The number of values to get
  * @return {array|null} - The values
  */
@@ -182,9 +182,9 @@ const getValuesToSend = async (database, count) => {
 
 /**
  * Remove sent values from the cache for a given North application.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {Object} values - The values to remove
- * @return {number} number of deleted values
+ * @return {Promise<number>} number of deleted values
  */
 const removeSentValues = async (database, values) => {
   let result
@@ -202,11 +202,11 @@ const removeSentValues = async (database, values) => {
 
 /**
  * Save file for a given application.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {number} timestamp - The timestamp
  * @param {string} id - The application id
  * @param {string} filePath - The file path
- * @return {void}
+ * @return {Promise<void>} - Promise resolved when the transition is done successfully
  */
 const saveFile = async (database, timestamp, id, filePath) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, application, path) 
@@ -217,9 +217,9 @@ const saveFile = async (database, timestamp, id, filePath) => {
 
 /**
  * Get file to send to a given North application.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} id - The application id
- * @return {string|null} - The file path
+ * @return {Promise<{path: string, timestamp: number}>} - The file path
  */
 const getFileToSend = async (database, id) => {
   const query = `SELECT path, timestamp 
@@ -235,7 +235,7 @@ const getFileToSend = async (database, id) => {
 
 /**
  * Delete sent file from the cache for a given North application.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} id - The application id
  * @param {string} filePath - The file path
  * @return {void}
@@ -250,9 +250,9 @@ const deleteSentFile = async (database, id, filePath) => {
 
 /**
  * Get file count.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} filePath - The file path
- * @return {number} - The file count
+ * @return {Promise<number>} - The file count
  */
 const getFileCount = async (database, filePath) => {
   const query = `SELECT COUNT(*) AS count 
@@ -266,7 +266,7 @@ const getFileCount = async (database, filePath) => {
 
 /**
  * Get file count for API.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} api - The api to get file count
  * @return {number} - The file count
  */
@@ -282,7 +282,7 @@ const getFileCountForApi = async (database, api) => {
 
 /**
  * Upsert config entry.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} name - The config entry
  * @param {string} value - The config value
  * @return {void}
@@ -297,7 +297,7 @@ const upsertConfig = async (database, name, value) => {
 
 /**
  * Get configuration.
- * @param {BetterSqlite3.Database} database - The database to use
+ * @param {sqlite.Database} database - The database to use
  * @param {string} name - The config name
  * @return {string} - The config value
  */
@@ -336,7 +336,7 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
 /**
  * Get logs count.
  * @param {string} databasePath - The database path
- * @return {number} - The logs count
+ * @return {Promise<{error: number, warn: number}>} - The logs count
  */
 const getLogsCount = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -356,7 +356,7 @@ const getLogsCount = async (databasePath) => {
 /**
  * Get number of errored values.
  * @param {string} databasePath - The database path
- * @returns {number} - The count
+ * @returns {Promise<number>} - The count
  */
 const getErroredValuesCount = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
@@ -370,7 +370,7 @@ const getErroredValuesCount = async (databasePath) => {
 /**
  * Get number of errored files.
  * @param {string} databasePath - The database path
- * @returns {number} - The count
+ * @returns {Promise<number>} - The count
  */
 const getErroredFilesCount = async (databasePath) => {
   const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
