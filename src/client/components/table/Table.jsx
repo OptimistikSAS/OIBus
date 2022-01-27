@@ -28,7 +28,7 @@ const Table = ({
         </>
       </OIbTitle>
     )}
-    <BsTable striped hover size="sm">
+    <BsTable striped hover size="sm" className="table">
       <TableHeader
         headers={headers}
         sortableProperties={sortableProperties}

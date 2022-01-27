@@ -16,8 +16,9 @@ const OIbCheckBox = ({ label, help, value, name, onChange, defaultValue, switchB
   if (value === null) return null
   if (switchButton) {
     return (
-      <FormGroup>
+      <FormGroup switch>
         <Input
+          className="mb-3"
           type="switch"
           id={name}
           name={name}

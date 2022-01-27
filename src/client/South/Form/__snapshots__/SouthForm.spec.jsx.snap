@@ -6,7 +6,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         ADS - Test
@@ -60,7 +60,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -113,11 +113,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Enabled"
@@ -140,7 +140,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -457,7 +457,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -507,7 +507,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     </p>
                     <p>
                       The client ams net id must be set beforehand. See the official
-
+                       
                       <a
                         href="https://optimistik.fr/oibus/"
                         rel="noreferrer"
@@ -515,7 +515,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                       >
                         OIBus
                       </a>
-
+                       
                       documentation for more information.
                     </p>
                   </div>
@@ -531,8 +531,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -558,7 +558,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The ADS net id of the PLC
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -599,8 +599,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -626,7 +626,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The IP address where the AMS router is
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -667,8 +667,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -694,7 +694,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The AMS net id set to this client from the AMS router settings
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -777,7 +777,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads data settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -818,7 +818,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                           PLC name:
                         </b>
                         You can add a prefix to your points ID by mentioning your PLC name. To separate this name from your points ID, you can add a separator.
-
+                         
                         <br />
                         For example, if you have a point ID TEST.MY_INTEGER and that I want to add something in front of it to better identify the data, you can add MY_PLC. in front of your point (dot included). That will give you MY_PLC.TEST.MY_INTEGER
                         <br />
@@ -873,8 +873,8 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -900,7 +900,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 The name of the PLC that will be added to the points ID as prefix.
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -987,7 +987,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             <h5>
               Ads structures
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -1037,7 +1037,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -1074,9 +1074,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
             </thead>
             <tbody>
               <tr>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1090,11 +1092,13 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1108,9 +1112,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -1128,9 +1134,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                 </td>
               </tr>
               <tr>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1144,11 +1152,13 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
-                  <form
-                    class=""
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
                     style="margin-bottom: 0px;"
                   >
                     <input
@@ -1162,9 +1172,11 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                     <div
                       class="invalid-feedback"
                     />
-                  </form>
+                  </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -1196,7 +1208,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         FolderScanner
@@ -1250,7 +1262,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1303,11 +1315,11 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Enabled"
@@ -1368,7 +1380,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1685,7 +1697,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             <h5>
               FolderScanner settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -1757,8 +1769,8 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -1784,7 +1796,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
                 Path to folder such as: c:/input/
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -1865,8 +1877,8 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -1892,7 +1904,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
                 RegExp to filter the folder
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -1929,7 +1941,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         MQTTServer
@@ -1983,7 +1995,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2036,10 +2048,10 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -2062,7 +2074,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2379,7 +2391,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Mqtt settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2557,8 +2569,8 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2577,7 +2589,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -2616,8 +2628,8 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2643,13 +2655,13 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 Server certificate (used for MQTTS protocol)
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2675,13 +2687,13 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 MQTT client private key
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2707,7 +2719,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
                 Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -2824,7 +2836,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Mqtt payload
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2924,7 +2936,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <h5>
               Timestamp settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -3038,8 +3050,8 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -3058,7 +3070,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -3568,7 +3580,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         OPC-HDA
@@ -3622,7 +3634,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3675,10 +3687,10 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -3701,7 +3713,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4018,7 +4030,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               HDA Agent
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4516,8 +4528,8 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -4543,7 +4555,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -4646,7 +4658,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               HDA Server
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4706,8 +4718,8 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -4733,13 +4745,13 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -4765,7 +4777,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -4880,7 +4892,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -4934,7 +4946,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -4989,7 +5001,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         PLC-35
@@ -5043,7 +5055,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5096,10 +5108,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -5122,7 +5134,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5439,7 +5451,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
             <h5>
               Modbus settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -5552,8 +5564,8 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -5581,7 +5593,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
                 IP address of the Modbus source
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -5719,7 +5731,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         PLC-42
@@ -5773,7 +5785,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5826,10 +5838,10 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -5852,7 +5864,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6169,7 +6181,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
             <h5>
               Modbus settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -6282,8 +6294,8 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -6311,7 +6323,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
                 IP address of the Modbus source
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -6449,7 +6461,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         SQLDbToFile
@@ -6503,7 +6515,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6556,10 +6568,10 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -6620,7 +6632,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6937,7 +6949,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             <h5>
               SQLDBtoFile Settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -7085,8 +7097,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7112,7 +7124,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 IP address of the SQLDbToFile server
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -7153,8 +7165,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-3"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7180,7 +7192,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Name of the SQL database (SID or Service Name for Oracle)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -7189,8 +7201,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-3"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7216,7 +7228,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 (Preferably with only readonly access to the database)
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-3"
@@ -7355,8 +7367,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-1"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7382,13 +7394,13 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Delimiter in the CSV file
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7414,13 +7426,13 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Date Format
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-3"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7446,7 +7458,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 The name of the CSV file
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -7455,8 +7467,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         <div
           class="col-md-2"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -7482,7 +7494,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                 Time Column
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -8015,7 +8027,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         SimulationServer
@@ -8069,7 +8081,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8122,10 +8134,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -8148,7 +8160,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8465,7 +8477,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             <h5>
               Opcua network settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -8507,7 +8519,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -8737,18 +8749,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             <h5>
               Opcua security settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -8815,7 +8826,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -8869,7 +8880,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -8911,7 +8922,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             </thead>
             <tbody>
               <tr>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -8947,8 +8960,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     />
                   </div>
                 </td>
-                <td />
-                <td>
+                <td
+                  class="align-top"
+                />
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -8999,7 +9016,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     />
                   </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -9017,7 +9036,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                 </td>
               </tr>
               <tr>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -9053,8 +9074,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     />
                   </div>
                 </td>
-                <td />
-                <td>
+                <td
+                  class="align-top"
+                />
+                <td
+                  class="align-top"
+                >
                   <div
                     class="mb-3"
                   >
@@ -9105,7 +9130,9 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                     />
                   </div>
                 </td>
-                <td>
+                <td
+                  class="align-top"
+                >
                   <svg
                     class="oi-icon"
                     fill="currentColor"
@@ -9137,7 +9164,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         SimulationServerBis
@@ -9191,7 +9218,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9244,10 +9271,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -9270,7 +9297,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9587,7 +9614,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             <h5>
               Opcua network settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -9629,7 +9656,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -9859,18 +9886,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             <h5>
               Opcua security settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -9937,7 +9963,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -9991,7 +10017,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -10046,7 +10072,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         SimulationServerBis copy
@@ -10100,7 +10126,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10153,10 +10179,10 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.0.enabled"
               label="Disabled"
@@ -10179,7 +10205,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -10496,7 +10522,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             <h5>
               Opcua network settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -10538,7 +10564,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
                       URL:
                     </b>
                     The url of the OPCUA server, including the endpoint and the port. For example: opc.tcp://localhost:53530/OPCUA/SimulationServer.
-
+                     
                     <br />
                     Note that opc.https is not supported for now. Moreover, you may need to trust the OIBus client certificate at the first connection on the OPCUA server.
                   </p>
@@ -10768,18 +10794,17 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             <h5>
               Opcua security settings
               <button
-                aria-label="Close"
-                class="close"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
                   class="oi-help"
                   fill="currentColor"
-                  height="1em"
+                  height="12"
                   stroke="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  width="1em"
+                  width="12"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -10846,7 +10871,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -10900,7 +10925,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -10955,7 +10980,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         emptyDataSource
@@ -11009,7 +11034,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -11068,7 +11093,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -11385,7 +11410,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Mqtt settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -11649,7 +11674,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Mqtt payload
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -11749,7 +11774,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
             <h5>
               Timestamp settings
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg

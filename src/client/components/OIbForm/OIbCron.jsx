@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, FormFeedback, FormText, Label, Input, Row } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 import OIbSelect from './OIbSelect.jsx'
 
 const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) => {
@@ -149,7 +149,7 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
   const renderEveryOption = () => (
     <>
       <Input
-        className="oi-form-input oi-cron-input"
+        className="oi-form-input oi-cron-input ms-1"
         type="number"
         id={`${name}.every.value`}
         name="value"
@@ -169,10 +169,10 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
     </>
   )
 
-  // render option fro custom type
+  // render option for custom type
   const renderCustomOption = () => (
     <Input
-      className="oi-form-input oi-cron-custom-input"
+      className="oi-form-input oi-cron-custom-input ms-1"
       id={`${name}.custom`}
       type="text"
       name="value"
@@ -197,19 +197,17 @@ const OIbCron = ({ label, help, valid, value, name, onChange, defaultValue }) =>
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
-      <Row>
-        <div style={{ paddingLeft: 10, paddingRight: 5 }}>
-          <OIbSelect
-            onChange={(_, newValue) => handleTypeChange(newValue)}
-            value={type}
-            options={options}
-            defaultValue="every"
-            name={`${name}.type`}
-            style={selectStyle}
-          />
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'row', marginLeft: '3px' }}>
+        <OIbSelect
+          onChange={(_, newValue) => handleTypeChange(newValue)}
+          value={type}
+          options={options}
+          defaultValue="every"
+          name={`${name}.type`}
+          style={selectStyle}
+        />
         {renderBasedOnSelectedType()}
-      </Row>
+      </div>
       <FormFeedback style={{ display: 'block' }}>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
     </FormGroup>

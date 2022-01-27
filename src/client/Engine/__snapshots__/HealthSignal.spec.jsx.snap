@@ -8,7 +8,7 @@ exports[`HealthSignal check HealthSignal 1`] = `
     <h5>
       Health signal
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -59,21 +59,21 @@ exports[`HealthSignal check HealthSignal 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         Log signal (info)
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.logging.enabled"
           label="Enabled"
@@ -123,21 +123,21 @@ exports[`HealthSignal check HealthSignal 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         HTTP signal
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.http.enabled"
           label="Enabled"
@@ -153,8 +153,8 @@ exports[`HealthSignal check HealthSignal 1`] = `
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -180,13 +180,13 @@ exports[`HealthSignal check HealthSignal 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -212,7 +212,7 @@ exports[`HealthSignal check HealthSignal 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
@@ -338,8 +338,8 @@ exports[`HealthSignal check HealthSignal 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -358,7 +358,7 @@ exports[`HealthSignal check HealthSignal 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -404,7 +404,7 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     <h5>
       Health signal
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -455,21 +455,21 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         Log signal (info)
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.logging.enabled"
           label="Enabled"
@@ -519,21 +519,21 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         HTTP signal
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.http.enabled"
           label="Enabled"
@@ -549,8 +549,8 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -576,13 +576,13 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -608,7 +608,7 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
@@ -734,8 +734,8 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -754,7 +754,7 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
@@ -800,7 +800,7 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     <h5>
       Health signal
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -851,21 +851,21 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         Log signal (info)
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.logging.enabled"
           label="Enabled"
@@ -915,21 +915,21 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     class="row"
   >
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <h6>
         HTTP signal
       </h6>
     </div>
     <div
-      class="col-md-3"
+      class="col-md-1"
     >
       <div
-        class="mb-3"
+        class="form-check form-switch"
       >
         <input
           checked=""
-          class="form-check-input"
+          class="mb-3 form-check-input"
           color="secondary"
           id="engine.healthSignal.http.enabled"
           label="Enabled"
@@ -945,8 +945,8 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -972,13 +972,13 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             The host to send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
     >
-      <form
-        class=""
+      <div
+        class="mb-3"
       >
         <label
           class="form-label"
@@ -1004,7 +1004,7 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             The endpoint send the health signal
           </div>
         </small>
-      </form>
+      </div>
     </div>
     <div
       class="col-md-2"
@@ -1130,8 +1130,8 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -1150,7 +1150,7 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"

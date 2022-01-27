@@ -48,8 +48,8 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -75,7 +75,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -83,7 +83,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -137,7 +137,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -174,9 +174,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -190,9 +192,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -228,7 +232,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -246,9 +252,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -262,9 +270,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -300,7 +310,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -318,9 +330,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -334,9 +348,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -372,7 +388,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -569,8 +587,8 @@ exports[`ConfigurePoints check add new point 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -596,7 +614,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -604,7 +622,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -658,7 +676,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -695,9 +713,11 @@ exports[`ConfigurePoints check add new point 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -711,9 +731,11 @@ exports[`ConfigurePoints check add new point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -749,7 +771,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -767,9 +791,11 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -783,9 +809,11 @@ exports[`ConfigurePoints check add new point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -821,7 +849,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -839,9 +869,11 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -855,9 +887,11 @@ exports[`ConfigurePoints check add new point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -893,7 +927,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1090,8 +1126,8 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -1117,7 +1153,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -1125,7 +1161,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1179,7 +1215,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1216,9 +1252,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1232,9 +1270,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1270,7 +1310,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1288,9 +1330,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1304,9 +1348,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1342,7 +1388,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1360,9 +1408,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1376,9 +1426,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1414,7 +1466,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1611,8 +1665,8 @@ exports[`ConfigurePoints check delete all points 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -1638,7 +1692,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -1646,7 +1700,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1700,7 +1754,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1737,9 +1791,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1753,9 +1809,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1791,7 +1849,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1809,9 +1869,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1825,9 +1887,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1863,7 +1927,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1881,9 +1947,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1897,9 +1965,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -1935,7 +2005,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2132,8 +2204,8 @@ exports[`ConfigurePoints check delete first point 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -2159,7 +2231,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -2167,7 +2239,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2221,7 +2293,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2258,9 +2330,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2274,9 +2348,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2312,7 +2388,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2330,9 +2408,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2346,9 +2426,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2384,7 +2466,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2402,9 +2486,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2418,9 +2504,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2456,7 +2544,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2653,8 +2743,8 @@ exports[`ConfigurePoints check edit filter input 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -2680,7 +2770,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -2688,7 +2778,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -2742,7 +2832,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2779,9 +2869,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2795,9 +2887,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2833,7 +2927,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2851,9 +2947,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2867,9 +2965,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2905,7 +3005,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2923,9 +3025,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2939,9 +3043,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -2977,7 +3083,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3174,8 +3282,8 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -3201,7 +3309,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -3209,7 +3317,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3263,7 +3371,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3300,9 +3408,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3316,9 +3426,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3354,7 +3466,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3372,9 +3486,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3388,9 +3504,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3426,7 +3544,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3444,9 +3564,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3460,9 +3582,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3498,7 +3622,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3695,8 +3821,8 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -3722,7 +3848,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -3730,7 +3856,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -3784,7 +3910,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3821,9 +3947,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3837,9 +3965,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3875,7 +4005,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3893,9 +4025,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3909,9 +4043,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -3947,7 +4083,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3965,9 +4103,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3981,9 +4121,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4019,7 +4161,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4216,8 +4360,8 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -4243,7 +4387,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -4251,7 +4395,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4305,7 +4449,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -4342,9 +4486,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4358,9 +4504,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4396,7 +4544,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4414,9 +4564,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4430,9 +4582,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4468,7 +4622,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4486,9 +4642,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4502,9 +4660,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4540,7 +4700,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4737,8 +4899,8 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -4764,7 +4926,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -4772,7 +4934,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -4826,7 +4988,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -4863,9 +5025,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4879,9 +5043,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4917,7 +5083,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4935,9 +5103,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4951,9 +5121,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -4989,7 +5161,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5007,9 +5181,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5023,9 +5199,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -5061,7 +5239,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5258,8 +5438,8 @@ exports[`ConfigurePoints check export points 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -5285,7 +5465,7 @@ exports[`ConfigurePoints check export points 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -5293,7 +5473,7 @@ exports[`ConfigurePoints check export points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5347,7 +5527,7 @@ exports[`ConfigurePoints check export points 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -5384,9 +5564,11 @@ exports[`ConfigurePoints check export points 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5400,9 +5582,11 @@ exports[`ConfigurePoints check export points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -5438,7 +5622,9 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5456,9 +5642,11 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5472,9 +5660,11 @@ exports[`ConfigurePoints check export points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -5510,7 +5700,9 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5528,9 +5720,11 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5544,9 +5738,11 @@ exports[`ConfigurePoints check export points 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -5582,7 +5778,9 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5779,8 +5977,8 @@ exports[`ConfigurePoints check import points file input 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -5806,7 +6004,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -5814,7 +6012,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -5868,7 +6066,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -5905,9 +6103,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5921,9 +6121,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -5959,7 +6161,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -5977,9 +6181,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -5993,9 +6199,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -6031,7 +6239,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6049,9 +6259,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6065,9 +6277,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -6103,7 +6317,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6300,8 +6516,8 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -6327,7 +6543,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -6335,7 +6551,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6389,7 +6605,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -6426,9 +6642,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6442,9 +6660,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -6480,7 +6700,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6498,9 +6720,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6514,9 +6738,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -6552,7 +6778,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6570,9 +6798,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6586,9 +6816,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -6624,7 +6856,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -6821,8 +7055,8 @@ exports[`ConfigurePoints check import points press 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -6848,7 +7082,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -6856,7 +7090,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -6910,7 +7144,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -6947,9 +7181,11 @@ exports[`ConfigurePoints check import points press 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -6963,9 +7199,11 @@ exports[`ConfigurePoints check import points press 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7001,7 +7239,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7019,9 +7259,11 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7035,9 +7277,11 @@ exports[`ConfigurePoints check import points press 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7073,7 +7317,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7091,9 +7337,11 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7107,9 +7355,11 @@ exports[`ConfigurePoints check import points press 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7145,7 +7395,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7342,8 +7594,8 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -7369,7 +7621,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -7377,7 +7629,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7431,7 +7683,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -7468,9 +7720,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7484,9 +7738,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7522,7 +7778,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7540,9 +7798,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7556,9 +7816,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7594,7 +7856,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7612,9 +7876,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -7628,9 +7894,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -7666,7 +7934,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -7863,8 +8133,8 @@ exports[`ConfigurePoints check import points success 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -7890,7 +8160,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -7898,7 +8168,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -7952,7 +8222,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -7989,9 +8259,11 @@ exports[`ConfigurePoints check import points success 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8005,9 +8277,11 @@ exports[`ConfigurePoints check import points success 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8043,7 +8317,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8061,9 +8337,11 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8077,9 +8355,11 @@ exports[`ConfigurePoints check import points success 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8115,7 +8395,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8133,9 +8415,11 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8149,9 +8433,11 @@ exports[`ConfigurePoints check import points success 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8187,7 +8473,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8404,8 +8692,8 @@ exports[`ConfigurePoints check no points 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -8431,7 +8719,7 @@ exports[`ConfigurePoints check no points 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -8439,7 +8727,7 @@ exports[`ConfigurePoints check no points 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8493,7 +8781,7 @@ exports[`ConfigurePoints check no points 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -8615,8 +8903,8 @@ exports[`ConfigurePoints check pagination 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -8642,7 +8930,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -8650,7 +8938,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -8704,7 +8992,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -8741,9 +9029,11 @@ exports[`ConfigurePoints check pagination 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8757,9 +9047,11 @@ exports[`ConfigurePoints check pagination 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8795,7 +9087,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8813,9 +9107,11 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8829,9 +9125,11 @@ exports[`ConfigurePoints check pagination 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8867,7 +9165,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -8885,9 +9185,11 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -8901,9 +9203,11 @@ exports[`ConfigurePoints check pagination 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
               >
@@ -8939,7 +9243,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -9136,8 +9442,8 @@ exports[`ConfigurePoints check render with filterText 1`] = `
       class="m-2"
     >
       <div>
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -9163,7 +9469,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
               Type any points related data
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="row"
@@ -9171,7 +9477,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         <h5>
           Table help
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -9225,7 +9531,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         </div>
       </div>
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>

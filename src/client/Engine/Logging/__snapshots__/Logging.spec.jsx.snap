@@ -9,7 +9,7 @@ exports[`Logging check Logging 1`] = `
       <h5>
         Logging parameters
         <button
-          class="util-button btn btn-link"
+          class="util-button mt-1 btn btn-link"
           id="id"
         >
           <svg
@@ -284,8 +284,8 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -311,7 +311,7 @@ exports[`Logging check Logging 1`] = `
                 The file name of the log file
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -474,8 +474,8 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -501,7 +501,7 @@ exports[`Logging check Logging 1`] = `
                 The file name of the database file
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -614,8 +614,8 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -641,7 +641,7 @@ exports[`Logging check Logging 1`] = `
                 The host name of the Loki instance
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -682,8 +682,8 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -709,7 +709,7 @@ exports[`Logging check Logging 1`] = `
                 The address of the token provider (need username and password)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -718,8 +718,8 @@ exports[`Logging check Logging 1`] = `
         <div
           class="col-md-3"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -738,7 +738,7 @@ exports[`Logging check Logging 1`] = `
             <div
               class="invalid-feedback"
             />
-          </form>
+          </div>
         </div>
         <div
           class="col-md-3"

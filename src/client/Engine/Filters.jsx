@@ -30,7 +30,7 @@ const Filters = ({ filters }) => {
         <Row>
           <Col md={4}>
             <Table
-              headers={['adresse']}
+              headers={['Addresses']}
               rows={filters.map((filter, i) => [
                 {
                   name: `engine.filter.${i}`,

@@ -77,8 +77,8 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -104,7 +104,7 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
               The file name of the database file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -222,8 +222,8 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -249,7 +249,7 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
               The file name of the database file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -367,8 +367,8 @@ exports[`SqliteLogging check change sqliteLog fileName to "new_sqliteFilename" 1
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -394,7 +394,7 @@ exports[`SqliteLogging check change sqliteLog fileName to "new_sqliteFilename" 1
               The file name of the database file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -512,8 +512,8 @@ exports[`SqliteLogging check change sqliteLog maxNumberOfLogs to 10000000 1`] = 
       <div
         class="col-md-4"
       >
-        <form
-          class=""
+        <div
+          class="mb-3"
         >
           <label
             class="form-label"
@@ -539,7 +539,7 @@ exports[`SqliteLogging check change sqliteLog maxNumberOfLogs to 10000000 1`] = 
               The file name of the database file
             </div>
           </small>
-        </form>
+        </div>
       </div>
       <div
         class="col-md-2"

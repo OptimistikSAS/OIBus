@@ -22,10 +22,10 @@ const HealthSignal = ({ onChange, healthSignal }) => (
       </>
     </OIbTitle>
     <Row>
-      <Col md={3}>
+      <Col md={1}>
         <h6>Log signal (info)</h6>
       </Col>
-      <Col md={3}>
+      <Col md={1}>
         <OIbCheckBox
           label={healthSignal.logging.enabled ? 'Enabled' : 'Disabled'}
           name="engine.healthSignal.logging.enabled"
@@ -52,10 +52,10 @@ const HealthSignal = ({ onChange, healthSignal }) => (
     </Row>
     )}
     <Row>
-      <Col md={3}>
+      <Col md={1}>
         <h6>HTTP signal</h6>
       </Col>
-      <Col md={3}>
+      <Col md={1}>
         <OIbCheckBox
           label={healthSignal.http.enabled ? 'Enabled' : 'Disabled'}
           name="engine.healthSignal.http.enabled"

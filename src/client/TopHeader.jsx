@@ -50,7 +50,7 @@ const TopHeader = () => {
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>
       <NavbarBrand tag={Link} to="/" className="mr-auto">
-        <img src={logo} alt="OIBus" height="20px" className="oi-navicon" />
+        <img src={logo} alt="OIBus" className="oi-navicon" />
       </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>

@@ -6,7 +6,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         OPC-HDA
@@ -60,7 +60,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -113,10 +113,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.8.enabled"
               label="Disabled"
@@ -139,7 +139,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -456,7 +456,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               HDA Agent
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -954,8 +954,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -981,7 +981,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -1084,7 +1084,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               HDA Server
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -1144,8 +1144,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -1171,13 +1171,13 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -1203,7 +1203,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -1318,7 +1318,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -1372,7 +1372,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>
@@ -1447,7 +1447,7 @@ exports[`ConfigureProtocol check update 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
         OPC-HDA
@@ -1501,7 +1501,7 @@ exports[`ConfigureProtocol check update 1`] = `
         <h5>
           General settings
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1554,10 +1554,10 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="mb-3"
+            class="form-check form-switch"
           >
             <input
-              class="form-check-input"
+              class="mb-3 form-check-input"
               color="secondary"
               id="south.dataSources.8.enabled"
               label="Disabled"
@@ -1580,7 +1580,7 @@ exports[`ConfigureProtocol check update 1`] = `
         <h5>
           Logging parameters
           <button
-            class="util-button btn btn-link"
+            class="util-button mt-1 btn btn-link"
             id="id"
           >
             <svg
@@ -1897,7 +1897,7 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               HDA Agent
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2395,8 +2395,8 @@ exports[`ConfigureProtocol check update 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2422,7 +2422,7 @@ exports[`ConfigureProtocol check update 1`] = `
                 ex: c:\\HdaAgent\\HdaAgent.exe
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-2"
@@ -2525,7 +2525,7 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               HDA Server
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2585,8 +2585,8 @@ exports[`ConfigureProtocol check update 1`] = `
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2612,13 +2612,13 @@ exports[`ConfigureProtocol check update 1`] = `
                 IP address or hostname of the HDA server
               </div>
             </small>
-          </form>
+          </div>
         </div>
         <div
           class="col-md-4"
         >
-          <form
-            class=""
+          <div
+            class="mb-3"
           >
             <label
               class="form-label"
@@ -2644,7 +2644,7 @@ exports[`ConfigureProtocol check update 1`] = `
                 HDA server (Matrikon.OPC.Simulation)
               </div>
             </small>
-          </form>
+          </div>
         </div>
       </div>
       <div
@@ -2759,7 +2759,7 @@ exports[`ConfigureProtocol check update 1`] = `
             <h5>
               ScanGroups
               <button
-                class="util-button btn btn-link"
+                class="util-button mt-1 btn btn-link"
                 id="id"
               >
                 <svg
@@ -2813,7 +2813,7 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-6"
         >
           <table
-            class="table table-sm table-striped table-hover"
+            class="table table table-sm table-striped table-hover"
           >
             <thead>
               <tr>

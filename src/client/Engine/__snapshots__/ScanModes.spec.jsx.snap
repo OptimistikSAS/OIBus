@@ -8,7 +8,7 @@ exports[`ScanModes check ScanModes 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -128,10 +128,10 @@ exports[`ScanModes check ScanModes 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -168,9 +168,11 @@ exports[`ScanModes check ScanModes 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -184,48 +186,46 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -296,7 +296,9 @@ exports[`ScanModes check ScanModes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -314,9 +316,11 @@ exports[`ScanModes check ScanModes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -330,48 +334,46 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -442,7 +444,9 @@ exports[`ScanModes check ScanModes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -460,9 +464,11 @@ exports[`ScanModes check ScanModes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -476,48 +482,46 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -588,7 +592,9 @@ exports[`ScanModes check ScanModes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -606,9 +612,11 @@ exports[`ScanModes check ScanModes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -622,48 +630,46 @@ exports[`ScanModes check ScanModes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -682,7 +688,9 @@ exports[`ScanModes check ScanModes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -714,7 +722,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -834,10 +842,10 @@ exports[`ScanModes check add line to scan modes 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -874,9 +882,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -890,48 +900,46 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -1002,7 +1010,9 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1020,9 +1030,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1036,48 +1048,46 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -1148,7 +1158,9 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1166,9 +1178,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1182,48 +1196,46 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -1294,7 +1306,9 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1312,9 +1326,11 @@ exports[`ScanModes check add line to scan modes 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1328,48 +1344,46 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -1388,7 +1402,9 @@ exports[`ScanModes check add line to scan modes 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1420,7 +1436,7 @@ exports[`ScanModes check change first cron 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -1540,10 +1556,10 @@ exports[`ScanModes check change first cron 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -1580,9 +1596,11 @@ exports[`ScanModes check change first cron 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1596,48 +1614,46 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -1708,7 +1724,9 @@ exports[`ScanModes check change first cron 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1726,9 +1744,11 @@ exports[`ScanModes check change first cron 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1742,48 +1762,46 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -1854,7 +1872,9 @@ exports[`ScanModes check change first cron 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -1872,9 +1892,11 @@ exports[`ScanModes check change first cron 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -1888,48 +1910,46 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -2000,7 +2020,9 @@ exports[`ScanModes check change first cron 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2018,9 +2040,11 @@ exports[`ScanModes check change first cron 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2034,48 +2058,46 @@ exports[`ScanModes check change first cron 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -2094,7 +2116,9 @@ exports[`ScanModes check change first cron 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2126,7 +2150,7 @@ exports[`ScanModes check change first scan mode 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -2246,10 +2270,10 @@ exports[`ScanModes check change first scan mode 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2286,9 +2310,11 @@ exports[`ScanModes check change first scan mode 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2302,48 +2328,46 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -2414,7 +2438,9 @@ exports[`ScanModes check change first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2432,9 +2458,11 @@ exports[`ScanModes check change first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2448,48 +2476,46 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -2560,7 +2586,9 @@ exports[`ScanModes check change first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2578,9 +2606,11 @@ exports[`ScanModes check change first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2594,48 +2624,46 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -2706,7 +2734,9 @@ exports[`ScanModes check change first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2724,9 +2754,11 @@ exports[`ScanModes check change first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -2740,48 +2772,46 @@ exports[`ScanModes check change first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -2800,7 +2830,9 @@ exports[`ScanModes check change first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -2832,7 +2864,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -2952,10 +2984,10 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -2992,9 +3024,11 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3008,48 +3042,46 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -3120,7 +3152,9 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3138,9 +3172,11 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3154,48 +3190,46 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -3266,7 +3300,9 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3284,9 +3320,11 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3300,48 +3338,46 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -3412,7 +3448,9 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3430,9 +3468,11 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3446,48 +3486,46 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -3506,7 +3544,9 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3538,7 +3578,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -3658,10 +3698,10 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -3698,9 +3738,11 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3714,48 +3756,46 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -3826,7 +3866,9 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3844,9 +3886,11 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -3860,48 +3904,46 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -3972,7 +4014,9 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -3990,9 +4034,11 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4006,48 +4052,46 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -4118,7 +4162,9 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4136,9 +4182,11 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4152,48 +4200,46 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -4212,7 +4258,9 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4244,7 +4292,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
     <h5>
       Scan Modes
       <button
-        class="util-button btn btn-link"
+        class="util-button mt-1 btn btn-link"
         id="id"
       >
         <svg
@@ -4364,10 +4412,10 @@ exports[`ScanModes check delete first scan mode 1`] = `
     class="row"
   >
     <div
-      class="col-md-6"
+      class="col-md-5"
     >
       <table
-        class="table table-sm table-striped table-hover"
+        class="table table table-sm table-striped table-hover"
       >
         <thead>
           <tr>
@@ -4404,9 +4452,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
         </thead>
         <tbody>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4420,48 +4470,46 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.0.cronTime.type"
+                      name="engine.scanModes.0.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.0.cronTime.type"
-                        name="engine.scanModes.0.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.0.cronTime.every.value"
                     min="1"
                     name="value"
@@ -4532,7 +4580,9 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4550,9 +4600,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4566,48 +4618,46 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.1.cronTime.type"
+                      name="engine.scanModes.1.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.1.cronTime.type"
-                        name="engine.scanModes.1.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.1.cronTime.every.value"
                     min="1"
                     name="value"
@@ -4678,7 +4728,9 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4696,9 +4748,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4712,48 +4766,46 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.2.cronTime.type"
+                      name="engine.scanModes.2.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.2.cronTime.type"
-                        name="engine.scanModes.2.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-input form-control"
+                    class="oi-form-input oi-cron-input ms-1 form-control"
                     id="engine.scanModes.2.cronTime.every.value"
                     min="1"
                     name="value"
@@ -4824,7 +4876,9 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
@@ -4842,9 +4896,11 @@ exports[`ScanModes check delete first scan mode 1`] = `
             </td>
           </tr>
           <tr>
-            <td>
-              <form
-                class=""
+            <td
+              class="align-top"
+            >
+              <div
+                class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <input
@@ -4858,48 +4914,46 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 <div
                   class="invalid-feedback"
                 />
-              </form>
+              </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <div
                 class="mb-3"
                 style="margin-bottom: 0px;"
               >
                 <div
-                  class="row"
+                  style="display: flex; flex-direction: row; margin-left: 3px;"
                 >
                   <div
-                    style="padding-left: 10px; padding-right: 5px;"
+                    class="mb-3"
+                    style="padding-bottom: 0px; margin-bottom: 0px;"
                   >
-                    <div
-                      class="mb-3"
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="engine.scanModes.3.cronTime.type"
+                      name="engine.scanModes.3.cronTime.type"
                       style="padding-bottom: 0px; margin-bottom: 0px;"
                     >
-                      <select
-                        aria-invalid="false"
-                        class="oi-form-input form-select"
-                        id="engine.scanModes.3.cronTime.type"
-                        name="engine.scanModes.3.cronTime.type"
-                        style="padding-bottom: 0px; margin-bottom: 0px;"
+                      <option
+                        value="every"
                       >
-                        <option
-                          value="every"
-                        >
-                          every
-                        </option>
-                        <option
-                          value="custom"
-                        >
-                          custom
-                        </option>
-                      </select>
-                      <div
-                        class="invalid-feedback"
-                      />
-                    </div>
+                        every
+                      </option>
+                      <option
+                        value="custom"
+                      >
+                        custom
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
                   </div>
                   <input
-                    class="oi-form-input oi-cron-custom-input form-control"
+                    class="oi-form-input oi-cron-custom-input ms-1 form-control"
                     id="engine.scanModes.3.cronTime.custom"
                     name="value"
                     placeholder="value"
@@ -4918,7 +4972,9 @@ exports[`ScanModes check delete first scan mode 1`] = `
                 </small>
               </div>
             </td>
-            <td>
+            <td
+              class="align-top"
+            >
               <svg
                 class="oi-icon"
                 fill="currentColor"
