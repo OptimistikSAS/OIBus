@@ -12,7 +12,8 @@
       "src/engine/SqliteLoggerTransport.class.js",
       "node_modules/better-sqlite3",
       "node_modules/better-sqlite3/build/Release/*.node",
-      "node_modules/bindings"
+      "node_modules/bindings",
+      "node_modules/file-uri-to-path/index.js"
     ]
   }
 }

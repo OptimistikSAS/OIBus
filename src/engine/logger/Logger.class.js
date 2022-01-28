@@ -50,7 +50,7 @@ class Logger {
 
     if (sqliteLog.level !== 'none') {
       targets.push({
-        target: `${__dirname}/SqliteLoggerTransport.class.js`,
+        target: path.join(__dirname, 'SqliteLoggerTransport.class.js'),
         options: {
           fileName: sqliteLog.fileName,
           maxFileSize: sqliteLog.maxSize,
@@ -61,7 +61,7 @@ class Logger {
 
     if (lokiLog.level !== 'none') {
       targets.push({
-        target: `${__dirname}/LokiLoggerTransport.class.js`,
+        target: path.join(__dirname, 'LokiLoggerTransport.class.js'),
         options: {
           username: lokiLog.username,
           password: this.encryptionService.decryptText(lokiLog.password),
