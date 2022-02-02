@@ -114,6 +114,7 @@ schema.form = {
   },
   keyFile: {
     type: 'OIbText',
+    newRow: false,
     label: 'Key File',
     valid: optional(),
     defaultValue: '',
@@ -121,6 +122,7 @@ schema.form = {
   },
   caFile: {
     type: 'OIbText',
+    newRow: false,
     label: 'CA File',
     valid: optional(),
     defaultValue: '',

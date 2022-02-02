@@ -59,7 +59,7 @@ class MQTT extends ProtocolHandler {
     this.connectTimeout = connectTimeout
     this.qos = qos
     this.persistent = persistent
-    this.clientId = engine.engineName
+    this.clientId = `${engine.engineName}-${this.dataSource.id}`
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath
     this.pointIdPath = pointIdPath
