@@ -75,7 +75,7 @@ class Cache {
       this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
     }
     this.apis[api.id] = api
-    if (api && api.config && api.config.sendInterval) {
+    if (api.config?.sendInterval) {
       this.resetTimeout(api, api.config.sendInterval)
     } else {
       this.logger.warn(`Application "${api.name}" has no sendInterval`)

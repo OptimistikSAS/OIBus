@@ -41,7 +41,7 @@ describe('MQTTNorth north', () => {
     mqttNorth.connect()
 
     const expectedOptions = {
-      clientId: engine.engineName,
+      clientId: `${engine.engineName}-${mqttConfig.id}`,
       username: mqttConfig.MQTTNorth.username,
       password: Buffer.from(mqttConfig.MQTTNorth.password),
       key: null,
@@ -82,7 +82,7 @@ describe('MQTTNorth north', () => {
     await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
-      clientId: engine.engineName,
+      clientId: `${engine.engineName}-${mqttConfig.id}`,
       username: mqttConfig.MQTTNorth.username,
       password: Buffer.from(mqttConfig.MQTTNorth.password),
       key: 'fileContent',

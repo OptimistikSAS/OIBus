@@ -38,7 +38,7 @@ const replaceValuesHelper = (obj, keys, value) => {
     if (obj[key]) obj[key] = value
   })
 
-  if ((typeof obj === 'object') && (obj !== null)) {
+  if (typeof obj === 'object') {
     const children = Object.keys(obj)
     if (children.length > 0) {
       for (let i = 0; i < children.length; i += 1) {
@@ -64,7 +64,7 @@ const replaceValuesDiffHelper = (obj, keys, value) => {
     if (obj[key]) obj[key] = [value, value]
   })
 
-  if ((typeof obj === 'object') && (obj !== null)) {
+  if (typeof obj === 'object') {
     const children = Object.keys(obj)
     if (children.length > 0) {
       for (let i = 0; i < children.length; i += 1) {

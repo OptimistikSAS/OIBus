@@ -32,6 +32,7 @@ jest.mock('../../services/database.service', () => ({
 }))
 
 const mqttConfig = {
+  id: 'dataSourceId',
   name: 'MQTTServer',
   enabled: true,
   protocol: 'MQTT',
@@ -89,7 +90,7 @@ describe('MQTT south', () => {
     expect(mqttSouth.persistent)
       .toEqual(mqttConfig.MQTT.persistent)
     expect(mqttSouth.clientId)
-      .toEqual(engine.engineName)
+      .toEqual(`${engine.engineName}-${mqttConfig.id}`)
     expect(mqttSouth.username)
       .toEqual(mqttConfig.MQTT.username)
     expect(mqttSouth.password)
@@ -123,7 +124,7 @@ describe('MQTT south', () => {
     expect(mqttInvalidSouth.persistent)
       .toEqual(mqttConfig.MQTT.persistent)
     expect(mqttInvalidSouth.clientId)
-      .toEqual(engine.engineName)
+      .toEqual(`${engine.engineName}-${mqttConfig.id}`)
     expect(mqttInvalidSouth.username)
       .toEqual(testMqttConfig.MQTT.username)
     expect(mqttInvalidSouth.password)
@@ -147,7 +148,7 @@ describe('MQTT south', () => {
     await mqttSouth.connect()
     const expectedOptions = {
       clean: !mqttConfig.MQTT.persistent,
-      clientId: engine.engineName,
+      clientId: `${engine.engineName}-${mqttConfig.id}`,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
       rejectUnauthorized: false,
@@ -192,7 +193,7 @@ describe('MQTT south', () => {
 
     const expectedOptionsWithFiles = {
       clean: !mqttConfig.MQTT.persistent,
-      clientId: engine.engineName,
+      clientId: `${engine.engineName}-${mqttConfig.id}`,
       username: mqttConfig.MQTT.username,
       password: Buffer.from(mqttConfig.MQTT.password),
       key: 'fileContent',
@@ -423,12 +424,18 @@ describe('MQTT south', () => {
   })
 
   it('should properly disconnect', () => {
+    mqttSouth.client = null
+    mqttSouth.disconnect()
+
+    expect(mqttSouth.logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...')
+
     mqttSouth.client = { end: jest.fn() }
 
     mqttSouth.disconnect()
 
     expect(mqttSouth.client.end)
       .toBeCalledWith(true)
+    expect(mqttSouth.logger.info).toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...')
   })
 
   it('should properly return timestamp when timestampOrigin is oibus', () => {
@@ -687,13 +694,22 @@ describe('MQTT south', () => {
   })
 
   it('should format date properly', () => {
-    const actual = MQTT.generateDateWithTimezone(
+    const test1 = MQTT.generateDateWithTimezone(
       '2020-02-22 22:22:22.666',
       'Europe/Paris',
       'yyyy-MM-dd HH:mm:ss.SSS',
     )
-    const expected = '2020-02-22T21:22:22.666Z'
-    expect(actual)
-      .toBe(expected)
+    const expectedResult1 = '2020-02-22T21:22:22.666Z'
+    expect(test1)
+      .toBe(expectedResult1)
+
+    const test2 = MQTT.generateDateWithTimezone(
+      '2020-02-22T22:22:22.666Z',
+      'Europe/Paris',
+      'yyyy-MM-dd HH:mm:ss.SSS',
+    )
+    const expectedResult2 = '2020-02-22T22:22:22.666Z'
+    expect(test2)
+      .toBe(expectedResult2)
   })
 })

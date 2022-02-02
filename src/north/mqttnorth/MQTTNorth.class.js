@@ -37,7 +37,7 @@ class MQTTNorth extends ApiHandler {
 
     this.url = url
     this.qos = qos
-    this.clientId = engine.engineName
+    this.clientId = `${engine.engineName}-${this.application.id}`
     this.username = username
     this.password = Buffer.from(this.encryptionService.decryptText(password))
     this.keyFile = keyFile

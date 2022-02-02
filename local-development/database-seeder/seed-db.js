@@ -5,8 +5,8 @@ const oracledb = require('oracledb')
 const Logger = require('../../src/engine/logger/Logger.class')
 
 const host = '127.0.0.1'
-const user = 'oibus'
-const password = 'oibus123'
+const user = 'oibus' // lgtm [js/hardcoded-credentials]
+const password = 'oibus123' // lgtm [js/hardcoded-credentials]
 const database = 'oibus'
 const table = 'history'
 const logger = new Logger()
@@ -15,8 +15,8 @@ const possibleDestinations = ['mysql', 'mssql', 'postgresql', 'oracle']
 const insertValueIntoMSSQL = async (query) => {
   const config = {
     server: host,
-    user: 'sa',
-    password: 'Oibus123@',
+    user: 'sa', // lgtm [js/hardcoded-credentials]
+    password: 'Oibus123@', // lgtm [js/hardcoded-credentials]
     database,
     connectionTimeout: 500,
     encrypt: false,

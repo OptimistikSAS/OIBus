@@ -227,7 +227,8 @@ class Engine {
           this.activeProtocols[id] = new ProtocolHandler(dataSource, this)
           // eslint-disable-next-line no-await-in-loop
           await this.activeProtocols[id].init()
-          this.activeProtocols[id].connect()
+          // eslint-disable-next-line no-await-in-loop
+          await this.activeProtocols[id].connect()
         } else {
           this.logger.error(`Protocol for ${name} is not found : ${protocol}`)
         }
@@ -250,7 +251,8 @@ class Engine {
           this.activeApis[id] = new ApiHandler(application, this)
           // eslint-disable-next-line no-await-in-loop
           await this.activeApis[id].init()
-          this.activeApis[id].connect()
+          // eslint-disable-next-line no-await-in-loop
+          await this.activeApis[id].connect()
         } else {
           this.logger.error(`API for ${name} is not found : ${api}`)
         }

@@ -143,7 +143,7 @@ schema.points = {
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
     label: 'Data type',
     defaultValue: 'Uint16',
-    help: 'HoldingRegisters and inputRegisters can have one of the above types.'
+    help: 'HoldingRegisters and inputRegisters can have one of the above types. '
       + 'Default type is UInt16. This field does not apply for coils and discreteInputs.',
   },
   multiplierCoefficient: {
