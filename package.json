@@ -79,7 +79,7 @@
     "object-path": "0.11.8",
     "oracledb": "5.3.0",
     "papaparse": "5.3.1",
-    "pg": "8.7.1",
+    "pg": "8.7.3",
     "pino": "git://github.com/burgerni10/pino.git",
     "pino-abstract-transport": "0.5.0",
     "pino-pretty": "7.5.1",
