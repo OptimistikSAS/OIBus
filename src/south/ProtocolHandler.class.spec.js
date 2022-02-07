@@ -55,13 +55,23 @@ describe('ProtocolHandler', () => {
   })
 
   it('should format date properly', () => {
-    const actual = ProtocolHandler.generateDateWithTimezone(
+    const test1 = ProtocolHandler.generateDateWithTimezone(
       '2020-02-22 22:22:22.666',
       'Europe/Paris',
       'yyyy-MM-dd HH:mm:ss.SSS',
     )
-    const expected = '2020-02-22T21:22:22.666Z'
-    expect(actual).toBe(expected)
+    const expectedResult1 = '2020-02-22T21:22:22.666Z'
+    expect(test1)
+      .toBe(expectedResult1)
+
+    const test2 = ProtocolHandler.generateDateWithTimezone(
+      '2020-02-22T22:22:22.666Z',
+      'Europe/Paris',
+      'yyyy-MM-dd HH:mm:ss.SSS',
+    )
+    const expectedResult2 = '2020-02-22T22:22:22.666Z'
+    expect(test2)
+      .toBe(expectedResult2)
   })
 
   it('should properly return timestamp when timestampOrigin is oibus', async () => {

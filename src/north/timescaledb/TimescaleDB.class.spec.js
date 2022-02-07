@@ -14,7 +14,6 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }
 engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
@@ -46,6 +45,7 @@ describe('TimescaleDB north', () => {
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
+    await timescaleDbNorth.init()
     await timescaleDbNorth.connect()
 
     expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('Connection To TimescaleDB: OK')
@@ -74,6 +74,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle connection errors', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = { connect: jest.fn((callback) => callback('error')), end: jest.fn() }
     pg.Client.mockReturnValue(client)
 
@@ -86,6 +87,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle values with publish error', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = { connect: jest.fn(), query: jest.fn(() => Promise.reject()) }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
@@ -119,6 +121,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle values with optional fields and table errors', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
@@ -139,6 +142,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle values with optional fields', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
@@ -164,6 +168,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle values with only optional fields and timestamp', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
@@ -189,6 +194,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly handle values with useDataKeyValue', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = {
       connect: jest.fn((callback) => callback()),
       query: jest.fn(),
@@ -232,6 +238,7 @@ describe('TimescaleDB north', () => {
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
     const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
+    await timescaleDbNorth.init()
     const client = {
       connect: jest.fn((callback) => callback()),
       query: jest.fn(),
