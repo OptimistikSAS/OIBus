@@ -87,6 +87,7 @@
     "sqlite3": "5.0.2",
     "timexe": "1.0.5",
     "tunnel": "0.0.6",
+    "win-ca": "^3.4.5",
     "winston": "3.3.3",
     "winston-transport": "4.4.0"
   },

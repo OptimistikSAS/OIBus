@@ -1,3 +1,4 @@
+require('win-ca')
 const cluster = require('cluster')
 const path = require('path')
 
