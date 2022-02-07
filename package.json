@@ -71,7 +71,7 @@
     "mongodb": "4.3.1",
     "mqtt": "4.3.4",
     "mqtt-wildcard": "3.0.9",
-    "mssql": "8.0.1",
+    "mssql": "8.0.2",
     "mysql2": "2.3.3",
     "nanoid": "3.2.0",
     "node-fetch": "2.6.7",
