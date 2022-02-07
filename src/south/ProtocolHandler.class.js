@@ -510,6 +510,9 @@ class ProtocolHandler {
    * @returns {string} - The formatted date with timezone
    */
   static generateDateWithTimezone(date, timezone, dateFormat) {
+    if (DateTime.fromISO(date).isValid) {
+      return date
+    }
     return DateTime.fromFormat(date, dateFormat, { zone: timezone }).toJSDate().toISOString()
   }
 }
