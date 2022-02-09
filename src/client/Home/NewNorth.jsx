@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { Button, Col, Container, Row, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
+import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import validationNorth from '../North/Form/North.validation'
 import { OIbText } from '../components/OIbForm'
@@ -22,6 +23,7 @@ const NewNorth = ({
   const [nameError, setNameError] = React.useState(null)
   const [api, setApi] = React.useState(null)
   const applications = newConfig?.north?.applications ?? []
+  const navigate = useNavigate()
 
   const northCategoryList = apiList ? [...new Set(apiList.map((e) => e.category))] : []
 
@@ -37,21 +39,25 @@ const NewNorth = ({
     }
 
     if (!validationNorth.application.isValidName(name, applications.map((application) => application.name)) && name !== '' && api !== null) {
+      const myNewId = nanoid()
+
       dispatchNewConfig({
         type: 'addRow',
         name: 'north.applications',
         value: {
-          id: nanoid(),
+          id: myNewId,
           name,
           api,
           enabled: false,
         },
       })
+
       toggle()
       setApi(null)
       setName('')
       setApiError(null)
       setNameError(null)
+      navigate(`/north/${myNewId}`)
     }
   }
 
