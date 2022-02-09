@@ -517,6 +517,19 @@ module.exports = {
 
       if (dataSource.protocol === 'FolderScanner') {
         logger.info(`Fixing Folder Scanner settings for data source ${dataSource.dataSourceId}`)
+
+        // Case where a connector has been created but never set
+        if (!dataSource.FolderScanner) {
+          dataSource.FolderScanner = {
+            minAge: 1000,
+            compression: false,
+            inputFolder: './input/',
+            regex: '.*',
+            ignoreModifiedDate: false,
+            preserveFiles: false,
+          }
+        }
+
         // a previous migration forgot to update the compression parameter (called "compress" before)
         if (typeof dataSource.FolderScanner.compression === 'undefined') {
           if (typeof dataSource.FolderScanner.compress !== 'undefined') {
@@ -538,6 +551,32 @@ module.exports = {
       }
       if (dataSource.protocol === 'SQLDbToFile') {
         logger.info(`Fixing SQL settings for data source ${dataSource.dataSourceId}`)
+        // Case where a connector has been created but never set
+        if (!dataSource.SQLDbToFile) {
+          dataSource.SQLDbToFile = {
+            port: 1433,
+            password: '',
+            encryption: false,
+            connectionTimeout: 1000,
+            requestTimeout: 1000,
+            compression: false,
+            maxReadInterval: 3600,
+            readIntervalDelay: 200,
+            driver: 'sqlite',
+            databasePath: './database.db',
+            host: 'localhost',
+            database: 'db',
+            username: 'a',
+            domain: '',
+            query: '',
+            delimiter: ',',
+            dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            filename: 'sql-@CurrentDate-@QueryPart.csv',
+            timeColumn: 'timestamp',
+            timezone: 'Europe/Paris',
+          }
+        }
+
         // when the driver sqlite was added to SQLDbToFile, the databasePath was forgotten in the migration, causing the
         // config to change (adding the databasePath default value) after an update when the user visit a SQLDbToFile
         // connector page
@@ -557,6 +596,33 @@ module.exports = {
       }
       if (dataSource.protocol === 'MQTT') {
         logger.info(`Fixing MQTT settings for data source ${dataSource.dataSourceId}`)
+
+        // Case where a connector has been created but never set
+        if (!dataSource.MQTT) {
+          dataSource.MQTT = {
+            persistent: false,
+            password: '',
+            rejectUnauthorized: false,
+            keepalive: 60000,
+            reconnectPeriod: 1000,
+            connectTimeout: 30000,
+            url: '',
+            qos: 1,
+            username: '',
+            certFile: '',
+            keyFile: '',
+            caFile: '',
+            dataArrayPath: '',
+            valuePath: 'value',
+            pointIdPath: '',
+            qualityPath: 'quality',
+            timestampOrigin: 'oibus',
+            timestampPath: 'timestamp',
+            timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            timestampTimezone: 'Europe/Paris',
+          }
+        }
+
         dataSource.MQTT.timestampOrigin = dataSource.MQTT.timeStampOrigin
         delete dataSource.MQTT.timeStampOrigin
         dataSource.MQTT.timestampFormat = dataSource.MQTT.timeStampFormat
@@ -593,6 +659,27 @@ module.exports = {
       }
       if (dataSource.protocol === 'OPCUA_HA') {
         logger.info(`Add OPCUA_HA security fields for data source ${dataSource.dataSourceId}`)
+
+        // Case where a connector has been created but never set
+        if (!dataSource.OPCUA_HA) {
+          dataSource.OPCUA_HA = {
+            keepSessionAlive: false,
+            retryInterval: 10000,
+            maxReadInterval: 3600,
+            readIntervalDelay: 200,
+            maxReturnValues: 1000,
+            readTimeout: 180000,
+            password: '',
+            url: '',
+            username: '',
+            securityMode: 'None',
+            securityPolicy: 'None',
+            certFile: '',
+            keyFile: '',
+            scanGroups: [],
+          }
+        }
+
         dataSource.OPCUA_HA.securityMode = 'None'
         dataSource.OPCUA_HA.securityPolicy = 'None'
         dataSource.OPCUA_HA.keepSessionAlive = false
@@ -601,6 +688,11 @@ module.exports = {
       }
       if (dataSource.protocol === 'OPCUA_DA') {
         logger.info(`Add OPCUA_DA security fields for data source ${dataSource.dataSourceId}`)
+
+        // Case where a connector has been created but never set
+        if (!dataSource.OPCUA_DA) {
+          dataSource.OPCUA_DA = {}
+        }
         dataSource.OPCUA_DA.securityMode = 'None'
         dataSource.OPCUA_DA.securityPolicy = 'None'
         dataSource.OPCUA_DA.keepSessionAlive = false
@@ -610,6 +702,23 @@ module.exports = {
 
       if (dataSource.protocol === 'OPCHDA') {
         logger.info(`Fixing OPCHDA settings for data source ${dataSource.dataSourceId}`)
+
+        // Case where a connector has been created but never set
+        if (!dataSource.OPCHDA) {
+          dataSource.OPCHDA = {
+            tcpPort: '2224',
+            retryInterval: 10000,
+            maxReturnValues: 0,
+            maxReadInterval: 3600,
+            readIntervalDelay: 200,
+            agentFilename: '\\HdaAgent\\HdaAgent.exe',
+            logLevel: 'debug',
+            host: 'localhost',
+            serverName: '',
+            scanGroups: [],
+          }
+        }
+
         if (dataSource.agentFilename) {
           if (!dataSource.OPCHDA.agentFilename) {
             dataSource.OPCHDA.agentFilename = dataSource.agentFilename
@@ -650,6 +759,20 @@ module.exports = {
           dataSource.OPCHDA.retryInterval = 10000
         }
       }
+
+      if (dataSource.protocol === 'ADS') {
+        // Case where a connector has been created but never set
+        if (!dataSource.ADS) {
+          dataSource.ADS = {}
+        }
+      }
+
+      if (dataSource.protocol === 'Modbus') {
+        // Case where a connector has been created but never set
+        if (!dataSource.Modbus) {
+          dataSource.Modbus = {}
+        }
+      }
     }
     for (const application of config.north.applications) {
       logger.info(`Fixing log parameters for application ${application.applicationId}`)
@@ -679,6 +802,11 @@ module.exports = {
 
       if (application.api === 'AmazonS3') {
         logger.info(`Fixing Amazon S3 parameters for application ${application.applicationId}`)
+        // Case where a connector has been created but never set
+        if (!application.AmazonS3) {
+          application.AmazonS3 = {}
+        }
+
         application.AmazonS3.key = application.AmazonS3.accessKey
         if (!application.AmazonS3.proxy) {
           application.AmazonS3.proxy = ''
@@ -687,6 +815,12 @@ module.exports = {
 
       if (application.api === 'Console') {
         logger.info(`Fixing Console parameters for application ${application.applicationId}`)
+
+        // Case where a connector has been created but never set
+        if (!application.Console) {
+          application.Console = {}
+        }
+
         if (application.Console.verbose === undefined) {
           application.Console.verbose = false
         }
@@ -694,6 +828,11 @@ module.exports = {
 
       if (application.api === 'OIAnalytics') {
         logger.info(`Fixing OIAnalytics parameters for application ${application.applicationId}`)
+
+        // Case where a connector has been created but never set
+        if (!application.OIAnalytics) {
+          application.OIAnalytics = {}
+        }
         if (!application.OIAnalytics.proxy) {
           application.OIAnalytics.proxy = ''
         }
@@ -710,6 +849,12 @@ module.exports = {
 
       if (application.api === 'OIConnect') {
         logger.info(`Fixing OIConnect parameters for application ${application.applicationId}`)
+
+        // Case where a connector has been created but never set
+        if (!application.OIConnect) {
+          application.OIConnect = {}
+        }
+
         if (!application.OIConnect.proxy) {
           application.OIConnect.proxy = ''
         }
@@ -876,6 +1021,9 @@ module.exports = {
       if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
         const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
         const database = await databaseService.createConfigDatabase(databasePath)
+        if (!dataSource[dataSource.protocol].scanGroups) {
+          dataSource[dataSource.protocol].scanGroups = []
+        }
         const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
         // eslint-disable-next-line no-restricted-syntax
         for (const scanMode of scanModes) {

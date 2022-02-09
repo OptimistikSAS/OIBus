@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { Col, Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
+import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import validationSouth from '../South/Form/South.validation'
 import { OIbText } from '../components/OIbForm'
@@ -22,6 +23,7 @@ const NewSouth = ({
   const [nameError, setNameError] = React.useState(null)
   const [protocol, setProtocol] = React.useState(null)
   const dataSources = newConfig?.south?.dataSources ?? []
+  const navigate = useNavigate()
 
   const southCategoryList = protocolList ? [...new Set(protocolList.map((e) => e.category))] : []
 
@@ -36,11 +38,12 @@ const NewSouth = ({
       setProtocolError('A name must be specified and a protocol must be selected')
     }
     if (!validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name)) && name !== '' && protocol !== null) {
+      const myNewId = nanoid()
       dispatchNewConfig({
         type: 'addRow',
         name: 'south.dataSources',
         value: {
-          id: nanoid(),
+          id: myNewId,
           name,
           protocol,
           enabled: false,
@@ -51,6 +54,7 @@ const NewSouth = ({
       setName('')
       setProtocolError(null)
       setNameError(null)
+      navigate(`/south/${myNewId}`)
     }
   }
 
