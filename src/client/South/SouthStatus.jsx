@@ -83,7 +83,7 @@ const SouthStatus = () => {
             }}
             className="util-button"
           >
-            <FaArrowLeft className="oi-icon me-2" />
+            <FaArrowLeft className="oi-back-icon me-2" />
           </Button>
           {`| ${dataSource.name}`}
         </h6>

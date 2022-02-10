@@ -96,12 +96,14 @@ const ConfigurePoints = () => {
       <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
           <Button
-            close
+            id="oi-navigate"
+            outline
             onClick={() => {
               navigate(-1)
             }}
+            className="util-button"
           >
-            <FaArrowLeft className="oi-icon mr-2" />
+            <FaArrowLeft className="oi-back-icon mr-2" />
           </Button>
           {`| ${dataSource.name}`}
         </h6>

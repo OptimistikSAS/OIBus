@@ -45,12 +45,12 @@ const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleA
       <tr>
         {decoratedHeaders.map((decoratedHeader, index) => (
           sortableProperties && sortableProperties.length > index ? (
-            <th key={headers[index]} scope="col">
+            <th key={`${headers[index]}-${index + 1}`} scope="col">
               {decoratedHeader}
               {renderSorting(index)}
             </th>
           ) : (
-            <th key={headers[index]} scope="col">
+            <th key={`${headers[index]}-${index + 1}`} scope="col">
               {decoratedHeader}
             </th>
           )

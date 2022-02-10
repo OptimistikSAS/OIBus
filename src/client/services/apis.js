@@ -45,8 +45,7 @@ const activateConfig = () => putRequest('/config/activate')
 const getHistoryConfig = () => getRequest('/history-query/config')
 const updateHistoryConfig = (body) => putRequest('/history-query/config', body)
 const activateHistoryConfig = () => putRequest('/history-query/config/activate')
-// TODO: implement api call when the endpoint is ready
-const getLastCompletedForHistoryQuery = async () => new Date()
+const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-query/${id}/status`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')

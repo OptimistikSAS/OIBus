@@ -4,32 +4,35 @@ import { Form, Row, Col, Label, Button, Container } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
 import { FaPauseCircle, FaPlayCircle, FaArrowLeft } from 'react-icons/fa'
 import { act } from 'react-dom/test-utils'
-import { OIbTitle, OIbCheckBox, OIbText, OIbTextArea } from '../../components/OIbForm'
+import {
+  OIbTitle,
+  OIbCheckBox,
+  OIbText,
+  OIbTextArea,
+} from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import PointsSection from './PointsSection.jsx'
 import apis from '../../services/apis'
 
-const HistoryQueryForm = ({
-  queryIndex,
-  query,
-  onChange,
-}) => {
-  const {
-    name,
-    paused,
-  } = query
+const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
+  const { name, paused } = query
   const { newConfig } = React.useContext(ConfigContext)
   const [lastCompleted, setLastCompleted] = useState()
-  const dataSource = newConfig?.south?.dataSources.find((southHandler) => southHandler.id === query.southId)
-  const application = newConfig?.north?.applications.find((northHandler) => northHandler.id === query.northId)
+  const dataSource = newConfig?.south?.dataSources.find(
+    (southHandler) => southHandler.id === query.southId,
+  )
+  const application = newConfig?.north?.applications.find(
+    (northHandler) => northHandler.id === query.northId,
+  )
   const navigate = useNavigate()
   const handlePause = () => {
     onChange('paused', !paused)
   }
 
   useEffect(() => {
-    apis.getLastCompletedForHistoryQuery()
+    apis
+      .getLastCompletedForHistoryQuery()
       .then((response) => {
         act(() => {
           setLastCompleted(response)
@@ -45,55 +48,54 @@ const HistoryQueryForm = ({
       <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
         <h6 className="text-muted d-flex align-items-center pl-3 pt-1 ml-2">
           <Button
-            close
+            id="oi-navigate"
+            outline
             onClick={() => {
               navigate(-1)
             }}
+            className="util-button"
           >
-            <FaArrowLeft className="oi-icon mr-2" />
+            <FaArrowLeft className="oi-back-icon mr-2" />
           </Button>
           {`| ${name}`}
-          {paused
-            ? (
-              <>
-                <FaPauseCircle
-                  className="oi-icon-breadcrumb"
-                  size={15}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handlePause()
-                  }}
-                />
-                <Label className="status-text-breadcrumb text-success">Ongoing</Label>
-              </>
-            )
-            : (
-              <>
-                <FaPlayCircle
-                  className="oi-icon-breadcrumb"
-                  size={15}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handlePause()
-                  }}
-                />
-                <Label className="status-text-breadcrumb text-warning">Paused</Label>
-              </>
-            )}
+          {paused ? (
+            <>
+              <FaPauseCircle
+                className="oi-icon-breadcrumb"
+                size={15}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePause()
+                }}
+              />
+              <Label className="status-text-breadcrumb text-success">
+                Ongoing
+              </Label>
+            </>
+          ) : (
+            <>
+              <FaPlayCircle
+                className="oi-icon-breadcrumb"
+                size={15}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePause()
+                }}
+              />
+              <Label className="status-text-breadcrumb text-warning">
+                Paused
+              </Label>
+            </>
+          )}
         </h6>
       </div>
       <Container fluid>
         <Form className="m-2">
           <OIbTitle label="Handlers" />
-          <Row>
-            <Col md={1}>
-              {'South handler: '}
+          <Row className="mb-2">
+            <Col md={2}>
               <a href={`/south/${query.southId}`}>{dataSource?.name}</a>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={1}>
-              {'North handler: '}
+              {'  ->  '}
               <a href={`/north/${query.northId}`}>{application?.name}</a>
             </Col>
           </Row>
@@ -149,10 +151,31 @@ const HistoryQueryForm = ({
           </Row>
           <Row>
             <Col md={4}>
-              <p>
-                <strong>Last completed date: </strong>
-                {lastCompleted?.toString()}
-              </p>
+              <div>
+                <strong>Last completed dates: </strong>
+                <div className="mb-2">
+                  {lastCompleted?.south.length ? (
+                    <table className="last-completed-table">
+                      <thead>
+                        <tr>
+                          <th>Scan mode</th>
+                          <th>Last completed date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lastCompleted?.south.map((obj) => (
+                          <tr>
+                            <td>{obj.scanMode}</td>
+                            <td>{obj.lastCompletedDate}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    'Nothing to show'
+                  )}
+                </div>
+              </div>
             </Col>
           </Row>
           <Row>
@@ -162,7 +185,12 @@ const HistoryQueryForm = ({
               ) : (
                 <>
                   <OIbTitle label="Request" />
-                  <OIbTextArea label="Query" name="query" value={query.query} onChange={onChange} />
+                  <OIbTextArea
+                    label="Query"
+                    name="query"
+                    value={query.query}
+                    onChange={onChange}
+                  />
                 </>
               )}
             </Col>
