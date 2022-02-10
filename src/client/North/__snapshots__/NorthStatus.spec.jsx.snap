@@ -15,7 +15,7 @@ exports[`North Status display NorthStatus page based on config 1`] = `
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-back-icon me-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -61,7 +61,7 @@ exports[`North Status go to previous page 1`] = `
         type="button"
       >
         <svg
-          class="oi-icon me-2"
+          class="oi-back-icon me-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"

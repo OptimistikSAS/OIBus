@@ -109,7 +109,7 @@ exports[`Filters check Filters 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -149,7 +149,7 @@ exports[`Filters check Filters 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -189,7 +189,7 @@ exports[`Filters check Filters 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -229,7 +229,7 @@ exports[`Filters check Filters 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -363,7 +363,7 @@ exports[`Filters check add line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -403,7 +403,7 @@ exports[`Filters check add line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -443,7 +443,7 @@ exports[`Filters check add line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -483,7 +483,7 @@ exports[`Filters check add line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -617,7 +617,7 @@ exports[`Filters check change line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -657,7 +657,7 @@ exports[`Filters check change line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -697,7 +697,7 @@ exports[`Filters check change line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -737,7 +737,7 @@ exports[`Filters check change line 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -871,7 +871,7 @@ exports[`Filters check delete Filter 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -911,7 +911,7 @@ exports[`Filters check delete Filter 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -951,7 +951,7 @@ exports[`Filters check delete Filter 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -991,7 +991,7 @@ exports[`Filters check delete Filter 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"

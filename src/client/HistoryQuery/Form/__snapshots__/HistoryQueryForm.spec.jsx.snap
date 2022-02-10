@@ -9,12 +9,12 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
       class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
     >
       <button
-        aria-label="Close"
-        class="btn-close"
+        class="util-button btn btn-outline-secondary"
+        id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-icon mr-2"
+          class="oi-back-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -67,24 +67,15 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         class="container-fluid"
       />
       <div
-        class="row"
+        class="mb-2 row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
-          South handler: 
           <a
             href="/south/southId-2"
           />
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-1"
-        >
-          North handler: 
+            -&gt;  
           <a
             href="/north/northId-2"
           />
@@ -210,20 +201,20 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Compress
-              <input
-                checked=""
-                class="oi-form-input checkbox form-check-input"
-                id="compress"
-                name="compress"
-                type="checkbox"
-              />
             </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="compress"
+              name="compress"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -233,11 +224,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         <div
           class="col-md-4"
         >
-          <p>
+          <div>
             <strong>
-              Last completed date: 
+              Last completed dates: 
             </strong>
-          </p>
+            <div
+              class="mb-2"
+            >
+              Nothing to show
+            </div>
+          </div>
         </div>
       </div>
       <div
@@ -277,12 +273,12 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
       class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
     >
       <button
-        aria-label="Close"
-        class="btn-close"
+        class="util-button btn btn-outline-secondary"
+        id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-icon mr-2"
+          class="oi-back-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -335,24 +331,15 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         class="container-fluid"
       />
       <div
-        class="row"
+        class="mb-2 row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
-          South handler: 
           <a
             href="/south/southId-1"
           />
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-1"
-        >
-          North handler: 
+            -&gt;  
           <a
             href="/north/northId-1"
           />
@@ -478,20 +465,20 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Compress
-              <input
-                checked=""
-                class="oi-form-input checkbox form-check-input"
-                id="compress"
-                name="compress"
-                type="checkbox"
-              />
             </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="compress"
+              name="compress"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -501,11 +488,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         <div
           class="col-md-4"
         >
-          <p>
+          <div>
             <strong>
-              Last completed date: 
+              Last completed dates: 
             </strong>
-          </p>
+            <div
+              class="mb-2"
+            >
+              Nothing to show
+            </div>
+          </div>
         </div>
       </div>
       <div
@@ -545,12 +537,12 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
       class="text-muted d-flex align-items-center pl-3 pt-1 ml-2"
     >
       <button
-        aria-label="Close"
-        class="btn-close"
+        class="util-button btn btn-outline-secondary"
+        id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-icon mr-2"
+          class="oi-back-icon mr-2"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -603,24 +595,15 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         class="container-fluid"
       />
       <div
-        class="row"
+        class="mb-2 row"
       >
         <div
-          class="col-md-1"
+          class="col-md-2"
         >
-          South handler: 
           <a
             href="/south/southId"
           />
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-1"
-        >
-          North handler: 
+            -&gt;  
           <a
             href="/north/northId"
           />
@@ -684,7 +667,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
-              value=""
+              value="1970-01-01T00:00"
             />
             <div
               class="invalid-feedback"
@@ -709,7 +692,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
               type="datetime-local"
-              value=""
+              value="1970-01-01T00:00"
             />
             <div
               class="invalid-feedback"
@@ -729,11 +712,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         <div
           class="col-md-4"
         >
-          <p>
+          <div>
             <strong>
-              Last completed date: 
+              Last completed dates: 
             </strong>
-          </p>
+            <div
+              class="mb-2"
+            >
+              Nothing to show
+            </div>
+          </div>
         </div>
       </div>
       <div

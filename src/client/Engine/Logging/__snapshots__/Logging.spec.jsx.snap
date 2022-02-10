@@ -381,20 +381,20 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Tailable
-              <input
-                checked=""
-                class="oi-form-input checkbox form-check-input"
-                id="engine.logParameters.fileLog.tailable"
-                name="engine.logParameters.fileLog.tailable"
-                type="checkbox"
-              />
             </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="engine.logParameters.fileLog.tailable"
+              name="engine.logParameters.fileLog.tailable"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>

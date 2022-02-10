@@ -1,44 +1,44 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from 'react'
+import PropTypes from 'prop-types'
 import {
   FaTrashAlt,
   FaCog,
   FaCopy,
   FaLongArrowAltDown,
   FaLongArrowAltUp,
-} from "react-icons/fa";
-import StatusButton from "../../StatusButton.jsx";
-import Modal from "../Modal.jsx";
+} from 'react-icons/fa'
+import StatusButton from '../../StatusButton.jsx'
+import Modal from '../Modal.jsx'
 
 const UpIcon = ({ handleOrder, index }) => (
   <FaLongArrowAltUp
     className="oi-arrow-up-down"
     size={15}
     onClick={(e) => {
-      e.preventDefault();
-      handleOrder("up", index);
+      e.preventDefault()
+      handleOrder('up', index)
     }}
   />
-);
+)
 
 const DownIcon = ({ handleOrder, index }) => (
   <FaLongArrowAltDown
     className="oi-arrow-up-down"
     size={15}
     onClick={(e) => {
-      e.preventDefault();
-      handleOrder("down", index);
+      e.preventDefault()
+      handleOrder('down', index)
     }}
   />
-);
+)
 
 const renderUpDownIcon = (handleOrder, listLength, indexInList) => {
-  if (listLength === 1) return null;
+  if (listLength === 1) return null
   if (listLength !== 1 && indexInList === 0) {
-    return <DownIcon handleOrder={handleOrder} index={indexInList} />;
+    return <DownIcon handleOrder={handleOrder} index={indexInList} />
   }
   if (listLength !== 1 && indexInList === listLength - 1) {
-    return <UpIcon handleOrder={handleOrder} index={indexInList} />;
+    return <UpIcon handleOrder={handleOrder} index={indexInList} />
   }
 
   return (
@@ -46,8 +46,8 @@ const renderUpDownIcon = (handleOrder, listLength, indexInList) => {
       <DownIcon handleOrder={handleOrder} index={indexInList} />
       <UpIcon handleOrder={handleOrder} index={indexInList} />
     </>
-  );
-};
+  )
+}
 
 const TableRows = ({
   rows,
@@ -66,7 +66,7 @@ const TableRows = ({
         {row.map((field) => (
           <td
             key={field.name}
-            style={{ width: field.value.props?.width ?? "" }}
+            style={{ width: field.value.props?.width ?? '' }}
             className="align-top"
           >
             {field.value}
@@ -77,8 +77,8 @@ const TableRows = ({
             <FaCog
               className="oi-icon"
               onClick={(e) => {
-                e.preventDefault();
-                handleEdit(index);
+                e.preventDefault()
+                handleEdit(index)
               }}
             />
           )}
@@ -89,8 +89,8 @@ const TableRows = ({
             <FaCopy
               className="oi-icon"
               onClick={(e) => {
-                e.preventDefault();
-                handleDuplicate(index);
+                e.preventDefault()
+                handleDuplicate(index)
               }}
             />
           )}
@@ -98,13 +98,13 @@ const TableRows = ({
             <Modal
               show={false}
               title="Delete"
-              body={`Are you sure you want to delete ${row[1].value}?`}
+              body={`Are you sure you want to delete ${row[1]?.value || row[0].name}?`}
             >
               {(confirm) => (
                 <FaTrashAlt
                   className="oi-icon"
                   onClick={confirm(() => {
-                    handleDelete(index);
+                    handleDelete(index)
                   })}
                 />
               )}
@@ -114,7 +114,7 @@ const TableRows = ({
       </tr>
     ))}
   </tbody>
-);
+)
 
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
@@ -123,17 +123,17 @@ TableRows.propTypes = {
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
   handleOrder: PropTypes.func,
-};
+}
 
 DownIcon.propTypes = {
   handleOrder: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
-};
+}
 
 UpIcon.propTypes = {
   handleOrder: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
-};
+}
 
 TableRows.defaultProps = {
   handleDelete: null,
@@ -141,6 +141,6 @@ TableRows.defaultProps = {
   handleStatus: null,
   handleDuplicate: null,
   handleOrder: null,
-};
+}
 
-export default TableRows;
+export default TableRows

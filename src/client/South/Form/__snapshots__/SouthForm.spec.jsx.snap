@@ -1115,7 +1115,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1175,7 +1175,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1806,39 +1806,39 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Preserve File?
-              <input
-                checked=""
-                class="oi-form-input checkbox form-check-input"
-                id="south.dataSources.0.FolderScanner.preserveFiles"
-                name="south.dataSources.0.FolderScanner.preserveFiles"
-                type="checkbox"
-              />
             </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.preserveFiles"
+              name="south.dataSources.0.FolderScanner.preserveFiles"
+              type="checkbox"
+            />
           </div>
         </div>
         <div
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Ignore modified date
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
-                name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -1914,19 +1914,19 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Compress File?
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="south.dataSources.0.FolderScanner.compression"
-                name="south.dataSources.0.FolderScanner.compression"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.compression"
+              name="south.dataSources.0.FolderScanner.compression"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -2729,19 +2729,19 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Reject Unauthorized Connection
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="south.dataSources.0.MQTT.rejectUnauthorized"
-                name="south.dataSources.0.MQTT.rejectUnauthorized"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.MQTT.rejectUnauthorized"
+              name="south.dataSources.0.MQTT.rejectUnauthorized"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -8058,19 +8058,19 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Compress File?
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="south.dataSources.0.SQLDbToFile.compression"
-                name="south.dataSources.0.SQLDbToFile.compression"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.SQLDbToFile.compression"
+              name="south.dataSources.0.SQLDbToFile.compression"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -9145,7 +9145,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -9259,7 +9259,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"

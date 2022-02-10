@@ -981,7 +981,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1089,7 +1089,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -3408,19 +3408,19 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               use key "value" of Json "data"
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="north.applications.0.TimescaleDB.useDataKeyValue"
-                name="north.applications.0.TimescaleDB.useDataKeyValue"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="north.applications.0.TimescaleDB.useDataKeyValue"
+              name="north.applications.0.TimescaleDB.useDataKeyValue"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -5645,7 +5645,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -8367,19 +8367,19 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Reject Unauthorized Connection
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="north.applications.0.MQTTNorth.rejectUnauthorized"
-                name="north.applications.0.MQTTNorth.rejectUnauthorized"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="north.applications.0.MQTTNorth.rejectUnauthorized"
+              name="north.applications.0.MQTTNorth.rejectUnauthorized"
+              type="checkbox"
+            />
           </div>
         </div>
       </div>
@@ -8561,19 +8561,19 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               use key "value" of Json "data"
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="north.applications.0.MQTTNorth.useDataKeyValue"
-                name="north.applications.0.MQTTNorth.useDataKeyValue"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="north.applications.0.MQTTNorth.useDataKeyValue"
+              name="north.applications.0.MQTTNorth.useDataKeyValue"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
