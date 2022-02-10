@@ -163,8 +163,7 @@ a:focus {
 
 .oi-add-history-query {
   float: right;
-  margin-right: 10px;
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
 .oi-modal-header {
@@ -395,10 +394,15 @@ label {
 .oi-icon {
   width: 12px;
   color: #627187;
-  margin-right: 2px;
+  margin-right: 10px;
 }
 
-.oi-icon:hover,.oi-help:hover,.oi-up-down:hover {
+.oi-back-icon {
+  width: 12px;
+  color: #627187;
+}
+
+.oi-icon:hover,.oi-help:hover,.oi-up-down:hover, .oi-back-icon:hover {
   text-decoration: none;
   color: #F5BB51;
   cursor: pointer;
@@ -518,11 +522,11 @@ h3 {
   padding-left: 5px;
 }
 
-.col .table td .oi-icon,
-.col-md-4 .table td .oi-icon,
-.col-md-6:not(.north) .table td .oi-icon,
-.col-md-8:not(.south) .table td .oi-icon,
-.table td .oi-icon {
+.col .table td ,
+.col-md-4 .table td ,
+.col-md-6:not(.north) .table td ,
+.col-md-8:not(.south) .table td ,
+.table td  {
   margin-top: 9px;
 }
 
@@ -545,8 +549,15 @@ h3 {
   outline: none;
   box-shadow: none;
   border-width: 0px;
+  margin-top: 3px;
 }
 
 .table > :not(:first-child) {
   border-top: 0;
+}
+
+.last-completed-table td,
+.last-completed-table th {
+  border: 1px solid grey;
+  padding: 5px;
 }

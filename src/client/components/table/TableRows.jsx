@@ -1,43 +1,84 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import { FaTrashAlt, FaCog, FaCopy, FaLongArrowAltDown, FaLongArrowAltUp } from 'react-icons/fa'
-import StatusButton from '../../StatusButton.jsx'
-import Modal from '../Modal.jsx'
+import React from "react";
+import PropTypes from "prop-types";
+import {
+  FaTrashAlt,
+  FaCog,
+  FaCopy,
+  FaLongArrowAltDown,
+  FaLongArrowAltUp,
+} from "react-icons/fa";
+import StatusButton from "../../StatusButton.jsx";
+import Modal from "../Modal.jsx";
 
-const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplicate, handleOrder }) => (
+const UpIcon = ({ handleOrder, index }) => (
+  <FaLongArrowAltUp
+    className="oi-arrow-up-down"
+    size={15}
+    onClick={(e) => {
+      e.preventDefault();
+      handleOrder("up", index);
+    }}
+  />
+);
+
+const DownIcon = ({ handleOrder, index }) => (
+  <FaLongArrowAltDown
+    className="oi-arrow-up-down"
+    size={15}
+    onClick={(e) => {
+      e.preventDefault();
+      handleOrder("down", index);
+    }}
+  />
+);
+
+const renderUpDownIcon = (handleOrder, listLength, indexInList) => {
+  if (listLength === 1) return null;
+  if (listLength !== 1 && indexInList === 0) {
+    return <DownIcon handleOrder={handleOrder} index={indexInList} />;
+  }
+  if (listLength !== 1 && indexInList === listLength - 1) {
+    return <UpIcon handleOrder={handleOrder} index={indexInList} />;
+  }
+
+  return (
+    <>
+      <DownIcon handleOrder={handleOrder} index={indexInList} />
+      <UpIcon handleOrder={handleOrder} index={indexInList} />
+    </>
+  );
+};
+
+const TableRows = ({
+  rows,
+  handleEdit,
+  handleStatus,
+  handleDelete,
+  handleDuplicate,
+  handleOrder,
+}) => (
   <tbody>
     {rows.map((row, index) => (
       <tr key={row[0].name}>
         {handleOrder && (
-        <td>
-          <FaLongArrowAltDown
-            className="oi-arrow-up-down"
-            size={15}
-            onClick={(e) => {
-              e.preventDefault()
-              handleOrder('down', index)
-            }}
-          />
-          <FaLongArrowAltUp
-            className="oi-arrow-up-down"
-            size={15}
-            onClick={(e) => {
-              e.preventDefault()
-              handleOrder('up', index)
-            }}
-          />
-        </td>
+          <td>{renderUpDownIcon(handleOrder, rows.length, index)}</td>
         )}
         {row.map((field) => (
-          <td key={field.name} style={{ width: field.value.props?.width ?? '' }} className="align-top">{field.value}</td>
+          <td
+            key={field.name}
+            style={{ width: field.value.props?.width ?? "" }}
+            className="align-top"
+          >
+            {field.value}
+          </td>
         ))}
-        <td className="align-top">
+        <td className="align-center">
           {handleEdit && (
             <FaCog
               className="oi-icon"
               onClick={(e) => {
-                e.preventDefault()
-                handleEdit(index)
+                e.preventDefault();
+                handleEdit(index);
               }}
             />
           )}
@@ -48,8 +89,8 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
             <FaCopy
               className="oi-icon"
               onClick={(e) => {
-                e.preventDefault()
-                handleDuplicate(index)
+                e.preventDefault();
+                handleDuplicate(index);
               }}
             />
           )}
@@ -57,13 +98,13 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
             <Modal
               show={false}
               title="Delete"
-              body={`Are you sure you want to delete ${row[0].name}?`}
+              body={`Are you sure you want to delete ${row[1].value}?`}
             >
               {(confirm) => (
                 <FaTrashAlt
                   className="oi-icon"
                   onClick={confirm(() => {
-                    handleDelete(index)
+                    handleDelete(index);
                   })}
                 />
               )}
@@ -73,7 +114,7 @@ const TableRows = ({ rows, handleEdit, handleStatus, handleDelete, handleDuplica
       </tr>
     ))}
   </tbody>
-)
+);
 
 TableRows.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.array).isRequired,
@@ -82,8 +123,24 @@ TableRows.propTypes = {
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
   handleOrder: PropTypes.func,
-}
+};
 
-TableRows.defaultProps = { handleDelete: null, handleEdit: null, handleStatus: null, handleDuplicate: null, handleOrder: null }
+DownIcon.propTypes = {
+  handleOrder: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+};
 
-export default TableRows
+UpIcon.propTypes = {
+  handleOrder: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+};
+
+TableRows.defaultProps = {
+  handleDelete: null,
+  handleEdit: null,
+  handleStatus: null,
+  handleDuplicate: null,
+  handleOrder: null,
+};
+
+export default TableRows;

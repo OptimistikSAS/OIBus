@@ -155,7 +155,7 @@ const PointsComponent = ({
         help={<div>Type any points related data</div>}
         onChange={(_name, val) => updateFilterText(val)}
       />
-      <Table help={tableHelps} headers={tableHeaders} rows={tableRows} handleAdd={handleAddPoint} handleDelete={handleDeletePoint} />
+      <Table help={tableHelps || []} headers={tableHeaders} rows={tableRows} handleAdd={handleAddPoint} handleDelete={handleDeletePoint} />
       {filteredPoints.length && (
         <TablePagination
           maxToDisplay={MAX_PAGINATION_DISPLAY}

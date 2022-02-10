@@ -15,6 +15,7 @@ const OIbDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
   }
   if (hidden) return null
   const validCheck = valid(value)
+  const formattedDate = new Date(value).toISOString().substring(0, 16)
 
   return (
     <FormGroup style={style}>
@@ -24,7 +25,7 @@ const OIbDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
         type="datetime-local"
         id={name}
         max={maxDateString}
-        value={value || undefined}
+        value={formattedDate}
         placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
         required
         onChange={handleChange}
@@ -39,7 +40,7 @@ OIbDate.propTypes = {
   label: PropTypes.string,
   help: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.object]),
   valid: PropTypes.func,
   inline: PropTypes.bool,
   hidden: PropTypes.bool,

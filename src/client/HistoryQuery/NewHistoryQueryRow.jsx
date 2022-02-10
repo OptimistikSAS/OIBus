@@ -2,6 +2,7 @@ import React from 'react'
 import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { nanoid } from 'nanoid'
+import { useNavigate } from 'react-router-dom'
 import { OIbSelect } from '../components/OIbForm/index'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
@@ -9,6 +10,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
   const [southHandler, setSouthHandler] = React.useState(southHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
+  const navigate = useNavigate()
   const schema = protocol === 'SQLDbToFile'
     ? ProtocolSchemas.SQLDbToFile.withDriver(southHandler.SQLDbToFile.driver)
     : ProtocolSchemas[protocol]
@@ -18,16 +20,23 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
    * @returns {void}
    */
   const handleAddHistoryQuery = () => {
+    const id = nanoid()
+    const currentDateMinus7Days = new Date()
+    currentDateMinus7Days.setDate(currentDateMinus7Days.getDate() - 7)
+
     addQuery({
-      id: nanoid(),
-      name: `${northHandler.name} -> ${southHandler.name}`,
+      id,
+      name: `${southHandler.name} -> ${northHandler.name}`,
       enabled: false,
       status: 'pending',
+      startTime: currentDateMinus7Days,
+      endTime: new Date(),
       southId: southHandler.id,
       northId: northHandler.id,
-      ...(schema.points ? { points: [] } : { query: '' }),
+      ...(schema.points ? { points: southHandler.points || [] } : { query: southHandler[protocol].query || '' }),
       order: queriesNumber + 1,
     })
+    navigate(`/history-query/${id}`)
   }
 
   /**
@@ -49,7 +58,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
   }
 
   return (
-    <Form>
+    <Form className="mt-5">
       <Row>
         <Col md="4">
           <OIbSelect
@@ -74,7 +83,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
           />
         </Col>
         <Col md="2">
-          <Button size="sm" className="oi-add-history-query" color="primary" onClick={() => handleAddHistoryQuery()}>
+          <Button className="oi-add-history-query" color="primary" onClick={() => handleAddHistoryQuery()}>
             Add
           </Button>
         </Col>

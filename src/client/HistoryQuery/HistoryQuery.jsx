@@ -152,19 +152,26 @@ const HistoryQuery = () => {
       value: <div className={statusColor(status || 'pending')}>{status || 'pending'}</div>,
     },
     { name: 'period', value: startTime && endTime ? `${startTime} -> ${endTime}` : 'Dates not specified' },
-    { name: 'percentage', value: `${percentageCalculator(startTime, endTime, new Date())} %` },
+    { name: 'percentage', value: startTime && endTime ? `${percentageCalculator(startTime, endTime, new Date())} %` : '-' },
   ])
 
   return tableRows ? (
-    <Col md="8">
-      <Table
-        headers={tableHeaders}
-        rows={tableRows}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-        handleDuplicate={handleDuplicate}
-        handleOrder={handleOrder}
-      />
+    <Col md="8" className="m-5">
+      {tableRows.length ? (
+        <Table
+          headers={tableHeaders}
+          rows={tableRows}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+          handleDuplicate={handleDuplicate}
+          handleOrder={handleOrder}
+        />
+      )
+        : (
+          <h6>
+            There is no history query yet, create one by using the form below.
+          </h6>
+        )}
       {applications.length > 0 && dataSources.length > 0
       && (
       <NewHistoryQueryRow
