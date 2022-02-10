@@ -3,19 +3,19 @@
 exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `
 <div>
   <div
-    class="form-check"
+    class="mb-3 mb-3"
   >
     <label
       class="form-check-label form-label"
     >
       label
-      <input
-        class="oi-form-input checkbox form-check-input"
-        id="name"
-        name="name"
-        type="checkbox"
-      />
     </label>
+    <input
+      class="oi-form-input checkbox form-check-input"
+      id="name"
+      name="name"
+      type="checkbox"
+    />
   </div>
 </div>
 `;
@@ -23,20 +23,20 @@ exports[`OIbCheckBox check CheckBox with value(=false) 1`] = `
 exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
 <div>
   <div
-    class="form-check"
+    class="mb-3 mb-3"
   >
     <label
       class="form-check-label form-label"
     >
       label
-      <input
-        checked=""
-        class="oi-form-input checkbox form-check-input"
-        id="name"
-        name="name"
-        type="checkbox"
-      />
     </label>
+    <input
+      checked=""
+      class="oi-form-input checkbox form-check-input"
+      id="name"
+      name="name"
+      type="checkbox"
+    />
   </div>
 </div>
 `;

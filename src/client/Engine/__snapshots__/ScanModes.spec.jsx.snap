@@ -297,7 +297,7 @@ exports[`ScanModes check ScanModes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -445,7 +445,7 @@ exports[`ScanModes check ScanModes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -593,7 +593,7 @@ exports[`ScanModes check ScanModes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -689,7 +689,7 @@ exports[`ScanModes check ScanModes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1011,7 +1011,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1159,7 +1159,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1307,7 +1307,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1403,7 +1403,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1725,7 +1725,7 @@ exports[`ScanModes check change first cron 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1873,7 +1873,7 @@ exports[`ScanModes check change first cron 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2021,7 +2021,7 @@ exports[`ScanModes check change first cron 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2117,7 +2117,7 @@ exports[`ScanModes check change first cron 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2439,7 +2439,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2587,7 +2587,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2735,7 +2735,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2831,7 +2831,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3153,7 +3153,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3301,7 +3301,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3449,7 +3449,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3545,7 +3545,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3867,7 +3867,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4015,7 +4015,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4163,7 +4163,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4259,7 +4259,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4581,7 +4581,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4729,7 +4729,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4877,7 +4877,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4973,7 +4973,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"

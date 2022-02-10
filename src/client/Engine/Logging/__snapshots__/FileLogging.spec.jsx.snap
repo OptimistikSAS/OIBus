@@ -174,20 +174,20 @@ exports[`FileLogging check FileLogging 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>
@@ -369,20 +369,20 @@ exports[`FileLogging check change file level to "warning" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>
@@ -564,20 +564,20 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>
@@ -759,20 +759,20 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>
@@ -954,20 +954,20 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>
@@ -1149,20 +1149,20 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
         class="col-md-3"
       >
         <div
-          class="form-check"
+          class="mb-3 mb-3"
         >
           <label
             class="form-check-label form-label"
           >
             Tailable
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </label>
+          <input
+            checked=""
+            class="oi-form-input checkbox form-check-input"
+            id="engine.logParameters.fileLog.tailable"
+            name="engine.logParameters.fileLog.tailable"
+            type="checkbox"
+          />
         </div>
       </div>
     </div>

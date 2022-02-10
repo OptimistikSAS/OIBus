@@ -217,19 +217,19 @@ exports[`Engine check Engine 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -347,7 +347,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -387,7 +387,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -427,7 +427,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -467,7 +467,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -868,20 +868,20 @@ exports[`Engine check Engine 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -1555,7 +1555,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1703,7 +1703,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1851,7 +1851,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -1947,7 +1947,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -2550,7 +2550,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -2702,7 +2702,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -2816,7 +2816,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-top"
                 />
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -3510,7 +3510,7 @@ exports[`Engine check Engine 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -3754,19 +3754,19 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -3884,7 +3884,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -3924,7 +3924,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -3964,7 +3964,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -4004,7 +4004,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -4405,20 +4405,20 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -5092,7 +5092,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -5240,7 +5240,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -5388,7 +5388,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -5484,7 +5484,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -6613,7 +6613,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -6877,19 +6877,19 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -7007,7 +7007,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -7047,7 +7047,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -7087,7 +7087,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -7127,7 +7127,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -7528,20 +7528,20 @@ exports[`Engine check change engineName 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -8215,7 +8215,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -8363,7 +8363,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -8511,7 +8511,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -8607,7 +8607,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -9210,7 +9210,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -9362,7 +9362,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -9476,7 +9476,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-top"
                 />
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -10170,7 +10170,7 @@ exports[`Engine check change engineName 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -10414,19 +10414,19 @@ exports[`Engine check change password 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -10544,7 +10544,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -10584,7 +10584,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -10624,7 +10624,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -10664,7 +10664,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -11065,20 +11065,20 @@ exports[`Engine check change password 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -11752,7 +11752,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -11900,7 +11900,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -12048,7 +12048,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -12144,7 +12144,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -12747,7 +12747,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -12899,7 +12899,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -13013,7 +13013,7 @@ exports[`Engine check change password 1`] = `
                   class="align-top"
                 />
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -13707,7 +13707,7 @@ exports[`Engine check change password 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -13951,19 +13951,19 @@ exports[`Engine check change port 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -14081,7 +14081,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -14121,7 +14121,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -14161,7 +14161,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -14201,7 +14201,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -14602,20 +14602,20 @@ exports[`Engine check change port 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -15289,7 +15289,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -15437,7 +15437,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -15585,7 +15585,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -15681,7 +15681,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -16284,7 +16284,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -16436,7 +16436,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -16550,7 +16550,7 @@ exports[`Engine check change port 1`] = `
                   class="align-top"
                 />
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -17244,7 +17244,7 @@ exports[`Engine check change port 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -17488,19 +17488,19 @@ exports[`Engine check change user 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check"
+            class="mb-3 mb-3"
           >
             <label
               class="form-check-label form-label"
             >
               Safe mode
-              <input
-                class="oi-form-input checkbox form-check-input"
-                id="engine.safeMode"
-                name="engine.safeMode"
-                type="checkbox"
-              />
             </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="engine.safeMode"
+              name="engine.safeMode"
+              type="checkbox"
+            />
             <small
               class="form-text text-muted"
             >
@@ -17618,7 +17618,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -17658,7 +17658,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -17698,7 +17698,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -17738,7 +17738,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -18139,20 +18139,20 @@ exports[`Engine check change user 1`] = `
               class="col-md-3"
             >
               <div
-                class="form-check"
+                class="mb-3 mb-3"
               >
                 <label
                   class="form-check-label form-label"
                 >
                   Tailable
-                  <input
-                    checked=""
-                    class="oi-form-input checkbox form-check-input"
-                    id="engine.logParameters.fileLog.tailable"
-                    name="engine.logParameters.fileLog.tailable"
-                    type="checkbox"
-                  />
                 </label>
+                <input
+                  checked=""
+                  class="oi-form-input checkbox form-check-input"
+                  id="engine.logParameters.fileLog.tailable"
+                  name="engine.logParameters.fileLog.tailable"
+                  type="checkbox"
+                />
               </div>
             </div>
           </div>
@@ -18826,7 +18826,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -18974,7 +18974,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -19122,7 +19122,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -19218,7 +19218,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -19821,7 +19821,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -19973,7 +19973,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -20087,7 +20087,7 @@ exports[`Engine check change user 1`] = `
                   class="align-top"
                 />
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"
@@ -20781,7 +20781,7 @@ exports[`Engine check change user 1`] = `
                   </div>
                 </td>
                 <td
-                  class="align-top"
+                  class="align-center"
                 >
                   <svg
                     class="oi-icon"

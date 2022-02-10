@@ -246,7 +246,7 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -398,7 +398,7 @@ exports[`Proxies check Proxies 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -512,7 +512,7 @@ exports[`Proxies check Proxies 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -783,7 +783,7 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -935,7 +935,7 @@ exports[`Proxies check add line to proxies 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1049,7 +1049,7 @@ exports[`Proxies check add line to proxies 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1320,7 +1320,7 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1472,7 +1472,7 @@ exports[`Proxies check change first host 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1586,7 +1586,7 @@ exports[`Proxies check change first host 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -1857,7 +1857,7 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2009,7 +2009,7 @@ exports[`Proxies check change first name 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2123,7 +2123,7 @@ exports[`Proxies check change first name 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2394,7 +2394,7 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2546,7 +2546,7 @@ exports[`Proxies check change first password 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2660,7 +2660,7 @@ exports[`Proxies check change first password 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -2931,7 +2931,7 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3083,7 +3083,7 @@ exports[`Proxies check change first port 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3197,7 +3197,7 @@ exports[`Proxies check change first port 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3468,7 +3468,7 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3620,7 +3620,7 @@ exports[`Proxies check change first protocol 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -3734,7 +3734,7 @@ exports[`Proxies check change first protocol 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4005,7 +4005,7 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4157,7 +4157,7 @@ exports[`Proxies check change first username 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4271,7 +4271,7 @@ exports[`Proxies check change first username 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4542,7 +4542,7 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4694,7 +4694,7 @@ exports[`Proxies check delete first proxie 1`] = `
               </div>
             </td>
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
@@ -4808,7 +4808,7 @@ exports[`Proxies check delete first proxie 1`] = `
               class="align-top"
             />
             <td
-              class="align-top"
+              class="align-center"
             >
               <svg
                 class="oi-icon"
