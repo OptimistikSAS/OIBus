@@ -32,7 +32,7 @@ jobs:
           npm run build-${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
           zip -r ../oibus.zip .
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -71,7 +71,7 @@ jobs:
         working-directory: ./dist/win
         shell: cmd
 
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
