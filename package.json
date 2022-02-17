@@ -69,7 +69,7 @@
     "micromatch": "4.0.4",
     "minimist": "1.2.5",
     "mongodb": "4.3.1",
-    "mqtt": "4.3.5",
+    "mqtt": "4.3.6",
     "mqtt-wildcard": "3.0.9",
     "mssql": "8.0.2",
     "mysql2": "2.3.3",
