@@ -490,6 +490,8 @@ module.exports = {
     delete config.engine.caching.archiveMode
     delete config.engine.caching.archiveFolder
 
+    config.engine.historyQuery = { folder: './historyQuery' }
+
     // Remove empty external sources
     config.engine.externalSources = config.engine.externalSources?.filter((externalSource) => externalSource !== '') || []
 
