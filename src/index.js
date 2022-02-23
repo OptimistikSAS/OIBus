@@ -5,6 +5,7 @@ const VERSION = require('../package.json').version
 
 const migrationService = require('./migration/migration.service')
 const ConfigService = require('./services/config.service.class')
+const Server = require('./server/Server.class')
 const OIBusEngine = require('./engine/OIBusEngine.class')
 const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/logger/Logger.class')
@@ -51,14 +52,24 @@ if (cluster.isMaster) {
   // Handle messages from the worker
   cluster.on('message', (_worker, msg) => {
     switch (msg.type) {
-      case 'shutdown':
+      case 'reload-oibus-engine':
         Object.keys(cluster.workers).forEach((id) => {
-          cluster.workers[id].send({ type: 'shutdown' })
+          cluster.workers[id].send({ type: 'reload-oibus-engine' })
+        })
+        break
+      case 'reload-historyquery-engine':
+        Object.keys(cluster.workers).forEach((id) => {
+          cluster.workers[id].send({ type: 'reload-historyquery-engine' })
         })
         break
       case 'reload':
         Object.keys(cluster.workers).forEach((id) => {
           cluster.workers[id].send({ type: 'reload' })
+        })
+        break
+      case 'shutdown':
+        Object.keys(cluster.workers).forEach((id) => {
+          cluster.workers[id].send({ type: 'shutdown' })
         })
         break
       case 'shutdown-ready':
@@ -75,12 +86,23 @@ if (cluster.isMaster) {
   // Migrate config file, if needed
   migrationService.migrate(configFile).then(() => {
     // this condition is reached only for a worker (i.e. not master)
-    // so this is here where we execute the OIBusEngine and HistoryQueryEngine
-    const oibusEngine = new OIBusEngine(configFile, check)
-    oibusEngine.start(process.env.SAFE_MODE === 'true')
+    // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
-    const historyQueryEngine = new HistoryQueryEngine(configFile, check)
-    historyQueryEngine.start(process.env.SAFE_MODE === 'true')
+    const configService = new ConfigService(configFile)
+    const safeMode = process.env.SAFE_MODE === 'true'
+
+    const oibusEngine = new OIBusEngine(configService)
+    const historyQueryEngine = new HistoryQueryEngine(configService)
+    const server = new Server(oibusEngine)
+    server.listen()
+
+    if (check) {
+      logger.info('OIBus is running in check mode')
+      process.send({ type: 'shutdown-ready' })
+    } else {
+      oibusEngine.start(safeMode)
+      historyQueryEngine.start(safeMode)
+    }
 
     // Catch Ctrl+C and properly stop the Engine
     process.on('SIGINT', () => {
@@ -93,15 +115,27 @@ if (cluster.isMaster) {
     })
 
     // Receive messages from the master process.
-    process.on('message', (msg) => {
+    process.on('message', async (msg) => {
       switch (msg.type) {
+        case 'reload-oibus-engine':
+          logger.info('Reloading OIBus Engine')
+          await oibusEngine.stop()
+          oibusEngine.start(safeMode)
+          break
+        case 'reload-historyquery-engine':
+          logger.info('Reloading HistoryQuery Engine')
+          await historyQueryEngine.stop()
+          historyQueryEngine.start(safeMode)
+          break
         case 'reload':
+          logger.info('Reloading OIBus')
           Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
             .then(() => {
               process.exit()
             })
           break
         case 'shutdown':
+          logger.info('Shutting down OIBus')
           Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
             .then(() => {
               process.send({ type: 'shutdown-ready' })

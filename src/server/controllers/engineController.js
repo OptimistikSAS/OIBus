@@ -46,28 +46,6 @@ const getSouthList = (ctx) => {
 }
 
 /**
- * Reload OIBus.
- * @param {Object} ctx  - The KOA context
- * @returns {void}
- */
-const reload = async (ctx) => {
-  await ctx.app.engine.reload(10000)
-
-  ctx.ok('Reloading...')
-}
-
-/**
- * Shutdown OIBus.
- * @param {Object} ctx  - The KOA context
- * @returns {void}
- */
-const shutdown = async (ctx) => {
-  await ctx.app.engine.shutdown(1000)
-
-  ctx.ok('Shutting down...')
-}
-
-/**
  * Add Values to the Engine
  * @param {Object} ctx - The KOA context
  * @param {Object} ctx.request.body - Array of values
@@ -132,8 +110,6 @@ module.exports = {
   getStatusForNorth,
   getNorthList,
   getSouthList,
-  reload,
-  shutdown,
   addValues,
   addFile,
   aliveSignal,

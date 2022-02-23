@@ -29,6 +29,8 @@ const updateConfig = (ctx) => {
 const activateConfiguration = (ctx) => {
   try {
     ctx.app.engine.configService.activateHistoryQueryConfiguration()
+    // Ask the Master Cluster to reload HistoryQuery Engine
+    process.send({ type: 'reload-historyquery-engine' })
     ctx.ok('Reloading...')
   } catch (error) {
     ctx.throw(500, 'Unable to activate configuration')

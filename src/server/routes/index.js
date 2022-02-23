@@ -5,6 +5,7 @@ const configController = require('../controllers/configController')
 const logController = require('../controllers/logController')
 const engineController = require('../controllers/engineController')
 const historyQueryController = require('../controllers/historyQueryController')
+const oibusController = require('../controllers/oibusController')
 
 const router = new Router()
 
@@ -25,8 +26,8 @@ router.post('/engine/addFile', upload.single('file'), engineController.addFile)
 router.post('/engine/aliveSignal', engineController.aliveSignal)
 router.get('/status', engineController.getStatus)
 router.get('/status/south/:id', engineController.getStatusForSouth)
-router.get('/reload', engineController.reload)
-router.get('/shutdown', engineController.shutdown)
+router.get('/reload', oibusController.reload)
+router.get('/shutdown', oibusController.shutdown)
 router.get('/logs', logController.getLogs)
 
 router.get('/history-query/config', historyQueryController.getActiveConfiguration)
