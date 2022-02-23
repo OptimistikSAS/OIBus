@@ -18,17 +18,15 @@ class HistoryQueryEngine extends BaseEngine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
-   * @param {string} configFile - The config file
-   * @param {boolean} check - the engine will quit
+   * @param {ConfigService} configService - The config service
    */
-  constructor(configFile, check) {
-    super(configFile)
+  constructor(configService) {
+    super(configService)
 
     const { engineConfig } = this.configService.getConfig()
     const { historyQuery: { folder } } = engineConfig
     this.cacheFolder = folder
     this.historyQueries = []
-    this.check = check
   }
 
   /**
@@ -114,9 +112,13 @@ class HistoryQueryEngine extends BaseEngine {
   async start(safeMode = false) {
     const { engineConfig } = this.configService.getConfig()
     await this.initEngineServices(engineConfig)
-    if (safeMode || this.check) {
-      this.logger.warn('HistoryQuery is not executed in safe (or check) mode')
+
+    this.safeMode = safeMode || engineConfig.safeMode
+    if (this.safeMode) {
+      this.logger.info('HistoryQuery Engine is running in safe mode')
+      return
     }
+
     this.runNextHistoryQuery()
   }
 
@@ -125,6 +127,10 @@ class HistoryQueryEngine extends BaseEngine {
    * @return {Promise<void>} - The stop promise
    */
   async stop() {
+    if (this.safeMode) {
+      return
+    }
+
     if (this.historyQuery) {
       await this.historyQuery.stop()
     }

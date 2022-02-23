@@ -24,7 +24,6 @@ protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
 // BaseEngine classes
-const ConfigService = require('../services/config.service.class')
 const Logger = require('./logger/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const { createRequestService } = require('../services/request')
@@ -41,15 +40,15 @@ class BaseEngine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
-   * @param {string} configFile - The config file
+   * @param {ConfigService} configService - The config service
    */
-  constructor(configFile) {
+  constructor(configService) {
     this.version = VERSION
 
     this.eventEmitters = {}
     this.statusData = {}
 
-    this.configService = new ConfigService(this, configFile)
+    this.configService = configService
 
     // Request service
     this.requestService = createRequestService(this)

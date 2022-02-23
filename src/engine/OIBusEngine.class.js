@@ -8,7 +8,6 @@ const databaseService = require('../services/database.service')
 
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
-const Server = require('../server/Server.class')
 const HealthSignal = require('./HealthSignal.class')
 const Cache = require('./Cache.class')
 
@@ -24,11 +23,10 @@ class OIBusEngine extends BaseEngine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
-   * @param {string} configFile - The config file
-   * @param {boolean} check - the engine will display the version and quit
+   * @param {ConfigService} configService - The config service
    */
-  constructor(configFile, check) {
-    super(configFile)
+  constructor(configService) {
+    super(configService)
 
     // Will only contain protocols/application used
     // based on the config file
@@ -41,7 +39,6 @@ class OIBusEngine extends BaseEngine {
     this.addValuesCount = 0
     this.addFileCount = 0
     this.forwardedHealthSignalMessages = 0
-    this.check = check
   }
 
   /**
@@ -153,20 +150,11 @@ class OIBusEngine extends BaseEngine {
       engineConfig,
     } = this.configService.getConfig()
     await this.initEngineServices(engineConfig)
-    // 1. start web server
-    const server = new Server(this)
-    server.listen()
-
-    // if OIBus is called with --checked, it will exit immediately
-    // this check is typically done in the CI mode.
-    if (this.check) {
-      this.logger.info('check mode => OIBus is stopping')
-      await this.shutdown(500)
-      return
-    }
     this.initializeStatusData()
-    if (engineConfig.safeMode || safeMode) {
-      this.logger.warn('Starting in safe mode!')
+
+    this.safeMode = safeMode || engineConfig.safeMode
+    if (this.safeMode) {
+      this.logger.info('OIBus Engine is running in safe mode')
       return
     }
 
@@ -304,14 +292,12 @@ class OIBusEngine extends BaseEngine {
    * @return {Promise<void>} - The stop promise
    */
   async stop() {
-    const { engineConfig } = this.configService.getConfig()
-
-    if (engineConfig.safeMode || this.check) {
-      return
-    }
-
     if (this.liveStatusInterval) {
       clearInterval(this.liveStatusInterval)
+    }
+
+    if (this.safeMode) {
+      return
     }
 
     // Stop HealthSignal
@@ -347,34 +333,6 @@ class OIBusEngine extends BaseEngine {
 
     // Stop the listener
     this.eventEmitters['/engine/sse']?.events?.off('data', this.listener)
-  }
-
-  /**
-   * Restart Engine.
-   * @param {number} timeout - The delay to wait before restart
-   * @returns {void}
-   */
-  async reload(timeout) {
-    this.logger.warn('Reloading OIBus')
-
-    setTimeout(() => {
-      // Ask the Master Cluster to reload
-      process.send({ type: 'reload' })
-    }, timeout)
-  }
-
-  /**
-   * Shutdown OIbus.
-   * @param {number} timeout - The delay to wait before restart
-   * @returns {void}
-   */
-  async shutdown(timeout) {
-    this.logger.warn('Shutting down OIBus')
-    setTimeout(() => {
-      // Ask the Master Cluster to shutdown
-      this.logger.warn('Request process shutdown')
-      process.send({ type: 'shutdown' })
-    }, timeout)
   }
 
   /**

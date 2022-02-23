@@ -36,7 +36,7 @@ beforeEach(async () => {
 
   ConfigService.mockImplementation(() => mockConfigService)
 
-  engine = new OIBusEngine('../config/defaultConfig.json', false)
+  engine = new OIBusEngine(mockConfigService)
   await engine.initEngineServices(config.engine)
 })
 

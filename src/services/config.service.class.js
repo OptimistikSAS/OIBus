@@ -9,13 +9,11 @@ const Logger = require('../engine/logger/Logger.class')
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
- * @param {Engine} engine - The Engine
  * @param {string} configFile - The config file
  * @return {void}
  */
 class ConfigService {
-  constructor(engine, configFile) {
-    this.engine = engine
+  constructor(configFile) {
     this.logger = Logger.getDefaultLogger()
     this.encryptionService = EncryptionService.getInstance()
 
@@ -195,7 +193,7 @@ class ConfigService {
   activateConfiguration() {
     ConfigService.backupConfigFile(this.configFile)
     ConfigService.saveConfig(this.configFile, this.modifiedConfig)
-    this.engine.reload(3000)
+    this.config = this.duplicateConfig(this.modifiedConfig)
   }
 
   /**
@@ -205,7 +203,7 @@ class ConfigService {
   activateHistoryQueryConfiguration() {
     ConfigService.backupConfigFile(this.historyQueryConfigFile)
     ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryModifiedConfig)
-    this.engine.reload(10)
+    this.historyQueryConfig = this.duplicateConfig(this.historyQueryModifiedConfig)
   }
 
   /**
