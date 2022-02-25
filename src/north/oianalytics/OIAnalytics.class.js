@@ -17,8 +17,8 @@ class OIAnalytics extends ApiHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-    const valuesEndpoint = '/api/oianalytics/oibus/data/time_values'
-    const fileEndpoint = '/api/oianalytics/data/values/upload'
+    const valuesEndpoint = '/api/oianalytics/oibus/time-values'
+    const fileEndpoint = '/api/oianalytics/value-upload/file'
     const queryParam = `?dataSourceId=${this.application.name}`
 
     const {
