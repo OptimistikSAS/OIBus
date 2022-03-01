@@ -24,6 +24,8 @@ if (cluster.isMaster) {
   // one if exit is detected (typically to load a new configuration)
   logger.info(`Starting OIBus version: ${VERSION}`)
 
+  console.log('Coucou')
+
   let restartCount = 0
   let startTime = (new Date()).getTime()
 
