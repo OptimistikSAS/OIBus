@@ -77,7 +77,7 @@ const Logging = ({ logParameters, onChange }) => (
         </table>
         <br />
         <p>
-          We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode
+          We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode
           only to identify the origin of an issue.
         </p>
       </>

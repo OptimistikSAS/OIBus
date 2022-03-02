@@ -3,7 +3,7 @@ const build = require('pino-abstract-transport')
 
 const MAX_BATCH_LOG = 500
 const MAX_BATCH_INTERVAL_S = 60
-const LEVEL_FORMAT = { 10: 'silly', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
+const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
 
 /**
  * Class to support logging to a remote loki instance as a custom Pino Transport module

@@ -17,7 +17,7 @@ class AxiosRequest extends BaseRequest {
    * @return {Promise} - The send status
    */
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
-    this.logger.silly('sendWithAxios() called')
+    this.logger.trace('sendWithAxios() called')
 
     const source = axios.CancelToken.source()
 

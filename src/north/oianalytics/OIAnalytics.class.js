@@ -41,7 +41,7 @@ class OIAnalytics extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`OIAnalytics ${this.name} handleValues() with ${values.length} values`)
+    this.logger.trace(`OIAnalytics ${this.name} handleValues() with ${values.length} values`)
     const cleanedValues = values.filter((value) => value?.data?.value !== undefined
       && value?.data?.value !== null
       && value.timestamp !== null

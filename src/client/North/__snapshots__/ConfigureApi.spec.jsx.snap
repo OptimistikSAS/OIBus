@@ -248,7 +248,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -1325,7 +1325,7 @@ exports[`ConfigureApi check update 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>

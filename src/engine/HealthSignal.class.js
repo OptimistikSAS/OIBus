@@ -1,5 +1,3 @@
-const Logger = require('./logger/Logger.class')
-
 /**
  * Class HealthSignal - sends health signal to a remote host
  */
@@ -7,12 +5,12 @@ class HealthSignal {
   /**
    * Constructor for HealthSignal
    * @constructor
-   * @param {Engine} engine - The Engine
+   * @param {OIBusEngine} engine - The Engine
    * @return {void}
    */
   constructor(engine) {
     this.engine = engine
-    this.logger = Logger.getDefaultLogger()
+    this.logger = engine.logger
     const { engineConfig } = this.engine.configService.getConfig()
 
     const { http, logging } = engineConfig.healthSignal
@@ -59,7 +57,7 @@ class HealthSignal {
    * @return {Promise<void>} - The response
    */
   async sendHttpSignal() {
-    this.logger.silly('sendHttpSignal')
+    this.logger.trace('sendHttpSignal')
 
     const healthStatus = await this.prepareStatus(this.http.verbose)
     healthStatus.id = this.engineName
@@ -87,7 +85,7 @@ class HealthSignal {
    * @returns {void}
    */
   async sendLoggingSignal() {
-    this.logger.silly('sendHttpSignal')
+    this.logger.trace('sendHttpSignal')
 
     const healthStatus = await this.prepareStatus(true)
     this.logger.info(JSON.stringify(healthStatus))

@@ -34,7 +34,7 @@ global.Date = class {
 }
 
 // verbosity options
-const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
+const verbosityOptions = ['debug', 'info', 'warning', 'error', 'trace']
 
 // sample test logs
 const testLogs = [
@@ -69,16 +69,16 @@ const testLogs = [
   {
     id: 5,
     timestamp: '2020-01-01T02:00:00.000Z',
-    level: 'silly',
+    level: 'trace',
     source: 'Source',
-    message: 'Testing silly logs',
+    message: 'Testing trace logs',
   },
   {
     id: 6,
     timestamp: '2020-01-01T03:00:00.000Z',
-    level: 'silly',
+    level: 'trace',
     source: 'Source',
-    message: 'Testing silly logs on page 2',
+    message: 'Testing trace logs on page 2',
   },
 ]
 
@@ -90,8 +90,8 @@ const defaultMaxLog = 300
 const tempDefaultMaxLog = 5
 React.useState = jest.fn().mockImplementation((init) => {
   if (JSON.stringify(init) === JSON.stringify(verbosityOptions)) {
-    // init test with 'silly' option unchecked
-    return [verbosityOptions.filter((item) => item !== 'silly'), setVerbosity]
+    // init test with 'trace' option unchecked
+    return [verbosityOptions.filter((item) => item !== 'trace'), setVerbosity]
   }
   if (init === undefined) {
     return [testLogs, setState]
@@ -177,7 +177,7 @@ describe('Logs', () => {
     expect(setVerbosity).toBeCalledWith(['info', 'warning', 'error'])
     expect(container).toMatchSnapshot()
   })
-  test('check change verbosity, check silly', () => {
+  test('check change verbosity, check trace', () => {
     act(() => {
       ReactDOM.render(
         <Logs />,
@@ -185,7 +185,7 @@ describe('Logs', () => {
       )
     })
     Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
-    expect(setVerbosity).toBeCalledWith(['debug', 'info', 'warning', 'error', 'silly'])
+    expect(setVerbosity).toBeCalledWith(['debug', 'info', 'warning', 'error', 'trace'])
     expect(container).toMatchSnapshot()
   })
   test('check press Show Logs, success in logs call', async () => {

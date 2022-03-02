@@ -26,6 +26,10 @@ class Server {
   constructor(engine) {
     this.app = new Koa()
 
+    // capture the engine and logger under app for reuse in routes.
+    this.app.engine = engine
+    this.app.logger = new Logger('web-server')
+
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
@@ -52,10 +56,6 @@ class Server {
       ctx.body = this.app.engine.eventEmitters[ctx.path].stream
       this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
     })
-
-    // capture the engine and logger under app for reuse in routes.
-    this.app.engine = engine
-    this.app.logger = Logger.getDefaultLogger()
 
     // Get the config entries
     const { engineConfig } = engine.configService.getConfig()
@@ -88,7 +88,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          this.app.logger.error('UnauthorizedError: Bad Combination Login/Password')
+          this.app.logger.warn('UnauthorizedError: Bad Combination Login/Password')
           ctx.body = JSON.stringify(err)
         } else {
           throw err
@@ -130,7 +130,11 @@ class Server {
   }
 
   listen() {
-    this.app.listen(this.port, () => this.app.logger.info(`Server started on ${this.port}`))
+    const { engineConfig } = this.app.engine.configService.getConfig()
+
+    this.app.logger.changeParameters(engineConfig).then(() => {
+      this.app.listen(this.port, () => this.app.logger.info(`Web server started on ${this.port}`))
+    })
   }
 }
 

@@ -231,7 +231,7 @@ class ProtocolHandler {
     do {
       // Wait between the read interval iterations to give time for the Cache to store the data from the previous iteration
       if (!firstIteration) {
-        this.logger.silly(`Wait ${this.readIntervalDelay} ms`)
+        this.logger.trace(`Wait ${this.readIntervalDelay} ms`)
         // eslint-disable-next-line no-await-in-loop
         await this.delay(this.readIntervalDelay)
       }
@@ -294,7 +294,7 @@ class ProtocolHandler {
    * @returns {void} -
    */
   async flush(flag = 'time-flush') {
-    this.logger.silly(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
+    this.logger.trace(`${flag}: ${this.buffer.length}, ${this.dataSource.name}`)
     // save the buffer to be sent and immediately clear it
     const bufferSave = [...this.buffer]
     this.buffer = []

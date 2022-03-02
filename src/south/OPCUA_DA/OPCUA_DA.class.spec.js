@@ -22,7 +22,7 @@ jest.mock('../../engine/logger/Logger.class')
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.getCacheFolder = () => config.engine.caching.cacheFolder
-engine.logger = { error: jest.fn(), info: jest.fn(), silly: jest.fn() }
+engine.logger = { error: jest.fn(), info: jest.fn(), trace: jest.fn() }
 engine.eventEmitters = {}
 engine.engineName = 'Test OPCUA_DA'
 

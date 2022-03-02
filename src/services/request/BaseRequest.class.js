@@ -73,7 +73,7 @@ class BaseRequest {
   async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) {
     const { engineConfig: { httpRequest } } = this.engine.configService.getConfig()
 
-    this.logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
+    this.logger.trace(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
 
     // Generate authentication header
     const headers = baseHeaders
@@ -117,7 +117,7 @@ class BaseRequest {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
 
-    this.logger.silly(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
+    this.logger.trace(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
     return ApiHandler.STATUS.SUCCESS
   }

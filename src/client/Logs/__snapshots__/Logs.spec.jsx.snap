@@ -148,7 +148,7 @@ exports[`Logs check Logs 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -288,10 +288,10 @@ exports[`Logs check Logs 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -460,7 +460,7 @@ exports[`Logs check change filterText 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -600,10 +600,10 @@ exports[`Logs check change filterText 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -772,7 +772,7 @@ exports[`Logs check change fromDate 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -912,10 +912,10 @@ exports[`Logs check change fromDate 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -1084,7 +1084,7 @@ exports[`Logs check change toDate 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -1224,10 +1224,10 @@ exports[`Logs check change toDate 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -1248,7 +1248,7 @@ exports[`Logs check change toDate 1`] = `
 </div>
 `;
 
-exports[`Logs check change verbosity, check silly 1`] = `
+exports[`Logs check change verbosity, check trace 1`] = `
 <div>
   <div
     class="container-fluid"
@@ -1396,7 +1396,7 @@ exports[`Logs check change verbosity, check silly 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -1536,10 +1536,10 @@ exports[`Logs check change verbosity, check silly 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -1708,7 +1708,7 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -1848,10 +1848,10 @@ exports[`Logs check change verbosity, uncheck debug 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -2020,7 +2020,7 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -2160,10 +2160,10 @@ exports[`Logs check press Show Logs, success in logs call 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -2332,7 +2332,7 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -2472,10 +2472,10 @@ exports[`Logs check press Show Logs, success in logs call 2`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                 </tbody>
@@ -2644,7 +2644,7 @@ exports[`Logs check press showMore 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  silly
+                  trace
                 </label>
               </div>
             </div>
@@ -2712,10 +2712,10 @@ exports[`Logs check press showMore 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs on page 2
+                      Testing trace logs on page 2
                     </td>
                   </tr>
                   <tr
@@ -2730,10 +2730,10 @@ exports[`Logs check press showMore 1`] = `
                       Source
                     </td>
                     <td>
-                      silly
+                      trace
                     </td>
                     <td>
-                      Testing silly logs
+                      Testing trace logs
                     </td>
                   </tr>
                   <tr

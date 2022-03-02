@@ -58,7 +58,7 @@ class MQTTNorth extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`MQTT North handleValues() call with ${values.length} values`)
+    this.logger.trace(`MQTT North handleValues() call with ${values.length} values`)
     const successCount = await this.publishValues(values)
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR

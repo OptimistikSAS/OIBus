@@ -4,7 +4,7 @@ const db = require('better-sqlite3')
 const LOGS_TABLE_NAME = 'logs'
 const NUMBER_OF_RECORDS_TO_DELETE = 10000
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000
-const LEVEL_FORMAT = { 10: 'silly', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
+const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
 
 /**
  * Class to support logging to sqlite as a custom Pino Transport module
@@ -66,7 +66,7 @@ class SqliteTransport {
                    WHERE id IN (
                        SELECT id
                        FROM ${this.tableName}
-                       ORDER BY id ASC
+                       ORDER BY id
                        LIMIT ?);`
     await this.database.prepare(query).run(NUMBER_OF_RECORDS_TO_DELETE)
   }

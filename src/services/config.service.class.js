@@ -4,7 +4,6 @@ const fs = require('fs')
 const minimist = require('minimist')
 
 const EncryptionService = require('./EncryptionService.class')
-const Logger = require('../engine/logger/Logger.class')
 
 /**
  * Class responsible for managing the configuration.
@@ -14,14 +13,12 @@ const Logger = require('../engine/logger/Logger.class')
  */
 class ConfigService {
   constructor(configFile) {
-    this.logger = Logger.getDefaultLogger()
     this.encryptionService = EncryptionService.getInstance()
 
     this.configFile = configFile
 
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
     if (!fs.existsSync(baseDir)) {
-      this.logger.info(`Creating folder ${baseDir}`)
       fs.mkdirSync(baseDir, { recursive: true })
     }
 
@@ -31,25 +28,21 @@ class ConfigService {
     this.checkOrCreateConfigFile(this.configFile, defaultConfig)
     this.checkOrCreateConfigFile(this.historyQueryConfigFile, [])
 
-    this.config = ConfigService.tryReadFile(this.configFile, this.logger)
-    this.modifiedConfig = this.duplicateConfig(this.config)
-    this.historyQueryConfig = ConfigService.tryReadFile(this.historyQueryConfigFile, this.logger)
-    this.historyQueryModifiedConfig = this.duplicateConfig(this.historyQueryConfig)
+    this.config = ConfigService.tryReadFile(this.configFile)
+    this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
+    this.historyQueryConfig = ConfigService.tryReadFile(this.historyQueryConfigFile)
+    this.historyQueryModifiedConfig = JSON.parse(JSON.stringify(this.historyQueryConfig))
 
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
   }
 
   /**
    * Get config file from console arguments
-   * @param {Object} logger - The logger
-   * @returns {string} - the config file
+   * @returns {Object} - the config file and check argument
    */
-  static getCommandLineArguments(logger) {
+  static getCommandLineArguments() {
     const args = minimist(process.argv.slice(2))
     const { config, check } = args
-    if (!config) {
-      logger.error('No config file specified, example: --config ./config/config.json')
-    }
     return { configFile: path.resolve(config ?? './oibus.json'), check }
   }
 
@@ -63,12 +56,7 @@ class ConfigService {
       throw new Error('You must provide a json file for the configuration!')
     }
 
-    try {
-      return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
-    } catch (error) {
-      logger.error(error)
-      throw error
-    }
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) // Get OIBus configuration file
   }
 
   /**
@@ -122,26 +110,7 @@ class ConfigService {
   /* eslint-disable-next-line class-methods-use-this */
   checkOrCreateConfigFile(filePath, defaultConfig) {
     if (!fs.existsSync(filePath)) {
-      this.logger.info('Default config file does not exist. Creating it.')
-      try {
-        fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
-      } catch (error) {
-        this.logger.error(error)
-      }
-    }
-  }
-
-  /**
-   * Make a deep copy to prevent overwriting the actual config when working on modifiedConfig
-   * @param {Object} config - The config to duplicate
-   * @returns {Object} - The duplicated config
-   */
-  duplicateConfig(config) {
-    try {
-      return JSON.parse(JSON.stringify(config))
-    } catch (error) {
-      this.logger.error(error)
-      throw error
+      fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
     }
   }
 
@@ -193,7 +162,7 @@ class ConfigService {
   activateConfiguration() {
     ConfigService.backupConfigFile(this.configFile)
     ConfigService.saveConfig(this.configFile, this.modifiedConfig)
-    this.config = this.duplicateConfig(this.modifiedConfig)
+    this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
   }
 
   /**
@@ -203,7 +172,7 @@ class ConfigService {
   activateHistoryQueryConfiguration() {
     ConfigService.backupConfigFile(this.historyQueryConfigFile)
     ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryModifiedConfig)
-    this.historyQueryConfig = this.duplicateConfig(this.historyQueryModifiedConfig)
+    this.historyQueryConfig = JSON.parse(JSON.stringify(this.historyQueryModifiedConfig))
   }
 
   /**
@@ -235,7 +204,7 @@ class ConfigService {
       activeHistoryQueryConfig.status = status
       activeHistoryQueryConfig.enabled = enabled
       ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryConfig)
-      this.historyQueryModifiedConfig = this.duplicateConfig(this.historyQueryConfig)
+      this.historyQueryModifiedConfig = JSON.parse(JSON.stringify(this.historyQueryConfig))
     }
   }
 }

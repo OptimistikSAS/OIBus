@@ -117,7 +117,7 @@ class WATSYConnect extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(messages) {
-    this.logger.silly(`Link handleValues() call with ${messages.length} messages`)
+    this.logger.trace(`Link handleValues() call with ${messages.length} messages`)
     const successCount = await this.publishOIBusMessages(messages)
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
@@ -178,8 +178,7 @@ class WATSYConnect extends ApiHandler {
    * @return {object[]} - The publish value
    */
   splitMessages(messages) {
-    const allWATSYMessages = this.recursiveSplitMessages([], messages)
-    return allWATSYMessages
+    return this.recursiveSplitMessages([], messages)
   }
 
   /**

@@ -4,7 +4,7 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 const ERROR_PRINT_SIZE = 5
-const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/ // match if the strind contains ${...}
+const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/ // match if the string contains ${...}
 const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/ // split the input into a array of string: "test ${value}" => [ "test ", ${value}]
 const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/ // match if the string starts with: ${...}
 const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
@@ -119,7 +119,7 @@ class CsvToHttp extends ApiHandler {
           csvDataParsed.push(step.data)
         },
         complete: () => {
-          this.logger.silly(`File ${filePath} parsed`)
+          this.logger.trace(`File ${filePath} parsed`)
           this.statusData['Last Parsed file'] = filePath
           this.statusData['Number of files sent since OIBus has started'] += 1
           this.statusData['Last Parsed file at'] = new Date().toISOString()
@@ -132,7 +132,7 @@ class CsvToHttp extends ApiHandler {
 
   /**
    * @param {Object} csvFileInJson - json object of the csv file
-   * @return {void}
+   * @return {Object} - the http body and associated errors
    */
   convertToHttpBody(csvFileInJson) {
     const httpBody = []
@@ -140,7 +140,7 @@ class CsvToHttp extends ApiHandler {
     const convertionErrorBuffer = []
 
     // Log all headers in the csv file and log the value ine the mapping not present in headers
-    this.logger.silly(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
+    this.logger.trace(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
 
     const onlyValidMappingValue = this.getOnlyValidMappingValue(csvFileInJson[0])
 
@@ -252,9 +252,7 @@ class CsvToHttp extends ApiHandler {
       })
     }
 
-    if (allHeaders[field] === undefined) { return false }
-
-    return true
+    return allHeaders[field] !== undefined
   }
 
   /**

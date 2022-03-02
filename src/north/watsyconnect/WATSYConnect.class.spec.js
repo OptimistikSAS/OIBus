@@ -1,12 +1,7 @@
 const mqtt = require('mqtt')
 const WATSYConnect = require('./WATSYConnect.class')
 const config = require('../../../tests/testConfig').default
-const Logger = require('../../engine/logger/Logger.class')
 const EncryptionService = require('../../services/EncryptionService.class')
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
@@ -171,7 +166,7 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult.length).toEqual(0) // No message receive
+    expect(expectedResult?.length).toEqual(0) // No message receive
     expect(expectedError).toBeNull()
   })
 
@@ -185,7 +180,7 @@ describe('WATSY Connect', () => {
       expectedError = error
     }
 
-    expect(expectedResult.length).toEqual(1) // Only one message receive
+    expect(expectedResult?.length).toEqual(1) // Only one message receive
     expect(expectedError).toBeNull()
   })
 

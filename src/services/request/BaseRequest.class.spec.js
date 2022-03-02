@@ -7,7 +7,7 @@ const ApiHandler = require('../../north/ApiHandler.class')
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
-engine.logger = { silly: jest.fn(), error: jest.fn() }
+engine.logger = { trace: jest.fn(), error: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()

@@ -79,7 +79,7 @@ class HistoryQueryEngine extends BaseEngine {
    */
   async addValues(dataSourceId, values) {
     const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.silly(`Add ${sanitizedValues?.length} values from "${this.historyQuery.dataSource.name || dataSourceId}"`)
+    this.logger.trace(`Add ${sanitizedValues?.length} values from "${this.historyQuery.dataSource.name || dataSourceId}"`)
     if (sanitizedValues.length) {
       const flattenedValues = sanitizedValues.map((sanitizedValue) => this.flattenObject(sanitizedValue))
       const csvContent = csv.unparse(flattenedValues)
@@ -99,7 +99,7 @@ class HistoryQueryEngine extends BaseEngine {
    */
   addFile(dataSourceId, filePath, _preserveFiles) {
     // The south will already store the files in the cache folder, so no copy is needed
-    this.logger.silly(`Add file from "${this.historyQuery.dataSource.name || dataSourceId}" with ${filePath}`)
+    this.logger.trace(`Add file from "${this.historyQuery.dataSource.name || dataSourceId}" with ${filePath}`)
   }
 
   /**

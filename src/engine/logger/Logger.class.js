@@ -10,13 +10,6 @@ class Logger {
     this.scope = scope
   }
 
-  static getDefaultLogger(scope) {
-    if (!Logger.instance) {
-      Logger.instance = new Logger(scope)
-    }
-    return Logger.instance
-  }
-
   setEncryptionService(encryptionService) {
     this.encryptionService = encryptionService
   }
@@ -104,7 +97,7 @@ class Logger {
     this.logger?.debug(message)
   }
 
-  silly(message) {
+  trace(message) {
     this.logger?.trace(message)
   }
 

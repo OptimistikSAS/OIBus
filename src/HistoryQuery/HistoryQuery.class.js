@@ -176,7 +176,7 @@ class HistoryQuery {
   async import() {
     let files = []
     try {
-      this.logger.silly(`Reading ${this.cacheFolder} directory`)
+      this.logger.trace(`Reading ${this.cacheFolder} directory`)
       files = await fs.readdir(this.cacheFolder)
     } catch (error) {
       this.logger.error(`Could not read folder ${this.cacheFolder} - error: ${error})`)
@@ -229,7 +229,7 @@ class HistoryQuery {
     do {
       // Wait between the read interval iterations
       if (!firstIteration) {
-        this.logger.silly(`Wait ${this.south.readIntervalDelay} ms`)
+        this.logger.trace(`Wait ${this.south.readIntervalDelay} ms`)
         // eslint-disable-next-line no-await-in-loop
         await this.south.delay(this.south.readIntervalDelay)
       }

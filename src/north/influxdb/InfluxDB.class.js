@@ -52,7 +52,7 @@ class InfluxDB extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.silly(`InfluxDB handleValues() call with ${values.length} values`)
+    this.logger.trace(`InfluxDB handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
       this.statusData['Last handled values at'] = new Date().toISOString()
