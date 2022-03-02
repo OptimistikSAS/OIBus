@@ -1,12 +1,8 @@
 const HealthSignal = require('./HealthSignal.class')
-const Logger = require('./logger/Logger.class')
-
-// Mock logger
-jest.mock('./logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
 
 // Mock engine
 const engine = jest.genMockFromModule('./OIBusEngine.class')
+engine.logger = { error: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() }
 
 beforeEach(() => {
   jest.resetAllMocks()
@@ -135,7 +131,7 @@ describe('HealthSignal', () => {
 
     await healthSignal.sendHttpSignal()
 
-    expect(healthSignal.logger.silly).toBeCalledWith('sendHttpSignal')
+    expect(healthSignal.logger.trace).toBeCalledWith('sendHttpSignal')
     expect(healthSignal.prepareStatus).toBeCalled()
     const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }

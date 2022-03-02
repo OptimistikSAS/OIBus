@@ -75,16 +75,10 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
 /**
  * Migrate if needed.
  * @param {string} configFile - The config file
- * @returns {void}
+ * @returns {Promise<void>} - Promise resolve if migration succeeds
  */
 const migrate = async (configFile) => {
-  let fileStat
-  try {
-    fileStat = await fs.stat(configFile)
-  } catch (error) {
-    // no migration needed
-    return
-  }
+  const fileStat = await fs.stat(configFile)
   if (fileStat) {
     const config = ConfigService.tryReadFile(configFile)
     const configVersion = config.schemaVersion || DEFAULT_VERSION

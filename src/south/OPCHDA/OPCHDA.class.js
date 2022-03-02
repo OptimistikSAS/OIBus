@@ -159,7 +159,7 @@ class OPCHDA extends ProtocolHandler {
           this.logger.debug(message)
           break
         case 'silly':
-          this.logger.silly(message)
+          this.logger.trace(message)
           break
         default:
           this.logger.debug(message)
@@ -231,7 +231,7 @@ class OPCHDA extends ProtocolHandler {
       }
 
       const messageString = JSON.stringify(message)
-      this.logger.silly(`Sent at ${new Date().toISOString()}: ${messageString}`)
+      this.logger.trace(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
       this.statusData['Last message sent at'] = new Date().toISOString()
       this.updateStatusDataStream()
@@ -249,7 +249,7 @@ class OPCHDA extends ProtocolHandler {
    */
   async handleMessage(message) {
     try {
-      this.logger.silly(`Received: ${message}`)
+      this.logger.trace(`Received: ${message}`)
 
       const messageObject = JSON.parse(message)
       let dateString
@@ -299,7 +299,7 @@ class OPCHDA extends ProtocolHandler {
             return
           }
 
-          this.logger.silly(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
+          this.logger.trace(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
 
           // eslint-disable-next-line no-case-declarations
           const values = messageObject.Content.Points.map((point) => {
@@ -321,7 +321,7 @@ class OPCHDA extends ProtocolHandler {
             `lastCompletedAt-${messageObject.Content.Group}`,
             this.lastCompletedAt[messageObject.Content.Group].toISOString(),
           )
-          this.logger.silly(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+          this.logger.trace(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
 
           this.ongoingReads[messageObject.Content.Group] = false
           break

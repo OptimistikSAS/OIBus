@@ -255,7 +255,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -1495,7 +1495,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -2189,7 +2189,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -3828,7 +3828,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -5281,7 +5281,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -6011,7 +6011,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -6779,7 +6779,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -8403,7 +8403,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -9540,7 +9540,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -10448,7 +10448,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -11336,7 +11336,7 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>

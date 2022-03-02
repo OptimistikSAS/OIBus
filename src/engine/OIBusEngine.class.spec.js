@@ -1,12 +1,7 @@
 const OIBusEngine = require('./OIBusEngine.class')
-const Logger = require('./logger/Logger.class')
 const EncryptionService = require('../services/EncryptionService.class')
 const config = require('../config/defaultConfig.json')
 const ConfigService = require('../services/config.service.class')
-
-// Mock logger
-jest.mock('./logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
 
 jest.mock('./Cache.class')
 

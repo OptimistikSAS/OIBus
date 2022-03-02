@@ -1,10 +1,6 @@
 const sqlite = require('sqlite')
 const sqlite3 = require('sqlite3')
 
-const Logger = require('../engine/logger/Logger.class')
-
-const logger = Logger.getDefaultLogger()
-
 const CACHE_TABLE_NAME = 'cache'
 
 /**
@@ -103,11 +99,7 @@ const saveValues = async (database, dataSourceName, values) => {
                       VALUES `
   const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceName}')`)
   const query = `${queryStart}${prepValues.join(',')};`
-  try {
-    await database.run(query)
-  } catch (error) {
-    logger.error(error)
-  }
+  await database.run(query)
 }
 
 /**
@@ -120,16 +112,11 @@ const saveValues = async (database, dataSourceName, values) => {
 const saveErroredValues = async (database, id, values) => {
   const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application)
                  VALUES (?, ?, ?, ?)`
-  try {
-    await database.run('BEGIN;')
-    const stmt = await database.prepare(query)
-    const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, id))
-    await Promise.all(actions)
-    await database.run('COMMIT;')
-  } catch (error) {
-    logger.error(error)
-    throw error
-  }
+  await database.run('BEGIN;')
+  const stmt = await database.prepare(query)
+  const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, id))
+  await Promise.all(actions)
+  await database.run('COMMIT;')
 }
 
 /**
@@ -140,14 +127,8 @@ const saveErroredValues = async (database, id, values) => {
 const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
-  let result = {}
-  try {
-    const stmt = await database.prepare(query)
-    result = await stmt.get()
-  } catch (error) {
-    logger.error(error)
-    throw error
-  }
+  const stmt = await database.prepare(query)
+  const result = await stmt.get()
   return result.count
 }
 
@@ -163,20 +144,10 @@ const getValuesToSend = async (database, count) => {
                  ORDER BY timestamp
                  LIMIT ${count}`
   const values = []
-  try {
-    await database.each(query, (err, value) => {
-      if (err) throw err
-      try {
-        values.push({ ...value, data: JSON.parse(decodeURI(value.data)) })
-      } catch (error) {
-        // log error but try to continue with value unchanged
-        logger.error(`Decoding Error: ${error.message} detected for value.data ${JSON.stringify(value)}`)
-      }
-    })
-  } catch (error) {
-    logger.error(error)
-    throw error
-  }
+  await database.each(query, (err, value) => {
+    if (err) throw err
+    values.push({ ...value, data: JSON.parse(decodeURI(value.data)) })
+  })
   return values
 }
 
@@ -187,16 +158,10 @@ const getValuesToSend = async (database, count) => {
  * @return {Promise<number>} number of deleted values
  */
 const removeSentValues = async (database, values) => {
-  let result
-  try {
-    const ids = values.map((value) => value.id).join()
-    const query = `DELETE FROM ${CACHE_TABLE_NAME}
+  const ids = values.map((value) => value.id).join()
+  const query = `DELETE FROM ${CACHE_TABLE_NAME}
                    WHERE id IN (${ids})`
-    result = await database.run(query)
-  } catch (error) {
-    logger.error(error)
-    throw error
-  }
+  const result = await database.run(query)
   return result.changes
 }
 

@@ -40,7 +40,7 @@ class FolderScanner extends ProtocolHandler {
     // List files in the inputFolder
     let files = []
     try {
-      this.logger.silly(`Reading ${this.inputFolder} directory`)
+      this.logger.trace(`Reading ${this.inputFolder} directory`)
       files = await fs.readdir(this.inputFolder)
     } catch (error) {
       this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
@@ -65,7 +65,7 @@ class FolderScanner extends ProtocolHandler {
       return
     }
     // the files remaining after these checks need to be sent to the bus
-    this.logger.silly(`Sending ${matchedFiles.length} files`)
+    this.logger.trace(`Sending ${matchedFiles.length} files`)
     // eslint-disable-next-line no-restricted-syntax
     for (const file of matchedFiles) {
       try {
@@ -75,7 +75,7 @@ class FolderScanner extends ProtocolHandler {
         this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
       }
     }
-    this.logger.silly('Leaving onscan method')
+    this.logger.trace('Leaving onscan method')
   }
 
   /**
@@ -88,15 +88,15 @@ class FolderScanner extends ProtocolHandler {
     // check age
     const timestamp = new Date().getTime()
     const stats = await fs.stat(path.join(this.inputFolder, filename))
-    this.logger.silly(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
+    this.logger.trace(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
     if (stats.mtimeMs + this.minAge > timestamp) return false
-    this.logger.silly(`checkConditions: ${filename} match age`)
+    this.logger.trace(`checkConditions: ${filename} match age`)
     // check if the file was already sent (if preserveFiles is true)
     if (this.preserveFiles) {
       if (this.ignoreModifiedDate) return true
       const modifyTime = await this.getConfig(filename)
       if (parseFloat(modifyTime) >= stats.mtimeMs) return false
-      this.logger.silly(`${filename} modified time ${modifyTime} => need to be sent`)
+      this.logger.trace(`${filename} modified time ${modifyTime} => need to be sent`)
     }
     return true
   }

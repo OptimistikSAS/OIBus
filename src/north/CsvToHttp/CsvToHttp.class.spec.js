@@ -2,12 +2,7 @@ const path = require('path')
 const CsvToHttp = require('./CsvToHttp.class')
 const ApiHandler = require('../ApiHandler.class')
 const config = require('../../../tests/testConfig').default
-const Logger = require('../../engine/logger/Logger.class')
 const EncryptionService = require('../../services/EncryptionService.class')
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-Logger.getDefaultLogger = () => new Logger()
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })

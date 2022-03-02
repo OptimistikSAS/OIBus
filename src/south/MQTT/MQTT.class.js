@@ -192,7 +192,7 @@ class MQTT extends ProtocolHandler {
   }
 
   handleMessageEvent(topic, message, packet) {
-    this.logger.silly(`mqtt ${topic}:${message}, dup:${packet.dup}`)
+    this.logger.trace(`mqtt ${topic}:${message}, dup:${packet.dup}`)
 
     try {
       const parsedMessage = JSON.parse(message.toString())

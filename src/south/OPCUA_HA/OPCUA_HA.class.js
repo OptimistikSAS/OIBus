@@ -111,7 +111,7 @@ class OPCUA_HA extends ProtocolHandler {
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
-    this.logger.silly(`Read with options ${JSON.stringify(options)}`)
+    this.logger.trace(`Read with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
     let nodesToRead = nodes.map((nodeId) => ({
       continuationPoint: null,
@@ -172,7 +172,7 @@ class OPCUA_HA extends ProtocolHandler {
       })
       // remove points fully retrieved
       nodesToRead = nodesToRead.filter((node) => !!node.continuationPoint)
-      this.logger.silly(`Continue read for ${nodesToRead.length} points`)
+      this.logger.trace(`Continue read for ${nodesToRead.length} points`)
     } while (nodesToRead.length)
     // if all is retrieved, clean continuation points
     nodesToRead = nodes.map((nodeId) => ({

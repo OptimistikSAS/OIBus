@@ -30,7 +30,7 @@ const selectStyle = (level) => {
 }
 
 const Log = () => {
-  const verbosityOptions = ['debug', 'info', 'warning', 'error', 'silly']
+  const verbosityOptions = ['debug', 'info', 'warning', 'error', 'trace']
   const defaultMaxLog = 300
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()

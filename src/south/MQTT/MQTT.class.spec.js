@@ -409,7 +409,7 @@ describe('MQTT south', () => {
 
     mqttSouth.handleMessageEvent(topic, Buffer.from(data), packet)
 
-    expect(mqttSouth.logger.silly)
+    expect(mqttSouth.logger.trace)
       .toBeCalled()
     expect(mqttSouth.getTimestamp)
       .not

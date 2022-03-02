@@ -16,10 +16,10 @@ class FetchRequest extends BaseRequest {
    * @param {object} proxy - Proxy to use
    * @param {string} data - The body or file to send
    * @param {number} timeout - The request timeout
-   * @return {Promise} - The send status
+   * @return {Promise} - The status sent
    */
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
-    this.logger.silly('sendWithFetch() called')
+    this.logger.trace('sendWithFetch() called')
 
     let agent = null
 

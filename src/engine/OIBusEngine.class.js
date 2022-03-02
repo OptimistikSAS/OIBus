@@ -81,7 +81,7 @@ class OIBusEngine extends BaseEngine {
    * @return {void}
    */
   async addValues(id, values) {
-    this.logger.silly(`Engine: Add ${values?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
+    this.logger.trace(`Engine: Add ${values?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
     if (values.length) await this.cache.cacheValues(id, values)
   }
 
@@ -94,7 +94,7 @@ class OIBusEngine extends BaseEngine {
    * @return {void}
    */
   addFile(id, filePath, preserveFiles) {
-    this.logger.silly(`Engine addFile() from "${this.activeProtocols[id]?.dataSource.name || id}" with ${filePath}`)
+    this.logger.trace(`Engine addFile() from "${this.activeProtocols[id]?.dataSource.name || id}" with ${filePath}`)
     this.cache.cacheFile(id, filePath, preserveFiles)
   }
 
@@ -105,7 +105,7 @@ class OIBusEngine extends BaseEngine {
    * @return {Promise<number>} - The sent status
    */
   async handleValuesFromCache(id, values) {
-    this.logger.silly(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
+    this.logger.trace(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
 
     let status
     try {
@@ -124,7 +124,7 @@ class OIBusEngine extends BaseEngine {
    * @return {Promise<number>} - The sent status
    */
   async sendFile(id, filePath) {
-    this.logger.silly(`Engine sendFile() call with "${this.activeApis[id]?.application.name || id}" and ${filePath}`)
+    this.logger.trace(`Engine sendFile() call with "${this.activeApis[id]?.application.name || id}" and ${filePath}`)
 
     let status
     try {

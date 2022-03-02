@@ -48,10 +48,6 @@ class Cache {
     this.valuesErrorDatabasePath = `${this.cacheFolder}/valueCache-error.db`
 
     this.archiveTimeout = null
-    // refresh the archiveFolder at the beginning only if retentionDuration is different than 0
-    if (this.archiveMode && this.retentionDuration > 0) {
-      this.refreshArchiveFolder()
-    }
   }
 
   /**
@@ -113,7 +109,12 @@ class Cache {
         this.logger.info(`Creating archive folder: ${this.cacheFolder}`)
         await fs.mkdir(this.cacheFolder, { recursive: true })
       }
+      // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
+      if (this.retentionDuration > 0) {
+        this.refreshArchiveFolder()
+      }
     }
+
     this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
     this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
     this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
@@ -159,12 +160,12 @@ class Cache {
       // to the North even if the timeout is not finished.
       const count = await databaseService.getCount(database)
       if (count >= config.groupCount) {
-        this.logger.silly(`groupCount reached: ${count}>=${config.groupCount}`)
+        this.logger.trace(`groupCount reached: ${count}>=${config.groupCount}`)
         return api
       }
     } else {
       // eslint-disable-next-line max-len
-      this.logger.silly(`Application "${this.engine.activeApis[applicationId]?.application.name || applicationId}" is not subscribed to datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}"`)
+      this.logger.trace(`Application "${this.engine.activeApis[applicationId]?.application.name || applicationId}" is not subscribed to datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}"`)
     }
     return null
   }
@@ -214,7 +215,7 @@ class Cache {
       await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
-    this.logger.silly(`datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}" is not subscribed to application "${applicationName}"`)
+    this.logger.trace(`datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}" is not subscribed to application "${applicationName}"`)
     return null
   }
 
@@ -294,7 +295,7 @@ class Cache {
     const { name, canHandleValues, canHandleFiles, config } = api
     let status = ApiHandler.STATUS.SUCCESS
 
-    this.logger.silly(`sendCallback ${name}, sendInProgress ${!!this.sendInProgress[name]}`)
+    this.logger.trace(`sendCallback ${name}, sendInProgress ${!!this.sendInProgress[name]}`)
 
     if (!this.sendInProgress[name]) {
       this.sendInProgress[name] = true
@@ -324,7 +325,7 @@ class Cache {
    * @return {ApiHandler.Status} - The callback status
    */
   async sendCallbackForValues(application) {
-    this.logger.silly(`Cache sendCallbackForValues() for ${application.name}`)
+    this.logger.trace(`Cache sendCallbackForValues() for ${application.name}`)
     const { id, name, database, config } = application
 
     try {
@@ -332,18 +333,18 @@ class Cache {
       let removed
 
       if (values.length) {
-        this.logger.silly(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.name}`)
+        this.logger.trace(`Cache:sendCallbackForValues() got ${values.length} values to send to ${application.name}`)
         const successCountStatus = await this.engine.handleValuesFromCache(id, values)
-        this.logger.silly(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus}, Application: ${application.name}`)
+        this.logger.trace(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus}, Application: ${application.name}`)
         // If there was a logic error
         if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
           // Add errored values into error table
-          this.logger.silly(`Cache:addErroredValues, add ${values.length} values to error database for ${name}`)
+          this.logger.trace(`Cache:addErroredValues, add ${values.length} values to error database for ${name}`)
           await databaseService.saveErroredValues(this.valuesErrorDatabase, id, values)
 
           // Remove them from the cache table
           removed = await databaseService.removeSentValues(database, values)
-          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
+          this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== values.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${values.length}`)
           }
@@ -352,13 +353,13 @@ class Cache {
         if (successCountStatus > 0) {
           const valuesSent = values.slice(0, successCountStatus)
           removed = await databaseService.removeSentValues(database, valuesSent)
-          this.logger.silly(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
+          this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== valuesSent.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${valuesSent.length}`)
           }
         }
       } else {
-        this.logger.silly(`no values in the db for ${name}`)
+        this.logger.trace(`no values in the db for ${name}`)
       }
       return ApiHandler.STATUS.SUCCESS
     } catch (error) {
@@ -374,17 +375,17 @@ class Cache {
    */
   async sendCallbackForFiles(application) {
     const { id, name } = application
-    this.logger.silly(`sendCallbackForFiles() for ${name}`)
+    this.logger.trace(`sendCallbackForFiles() for ${name}`)
 
     try {
       const fileToSend = await databaseService.getFileToSend(this.filesDatabase, id)
 
       if (!fileToSend) {
-        this.logger.silly('sendCallbackForFiles(): no file to send')
+        this.logger.trace('sendCallbackForFiles(): no file to send')
         return ApiHandler.STATUS.SUCCESS
       }
 
-      this.logger.silly(`sendCallbackForFiles() file:${fileToSend.path}`)
+      this.logger.trace(`sendCallbackForFiles() file:${fileToSend.path}`)
 
       try {
         await fs.stat(fileToSend.path)
@@ -394,11 +395,11 @@ class Cache {
         this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
         return ApiHandler.STATUS.SUCCESS
       }
-      this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${name}`)
+      this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${name}`)
       const status = await this.engine.sendFile(id, fileToSend.path)
       switch (status) {
         case ApiHandler.STATUS.SUCCESS:
-          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
+          this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
           await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           await this.handleSentFile(fileToSend.path)
           break
@@ -406,7 +407,7 @@ class Cache {
           this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${name}`)
           await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, id, fileToSend.path)
 
-          this.logger.silly(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
+          this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
           await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           break
         default:
@@ -425,7 +426,7 @@ class Cache {
    * @return {void}
    */
   async handleSentFile(filePath) {
-    this.logger.silly(`handleSentFile(${filePath})`)
+    this.logger.trace(`handleSentFile(${filePath})`)
     const count = await databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       if (this.archiveMode) {
@@ -455,7 +456,7 @@ class Cache {
    * @return {void}
    */
   async refreshArchiveFolder() {
-    this.logger.silly('Parse archive folder to empty old files')
+    this.logger.trace('Parse archive folder to empty old files')
     // if a process already occurs, it clears it
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout)

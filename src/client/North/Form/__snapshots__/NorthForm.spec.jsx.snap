@@ -248,7 +248,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -1721,7 +1721,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -2743,7 +2743,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -3973,7 +3973,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -5064,7 +5064,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -5921,7 +5921,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -6726,7 +6726,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -7784,7 +7784,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -9126,7 +9126,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -10054,7 +10054,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
@@ -10962,7 +10962,7 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
               </table>
               <br />
               <p>
-                We recommend to use the info or warning levels in normal operations and to put the debug or the silly mode only to identify the origin of an issue.
+                We recommend to use the info or warning levels in normal operations and to put the debug or the trace mode only to identify the origin of an issue.
               </p>
             </div>
           </div>
