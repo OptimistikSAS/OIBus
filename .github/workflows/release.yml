@@ -37,7 +37,7 @@ jobs:
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
 
       - name: Upload ${{ matrix.config['archiveName'] }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.config['archiveName'] }}
           path: ./dist/${{ matrix.config['archiveName'] }}
