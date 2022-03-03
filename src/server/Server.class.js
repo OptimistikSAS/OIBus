@@ -29,6 +29,7 @@ class Server {
     // capture the engine and logger under app for reuse in routes.
     this.app.engine = engine
     this.app.logger = new Logger('web-server')
+    this.app.logger.setEncryptionService(this.app.engine.encryptionService)
 
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {

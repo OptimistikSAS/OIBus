@@ -154,7 +154,7 @@ class OIBusEngine extends BaseEngine {
 
     this.safeMode = safeMode || engineConfig.safeMode
     if (this.safeMode) {
-      this.logger.info('OIBus Engine is running in safe mode')
+      this.logger.warn('OIBus Engine is running in safe mode')
       return
     }
 
@@ -268,12 +268,12 @@ class OIBusEngine extends BaseEngine {
               }
             } else {
               // eslint-disable-next-line max-len
-              this.logger.error(`${this.activeProtocols[id]?.dataSource.name || id} currently on scan. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
+              this.logger.warn(`${this.activeProtocols[id]?.dataSource.name || id} currently on scan. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
             }
           })
         })
         if (job.result !== 'ok') {
-          this.logger.error(`The scan  ${scanMode} could not start : ${job.error}`)
+          this.logger.error(`The scan ${scanMode} could not start : ${job.error}`)
         } else {
           this.jobs.push(job.id)
         }
@@ -463,7 +463,7 @@ class OIBusEngine extends BaseEngine {
       logWarning: logsCount.warn,
       filesErrorCount,
       valuesErrorCount,
-      copyright: '(c) Copyright 2019-2021 Optimistik, all rights reserved.',
+      copyright: '(c) Copyright 2019-2022 Optimistik, all rights reserved.',
     }
   }
 

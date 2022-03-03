@@ -48,7 +48,7 @@ class MQTT extends ProtocolHandler {
 
     this.url = url
     this.username = username
-    this.password = Buffer.from(this.encryptionService.decryptText(password))
+    this.password = password
     this.keyFile = keyFile
     this.certFile = certFile
     this.caFile = caFile
@@ -93,7 +93,7 @@ class MQTT extends ProtocolHandler {
 
     const options = {
       username: this.username,
-      password: this.password,
+      password: this.password ? Buffer.from(this.encryptionService.decryptText(this.password)) : '',
       key: this.certificate.privateKey,
       cert: this.certificate.cert,
       ca: this.certificate.ca,

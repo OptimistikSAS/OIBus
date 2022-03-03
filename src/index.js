@@ -19,22 +19,23 @@ const MAX_INTERVAL_MILLISECOND = 30 * 1000
 
 const logger = new Logger()
 
+const {
+  configFile,
+  check,
+} = ConfigService.getCommandLineArguments()
+
 logger.changeParameters({
-  engineName: 'OIBus-main-thread',
+  engineName: 'OIBus-main',
   logParameters: {
     consoleLog: { level: 'debug' },
     fileLog: {
       level: 'debug',
-      fileName: './main-thread-journal.log',
+      fileName: `${path.parse(configFile).dir}/OIBus-main-journal.log`,
       maxSize: 1000000,
       numberOfFiles: 5,
       tailable: true,
     },
-    sqliteLog: {
-      level: 'debug',
-      fileName: './main-thread-journal.db',
-      maxNumberOfLogs: 1000000,
-    },
+    sqliteLog: { level: 'none' },
     lokiLog: { level: 'none' },
   },
 }).then(() => {
@@ -103,10 +104,6 @@ logger.changeParameters({
       }
     })
   } else {
-    const {
-      configFile,
-      check,
-    } = ConfigService.getCommandLineArguments()
     process.chdir(path.parse(configFile).dir)
 
     // Migrate config file, if needed
@@ -123,7 +120,7 @@ logger.changeParameters({
       server.listen()
 
       if (check) {
-        logger.info('OIBus is running in check mode')
+        logger.warn('OIBus is running in check mode')
         process.send({ type: 'shutdown-ready' })
       } else {
         oibusEngine.start(safeMode)
@@ -172,8 +169,5 @@ logger.changeParameters({
         }
       })
     })
-      .catch((error) => {
-        logger.error(`Migration error: ${JSON.stringify(error)}`)
-      })
   }
 })

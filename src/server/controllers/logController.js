@@ -22,4 +22,53 @@ const getLogs = async (ctx) => {
   ctx.ok(logs)
 }
 
-module.exports = { getLogs }
+/**
+ * Add logs to the Engine
+ * @param {Object} ctx - The KOA context
+ * @param {Object} ctx.request.body - Array of values
+ * @return {void}
+ */
+const addLogs = async (ctx) => {
+  const { streams } = ctx.request.body
+  if (Array.isArray(streams)) {
+    streams.forEach((element) => {
+      element?.values.forEach((value) => {
+        const log = JSON.parse(value[1])
+        const formattedLog = {
+          oibus: element.oibus,
+          time: new Date(value[0] / 1000000),
+          scope: `${element.stream.oibus}-${log.scope}`,
+          source: log.source,
+          msg: log.message,
+        }
+        switch (element.stream.level) {
+          case 'trace':
+            ctx.app.logger.trace(formattedLog)
+            break
+
+          case 'debug':
+            ctx.app.logger.debug(formattedLog)
+            break
+
+          case 'info':
+            ctx.app.logger.info(formattedLog)
+            break
+
+          case 'warn':
+            ctx.app.logger.warn(formattedLog)
+            break
+
+          case 'error':
+            ctx.app.logger.error(formattedLog)
+            break
+
+          default:
+            ctx.app.logger.warn(formattedLog)
+            break
+        }
+      })
+    })
+  }
+}
+
+module.exports = { getLogs, addLogs }

@@ -35,7 +35,7 @@ class OPCUA_DA extends ProtocolHandler {
 
     this.url = url
     this.username = username
-    this.password = this.encryptionService.decryptText(password)
+    this.password = password
     this.securityMode = securityMode
     this.securityPolicy = securityPolicy
     this.retryInterval = retryInterval
@@ -205,7 +205,7 @@ class OPCUA_DA extends ProtocolHandler {
         userIdentity = {
           type: Opcua.UserTokenType.UserName,
           userName: this.username,
-          password: this.password,
+          password: this.encryptionService.decryptText(this.password),
         }
       }
       this.session = await this.client.createSession(userIdentity)
