@@ -52,6 +52,11 @@ class BaseEngine {
 
     // Request service
     this.requestService = createRequestService(this)
+
+    // Check for private key
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(this.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
   }
 
   /**
@@ -61,11 +66,6 @@ class BaseEngine {
    * @returns {Promise<void>} - The promise returns when the services are set
    */
   async initEngineServices(engineConfig, loggerScope) {
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
     // Configure the logger
     this.logger = new Logger(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)

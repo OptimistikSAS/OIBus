@@ -44,7 +44,7 @@ class OPCUA_HA extends ProtocolHandler {
 
     this.url = url
     this.username = username
-    this.password = this.encryptionService.decryptText(password)
+    this.password = password
     this.retryInterval = retryInterval
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
@@ -379,7 +379,7 @@ class OPCUA_HA extends ProtocolHandler {
         userIdentity = {
           type: Opcua.UserTokenType.UserName,
           userName: this.username,
-          password: this.password,
+          password: this.encryptionService.decryptText(this.password),
         }
       }
       this.session = await this.client.createSession(userIdentity)

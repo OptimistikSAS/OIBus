@@ -115,6 +115,7 @@ class EncryptionService {
       {
         key: privateKey.toString(),
         passphrase: '',
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
       },
       buffer,
     )

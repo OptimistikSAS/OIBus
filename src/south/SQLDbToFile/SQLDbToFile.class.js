@@ -257,7 +257,7 @@ class SQLDbToFile extends ProtocolHandler {
 
     const config = {
       user: this.username,
-      password: this.encryptionService.decryptText(this.password),
+      password: this.password ? this.encryptionService.decryptText(this.password) : '',
       server: this.host,
       port: this.port,
       database: this.database,

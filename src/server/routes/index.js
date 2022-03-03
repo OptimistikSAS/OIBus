@@ -29,6 +29,7 @@ router.get('/status/south/:id', engineController.getStatusForSouth)
 router.get('/reload', oibusController.reload)
 router.get('/shutdown', oibusController.shutdown)
 router.get('/logs', logController.getLogs)
+router.post('/logs', logController.addLogs)
 
 router.get('/history-query/config', historyQueryController.getActiveConfiguration)
 router.put('/history-query/config', historyQueryController.updateConfig)

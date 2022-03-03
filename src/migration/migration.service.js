@@ -23,11 +23,7 @@ const engineConfigLogParameters = {
       numberOfFiles: 5,
       tailable: true,
     },
-    sqliteLog: {
-      level: 'debug',
-      fileName: './migration-journal.db',
-      maxNumberOfLogs: 1000000,
-    },
+    sqliteLog: { level: 'none' },
     lokiLog: { level: 'none' },
   },
 }
