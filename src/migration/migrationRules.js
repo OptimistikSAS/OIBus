@@ -1036,14 +1036,23 @@ module.exports = {
             await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
           }
         }
-        logger.info(`Rename nodeId to pointId in the points for ${dataSource.name}`)
+        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
         dataSource.points?.forEach((point) => {
           if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
             point.pointId = point.nodeId
-            delete point.nodeId
           }
         })
       }
+
+      if (dataSource.protocol === 'OPCUA_DA') {
+        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+          }
+        })
+      }
+
       // This field can now be deleted
       delete dataSource.dataSourceId
     }

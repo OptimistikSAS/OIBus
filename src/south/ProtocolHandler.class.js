@@ -102,9 +102,7 @@ class ProtocolHandler {
       // Group all points in their respective scanGroup
       // Each scanGroup is also initialized with a default "last completed date" equal to current Time
       this.scanGroups = this.dataSource[this.constructor.name].scanGroups.map((scanGroup) => {
-        const points = this.dataSource.points
-          .filter((point) => point.scanMode === scanGroup.scanMode)
-          .map((point) => point.pointId)
+        const points = this.dataSource.points.filter((point) => point.scanMode === scanGroup.scanMode)
         this.lastCompletedAt[scanGroup.scanMode] = new Date().getTime()
         this.queryParts[scanGroup.scanMode] = 0
         this.ongoingReads[scanGroup.scanMode] = false

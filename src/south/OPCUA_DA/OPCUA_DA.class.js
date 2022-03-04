@@ -67,7 +67,7 @@ class OPCUA_DA extends ProtocolHandler {
     const values = []
     dataValues.forEach((dataValue, i) => {
       values.push({
-        pointId: nodesToRead[i],
+        pointId: nodesToRead[i].pointId,
         timestamp: new Date().toISOString(),
         data: {
           value: dataValue.value.value,
@@ -91,14 +91,13 @@ class OPCUA_DA extends ProtocolHandler {
 
     const nodesToRead = this.dataSource.points
       .filter((point) => point.scanMode === scanMode)
-      .map((point) => point.pointId)
     if (!nodesToRead.length) {
       this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
       return
     }
 
     try {
-      const dataValues = await this.session.readVariableValue(nodesToRead)
+      const dataValues = await this.session.readVariableValue(nodesToRead.map((node) => node.nodeId))
       if (dataValues.length !== nodesToRead.length) {
         this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
       }

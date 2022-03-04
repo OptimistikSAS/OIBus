@@ -96,7 +96,7 @@ class OPCUA_HA extends ProtocolHandler {
         const selectedTime = selectedTimestamp.getTime()
         maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
         return {
-          pointId: nodesToRead[i],
+          pointId: nodesToRead[i].pointId,
           timestamp: selectedTimestamp.toISOString(),
           data: {
             value: value.value.value,
@@ -113,11 +113,11 @@ class OPCUA_HA extends ProtocolHandler {
   async readHistoryValue(nodes, startTime, endTime, options) {
     this.logger.trace(`Read with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
-    let nodesToRead = nodes.map((nodeId) => ({
+    let nodesToRead = nodes.map((node) => ({
       continuationPoint: null,
       dataEncoding: undefined,
       indexRange: undefined,
-      nodeId,
+      nodeId: node.nodeId,
     }))
     let historyReadDetails
 
@@ -175,11 +175,11 @@ class OPCUA_HA extends ProtocolHandler {
       this.logger.trace(`Continue read for ${nodesToRead.length} points`)
     } while (nodesToRead.length)
     // if all is retrieved, clean continuation points
-    nodesToRead = nodes.map((nodeId) => ({
+    nodesToRead = nodes.map((node) => ({
       continuationPoint: null,
       dataEncoding: undefined,
       indexRange: undefined,
-      nodeId,
+      nodeId: node.nodeId,
     }))
     await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
       historyReadDetails,
