@@ -51,7 +51,8 @@ const opcuaConfig = {
     keyFile: '',
   },
   points: [{
-    pointId: 'ns=3;s=Random',
+    pointId: 'Random',
+    nodeId: 'ns=3;s=Random',
     scanMode: 'every10Second',
   }],
 }
@@ -204,6 +205,7 @@ describe('OPCUA-DA south', () => {
     const testOpcuaConfig = {
       ...opcuaConfig,
       points: [{
+        pointId: 'Random',
         nodeId: 'ns=3;s=Random',
         scanMode: 'every1minute',
       }],
@@ -246,7 +248,7 @@ describe('OPCUA-DA south', () => {
             quality: JSON.stringify({ value: 0 }),
             value: 666,
           },
-          pointId: 'ns=3;s=Random',
+          pointId: 'Random',
           timestamp: new Date(nowDateString).toISOString(),
         },
       ])

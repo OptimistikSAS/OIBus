@@ -30,7 +30,6 @@ jest.mock('../../engine/logger/Logger.class')
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.getCacheFolder = () => config.engine.caching.cacheFolder
-engine.logger = { error: jest.fn(), info: jest.fn(), trace: jest.fn() }
 engine.eventEmitters = {}
 engine.engineName = 'Test OPCUA_DA'
 
@@ -65,7 +64,8 @@ const opcuaConfig = {
     }],
   },
   points: [{
-    pointId: 'ns=3;s=Random',
+    pointId: 'Random',
+    nodeId: 'ns=3;s=Random',
     scanMode: 'every10Second',
   }],
 }
@@ -74,7 +74,7 @@ const opcuaScanGroups = [{
   aggregate: 'Raw',
   resampling: 'None',
   scanMode: 'every10Second',
-  points: ['ns=3;s=Random'],
+  points: [{ pointId: 'Random', nodeId: 'ns=3;s=Random', scanMode: 'every10Second' }],
 }]
 
 beforeEach(async () => {
@@ -361,7 +361,7 @@ describe('OPCUA-HA south', () => {
     expect(opcuaSouth.readHistoryValue)
       .toBeCalledTimes(1)
     expect(opcuaSouth.readHistoryValue)
-      .toBeCalledWith([opcuaConfig.points[0].pointId], startDate, nowDate, { numValuesPerNode: 1000, timeout: 600000 })
+      .toBeCalledWith([opcuaConfig.points[0]], startDate, nowDate, { numValuesPerNode: 1000, timeout: 600000 })
     expect(opcuaSouth.addValues)
       .toBeCalledTimes(1)
     expect(opcuaSouth.addValues)
