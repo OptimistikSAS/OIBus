@@ -95,7 +95,7 @@
     "reactstrap": "9.0.1",
     "real-require": "git://github.com/burgerni10/real-require.git",
     "sprintf-js": "1.1.2",
-    "sqlite": "4.0.23",
+    "sqlite": "4.0.24",
     "sqlite3": "5.0.2",
     "thread-stream": "git://github.com/burgerni10/thread-stream.git",
     "timexe": "1.0.5",
