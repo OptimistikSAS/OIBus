@@ -116,7 +116,7 @@ logger.changeParameters({
 
       const oibusEngine = new OIBusEngine(configService)
       const historyQueryEngine = new HistoryQueryEngine(configService)
-      const server = new Server(oibusEngine)
+      const server = new Server(oibusEngine, historyQueryEngine)
       server.listen()
 
       if (check) {

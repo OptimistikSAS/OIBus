@@ -85,7 +85,7 @@ class HistoryQuery {
     this.logger.info(`Start the export phase for HistoryQuery ${this.dataSource.name} -> ${this.application.name} (${this.id})`)
 
     if (this.status !== HistoryQuery.STATUS_EXPORTING) {
-      this.setStatus(HistoryQuery.STATUS_EXPORTING)
+      await this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
 
     const { protocol, enabled, name } = this.dataSource
@@ -103,7 +103,7 @@ class HistoryQuery {
       await this.export()
     } else {
       this.logger.error(`South ${name} is not enabled or not found`)
-      this.disable()
+      await this.disable()
       this.engine.runNextHistoryQuery()
     }
   }
@@ -131,7 +131,7 @@ class HistoryQuery {
       await this.import()
     } else {
       this.logger.error(`Application ${name} is enabled or not found`)
-      this.disable()
+      await this.disable()
       this.engine.runNextHistoryQuery()
     }
   }
@@ -142,7 +142,7 @@ class HistoryQuery {
    */
   async finish() {
     this.logger.info(`Finish HistoryQuery ${this.dataSource.name} -> ${this.application.name} (${this.id})`)
-    this.setStatus(HistoryQuery.STATUS_FINISHED)
+    await this.setStatus(HistoryQuery.STATUS_FINISHED)
     await this.stop()
   }
 
@@ -261,17 +261,19 @@ class HistoryQuery {
    * @param {string} status - The new status
    * @return {void}
    */
-  setStatus(status) {
+  async setStatus(status) {
     this.status = status
-    this.engine.configService.saveStatusForHistoryQuery(this.id, status)
+    this.config.status = status
+    await this.engine.historyQueryRepository.update(this.config)
   }
 
   /**
    * Disable HistoryQuery
    * @return {void}
    */
-  disable() {
-    this.engine.configService.saveStatusForHistoryQuery(this.id, this.status, false)
+  async disable() {
+    this.config.enabled = false
+    await this.engine.historyQueryRepository.update(this.config)
   }
 
   /**
