@@ -22,16 +22,13 @@ class ConfigService {
       fs.mkdirSync(baseDir, { recursive: true })
     }
 
-    this.historyQueryConfigFile = `${baseDir}/historyQuery.json`
+    this.historyQueryConfigFile = `${baseDir}/historyQuery.db`
 
     const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
     this.checkOrCreateConfigFile(this.configFile, defaultConfig)
-    this.checkOrCreateConfigFile(this.historyQueryConfigFile, [])
 
     this.config = ConfigService.tryReadFile(this.configFile)
     this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
-    this.historyQueryConfig = ConfigService.tryReadFile(this.historyQueryConfigFile)
-    this.historyQueryModifiedConfig = JSON.parse(JSON.stringify(this.historyQueryConfig))
 
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
   }
@@ -95,14 +92,6 @@ class ConfigService {
   }
 
   /**
-   * Get HistoryQuery config.
-   * @returns {object} - The config
-   */
-  getHistoryQueryConfig() {
-    return this.historyQueryConfig
-  }
-
-  /**
    * Check if config file exists and create it if not
    * @param {string} filePath - The location of the config file
    * @return {boolean} - Whether it was successful or not
@@ -123,14 +112,6 @@ class ConfigService {
   }
 
   /**
-   * Get active HistoryQuery configuration.
-   * @returns {object} - The active HistoryQuery configuration
-   */
-  getActiveHistoryQueryConfiguration() {
-    return this.historyQueryConfig
-  }
-
-  /**
    * Update configuration
    * @param {object} config - The updated configuration
    * @returns {void}
@@ -147,15 +128,6 @@ class ConfigService {
   }
 
   /**
-   * Update HistoryQuery configuration
-   * @param {object} config - The updated HistoryQuery configuration
-   * @returns {void}
-   */
-  updateHistoryQueryConfig(config) {
-    this.historyQueryModifiedConfig = config
-  }
-
-  /**
    * Activate the configuration
    * @returns {void}
    */
@@ -163,16 +135,6 @@ class ConfigService {
     ConfigService.backupConfigFile(this.configFile)
     ConfigService.saveConfig(this.configFile, this.modifiedConfig)
     this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
-  }
-
-  /**
-   * Activate the HistoryQuery configuration
-   * @returns {void}
-   */
-  activateHistoryQueryConfiguration() {
-    ConfigService.backupConfigFile(this.historyQueryConfigFile)
-    ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryModifiedConfig)
-    this.historyQueryConfig = JSON.parse(JSON.stringify(this.historyQueryModifiedConfig))
   }
 
   /**
@@ -189,23 +151,6 @@ class ConfigService {
    */
   getHistoryQueryConfigurationFileLocation() {
     return this.historyQueryConfigFile
-  }
-
-  /**
-   * Save the new status for HistoryQuery with the given ID
-   * @param {string} historyQueryId - The HistoryQuery ID to store the new status for
-   * @param {string} status - The new status
-   * @param {boolean} enabled - Enabled
-   * @return {void}
-   */
-  saveStatusForHistoryQuery(historyQueryId, status, enabled = true) {
-    const activeHistoryQueryConfig = this.historyQueryConfig.find((historyQueryConfig) => historyQueryConfig.id === historyQueryId)
-    if (activeHistoryQueryConfig) {
-      activeHistoryQueryConfig.status = status
-      activeHistoryQueryConfig.enabled = enabled
-      ConfigService.saveConfig(this.historyQueryConfigFile, this.historyQueryConfig)
-      this.historyQueryModifiedConfig = JSON.parse(JSON.stringify(this.historyQueryConfig))
-    }
   }
 }
 

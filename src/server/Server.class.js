@@ -20,14 +20,16 @@ class Server {
   /**
    * Constructor for Protocol
    * @constructor
-   * @param {BaseEngine} engine - The engine
+   * @param {OIBusEngine} oibusEngine - The OIBus engine
+   * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
    * @return {void}
    */
-  constructor(engine) {
+  constructor(oibusEngine, historyQueryEngine) {
     this.app = new Koa()
 
     // capture the engine and logger under app for reuse in routes.
-    this.app.engine = engine
+    this.app.engine = oibusEngine
+    this.app.historyQueryEngine = historyQueryEngine
     this.app.logger = new Logger('web-server')
     this.app.logger.setEncryptionService(this.app.engine.encryptionService)
 
@@ -59,14 +61,14 @@ class Server {
     })
 
     // Get the config entries
-    const { engineConfig } = engine.configService.getConfig()
+    const { engineConfig } = oibusEngine.configService.getConfig()
     const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
     this.port = port
     this.user = user
 
     if (password) {
-      this.password = engine.encryptionService.decryptText(password)
+      this.password = oibusEngine.encryptionService.decryptText(password)
       if (this.password == null) {
         this.app.logger.error('Error decrypting admin password. Falling back to default')
       }

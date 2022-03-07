@@ -10,8 +10,7 @@ coverage/
 oibus-*.json
 oibus.json
 tests/db/test.db
-historyQuery-*.json
-historyQuery.json
+historyQuery.db
 local-development/data
 .env
 tests/historyQuery/

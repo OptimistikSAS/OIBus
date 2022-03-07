@@ -5,6 +5,7 @@ const EventEmitter = require('events')
 
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
+const HistoryQueryRepository = require('./HistoryQueryRepository.class')
 
 /**
  *
@@ -27,6 +28,7 @@ class HistoryQueryEngine extends BaseEngine {
     const { historyQuery: { folder } } = engineConfig
     this.cacheFolder = folder
     this.historyQueries = []
+    this.historyQueryRepository = new HistoryQueryRepository(this.configService.getHistoryQueryConfigurationFileLocation())
   }
 
   /**
@@ -44,6 +46,8 @@ class HistoryQueryEngine extends BaseEngine {
       this.logger.info(`Creating main history cache folder in ${this.cacheFolder}`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
+
+    await this.historyQueryRepository.initialize()
 
     this.logger.info('Starting HistoryQueryEngine')
   }
