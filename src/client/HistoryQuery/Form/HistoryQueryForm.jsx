@@ -135,7 +135,7 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
                 label="File pattern"
                 name="filePattern"
                 value={query.filePattern}
-                defaultValue="./cache"
+                defaultValue="./@ConnectorName-@CurrentDate-@QueryPart.csv"
                 onChange={onChange}
               />
             </Col>

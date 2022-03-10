@@ -56,6 +56,7 @@ const TableRows = ({
   handleDelete,
   handleDuplicate,
   handleOrder,
+  isHistoryQuery,
 }) => (
   <tbody>
     {rows.map((row, index) => (
@@ -98,7 +99,7 @@ const TableRows = ({
             <Modal
               show={false}
               title="Delete"
-              body={`Are you sure you want to delete ${row[1]?.value || row[0].name}?`}
+              body={`Are you sure you want to delete ${isHistoryQuery ? row[1].value : row[0].name}?`}
             >
               {(confirm) => (
                 <FaTrashAlt
@@ -123,6 +124,7 @@ TableRows.propTypes = {
   handleDelete: PropTypes.func,
   handleDuplicate: PropTypes.func,
   handleOrder: PropTypes.func,
+  isHistoryQuery: PropTypes.bool,
 }
 
 DownIcon.propTypes = {
@@ -141,6 +143,7 @@ TableRows.defaultProps = {
   handleStatus: null,
   handleDuplicate: null,
   handleOrder: null,
+  isHistoryQuery: false,
 }
 
 export default TableRows

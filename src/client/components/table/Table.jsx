@@ -20,6 +20,7 @@ const Table = ({
   handleDuplicate,
   handleSort,
   handleOrder,
+  isHistoryQuery,
 }) => (
   <>
     {help && (
@@ -47,6 +48,7 @@ const Table = ({
         handleStatus={handleStatus}
         handleDuplicate={handleDuplicate}
         handleOrder={handleOrder}
+        isHistoryQuery={isHistoryQuery}
       />
     </BsTable>
   </>
@@ -66,6 +68,7 @@ Table.propTypes = {
   handleDuplicate: PropTypes.func,
   handleSort: PropTypes.func,
   handleOrder: PropTypes.func,
+  isHistoryQuery: PropTypes.bool,
 }
 
 Table.defaultProps = {
@@ -80,6 +83,7 @@ Table.defaultProps = {
   handleDuplicate: null,
   handleSort: null,
   handleOrder: null,
+  isHistoryQuery: false,
 }
 
 export default Table

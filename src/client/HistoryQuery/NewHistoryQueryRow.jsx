@@ -63,20 +63,20 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
         <Col md="4">
           <OIbSelect
             label="South Handler"
-            value={southHandler.name}
+            value={southHandler}
             name="southHandler"
-            options={southHandlers}
+            options={southHandlers.map((handler) => handler.id)}
             optionsLabel={southHandlers.map((handler) => handler.name)}
-            defaultValue={southHandlers[0].name}
+            defaultValue={southHandlers[0].id}
             onChange={handleChange}
           />
         </Col>
         <Col md="4">
           <OIbSelect
             label="North Handler"
-            value={northHandler.name}
+            value={northHandler}
             name="northHandler"
-            options={northHandlers}
+            options={northHandlers.map((handler) => handler.id)}
             optionsLabel={northHandlers.map((handler) => handler.name)}
             defaultValue={northHandlers[0].name}
             onChange={handleChange}

@@ -165,6 +165,7 @@ const HistoryQuery = () => {
           handleDelete={handleDelete}
           handleDuplicate={handleDuplicate}
           handleOrder={handleOrder}
+          isHistoryQuery
         />
       )
         : (
