@@ -33,7 +33,7 @@ const OIbSelect = ({ label, help, valid, value, options, optionsLabel, name, onC
         invalid={validCheck !== null}
       >
         {options.map((o, index) => (
-          <option key={optionsLabel[index] || o} value={optionsLabel[index] || o}>
+          <option key={optionsLabel[index] || o} value={o}>
             {optionsLabel[index] || o}
           </option>
         ))}

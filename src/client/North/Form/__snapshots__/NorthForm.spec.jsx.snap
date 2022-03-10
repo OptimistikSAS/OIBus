@@ -5584,52 +5584,52 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                       name="subscribedTo.0"
                     >
                       <option
-                        value="MQTTServer"
+                        value="datasource-uuid-1"
                       >
                         MQTTServer
                       </option>
                       <option
-                        value="SimulationServer"
+                        value="datasource-uuid-2"
                       >
                         SimulationServer
                       </option>
                       <option
-                        value="SimulationServerBis"
+                        value="datasource-uuid-3"
                       >
                         SimulationServerBis
                       </option>
                       <option
-                        value="SimulationServerBis copy"
+                        value="datasource-uuid-4"
                       >
                         SimulationServerBis copy
                       </option>
                       <option
-                        value="PLC-35"
+                        value="datasource-uuid-5"
                       >
                         PLC-35
                       </option>
                       <option
-                        value="PLC-42"
+                        value="datasource-uuid-6"
                       >
                         PLC-42
                       </option>
                       <option
-                        value="FolderScanner"
+                        value="datasource-uuid-7"
                       >
                         FolderScanner
                       </option>
                       <option
-                        value="SQLDbToFile"
+                        value="datasource-uuid-8"
                       >
                         SQLDbToFile
                       </option>
                       <option
-                        value="OPC-HDA"
+                        value="datasource-uuid-9"
                       >
                         OPC-HDA
                       </option>
                       <option
-                        value="ADS - Test"
+                        value="datasource-uuid-10"
                       >
                         ADS - Test
                       </option>
