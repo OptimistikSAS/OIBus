@@ -77,7 +77,6 @@
     "node-fetch": "2.6.7",
     "node-opcua": "2.65.0",
     "object-path": "0.11.8",
-    "oracledb": "5.3.0",
     "papaparse": "5.3.1",
     "pg": "8.7.3",
     "pino": "git://github.com/burgerni10/pino.git",
@@ -131,6 +130,9 @@
     "url-loader": "4.1.1",
     "webpack": "5.70.0",
     "webpack-cli": "4.9.2"
+  },
+  "optionalDependencies": {
+    "oracledb": "5.3.0"
   },
   "jest": {
     "globalSetup": "./jest-config.js",
