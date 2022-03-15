@@ -74,18 +74,28 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
  * @returns {Promise<void>} - Promise resolve if migration succeeds
  */
 const migrate = async (configFile) => {
-  const fileStat = await fs.stat(configFile)
-  if (fileStat) {
-    const config = ConfigService.tryReadFile(configFile)
-    const configVersion = config.schemaVersion || DEFAULT_VERSION
-    if (configVersion < REQUIRED_SCHEMA_VERSION) {
-      const logger = new Logger('Migration')
-      engineConfigLogParameters.logParameters.fileLog.fileName = `${path.dirname(configFile)}/logs/migration.log`
-      engineConfigLogParameters.logParameters.sqliteLog.fileName = `${path.dirname(configFile)}/logs/migration.db`
-      await logger.changeParameters(engineConfigLogParameters)
-      logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
-      await migrateImpl(configVersion, config, configFile, logger)
+  const logger = new Logger('Migration')
+  engineConfigLogParameters.logParameters.fileLog.fileName = `${path.dirname(configFile)}/logs/migration.log`
+  engineConfigLogParameters.logParameters.sqliteLog.fileName = `${path.dirname(configFile)}/logs/migration.db`
+  try {
+    await logger.changeParameters(engineConfigLogParameters)
+
+    let fileStat
+    try {
+      fileStat = await fs.stat(configFile)
+    } catch (fileNotFound) {
+      logger.warn('No settings file found. No need to update')
     }
+    if (fileStat) {
+      const config = ConfigService.tryReadFile(configFile)
+      const configVersion = config.schemaVersion || DEFAULT_VERSION
+      if (configVersion < REQUIRED_SCHEMA_VERSION) {
+        logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
+        await migrateImpl(configVersion, config, configFile, logger)
+      }
+    }
+  } catch (migrationError) {
+    logger.error(migrationError)
   }
 }
 

@@ -16,7 +16,7 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 
 let oracledb
 try {
-  // eslint-disable-next-line global-require,import/no-unresolved
+  // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
   oracledb = require('oracledb')
 } catch {
   console.error('Could not load node oracledb')

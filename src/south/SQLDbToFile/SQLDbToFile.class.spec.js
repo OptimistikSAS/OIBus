@@ -14,7 +14,7 @@ const {
 
 let oracledb
 try {
-  // eslint-disable-next-line no-undef,global-require,import/no-unresolved
+  // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
   oracledb = require('oracledb')
 } catch (e) {
   console.error('node-oracledb could not be loaded. Skipping oracle tests')

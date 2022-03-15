@@ -102,13 +102,14 @@ class Cache {
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
 
+    try {
+      await fs.stat(this.archiveFolder)
+    } catch (error) {
+      this.logger.info(`Creating archive folder: ${this.archiveFolder}`)
+      await fs.mkdir(this.archiveFolder, { recursive: true })
+    }
+
     if (this.archiveMode) {
-      try {
-        await fs.stat(this.archiveFolder)
-      } catch (error) {
-        this.logger.info(`Creating archive folder: ${this.cacheFolder}`)
-        await fs.mkdir(this.cacheFolder, { recursive: true })
-      }
       // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
       if (this.retentionDuration > 0) {
         this.refreshArchiveFolder()
@@ -456,7 +457,7 @@ class Cache {
    * @return {void}
    */
   async refreshArchiveFolder() {
-    this.logger.trace('Parse archive folder to empty old files')
+    this.logger.debug('Parse archive folder to empty old files')
     // if a process already occurs, it clears it
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout)
