@@ -204,7 +204,7 @@ class OPCUA_HA extends ProtocolHandler {
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
       // eslint-disable-next-line max-len
-      this.logger.debug(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0]}...${nodesToRead[nodesToRead.length - 1]}]`)
+      this.logger.debug(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms) ${nodesToRead.length} nodes [${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
       const options = {
         timeout: this.readTimeout,
         numValuesPerNode: this.maxReturnValues,
