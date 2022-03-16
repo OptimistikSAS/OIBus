@@ -58,7 +58,12 @@ schema.form = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '(.*)',
-    help: 'for example (.*)\\/(.{2})(.)(.*) to split in 4 groups',
+    help: (
+      <div>
+        For example (.*)\\/(.
+        {2}
+        )(.)(.*) to split in 4 groups
+      </div>),
   },
   table: {
     type: 'OIbText',
@@ -70,14 +75,14 @@ schema.form = {
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
-    help: 'field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s',
+    help: <div>Field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s</div>,
   },
   timestampPathInDataValue: {
     type: 'OIbText',
     defaultValue: '',
     valid: optional(),
     newRow: false,
-    help: 'Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)',
+    help: <div>Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>,
   },
   valueParameters: {
     type: 'OIbTitle',
@@ -137,14 +142,14 @@ schema.form = {
     type: 'OIbCheckBox',
     valid: notEmpty(),
     label: 'use key "value" of Json "data"',
-    help: 'When checked, means that the field "value" will be parsed as JSON object',
+    help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: 'Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)',
+    help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
   },
 }
 schema.category = 'DatabaseIn'

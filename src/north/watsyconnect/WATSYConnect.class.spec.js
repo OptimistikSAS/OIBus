@@ -3,6 +3,9 @@ const WATSYConnect = require('./WATSYConnect.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
+// Mock logger
+jest.mock('../../engine/logger/Logger.class')
+
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
@@ -92,21 +95,25 @@ beforeEach(async () => {
   await WATSYNorth.init()
 })
 
-describe('WATSY Connect', () => {
+describe('WATSYConnect', () => {
   // Begin of test functions
-  it('Should properly connect', () => {
+  it('should properly connect', () => {
     jest.spyOn(mqtt, 'connect').mockImplementation(() => ({ on: jest.fn() }))
 
     WATSYNorth.connect()
 
-    const expectedOptions = { username: WATSYConfig.WATSYConnect.username, password: Buffer.from(WATSYConfig.WATSYConnect.password) }
+    const expectedOptions = {
+      port: WATSYNorth.port,
+      username: WATSYConfig.WATSYConnect.username,
+      password: WATSYConfig.WATSYConnect.password,
+    }
     expect(mqtt.connect).toBeCalledWith(WATSYNorth.url, expectedOptions)
     expect(WATSYNorth.client.on).toHaveBeenCalledTimes(2)
     expect(WATSYNorth.client.on).toHaveBeenCalledWith('error', expect.any(Function))
     expect(WATSYNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
   })
 
-  it('Should properly handle values and publish them', async () => {
+  it('should properly handle values and publish them', async () => {
     WATSYNorth.client = { publish: jest.fn() }
 
     let expectedResult = null
@@ -127,7 +134,7 @@ describe('WATSY Connect', () => {
     expect(expectedError).toBeNull()
   })
 
-  it('Should properly not handle unexpected values ', async () => {
+  it('should properly not handle unexpected values ', async () => {
     WATSYNorth.client = { publish: jest.fn().mockImplementation((callback) => callback()) }
 
     let expectedResult = null
@@ -142,7 +149,7 @@ describe('WATSY Connect', () => {
     expect(expectedError).not.toBeNull()
   })
 
-  it('Should properly split message in  WATSY messages', () => {
+  it('should properly split message in  WATSY messages', () => {
     let expectedResult = null
     let expectedError = null
 
@@ -156,7 +163,7 @@ describe('WATSY Connect', () => {
     expect(expectedError).toBeNull()
   })
 
-  it('Send an empty array an received an empty array ', () => {
+  it('should send an empty array an received an empty array ', () => {
     let expectedResult = null
     let expectedError = null
 
@@ -170,7 +177,7 @@ describe('WATSY Connect', () => {
     expect(expectedError).toBeNull()
   })
 
-  it('Send only message in the same sendInterval ', () => {
+  it('should send only message in the same sendInterval ', () => {
     let expectedResult = null
     let expectedError = null
 
@@ -184,7 +191,7 @@ describe('WATSY Connect', () => {
     expect(expectedError).toBeNull()
   })
 
-  it('Should properly disconnect', () => {
+  it('should properly disconnect', () => {
     WATSYNorth.client = { end: jest.fn() }
 
     WATSYNorth.disconnect()

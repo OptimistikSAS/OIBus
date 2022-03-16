@@ -1,7 +1,7 @@
 const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
-const MQTTNorth = require('./MQTTNorth.class')
+const MQTT = require('./MQTT.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
@@ -31,31 +31,31 @@ let mqttNorth = null
 beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
-  mqttNorth = new MQTTNorth(mqttConfig, engine)
+  mqttNorth = new MQTT(mqttConfig, engine)
   await mqttNorth.init()
 })
 
-describe('MQTTNorth north', () => {
+describe('MQTT north', () => {
   it('should properly connect', () => {
     mqtt.connect.mockReturnValue({ on: jest.fn() })
     mqttNorth.connect()
 
     const expectedOptions = {
       clientId: `${engine.engineName}-${mqttConfig.id}`,
-      username: mqttConfig.MQTTNorth.username,
-      password: Buffer.from(mqttConfig.MQTTNorth.password),
+      username: mqttConfig.MQTT.username,
+      password: Buffer.from(mqttConfig.MQTT.password),
       key: null,
       cert: null,
       ca: null,
       rejectUnauthorized: false,
     }
-    expect(mqtt.connect).toBeCalledWith(mqttConfig.MQTTNorth.url, expectedOptions)
+    expect(mqtt.connect).toBeCalledWith(mqttConfig.MQTT.url, expectedOptions)
     expect(mqttNorth.client.on).toHaveBeenCalledTimes(2)
     expect(mqttNorth.client.on).toHaveBeenCalledWith('error', expect.any(Function))
     expect(mqttNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
 
     mqttNorth.handleConnectEvent()
-    expect(mqttNorth.logger.info).toHaveBeenCalledWith(`North MQTT Connector connected to ${mqttConfig.MQTTNorth.url}`)
+    expect(mqttNorth.logger.info).toHaveBeenCalledWith(`North MQTT Connector connected to ${mqttConfig.MQTT.url}`)
   })
 
   it('should properly connect with cert files', async () => {
@@ -67,8 +67,8 @@ describe('MQTTNorth north', () => {
 
     const testMqttConfigWithFiles = {
       ...mqttConfig,
-      MQTTNorth: {
-        ...mqttConfig.MQTTNorth,
+      MQTT: {
+        ...mqttConfig.MQTT,
         caFile: 'myCaFile',
         keyFile: 'myKeyFile',
         certFile: 'myCertFile',
@@ -76,22 +76,22 @@ describe('MQTTNorth north', () => {
       },
     }
 
-    const mqttNorthCert = new MQTTNorth(testMqttConfigWithFiles, engine)
+    const mqttNorthCert = new MQTT(testMqttConfigWithFiles, engine)
     await mqttNorthCert.init()
     mqttNorthCert.certificate = CertificateService
     await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
       clientId: `${engine.engineName}-${mqttConfig.id}`,
-      username: mqttConfig.MQTTNorth.username,
-      password: Buffer.from(mqttConfig.MQTTNorth.password),
+      username: mqttConfig.MQTT.username,
+      password: Buffer.from(mqttConfig.MQTT.password),
       key: 'fileContent',
       cert: 'fileContent',
       ca: 'fileContent',
       rejectUnauthorized: true,
     }
     expect(mqtt.connect)
-      .toBeCalledWith(testMqttConfigWithFiles.MQTTNorth.url, expectedOptionsWithFiles)
+      .toBeCalledWith(testMqttConfigWithFiles.MQTT.url, expectedOptionsWithFiles)
   })
 
   it('should properly handle the connect error event', async () => {

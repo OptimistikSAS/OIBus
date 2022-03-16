@@ -886,6 +886,9 @@ module.exports = {
           logger.info(`Add timestampPathInDataValue field to ${application.name}`)
           application.MQTTNorth.timestampPathInDataValue = ''
         }
+        application.api = 'MQTT'
+        application.MQTT = application.MQTTNorth
+        delete application.MQTTNorth
       }
 
       if (application.api === 'InfluxDB') {

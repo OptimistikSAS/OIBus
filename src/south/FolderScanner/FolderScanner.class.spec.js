@@ -169,7 +169,7 @@ describe('FolderScanner', () => {
     const targetBuffer = await fs.readFile(decompressedCsv)
     expect(targetBuffer).toEqual(referenceBuffer)
     jest.restoreAllMocks()
-    await fs.rmdir(folderScanner.inputFolder, { recursive: true })
+    await fs.rm(folderScanner.inputFolder, { recursive: true })
   })
 
   it('onScan: should addFile() if file match conditions with preserveFiles true and compression true', async () => {
@@ -197,6 +197,6 @@ describe('FolderScanner', () => {
     expect(targetBuffer).toEqual(referenceBuffer)
 
     jest.restoreAllMocks()
-    await fs.rmdir(folderScanner.inputFolder, { recursive: true })
+    await fs.rm(folderScanner.inputFolder, { recursive: true })
   })
 })

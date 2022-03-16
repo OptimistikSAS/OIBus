@@ -488,9 +488,9 @@ const testConfig = {
       {
         id: 'application-uuid-4',
         name: 'mqtt',
-        api: 'MQTTNorth',
+        api: 'MQTT',
         enabled: true,
-        MQTTNorth: {
+        MQTT: {
           password: 'anypass',
           url: 'mqtt://hostname:1883',
           username: 'anyuser',

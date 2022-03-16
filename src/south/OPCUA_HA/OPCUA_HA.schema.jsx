@@ -210,18 +210,14 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
-    help: (
-      <div>The pointId to used to send the data</div>
-    ),
+    help: <div>The pointId to used to send the data</div>,
   },
   nodeId: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
-    help: (
-      <div>The nodeId referenced in the OPCUA server</div>
-    ),
+    help: <div>The nodeId referenced in the OPCUA server</div>,
   },
   scanMode: {
     type: 'OIbScanMode',

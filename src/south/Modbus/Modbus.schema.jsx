@@ -121,38 +121,47 @@ schema.points = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '',
-    help: 'The id of the data. This id can then be used by another application where the data is sent by a north connector.',
+    help: <div>The id of the data. This id can then be used by another application where the data is sent by a north connector.</div>,
   },
   address: {
     type: 'OIbText',
     defaultValue: '',
     valid: combinedValidations([isHexaOrDecimal(), notEmpty()]),
-    help: 'The address must be in hexadecimal form, without the type number in front. '
-      + 'For example, holdingRegister 400001 must be written 0x00001. '
-      + 'The number "4" mst not be written since it will be infer from the modbus data typ field.',
+    help: (
+      <div>
+        The address must be in hexadecimal form, without the type number in front.
+        For example, holdingRegister 400001 must be written 0x00001.
+        The number &quot;4&quot; mst not be written since it will be infer from the modbus data typ field.
+      </div>),
   },
   modbusType: {
     type: 'OIbSelect',
     options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
     label: 'Modbus type',
     defaultValue: 'holdingRegister',
-    help: 'Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).',
+    help: <div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).</div>,
   },
   dataType: {
     type: 'OIbSelect',
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
     label: 'Data type',
     defaultValue: 'Uint16',
-    help: 'HoldingRegisters and inputRegisters can have one of the above types. '
-      + 'Default type is UInt16. This field does not apply for coils and discreteInputs.',
+    help: (
+      <div>
+        HoldingRegisters and inputRegisters can have one of the above types. Default type is UInt16.
+        This field does not apply for coils and discreteInputs.
+      </div>),
   },
   multiplierCoefficient: {
     type: 'OIbText',
     label: 'Multiplier Coefficient',
     valid: combinedValidations([notEmpty(), inRange(-1000, 1000)]),
     defaultValue: 1,
-    help: 'Multiply retrieved data by a coefficient\n'
-      + 'Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value.',
+    help: (
+      <div>
+        Multiply retrieved data by a coefficient.
+        Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value.
+      </div>),
   },
   scanMode: {
     type: 'OIbScanMode',

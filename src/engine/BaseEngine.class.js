@@ -8,9 +8,9 @@ apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
 apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
-apiList.MQTTNorth = require('../north/mqttnorth/MQTTNorth.class')
+apiList.MQTT = require('../north/mqtt/MQTT.class')
 apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
-apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
+apiList.CsvToHttp = require('../north/csvtohttp/CsvToHttp.class')
 apiList.FileWriter = require('../north/filewriter/FileWriter.class')
 
 const protocolList = {}

@@ -5,7 +5,7 @@ const FetchRequest = require('./FetchRequest.class')
 const config = require('../../config/defaultConfig.json')
 
 // Mock engine
-const engine = jest.createMockFromModule('../../engine/OIBusEngine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class')
 
 beforeEach(() => {
   jest.resetAllMocks()

@@ -4,9 +4,9 @@ const fs = require('fs')
 const ApiHandler = require('../ApiHandler.class')
 
 const ERROR_PRINT_SIZE = 5
-const REGEX_CONTAIN_VARIABLE_STRING = /\$\{[^}]*\}/ // match if the string contains ${...}
-const REGEX_SPLIT_TEMPLATE_STRING = /(\$\{[^}]*\}|[^${^}*}]*)/ // split the input into a array of string: "test ${value}" => [ "test ", ${value}]
-const REGEX_MATCH_VARIABLE_STRING = /^\$\{[^}]*\}$/ // match if the string starts with: ${...}
+const REGEX_CONTAIN_VARIABLE_STRING = /\${[^}]*}/ // match if the string contains ${...}
+const REGEX_SPLIT_TEMPLATE_STRING = /(\${[^}]*}|[^${^}*]*)/ // split the input into an array of string: "test ${value}" => [ "test ", ${value}]
+const REGEX_MATCH_VARIABLE_STRING = /^\${[^}]*}$/ // match if the string starts with: ${...}
 const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 
 /**
@@ -332,8 +332,8 @@ class CsvToHttp extends ApiHandler {
         }
         return { value: valueToConvert, error: `Fail To convert "${valueToConvert}" into ${type} ` }
       case 'float':
-        if (parseFloat(valueToConvert, 10)) {
-          return { value: parseFloat(valueToConvert, 10) }
+        if (parseFloat(valueToConvert)) {
+          return { value: parseFloat(valueToConvert) }
         }
         return { value: valueToConvert, error: `Fail To convert ${valueToConvert} into ${type} ` }
       case 'timestamp':

@@ -3,7 +3,7 @@ const ProtocolHandler = require('./ProtocolHandler.class')
 
 jest.mock('../engine/logger/Logger.class')
 
-const engine = jest.genMockFromModule('../engine/OIBusEngine.class')
+const engine = jest.mock('../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.addValues = jest.fn()
 engine.addFile = jest.fn()
