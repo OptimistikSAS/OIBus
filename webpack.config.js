@@ -47,7 +47,10 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: path.resolve('./src/client/index.html') }),
+    new HtmlWebpackPlugin({
+      template: path.resolve('./src/client/index.html'),
+      favicon: path.resolve('./src/client/favicon.ico'),
+    }),
     new ESLintPlugin(),
   ],
 }
