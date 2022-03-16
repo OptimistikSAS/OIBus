@@ -2,7 +2,6 @@ import React from 'react'
 import { Container, Button } from 'reactstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
-import { AlertContext } from '../context/AlertContext.jsx'
 import PointsButton from './PointsButton.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import Table from '../components/table/Table.jsx'
@@ -31,12 +30,10 @@ const generateRowEntry = (key, value) => [
 
 const SouthStatus = () => {
   const [connectorData, setConnectorData] = React.useState([])
-  const { setAlert } = React.useContext(AlertContext)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
   const { id } = useParams() // the dataSource id passed in the url
   const [dataSource, setDataSource] = React.useState(null)
-  const [sseSource, setSseSource] = React.useState(null)
 
   React.useEffect(() => {
     const currentDataSource = newConfig.south?.dataSources?.find(
@@ -44,10 +41,11 @@ const SouthStatus = () => {
     )
     setDataSource(currentDataSource)
 
+    let source
     if (currentDataSource && currentDataSource.enabled) {
-      const source = new EventSource(`/south/${id}/sse`)
+      source = new EventSource(`/south/${id}/sse`)
       source.onerror = (error) => {
-        setAlert({ text: error.message, type: 'danger' })
+        console.error(error)
       }
       source.onmessage = (event) => {
         if (event && event.data) {
@@ -59,12 +57,9 @@ const SouthStatus = () => {
           setConnectorData(tableRows)
         }
       }
-      setSseSource(source)
     }
     return () => {
-      if (sseSource) {
-        sseSource.close()
-      }
+      source?.close()
     }
   }, [newConfig])
 

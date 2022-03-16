@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const Console = require('./Console.class')
 const config = require('../../config/defaultConfig.json')
 
@@ -65,11 +65,11 @@ describe('Console', () => {
     expect(process.stdout.write).not.toHaveBeenCalled()
   })
 
-  it('should properly handle file', () => {
+  it('should properly handle file', async () => {
     const filePath = '/path/to/file/example.file'
-    jest.spyOn(fs, 'statSync').mockImplementation(() => ({ size: 666 }))
+    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ size: 666 }))
 
-    consoleNorth.handleFile(filePath)
+    await consoleNorth.handleFile(filePath)
 
     expect(console.table).toBeCalledWith([{ filePath, fileSize: 666 }])
   })

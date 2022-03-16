@@ -142,7 +142,6 @@ class MQTT extends ProtocolHandler {
     this.logger.info(`Connected to ${this.url}`)
 
     this.listen({ pointList: this.dataSource.points })
-    this.statusData['Last scan at'] = 'Subscription'
     this.statusData['Connected at'] = new Date().toISOString()
     this.updateStatusDataStream()
   }

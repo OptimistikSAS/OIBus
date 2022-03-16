@@ -39,7 +39,7 @@ class ProtocolHandler {
    * Constructor for Protocol
    * @constructor
    * @param {*} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @param {object} supportedModes - The supported modes
    * @return {void}
    */
@@ -169,14 +169,13 @@ class ProtocolHandler {
   }
 
   initializeStatusData() {
-    const initialStatusData = {}
     if (this.handlesPoints) {
-      initialStatusData['Number of values since OIBus has started'] = 0
+      this.statusData['Number of values since OIBus has started'] = 0
     }
     if (this.handlesFiles) {
-      initialStatusData['Number of files since OIBus has started'] = 0
+      this.statusData['Number of files since OIBus has started'] = 0
     }
-    this.statusData = initialStatusData
+
     if (!this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]) {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`] = {}
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
@@ -188,7 +187,7 @@ class ProtocolHandler {
   }
 
   /**
-   * Method used by the eventEmmiter of the current protocol to write data to the socket and send them to the frontend
+   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
    * @param {object} data - The json object of data to send
    * @return {void}
    */

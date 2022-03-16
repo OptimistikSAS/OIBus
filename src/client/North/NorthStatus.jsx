@@ -2,7 +2,6 @@ import React from 'react'
 import { Container, Button } from 'reactstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
-import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import Table from '../components/table/Table.jsx'
 
@@ -30,22 +29,22 @@ const generateRowEntry = (key, value) => [
 
 const NorthStatus = () => {
   const [connectorData, setConnectorData] = React.useState([])
-  const { setAlert } = React.useContext(AlertContext)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
   const { id } = useParams() // the application id passed in the url
   const [application, setApplication] = React.useState(null)
-  const [sseSource, setSseSource] = React.useState(null)
 
   React.useEffect(() => {
     const currentApplication = newConfig.north?.applications?.find(
       (element) => element.id === id,
     )
     setApplication(currentApplication)
+
+    let source
     if (currentApplication && currentApplication.enabled) {
-      const source = new EventSource(`/north/${id}/sse`)
+      source = new EventSource(`/north/${id}/sse`)
       source.onerror = (error) => {
-        setAlert({ text: error.message, type: 'danger' })
+        console.error(error)
       }
       source.onmessage = (event) => {
         if (event && event.data) {
@@ -57,12 +56,9 @@ const NorthStatus = () => {
           setConnectorData(tableRows)
         }
       }
-      setSseSource(source)
     }
     return () => {
-      if (sseSource) {
-        sseSource.close()
-      }
+      source?.close()
     }
   }, [newConfig])
 

@@ -538,6 +538,9 @@ class OIBusEngine extends BaseEngine {
       this.eventEmitters['/engine/sse'].statusData = this.statusData
       this.updateStatusDataStream()
     }
+    if (this.liveStatusInterval) {
+      clearInterval(this.liveStatusInterval)
+    }
     this.liveStatusInterval = setInterval(() => {
       this.updateEngineStatusData()
       this.updateStatusDataStream()

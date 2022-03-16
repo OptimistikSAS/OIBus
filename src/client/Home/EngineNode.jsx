@@ -1,21 +1,15 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
-import { AlertContext } from '../context/AlertContext.jsx'
 import EngineMenu from './EngineMenu.jsx'
 
 const EngineNode = ({ engineName, onRestart, onShutdown }) => {
   const [connectorData, setConnectorData] = React.useState({})
 
-  const { setAlert } = React.useContext(AlertContext)
-
   React.useEffect(() => {
     const source = new EventSource('/engine/sse')
     source.onerror = (error) => {
-      setAlert({
-        text: error.message,
-        type: 'danger',
-      })
+      console.error(error)
     }
     source.onmessage = (event) => {
       if (event && event.data) {

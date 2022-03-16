@@ -18,7 +18,7 @@ const HomePage = () => {
     apis
       .getConfig()
       .then(() => setLoading(false))
-      // retry getConfig if error catched
+      // retry getConfig if error caught
       .catch(() => setTimeout(() => stopLoadingWhenReachable(), 1000))
   }
 

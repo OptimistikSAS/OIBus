@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 
 const ApiHandler = require('../ApiHandler.class')
 
@@ -9,7 +9,7 @@ class Console extends ApiHandler {
    * Constructor for Console
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -32,7 +32,7 @@ class Console extends ApiHandler {
     }
     this.statusData['Last handled values at'] = new Date().toISOString()
     this.statusData['Number of values sent since OIBus has started'] += values.length
-    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
+    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
     this.updateStatusDataStream()
     return values.length
   }
@@ -40,11 +40,10 @@ class Console extends ApiHandler {
   /**
    * Handle the file.
    * @param {String} filePath - The path of the file
-   * @return {Promise} - The send status
+   * @return {Promise} - The status sent
    */
-  /* eslint-disable-next-line class-methods-use-this */
   async handleFile(filePath) {
-    const stats = fs.statSync(filePath)
+    const stats = await fs.stat(filePath)
     const fileSize = stats.size
     const data = [{
       filePath,
