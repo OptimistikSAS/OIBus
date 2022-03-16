@@ -10,9 +10,6 @@ import Logs from './Logs.jsx'
 
 // fixing date to match snapshot
 const RealDate = Date
-const realToLocaleString = global.Date.prototype.toLocaleString
-const realToLocaleTimeString = global.Date.prototype.toLocaleTimeString
-const realToLocaleDateString = global.Date.prototype.toLocaleDateString
 const constantDate = new Date(Date.UTC(2020, 1, 1, 0, 0, 0))
 // Ensure test output is consistent across machine locale and time zone config.
 const mockToLocaleString = () => constantDate.toUTCString()
@@ -32,9 +29,6 @@ global.Date = class {
     return new RealDate(constantDate)
   }
 }
-
-// verbosity options
-const verbosityOptions = ['debug', 'info', 'warning', 'error', 'trace']
 
 // sample test logs
 const testLogs = [
@@ -82,12 +76,7 @@ const testLogs = [
   },
 ]
 
-// setting initial test logs to be displayed
-// setting max log to 5 to have more pages
-const setVerbosity = jest.fn()
-const setState = jest.fn()
-const defaultMaxLog = 300
-const tempDefaultMaxLog = 5
+/*
 React.useState = jest.fn().mockImplementation((init) => {
   if (JSON.stringify(init) === JSON.stringify(verbosityOptions)) {
     // init test with 'trace' option unchecked
@@ -101,7 +90,7 @@ React.useState = jest.fn().mockImplementation((init) => {
   }
   return [init, setState]
 })
-
+*/
 // mock get Logs
 let resolve
 let reject
@@ -124,16 +113,20 @@ afterEach(() => {
 })
 
 describe('Logs', () => {
-  test('check Logs', () => {
+  test('check Logs', async () => {
     act(() => {
       ReactDOM.render(
         <Logs />,
         container,
       )
     })
+    Simulate.click(document.getElementById('showLog'))
+    await act(async () => {
+      resolve(testLogs)
+    })
     expect(container).toMatchSnapshot()
   })
-  test('check change fromDate', () => {
+  test('check change fromDate', async () => {
     act(() => {
       ReactDOM.render(
         <Logs />,
@@ -141,10 +134,13 @@ describe('Logs', () => {
       )
     })
     Simulate.change(document.getElementById('fromDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
-    expect(setState).toBeCalledWith('2020-02-01T00:00:00.000Z')
+    Simulate.click(document.getElementById('showLog'))
+    await act(async () => {
+      resolve(testLogs)
+    })
     expect(container).toMatchSnapshot()
   })
-  test('check change toDate', () => {
+  test('check change toDate', async () => {
     act(() => {
       ReactDOM.render(
         <Logs />,
@@ -152,55 +148,51 @@ describe('Logs', () => {
       )
     })
     Simulate.change(document.getElementById('toDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
-    expect(setState).toBeCalledWith('2020-02-01T00:00:00.000Z')
-    expect(container).toMatchSnapshot()
-  })
-  test('check change filterText', () => {
-    act(() => {
-      ReactDOM.render(
-        <Logs />,
-        container,
-      )
-    })
-    Simulate.change(document.getElementById('filterText'), { target: { value: 'debug' } })
-    expect(setState).toBeCalledWith('debug')
-    expect(container).toMatchSnapshot()
-  })
-  test('check change verbosity, uncheck debug', () => {
-    act(() => {
-      ReactDOM.render(
-        <Logs />,
-        container,
-      )
-    })
-    Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
-    expect(setVerbosity).toBeCalledWith(['info', 'warning', 'error'])
-    expect(container).toMatchSnapshot()
-  })
-  test('check change verbosity, check trace', () => {
-    act(() => {
-      ReactDOM.render(
-        <Logs />,
-        container,
-      )
-    })
-    Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
-    expect(setVerbosity).toBeCalledWith(['debug', 'info', 'warning', 'error', 'trace'])
-    expect(container).toMatchSnapshot()
-  })
-  test('check press Show Logs, success in logs call', async () => {
-    act(() => {
-      ReactDOM.render(
-        <Logs />,
-        container,
-      )
-    })
-    expect(container).toMatchSnapshot()
-    // resolve the call requested by showLog
     Simulate.click(document.getElementById('showLog'))
     await act(async () => {
       resolve(testLogs)
     })
+    expect(container).toMatchSnapshot()
+  })
+  test('check change filterText', async () => {
+    act(() => {
+      ReactDOM.render(
+        <Logs />,
+        container,
+      )
+    })
+    await act(async () => {
+      resolve([])
+    })
+    Simulate.change(document.getElementById('filterText'), { target: { value: 'debug' } })
+    Simulate.click(document.getElementById('showLog'))
+    expect(container).toMatchSnapshot()
+  })
+  test('check change verbosity, uncheck error', async () => {
+    act(() => {
+      ReactDOM.render(
+        <Logs />,
+        container,
+      )
+    })
+    await act(async () => {
+      resolve([])
+    })
+    Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
+    Simulate.click(document.getElementById('showLog'))
+    expect(container).toMatchSnapshot()
+  })
+  test('check change verbosity, check trace', async () => {
+    act(() => {
+      ReactDOM.render(
+        <Logs />,
+        container,
+      )
+    })
+    await act(async () => {
+      resolve([])
+    })
+    Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
     expect(container).toMatchSnapshot()
   })
   test('check press Show Logs, error in logs call', async () => {
@@ -217,22 +209,33 @@ describe('Logs', () => {
     await act(async () => {
       reject('Logs: testing error on getLogs request')
     })
-    expect(setAlert).toHaveBeenCalled()
     console.error = originalError
+    expect(container).toMatchSnapshot()
   })
-  test('check press showMore', () => {
+  test('check press showMore', async () => {
     act(() => {
       ReactDOM.render(
         <Logs />,
         container,
       )
     })
-    Simulate.click(document.getElementById('showMore'))
-    expect(setState).toBeCalledWith(defaultMaxLog)
+    // resolve the call requested by showLog
+    Simulate.click(document.getElementById('showLog'))
+    await act(async () => {
+      const logs = []
+      for (let index = 0; index < 1000; index += 1) {
+        logs[index] = {
+          id: index,
+          timestamp: '2020-01-01T00:00:00.000Z',
+          level: 'debug',
+          source: 'Source',
+          message: 'Testing lot of logs',
+        }
+      }
+      resolve(logs)
+    })
     expect(container).toMatchSnapshot()
-    global.Date = RealDate
-    global.Date.prototype.toLocaleString = realToLocaleString
-    global.Date.prototype.toLocaleTimeString = realToLocaleTimeString
-    global.Date.prototype.toLocaleDateString = realToLocaleDateString
+    Simulate.click(document.getElementById('showMore'))
+    expect(container).toMatchSnapshot()
   })
 })

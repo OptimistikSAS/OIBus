@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   FormGroup,
   FormText,
@@ -17,9 +17,9 @@ import { AlertContext } from '../context/AlertContext.jsx'
 const selectStyle = (level) => {
   switch (level) {
     case 'debug':
-      return 'text-success'
-    case 'info':
       return 'text-info'
+    case 'info':
+      return 'text-success'
     case 'warning':
       return 'text-warning'
     case 'error':
@@ -30,21 +30,21 @@ const selectStyle = (level) => {
 }
 
 const Log = () => {
-  const verbosityOptions = ['debug', 'info', 'warning', 'error', 'trace']
+  const verbosityOptions = ['error', 'warning', 'info', 'debug', 'trace']
   const defaultMaxLog = 300
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
-  const [logs, setLogs] = React.useState()
+  const [logs, setLogs] = React.useState([])
   const [filterText, setFilterText] = React.useState('')
   const [maxLog, setMaxLog] = React.useState(defaultMaxLog)
   const { setAlert } = React.useContext(AlertContext)
 
   /**
-   * Handles the form's submittion and set the logs if any response
+   * Retrieve the logs from sqlite database
    * @returns {void}
    */
-  const handleSubmit = async () => {
+  const retrieveLogs = async () => {
     try {
       const logsResponse = await apis.getLogs(fromDate, toDate, verbosity.join(','))
       // sort logs based on timestamp
@@ -65,9 +65,13 @@ const Log = () => {
     }
   }
 
+  useEffect(async () => {
+    await retrieveLogs()
+  }, [])
+
   /**
-   * Handles the form's submittion and set the logs if any response
-   * @param {string} value checked/unchecled item
+   * Handles the form's submission and set the logs if any response
+   * @param {string} value checked/unchecked item
    * @returns {void}
    */
   const handleVerbosityChange = (value) => {
@@ -105,44 +109,52 @@ const Log = () => {
 
   /**
    * Render the logs
-   * @returns {void}
+   * @param {Array} filteredLogs - the list of logs filtered
+   * @returns {JSX.Element} - The HTML array of logs
    */
-  const renderLogs = () => {
-    const filteredLogs = logs.filter((item) => item.message.toLowerCase().includes(filterText))
-    return (
-      <Col className="log-right-panel">
-        <Card>
-          <Label className="label-card-title">Logs</Label>
-          <CardBody className="card-body">
-            {renderFilter()}
-            <Table size="small" bordered hover responsive>
-              <tbody>
-                {filteredLogs
-                  .filter((_, index) => index < maxLog)
-                  .map((item) => {
-                    const { id, source, level, message, timestamp } = item
-                    const date = new Date(timestamp)
-                    return (
-                      <tr key={id} className={`oi-log ${selectStyle(level)}`}>
-                        <td style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
-                        <td>{source}</td>
-                        <td>{level}</td>
-                        <td>{message}</td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </Table>
-            {filteredLogs.length > maxLog && (
-              <Button id="showMore" color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
-                Show more...
-              </Button>
-            )}
-          </CardBody>
-        </Card>
-      </Col>
-    )
-  }
+  const renderLogs = (filteredLogs) => (
+    <Col className="log-right-panel">
+      <Card>
+        <Label className="label-card-title">Logs</Label>
+        <CardBody className="card-body">
+          {renderFilter()}
+          <Table size="small" bordered hover responsive>
+            <thead>
+              <tr>
+                <td>Date</td>
+                <td>Level</td>
+                <td>Scope</td>
+                <td>Source file</td>
+                <td>Details</td>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLogs
+                .filter((_, index) => index < maxLog)
+                .map((item) => {
+                  const { id, source, scope, level, message, timestamp } = item
+                  const date = new Date(timestamp)
+                  return (
+                    <tr key={id} className={`oi-log ${selectStyle(level)}`}>
+                      <td style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
+                      <td>{level}</td>
+                      <td>{scope}</td>
+                      <td>{source}</td>
+                      <td>{message}</td>
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </Table>
+          {filteredLogs.length > maxLog && (
+          <Button id="showMore" color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
+            Show more...
+          </Button>
+          )}
+        </CardBody>
+      </Card>
+    </Col>
+  )
 
   const maxDateString = new Date().toISOString().substr(0, 16)
   return (
@@ -203,13 +215,13 @@ const Log = () => {
                   </FormGroup>
                 ))}
               </FormGroup>
-              <Button id="showLog" color="primary" onClick={handleSubmit}>
+              <Button id="showLog" color="primary" onClick={retrieveLogs}>
                 Show log
               </Button>
             </CardBody>
           </Card>
         </Col>
-        {logs && renderLogs()}
+        {logs && renderLogs(logs.filter((item) => item.message.toLowerCase().includes(filterText)))}
       </Row>
     </Container>
   )
