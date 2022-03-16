@@ -90,7 +90,6 @@ class Server {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
           this.app.logger.warn('UnauthorizedError: Bad Combination Login/Password')
-          ctx.body = JSON.stringify(err)
         } else {
           throw err
         }
