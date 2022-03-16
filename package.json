@@ -77,7 +77,7 @@
     "node-fetch": "2.6.7",
     "node-opcua": "2.65.0",
     "object-path": "0.11.8",
-    "papaparse": "5.3.1",
+    "papaparse": "5.3.2",
     "pg": "8.7.3",
     "pino": "git://github.com/burgerni10/pino.git",
     "pino-abstract-transport": "0.5.0",
