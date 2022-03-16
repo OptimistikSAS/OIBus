@@ -130,16 +130,15 @@ const NodeView = ({ onRestart, onShutdown }) => {
             + 150 * (Math.trunc((northNodes.length - 1) / 5) + 1)
             + 150 * (Math.trunc((southNodes.length - 1) / 5) + 1),
           width: '100%',
+          paddingTop: '2rem',
         }}
       >
         <ReactFlow
-          fitViewOnInit
           defaultNodes={nodes}
           defaultEdges={edges}
           zoomOnScroll={false}
           zoomOnDoubleClick={false}
           selectNodesOnDrag={false}
-          paneMoveable={false}
           preventScrolling={false}
           nodesConnectable={false}
           elementsSelectable

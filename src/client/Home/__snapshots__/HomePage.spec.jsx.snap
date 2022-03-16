@@ -6,7 +6,7 @@ exports[`HomePage display Health page based on config 1`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
@@ -20,7 +20,7 @@ exports[`HomePage display Health with config null 1`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>

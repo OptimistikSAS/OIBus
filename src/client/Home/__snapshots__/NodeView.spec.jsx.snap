@@ -6,7 +6,7 @@ exports[`NodeView display main page based on config 1`] = `
     class="container"
   >
     <div
-      style="height: 1010px; width: 100%;"
+      style="height: 1010px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
@@ -20,7 +20,7 @@ exports[`NodeView display main page based on config 2`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
@@ -34,7 +34,7 @@ exports[`NodeView display main page based on config 3`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
@@ -48,7 +48,7 @@ exports[`NodeView display main page based on config 4`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
@@ -62,7 +62,7 @@ exports[`NodeView display main page based on config 5`] = `
     class="container"
   >
     <div
-      style="height: 710px; width: 100%;"
+      style="height: 710px; width: 100%; padding-top: 2rem;"
     >
       ReactFlow
     </div>
