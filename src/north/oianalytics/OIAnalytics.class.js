@@ -6,7 +6,7 @@ const ApiHandler = require('../ApiHandler.class')
  * Class OIAnalytics - sends files through a POST Multipart HTTP and values as json payload
  */
 class OIAnalytics extends ApiHandler {
-  static category = 'OI'
+  static category = 'Optimistik'
 
   /**
    * Constructor for OIAnalytics

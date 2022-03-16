@@ -1,6 +1,6 @@
 import FileIn from './images/file-in.svg'
 import FileOut from './images/file-out.svg'
-import OI from './images/oi.svg'
+import Optimistik from './images/oi.svg'
 import IoT from './images/iot.svg'
 import Api from './images/api.svg'
 import Debug from './images/debug.svg'
@@ -28,9 +28,9 @@ const imageCategories = {
     image: Api,
     label: 'Api',
   },
-  OI: {
-    image: OI,
-    label: 'OI',
+  Optimistik: {
+    image: Optimistik,
+    label: 'Optimistik',
   },
   IoT: {
     image: IoT,
@@ -41,8 +41,8 @@ const imageCategories = {
     label: 'Debug',
   },
   Default: {
-    image: OI,
-    label: 'OI',
+    image: Optimistik,
+    label: 'Optimistik',
   },
 }
 export default imageCategories
