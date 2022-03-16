@@ -1,7 +1,7 @@
 const HealthSignal = require('./HealthSignal.class')
 
 // Mock engine
-const engine = jest.genMockFromModule('./OIBusEngine.class')
+const engine = jest.mock('./OIBusEngine.class')
 engine.logger = { error: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() }
 
 beforeEach(() => {

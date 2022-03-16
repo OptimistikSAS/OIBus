@@ -3204,7 +3204,11 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              for example (.*)\\/(.{2})(.)(.*) to split in 4 groups
+              <div>
+                For example (.*)\\\\/(.
+                2
+                )(.)(.*) to split in 4 groups
+              </div>
             </small>
           </div>
         </div>
@@ -3263,7 +3267,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s
+              <div>
+                Field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s
+              </div>
             </small>
           </div>
         </div>
@@ -3293,7 +3299,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)
+              <div>
+                Timestamp field extracted from the JSON object (empty means the JSON "timestamp" field is used)
+              </div>
             </small>
           </div>
         </div>
@@ -3424,7 +3432,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              When checked, means that the field "value" will be parsed as JSON object
+              <div>
+                When checked, means that the field "value" will be parsed as JSON object
+              </div>
             </small>
           </div>
         </div>
@@ -3458,7 +3468,9 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             <small
               class="form-text text-muted"
             >
-              Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
+              <div>
+                Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
+              </div>
             </small>
           </div>
         </div>
@@ -8137,15 +8149,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.url"
+              for="north.applications.0.MQTT.url"
             >
               Url
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.url"
-              name="north.applications.0.MQTTNorth.url"
+              id="north.applications.0.MQTT.url"
+              name="north.applications.0.MQTT.url"
               type="text"
               value="mqtt://hostname:1883"
             />
@@ -8169,15 +8181,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.qos"
+              for="north.applications.0.MQTT.qos"
             >
               Qos
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.MQTTNorth.qos"
-              name="north.applications.0.MQTTNorth.qos"
+              id="north.applications.0.MQTT.qos"
+              name="north.applications.0.MQTT.qos"
             >
               <option
                 value="0"
@@ -8212,15 +8224,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.username"
+              for="north.applications.0.MQTT.username"
             >
               Username
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.username"
-              name="north.applications.0.MQTTNorth.username"
+              id="north.applications.0.MQTT.username"
+              name="north.applications.0.MQTT.username"
               type="text"
               value="anyuser"
             />
@@ -8237,7 +8249,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.password"
+              for="north.applications.0.MQTT.password"
             >
               Password
             </label>
@@ -8247,8 +8259,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="north.applications.0.MQTTNorth.password"
-                name="north.applications.0.MQTTNorth.password"
+                id="north.applications.0.MQTT.password"
+                name="north.applications.0.MQTT.password"
                 type="password"
                 value="anypass"
               />
@@ -8271,15 +8283,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.certFile"
+              for="north.applications.0.MQTT.certFile"
             >
               Cert File
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.certFile"
-              name="north.applications.0.MQTTNorth.certFile"
+              id="north.applications.0.MQTT.certFile"
+              name="north.applications.0.MQTT.certFile"
               type="text"
               value=""
             />
@@ -8303,15 +8315,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.keyFile"
+              for="north.applications.0.MQTT.keyFile"
             >
               Key File
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.keyFile"
-              name="north.applications.0.MQTTNorth.keyFile"
+              id="north.applications.0.MQTT.keyFile"
+              name="north.applications.0.MQTT.keyFile"
               type="text"
               value=""
             />
@@ -8335,15 +8347,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.caFile"
+              for="north.applications.0.MQTT.caFile"
             >
               CA File
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.caFile"
-              name="north.applications.0.MQTTNorth.caFile"
+              id="north.applications.0.MQTT.caFile"
+              name="north.applications.0.MQTT.caFile"
               type="text"
               value=""
             />
@@ -8376,8 +8388,8 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.MQTTNorth.rejectUnauthorized"
-              name="north.applications.0.MQTTNorth.rejectUnauthorized"
+              id="north.applications.0.MQTT.rejectUnauthorized"
+              name="north.applications.0.MQTT.rejectUnauthorized"
               type="checkbox"
             />
           </div>
@@ -8394,15 +8406,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.regExp"
+              for="north.applications.0.MQTT.regExp"
             >
               Reg exp
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.regExp"
-              name="north.applications.0.MQTTNorth.regExp"
+              id="north.applications.0.MQTT.regExp"
+              name="north.applications.0.MQTT.regExp"
               type="text"
               value="(.*)/"
             />
@@ -8412,7 +8424,11 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <small
               class="form-text text-muted"
             >
-              for example (.*)\\/(.{2})(.)(.*) to split in 4 groups
+              <div>
+                For example (.*)\\\\/(.
+                2
+                )(.)(.*) to split in 4 groups
+              </div>
             </small>
           </div>
         </div>
@@ -8428,15 +8444,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.topic"
+              for="north.applications.0.MQTT.topic"
             >
               Topic
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.topic"
-              name="north.applications.0.MQTTNorth.topic"
+              id="north.applications.0.MQTT.topic"
+              name="north.applications.0.MQTT.topic"
               type="text"
               value="%1$s"
             />
@@ -8446,7 +8462,9 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <small
               class="form-text text-muted"
             >
-              Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)
+              <div>
+                Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)
+              </div>
             </small>
           </div>
         </div>
@@ -8570,14 +8588,16 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.MQTTNorth.useDataKeyValue"
-              name="north.applications.0.MQTTNorth.useDataKeyValue"
+              id="north.applications.0.MQTT.useDataKeyValue"
+              name="north.applications.0.MQTT.useDataKeyValue"
               type="checkbox"
             />
             <small
               class="form-text text-muted"
             >
-              When checked, means that the field "value" will be parsed as JSON object
+              <div>
+                When checked, means that the field "value" will be parsed as JSON object
+              </div>
             </small>
           </div>
         </div>
@@ -8593,15 +8613,15 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.MQTTNorth.keyParentValue"
+              for="north.applications.0.MQTT.keyParentValue"
             >
               Key parent value
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.MQTTNorth.keyParentValue"
-              name="north.applications.0.MQTTNorth.keyParentValue"
+              id="north.applications.0.MQTT.keyParentValue"
+              name="north.applications.0.MQTT.keyParentValue"
               type="text"
               value=""
             />
@@ -8611,7 +8631,9 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             <small
               class="form-text text-muted"
             >
-              Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
+              <div>
+                Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)
+              </div>
             </small>
           </div>
         </div>

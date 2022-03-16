@@ -7,7 +7,7 @@ const ApiHandler = require('../ApiHandler.class')
 /**
  * Class MQTT - generates and sends MQTT messages
  */
-class MQTTNorth extends ApiHandler {
+class MQTT extends ApiHandler {
   static category = 'IoT'
 
   /**
@@ -33,7 +33,7 @@ class MQTTNorth extends ApiHandler {
       topic,
       useDataKeyValue,
       keyParentValue,
-    } = this.application.MQTTNorth
+    } = this.application.MQTT
 
     this.url = url
     this.qos = qos
@@ -186,4 +186,4 @@ class MQTTNorth extends ApiHandler {
   }
 }
 
-module.exports = MQTTNorth
+module.exports = MQTT

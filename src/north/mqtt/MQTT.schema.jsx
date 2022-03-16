@@ -1,7 +1,7 @@
 import React from 'react'
 import { notEmpty, optional } from '../../services/validation.service'
 
-const schema = { name: 'MQTTNorth' }
+const schema = { name: 'MQTT' }
 schema.form = {
   MQTTParameters: {
     type: 'OIbTitle',
@@ -137,13 +137,18 @@ schema.form = {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '(.*)',
-    help: 'for example (.*)\\/(.{2})(.)(.*) to split in 4 groups',
+    help: (
+      <div>
+        For example (.*)\\/(.
+        {2}
+        )(.)(.*) to split in 4 groups
+      </div>),
   },
   topic: {
     type: 'OIbText',
     valid: notEmpty(),
     defaultValue: '%1$s',
-    help: 'Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)',
+    help: <div>Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)</div>,
   },
   valueParameters: {
     type: 'OIbTitle',
@@ -203,14 +208,14 @@ schema.form = {
     type: 'OIbCheckBox',
     valid: notEmpty(),
     label: 'use key "value" of Json "data"',
-    help: 'When checked, means that the field "value" will be parsed as JSON object',
+    help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
     valid: optional(),
     defaultValue: '',
-    help: 'Indicates which field of the JSON object contains the value (empty means the JSON "data" field is used)',
+    help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
   },
 }
 schema.category = 'IoT'

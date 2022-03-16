@@ -4,6 +4,9 @@ const ApiHandler = require('../ApiHandler.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
+// Mock logger
+jest.mock('../../engine/logger/Logger.class')
+
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
