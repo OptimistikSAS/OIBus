@@ -52,6 +52,6 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'OI'
+schema.category = 'Optimistik'
 
 export default schema
