@@ -6,7 +6,7 @@ const serveClient = async (ctx) => {
   switch (path) {
     case '/bundle.js':
     case '/bundle.js.map':
-    case 'favicon.ico':
+    case '/favicon.ico':
       await koaSend(ctx, path, { root, index: '/index.html' })
       break
     default: await koaSend(ctx, '/index.html', { root })
