@@ -97,6 +97,7 @@ class OPCUA_DA extends ProtocolHandler {
     }
 
     try {
+      this.logger.debug(`Read ${nodesToRead.length} nodes [${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
       const dataValues = await this.session.readVariableValue(nodesToRead.map((node) => node.nodeId))
       if (dataValues.length !== nodesToRead.length) {
         this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
