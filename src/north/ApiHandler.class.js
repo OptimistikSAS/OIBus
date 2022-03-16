@@ -30,7 +30,7 @@ class ApiHandler {
    *
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -73,14 +73,12 @@ class ApiHandler {
   }
 
   initializeStatusData() {
-    const initialStatusData = { }
     if (this.canHandleValues) {
-      initialStatusData['Number of values sent since OIBus has started'] = 0
+      this.statusData['Number of values sent since OIBus has started'] = 0
     }
     if (this.canHandleFiles) {
-      initialStatusData['Number of files sent since OIBus has started'] = 0
+      this.statusData['Number of files sent since OIBus has started'] = 0
     }
-    this.statusData = initialStatusData
     if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
       this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
@@ -102,8 +100,15 @@ class ApiHandler {
     this.engine.eventEmitters[`/north/${id}/sse`]?.events?.off('data', this.listener)
   }
 
+  /**
+   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
+   * @param {object} data - The json object of data to send
+   * @return {void}
+   */
   listener = (data) => {
-    if (data) this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    if (data) {
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
   }
 
   updateStatusDataStream() {

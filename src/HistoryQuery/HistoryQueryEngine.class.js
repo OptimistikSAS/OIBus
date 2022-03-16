@@ -61,6 +61,9 @@ class HistoryQueryEngine extends BaseEngine {
       this.eventEmitters['/history-query-engine/sse'].statusData = this.statusData
       this.updateStatusDataStream()
     }
+    if (this.liveStatusInterval) {
+      clearInterval(this.liveStatusInterval)
+    }
     this.liveStatusInterval = setInterval(() => {
       this.updateStatusDataStream()
     }, 5000)
@@ -68,6 +71,17 @@ class HistoryQueryEngine extends BaseEngine {
 
   updateStatusDataStream() {
     this.eventEmitters['/history-query-engine/sse']?.events?.emit('data', this.statusData)
+  }
+
+  /**
+   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
+   * @param {object} data - The json object of data to send
+   * @return {void}
+   */
+  listener = (data) => {
+    if (data) {
+      this.eventEmitters['/history-query-engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
   }
 
   /**
@@ -127,6 +141,10 @@ class HistoryQueryEngine extends BaseEngine {
    * @return {Promise<void>} - The stop promise
    */
   async stop() {
+    if (this.liveStatusInterval) {
+      clearInterval(this.liveStatusInterval)
+    }
+
     if (this.safeMode) {
       return
     }
