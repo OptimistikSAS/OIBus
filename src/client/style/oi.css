@@ -362,7 +362,7 @@ label {
 }
 
 .form-check {
-  padding-left: 5px;
+  padding-left: 2rem;
 }
 
 /* log pannels */
@@ -461,7 +461,7 @@ label {
 
 .checkbox {
   position: relative;
-  margin-top: 0px;
+  margin-top: 0;
   width: 14px;
   height: 14px;
   margin-right: 8px;
@@ -555,7 +555,7 @@ h3 {
 .util-button:hover {
   outline: none;
   box-shadow: none;
-  border-width: 0px;
+  border-width: 0;
   margin-top: 3px;
 }
 

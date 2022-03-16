@@ -23,7 +23,7 @@ const HealthSignal = ({ onChange, healthSignal }) => (
     </OIbTitle>
     <Row>
       <Col md={1}>
-        <h6>Log signal (info)</h6>
+        <h6>Log (info)</h6>
       </Col>
       <Col md={1}>
         <OIbCheckBox
