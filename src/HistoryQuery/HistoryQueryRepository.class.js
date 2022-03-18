@@ -1,5 +1,6 @@
 const sqlite = require('sqlite')
 const sqlite3 = require('sqlite3')
+const HistoryQuery = require('./HistoryQuery.class')
 
 class HistoryQueryRepository {
   static TABLE = 'history_queries'
@@ -175,6 +176,44 @@ class HistoryQueryRepository {
                    WHERE id = ?`
     const stmt = await this.database.prepare(query)
     await stmt.run(id)
+  }
+
+  /**
+   * Get next HistoryQuery to run.
+   * @return {Promise<object|null>} - The next HistoryQuery to run
+   */
+  async getNextToRun() {
+    const ongoingQuery = `SELECT *
+                   FROM ${HistoryQueryRepository.TABLE}
+                   WHERE enabled = 1
+                     AND paused = 0
+                     AND status IN (${HistoryQuery.STATUS_EXPORTING}, ${HistoryQuery.STATUS_IMPORTING})
+                   ORDER BY orderColumn ASC
+                   LIMIT 1`
+    const ongoingStmt = await this.database.prepare(ongoingQuery)
+    const ongoingResults = await ongoingStmt.all()
+    if (ongoingResults.length > 0) {
+      const ongoingHistoryQuery = ongoingResults[0]
+      ongoingHistoryQuery.settings = JSON.parse(ongoingHistoryQuery.settings)
+      return ongoingHistoryQuery
+    }
+
+    const pendingQuery = `SELECT *
+                   FROM ${HistoryQueryRepository.TABLE}
+                   WHERE enabled = 1
+                     AND paused = 0
+                     AND status IN (${HistoryQuery.STATUS_EXPORTING}, ${HistoryQuery.STATUS_IMPORTING})
+                   ORDER BY orderColumn ASC
+                   LIMIT 1`
+    const pendingStmt = await this.database.prepare(pendingQuery)
+    const pendingResults = await pendingStmt.all()
+    if (pendingResults.length > 0) {
+      const pendingHistoryQuery = pendingResults[0]
+      pendingHistoryQuery.settings = JSON.parse(pendingHistoryQuery.settings)
+      return pendingHistoryQuery
+    }
+
+    return null
   }
 }
 

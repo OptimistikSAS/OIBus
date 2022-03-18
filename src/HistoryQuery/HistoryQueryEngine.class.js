@@ -159,34 +159,11 @@ class HistoryQueryEngine extends BaseEngine {
   }
 
   /**
-   * Get the next history query config
-   * @returns {object|null} - The next history query config
-   */
-  getNextHistoryQueryConfig() {
-    const historyQueryConfigs = this.configService.getActiveHistoryQueryConfiguration()
-    const activeHistoryQueryConfigs = historyQueryConfigs.filter((historyQueryConfig) => historyQueryConfig.enabled && !historyQueryConfig.paused)
-
-    const ongoingHistoryQueries = activeHistoryQueryConfigs.filter(
-      (historyQueryConfig) => [HistoryQuery.STATUS_EXPORTING, HistoryQuery.STATUS_IMPORTING].includes(historyQueryConfig.status),
-    )
-    if (ongoingHistoryQueries.length > 0) {
-      return ongoingHistoryQueries.sort((a, b) => a.order - b.order)[0]
-    }
-
-    const pendingHistoryQueries = activeHistoryQueryConfigs.filter((historyQueryConfig) => historyQueryConfig.status === HistoryQuery.STATUS_PENDING)
-    if (pendingHistoryQueries.length > 0) {
-      return pendingHistoryQueries.sort((a, b) => a.order - b.order)[0]
-    }
-
-    return null
-  }
-
-  /**
    * Run the next history query
    * @returns {void}
    */
-  runNextHistoryQuery() {
-    const historyQueryConfig = this.getNextHistoryQueryConfig()
+  async runNextHistoryQuery() {
+    const historyQueryConfig = await this.historyQueryRepository.getNextToRun()
     if (historyQueryConfig) {
       this.logger.info(`Preparing to start HistoryQuery: ${historyQueryConfig.id}`)
 
