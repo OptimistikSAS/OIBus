@@ -117,7 +117,6 @@ exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
 <div>
   <div
     class="mb-3"
-    style="margin-bottom: 0px;"
   >
     <textarea
       aria-invalid="false"

@@ -137,9 +137,9 @@ schema.form = {
   query: {
     md: 8,
     type: 'OIbTextArea',
-    defaultValue: '',
+    contentType: 'sql',
+    defaultValue: 'SELECT * FROM Table WHERE timestamp > @LastCompletedDate',
     valid: notEmpty(),
-    help: <div>SQL query</div>,
   },
   connectionTimeout: {
     type: 'OIbInteger',
