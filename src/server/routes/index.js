@@ -33,11 +33,12 @@ router.post('/logs', logController.addLogs)
 
 router.post('/history-queries', historyQueryController.createHistoryQuery)
 router.get('/history-queries', historyQueryController.getHistoryQueries)
+router.get('/history-queries/:id', historyQueryController.getHistoryQueryById)
 router.put('/history-queries/:id', historyQueryController.updateHistoryQuery)
 router.put('/history-queries/:id/enable', historyQueryController.enableHistoryQuery)
 router.put('/history-queries/:id/pause', historyQueryController.pauseHistoryQuery)
 router.put('/history-queries/:id/order', historyQueryController.orderHistoryQuery)
 router.delete('/history-queries/:id', historyQueryController.deleteHistoryQuery)
-router.get('/history-query/:id/status', historyQueryController.getStatus)
+router.get('/history-queries/:id/status', historyQueryController.getStatus)
 
 module.exports = router

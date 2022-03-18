@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { OIbSelect } from '../components/OIbForm/index'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
-const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNumber }) => {
+const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
   const [southHandler, setSouthHandler] = React.useState(southHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
@@ -33,8 +33,10 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
       endTime: new Date(),
       southId: southHandler.id,
       northId: northHandler.id,
-      ...(schema.points ? { points: southHandler.points || [] } : { query: southHandler[protocol].query || '' }),
-      order: queriesNumber + 1,
+      settings: { ...(schema.points ? { points: southHandler.points || [] } : { query: southHandler[protocol].query || '' }) },
+      filePattern: './@ConnectorName-@CurrentDate-@QueryPart.csv',
+      compress: false,
+      paused: false,
     })
     navigate(`/history-query/${id}`)
   }
@@ -48,11 +50,11 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
   const handleChange = (attributeName, value) => {
     switch (attributeName) {
       case 'southHandler':
-        setSouthHandler(value)
+        setSouthHandler(southHandlers.find((handler) => handler.id === value))
         break
       case 'northHandler':
       default:
-        setNorthHandler(value)
+        setNorthHandler(northHandlers.find((handler) => handler.id === value))
         break
     }
   }
@@ -63,7 +65,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
         <Col md="4">
           <OIbSelect
             label="South Handler"
-            value={southHandler}
+            value={southHandler.id}
             name="southHandler"
             options={southHandlers.map((handler) => handler.id)}
             optionsLabel={southHandlers.map((handler) => handler.name)}
@@ -74,11 +76,11 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery, queriesNum
         <Col md="4">
           <OIbSelect
             label="North Handler"
-            value={northHandler}
+            value={northHandler.id}
             name="northHandler"
             options={northHandlers.map((handler) => handler.id)}
             optionsLabel={northHandlers.map((handler) => handler.name)}
-            defaultValue={northHandlers[0].name}
+            defaultValue={northHandlers[0].id}
             onChange={handleChange}
           />
         </Col>
@@ -96,7 +98,6 @@ NewHistoryQueryRow.propTypes = {
   northHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
   southHandlers: PropTypes.arrayOf(PropTypes.object).isRequired,
   addQuery: PropTypes.func.isRequired,
-  queriesNumber: PropTypes.number.isRequired,
 }
 
 export default NewHistoryQueryRow

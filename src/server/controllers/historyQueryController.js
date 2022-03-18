@@ -20,6 +20,16 @@ const getHistoryQueries = async (ctx) => {
 }
 
 /**
+ * Get HistoryQuery by id.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getHistoryQueryById = async (ctx) => {
+  const historyQueries = await ctx.app.historyQueryEngine.historyQueryRepository.get(ctx.params.id)
+  ctx.ok(historyQueries)
+}
+
+/**
  * Update a HistoryQuery entry.
  * @param {Object} ctx - The KOA context
  * @return {void}
@@ -84,13 +94,14 @@ const deleteHistoryQuery = async (ctx) => {
  * @return {void}
  */
 const getStatus = async (ctx) => {
-  const status = await ctx.app.engine.getStatusForHistoryQuery(ctx.params.id)
+  const status = await ctx.app.historyQueryEngine.getStatusForHistoryQuery(ctx.params.id)
   ctx.ok(status)
 }
 
 module.exports = {
   createHistoryQuery,
   getHistoryQueries,
+  getHistoryQueryById,
   updateHistoryQuery,
   enableHistoryQuery,
   pauseHistoryQuery,

@@ -93,12 +93,11 @@ class HistoryQueryRepository {
    * @return {Promise<object>} - The HistoryQuery
    */
   async get(id) {
-    let result = null
     const query = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE id = ?`
     const stmt = await this.database.prepare(query)
-    result = await stmt.get(id)
+    const result = await stmt.get(id)
 
     if (result) {
       result.settings = JSON.parse(result.settings)
@@ -157,9 +156,10 @@ class HistoryQueryRepository {
     const historyQuery = await this.get(id)
 
     const query = `UPDATE ${HistoryQueryRepository.TABLE}
-                   SET orderColumn = ?`
+                   SET orderColumn = ?
+                   WHERE id = ?`
     const stmt = await this.database.prepare(query)
-    await stmt.run(historyQuery.orderColumn)
+    await stmt.run(orderColumn, id)
 
     historyQuery.orderColumn = orderColumn
     return this.update(historyQuery)
@@ -187,7 +187,7 @@ class HistoryQueryRepository {
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE enabled = 1
                      AND paused = 0
-                     AND status IN (${HistoryQuery.STATUS_EXPORTING}, ${HistoryQuery.STATUS_IMPORTING})
+                     AND status IN ('${HistoryQuery.STATUS_EXPORTING}', '${HistoryQuery.STATUS_IMPORTING}')
                    ORDER BY orderColumn ASC
                    LIMIT 1`
     const ongoingStmt = await this.database.prepare(ongoingQuery)
@@ -202,7 +202,7 @@ class HistoryQueryRepository {
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE enabled = 1
                      AND paused = 0
-                     AND status IN (${HistoryQuery.STATUS_EXPORTING}, ${HistoryQuery.STATUS_IMPORTING})
+                     AND status = '${HistoryQuery.STATUS_PENDING}'
                    ORDER BY orderColumn ASC
                    LIMIT 1`
     const pendingStmt = await this.database.prepare(pendingQuery)

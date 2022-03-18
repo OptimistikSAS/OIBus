@@ -6,6 +6,7 @@ const EventEmitter = require('events')
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 const HistoryQueryRepository = require('./HistoryQueryRepository.class')
+const databaseService = require('../services/database.service')
 
 /**
  *
@@ -184,6 +185,36 @@ class HistoryQueryEngine extends BaseEngine {
     } else {
       this.logger.warn('No HistoryQuery to execute')
     }
+  }
+
+  /**
+   * Get live status for a given HistoryQuery.
+   * @param {string} id - The HistoryQuery id
+   * @returns {object} - The live status
+   */
+  async getStatusForHistoryQuery(id) {
+    const data = {
+      north: { numberOfFilesToSend: 0 },
+      south: [],
+    }
+    const { engineConfig } = this.configService.getConfig()
+    const historyQueryConfig = this.historyQueryRepository.get(id)
+    if (historyQueryConfig) {
+      const { historyQuery: { folder } } = engineConfig
+      const databasePath = `${folder}/${historyQueryConfig.southId}.db`
+      try {
+        await fs.stat(databasePath)
+        const entries = await databaseService.getHistoryQuerySouthData(databasePath)
+        data.south = entries.map((entry) => ({
+          scanMode: entry.name.replace('lastCompletedAt-', ''),
+          lastCompletedDate: entry.value,
+        }))
+      } catch (e) {
+        this.logger.info(`The South database (${databasePath}) for HistoryQuery ${historyQueryConfig.name} doesn't exists`)
+      }
+    }
+
+    return data
   }
 
   /**

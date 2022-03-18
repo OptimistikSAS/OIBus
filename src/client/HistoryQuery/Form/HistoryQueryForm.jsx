@@ -15,24 +15,33 @@ import { ConfigContext } from '../../context/ConfigContext.jsx'
 import PointsSection from './PointsSection.jsx'
 import apis from '../../services/apis'
 
-const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
-  const { name, paused } = query
+const HistoryQueryForm = ({ query }) => {
+  const [queryToUpdate, setQueryToUpdate] = useState(query)
+  const { name, paused } = queryToUpdate
   const { newConfig } = React.useContext(ConfigContext)
   const [lastCompleted, setLastCompleted] = useState()
   const dataSource = newConfig?.south?.dataSources.find(
-    (southHandler) => southHandler.id === query.southId,
+    (southHandler) => southHandler.id === queryToUpdate.southId,
   )
   const application = newConfig?.north?.applications.find(
-    (northHandler) => northHandler.id === query.northId,
+    (northHandler) => northHandler.id === queryToUpdate.northId,
   )
   const navigate = useNavigate()
-  const handlePause = () => {
-    onChange('paused', !paused)
+
+  const handlePause = async () => {
+    await apis.pauseHistoryQuery(queryToUpdate.id, { paused: !paused })
+    setQueryToUpdate({ ...queryToUpdate, paused: !queryToUpdate.paused })
+  }
+
+  const handleEnabled = async () => {
+    await apis.enableHistoryQuery(queryToUpdate.id, { enabled: !queryToUpdate.enabled })
+    setQueryToUpdate({ ...queryToUpdate, enabled: !queryToUpdate.enabled })
   }
 
   useEffect(() => {
+    // TODO: Fails on backend
     apis
-      .getLastCompletedForHistoryQuery()
+      .getLastCompletedForHistoryQuery(queryToUpdate.id)
       .then((response) => {
         act(() => {
           setLastCompleted(response)
@@ -42,6 +51,34 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
         console.error(error)
       })
   }, [])
+
+  const handleUpdateHistoryQuery = async () => {
+    await apis.updateHistoryQuery(queryToUpdate.id, { ...queryToUpdate })
+  }
+
+  const onChange = (propertyName, value) => {
+    setQueryToUpdate({ ...queryToUpdate, [propertyName]: value })
+  }
+
+  const handleAddQuery = (_, value) => {
+    setQueryToUpdate({ ...queryToUpdate, settings: { query: value } })
+  }
+
+  const handleAddPoint = () => {
+    setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
+  }
+
+  // const handleDeletePoint = () => {
+  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
+  // }
+
+  // const handleDeleteAllPoint = () => {
+  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
+  // }
+
+  // const handleImportPoints = () => {
+  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
+  // }
 
   return (
     <>
@@ -94,9 +131,9 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
           <OIbTitle label="Handlers" />
           <Row className="mb-2">
             <Col md={2}>
-              <a href={`/south/${query.southId}`}>{dataSource?.name}</a>
+              <a href={`/south/${queryToUpdate.southId}`}>{dataSource?.name}</a>
               {'  ->  '}
-              <a href={`/north/${query.northId}`}>{application?.name}</a>
+              <a href={`/north/${queryToUpdate.northId}`}>{application?.name}</a>
             </Col>
           </Row>
           <OIbTitle label="General settings" />
@@ -106,9 +143,9 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
                 name="enabled"
                 label="Enabled"
                 defaultValue={false}
-                value={query.enabled}
+                value={queryToUpdate.enabled}
                 help={<div>Enable this history query</div>}
-                onChange={onChange}
+                onChange={handleEnabled}
                 switchButton
               />
             </Col>
@@ -117,7 +154,7 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
             <Col md={2}>
               <OIbDate
                 name="startTime"
-                value={query.startTime}
+                value={queryToUpdate.startTime}
                 label="From date"
                 onChange={onChange}
               />
@@ -125,7 +162,7 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
             <Col md={2}>
               <OIbDate
                 name="endTime"
-                value={query.endTime}
+                value={queryToUpdate.endTime}
                 label="To date"
                 onChange={onChange}
               />
@@ -134,7 +171,7 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
               <OIbText
                 label="File pattern"
                 name="filePattern"
-                value={query.filePattern}
+                value={queryToUpdate.filePattern}
                 defaultValue="./@ConnectorName-@CurrentDate-@QueryPart.csv"
                 onChange={onChange}
               />
@@ -144,7 +181,7 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
                 name="compress"
                 label="Compress"
                 defaultValue={false}
-                value={query.compress}
+                value={queryToUpdate.compress}
                 onChange={onChange}
               />
             </Col>
@@ -180,19 +217,29 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
           </Row>
           <Row>
             <Col md={8}>
-              {query.points ? (
-                <PointsSection query={query} queryIndex={queryIndex} />
+              {queryToUpdate.settings.points ? (
+                <PointsSection
+                  query={queryToUpdate}
+                  handleAddPoint={handleAddPoint}
+                />
               ) : (
                 <>
                   <OIbTitle label="Request" />
                   <OIbTextArea
                     label="Query"
                     name="query"
-                    value={query.query}
-                    onChange={onChange}
+                    value={queryToUpdate.settings?.query}
+                    onChange={handleAddQuery}
                   />
                 </>
               )}
+            </Col>
+          </Row>
+          <Row>
+            <Col md={2}>
+              <Button color="primary" onClick={() => handleUpdateHistoryQuery()}>
+                Save history query
+              </Button>
             </Col>
           </Row>
         </Form>
@@ -201,10 +248,6 @@ const HistoryQueryForm = ({ queryIndex, query, onChange }) => {
   )
 }
 
-HistoryQueryForm.propTypes = {
-  queryIndex: PropTypes.number.isRequired,
-  query: PropTypes.object.isRequired,
-  onChange: PropTypes.func.isRequired,
-}
+HistoryQueryForm.propTypes = { query: PropTypes.object.isRequired }
 
 export default HistoryQueryForm
