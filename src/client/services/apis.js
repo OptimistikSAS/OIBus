@@ -17,6 +17,43 @@ const getRequest = async (uri) => {
   }
 }
 
+const postRequest = async (uri, body) => {
+  try {
+    const response = await fetch(uri, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    if (response.status !== 200) {
+      throw new Error(createErrorMessage(response))
+    }
+    return JSON.parse(await response.text())
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const deleteRequest = async (uri) => {
+  try {
+    const response = await fetch(uri, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+    if (response.status !== 200) {
+      throw new Error(createErrorMessage(response))
+    }
+    return response
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 const putRequest = async (uri, body) => {
   try {
     const response = await fetch(uri, {
@@ -42,10 +79,15 @@ const getConfig = () => getRequest('/config')
 const updateConfig = (body) => putRequest('/config', body)
 const activateConfig = () => putRequest('/config/activate')
 
-const getHistoryConfig = () => getRequest('/history-query/config')
-const updateHistoryConfig = (body) => putRequest('/history-query/config', body)
-const activateHistoryConfig = () => putRequest('/history-query/config/activate')
-const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-query/${id}/status`)
+const createHistoryQuery = async (body) => postRequest('/history-queries', body)
+const getHistoryQueries = async () => getRequest('/history-queries')
+const getHistoryQueryById = async (id) => getRequest(`/history-queries/${id}`)
+const updateHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}`, body)
+const enableHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/enable`, body)
+const pauseHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/pause`, body)
+const orderHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/order`, body)
+const deleteHistoryQuery = async (id) => deleteRequest(`/history-queries/${id}`)
+const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queries/${id}/status`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getStatus = () => getRequest('/status')
@@ -61,9 +103,14 @@ export default {
   getConfig,
   activateConfig,
   updateConfig,
-  getHistoryConfig,
-  updateHistoryConfig,
-  activateHistoryConfig,
+  createHistoryQuery,
+  getHistoryQueries,
+  getHistoryQueryById,
+  updateHistoryQuery,
+  enableHistoryQuery,
+  pauseHistoryQuery,
+  orderHistoryQuery,
+  deleteHistoryQuery,
   getLastCompletedForHistoryQuery,
   getLogs,
   getStatus,

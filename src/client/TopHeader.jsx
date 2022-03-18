@@ -6,11 +6,9 @@ import apis from './services/apis'
 import { ConfigContext } from './context/ConfigContext.jsx'
 import { AlertContext } from './context/AlertContext.jsx'
 import logo from './logo-OIBus.png'
-import { HistoryConfigContext } from './context/HistoryContext.jsx'
 
 const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)
-  const { newHistoryConfig, activeHistoryConfig } = React.useContext(HistoryConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
   const [status, setStatus] = React.useState({})
@@ -49,7 +47,6 @@ const TopHeader = () => {
 
   const isActive = (name) => (location.pathname === `/${name}`)
   const configModified = JSON.stringify(newConfig) !== JSON.stringify(activeConfig)
-  || JSON.stringify(newHistoryConfig) !== JSON.stringify(activeHistoryConfig)
 
   return (
     <Navbar expand="md" className="oi-navbar oi-navbar-top" fixed="top" dark>

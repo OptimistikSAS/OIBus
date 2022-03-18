@@ -259,6 +259,20 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           </div>
         </div>
       </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary"
+            type="button"
+          >
+            Save history query
+          </button>
+        </div>
+      </div>
     </form>
   </div>
 </div>
@@ -523,6 +537,20 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           </div>
         </div>
       </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary"
+            type="button"
+          >
+            Save history query
+          </button>
+        </div>
+      </div>
     </form>
   </div>
 </div>
@@ -701,7 +729,29 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         </div>
         <div
           class="col-md-2"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="filePattern"
+            >
+              File pattern
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="filePattern"
+              name="filePattern"
+              type="text"
+              value="./@ConnectorName-@CurrentDate-@QueryPart.csv"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
         <div
           class="col-md-2"
         />
@@ -759,6 +809,20 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               class="invalid-feedback"
             />
           </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary"
+            type="button"
+          >
+            Save history query
+          </button>
         </div>
       </div>
     </form>

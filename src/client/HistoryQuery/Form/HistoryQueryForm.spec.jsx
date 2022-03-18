@@ -28,14 +28,12 @@ afterEach(() => {
 })
 
 describe('HistoryQueryForm', () => {
-  newConfig.forEach((historyQuery, index) => {
+  newConfig.forEach((historyQuery) => {
     test(`check HistoryQueryForm with data: ${historyQuery.name}`, () => {
       act(() => {
         ReactDOM.render(
           <HistoryQueryForm
             query={historyQuery}
-            queryIndex={index}
-            onChange={() => 1}
           />,
           container,
         )
@@ -57,9 +55,8 @@ describe('HistoryQueryForm', () => {
             northId: 'northId',
             query: '',
             order: 1,
+            settings: {},
           }}
-          queryIndex={0}
-          onChange={() => 1}
         />,
         container,
       )

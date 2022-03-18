@@ -1,27 +1,36 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Col, Spinner } from 'reactstrap'
+import { nanoid } from 'nanoid'
 import Table from '../components/table/Table.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import { HistoryConfigContext } from '../context/HistoryContext.jsx'
 import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
+import apis from '../services/apis'
 
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
-  const { newHistoryConfig: unorderedHistoryQueries, dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
+  const [queries, setQueries] = React.useState([])
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
   const navigate = useNavigate()
 
-  const historyQueries = unorderedHistoryQueries.slice().sort((a, b) => (a.order > b.order ? 1 : -1))
+  React.useEffect(() => {
+    apis.getHistoryQueries()
+      .then((response) => {
+        setQueries(response)
+      })
+      .catch((_error) => console.warn('Could not get the history queries'))
+  }, [])
+
+  const historyQueries = queries.slice().sort((a, b) => (a.orderColumn > b.orderColumn ? 1 : -1))
 
   /**
    * @param {number} indexInTable the index of a point in the table
    * @returns {number} the index in the config file of the chosen point
    */
-  const findIndexBasedOnOrderNumber = (indexInTable) => {
+  const findIndexBasedOnId = (indexInTable) => {
     const queryToOperate = historyQueries[indexInTable]
-    return unorderedHistoryQueries.findIndex((historyQuery) => historyQuery.order === queryToOperate.order)
+    return queries.findIndex((historyQuery) => historyQuery.id === queryToOperate.id)
   }
 
   /**
@@ -31,7 +40,7 @@ const HistoryQuery = () => {
    * @return {void}
    */
   const handleEdit = (position) => {
-    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(position)]
+    const historyQuery = queries[findIndexBasedOnId(position)]
     const link = `/history-query/${historyQuery.id}`
     navigate(link)
   }
@@ -57,8 +66,10 @@ const HistoryQuery = () => {
    * @param {Object} queryObject A history query object containing
    * @returns {void}
    */
-  const addHistoryQuery = (queryObject) => {
-    dispatchNewHistoryConfig({ type: 'addRow', name: '', value: queryObject })
+  const addHistoryQuery = async (queryObject) => {
+    apis.createHistoryQuery(queryObject).then((response) => {
+      setQueries([...queries, response])
+    })
   }
 
   /**
@@ -66,13 +77,26 @@ const HistoryQuery = () => {
    * @param {integer} position The index to delete
    * @returns {void}
    */
-  const handleDelete = (position) => {
-    unorderedHistoryQueries.forEach((currentQuery, index) => {
-      if (currentQuery.order > position + 1) {
-        dispatchNewHistoryConfig({ type: 'update', name: `${index}.order`, value: currentQuery.order - 1 })
+  const handleDelete = async (position) => {
+    const queryToDelete = queries[findIndexBasedOnId(position)]
+    await apis.deleteHistoryQuery(queryToDelete.id)
+    setQueries(queries.filter((query) => query.id !== queryToDelete.id))
+
+    queries.forEach(async (currentQuery) => {
+      if (currentQuery.orderColumn > position + 1) {
+        apis.orderHistoryQuery(currentQuery.id, { orderColumn: currentQuery.orderColumn - 1 }).then(() => {
+          setQueries(queries.map((query) => {
+            if (query.id === currentQuery.id) {
+              return {
+                ...query,
+                orderColumn: currentQuery.orderColumn - 1,
+              }
+            }
+            return query
+          }).filter((query) => query.id !== queryToDelete.id))
+        })
       }
     })
-    dispatchNewHistoryConfig({ type: 'deleteRow', name: findIndexBasedOnOrderNumber(position) })
   }
 
   /**
@@ -81,17 +105,18 @@ const HistoryQuery = () => {
    * @returns {void}
    */
   const handleDuplicate = (position) => {
-    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(position)]
+    const historyQuery = queries[findIndexBasedOnId(position)]
     const newName = `${historyQuery.name} copy`
     const countCopies = historyQueries.filter((e) => e.name.startsWith(newName)).length
-    dispatchNewHistoryConfig({
-      type: 'addRow',
-      value: {
-        ...historyQuery,
-        name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
-        enabled: false,
-        order: historyQueries.length + 1,
-      },
+    apis.createHistoryQuery({
+      ...historyQuery,
+      id: nanoid(),
+      name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
+      enabled: false,
+      status: 'pending',
+      orderColumn: historyQueries.length + 1,
+    }).then((response) => {
+      setQueries([...queries, response])
     })
   }
 
@@ -101,20 +126,52 @@ const HistoryQuery = () => {
    * @param {number} positionInTable The position of the history query in the table
    * @returns {void}
    */
-  const handleOrder = (type, positionInTable) => {
-    const historyQuery = unorderedHistoryQueries[findIndexBasedOnOrderNumber(positionInTable)]
+  const handleOrder = async (type, positionInTable) => {
+    const historyQuery = queries[findIndexBasedOnId(positionInTable)]
     switch (type) {
       case 'up': {
         if (positionInTable > 0) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: historyQuery.order - 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable - 1)}.order`, value: historyQuery.order })
+          const historyQueryAbove = queries[findIndexBasedOnId(positionInTable - 1)]
+          await apis.orderHistoryQuery(historyQuery.id, { orderColumn: historyQuery.orderColumn - 1 })
+          await apis.orderHistoryQuery(historyQueryAbove.id, { orderColumn: historyQuery.orderColumn })
+          setQueries(queries.map((query) => {
+            if (query.id === historyQuery.id) {
+              return {
+                ...query,
+                orderColumn: historyQuery.orderColumn - 1,
+              }
+            }
+            if (query.id === historyQueryAbove.id) {
+              return {
+                ...query,
+                orderColumn: historyQuery.orderColumn,
+              }
+            }
+            return query
+          }))
         }
         break
       }
       case 'down': {
         if (positionInTable < historyQueries.length - 1) {
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable)}.order`, value: historyQuery.order + 1 })
-          dispatchNewHistoryConfig({ type: 'update', name: `${findIndexBasedOnOrderNumber(positionInTable + 1)}.order`, value: historyQuery.order })
+          const historyQueryBelow = queries[findIndexBasedOnId(positionInTable + 1)]
+          await apis.orderHistoryQuery(historyQuery.id, { orderColumn: historyQuery.orderColumn + 1 })
+          await apis.orderHistoryQuery(historyQueryBelow.id, { orderColumn: historyQuery.orderColumn })
+          setQueries(queries.map((query) => {
+            if (query.id === historyQuery.id) {
+              return {
+                ...query,
+                orderColumn: historyQuery.orderColumn + 1,
+              }
+            }
+            if (query.id === historyQueryBelow.id) {
+              return {
+                ...query,
+                orderColumn: historyQuery.orderColumn,
+              }
+            }
+            return query
+          }))
         }
         break
       }
@@ -138,10 +195,10 @@ const HistoryQuery = () => {
   }
 
   const tableHeaders = ['Order', 'Query', 'Status', 'Period', 'Percentage']
-  const tableRows = historyQueries?.map(({ name, status, startTime, endTime, order }) => [
+  const tableRows = historyQueries?.map(({ name, status, startTime, endTime, orderColumn }) => [
     {
-      name: order,
-      value: `${order}.`,
+      name: orderColumn,
+      value: `${orderColumn}.`,
     },
     {
       name: 'name',

@@ -5,12 +5,10 @@ import PropTypes from 'prop-types'
 import { AlertContext } from '../../context/AlertContext.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import utils from '../../helpers/utils'
-import { HistoryConfigContext } from '../../context/HistoryContext.jsx'
 import PointsComponent from '../../components/PointsComponent.jsx'
 
-const PointsSection = ({ query, queryIndex }) => {
+const PointsSection = ({ query, handleAddPoint }) => {
   const { newConfig } = React.useContext(ConfigContext)
-  const { dispatchNewHistoryConfig } = React.useContext(HistoryConfigContext)
 
   const { setAlert } = React.useContext(AlertContext)
 
@@ -28,23 +26,24 @@ const PointsSection = ({ query, queryIndex }) => {
   const dataSource = newConfig.south.dataSources[dataSourceIndex]
 
   const { protocol } = dataSource
-  const { points: pointsOrdered = [] } = query
+  const { points: pointsOrdered = [] } = query.settings
 
   /**
    * add point
    * @returns {void}
    */
-  const handleAdd = () => {
-    dispatchNewHistoryConfig({ type: 'addRow', name: `${queryIndex}.points`, value: {} })
+  const handleAdd = async () => {
+    // dispatchNewHistoryConfig({ type: 'addRow', name: `${queryIndex}.points`, value: {} })
+    handleAddPoint()
   }
 
   /**
    * Delete point
-   * @param {string} index the index of point
+   * @param {string} _index the index of point
    * @returns {void}
    */
-  const handleDelete = (index) => {
-    dispatchNewHistoryConfig({ type: 'deleteRow', name: `${queryIndex}.points.${index}` })
+  const handleDelete = (_index) => {
+    // dispatchNewHistoryConfig({ type: 'deleteRow', name: `${queryIndex}.points.${index}` })
   }
 
   /**
@@ -52,7 +51,7 @@ const PointsSection = ({ query, queryIndex }) => {
    * @returns {void}
    */
   const handleDeleteAllPoint = () => {
-    dispatchNewHistoryConfig({ type: 'deleteAllRows', name: `${queryIndex}.points` })
+    // dispatchNewHistoryConfig({ type: 'deleteAllRows', name: `${queryIndex}.points` })
   }
 
   /**
@@ -65,12 +64,12 @@ const PointsSection = ({ query, queryIndex }) => {
       const text = await utils.readFileContent(file)
       utils
         .parseCSV(text)
-        .then((newPoints) => {
-          dispatchNewHistoryConfig({
-            type: 'importPoints',
-            name: `${queryIndex}.points`,
-            value: newPoints,
-          })
+        .then((_newPoints) => {
+          // dispatchNewHistoryConfig({
+          //   type: 'importPoints',
+          //   name: `${queryIndex}.points`,
+          //   value: newPoints,
+          // })
         })
         .catch((error) => {
           console.error(error)
@@ -82,13 +81,13 @@ const PointsSection = ({ query, queryIndex }) => {
     }
   }
 
-  const onChange = (name, value, validity) => {
-    dispatchNewHistoryConfig({
-      type: 'update',
-      name: `${queryIndex}.${name}`,
-      value,
-      validity,
-    })
+  const onChange = (_name, _value, _validity) => {
+    // dispatchNewHistoryConfig({
+    //   type: 'update',
+    //   name: `${queryIndex}.${name}`,
+    //   value,
+    //   validity,
+    // })
   }
 
   return (
@@ -106,8 +105,8 @@ const PointsSection = ({ query, queryIndex }) => {
 }
 
 PointsSection.propTypes = {
-  queryIndex: PropTypes.number.isRequired,
   query: PropTypes.object.isRequired,
+  handleAddPoint: PropTypes.func.isRequired,
 }
 
 export default PointsSection

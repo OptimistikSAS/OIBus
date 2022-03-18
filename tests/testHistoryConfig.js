@@ -9,21 +9,23 @@ const testHistoryConfig = [
     southId: 'southId-1',
     northId: 'northId-1',
     order: 2,
-    query: 'SELECT timestamp,temperature FROM history WHERE timestamp >= @StartTime AND timestamp <= @EndTime',
-    points: [
-      {
-        pointId: 'A13518/AI1/PV.CV',
-        scanMode: 'everySecond',
-      },
-      {
-        pointId: '_FC42404/PID1/OUT.CV',
-        scanMode: 'everySecond',
-      },
-      {
-        pointId: '_FC42404/PID1/PV.CV',
-        scanMode: 'every10Seconds',
-      },
-    ],
+    settings: {
+      query: 'SELECT timestamp,temperature FROM history WHERE timestamp >= @StartTime AND timestamp <= @EndTime',
+      points: [
+        {
+          pointId: 'A13518/AI1/PV.CV',
+          scanMode: 'everySecond',
+        },
+        {
+          pointId: '_FC42404/PID1/OUT.CV',
+          scanMode: 'everySecond',
+        },
+        {
+          pointId: '_FC42404/PID1/PV.CV',
+          scanMode: 'every10Seconds',
+        },
+      ],
+    },
     enabled: true,
     paused: true,
     status: 'exporting',
@@ -38,8 +40,10 @@ const testHistoryConfig = [
     southId: 'southId-2',
     northId: 'northId-2',
     order: 1,
-    query: 'SELECT timestamp,temperature FROM history WHERE timestamp >= @StartTime AND timestamp <= @EndTime',
-    points: [],
+    settings: {
+      query: 'SELECT timestamp,temperature FROM history WHERE timestamp >= @StartTime AND timestamp <= @EndTime',
+      points: [],
+    },
     enabled: true,
     paused: true,
     status: 'pending',
