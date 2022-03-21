@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange, minValue, notEmpty, startsWith } from '../../services/validation.service'
+import { inRange, minValue, notEmpty, optional, startsWith } from '../../services/validation.service'
 
 const schema = { name: 'RestApi' }
 schema.form = {
@@ -42,24 +42,41 @@ schema.form = {
     valid: startsWith('/'),
     help: <div>Endpoint to request</div>,
   },
+  scanGroupsSection: {
+    type: 'OIbTitle',
+    label: 'Query params and body',
+    md: 12,
+    children: (
+      <p>
+        You can add query params directly from the table, or enter a body in a json format.
+      </p>
+    ),
+  },
   queryParams: {
     type: 'OIbTable',
     rows: {
       queryParamKey: {
         type: 'OIbText',
-        newRow: false,
         label: 'Key',
         valid: notEmpty(),
         defaultValue: '',
       },
       queryParamValue: {
         type: 'OIbText',
-        newRow: false,
         label: 'Value',
         valid: notEmpty(),
         defaultValue: '',
       },
     },
+    md: 6,
+  },
+  body: {
+    md: 6,
+    newRow: false,
+    type: 'OIbTextArea',
+    contentType: 'json',
+    defaultValue: '',
+    valid: optional(),
   },
   authentication: { type: 'OIbAuthentication' },
   acceptSelfSigned: {

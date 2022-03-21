@@ -22,6 +22,7 @@ protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.SQL = require('../south/SQL/SQL.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
+protocolList.RestApi = require('../south/RestApi/RestApi.class')
 
 // BaseEngine classes
 const Logger = require('./logger/Logger.class')

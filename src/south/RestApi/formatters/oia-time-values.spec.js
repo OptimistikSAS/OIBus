@@ -13,20 +13,20 @@ describe('oia time values formatter', () => {
       oiaTimeValues([{}])
     } catch (error) {
       expect(error)
-        .toEqual(Error('Bad data: expect dataReference field'))
+        .toEqual(Error('Bad data: expect data.reference field'))
     }
 
     try {
-      oiaTimeValues([{ dataReference: 'dataReference' }])
+      oiaTimeValues([{ data: { reference: 'dataReference' } }])
     } catch (error) {
       expect(error)
-        .toEqual(Error('Bad data: expect unit field'))
+        .toEqual(Error('Bad data: expect unit.label field'))
     }
 
     try {
       oiaTimeValues([{
-        dataReference: 'dataReference',
-        unit: 'g/L',
+        data: { reference: 'dataReference' },
+        unit: { label: 'g/L' },
       }])
     } catch (error) {
       expect(error)
@@ -34,62 +34,93 @@ describe('oia time values formatter', () => {
     }
 
     try {
-      oiaTimeValues([{
-        dataReference: 'dataReference',
-        unit: 'g/L',
-        values: [{}],
-      }])
+      oiaTimeValues(
+        [{
+          data: { reference: 'dataReference' },
+          unit: { label: 'g/L' },
+          values: [],
+        }],
+      )
     } catch (error) {
       expect(error)
-        .toEqual(Error('Bad data: expect value to have a timestamp'))
-    }
-
-    try {
-      oiaTimeValues([{
-        dataReference: 'dataReference',
-        unit: 'g/L',
-        values: [{ timestamp: '2020-01-01T00:00:00Z' }],
-      }])
-    } catch (error) {
-      expect(error)
-        .toEqual(Error('Bad data: expect value to have a value'))
+        .toEqual(Error('Bad data: expect timestamps to be an array'))
     }
   })
 
   it('should correctly parse accepted data', () => {
-    const oiaData = [{
-      dataReference: 'dataReference',
-      unit: 'g/L',
-      values: [{
-        timestamp: '2020-01-01T00:00:00Z',
-        value: 1,
-      }, {
-        timestamp: '2020-01-02T00:00:00Z',
-        value: 2,
-      }],
-    }]
-
-    expect(oiaTimeValues(oiaData))
-      .toEqual([{
-        pointId: 'dataReference',
-        timestamp: '2020-01-01T00:00:00Z',
-        unit: 'g/L',
-        value: 1,
+    const oiaData = [
+      {
+        type: 'time-values',
+        unit: { id: '2', label: '%' },
+        data: {
+          dataType: 'RAW_TIME_DATA',
+          id: 'D4',
+          reference: 'ref1',
+          description: 'Concentration O2 fermentation',
+        },
+        timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
+        values: [63, 84],
       },
       {
-        pointId: 'dataReference',
-        timestamp: '2020-01-02T00:00:00Z',
-        unit: 'g/L',
-        value: 2,
-      }])
+        type: 'time-values',
+        unit: { id: '180', label: 'pH' },
+        data: {
+          dataType: 'RAW_TIME_DATA',
+          id: 'D5',
+          reference: 'ref2',
+          description: 'pH fermentation',
+        },
+        timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
+        values: [7, 8],
+      },
+    ]
+
+    expect(oiaTimeValues(oiaData))
+      .toEqual({
+        httpResults: [
+          {
+            pointId: 'ref1',
+            timestamp: '2022-01-01T00:00:00Z',
+            unit: '%',
+            value: 63,
+          },
+          {
+            pointId: 'ref1',
+            timestamp: '2022-01-01T00:10:00Z',
+            unit: '%',
+            value: 84,
+          },
+          {
+            pointId: 'ref2',
+            timestamp: '2022-01-01T00:00:00Z',
+            unit: 'pH',
+            value: 7,
+          },
+          {
+            pointId: 'ref2',
+            timestamp: '2022-01-01T00:10:00Z',
+            unit: 'pH',
+            value: 8,
+          }],
+        latestDateRetrieved: '2022-01-01T00:10:00.000Z',
+      })
 
     expect(oiaTimeValues([]))
-      .toEqual([])
-    expect(oiaTimeValues([{
-      dataReference: 'dataReference',
-      unit: 'g/L',
-      values: [],
-    }]))
-      .toEqual([])
+      .toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' })
+    expect(oiaTimeValues([
+      {
+        type: 'time-values',
+        unit: { id: '2', label: '%' },
+        data: {
+          dataType: 'RAW_TIME_DATA',
+          id: 'D4',
+          reference: 'ref1',
+          description: 'Concentration O2 fermentation',
+        },
+        timestamps: [],
+        values: [],
+      },
+    ]))
+      .toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' })
   })
 })

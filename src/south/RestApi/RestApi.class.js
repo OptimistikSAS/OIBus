@@ -10,9 +10,9 @@ const ProtocolHandler = require('../ProtocolHandler.class')
 const oiaTimeValues = require('./formatters/oia-time-values')
 
 const parsers = {
-  Raw: (results) => results,
+  Raw: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
   'OIAnalytics time values': oiaTimeValues,
-  SLIMS: (results) => results,
+  SLIMS: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
 }
 
 /**
@@ -29,7 +29,12 @@ class RestApi extends ProtocolHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine)
+    super(dataSource, engine, {
+      supportListen: false,
+      supportLastPoint: false,
+      supportFile: false,
+      supportHistory: true,
+    })
 
     const {
       requestMethod,
@@ -37,6 +42,7 @@ class RestApi extends ProtocolHandler {
       port,
       endpoint,
       queryParams,
+      body,
       authentication,
       connectionTimeout,
       requestTimeout,
@@ -55,6 +61,7 @@ class RestApi extends ProtocolHandler {
     this.port = port
     this.endpoint = endpoint
     this.queryParams = queryParams
+    this.body = body
     this.authentication = authentication
     this.connectionTimeout = connectionTimeout
     this.requestTimeout = requestTimeout
@@ -73,31 +80,35 @@ class RestApi extends ProtocolHandler {
     this.handlesFiles = true
   }
 
-  async connect() {
-    await super.connect()
-    // Create tmp folder if not exists
+  async init() {
+    await super.init()
     try {
       await fs.stat(this.tmpFolder)
     } catch (error) {
       await fs.mkdir(this.tmpFolder, { recursive: true })
     }
+  }
 
-    this.lastCompletedAt = await this.getConfig('lastCompletedAt')
-    if (!this.lastCompletedAt) {
-      this.lastCompletedAt = new Date().toISOString()
-    }
+  async connect() {
+    await super.connect()
+    this.statusData['Connected at'] = new Date().toISOString()
+    this.updateStatusDataStream()
+    this.connected = true
   }
 
   /**
    * Get entries from the database since the last query completion, write them into a CSV file and send to the Engine.
-   * @param {*} _scanMode - The scan mode
+   * @param {String} scanMode - The scan mode
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
    * @return {void}
    */
-  async onScanImplementation(_scanMode) {
+  async historyQuery(scanMode, startTime, endTime) {
+    let updatedStartTime = startTime
+
     let results = null
     try {
-      this.currentDate = new Date().toISOString()
-      results = await this.getDataFromRestApi()
+      results = await this.getDataFromRestApi(startTime, endTime)
     } catch (error) {
       this.logger.error(JSON.stringify(error))
     }
@@ -105,10 +116,18 @@ class RestApi extends ProtocolHandler {
     if (results) {
       // Use a formatter to format the retrieved data before converting it into csv or adding values
       let formattedResults = null
+      if (!parsers[this.payloadParser]) {
+        this.logger.error(`Parser "${this.payloadParser}" does not exist`)
+        return
+      }
       try {
-        formattedResults = parsers[this.payloadParser](results)
-      } catch {
-        this.logger.error(`Could not format the results with parser "${this.payloadParser}"`)
+        const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results)
+        formattedResults = httpResults
+        if (latestDateRetrieved > updatedStartTime.toISOString()) {
+          updatedStartTime = latestDateRetrieved
+        }
+      } catch (parsingError) {
+        this.logger.error(`Could not format the results with parser "${this.payloadParser}". Error: ${JSON.stringify(parsingError)}`)
         return
       }
 
@@ -140,17 +159,25 @@ class RestApi extends ProtocolHandler {
       } else {
         await this.addValues(formattedResults)
       }
+    }
 
-      this.lastCompletedAt = this.currentDate
-      await this.setConfig('lastCompletedAt', this.lastCompletedAt)
+    const oldLastCompletedAt = this.lastCompletedAt[scanMode]
+    this.lastCompletedAt[scanMode] = updatedStartTime
+    if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
+      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
+      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+    } else {
+      this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
     }
   }
 
   /**
    * Get new entries from a REST API.
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
    * @return {object} results - the retrieved results
    */
-  async getDataFromRestApi() {
+  async getDataFromRestApi(startTime, endTime) {
     const headers = {}
     switch (this.authentication.type) {
       case 'Basic': {
@@ -176,8 +203,12 @@ class RestApi extends ProtocolHandler {
       agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
       timeout: this.connectionTimeout,
     }
-    const requestUrl = `${this.host}:${this.port}${this.endpoint}${this.formatQueryParams()}`
+    const requestUrl = `${this.host}:${this.port}${this.endpoint}${this.formatQueryParams(startTime, endTime)}`
 
+    if (this.body) {
+      fetchOptions.body = JSON.stringify(this.body).replace(/@StartTime/g, new Date(startTime).toISOString())
+        .replace(/@EndTime/g, new Date(endTime).toISOString())
+    }
     // eslint-disable-next-line max-len
     this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} authentication and ${this.requestMethod} method: ${requestUrl}`)
     let results = null
@@ -203,17 +234,22 @@ class RestApi extends ProtocolHandler {
     return results
   }
 
-  formatQueryParams() {
+  /**
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {string} queryParamsString - the query params in string format
+   */
+  formatQueryParams(startTime, endTime) {
     if (this.queryParams?.length > 0) {
       let queryParamsString = '?'
       this.queryParams.forEach((queryParam, index) => {
         let value
         switch (queryParam.queryParamValue) {
-          case '@LastCompletedDate':
-            value = new Date(this.lastCompletedAt).toISOString()
+          case '@StartTime':
+            value = new Date(startTime).toISOString()
             break
-          case '@CurrentDate':
-            value = this.currentDate
+          case '@EndTime':
+            value = new Date(endTime).toISOString()
             break
           default:
             value = queryParam.queryParamValue
