@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs/promises')
 const path = require('path')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
@@ -31,46 +31,49 @@ class FolderScanner extends ProtocolHandler {
 
   /**
    * Read the raw file and rewrite it to another file in the folder archive
-   * @param {*} _scanMode - The scan mode
+   * @param {*} scanMode - The scan mode
    * @return {void}
    */
-  async onScanImplementation(_scanMode) {
-    // Check if input folder exists
+  async onScanImplementation(scanMode) {
+    // List files in the inputFolder
+    let files = []
     try {
-      // eslint-disable-next-line no-bitwise
-      fs.accessSync(this.inputFolder, fs.constants.R_OK | fs.constants.W_OK)
-      this.logger.debug(`${this.dataSource.dataSourceId} is checking folder ${this.inputFolder}.`)
-    } catch (err) {
-      this.logger.error(`can't write to ${this.inputFolder}: ${err.message}`)
+      this.logger.silly(`Reading ${this.inputFolder} directory`)
+      files = await fs.readdir(this.inputFolder)
+    } catch (error) {
+      this.logger.error(`could not read folder ${this.inputFolder} - error: ${error})`)
+      return
     }
 
-    // List files in the inputFolder and manage them.
-    try {
-      const files = fs.readdirSync(this.inputFolder)
-      if (files.length > 0) {
-        // Disable ESLint check because we need for..of loop to support async calls
-        // eslint-disable-next-line no-restricted-syntax
-        for (const file of files) {
-          // Disable ESLint check because we want to handle files one by one
-          // eslint-disable-next-line no-await-in-loop
-          const matchConditions = await this.checkConditions(file)
-          if (matchConditions) {
-            // local try catch in case an error occurs on a file
-            // if so, the loop goes on with the other files
-            try {
-              // eslint-disable-next-line no-await-in-loop
-              await this.sendFile(file)
-            } catch (sendFileError) {
-              this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
-            }
-          }
-        }
-      } else {
-        this.logger.debug(`The folder ${this.inputFolder} is empty.`)
-      }
-    } catch (error) {
-      this.logger.error(`The input folder ${this.inputFolder} is not readable: ${error.message}`)
+    if (files.length === 0) {
+      this.logger.debug(`The folder ${this.inputFolder} is empty. (scanmode:${scanMode})`)
+      return
     }
+    // filters file that don't match the regex
+    const filteredFiles = files.filter((file) => file.match(this.regex))
+    if (filteredFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} matches regex ${this.regex} (scanmode:${scanMode})is empty.`)
+      return
+    }
+    // filters file that may still currently modified (based on last modifcation date)
+    const promisesResults = await Promise.allSettled(filteredFiles.map(this.checkAge.bind(this)))
+    const matchedFiles = filteredFiles.filter((_v, index) => promisesResults[index].value)
+    if (matchedFiles.length === 0) {
+      this.logger.debug(`no files in ${this.inputFolder} passed checkAge. (scanmode:${scanMode}).`)
+      return
+    }
+    // the files remaining after these checks need to be sent to the bus
+    this.logger.silly(`Sending ${matchedFiles.length} files`)
+    // eslint-disable-next-line no-restricted-syntax
+    for (const file of matchedFiles) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await this.sendFile(file)
+      } catch (sendFileError) {
+        this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
+      }
+    }
+    this.logger.silly('Leaving onscan method')
   }
 
   /**
@@ -79,13 +82,10 @@ class FolderScanner extends ProtocolHandler {
    * @param {String} filename - file
    * @returns {Array} - Whether the file matches the conditions
    */
-  async checkConditions(filename) {
-    // check regexp
-    if (!this.regex.test(filename)) return false
-    this.logger.silly(`checkConditions:${filename} match regexp`)
+  async checkAge(filename) {
     // check age
     const timestamp = new Date().getTime()
-    const stats = fs.statSync(path.join(this.inputFolder, filename))
+    const stats = await fs.stat(path.join(this.inputFolder, filename))
     this.logger.silly(`checkConditions: mT:${stats.mtimeMs} + mA ${this.minAge} < ts:${timestamp}  = ${stats.mtimeMs + this.minAge < timestamp}`)
     if (stats.mtimeMs + this.minAge > timestamp) return false
     this.logger.silly(`checkConditions: ${filename} match age`)
@@ -109,27 +109,26 @@ class FolderScanner extends ProtocolHandler {
     this.logger.debug(`Sending ${filePath} to Engine.`)
 
     if (this.compression) {
-      // Compress and send the compressed file
-      const gzipPath = `${filePath}.gz`
-      await this.compress(filePath, gzipPath)
-      await this.addFile(gzipPath, false)
+      try {
+        // Compress and send the compressed file
+        const gzipPath = `${filePath}.gz`
+        await this.compress(filePath, gzipPath)
+        await this.addFile(gzipPath, false)
 
-      // Delete original file if preserveFile is not set
-      if (!this.preserveFiles) {
-        fs.unlink(filePath, (unlinkError) => {
-          if (unlinkError) {
-            this.logger.error(unlinkError)
-          } else {
-            this.logger.info(`File ${filePath} compressed and deleted`)
-          }
-        })
+        // Delete original file if preserveFile is not set
+        if (!this.preserveFiles) {
+          await fs.unlink(filePath)
+        }
+      } catch (compressionError) {
+        this.logger.error(`Error compressing file ${filename}. Sending it raw instead`)
+        await this.addFile(filePath, this.preserveFiles)
       }
     } else {
       await this.addFile(filePath, this.preserveFiles)
     }
 
     if (this.preserveFiles) {
-      const stats = fs.statSync(path.join(this.inputFolder, filename))
+      const stats = await fs.stat(path.join(this.inputFolder, filename))
       this.logger.debug(`Upsert handled file ${filename} with modify time ${stats.mtimeMs}`)
       await this.setConfig(filename, `${stats.mtimeMs}`)
     }
