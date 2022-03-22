@@ -76,7 +76,7 @@ const PointsComponent = ({
    */
   const handleAddPoint = () => {
     setSelectedPage(1) // jump to first page, to see new row
-    handleAdd()
+    handleAdd(Object.entries(ProtocolSchemas[protocol].points).map(([name]) => name))
   }
 
   /**

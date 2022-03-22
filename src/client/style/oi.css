@@ -102,7 +102,10 @@ a:focus {
 }
 
 .oi-navitem {
-  padding: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 8px;
+  height: 35px;
   text-decoration: none;
   color: #ffffff;
 }
@@ -219,7 +222,6 @@ a:focus {
   height: 27px;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
-
 }
 
 .icon-left-modal {

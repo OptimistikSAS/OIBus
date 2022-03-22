@@ -3,7 +3,7 @@ import { Spinner } from 'reactstrap'
 
 import PropTypes from 'prop-types'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
-import HistoryQueryPointsComponent from './HistoryQueryPointsComponent.jsx'
+import PointsComponent from '../../components/PointsComponent.jsx'
 
 const PointsSection = ({
   query, handleAddPoint, handleChange, handleDeletePoint,
@@ -29,7 +29,7 @@ const PointsSection = ({
   const { points: pointsOrdered = [] } = query.settings
 
   return (
-    <HistoryQueryPointsComponent
+    <PointsComponent
       southId={query.southId}
       protocol={protocol}
       points={pointsOrdered}

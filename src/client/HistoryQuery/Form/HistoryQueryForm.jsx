@@ -44,7 +44,6 @@ const HistoryQueryForm = ({ query }) => {
   }
 
   useEffect(() => {
-    // TODO: Fails on backend
     apis
       .getLastCompletedForHistoryQuery(queryToUpdate.id)
       .then((response) => {
@@ -201,7 +200,7 @@ const HistoryQueryForm = ({ query }) => {
                 name="enabled"
                 label="Enabled"
                 defaultValue={false}
-                value={queryToUpdate.enabled}
+                value={!!queryToUpdate.enabled}
                 help={<div>Enable this history query</div>}
                 onChange={handleEnabled}
                 switchButton
@@ -239,7 +238,7 @@ const HistoryQueryForm = ({ query }) => {
                 name="compress"
                 label="Compress"
                 defaultValue={false}
-                value={queryToUpdate.compress}
+                value={!!queryToUpdate.compress}
                 onChange={onChange}
               />
             </Col>
