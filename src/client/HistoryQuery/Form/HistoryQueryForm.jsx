@@ -14,18 +14,23 @@ import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import PointsSection from './PointsSection.jsx'
 import apis from '../../services/apis'
+import utils from '../../helpers/utils'
+import { AlertContext } from '../../context/AlertContext.jsx'
 
 const HistoryQueryForm = ({ query }) => {
   const [queryToUpdate, setQueryToUpdate] = useState(query)
   const { name, paused } = queryToUpdate
   const { newConfig } = React.useContext(ConfigContext)
   const [lastCompleted, setLastCompleted] = useState()
+  const [errors, setErrors] = useState({})
   const dataSource = newConfig?.south?.dataSources.find(
     (southHandler) => southHandler.id === queryToUpdate.southId,
   )
   const application = newConfig?.north?.applications.find(
     (northHandler) => northHandler.id === queryToUpdate.northId,
   )
+
+  const { setAlert } = React.useContext(AlertContext)
   const navigate = useNavigate()
 
   const handlePause = async () => {
@@ -53,7 +58,12 @@ const HistoryQueryForm = ({ query }) => {
   }, [])
 
   const handleUpdateHistoryQuery = async () => {
-    await apis.updateHistoryQuery(queryToUpdate.id, { ...queryToUpdate })
+    if (Object.values(errors).length === 0) {
+      setAlert(null)
+      await apis.updateHistoryQuery(queryToUpdate.id, { ...queryToUpdate })
+    } else {
+      setAlert({ text: 'You have unresolved errors in configuration! Please fix before updating the settings.', type: 'danger' })
+    }
   }
 
   const onChange = (propertyName, value) => {
@@ -64,21 +74,69 @@ const HistoryQueryForm = ({ query }) => {
     setQueryToUpdate({ ...queryToUpdate, settings: { query: value } })
   }
 
-  const handleAddPoint = () => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
+  const handleAddPoint = (attributes) => {
+    const newPointAttributes = {}
+    attributes.forEach((attribute) => { newPointAttributes[attribute] = '' })
+    setQueryToUpdate(
+      { ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, { ...newPointAttributes }] } },
+    )
   }
 
-  // const handleDeletePoint = () => {
-  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
-  // }
+  const handleChangePoint = (attributeDescription, value, validity) => {
+    if (validity) {
+      setErrors((oldErrors) => ({ ...oldErrors, [attributeDescription]: validity }))
+    } else {
+      const copyErrorObject = errors
+      delete copyErrorObject[attributeDescription]
+      setErrors(copyErrorObject)
+    }
 
-  // const handleDeleteAllPoint = () => {
-  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
-  // }
+    const attributeName = attributeDescription.split('.')[2]
+    const pointIndex = Number(attributeDescription.split('.')[1])
+    setQueryToUpdate((oldQuery) => ({
+      ...oldQuery,
+      settings: {
+        points: oldQuery.settings.points.map((point, index) => {
+          if (pointIndex === index) {
+            return { ...point, [attributeName]: value }
+          }
+          return point
+        }),
+      },
+    }))
+  }
 
-  // const handleImportPoints = () => {
-  //   setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, {}] } })
-  // }
+  const handleDeletePoint = (indexInTable) => {
+    setQueryToUpdate((oldQuery) => ({
+      ...oldQuery,
+      settings: { points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable) },
+    }))
+    Object.keys(errors).forEach((errorKey) => {
+      if (errorKey.split('.')[1] === String(indexInTable)) delete errors[errorKey]
+    })
+  }
+
+  const handleDeleteAllPoint = () => {
+    setQueryToUpdate({ ...queryToUpdate, settings: { points: [] } })
+  }
+
+  const handleImportPoints = async (file) => {
+    try {
+      const text = await utils.readFileContent(file)
+      utils
+        .parseCSV(text)
+        .then((newPoints) => {
+          setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, ...newPoints] } })
+        })
+        .catch((error) => {
+          console.error(error)
+          setAlert({ text: error.message, type: 'danger' })
+        })
+    } catch (error) {
+      console.error(error)
+      setAlert({ text: error.message, type: 'danger' })
+    }
+  }
 
   return (
     <>
@@ -221,6 +279,10 @@ const HistoryQueryForm = ({ query }) => {
                 <PointsSection
                   query={queryToUpdate}
                   handleAddPoint={handleAddPoint}
+                  handleChange={handleChangePoint}
+                  handleDeletePoint={handleDeletePoint}
+                  handleDeleteAllPoint={handleDeleteAllPoint}
+                  handleImportPoints={handleImportPoints}
                 />
               ) : (
                 <>
