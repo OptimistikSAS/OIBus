@@ -4,7 +4,7 @@ import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inline, disabled, hidden }) => {
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultValue, valid(defaultValue))
+    if (value === null || value === '') onChange(name, defaultValue, valid(defaultValue))
   }, [value])
   const handleChange = (event) => {
     const { target } = event
@@ -17,7 +17,7 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
     style.display = 'inline-block'
   }
   if (hidden) return null
-  const validCheck = valid(value)
+  const validCheck = valid(value || defaultValue)
   // if value is null, no need to render
   if (value === null) return null
   return (
@@ -31,7 +31,7 @@ const OIbText = ({ label, help, valid, value, name, onChange, defaultValue, inli
         disabled={disabled}
         invalid={validCheck !== null}
         onChange={handleChange}
-        value={value}
+        value={value || defaultValue}
       />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
