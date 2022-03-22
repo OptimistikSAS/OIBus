@@ -198,7 +198,7 @@ class HistoryQueryEngine extends BaseEngine {
       south: [],
     }
     const { engineConfig } = this.configService.getConfig()
-    const historyQueryConfig = this.historyQueryRepository.get(id)
+    const historyQueryConfig = await this.historyQueryRepository.get(id)
     if (historyQueryConfig) {
       const { historyQuery: { folder } } = engineConfig
       const databasePath = `${folder}/${historyQueryConfig.southId}.db`

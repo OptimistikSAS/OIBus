@@ -729,32 +729,26 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         </div>
         <div
           class="col-md-2"
+        />
+        <div
+          class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="mb-3 mb-3"
           >
             <label
-              class="form-label"
-              for="filePattern"
+              class="form-check-label form-label"
             >
-              File pattern
+              Compress
             </label>
             <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="filePattern"
-              name="filePattern"
-              type="text"
-              value="./@ConnectorName-@CurrentDate-@QueryPart.csv"
-            />
-            <div
-              class="invalid-feedback"
+              class="oi-form-input checkbox form-check-input"
+              id="compress"
+              name="compress"
+              type="checkbox"
             />
           </div>
         </div>
-        <div
-          class="col-md-2"
-        />
       </div>
       <div
         class="row"
