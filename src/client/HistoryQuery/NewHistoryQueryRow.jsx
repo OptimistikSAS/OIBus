@@ -6,8 +6,13 @@ import { useNavigate } from 'react-router-dom'
 import { OIbSelect } from '../components/OIbForm/index'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
+const HISTORY_QUERY_CAPABLE_PROTOCOLS = [
+  'OPCUA_HA', 'OPCHDA', 'SQLDbToFile',
+]
+
 const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
-  const [southHandler, setSouthHandler] = React.useState(southHandlers[0])
+  const filteredSouthHandlers = southHandlers.filter((handler) => HISTORY_QUERY_CAPABLE_PROTOCOLS.includes(handler.protocol))
+  const [southHandler, setSouthHandler] = React.useState(filteredSouthHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
   const navigate = useNavigate()
@@ -50,7 +55,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
   const handleChange = (attributeName, value) => {
     switch (attributeName) {
       case 'southHandler':
-        setSouthHandler(southHandlers.find((handler) => handler.id === value))
+        setSouthHandler(filteredSouthHandlers.find((handler) => handler.id === value))
         break
       case 'northHandler':
       default:
@@ -67,9 +72,9 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
             label="South Handler"
             value={southHandler.id}
             name="southHandler"
-            options={southHandlers.map((handler) => handler.id)}
-            optionsLabel={southHandlers.map((handler) => handler.name)}
-            defaultValue={southHandlers[0].id}
+            options={filteredSouthHandlers.map((handler) => handler.id)}
+            optionsLabel={filteredSouthHandlers.map((handler) => handler.name)}
+            defaultValue={filteredSouthHandlers[0].id}
             onChange={handleChange}
           />
         </Col>

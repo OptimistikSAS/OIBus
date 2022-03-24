@@ -189,9 +189,9 @@ const HistoryQueryForm = ({ query }) => {
           <OIbTitle label="Handlers" />
           <Row className="mb-2">
             <Col md={2}>
-              <ConnectorButton connectorName={dataSource?.name} connectorUrl={`/south/${queryToUpdate.southId}`} />
+              <ConnectorButton connectorName={dataSource?.name ?? ''} connectorUrl={`/south/${queryToUpdate.southId}`} />
               <FaArrowRight className="me-2" />
-              <ConnectorButton connectorName={application?.name} connectorUrl={`/north/${queryToUpdate.northId}`} />
+              <ConnectorButton connectorName={application?.name ?? ''} connectorUrl={`/north/${queryToUpdate.northId}`} />
             </Col>
           </Row>
           <OIbTitle label="General settings" />
@@ -259,7 +259,7 @@ const HistoryQueryForm = ({ query }) => {
                       </thead>
                       <tbody>
                         {lastCompleted?.south.map((obj) => (
-                          <tr>
+                          <tr key={`${obj.scanMode}-${obj.lastCompletedDate}`}>
                             <td>{obj.scanMode}</td>
                             <td>{obj.lastCompletedDate}</td>
                           </tr>
