@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Form, Row, Col, Label, Button, Container } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import { FaPauseCircle, FaPlayCircle, FaArrowLeft } from 'react-icons/fa'
+import { FaPauseCircle, FaPlayCircle, FaArrowLeft, FaArrowRight } from 'react-icons/fa'
 import { act } from 'react-dom/test-utils'
 import {
   OIbTitle,
@@ -16,6 +16,7 @@ import PointsSection from './PointsSection.jsx'
 import apis from '../../services/apis'
 import utils from '../../helpers/utils'
 import { AlertContext } from '../../context/AlertContext.jsx'
+import ConnectorButton from '../ConnectorButton.jsx'
 
 const HistoryQueryForm = ({ query }) => {
   const [queryToUpdate, setQueryToUpdate] = useState(query)
@@ -188,9 +189,9 @@ const HistoryQueryForm = ({ query }) => {
           <OIbTitle label="Handlers" />
           <Row className="mb-2">
             <Col md={2}>
-              <a href={`/south/${queryToUpdate.southId}`}>{dataSource?.name}</a>
-              {'  ->  '}
-              <a href={`/north/${queryToUpdate.northId}`}>{application?.name}</a>
+              <ConnectorButton connectorName={dataSource?.name} connectorUrl={`/south/${queryToUpdate.southId}`} />
+              <FaArrowRight className="me-2" />
+              <ConnectorButton connectorName={application?.name} connectorUrl={`/north/${queryToUpdate.northId}`} />
             </Col>
           </Row>
           <OIbTitle label="General settings" />
