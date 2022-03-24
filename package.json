@@ -82,7 +82,7 @@
     "pg": "8.7.3",
     "pino": "git://github.com/burgerni10/pino.git",
     "pino-abstract-transport": "0.5.0",
-    "pino-pretty": "7.5.4",
+    "pino-pretty": "7.6.0",
     "prop-types": "15.8.1",
     "proxy-agent": "5.0.0",
     "react": "17.0.2",
