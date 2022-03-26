@@ -1,4 +1,5 @@
 const fs = require('fs')
+const fsAsync = require('fs/promises')
 const path = require('path')
 
 const databaseService = require('../services/database.service')
@@ -245,36 +246,26 @@ class Cache {
    * @param {boolean} preserveFiles - Whether to preserve the file
    * @returns {Promise<*>} - The result promise
    */
-  transferFile(filePath, cachePath, preserveFiles) {
-    return new Promise((resolve, reject) => {
-      this.logger.debug(`transferFile(${filePath}) - preserveFiles:${preserveFiles}, cachePath:${cachePath}`)
+  async transferFile(filePath, cachePath, preserveFiles) {
+    this.logger.debug(`transferFile(${filePath}) - preserveFiles:${preserveFiles}, cachePath:${cachePath}`)
+
+    if (preserveFiles) {
+      await fsAsync.copyFile(filePath, cachePath)
+    } else {
       try {
-        if (preserveFiles) {
-          fs.copyFile(filePath, cachePath, (copyError) => {
-            if (copyError) throw copyError
-            resolve()
-          })
-        } else {
-          fs.rename(filePath, cachePath, (renameError) => {
-            if (renameError) {
-              // In case of cross-device link error we copy+delete instead
-              if (renameError.code !== 'EXDEV') throw renameError
-              this.logger.debug('Cross-device link error during rename, copy+paste instead')
-              fs.copyFile(filePath, cachePath, (copyError) => {
-                if (copyError) throw copyError
-                fs.unlink(filePath, (unlinkError) => {
-                  // log error but does not throw so we try sending the file to S3
-                  if (unlinkError) this.logger.error(unlinkError)
-                })
-              })
-            }
-            resolve()
-          })
+        await fsAsync.rename(filePath, cachePath)
+      } catch (renameError) {
+        // In case of cross-device link error we copy+delete instead
+        if (renameError.code !== 'EXDEV') throw renameError
+        this.logger.debug('Cross-device link error during rename, copy+paste instead')
+        await fsAsync.copyFile(filePath, cachePath)
+        try {
+          await fsAsync.unlink(filePath)
+        } catch (unlinkError) {
+          this.logger.error(unlinkError)
         }
-      } catch (error) {
-        reject(error)
       }
-    })
+    }
   }
 
   /**
