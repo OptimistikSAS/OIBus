@@ -76,7 +76,7 @@
     "mysql2": "2.3.3",
     "nanoid": "3.3.2",
     "node-fetch": "2.6.7",
-    "node-opcua": "2.66.0",
+    "node-opcua": "2.66.3",
     "object-path": "0.11.8",
     "papaparse": "5.3.2",
     "pg": "8.7.3",
