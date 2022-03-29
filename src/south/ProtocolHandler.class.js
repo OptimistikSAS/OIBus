@@ -47,7 +47,6 @@ class ProtocolHandler {
     this.dataSource = dataSource
     this.engine = engine
     this.encryptionService = EncryptionService.getInstance()
-    this.compressionLevel = 9
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
     this.supportedModes = supportedModes
@@ -148,7 +147,7 @@ class ProtocolHandler {
 
     if (this.supportedModes?.supportHistory) {
       // Initialize lastCompletedAt for every scanMode
-      // "startTime" is currently a "hidden" parameter of oibus.json
+      // "startTime" is set from HistoryQuery or can be a "hidden" parameter of oibus.json
       const defaultLastCompletedAt = startTime ? new Date(startTime) : new Date()
 
       // Disable ESLint check because we need for..of loop to support async calls

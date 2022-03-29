@@ -32,7 +32,7 @@ class SQLDbToFile extends ProtocolHandler {
    * Constructor for SQLDbToFile
    * @constructor
    * @param {Object} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
   constructor(dataSource, engine) {
