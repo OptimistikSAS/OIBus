@@ -68,35 +68,35 @@ const About = () => {
               <img src={logo} alt="logo" height="100px" />
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">Version:</b>
+              <b className="me-1">Version:</b>
               {staticStatus.version}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">Architecture:</b>
+              <b className="me-1">Architecture:</b>
               {staticStatus.architecture}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">currentDirectory:</b>
+              <b className="me-1">currentDirectory:</b>
               {staticStatus.currentDirectory}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">nodeVersion:</b>
+              <b className="me-1">nodeVersion:</b>
               {staticStatus.nodeVersion}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">Executable:</b>
+              <b className="me-1">Executable:</b>
               {staticStatus.executable}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">ConfigurationFile:</b>
+              <b className="me-1">ConfigurationFile:</b>
               {staticStatus.configurationFile}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">Hostname:</b>
+              <b className="me-1">Hostname:</b>
               {staticStatus.hostname}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="mr-2">Operating System:</b>
+              <b className="me-1">Operating System:</b>
               {staticStatus.osType}
               {' '}
               {staticStatus.osRelease}
@@ -115,7 +115,7 @@ const About = () => {
               .map(([key, value]) => (
                 <ListGroupItem key={key}>
                   <div key={key}>
-                    <b className="mr-2">
+                    <b className="me-1">
                       {key}
                       :
                     </b>

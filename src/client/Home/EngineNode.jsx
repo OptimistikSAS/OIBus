@@ -1,9 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
+import { Badge } from 'reactstrap'
 import EngineMenu from './EngineMenu.jsx'
 
-const EngineNode = ({ engineName, onRestart, onShutdown }) => {
+const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
   const [connectorData, setConnectorData] = React.useState({})
 
   React.useEffect(() => {
@@ -26,7 +27,10 @@ const EngineNode = ({ engineName, onRestart, onShutdown }) => {
     <div className="d-flex flex-column h-100 w-100">
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <div />
-        <div className="oi-node-title">{`Engine ${engineName}`}</div>
+        <div className="oi-node-title">
+          <span className="me-2">{`Engine ${engineName}`}</span>
+          {safeMode ? <span><Badge color="warning" pill>safe mode</Badge></span> : null}
+        </div>
         <div className="oi-node-click-item">
           <EngineMenu onRestart={onRestart} onShutdown={onShutdown} />
         </div>
@@ -44,7 +48,7 @@ const EngineNode = ({ engineName, onRestart, onShutdown }) => {
             )
             .map(([key, value]) => (
               <div key={key}>
-                <b className="mr-2">
+                <b className="me-1">
                   {key}
                   :
                 </b>
@@ -61,6 +65,7 @@ EngineNode.propTypes = {
   onRestart: PropTypes.func.isRequired,
   onShutdown: PropTypes.func.isRequired,
   engineName: PropTypes.string.isRequired,
+  safeMode: PropTypes.bool.isRequired,
 }
 
 export default EngineNode
