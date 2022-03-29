@@ -56,9 +56,6 @@ const TopHeader = () => {
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
         <Nav navbar>
-          <NavItem className="oi-navitem" active={isActive('history-query')} tag={Link} to="/history-query">
-            History query
-          </NavItem>
           <NavItem className="oi-navitem" active={isActive('log')} tag={Link} to="/log">
             Logs
           </NavItem>
@@ -69,8 +66,8 @@ const TopHeader = () => {
           <NavItem className="oi-navitem" active={isActive('about')} tag={Link} to="/about">
             About
           </NavItem>
-          <NavItem className="oi-navname">
-            {` version ${status.version}`}
+          <NavItem className="oi-navname text-muted">
+            {`version ${status.version}`}
           </NavItem>
         </Nav>
       </Collapse>

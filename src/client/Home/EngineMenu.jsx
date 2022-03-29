@@ -34,9 +34,17 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
             Add South
           </DropdownItem>
           <DropdownItem
+            id="history"
+            onClick={() => {
+              navigate('/history-query')
+            }}
+          >
+            History
+          </DropdownItem>
+          <DropdownItem
             id="oi-settings"
             onClick={() => {
-              navigate('/engine/')
+              navigate('/engine')
             }}
           >
             Settings
@@ -47,7 +55,10 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
           <ConfirmationModal
             title="Restart"
             body="Confirm restart?"
-            onConfirm={onRestart}
+            onConfirm={() => {
+              onRestart()
+              setRestartShow(false)
+            }}
             isOpen={restartShow}
             toggle={() => setRestartShow(false)}
           />
@@ -57,7 +68,10 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
           <ConfirmationModal
             title="Shutdown"
             body="Confirm shutdown?"
-            onConfirm={onShutdown}
+            onConfirm={() => {
+              onShutdown()
+              setShutdownShow(false)
+            }}
             isOpen={shutdownShow}
             toggle={() => setShutdownShow(false)}
           />

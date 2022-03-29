@@ -22,6 +22,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
   }
 
   const engineName = newConfig?.engine?.engineName ?? ''
+  const safeMode = newConfig?.engine?.safeMode ?? false
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
 
@@ -95,6 +96,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
         label: (
           <EngineNode
             engineName={engineName}
+            safeMode={safeMode}
             onRestart={onRestart}
             onShutdown={onShutdown}
           />
