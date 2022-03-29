@@ -25,7 +25,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Version:
           </b>
@@ -34,7 +34,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Architecture:
           </b>
@@ -43,7 +43,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             currentDirectory:
           </b>
@@ -52,7 +52,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             nodeVersion:
           </b>
@@ -61,7 +61,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Executable:
           </b>
@@ -70,7 +70,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             ConfigurationFile:
           </b>
@@ -79,7 +79,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Hostname:
           </b>
@@ -88,7 +88,7 @@ exports[`About display About page based on config and status 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Operating System:
           </b>
@@ -142,7 +142,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Version:
           </b>
@@ -152,7 +152,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Architecture:
           </b>
@@ -162,7 +162,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             currentDirectory:
           </b>
@@ -172,7 +172,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             nodeVersion:
           </b>
@@ -182,7 +182,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Executable:
           </b>
@@ -192,7 +192,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             ConfigurationFile:
           </b>
@@ -202,7 +202,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Hostname:
           </b>
@@ -212,7 +212,7 @@ exports[`About display About page based on config and status 2`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Operating System:
           </b>
@@ -269,7 +269,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Version:
           </b>
@@ -278,7 +278,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Architecture:
           </b>
@@ -287,7 +287,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             currentDirectory:
           </b>
@@ -296,7 +296,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             nodeVersion:
           </b>
@@ -305,7 +305,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Executable:
           </b>
@@ -314,7 +314,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             ConfigurationFile:
           </b>
@@ -323,7 +323,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Hostname:
           </b>
@@ -332,7 +332,7 @@ exports[`About display About with config null 1`] = `
           class="list-group-item"
         >
           <b
-            class="mr-2"
+            class="me-1"
           >
             Operating System:
           </b>

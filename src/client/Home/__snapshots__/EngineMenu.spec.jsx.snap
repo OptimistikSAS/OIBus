@@ -52,6 +52,15 @@ exports[`EngineMenu check cancel restart 1`] = `
       </button>
       <button
         class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
+      </button>
+      <button
+        class="dropdown-item"
         id="oi-settings"
         role="menuitem"
         tabindex="0"
@@ -131,6 +140,15 @@ exports[`EngineMenu check cancel shutdown 1`] = `
         type="button"
       >
         Add South
+      </button>
+      <button
+        class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
       </button>
       <button
         class="dropdown-item"
@@ -216,6 +234,15 @@ exports[`EngineMenu check restart engine 1`] = `
       </button>
       <button
         class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
+      </button>
+      <button
+        class="dropdown-item"
         id="oi-settings"
         role="menuitem"
         tabindex="0"
@@ -295,6 +322,15 @@ exports[`EngineMenu check shutdown engine 1`] = `
         type="button"
       >
         Add South
+      </button>
+      <button
+        class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
       </button>
       <button
         class="dropdown-item"
@@ -380,6 +416,15 @@ exports[`EngineMenu display EngineMenu page based on config 1`] = `
       </button>
       <button
         class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
+      </button>
+      <button
+        class="dropdown-item"
         id="oi-settings"
         role="menuitem"
         tabindex="0"
@@ -459,6 +504,15 @@ exports[`EngineMenu go to engine settings 1`] = `
         type="button"
       >
         Add South
+      </button>
+      <button
+        class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
       </button>
       <button
         class="dropdown-item"

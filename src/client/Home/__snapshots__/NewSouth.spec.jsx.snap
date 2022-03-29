@@ -52,6 +52,15 @@ exports[`NewSouth check add connector without "name" & with protocol 1`] = `
       </button>
       <button
         class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
+      </button>
+      <button
+        class="dropdown-item"
         id="oi-settings"
         role="menuitem"
         tabindex="0"
@@ -131,6 +140,15 @@ exports[`NewSouth check add connector without "protocol" & with new name 1`] = `
         type="button"
       >
         Add South
+      </button>
+      <button
+        class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
       </button>
       <button
         class="dropdown-item"
@@ -216,6 +234,15 @@ exports[`NewSouth check add connector without "protocol" & without new name 1`] 
       </button>
       <button
         class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
+      </button>
+      <button
+        class="dropdown-item"
         id="oi-settings"
         role="menuitem"
         tabindex="0"
@@ -295,6 +322,15 @@ exports[`NewSouth check change name with "new_application" id 1`] = `
         type="button"
       >
         Add South
+      </button>
+      <button
+        class="dropdown-item"
+        id="history"
+        role="menuitem"
+        tabindex="0"
+        type="button"
+      >
+        History
       </button>
       <button
         class="dropdown-item"

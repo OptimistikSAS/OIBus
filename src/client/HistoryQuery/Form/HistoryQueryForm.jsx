@@ -207,6 +207,15 @@ const HistoryQueryForm = ({ query }) => {
                 switchButton
               />
             </Col>
+            <Col md={2}>
+              <Button
+                disabled={JSON.stringify(queryToUpdate) === JSON.stringify(query)}
+                color="primary"
+                onClick={() => handleUpdateHistoryQuery()}
+              >
+                Save history query
+              </Button>
+            </Col>
           </Row>
           <Row>
             <Col md={2}>
@@ -290,18 +299,12 @@ const HistoryQueryForm = ({ query }) => {
                   <OIbTextArea
                     label="Query"
                     name="query"
+                    contentType="sql"
                     value={queryToUpdate.settings?.query}
                     onChange={handleAddQuery}
                   />
                 </>
               )}
-            </Col>
-          </Row>
-          <Row>
-            <Col md={2}>
-              <Button color="primary" onClick={() => handleUpdateHistoryQuery()}>
-                Save history query
-              </Button>
             </Col>
           </Row>
         </Form>

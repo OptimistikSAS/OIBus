@@ -133,6 +133,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
             </small>
           </div>
         </div>
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary disabled"
+            disabled=""
+            type="button"
+          >
+            Save history query
+          </button>
+        </div>
       </div>
       <div
         class="row"
@@ -272,20 +283,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
             </div>
             ...loading points from OIBus server...
           </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <button
-            class="btn btn-primary"
-            type="button"
-          >
-            Save history query
-          </button>
         </div>
       </div>
     </form>
@@ -426,6 +423,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
             </small>
           </div>
         </div>
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary disabled"
+            disabled=""
+            type="button"
+          >
+            Save history query
+          </button>
+        </div>
       </div>
       <div
         class="row"
@@ -567,20 +575,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           </div>
         </div>
       </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <button
-            class="btn btn-primary"
-            type="button"
-          >
-            Save history query
-          </button>
-        </div>
-      </div>
     </form>
   </div>
 </div>
@@ -718,6 +712,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             </small>
           </div>
         </div>
+        <div
+          class="col-md-2"
+        >
+          <button
+            class="btn btn-primary"
+            type="button"
+          >
+            Save history query
+          </button>
+        </div>
       </div>
       <div
         class="row"
@@ -838,30 +842,22 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             >
               Query
             </label>
-            <textarea
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="query"
-              name="query"
-            />
             <div
               class="invalid-feedback"
             />
+            <section
+              style="display: flex; position: relative; text-align: initial; width: 100%; height: 400px;"
+            >
+              <div
+                style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
+              >
+                Loading...
+              </div>
+              <div
+                style="width: 100%; display: none;"
+              />
+            </section>
           </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <button
-            class="btn btn-primary"
-            type="button"
-          >
-            Save history query
-          </button>
         </div>
       </div>
     </form>
