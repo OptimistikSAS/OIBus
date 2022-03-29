@@ -94,9 +94,9 @@ class HistoryQuery {
       // override some parameters for history query
       this.south.filename = this.filePattern
       this.south.tmpFolder = this.cacheFolder
-      this.south.startTime = this.config.startTime
-      this.south.points = this.config.points
-      this.south.query = this.config.query
+      this.south.dataSource.startTime = this.config.startTime
+      this.south.points = this.config.settings.points
+      this.south.query = this.config.settings.query
       this.south.name = `${this.dataSource.name}-${this.application.name}`
       await this.south.init()
       await this.south.connect()
