@@ -113,7 +113,7 @@ class Logger {
       Error.captureStackTrace(this)
       // Get the first CallSite outside the logger and outside pino library
       const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(__filename)) === -1
-        && line.getFileName().indexOf('node_modules/pino') === -1)
+        && line.getFileName().indexOf('pino') === -1)
       return `${path.parse(callSite.getFileName()).name}(${callSite.getLineNumber()})`
     } finally {
       Error.prepareStackTrace = oldStackTrace
