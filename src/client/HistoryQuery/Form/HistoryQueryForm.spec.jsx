@@ -12,6 +12,11 @@ React.useContext = jest.fn().mockReturnValue({ newConfig })
 jest.mock('react-router-dom', () => (
   { useNavigate: jest.fn().mockReturnValue({}) }
 ))
+global.EventSource = class {
+  constructor() {
+    this.close = () => {}
+  }
+}
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
 global.Math = mockMath

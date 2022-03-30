@@ -40,7 +40,8 @@ class Server {
         // eslint-disable-next-line no-return-await
         return await next()
       }
-      if (!this.app.engine.eventEmitters[ctx.path]) {
+      if ((!ctx.path.startsWith('/history/') && !this.app.engine.eventEmitters[ctx.path])
+          || (ctx.path.startsWith('/history/') && !this.app.historyQueryEngine.eventEmitters[ctx.path])) {
         // eslint-disable-next-line no-return-await
         return await next()
       }
@@ -55,9 +56,15 @@ class Server {
       })
 
       ctx.status = 200
-      this.app.engine.eventEmitters[ctx.path].stream = new PassThrough()
-      ctx.body = this.app.engine.eventEmitters[ctx.path].stream
-      this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
+      if (ctx.path.startsWith('/history/')) {
+        this.app.historyQueryEngine.eventEmitters[ctx.path].stream = new PassThrough()
+        ctx.body = this.app.historyQueryEngine.eventEmitters[ctx.path].stream
+        this.app.historyQueryEngine.eventEmitters[ctx.path].events.emit('data', this.app.historyQueryEngine.eventEmitters[ctx.path].statusData)
+      } else {
+        this.app.engine.eventEmitters[ctx.path].stream = new PassThrough()
+        ctx.body = this.app.engine.eventEmitters[ctx.path].stream
+        this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
+      }
     })
 
     // Get the config entries

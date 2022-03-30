@@ -2,6 +2,7 @@
 
 const fs = require('fs/promises')
 const path = require('path')
+const EventEmitter = require('events')
 const ApiHandler = require('../north/ApiHandler.class')
 
 class HistoryQuery {
@@ -37,6 +38,17 @@ class HistoryQuery {
     this.endTime = new Date(config.endTime)
     this.filePattern = config.filePattern
     this.cacheFolder = `${this.engine.getCacheFolder()}/${this.id}`
+    this.statusData = { status: this.status }
+    this.numberOfQueryParts = Math.round((this.endTime.getTime() - this.startTime.getTime()) / (1000 * this.config.settings.maxReadInterval))
+
+    if (!this.engine.eventEmitters[`/history/${this.id}/sse`]) {
+      this.engine.eventEmitters[`/history/${this.id}/sse`] = {}
+      this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
+      this.engine.eventEmitters[`/history/${this.id}/sse`].events.setMaxListeners(0)
+      this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
+      this.engine.eventEmitters[`/history/${this.id}/sse`].statusData = this.statusData
+      this.updateStatusDataStream()
+    }
   }
 
   /**
@@ -75,6 +87,7 @@ class HistoryQuery {
       this.logger.info(`Stopping north ${this.application.name}`)
       await this.north.disconnect()
     }
+    this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.off('data', this.listener)
   }
 
   /**
@@ -97,6 +110,8 @@ class HistoryQuery {
       this.south.dataSource.startTime = this.config.startTime
       this.south.points = this.config.settings.points
       this.south.query = this.config.settings.query
+      this.south.maxReadInterval = this.config.settings.maxReadInterval
+      this.south.readIntervalDelay = this.config.settings.readIntervalDelay
       this.south.name = `${this.dataSource.name}-${this.application.name}`
       await this.south.init()
       await this.south.connect()
@@ -156,12 +171,16 @@ class HistoryQuery {
       for (const scanGroup of this.south.scanGroups) {
         const { scanMode } = scanGroup
         if (scanGroup.points && scanGroup.points.length) {
+          this.statusData.scanGroup = `${scanGroup.scanMode} - ${scanGroup.aggregate}`
+          this.updateStatusDataStream()
           // eslint-disable-next-line no-await-in-loop
           await this.exportScanMode(scanMode)
         } else {
           this.logger.error(`scanMode ${scanMode} ignored: scanGroup.points undefined or empty`)
         }
       }
+      this.statusData.scanGroup = null
+      this.updateStatusDataStream()
     } else {
       await this.exportScanMode(this.dataSource.scanMode)
     }
@@ -224,22 +243,26 @@ class HistoryQuery {
    */
   async exportScanMode(scanMode) {
     let startTime = this.south.lastCompletedAt[scanMode]
+
     let intervalEndTime
     let firstIteration = true
     do {
-      // Wait between the read interval iterations
-      if (!firstIteration) {
-        this.logger.trace(`Wait ${this.south.readIntervalDelay} ms`)
-        // eslint-disable-next-line no-await-in-loop
-        await this.south.delay(this.south.readIntervalDelay)
-      }
-
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests (for example only one hour if maxReadInterval is 3600)
       if ((this.endTime.getTime() - startTime.getTime()) > 1000 * this.south.maxReadInterval) {
         intervalEndTime = new Date(startTime.getTime() + 1000 * this.south.maxReadInterval)
       } else {
         intervalEndTime = this.endTime
+      }
+      this.statusData.currentTime = startTime.toISOString()
+      this.statusData.progress = Math.round((this.south.queryParts[scanMode] / this.numberOfQueryParts) * 10000) / 100
+      this.updateStatusDataStream()
+
+      // Wait between the read interval iterations
+      if (!firstIteration) {
+        this.logger.trace(`Wait ${this.south.readIntervalDelay} ms`)
+        // eslint-disable-next-line no-await-in-loop
+        await this.south.delay(this.south.readIntervalDelay)
       }
 
       // eslint-disable-next-line no-await-in-loop
@@ -254,6 +277,9 @@ class HistoryQuery {
     this.south.queryParts[scanMode] = 0
     // eslint-disable-next-line no-await-in-loop
     await this.south.setConfig(`queryPart-${scanMode}`, this.south.queryParts[scanMode])
+    this.statusData.currentTime = startTime.toISOString()
+    this.statusData.progress = 100
+    this.updateStatusDataStream()
   }
 
   /**
@@ -265,6 +291,8 @@ class HistoryQuery {
     this.status = status
     this.config.status = status
     await this.engine.historyQueryRepository.update(this.config)
+    this.statusData.status = status
+    this.updateStatusDataStream()
   }
 
   /**
@@ -288,6 +316,21 @@ class HistoryQuery {
     } catch (error) {
       await fs.mkdir(folderPath, { recursive: true })
     }
+  }
+
+  /**
+   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
+   * @param {object} data - The json object of data to send
+   * @return {void}
+   */
+  listener = (data) => {
+    if (data) {
+      this.engine.eventEmitters[`/history/${this.id}/sse`]?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
+  }
+
+  updateStatusDataStream() {
+    this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.emit('data', this.statusData)
   }
 }
 
