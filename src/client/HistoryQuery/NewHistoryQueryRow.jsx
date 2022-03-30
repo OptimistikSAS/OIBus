@@ -38,7 +38,11 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
       endTime: new Date(),
       southId: southHandler.id,
       northId: northHandler.id,
-      settings: { ...(schema.points ? { points: southHandler.points || [] } : { query: southHandler[protocol].query || '' }) },
+      settings: {
+        ...(schema.points ? { points: southHandler.points || [] } : { query: southHandler[protocol].query || '' }),
+        maxReadInterval: southHandler[protocol].maxReadInterval,
+        readIntervalDelay: southHandler[protocol].readIntervalDelay,
+      },
       filePattern: './@ConnectorName-@CurrentDate-@QueryPart.csv',
       compress: false,
       paused: false,

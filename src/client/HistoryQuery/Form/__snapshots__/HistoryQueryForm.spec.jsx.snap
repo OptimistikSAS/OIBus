@@ -29,25 +29,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         </svg>
       </button>
       | MSSQL South -&gt; Console
-      <svg
-        class="oi-icon-breadcrumb"
-        fill="currentColor"
-        height="15"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 512 512"
-        width="15"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm-16 328c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160zm112 0c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160z"
-        />
-      </svg>
-      <label
-        class="status-text-breadcrumb text-success form-label"
-      >
-        Ongoing
-      </label>
     </h6>
   </div>
   <div
@@ -136,15 +117,77 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
         <div
           class="col-md-2"
         >
+          <svg
+            class="oi-icon-breadcrumb"
+            fill="currentColor"
+            height="15"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="15"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm115.7 272l-176 101c-15.8 8.8-35.7-2.5-35.7-21V152c0-18.4 19.8-29.8 35.7-21l176 107c16.4 9.2 16.4 32.9 0 42z"
+            />
+          </svg>
+          <label
+            class="status-text-breadcrumb text-warning form-label"
+          >
+            Paused
+          </label>
+        </div>
+        <div
+          class="col-md-2"
+        >
           <button
-            class="btn btn-primary disabled"
-            disabled=""
+            class="btn btn-primary"
             type="button"
           >
-            Save history query
+            Save
           </button>
         </div>
       </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Progress status
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="mb-2 row"
+      >
+        <div
+          class="col-md-3"
+        >
+          <div>
+            <span>
+              <b>
+                Status:
+              </b>
+            </span>
+            <span
+              class="mx-1"
+            >
+              pending
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Settings
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
       <div
         class="row"
       >
@@ -206,6 +249,60 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           >
             <label
               class="form-label"
+              for="maxReadInterval"
+            >
+              Max read interval
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="maxReadInterval"
+              name="maxReadInterval"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="readIntervalDelay"
+            >
+              Read interval delay
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="readIntervalDelay"
+              name="readIntervalDelay"
+              type="integer"
+              value="200"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
               for="filePattern"
             >
               File pattern
@@ -241,24 +338,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               name="compress"
               type="checkbox"
             />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div>
-            <strong>
-              Last completed dates: 
-            </strong>
-            <div
-              class="mb-2"
-            >
-              Nothing to show
-            </div>
           </div>
         </div>
       </div>
@@ -319,25 +398,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         </svg>
       </button>
       | MSSQL South -&gt; OIAnalytics North
-      <svg
-        class="oi-icon-breadcrumb"
-        fill="currentColor"
-        height="15"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 512 512"
-        width="15"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm-16 328c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160zm112 0c0 8.8-7.2 16-16 16h-48c-8.8 0-16-7.2-16-16V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v160z"
-        />
-      </svg>
-      <label
-        class="status-text-breadcrumb text-success form-label"
-      >
-        Ongoing
-      </label>
     </h6>
   </div>
   <div
@@ -426,15 +486,77 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
         <div
           class="col-md-2"
         >
+          <svg
+            class="oi-icon-breadcrumb"
+            fill="currentColor"
+            height="15"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="15"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm115.7 272l-176 101c-15.8 8.8-35.7-2.5-35.7-21V152c0-18.4 19.8-29.8 35.7-21l176 107c16.4 9.2 16.4 32.9 0 42z"
+            />
+          </svg>
+          <label
+            class="status-text-breadcrumb text-warning form-label"
+          >
+            Paused
+          </label>
+        </div>
+        <div
+          class="col-md-2"
+        >
           <button
-            class="btn btn-primary disabled"
-            disabled=""
+            class="btn btn-primary"
             type="button"
           >
-            Save history query
+            Save
           </button>
         </div>
       </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Progress status
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="mb-2 row"
+      >
+        <div
+          class="col-md-3"
+        >
+          <div>
+            <span>
+              <b>
+                Status:
+              </b>
+            </span>
+            <span
+              class="mx-1"
+            >
+              exporting
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Settings
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
       <div
         class="row"
       >
@@ -496,6 +618,60 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           >
             <label
               class="form-label"
+              for="maxReadInterval"
+            >
+              Max read interval
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="maxReadInterval"
+              name="maxReadInterval"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="readIntervalDelay"
+            >
+              Read interval delay
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="readIntervalDelay"
+              name="readIntervalDelay"
+              type="integer"
+              value="200"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
               for="filePattern"
             >
               File pattern
@@ -531,24 +707,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               name="compress"
               type="checkbox"
             />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div>
-            <strong>
-              Last completed dates: 
-            </strong>
-            <div
-              class="mb-2"
-            >
-              Nothing to show
-            </div>
           </div>
         </div>
       </div>
@@ -609,25 +767,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         </svg>
       </button>
       | north -&gt; south
-      <svg
-        class="oi-icon-breadcrumb"
-        fill="currentColor"
-        height="15"
-        stroke="currentColor"
-        stroke-width="0"
-        viewBox="0 0 512 512"
-        width="15"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm115.7 272l-176 101c-15.8 8.8-35.7-2.5-35.7-21V152c0-18.4 19.8-29.8 35.7-21l176 107c16.4 9.2 16.4 32.9 0 42z"
-        />
-      </svg>
-      <label
-        class="status-text-breadcrumb text-warning form-label"
-      >
-        Paused
-      </label>
     </h6>
   </div>
   <div
@@ -719,10 +858,50 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             class="btn btn-primary"
             type="button"
           >
-            Save history query
+            Save
           </button>
         </div>
       </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Progress status
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
+      <div
+        class="mb-2 row"
+      >
+        <div
+          class="col-md-3"
+        >
+          <div>
+            <span>
+              <b>
+                Status:
+              </b>
+            </span>
+            <span
+              class="mx-1"
+            >
+              pending
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <h5>
+          Settings
+        </h5>
+      </div>
+      <div
+        class="container-fluid"
+      />
       <div
         class="row"
       >
@@ -778,6 +957,60 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
         </div>
         <div
           class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="maxReadInterval"
+            >
+              Max read interval
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="maxReadInterval"
+              name="maxReadInterval"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="readIntervalDelay"
+            >
+              Read interval delay
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="readIntervalDelay"
+              name="readIntervalDelay"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
         />
         <div
           class="col-md-2"
@@ -796,24 +1029,6 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               name="compress"
               type="checkbox"
             />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div>
-            <strong>
-              Last completed dates: 
-            </strong>
-            <div
-              class="mb-2"
-            >
-              Nothing to show
-            </div>
           </div>
         </div>
       </div>

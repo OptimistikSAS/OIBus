@@ -1,15 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Row, Col, Label, Button, Container } from 'reactstrap'
+import { Button, Col, Container, Form, Label, Row } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import { FaPauseCircle, FaPlayCircle, FaArrowLeft, FaArrowRight } from 'react-icons/fa'
-import { act } from 'react-dom/test-utils'
-import {
-  OIbTitle,
-  OIbCheckBox,
-  OIbText,
-  OIbTextArea,
-} from '../../components/OIbForm'
+import { FaArrowLeft, FaArrowRight, FaPauseCircle, FaPlayCircle } from 'react-icons/fa'
+import { OIbCheckBox, OIbInteger, OIbText, OIbTextArea, OIbTitle } from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import PointsSection from './PointsSection.jsx'
@@ -20,9 +14,10 @@ import ConnectorButton from '../ConnectorButton.jsx'
 
 const HistoryQueryForm = ({ query }) => {
   const [queryToUpdate, setQueryToUpdate] = useState(query)
+  const [progressStatus, setProgressStatus] = useState({ status: query.status })
+
   const { name, paused } = queryToUpdate
   const { newConfig } = React.useContext(ConfigContext)
-  const [lastCompleted, setLastCompleted] = useState()
   const [errors, setErrors] = useState({})
   const dataSource = newConfig?.south?.dataSources.find(
     (southHandler) => southHandler.id === queryToUpdate.southId,
@@ -34,6 +29,32 @@ const HistoryQueryForm = ({ query }) => {
   const { setAlert } = React.useContext(AlertContext)
   const navigate = useNavigate()
 
+  React.useEffect(() => {
+    let source
+    if (progressStatus.status !== 'finished' && progressStatus.status !== 'pending') {
+      source = new EventSource(`/history/${queryToUpdate.id}/sse`)
+      source.onerror = (error) => {
+        console.error(error)
+      }
+
+      source.onmessage = (event) => {
+        if (event && event.data) {
+          const myData = JSON.parse(event.data)
+          setProgressStatus({
+            currentTime: myData.currentTime,
+            progress: myData.progress,
+            scanGroup: myData.scanGroup,
+            status: myData.status,
+          })
+        }
+      }
+    }
+
+    return () => {
+      source?.close()
+    }
+  }, [queryToUpdate])
+
   const handlePause = async () => {
     await apis.pauseHistoryQuery(queryToUpdate.id, { paused: !paused })
     setQueryToUpdate({ ...queryToUpdate, paused: !queryToUpdate.paused })
@@ -43,19 +64,6 @@ const HistoryQueryForm = ({ query }) => {
     await apis.enableHistoryQuery(queryToUpdate.id, { enabled: !queryToUpdate.enabled })
     setQueryToUpdate({ ...queryToUpdate, enabled: !queryToUpdate.enabled })
   }
-
-  useEffect(() => {
-    apis
-      .getLastCompletedForHistoryQuery(queryToUpdate.id)
-      .then((response) => {
-        act(() => {
-          setLastCompleted(response)
-        })
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }, [])
 
   const handleUpdateHistoryQuery = async () => {
     if (Object.values(errors).length === 0) {
@@ -70,15 +78,23 @@ const HistoryQueryForm = ({ query }) => {
     setQueryToUpdate({ ...queryToUpdate, [propertyName]: value })
   }
 
+  const onMaxReadIntervalChange = (_, value) => {
+    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, maxReadInterval: value } })
+  }
+
+  const onReadIntervalDelayChange = (_, value) => {
+    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, readIntervalDelay: value } })
+  }
+
   const handleAddQuery = (_, value) => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { query: value } })
+    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, query: value } })
   }
 
   const handleAddPoint = (attributes) => {
     const newPointAttributes = {}
     attributes.forEach((attribute) => { newPointAttributes[attribute] = '' })
     setQueryToUpdate(
-      { ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, { ...newPointAttributes }] } },
+      { ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, { ...newPointAttributes }] } },
     )
   }
 
@@ -96,6 +112,7 @@ const HistoryQueryForm = ({ query }) => {
     setQueryToUpdate((oldQuery) => ({
       ...oldQuery,
       settings: {
+        ...oldQuery.settings,
         points: oldQuery.settings.points.map((point, index) => {
           if (pointIndex === index) {
             return { ...point, [attributeName]: value }
@@ -109,7 +126,7 @@ const HistoryQueryForm = ({ query }) => {
   const handleDeletePoint = (indexInTable) => {
     setQueryToUpdate((oldQuery) => ({
       ...oldQuery,
-      settings: { points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable) },
+      settings: { ...oldQuery.settings, points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable) },
     }))
     Object.keys(errors).forEach((errorKey) => {
       if (errorKey.split('.')[1] === String(indexInTable)) delete errors[errorKey]
@@ -117,7 +134,7 @@ const HistoryQueryForm = ({ query }) => {
   }
 
   const handleDeleteAllPoint = () => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { points: [] } })
+    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [] } })
   }
 
   const handleImportPoints = async (file) => {
@@ -126,7 +143,7 @@ const HistoryQueryForm = ({ query }) => {
       utils
         .parseCSV(text)
         .then((newPoints) => {
-          setQueryToUpdate({ ...queryToUpdate, settings: { points: [...queryToUpdate.settings.points, ...newPoints] } })
+          setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, ...newPoints] } })
         })
         .catch((error) => {
           console.error(error)
@@ -137,6 +154,11 @@ const HistoryQueryForm = ({ query }) => {
       setAlert({ text: error.message, type: 'danger' })
     }
   }
+
+  const checkIfQueryHasChanged = () => JSON.stringify(queryToUpdate.settings) === JSON.stringify(query.settings)
+        || queryToUpdate.startTime !== query.startTime || queryToUpdate.endTime !== query.endTime
+    || queryToUpdate.filePattern !== query.filePattern
+    || queryToUpdate.compress !== query.compress
 
   return (
     <>
@@ -153,35 +175,6 @@ const HistoryQueryForm = ({ query }) => {
             <FaArrowLeft className="oi-back-icon mr-2" />
           </Button>
           {`| ${name}`}
-          {paused ? (
-            <>
-              <FaPauseCircle
-                className="oi-icon-breadcrumb"
-                size={15}
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePause()
-                }}
-              />
-              <Label className="status-text-breadcrumb text-success">
-                Ongoing
-              </Label>
-            </>
-          ) : (
-            <>
-              <FaPlayCircle
-                className="oi-icon-breadcrumb"
-                size={15}
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePause()
-                }}
-              />
-              <Label className="status-text-breadcrumb text-warning">
-                Paused
-              </Label>
-            </>
-          )}
         </h6>
       </div>
       <Container fluid>
@@ -207,16 +200,86 @@ const HistoryQueryForm = ({ query }) => {
                 switchButton
               />
             </Col>
+            { queryToUpdate.enabled && progressStatus.status !== 'finished' && (
+            <Col md={2}>
+              {paused ? (
+                <>
+                  <FaPlayCircle
+                    className="oi-icon-breadcrumb"
+                    size={15}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handlePause()
+                    }}
+                  />
+
+                  <Label className="status-text-breadcrumb text-warning">
+                    Paused
+                  </Label>
+                </>
+              ) : (
+                <>
+                  <FaPauseCircle
+                    className="oi-icon-breadcrumb"
+                    size={15}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handlePause()
+                    }}
+                  />
+                  <Label className="status-text-breadcrumb text-success">
+                    Ongoing
+                  </Label>
+                </>
+              )}
+            </Col>
+            )}
             <Col md={2}>
               <Button
-                disabled={JSON.stringify(queryToUpdate) === JSON.stringify(query)}
+                disabled={checkIfQueryHasChanged()}
                 color="primary"
                 onClick={() => handleUpdateHistoryQuery()}
               >
-                Save history query
+                Save
               </Button>
             </Col>
           </Row>
+          <OIbTitle label="Progress status" />
+          <Row className="mb-2">
+            <Col md={3}>
+              <div>
+                <span><b>Status:</b></span>
+                <span className="mx-1">{progressStatus.status}</span>
+              </div>
+            </Col>
+            {progressStatus.currentTime && (
+              <Col md={3}>
+                <div>
+                  <span><b>Current time:</b></span>
+                  <span className="mx-1">{progressStatus.currentTime}</span>
+                </div>
+              </Col>
+            )}
+            {progressStatus.progress && (
+            <Col md={3}>
+              <div>
+                <span><b>Export progress:</b></span>
+                <span className="mx-1">
+                  {progressStatus.progress}
+                  %
+                </span>
+                {progressStatus.scanGroup && (
+                <span className="mx-1">
+                  (for scan group
+                  {progressStatus.scanGroup}
+                  )
+                </span>
+                )}
+              </div>
+            </Col>
+            )}
+          </Row>
+          <OIbTitle label="Settings" />
           <Row>
             <Col md={2}>
               <OIbDate
@@ -235,6 +298,26 @@ const HistoryQueryForm = ({ query }) => {
               />
             </Col>
             <Col md={2}>
+              <OIbInteger
+                name="maxReadInterval"
+                label="Max read interval"
+                value={queryToUpdate.settings.maxReadInterval}
+                defaultValue={3600}
+                onChange={onMaxReadIntervalChange}
+              />
+            </Col>
+            <Col md={2}>
+              <OIbInteger
+                name="readIntervalDelay"
+                label="Read interval delay"
+                value={queryToUpdate.settings.readIntervalDelay}
+                defaultValue={200}
+                onChange={onReadIntervalDelayChange}
+              />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={2}>
               <OIbText
                 label="File pattern"
                 name="filePattern"
@@ -251,35 +334,6 @@ const HistoryQueryForm = ({ query }) => {
                 value={!!queryToUpdate.compress}
                 onChange={onChange}
               />
-            </Col>
-          </Row>
-          <Row>
-            <Col md={4}>
-              <div>
-                <strong>Last completed dates: </strong>
-                <div className="mb-2">
-                  {lastCompleted?.south.length ? (
-                    <table className="last-completed-table">
-                      <thead>
-                        <tr>
-                          <th>Scan mode</th>
-                          <th>Last completed date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lastCompleted?.south.map((obj) => (
-                          <tr key={`${obj.scanMode}-${obj.lastCompletedDate}`}>
-                            <td>{obj.scanMode}</td>
-                            <td>{obj.lastCompletedDate}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    'Nothing to show'
-                  )}
-                </div>
-              </div>
             </Col>
           </Row>
           <Row>

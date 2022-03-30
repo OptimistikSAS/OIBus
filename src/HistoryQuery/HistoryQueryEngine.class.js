@@ -40,6 +40,7 @@ class HistoryQueryEngine extends BaseEngine {
    */
   async initEngineServices(engineConfig, loggerScope = 'HistoryQueryEngine') {
     await super.initEngineServices(engineConfig, loggerScope)
+    this.initializeStatusData()
 
     try {
       await fs.stat(this.cacheFolder)
@@ -58,12 +59,12 @@ class HistoryQueryEngine extends BaseEngine {
    * @returns {void}
    */
   initializeStatusData() {
-    if (!this.eventEmitters['/history-query-engine/sse']) {
-      this.eventEmitters['/history-query-engine/sse'] = {}
-      this.eventEmitters['/history-query-engine/sse'].events = new EventEmitter()
-      this.eventEmitters['/history-query-engine/sse'].events.setMaxListeners(0)
-      this.eventEmitters['/history-query-engine/sse'].events.on('data', this.listener)
-      this.eventEmitters['/history-query-engine/sse'].statusData = this.statusData
+    if (!this.eventEmitters['/history/engine/sse']) {
+      this.eventEmitters['/history/engine/sse'] = {}
+      this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
+      this.eventEmitters['/history/engine/sse'].events.setMaxListeners(0)
+      this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
+      this.eventEmitters['/history/engine/sse'].statusData = this.statusData
       this.updateStatusDataStream()
     }
     if (this.liveStatusInterval) {
@@ -75,7 +76,7 @@ class HistoryQueryEngine extends BaseEngine {
   }
 
   updateStatusDataStream() {
-    this.eventEmitters['/history-query-engine/sse']?.events?.emit('data', this.statusData)
+    this.eventEmitters['/history/engine/sse']?.events?.emit('data', this.statusData)
   }
 
   /**
@@ -85,7 +86,7 @@ class HistoryQueryEngine extends BaseEngine {
    */
   listener = (data) => {
     if (data) {
-      this.eventEmitters['/history-query-engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+      this.eventEmitters['/history/engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
     }
   }
 
