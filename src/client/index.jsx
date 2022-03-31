@@ -1,5 +1,5 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import * as ReactDOMClient from 'react-dom/client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -51,4 +51,6 @@ const Main = () => (
   </Router>
 )
 
-ReactDOM.render(<Main />, document.getElementById('root'))
+const root = ReactDOMClient.createRoot(document.getElementById('root'))
+
+root.render(<Main />)

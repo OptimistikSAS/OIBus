@@ -20,6 +20,7 @@ const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, d
   const monacoEditorOptions = {
     selectOnLineNumbers: true,
     minimap: { enabled: false },
+    scrollbar: { alwaysConsumeMouseWheel: false },
   }
 
   const validCheck = valid(value)
