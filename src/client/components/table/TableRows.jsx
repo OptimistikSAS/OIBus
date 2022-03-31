@@ -118,7 +118,7 @@ const TableRows = ({
 )
 
 TableRows.propTypes = {
-  rows: PropTypes.arrayOf(PropTypes.array).isRequired,
+  rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
   handleEdit: PropTypes.func,
   handleStatus: PropTypes.func,
   handleDelete: PropTypes.func,

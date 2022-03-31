@@ -60,7 +60,7 @@ Table.propTypes = {
   sortableProperties: PropTypes.arrayOf(PropTypes.string),
   sortBy: PropTypes.string,
   isAscending: PropTypes.bool,
-  rows: PropTypes.arrayOf(PropTypes.array).isRequired,
+  rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
   handleEdit: PropTypes.func,
   handleStatus: PropTypes.func,
   handleAdd: PropTypes.func,
