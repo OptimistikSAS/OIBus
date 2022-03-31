@@ -24,9 +24,9 @@ const imageCategories = {
     image: FileOut,
     label: 'File',
   },
-  Api: {
+  API: {
     image: Api,
-    label: 'Api',
+    label: 'API',
   },
   Optimistik: {
     image: Optimistik,
