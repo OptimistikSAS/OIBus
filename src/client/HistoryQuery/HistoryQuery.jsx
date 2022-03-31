@@ -41,24 +41,7 @@ const HistoryQuery = () => {
    */
   const handleEdit = (position) => {
     const historyQuery = queries[findIndexBasedOnId(position)]
-    const link = `/history-query/${historyQuery.id}`
-    navigate(link)
-  }
-
-  /**
-   * Calculates the status of history query read based on the end time and start time in percent
-   * @param {Date} startTime The start time of history query
-   * @param {Date} endTime The end time of history query
-   * @param {Date} lastCompleted The lastCompleted date of history query
-   * @return {number} The status percent
-   */
-  const percentageCalculator = (startTime, endTime, lastCompleted) => {
-    if (!lastCompleted) {
-      return 0
-    }
-    const differenceFromStartToEnd = new Date(endTime).getTime() - new Date(startTime).getTime()
-    const differenceFromLastCompletedToEnd = new Date(endTime).getTime() - new Date(lastCompleted).getTime()
-    return differenceFromLastCompletedToEnd > 0 ? (100 - ((differenceFromLastCompletedToEnd * 100) / differenceFromStartToEnd)).toFixed(2) : 100
+    navigate(`/history-query/${historyQuery.id}`)
   }
 
   /**
@@ -68,7 +51,7 @@ const HistoryQuery = () => {
    */
   const addHistoryQuery = async (queryObject) => {
     apis.createHistoryQuery(queryObject).then((response) => {
-      setQueries([...queries, response])
+      navigate(`/history-query/${response.id}`)
     })
   }
 
@@ -82,7 +65,7 @@ const HistoryQuery = () => {
     await apis.deleteHistoryQuery(queryToDelete.id)
     setQueries(queries.filter((query) => query.id !== queryToDelete.id))
 
-    queries.forEach(async (currentQuery) => {
+    queries.forEach((currentQuery) => {
       if (currentQuery.orderColumn > position + 1) {
         apis.orderHistoryQuery(currentQuery.id, { orderColumn: currentQuery.orderColumn - 1 }).then(() => {
           setQueries(queries.map((query) => {
@@ -194,7 +177,7 @@ const HistoryQuery = () => {
     }
   }
 
-  const tableHeaders = ['Order', 'Query', 'Status', 'Period', 'Percentage']
+  const tableHeaders = ['Order', 'Query', 'Status', 'Period']
   const tableRows = historyQueries?.map(({ name, status, startTime, endTime, orderColumn }) => [
     {
       name: orderColumn,
@@ -209,7 +192,6 @@ const HistoryQuery = () => {
       value: <div className={statusColor(status || 'pending')}>{status || 'pending'}</div>,
     },
     { name: 'period', value: startTime && endTime ? `${startTime} -> ${endTime}` : 'Dates not specified' },
-    { name: 'percentage', value: startTime && endTime ? `${percentageCalculator(startTime, endTime, new Date())} %` : '-' },
   ])
 
   return tableRows ? (

@@ -171,7 +171,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               </b>
             </span>
             <span
-              class="mx-1"
+              class="text-warning mx-1"
             >
               pending
             </span>
@@ -540,7 +540,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               </b>
             </span>
             <span
-              class="mx-1"
+              class="text-info mx-1"
             >
               exporting
             </span>
@@ -885,7 +885,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               </b>
             </span>
             <span
-              class="mx-1"
+              class="text-warning mx-1"
             >
               pending
             </span>

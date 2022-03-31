@@ -160,6 +160,21 @@ const HistoryQueryForm = ({ query }) => {
     || queryToUpdate.filePattern !== query.filePattern
     || queryToUpdate.compress !== query.compress
 
+  /**
+   * Returns the text color for each status
+   * @param {string} status The status of the current history query
+   * @returns {string} The color represented by the status
+   */
+  const statusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'text-warning mx-1'
+      case 'exporting': return 'text-info mx-1'
+      case 'importing': return 'text-primary mx-1'
+      case 'finished': return 'text-success mx-1'
+      default: return 'text-primary mx-1'
+    }
+  }
+
   return (
     <>
       <div className="d-flex align-items-center w-100 oi-sub-nav mb-2">
@@ -249,7 +264,7 @@ const HistoryQueryForm = ({ query }) => {
             <Col md={3}>
               <div>
                 <span><b>Status:</b></span>
-                <span className="mx-1">{progressStatus.status}</span>
+                <span className={statusColor(progressStatus.status)}>{progressStatus.status}</span>
               </div>
             </Col>
             {progressStatus.currentTime ? (
