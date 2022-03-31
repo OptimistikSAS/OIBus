@@ -46,6 +46,7 @@ const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, d
       {contentType && (
       <>
         <div className="invalid-feedback">{validCheck}</div>
+        {help && <div className="mb-2"><FormText>{help}</FormText></div>}
         <MonacoEditor
           language={contentType}
           theme="vs"

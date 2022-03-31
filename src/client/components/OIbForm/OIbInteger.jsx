@@ -27,7 +27,7 @@ const OIbInteger = ({ label, help, valid, value, name, onChange, defaultValue, h
         id={name}
         name={name}
         invalid={validCheck !== null}
-        value={value || ''}
+        value={value ?? ''}
         onChange={handleChange}
       />
       <FormFeedback>{validCheck}</FormFeedback>

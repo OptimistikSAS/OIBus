@@ -562,7 +562,7 @@ module.exports = {
             connectionTimeout: 1000,
             requestTimeout: 1000,
             compression: false,
-            maxReadInterval: 3600,
+            maxReadInterval: 0,
             readIntervalDelay: 200,
             driver: 'sqlite',
             databasePath: './database.db',
@@ -591,8 +591,18 @@ module.exports = {
           dataSource.SQLDbToFile.dateFormat = dataSource.SQLDbToFile.dateFormat.replace('YYYY', 'yyyy')
             .replace('DD', 'dd')
         }
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'maxReadInterval')) {
+          logger.info('Add maxReadInterval')
+          dataSource.SQLDbToFile.maxReadInterval = 0
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'readIntervalDelay')) {
+          logger.info('Add readIntervalDelay')
+          dataSource.SQLDbToFile.readIntervalDelay = 200
+        }
         if (Object.prototype.hasOwnProperty.call(dataSource.SQLDbToFile, 'filename')) {
-          logger.info('Update date format from moment to luxon for SQLDbToFile')
+          logger.info('Update @date to @CurrentDate in file name')
           dataSource.SQLDbToFile.filename = dataSource.SQLDbToFile.filename.replace('@date', '@CurrentDate')
         }
 

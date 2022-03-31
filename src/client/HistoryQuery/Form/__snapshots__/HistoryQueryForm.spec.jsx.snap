@@ -251,7 +251,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               class="form-label"
               for="maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="false"
@@ -264,6 +264,13 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
             <div
               class="invalid-feedback"
             />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Put 0 to not split the query
+              </div>
+            </small>
           </div>
         </div>
         <div
@@ -276,7 +283,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               class="form-label"
               for="readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -620,7 +627,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               class="form-label"
               for="maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="false"
@@ -633,6 +640,13 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
             <div
               class="invalid-feedback"
             />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Put 0 to not split the query
+              </div>
+            </small>
           </div>
         </div>
         <div
@@ -645,7 +659,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               class="form-label"
               for="readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -965,7 +979,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               class="form-label"
               for="maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="false"
@@ -978,6 +992,13 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             <div
               class="invalid-feedback"
             />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Put 0 to not split the query
+              </div>
+            </small>
           </div>
         </div>
         <div
@@ -990,7 +1011,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               class="form-label"
               for="readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -1060,6 +1081,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             <div
               class="invalid-feedback"
             />
+            <div
+              class="mb-2"
+            >
+              <small
+                class="form-text text-muted"
+              >
+                <div>
+                  Available variables: @StartTime, @EndTime. Be sure to use both variables to split the query with the Max read interval field.
+                </div>
+              </small>
+            </div>
             <section
               style="display: flex; position: relative; text-align: initial; width: 100%; height: 400px;"
             >

@@ -142,8 +142,9 @@ schema.form = {
     type: 'OIbInteger',
     label: 'Max read interval (s)',
     md: 2,
-    valid: minValue(60),
-    defaultValue: 3600,
+    valid: minValue(0),
+    defaultValue: 0,
+    help: <div>Put 0 to not split the query</div>,
   },
   readIntervalDelay: {
     type: 'OIbInteger',
@@ -152,7 +153,7 @@ schema.form = {
     md: 2,
     valid: minValue(0),
     defaultValue: 200,
-    help: <div>Time to wait between sub-requests when the main request is split (ms)</div>,
+    help: <div>Time to wait between the read interval iterations (ms)</div>,
   },
   FileSettings: {
     type: 'OIbTitle',
