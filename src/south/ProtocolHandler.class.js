@@ -295,11 +295,15 @@ class ProtocolHandler {
     const bufferSave = [...this.buffer]
     this.buffer = []
     await this.engine.addValues(this.dataSource.id, bufferSave)
-    this.statusData['Number of values since OIBus has started'] += bufferSave.length
-    this.statusData['Last added points at'] = new Date().toLocaleString()
-    // eslint-disable-next-line max-len
-    this.statusData['Last added point id (value)'] = `${bufferSave[bufferSave.length - 1].pointId} (${JSON.stringify(bufferSave[bufferSave.length - 1].data)})`
-    this.updateStatusDataStream()
+
+    if (bufferSave.length > 0) {
+      this.statusData['Number of values since OIBus has started'] += bufferSave.length
+      this.statusData['Last added points at'] = new Date().toLocaleString()
+      // eslint-disable-next-line max-len
+      this.statusData['Last added point id (value)'] = `${bufferSave[bufferSave.length - 1].pointId} (${JSON.stringify(bufferSave[bufferSave.length - 1].data)})`
+      this.updateStatusDataStream()
+    }
+
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout)
       this.bufferTimeout = null
