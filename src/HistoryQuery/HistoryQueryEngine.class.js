@@ -104,7 +104,7 @@ class HistoryQueryEngine extends BaseEngine {
       const flattenedValues = sanitizedValues.map((sanitizedValue) => this.flattenObject(sanitizedValue))
       const csvContent = csv.unparse(flattenedValues)
       const filename = this.historyQuery.south.replaceFilenameWithVariable(this.historyQuery.south.filename)
-      const filePath = path.join(this.historyQuery.south.tmpFolder, filename)
+      const filePath = path.join(this.historyQuery.dataCacheFolder, filename)
       await fs.writeFile(filePath, csvContent)
     }
   }
@@ -223,7 +223,7 @@ class HistoryQueryEngine extends BaseEngine {
    * @return {string} - The cache folder
    */
   getCacheFolder() {
-    return this.cacheFolder
+    return this.historyQuery.cacheFolder
   }
 
   /**
