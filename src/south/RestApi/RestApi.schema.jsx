@@ -154,6 +154,6 @@ schema.form = {
   },
 }
 
-schema.category = 'IoT'
+schema.category = 'API'
 
 export default schema

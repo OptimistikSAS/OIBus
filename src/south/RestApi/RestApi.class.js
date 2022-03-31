@@ -8,18 +8,19 @@ const { DateTime } = require('luxon')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 const oiaTimeValues = require('./formatters/oia-time-values')
+const slims = require('./formatters/slims')
 
 const parsers = {
   Raw: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
   'OIAnalytics time values': oiaTimeValues,
-  SLIMS: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
+  SLIMS: slims,
 }
 
 /**
  * Class RestApi
  */
 class RestApi extends ProtocolHandler {
-  static category = 'IoT'
+  static category = 'API'
 
   /**
    * Constructor for RestApi
