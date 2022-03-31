@@ -200,40 +200,40 @@ const HistoryQueryForm = ({ query }) => {
                 switchButton
               />
             </Col>
-            { queryToUpdate.enabled && progressStatus.status !== 'finished' && (
-            <Col md={2}>
-              {paused ? (
-                <>
-                  <FaPlayCircle
-                    className="oi-icon-breadcrumb"
-                    size={15}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handlePause()
-                    }}
-                  />
+            { queryToUpdate.enabled && progressStatus.status !== 'finished' ? (
+              <Col md={2}>
+                {paused ? (
+                  <>
+                    <FaPlayCircle
+                      className="oi-icon-breadcrumb"
+                      size={15}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handlePause()
+                      }}
+                    />
 
-                  <Label className="status-text-breadcrumb text-warning">
-                    Paused
-                  </Label>
-                </>
-              ) : (
-                <>
-                  <FaPauseCircle
-                    className="oi-icon-breadcrumb"
-                    size={15}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handlePause()
-                    }}
-                  />
-                  <Label className="status-text-breadcrumb text-success">
-                    Ongoing
-                  </Label>
-                </>
-              )}
-            </Col>
-            )}
+                    <Label className="status-text-breadcrumb text-warning">
+                      Paused
+                    </Label>
+                  </>
+                ) : (
+                  <>
+                    <FaPauseCircle
+                      className="oi-icon-breadcrumb"
+                      size={15}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handlePause()
+                      }}
+                    />
+                    <Label className="status-text-breadcrumb text-success">
+                      Ongoing
+                    </Label>
+                  </>
+                )}
+              </Col>
+            ) : null}
             <Col md={2}>
               <Button
                 disabled={checkIfQueryHasChanged()}
@@ -252,32 +252,32 @@ const HistoryQueryForm = ({ query }) => {
                 <span className="mx-1">{progressStatus.status}</span>
               </div>
             </Col>
-            {progressStatus.currentTime && (
+            {progressStatus.currentTime ? (
               <Col md={3}>
                 <div>
                   <span><b>Current time:</b></span>
                   <span className="mx-1">{progressStatus.currentTime}</span>
                 </div>
               </Col>
-            )}
-            {progressStatus.progress && (
-            <Col md={3}>
-              <div>
-                <span><b>Export progress:</b></span>
-                <span className="mx-1">
-                  {progressStatus.progress}
-                  %
-                </span>
-                {progressStatus.scanGroup && (
-                <span className="mx-1">
-                  (for scan group
-                  {progressStatus.scanGroup}
-                  )
-                </span>
-                )}
-              </div>
-            </Col>
-            )}
+            ) : null}
+            {progressStatus.progress ? (
+              <Col md={6}>
+                <div>
+                  <span><b>Export progress:</b></span>
+                  <span className="mx-1">
+                    {progressStatus.progress}
+                    %
+                  </span>
+                  {progressStatus.scanGroup && (
+                  <span className="mx-1">
+                    (for scan group
+                    {progressStatus.scanGroup}
+                    )
+                  </span>
+                  )}
+                </div>
+              </Col>
+            ) : null}
           </Row>
           <OIbTitle label="Settings" />
           <Row>

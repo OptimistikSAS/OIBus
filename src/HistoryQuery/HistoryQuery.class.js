@@ -101,8 +101,8 @@ class HistoryQuery {
       await this.setStatus(HistoryQuery.STATUS_EXPORTING)
     }
 
-    const { protocol, enabled, name } = this.dataSource
-    this.south = enabled ? this.engine.createSouth(protocol, this.dataSource) : null
+    const { protocol, name } = this.dataSource
+    this.south = this.engine.createSouth(protocol, this.dataSource)
     if (this.south) {
       // override some parameters for history query
       this.south.filename = this.filePattern
@@ -117,7 +117,7 @@ class HistoryQuery {
       await this.south.connect()
       await this.export()
     } else {
-      this.logger.error(`South ${name} is not enabled or not found`)
+      this.logger.error(`South connector "${name}" is not found (history query ${this.id})`)
       await this.disable()
       this.engine.runNextHistoryQuery()
     }
@@ -136,16 +136,15 @@ class HistoryQuery {
 
     const {
       api,
-      enabled,
       name,
     } = this.application
-    this.north = enabled ? this.engine.createNorth(api, this.application) : null
+    this.north = this.engine.createNorth(api, this.application)
     if (this.north) {
       await this.north.init()
       await this.north.connect()
       await this.import()
     } else {
-      this.logger.error(`Application ${name} is enabled or not found`)
+      this.logger.error(`North connector "${name}" is not found (history query ${this.id})`)
       await this.disable()
       this.engine.runNextHistoryQuery()
     }
