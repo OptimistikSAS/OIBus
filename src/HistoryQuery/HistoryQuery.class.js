@@ -18,6 +18,9 @@ class HistoryQuery {
   // History query finished
   static STATUS_FINISHED = 'finished'
 
+  // The folder to store the files during the export
+  static DATA_FOLDER = 'data'
+
   // The folder to store the imported files
   static IMPORTED_FOLDER = 'imported'
 
@@ -37,7 +40,8 @@ class HistoryQuery {
     this.startTime = new Date(config.startTime)
     this.endTime = new Date(config.endTime)
     this.filePattern = config.filePattern
-    this.cacheFolder = `${this.engine.getCacheFolder()}/${this.id}`
+    this.cacheFolder = `${this.engine.cacheFolder}/${this.id}`
+    this.dataCacheFolder = `${this.engine.cacheFolder}/${this.id}/${HistoryQuery.DATA_FOLDER}`
     this.statusData = { status: this.status }
     this.numberOfQueryParts = Math.round((this.endTime.getTime() - this.startTime.getTime()) / (1000 * this.config.settings.maxReadInterval))
 
@@ -57,6 +61,7 @@ class HistoryQuery {
    */
   async start() {
     await HistoryQuery.createFolder(this.cacheFolder)
+    await HistoryQuery.createFolder(this.dataCacheFolder)
     switch (this.status) {
       case HistoryQuery.STATUS_PENDING:
       case HistoryQuery.STATUS_EXPORTING:
@@ -106,7 +111,7 @@ class HistoryQuery {
     if (this.south) {
       // override some parameters for history query
       this.south.filename = this.filePattern
-      this.south.tmpFolder = this.cacheFolder
+      this.south.tmpFolder = this.dataCacheFolder
       this.south.dataSource.startTime = this.config.startTime
       this.south.points = this.config.settings.points
       this.south.query = this.config.settings.query
@@ -194,26 +199,26 @@ class HistoryQuery {
   async import() {
     let files = []
     try {
-      this.logger.trace(`Reading ${this.cacheFolder} directory`)
-      files = await fs.readdir(this.cacheFolder)
+      this.logger.trace(`Reading ${this.dataCacheFolder} directory`)
+      files = await fs.readdir(this.dataCacheFolder)
     } catch (error) {
-      this.logger.error(`Could not read folder ${this.cacheFolder} - error: ${error})`)
+      this.logger.error(`Could not read folder ${this.dataCacheFolder} - error: ${error})`)
       return
     }
 
     // Filter out directories
     files = files.filter(async (filename) => {
-      const stats = await fs.stat(path.join(this.cacheFolder, filename))
+      const stats = await fs.stat(path.join(this.dataCacheFolder, filename))
       return stats.isFile()
     })
     if (files.length === 0) {
-      this.logger.debug(`No files in ${this.cacheFolder}`)
+      this.logger.debug(`No files in ${this.dataCacheFolder}`)
       return
     }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const filename of files) {
-      const filePath = path.join(this.cacheFolder, filename)
+      const filePath = path.join(this.dataCacheFolder, filename)
       let status
       try {
         status = await this.north.handleFile(filePath)
