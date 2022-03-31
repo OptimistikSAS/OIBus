@@ -253,7 +253,7 @@ class HistoryQuery {
     do {
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests (for example only one hour if maxReadInterval is 3600)
-      if ((this.endTime.getTime() - startTime.getTime()) > 1000 * this.south.maxReadInterval) {
+      if (this.south.maxReadInterval > 0 && (this.endTime.getTime() - startTime.getTime()) > 1000 * this.south.maxReadInterval) {
         intervalEndTime = new Date(startTime.getTime() + 1000 * this.south.maxReadInterval)
       } else {
         intervalEndTime = this.endTime

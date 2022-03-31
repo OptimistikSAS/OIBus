@@ -1863,7 +1863,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
               id="south.dataSources.0.FolderScanner.minAge"
               name="south.dataSources.0.FolderScanner.minAge"
               type="integer"
-              value=""
+              value="0"
             />
             <div
               class="invalid-feedback"
@@ -7366,6 +7366,17 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
             <div
               class="invalid-feedback"
             />
+            <div
+              class="mb-2"
+            >
+              <small
+                class="form-text text-muted"
+              >
+                <div>
+                  Available variables: @StartTime, @EndTime
+                </div>
+              </small>
+            </div>
             <section
               style="display: flex; position: relative; text-align: initial; width: 100%; height: 400px;"
             >
@@ -7451,8 +7462,8 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
               Max read interval (s)
             </label>
             <input
-              aria-invalid="true"
-              class="oi-form-input is-invalid form-control"
+              aria-invalid="false"
+              class="oi-form-input form-control"
               id="south.dataSources.0.SQL.maxReadInterval"
               name="south.dataSources.0.SQL.maxReadInterval"
               type="integer"
@@ -7460,9 +7471,14 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
             />
             <div
               class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
             >
-              Value must be greater than 60
-            </div>
+              <div>
+                Put 0 to not split the query
+              </div>
+            </small>
           </div>
         </div>
         <div
@@ -7492,7 +7508,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Time to wait between sub-requests when the main request is split (ms)
+                Time to wait between the read interval iterations (ms)
               </div>
             </small>
           </div>

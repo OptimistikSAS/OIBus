@@ -234,7 +234,7 @@ class ProtocolHandler {
 
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests (for example only one hour if maxReadInterval is 3600)
-      if ((endTime.getTime() - startTime.getTime()) > 1000 * this.maxReadInterval) {
+      if (this.maxReadInterval > 0 && (endTime.getTime() - startTime.getTime()) > 1000 * this.maxReadInterval) {
         intervalEndTime = new Date(startTime.getTime() + 1000 * this.maxReadInterval)
       } else {
         intervalEndTime = endTime

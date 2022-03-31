@@ -70,7 +70,10 @@ const HistoryQueryForm = ({ query }) => {
       setAlert(null)
       await apis.updateHistoryQuery(queryToUpdate.id, { ...queryToUpdate })
     } else {
-      setAlert({ text: 'You have unresolved errors in configuration! Please fix before updating the settings.', type: 'danger' })
+      setAlert({
+        text: 'You have unresolved errors in configuration! Please fix before updating the settings.',
+        type: 'danger',
+      })
     }
   }
 
@@ -92,9 +95,17 @@ const HistoryQueryForm = ({ query }) => {
 
   const handleAddPoint = (attributes) => {
     const newPointAttributes = {}
-    attributes.forEach((attribute) => { newPointAttributes[attribute] = '' })
+    attributes.forEach((attribute) => {
+      newPointAttributes[attribute] = ''
+    })
     setQueryToUpdate(
-      { ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, { ...newPointAttributes }] } },
+      {
+        ...queryToUpdate,
+        settings: {
+          ...queryToUpdate.settings,
+          points: [...queryToUpdate.settings.points, { ...newPointAttributes }],
+        },
+      },
     )
   }
 
@@ -126,7 +137,10 @@ const HistoryQueryForm = ({ query }) => {
   const handleDeletePoint = (indexInTable) => {
     setQueryToUpdate((oldQuery) => ({
       ...oldQuery,
-      settings: { ...oldQuery.settings, points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable) },
+      settings: {
+        ...oldQuery.settings,
+        points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable),
+      },
     }))
     Object.keys(errors).forEach((errorKey) => {
       if (errorKey.split('.')[1] === String(indexInTable)) delete errors[errorKey]
@@ -143,7 +157,10 @@ const HistoryQueryForm = ({ query }) => {
       utils
         .parseCSV(text)
         .then((newPoints) => {
-          setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, ...newPoints] } })
+          setQueryToUpdate({
+            ...queryToUpdate,
+            settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, ...newPoints] },
+          })
         })
         .catch((error) => {
           console.error(error)
@@ -157,21 +174,26 @@ const HistoryQueryForm = ({ query }) => {
 
   const checkIfQueryHasChanged = () => JSON.stringify(queryToUpdate.settings) === JSON.stringify(query.settings)
         || queryToUpdate.startTime !== query.startTime || queryToUpdate.endTime !== query.endTime
-    || queryToUpdate.filePattern !== query.filePattern
-    || queryToUpdate.compress !== query.compress
+        || queryToUpdate.filePattern !== query.filePattern
+        || queryToUpdate.compress !== query.compress
 
   /**
-   * Returns the text color for each status
-   * @param {string} status The status of the current history query
-   * @returns {string} The color represented by the status
-   */
+     * Returns the text color for each status
+     * @param {string} status The status of the current history query
+     * @returns {string} The color represented by the status
+     */
   const statusColor = (status) => {
     switch (status) {
-      case 'pending': return 'text-warning mx-1'
-      case 'exporting': return 'text-info mx-1'
-      case 'importing': return 'text-primary mx-1'
-      case 'finished': return 'text-success mx-1'
-      default: return 'text-primary mx-1'
+      case 'pending':
+        return 'text-warning mx-1'
+      case 'exporting':
+        return 'text-info mx-1'
+      case 'importing':
+        return 'text-primary mx-1'
+      case 'finished':
+        return 'text-success mx-1'
+      default:
+        return 'text-primary mx-1'
     }
   }
 
@@ -197,9 +219,15 @@ const HistoryQueryForm = ({ query }) => {
           <OIbTitle label="Handlers" />
           <Row className="mb-2">
             <Col md={2}>
-              <ConnectorButton connectorName={dataSource?.name ?? ''} connectorUrl={`/south/${queryToUpdate.southId}`} />
+              <ConnectorButton
+                connectorName={dataSource?.name ?? ''}
+                connectorUrl={`/south/${queryToUpdate.southId}`}
+              />
               <FaArrowRight className="me-2" />
-              <ConnectorButton connectorName={application?.name ?? ''} connectorUrl={`/north/${queryToUpdate.northId}`} />
+              <ConnectorButton
+                connectorName={application?.name ?? ''}
+                connectorUrl={`/north/${queryToUpdate.northId}`}
+              />
             </Col>
           </Row>
           <OIbTitle label="General settings" />
@@ -215,7 +243,7 @@ const HistoryQueryForm = ({ query }) => {
                 switchButton
               />
             </Col>
-            { queryToUpdate.enabled && progressStatus.status !== 'finished' ? (
+            {queryToUpdate.enabled && progressStatus.status !== 'finished' ? (
               <Col md={2}>
                 {paused ? (
                   <>
@@ -284,11 +312,11 @@ const HistoryQueryForm = ({ query }) => {
                     %
                   </span>
                   {progressStatus.scanGroup && (
-                  <span className="mx-1">
-                    (for scan group
-                    {progressStatus.scanGroup}
-                    )
-                  </span>
+                    <span className="mx-1">
+                      (for scan group
+                      {progressStatus.scanGroup}
+                      )
+                    </span>
                   )}
                 </div>
               </Col>
@@ -315,16 +343,17 @@ const HistoryQueryForm = ({ query }) => {
             <Col md={2}>
               <OIbInteger
                 name="maxReadInterval"
-                label="Max read interval"
+                label="Max read interval (s)"
                 value={queryToUpdate.settings.maxReadInterval}
                 defaultValue={3600}
                 onChange={onMaxReadIntervalChange}
+                help={<div>Put 0 to not split the query</div>}
               />
             </Col>
             <Col md={2}>
               <OIbInteger
                 name="readIntervalDelay"
-                label="Read interval delay"
+                label="Read interval delay (ms)"
                 value={queryToUpdate.settings.readIntervalDelay}
                 defaultValue={200}
                 onChange={onReadIntervalDelayChange}
@@ -371,6 +400,15 @@ const HistoryQueryForm = ({ query }) => {
                     contentType="sql"
                     value={queryToUpdate.settings?.query}
                     onChange={handleAddQuery}
+                    help={
+                      (
+                        <div>
+                          Available variables: @StartTime, @EndTime.
+                          Be sure to use both variables to split the query with the Max read
+                          interval field.
+                        </div>
+                      )
+                    }
                   />
                 </>
               )}
