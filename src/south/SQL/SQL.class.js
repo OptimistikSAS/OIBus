@@ -23,13 +23,13 @@ try {
 }
 
 /**
- * Class SQLDbToFile
+ * Class SQL
  */
-class SQLDbToFile extends ProtocolHandler {
+class SQL extends ProtocolHandler {
   static category = 'DatabaseOut'
 
   /**
-   * Constructor for SQLDbToFile
+   * Constructor for SQL
    * @constructor
    * @param {Object} dataSource - The data source
    * @param {BaseEngine} engine - The engine
@@ -64,7 +64,7 @@ class SQLDbToFile extends ProtocolHandler {
       compression,
       maxReadInterval,
       readIntervalDelay,
-    } = this.dataSource.SQLDbToFile
+    } = this.dataSource.SQL
 
     this.preserveFiles = false
     this.driver = driver
@@ -318,7 +318,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = await mysql.createConnection(config)
 
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
+      const params = SQL.generateReplacementParameters(this.query, startTime, endTime)
       const [rows] = await connection.execute(
         {
           sql: adaptedQuery,
@@ -363,7 +363,7 @@ class SQLDbToFile extends ProtocolHandler {
     try {
       connection = new Client(config)
       await connection.connect()
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
+      const params = SQL.generateReplacementParameters(this.query, startTime, endTime)
       const { rows } = await connection.query(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -405,7 +405,7 @@ class SQLDbToFile extends ProtocolHandler {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
       connection = await oracledb.getConnection(config)
       connection.callTimeout = this.requestTimeout
-      const params = SQLDbToFile.generateReplacementParameters(this.query, startTime, endTime)
+      const params = SQL.generateReplacementParameters(this.query, startTime, endTime)
       const { rows } = await connection.execute(adaptedQuery, params)
       data = rows
     } catch (error) {
@@ -483,7 +483,7 @@ class SQLDbToFile extends ProtocolHandler {
         .forEach((key) => {
           const value = row[key]
           if (value instanceof Date) {
-            row[key] = SQLDbToFile.formatDateWithTimezone(value, this.timezone, this.dateFormat)
+            row[key] = SQL.formatDateWithTimezone(value, this.timezone, this.dateFormat)
           }
         })
     })
@@ -517,8 +517,8 @@ class SQLDbToFile extends ProtocolHandler {
    * @return {any[]} - The replacement parameters
    */
   static generateReplacementParameters(query, startTime, endTime) {
-    const startTimeOccurrences = SQLDbToFile.getOccurrences(query, '@StartTime', startTime)
-    const endTimeOccurrences = SQLDbToFile.getOccurrences(query, '@EndTime', endTime)
+    const startTimeOccurrences = SQL.getOccurrences(query, '@StartTime', startTime)
+    const endTimeOccurrences = SQL.getOccurrences(query, '@EndTime', endTime)
     const occurrences = startTimeOccurrences.concat(endTimeOccurrences)
     occurrences.sort((a, b) => (a.index - b.index))
     return occurrences.map((occurrence) => occurrence.value)
@@ -545,4 +545,4 @@ class SQLDbToFile extends ProtocolHandler {
   }
 }
 
-module.exports = SQLDbToFile
+module.exports = SQL

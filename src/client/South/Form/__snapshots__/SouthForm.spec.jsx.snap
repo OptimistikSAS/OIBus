@@ -6487,7 +6487,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
 </div>
 `;
 
-exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
+exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
@@ -6496,7 +6496,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
       class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
-        SQLDbToFile
+        SQL
       </div>
       <button
         class="util-button btn btn-outline-secondary"
@@ -6979,7 +6979,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             class="row"
           >
             <h5>
-              SQLDBtoFile Settings
+              SQL Settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -7016,61 +7016,17 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
                   class="col"
                 >
                   <p>
-                    SQLDbToFile periodically connects to the specified SQL server at an interval specified by scan mode. It gets values from the database based on the 'query' parameter, saves the result in a CSV file and sends to any North capable of handling files and configured to accept files from this South.
+                    SQL periodically connects to the specified SQL server at an interval specified by scan mode. It gets values from the database based on the 'query' parameter, saves the result in a CSV file and sends to any North capable of handling files and configured to accept files from this South.
                   </p>
-                  <ul>
-                    <li>
-                      The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime.
-                    </li>
-                    <li>
-                      To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout.
-                      <br />
-                      Note for Oracle: Connection timeout can be specified in the 'sqlnet.ora' file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora) like this: 'SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms'
-                    </li>
-                    <li>
-                      The query results are then converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template.
-                      <p>
-                        The file name can be adapted with the following parameters: 
-                      </p>
-                      <ul>
-                        <li>
-                          <b>
-                            @CurrentDate:
-                          </b>
-                           
-                          The date where the file is created. The date format is yyyy_MM_dd_HH_mm_ss_SSS
-                        </li>
-                        <li>
-                          <b>
-                            @ConnectorName:
-                          </b>
-                           
-                          The name of the south connector
-                        </li>
-                        <li>
-                          <b>
-                            @QueryPart:
-                          </b>
-                           
-                          When the query is split according the the MaxReadInterval field, we can use the @QueryPart parameter to name the file. If the query is not split, @QueryPart is replaced by 0
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      Since we have no information about the SQL server it is possible to specify the time column and the timezone for it.
-                    </li>
-                    <li>
-                      All date fields are read as UTC time and converted to the specified timezone. Ex: With timezone 'Europe/Paris' the date '2019-01-01 00:00:00' will be converted to 'Tue Jan 01 2019 00:00:00 GMT+0100'
-                    </li>
-                  </ul>
                   <p>
                     Note for Oracle: Oracle Client libraries must be installed and configured separated.
+                     
                     <a
                       href="https://oracle.github.io/node-oracledb/INSTALL.html"
                       rel="noopener noreferrer"
                       target="_blank"
                     >
-                       More info
+                      More info
                     </a>
                   </p>
                   <p>
@@ -7093,15 +7049,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.driver"
+              for="south.dataSources.0.SQL.driver"
             >
               SQL Driver
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.SQLDbToFile.driver"
-              name="south.dataSources.0.SQLDbToFile.driver"
+              id="south.dataSources.0.SQL.driver"
+              name="south.dataSources.0.SQL.driver"
             >
               <option
                 value="mssql"
@@ -7160,15 +7116,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.host"
+              for="south.dataSources.0.SQL.host"
             >
               Host
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.host"
-              name="south.dataSources.0.SQLDbToFile.host"
+              id="south.dataSources.0.SQL.host"
+              name="south.dataSources.0.SQL.host"
               type="text"
               value="192.168.0.11"
             />
@@ -7179,7 +7135,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               class="form-text text-muted"
             >
               <div>
-                IP address of the SQLDbToFile server
+                IP address of the SQL server
               </div>
             </small>
           </div>
@@ -7192,15 +7148,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.port"
+              for="south.dataSources.0.SQL.port"
             >
               Port
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.port"
-              name="south.dataSources.0.SQLDbToFile.port"
+              id="south.dataSources.0.SQL.port"
+              name="south.dataSources.0.SQL.port"
               type="integer"
               value="1433"
             />
@@ -7211,7 +7167,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Port number of the SQLDbToFile server
+                Port number of the SQL server
               </div>
             </small>
           </div>
@@ -7228,15 +7184,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.database"
+              for="south.dataSources.0.SQL.database"
             >
               Database
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.database"
-              name="south.dataSources.0.SQLDbToFile.database"
+              id="south.dataSources.0.SQL.database"
+              name="south.dataSources.0.SQL.database"
               type="text"
               value="oibus"
             />
@@ -7264,15 +7220,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.username"
+              for="south.dataSources.0.SQL.username"
             >
               Username
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.username"
-              name="south.dataSources.0.SQLDbToFile.username"
+              id="south.dataSources.0.SQL.username"
+              name="south.dataSources.0.SQL.username"
               type="text"
               value="oibus_user"
             />
@@ -7296,7 +7252,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.password"
+              for="south.dataSources.0.SQL.password"
             >
               Password
             </label>
@@ -7306,8 +7262,8 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="south.dataSources.0.SQLDbToFile.password"
-                name="south.dataSources.0.SQLDbToFile.password"
+                id="south.dataSources.0.SQL.password"
+                name="south.dataSources.0.SQL.password"
                 type="password"
                 value="popopopopopopopopo"
               />
@@ -7333,6 +7289,69 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         class="row"
       >
         <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Query Settings
+              <button
+                class="util-button mt-1 btn btn-link"
+                id="id"
+              >
+                <svg
+                  class="oi-help"
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                  />
+                </svg>
+              </button>
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          >
+            <div
+              class="collapse"
+              toggler="id"
+            >
+              <div
+                class="row"
+                style="margin-bottom: 15px;"
+              >
+                <div
+                  class="col"
+                >
+                  <p>
+                    The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime. If @StartTime and @EndTime are used, the query will be split according to the maxReadInterval parameter. For example, if @EndTime and @StartTime is a two hours interval, and maxReadInterval is 3600s, the query will be split in two parts. Two files will be created.
+                  </p>
+                  <p>
+                    To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout.
+                    <br />
+                    Note for Oracle: Connection timeout can be specified in the 'sqlnet.ora' file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora) like this: 'SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms'
+                  </p>
+                  <p>
+                    The query results are then converted into a csv (see below).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
           class="col-md-8"
         >
           <div
@@ -7340,7 +7359,7 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.query"
+              for="south.dataSources.0.SQL.query"
             >
               Query
             </label>
@@ -7366,22 +7385,22 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
         class="row"
       >
         <div
-          class="col-md-3"
+          class="col-md-2"
         >
           <div
             class="mb-3"
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.connectionTimeout"
+              for="south.dataSources.0.SQL.connectionTimeout"
             >
               Connection timeout (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.connectionTimeout"
-              name="south.dataSources.0.SQLDbToFile.connectionTimeout"
+              id="south.dataSources.0.SQL.connectionTimeout"
+              name="south.dataSources.0.SQL.connectionTimeout"
               type="integer"
               value="1000"
             />
@@ -7391,6 +7410,185 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           </div>
         </div>
         <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.SQL.requestTimeout"
+            >
+              Request timeout (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.SQL.requestTimeout"
+              name="south.dataSources.0.SQL.requestTimeout"
+              type="integer"
+              value="1000"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.SQL.maxReadInterval"
+            >
+              Max read interval (s)
+            </label>
+            <input
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="south.dataSources.0.SQL.maxReadInterval"
+              name="south.dataSources.0.SQL.maxReadInterval"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            >
+              Value must be greater than 60
+            </div>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.SQL.readIntervalDelay"
+            >
+              Read interval delay (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.SQL.readIntervalDelay"
+              name="south.dataSources.0.SQL.readIntervalDelay"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Time to wait between sub-requests when the main request is split (ms)
+              </div>
+            </small>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              File Settings
+              <button
+                class="util-button mt-1 btn btn-link"
+                id="id"
+              >
+                <svg
+                  class="oi-help"
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 512 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
+                  />
+                </svg>
+              </button>
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          >
+            <div
+              class="collapse"
+              toggler="id"
+            >
+              <div
+                class="row"
+                style="margin-bottom: 15px;"
+              >
+                <div
+                  class="col"
+                >
+                  <p>
+                    The query results are converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template.
+                    <p>
+                      The file name can be adapted with the following variables: 
+                    </p>
+                    <ul>
+                      <li>
+                        <b>
+                          @CurrentDate:
+                        </b>
+                         
+                        The date the file is created. The date format is yyyy_MM_dd_HH_mm_ss_SSS
+                      </li>
+                      <li>
+                        <b>
+                          @ConnectorName:
+                        </b>
+                         
+                        The name of the south connector
+                      </li>
+                      <li>
+                        <b>
+                          @QueryPart:
+                        </b>
+                         
+                        When the query is split according the the MaxReadInterval field, we can use the @QueryPart parameter to name the file. If the query is not split, @QueryPart is replaced by 0
+                      </li>
+                    </ul>
+                  </p>
+                  <p>
+                    Since we have no information about the SQL server timezone it is possible to specify the time column and the timezone for it.
+                  </p>
+                  <p>
+                    All date fields are read as UTC time and converted to the specified timezone. Ex: With timezone 'Europe/Paris' the date '2019-01-01 00:00:00' will be converted to 'Tue Jan 01 2019 00:00:00 GMT+0100'
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
           class="col-md-3"
         >
           <div
@@ -7398,20 +7596,46 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.requestTimeout"
+              for="south.dataSources.0.SQL.filename"
             >
-              Request timeout (ms)
+              Filename
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.requestTimeout"
-              name="south.dataSources.0.SQLDbToFile.requestTimeout"
-              type="integer"
-              value="1000"
+              id="south.dataSources.0.SQL.filename"
+              name="south.dataSources.0.SQL.filename"
+              type="text"
+              value="sql-@CurrentDate.csv"
             />
             <div
               class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                The name of the CSV file. Available variables: @CurrentDate, @ConnectorName, @QueryPart
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label form-label"
+            >
+              Compress File?
+            </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.SQL.compression"
+              name="south.dataSources.0.SQL.compression"
+              type="checkbox"
             />
           </div>
         </div>
@@ -7427,15 +7651,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.delimiter"
+              for="south.dataSources.0.SQL.delimiter"
             >
               Delimiter
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.delimiter"
-              name="south.dataSources.0.SQLDbToFile.delimiter"
+              id="south.dataSources.0.SQL.delimiter"
+              name="south.dataSources.0.SQL.delimiter"
               type="text"
               value=","
             />
@@ -7459,66 +7683,23 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.dateFormat"
+              for="south.dataSources.0.SQL.dateFormat"
             >
               Date format
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.dateFormat"
-              name="south.dataSources.0.SQLDbToFile.dateFormat"
+              id="south.dataSources.0.SQL.dateFormat"
+              name="south.dataSources.0.SQL.dateFormat"
               type="text"
               value="yyyy-MM-dd HH:mm:ss.SSS"
             />
             <div
               class="invalid-feedback"
             />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Date Format
-              </div>
-            </small>
           </div>
         </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.SQLDbToFile.filename"
-            >
-              Filename
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.filename"
-              name="south.dataSources.0.SQLDbToFile.filename"
-              type="text"
-              value="sql-@CurrentDate.csv"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The name of the CSV file
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
         <div
           class="col-md-2"
         >
@@ -7527,28 +7708,21 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.timeColumn"
+              for="south.dataSources.0.SQL.timeColumn"
             >
               Time column
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.timeColumn"
-              name="south.dataSources.0.SQLDbToFile.timeColumn"
+              id="south.dataSources.0.SQL.timeColumn"
+              name="south.dataSources.0.SQL.timeColumn"
               type="text"
               value="timestamp"
             />
             <div
               class="invalid-feedback"
             />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time Column
-              </div>
-            </small>
           </div>
         </div>
         <div
@@ -7559,15 +7733,15 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.SQLDbToFile.timezone"
+              for="south.dataSources.0.SQL.timezone"
             >
               Timezone
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.SQLDbToFile.timezone"
-              name="south.dataSources.0.SQLDbToFile.timezone"
+              id="south.dataSources.0.SQL.timezone"
+              name="south.dataSources.0.SQL.timezone"
             >
               <option
                 value="Etc/UTC"
@@ -8043,99 +8217,6 @@ exports[`SouthForm check SouthForm with dataSource: SQLDbToFile 1`] = `
             >
               <div>
                 Time Zone
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3 mb-3"
-          >
-            <label
-              class="form-check-label form-label"
-            >
-              Compress File?
-            </label>
-            <input
-              class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.SQLDbToFile.compression"
-              name="south.dataSources.0.SQLDbToFile.compression"
-              type="checkbox"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.SQLDbToFile.maxReadInterval"
-            >
-              Max read interval
-            </label>
-            <input
-              aria-invalid="true"
-              class="oi-form-input is-invalid form-control"
-              id="south.dataSources.0.SQLDbToFile.maxReadInterval"
-              name="south.dataSources.0.SQLDbToFile.maxReadInterval"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            >
-              Value must be greater than 60
-            </div>
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max read interval (s)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.SQLDbToFile.readIntervalDelay"
-            >
-              Read interval delay
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.SQLDbToFile.readIntervalDelay"
-              name="south.dataSources.0.SQLDbToFile.readIntervalDelay"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time to wait between the read interval iterations (ms)
               </div>
             </small>
           </div>

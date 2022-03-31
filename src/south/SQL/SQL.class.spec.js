@@ -22,7 +22,7 @@ try {
 const sqlite = require('sqlite')
 const csv = require('papaparse')
 
-const SQLDbToFile = require('./SQLDbToFile.class')
+const SQL = require('./SQL.class')
 const databaseService = require('../../services/database.service')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
@@ -80,7 +80,7 @@ beforeEach(async () => {
   jest.clearAllMocks()
   jest.useFakeTimers()
   jest.restoreAllMocks()
-  sqlSouth = new SQLDbToFile(sqlConfig, engine)
+  sqlSouth = new SQL(sqlConfig, engine)
   global.Date = jest.fn(() => new RealDate(nowDateString))
   global.Date.UTC = jest.fn(() => new RealDate(nowDateString).toUTCString())
 })
@@ -89,7 +89,7 @@ afterEach(() => {
   global.Date = RealDate
 })
 
-describe('SQLDbToFile', () => {
+describe('SQL', () => {
   it('should properly connect and set lastCompletedAt from database', async () => {
     await sqlSouth.init()
     databaseService.getConfig.mockReturnValue('2020-04-23T11:09:01.001Z')
@@ -109,7 +109,7 @@ describe('SQLDbToFile', () => {
 
     const tempConfig = { ...sqlConfig }
     tempConfig.startTime = '2020-02-02 02:02:02'
-    const tempSqlSouth = new SQLDbToFile(tempConfig, engine)
+    const tempSqlSouth = new SQL(tempConfig, engine)
     await tempSqlSouth.init()
     await tempSqlSouth.connect()
 
@@ -120,13 +120,13 @@ describe('SQLDbToFile', () => {
   it('should trigger an error on connection if timezone is invalid', async () => {
     const badConfig = {
       ...sqlConfig,
-      SQLDbToFile: {
-        ...sqlConfig.SQLDbToFile,
+      SQL: {
+        ...sqlConfig.SQL,
         timezone: undefined,
         databasePath: undefined,
       },
     }
-    const badSqlSouth = new SQLDbToFile(badConfig, engine)
+    const badSqlSouth = new SQL(badConfig, engine)
     await badSqlSouth.init()
 
     expect(badSqlSouth.logger.error)
@@ -216,15 +216,15 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
 
     const expectedConfig = {
-      server: sqlConfig.SQLDbToFile.host,
-      port: sqlConfig.SQLDbToFile.port,
-      user: sqlConfig.SQLDbToFile.username,
-      password: sqlConfig.SQLDbToFile.password,
-      database: sqlConfig.SQLDbToFile.database,
-      connectionTimeout: sqlConfig.SQLDbToFile.connectionTimeout,
-      requestTimeout: sqlConfig.SQLDbToFile.requestTimeout,
+      server: sqlConfig.SQL.host,
+      port: sqlConfig.SQL.port,
+      user: sqlConfig.SQL.username,
+      password: sqlConfig.SQL.password,
+      database: sqlConfig.SQL.database,
+      connectionTimeout: sqlConfig.SQL.connectionTimeout,
+      requestTimeout: sqlConfig.SQL.requestTimeout,
       options: {
-        encrypt: sqlConfig.SQLDbToFile.encryption,
+        encrypt: sqlConfig.SQL.encryption,
         trustServerCertificate: true,
       },
     }
@@ -262,17 +262,17 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
-      host: sqlConfig.SQLDbToFile.host,
-      port: sqlConfig.SQLDbToFile.port,
-      user: sqlConfig.SQLDbToFile.username,
-      password: sqlConfig.SQLDbToFile.password,
-      database: sqlConfig.SQLDbToFile.database,
-      connectTimeout: sqlConfig.SQLDbToFile.connectionTimeout,
+      host: sqlConfig.SQL.host,
+      port: sqlConfig.SQL.port,
+      user: sqlConfig.SQL.username,
+      password: sqlConfig.SQL.password,
+      database: sqlConfig.SQL.database,
+      connectTimeout: sqlConfig.SQL.connectionTimeout,
       timezone: 'Z',
     }
     const expectedExecute = {
       sql: 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ?',
-      timeout: sqlConfig.SQLDbToFile.requestTimeout,
+      timeout: sqlConfig.SQL.requestTimeout,
     }
     const expectedExecuteParams = [
       new Date('2019-10-03T13:36:36.360Z'),
@@ -357,12 +357,12 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
-      host: sqlConfig.SQLDbToFile.host,
-      port: sqlConfig.SQLDbToFile.port,
-      user: sqlConfig.SQLDbToFile.username,
-      password: sqlConfig.SQLDbToFile.password,
-      database: sqlConfig.SQLDbToFile.database,
-      query_timeout: sqlConfig.SQLDbToFile.requestTimeout,
+      host: sqlConfig.SQL.host,
+      port: sqlConfig.SQL.port,
+      user: sqlConfig.SQL.username,
+      password: sqlConfig.SQL.password,
+      database: sqlConfig.SQL.database,
+      query_timeout: sqlConfig.SQL.requestTimeout,
     }
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > $1 AND created_at <= $2'
     const expectedExecuteParams = [
@@ -446,9 +446,9 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
     const expectedConfig = {
-      user: sqlConfig.SQLDbToFile.username,
-      password: sqlConfig.SQLDbToFile.password,
-      connectString: `${sqlConfig.SQLDbToFile.host}:${sqlConfig.SQLDbToFile.port}/${sqlConfig.SQLDbToFile.database}`,
+      user: sqlConfig.SQL.username,
+      password: sqlConfig.SQL.password,
+      connectString: `${sqlConfig.SQL.host}:${sqlConfig.SQL.port}/${sqlConfig.SQL.database}`,
     }
     // eslint-disable-next-line
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > :date1 AND created_at <= :date2'
@@ -579,7 +579,7 @@ describe('SQLDbToFile', () => {
     await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
 
     expect(sqlSouth.logger.error)
-      .toHaveBeenCalledWith('Driver invalid not supported by SQLDbToFile')
+      .toHaveBeenCalledWith('Driver invalid not supported by SQL')
   })
 
   it('should not send file on emtpy result', async () => {
@@ -721,7 +721,7 @@ describe('SQLDbToFile', () => {
 
   it('should format date properly without timezone', () => {
     global.Date = RealDate
-    const actual = SQLDbToFile.formatDateWithTimezone(
+    const actual = SQL.formatDateWithTimezone(
       new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
       'Europe/Paris',
       'yyyy_MM_dd HH:mm:ss.SSS',
@@ -732,7 +732,7 @@ describe('SQLDbToFile', () => {
 
   it('should format date properly with timezone', () => {
     global.Date = RealDate
-    const actual = SQLDbToFile.formatDateWithTimezone(
+    const actual = SQL.formatDateWithTimezone(
       new Date(Date.UTC(2020, 2, 22, 22, 22, 22, 666)),
       'Europe/Paris',
       'yyyy_MM_dd HH:mm:ss.SSS ZZ',
@@ -747,7 +747,7 @@ describe('SQLDbToFile', () => {
     const endTime = new Date('2020-02-20 22:20:20.222')
     const maxReturnValues = 666
 
-    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
+    const replacementParameters = SQL.generateReplacementParameters(query, startTime, endTime, maxReturnValues)
 
     expect(replacementParameters)
       .toEqual([])
@@ -759,7 +759,7 @@ describe('SQLDbToFile', () => {
     const startTime = new Date('2020-02-20 20:20:20.222')
     const endTime = new Date('2020-02-20 22:20:20.222')
 
-    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime)
+    const replacementParameters = SQL.generateReplacementParameters(query, startTime, endTime)
 
     expect(replacementParameters)
       .toEqual([startTime])
@@ -779,7 +779,7 @@ describe('SQLDbToFile', () => {
     const startTime = new Date('2020-02-20 20:20:20.222')
     const endTime = new Date('2020-02-20 22:20:20.222')
 
-    const replacementParameters = SQLDbToFile.generateReplacementParameters(query, startTime, endTime)
+    const replacementParameters = SQL.generateReplacementParameters(query, startTime, endTime)
 
     expect(replacementParameters)
       .toEqual([startTime, endTime, startTime])

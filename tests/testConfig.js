@@ -255,10 +255,10 @@ const testConfig = {
       },
       {
         id: 'datasource-uuid-8',
-        name: 'SQLDbToFile',
-        protocol: 'SQLDbToFile',
+        name: 'SQL',
+        protocol: 'SQL',
         enabled: false,
-        SQLDbToFile: {
+        SQL: {
           port: 1433,
           password: 'popopopopopopopopo',
           connectionTimeout: 1000,
@@ -652,7 +652,7 @@ const testConfig = {
   },
   schemaVersion: 5,
   apiList: ['Console', 'OIConnect', 'OIAnalytics'],
-  protocolList: ['CSV', 'OPCHDA', 'SQLDbToFile', 'FolderScanner', 'Modbus', 'OPCUA_HA', 'MQTT'],
+  protocolList: ['CSV', 'OPCHDA', 'SQL', 'FolderScanner', 'Modbus', 'OPCUA_HA', 'MQTT'],
 }
 
 export default testConfig
