@@ -5633,7 +5633,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
                       <option
                         value="datasource-uuid-8"
                       >
-                        SQLDbToFile
+                        SQL
                       </option>
                       <option
                         value="datasource-uuid-9"

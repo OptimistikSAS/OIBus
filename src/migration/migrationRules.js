@@ -595,6 +595,15 @@ module.exports = {
           logger.info('Update date format from moment to luxon for SQLDbToFile')
           dataSource.SQLDbToFile.filename = dataSource.SQLDbToFile.filename.replace('@date', '@CurrentDate')
         }
+
+        logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
+        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
+
+        logger.info(`Changing SQLDbToFile type to SQL for ${dataSource.name}`)
+
+        dataSource.SQL = dataSource.SQLDbToFile
+        delete dataSource.SQLDbToFile
+        dataSource.protocol = 'SQL'
       }
       if (dataSource.protocol === 'MQTT') {
         logger.info(`Fixing MQTT settings for data source ${dataSource.dataSourceId}`)
@@ -1012,15 +1021,12 @@ module.exports = {
         }
       }
 
-      if (dataSource.protocol === 'SQLDbToFile') {
+      if (dataSource.protocol === 'SQL') {
         logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
         const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
         const database = await databaseService.createConfigDatabase(databasePath)
         const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
         await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
-
-        logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
-        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
       }
 
       if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {

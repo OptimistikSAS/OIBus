@@ -30,9 +30,9 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
     dataSource.points = []
   }
   // load the proper schema based on the protocol name.
-  // in case of SQLDbToFile protocol load schema based on selected driver
-  const schema = protocol === 'SQLDbToFile'
-    ? ProtocolSchemas.SQLDbToFile.withDriver(dataSource.SQLDbToFile.driver)
+  // in case of SQL protocol load schema based on selected driver
+  const schema = protocol === 'SQL'
+    ? ProtocolSchemas.SQL.withDriver(dataSource.SQL.driver)
     : ProtocolSchemas[protocol]
   const prefix = `south.dataSources.${dataSourceIndex}`
 

@@ -36,7 +36,7 @@ beforeEach(() => {
         category: 'IoT',
       },
       {
-        connectorName: 'SQLDbToFile',
+        connectorName: 'SQL',
         category: 'IoT',
       },
       {
@@ -83,7 +83,7 @@ describe('NewSouth', () => {
           category: 'IoT',
         },
         {
-          connectorName: 'SQLDbToFile',
+          connectorName: 'SQL',
           category: 'IoT',
         },
         {
@@ -118,7 +118,7 @@ describe('NewSouth', () => {
           category: 'IoT',
         },
         {
-          connectorName: 'SQLDbToFile',
+          connectorName: 'SQL',
           category: 'IoT',
         },
         {
@@ -153,7 +153,7 @@ describe('NewSouth', () => {
           category: 'IoT',
         },
         {
-          connectorName: 'SQLDbToFile',
+          connectorName: 'SQL',
           category: 'IoT',
         },
         {
@@ -188,7 +188,7 @@ describe('NewSouth', () => {
           category: 'IoT',
         },
         {
-          connectorName: 'SQLDbToFile',
+          connectorName: 'SQL',
           category: 'IoT',
         },
         {
@@ -225,7 +225,7 @@ describe('NewSouth', () => {
           category: 'IoT',
         },
         {
-          connectorName: 'SQLDbToFile',
+          connectorName: 'SQL',
           category: 'IoT',
         },
         {
