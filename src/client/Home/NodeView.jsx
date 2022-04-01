@@ -7,7 +7,7 @@ import EngineNode from './EngineNode.jsx'
 import SouthNode from './SouthNode.jsx'
 import NorthNode from './NorthNode.jsx'
 
-const NODE_BACKGROUND_COLOR = '#eaecef5c'
+const NODE_BACKGROUND_COLOR = '#f7f8f9'
 const NODE_BORDER = '1px solid #eaecef'
 
 const NodeView = ({ onRestart, onShutdown }) => {
