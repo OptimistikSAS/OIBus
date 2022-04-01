@@ -25,7 +25,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
   const safeMode = newConfig?.engine?.safeMode ?? false
   const applications = newConfig?.north?.applications ?? []
   const dataSources = newConfig?.south?.dataSources ?? []
-
+  const globalZIndex = dataSources.length + applications.length + 1
   const northNodes = applications.map((application, indexNorth) => ({
     id: application.id,
     type: 'output',
@@ -37,6 +37,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
       height: 130,
       padding: 0,
       borderRadius: 5,
+      zIndex: globalZIndex - indexNorth,
     },
     data: { label: (<NorthNode application={application} indexNorth={indexNorth} onChange={onChange} />) },
     // position the node with an offset to center and then an offset for each node
@@ -54,7 +55,6 @@ const NodeView = ({ onRestart, onShutdown }) => {
     arrowHeadType: 'arrow',
     isHidden: !application.enabled,
   }))
-
   const southNodes = dataSources.map((dataSource, indexSouth) => ({
     id: dataSource.id,
     type: 'input',
@@ -66,6 +66,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
       height: 130,
       padding: 0,
       borderRadius: 5,
+      zIndex: globalZIndex - applications.length - indexSouth - 1,
     },
     data: { label: (<SouthNode dataSource={dataSource} onChange={onChange} indexSouth={indexSouth} />) },
     // position the node with an offset to center and then an offset for each node
@@ -115,6 +116,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
         height: 130,
         padding: 0,
         borderRadius: 5,
+        zIndex: globalZIndex - applications.length,
       },
     },
     ...southNodes,
