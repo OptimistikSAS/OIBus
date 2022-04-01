@@ -533,7 +533,7 @@ class OIBusEngine extends BaseEngine {
 
     this.statusData['Up time'] = humanizeDuration(1000 * process.uptime(), { round: true })
     this.statusData['CPU usage'] = `${cpuUsagePercentage}%`
-    this.statusData['Global memory usage'] = `${freeMemory} MB / ${os.totalmem() / 1024 / 1024 / 1024} GB (${percentMemory} %)`
+    this.statusData['Global memory usage'] = `${freeMemory} MB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB (${percentMemory} %)`
     this.statusData['Resident set size (min / current / max)'] = memoryUsage.rss
     this.statusData['Total heap size (min / current / max)'] = memoryUsage.heapTotal
     this.statusData['Heap used (min / current / max)'] = memoryUsage.heapUsed
