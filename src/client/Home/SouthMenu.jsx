@@ -48,7 +48,7 @@ const SouthMenu = ({ dataSource }) => {
       <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
         <FaEllipsisV />
       </DropdownToggle>
-      <DropdownMenu>
+      <DropdownMenu flip={false}>
         <DropdownItem
           id="oi-settings"
           onClick={() => {

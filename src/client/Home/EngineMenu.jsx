@@ -26,7 +26,7 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
         <DropdownToggle size="sm" id="dropdown-toggle" className="p-0 m-0 btn btn-secondary oi-dropdown-toggle">
           <FaEllipsisV />
         </DropdownToggle>
-        <DropdownMenu>
+        <DropdownMenu flip={false}>
           <DropdownItem id="add-north" onClick={() => setNorthModal(true)}>
             Add North
           </DropdownItem>

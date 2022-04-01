@@ -47,7 +47,7 @@ const NorthMenu = ({ application }) => {
       <DropdownToggle size="sm" caret={false} id="dropdown-toggle" className="p-0 m-0 oi-dropdown-toggle">
         <FaEllipsisV />
       </DropdownToggle>
-      <DropdownMenu>
+      <DropdownMenu flip={false}>
         <DropdownItem
           id="oi-settings"
           onClick={() => {
