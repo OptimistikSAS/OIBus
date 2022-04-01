@@ -1,26 +1,26 @@
 const VERSION = require('../../package.json').version
 
 const apiList = {}
-apiList.Console = require('../north/console/Console.class')
+apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
+apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
+apiList.FileWriter = require('../north/filewriter/FileWriter.class')
+apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
 apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
 apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
-apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
-apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
-apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
 apiList.MongoDB = require('../north/mongodb/MongoDB.class')
 apiList.MQTT = require('../north/mqtt/MQTT.class')
+apiList.Console = require('../north/console/Console.class')
 apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
 apiList.CsvToHttp = require('../north/csvtohttp/CsvToHttp.class')
-apiList.FileWriter = require('../north/filewriter/FileWriter.class')
 
 const protocolList = {}
-protocolList.ADS = require('../south/ADS/ADS.class')
-protocolList.Modbus = require('../south/Modbus/Modbus.class')
+protocolList.SQL = require('../south/SQL/SQL.class')
+protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
 protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
 protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.SQL = require('../south/SQL/SQL.class')
-protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
+protocolList.ADS = require('../south/ADS/ADS.class')
+protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 
 // BaseEngine classes

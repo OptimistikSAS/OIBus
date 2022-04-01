@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
-import { Col, Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
+import { Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import validationSouth from '../South/Form/South.validation'
@@ -71,80 +71,88 @@ const NewSouth = ({
       </ModalHeader>
 
       <ModalBody>
-        <Col className="oi-new-name" md="6">
-          <OIbText
-            label="New DataSource Name"
-            value={name}
-            name="name"
-            onChange={(fieldName, newName) => setName(newName)}
-            defaultValue=""
-            valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
-          />
-        </Col>
         <Container className="scrollBar">
           {southCategoryList?.map((category) => (
-            <Row key={`${category}-south-row`} style={{ margin: '25px 0px 60px 0px' }}>
-              <Col xs={6} md={12}>
-                <div className="oi-header-modal">
-                  <div className="icon-left-modal">
-                    <img src={imageCategories[category]?.image ?? imageCategories.Default.image} alt="logo" height="24px" />
-                  </div>
-                  <div style={{ fontSize: '18px' }} className="icon-center-modal ">
-                    {imageCategories[category]?.label}
-                  </div>
+            <Row key={`${category}-south-row`} className="mb-3">
+              <div className="d-flex">
+                <div>
+                  <img
+                    src={imageCategories[category]?.image ?? imageCategories.Default.image}
+                    alt="logo"
+                    style={{ backgroundColor: '#323e48' }}
+                    height="20px"
+                  />
                 </div>
-                <div className="connector-container">
-                  {protocolList.filter((e) => e.category === category)
-                    .map(({ connectorName }) => (
-                      <button
-                        id="icon-connector"
-                        key={`${category}-${connectorName}-south-icon-connector`}
-                        className={`${(protocol === connectorName && active) ? 'connector-focus' : 'connector'}`}
-                        type="button"
-                        onClick={() => {
-                          setActive(true)
-                          setProtocol(connectorName)
-                        }}
-                      >
-                        {connectorName}
-                      </button>
-                    ))}
+                <div
+                  style={{ fontSize: '18px' }}
+                  className="ms-2"
+                >
+                  <b>{imageCategories[category]?.label}</b>
                 </div>
-              </Col>
+              </div>
+              <div>
+                {protocolList.filter((e) => e.category === category)
+                  .map(({ connectorName }) => (
+                    <button
+                      id="icon-connector"
+                      key={`${category}-${connectorName}-south-icon-connector`}
+                      className={`${(protocol === connectorName && active) ? 'connector connector-focus me-2 my-2' : 'connector me-2 my-2'}`}
+                      type="button"
+                      onClick={() => {
+                        setActive(true)
+                        setProtocol(connectorName)
+                      }}
+                    >
+                      {connectorName}
+                    </button>
+                  ))}
+              </div>
             </Row>
           ))}
         </Container>
+        <OIbText
+          value={name}
+          label="Name"
+          name="name"
+          onChange={(fieldName, newName) => setName(newName)}
+          defaultValue=""
+          valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
+        />
       </ModalBody>
 
-      <ModalFooter className="oi-modal-footer">
-        {protocolError && !protocol ? (
-          <div className="oi-error">
-            {protocolError}
-          </div>
-        ) : null}
-        {nameError && name === '' ? (
-          <div className="oi-error">
-            {nameError}
-          </div>
-        ) : null}
-        <Button
-          className="oi-add-button"
-          id="confirm"
-          variant="secondary"
-          onClick={() => {
-            addDataSource()
-          }}
-        >
-          Add
-        </Button>
-        <Button
-          className="oi-add-button"
-          id="cancel"
-          variant="primary"
-          onClick={toggle}
-        >
-          Cancel
-        </Button>
+      <ModalFooter className="d-flex d-flex justify-content-end align-items-center">
+        <div>
+          {protocolError && !protocol ? (
+            <span className="oi-error">
+              {protocolError}
+            </span>
+          ) : null}
+          {nameError && name === '' ? (
+            <span className="oi-error">
+              {nameError}
+            </span>
+          ) : null}
+        </div>
+        <div>
+          <Button
+            id="confirm"
+            className="mx-1 my-0"
+            variant="secondary"
+            onClick={() => {
+              addDataSource()
+            }}
+          >
+            Add
+          </Button>
+          <Button
+            id="cancel"
+            className="mx-1 my-0"
+            variant="primary"
+            onClick={toggle}
+          >
+            Cancel
+          </Button>
+        </div>
       </ModalFooter>
     </Modal>
   )
