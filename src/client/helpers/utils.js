@@ -1,6 +1,16 @@
 import * as Papa from 'papaparse'
 import timexe from 'timexe'
 
+const formatValue = (value) => {
+  if (typeof value === 'string') {
+    if (Number.isNaN(Date.parse(value))) {
+      return value
+    }
+    return new Date(value).toLocaleString()
+  }
+  return value
+}
+
 const readFileContent = async (file) => new Promise((resolve) => {
   const reader = new FileReader()
   reader.readAsText(file)
@@ -119,4 +129,4 @@ const nextTime = (value) => {
   return ''
 }
 
-export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime }
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime, formatValue }

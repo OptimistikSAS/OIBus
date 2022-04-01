@@ -4,12 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import Table from '../components/table/Table.jsx'
+import utils from '../helpers/utils'
 
-function isIsoDate(str) {
-  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false
-  const d = new Date(str)
-  return d.toISOString() === str
-}
 /**
  * Generate row entry for the status table.
  * @param {string} key - The key
@@ -23,7 +19,7 @@ const generateRowEntry = (key, value) => [
   },
   {
     name: 'value',
-    value: isIsoDate(value) ? new Date(value).toLocaleString() : value,
+    value: utils.formatValue(value),
   },
 ]
 
