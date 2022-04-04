@@ -1,10 +1,10 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './style/oi.css'
 
+import { createRoot } from 'react-dom/client'
 import TopHeader from './TopHeader.jsx'
 import Activation from './Activation/Activation.jsx'
 import NotFound from './NotFound.jsx'
@@ -51,4 +51,6 @@ const Main = () => (
   </Router>
 )
 
-ReactDOM.render(<Main />, document.getElementById('root'))
+const container = document.getElementById('root')
+const root = createRoot(container)
+root.render(<Main />)

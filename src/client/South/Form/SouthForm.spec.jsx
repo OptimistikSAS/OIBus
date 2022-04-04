@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import newConfig from '../../../../tests/testConfig'
 import SouthForm from './SouthForm.jsx'
 
@@ -23,23 +23,27 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('SouthForm', () => {
   newConfig.south.dataSources.forEach((dataSource) => {
     test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
       act(() => {
-        ReactDOM.render(
+        root.render(
           <SouthForm dataSource={dataSource} dataSourceIndex={0} onChange={() => 1} />,
-          container,
         )
       })
       expect(container).toMatchSnapshot()
@@ -47,9 +51,8 @@ describe('SouthForm', () => {
   })
   test('check SouthForm with empty dataSource', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthForm dataSource={{ protocol: 'MQTT', name: 'emptyDataSource' }} dataSourceIndex={0} onChange={() => 1} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

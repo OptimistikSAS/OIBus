@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`OIbTextArea check Text no value 1`] = `<div />`;
+exports[`OIbTextArea check TextArea no value 1`] = `<div />`;
 
-exports[`OIbTextArea check Texte with inline 1`] = `
+exports[`OIbTextArea check TextArea with inline 1`] = `
 <div>
   <div
     class="mb-3"
@@ -28,7 +28,7 @@ exports[`OIbTextArea check Texte with inline 1`] = `
 </div>
 `;
 
-exports[`OIbTextArea check TexteArea with too short value 1`] = `
+exports[`OIbTextArea check TextArea with too short value 1`] = `
 <div>
   <div
     class="mb-3"
@@ -54,7 +54,7 @@ exports[`OIbTextArea check TexteArea with too short value 1`] = `
 </div>
 `;
 
-exports[`OIbTextArea check TexteArea with value and help text 1`] = `
+exports[`OIbTextArea check TextArea with value and help text 1`] = `
 <div>
   <div
     class="mb-3"
@@ -87,7 +87,7 @@ exports[`OIbTextArea check TexteArea with value and help text 1`] = `
 </div>
 `;
 
-exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
+exports[`OIbTextArea check TextArea with value="some text in the area" 1`] = `
 <div>
   <div
     class="mb-3"
@@ -113,7 +113,7 @@ exports[`OIbTextArea check TexteArea with value="some text in the area" 1`] = `
 </div>
 `;
 
-exports[`OIbTextArea check TexteArea with value="some text" and no label 1`] = `
+exports[`OIbTextArea check TextArea with value="some text" and no label 1`] = `
 <div>
   <div
     class="mb-3"

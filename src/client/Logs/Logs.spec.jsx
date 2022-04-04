@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import apis from '../services/apis'
 import Logs from './Logs.jsx'
 
@@ -76,21 +76,6 @@ const testLogs = [
   },
 ]
 
-/*
-React.useState = jest.fn().mockImplementation((init) => {
-  if (JSON.stringify(init) === JSON.stringify(verbosityOptions)) {
-    // init test with 'trace' option unchecked
-    return [verbosityOptions.filter((item) => item !== 'trace'), setVerbosity]
-  }
-  if (init === undefined) {
-    return [testLogs, setState]
-  }
-  if (init === defaultMaxLog) {
-    return [tempDefaultMaxLog, setState]
-  }
-  return [init, setState]
-})
-*/
 // mock get Logs
 let resolve
 let reject
@@ -102,25 +87,32 @@ apis.getLogs = () => new Promise((_resolve, _reject) => {
 React.useContext = jest.fn().mockReturnValue({ setAlert })
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('Logs', () => {
   test('check Logs', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      Simulate.click(document.getElementById('showLog'))
+    })
+
     await act(async () => {
       resolve(testLogs)
     })
@@ -128,13 +120,17 @@ describe('Logs', () => {
   })
   test('check change fromDate', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
-    Simulate.change(document.getElementById('fromDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      Simulate.change(document.getElementById('fromDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
+    })
+    act(() => {
+      Simulate.click(document.getElementById('showLog'))
+    })
+
     await act(async () => {
       resolve(testLogs)
     })
@@ -142,13 +138,16 @@ describe('Logs', () => {
   })
   test('check change toDate', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
-    Simulate.change(document.getElementById('toDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      Simulate.change(document.getElementById('toDate'), { target: { value: '2020-02-01T00:00:00.000Z' } })
+    })
+    act(() => {
+      Simulate.click(document.getElementById('showLog'))
+    })
     await act(async () => {
       resolve(testLogs)
     })
@@ -156,56 +155,66 @@ describe('Logs', () => {
   })
   test('check change filterText', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
     await act(async () => {
       resolve([])
     })
-    Simulate.change(document.getElementById('filterText'), { target: { value: 'debug' } })
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      Simulate.change(document.getElementById('filterText'), { target: { value: 'debug' } })
+    })
+    act(() => {
+      Simulate.click(document.getElementById('showLog'))
+    })
     expect(container).toMatchSnapshot()
   })
   test('check change verbosity, uncheck error', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
     await act(async () => {
       resolve([])
     })
-    Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
+    })
+    act(() => {
+      Simulate.click(document.getElementById('showLog'))
+    })
+
     expect(container).toMatchSnapshot()
   })
   test('check change verbosity, check trace', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
     await act(async () => {
       resolve([])
     })
-    Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
+    act(() => {
+      Simulate.change(document.getElementsByClassName('oi-form-input form-check-input')[4], { target: { checked: true } })
+    })
+
     expect(container).toMatchSnapshot()
   })
   test('check press Show Logs, error in logs call', async () => {
     const originalError = console.error
     console.error = jest.fn()
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
-    // resolve the call requested by showLog
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      // resolve the call requested by showLog
+      Simulate.click(document.getElementById('showLog'))
+    })
     await act(async () => {
       reject('Logs: testing error on getLogs request')
     })
@@ -214,13 +223,14 @@ describe('Logs', () => {
   })
   test('check press showMore', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <Logs />,
-        container,
       )
     })
-    // resolve the call requested by showLog
-    Simulate.click(document.getElementById('showLog'))
+    act(() => {
+      // resolve the call requested by showLog
+      Simulate.click(document.getElementById('showLog'))
+    })
     await act(async () => {
       const logs = []
       for (let index = 0; index < 1000; index += 1) {
@@ -235,7 +245,9 @@ describe('Logs', () => {
       resolve(logs)
     })
     expect(container).toMatchSnapshot()
-    Simulate.click(document.getElementById('showMore'))
+    act(() => {
+      Simulate.click(document.getElementById('showMore'))
+    })
     expect(container).toMatchSnapshot()
   })
 })

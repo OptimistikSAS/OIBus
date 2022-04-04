@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import NorthMenu from './NorthMenu.jsx'
 import newConfig from '../../../tests/testConfig'
 
@@ -23,16 +23,20 @@ jest.mock('react-router-dom', () => (
 const application = newConfig.north.applications[0]
 
 let container
-
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
   jest.clearAllMocks()
 })
 
@@ -41,9 +45,8 @@ describe('NorthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthMenu application={application} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -51,9 +54,8 @@ describe('NorthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: {}, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthMenu application={application} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -61,9 +63,8 @@ describe('NorthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: { north: {} }, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthMenu application={application} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -71,9 +72,8 @@ describe('NorthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: { north: { applications: [] } }, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthMenu application={application} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -81,9 +81,8 @@ describe('NorthMenu', () => {
 
   test('display NorthMenu page based on config', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthMenu application={application} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -91,10 +90,15 @@ describe('NorthMenu', () => {
 
   test('check duplicate application', () => {
     act(() => {
-      ReactDOM.render(<NorthMenu application={application} />, container)
+      root.render(<NorthMenu application={application} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-duplicate'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-duplicate'))
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications',
@@ -112,10 +116,14 @@ describe('NorthMenu', () => {
     const applicationWithCopyInName = newConfig.north.applications[8]
 
     act(() => {
-      ReactDOM.render(<NorthMenu application={applicationWithCopyInName} />, container)
+      root.render(<NorthMenu application={applicationWithCopyInName} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-duplicate'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-duplicate'))
+    })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications',
@@ -131,31 +139,45 @@ describe('NorthMenu', () => {
 
   test('check edit first application', () => {
     act(() => {
-      ReactDOM.render(<NorthMenu application={application} />, container)
+      root.render(<NorthMenu application={application} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-settings'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-settings'))
+    })
     expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
   test('check status first application', () => {
     act(() => {
-      ReactDOM.render(<NorthMenu application={application} />, container)
+      root.render(<NorthMenu application={application} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-status'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-status'))
+    })
     expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 
   test('check delete first application', () => {
     act(() => {
-      ReactDOM.render(<NorthMenu application={application} />, container)
+      root.render(<NorthMenu application={application} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-delete'))
-    Simulate.click(document.getElementById('confirm'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-delete'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('confirm'))
+    })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'north.applications.0',
@@ -165,11 +187,17 @@ describe('NorthMenu', () => {
 
   test('check cancel delete first application', () => {
     act(() => {
-      ReactDOM.render(<NorthMenu application={application} />, container)
+      root.render(<NorthMenu application={application} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-delete'))
-    Simulate.click(document.getElementById('cancel'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-delete'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('cancel'))
+    })
     expect(dispatchNewConfig).not.toBeCalled()
     expect(container).toMatchSnapshot()
   })

@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import OIbPassword from './OIbPassword.jsx'
 import { minLength } from '../../../services/validation.service'
 
@@ -32,74 +32,79 @@ React.useState = jest.fn().mockImplementation((init) => {
 })
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('OIbPassword', () => {
   test('check Password with value="a password"', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         label="label"
         value="a text"
         name="name"
         onChange={() => (1)}
         defaultValue="default"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check Password with too short value', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         label="label"
         name="name"
         onChange={() => (1)}
         value="password"
         valid={minLength(10)}
         defaultValue="default"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check Password with no label', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check Password with help', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check input key down', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.keyDown(document.querySelector('input'), { target: { value: 'key' } })
     expect(setEdited).toBeCalledWith(true)
@@ -107,13 +112,13 @@ describe('OIbPassword', () => {
   })
   test('check input edited', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.keyDown(document.querySelector('input'), { target: { value: `${PREFIX}new_password` } })
     expect(setEdited).toBeCalledWith(true)
@@ -121,13 +126,13 @@ describe('OIbPassword', () => {
   })
   test('check user cleared password', () => {
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.change(document.querySelector('input'), { target: { value: '' } })
     expect(setEdited).toBeCalledWith(false)
@@ -136,13 +141,13 @@ describe('OIbPassword', () => {
   test('check input edited again', () => {
     edited = true
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.keyDown(document.querySelector('input'), { target: { value: 'new_password' } })
     expect(setEdited).toBeCalledWith(true)
@@ -151,13 +156,13 @@ describe('OIbPassword', () => {
   test('check show password-false', () => {
     edited = true
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.click(document.querySelector('div path'))
     expect(setShowPassword).toBeCalledWith(false)
@@ -166,13 +171,13 @@ describe('OIbPassword', () => {
   test('check show password-true', () => {
     showPassword = false
     act(() => {
-      ReactDOM.render(<OIbPassword
+      root.render(<OIbPassword
         name="name"
         help={<div>help text</div>}
         onChange={() => (1)}
         value="password"
         defaultValue="default"
-      />, container)
+      />)
     })
     Simulate.click(document.querySelector('div path'))
     expect(setShowPassword).toBeCalledWith(true)

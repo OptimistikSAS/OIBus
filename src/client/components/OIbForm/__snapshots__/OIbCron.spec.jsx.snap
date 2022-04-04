@@ -848,7 +848,94 @@ exports[`OIbCron check change cron type to invalide 1`] = `
   >
     <div
       style="display: flex; flex-direction: row; margin-left: 3px;"
-    />
+    >
+      <div
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
+      >
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.type"
+          name="name.type"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <option
+            value="every"
+          >
+            every
+          </option>
+          <option
+            value="custom"
+          >
+            custom
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
+      </div>
+      <input
+        class="oi-form-input oi-cron-input ms-1 form-control"
+        id="name.every.value"
+        min="1"
+        name="value"
+        placeholder="value"
+        type="number"
+        value="10"
+      />
+      <div
+        class="mb-3"
+        style="padding-bottom: 0px; margin-bottom: 0px;"
+      >
+        <select
+          aria-invalid="false"
+          class="oi-form-input form-select"
+          id="name.interval"
+          name="name.interval"
+          style="padding-bottom: 0px; margin-bottom: 0px;"
+        >
+          <option
+            value="year"
+          >
+            year
+          </option>
+          <option
+            value="month"
+          >
+            month
+          </option>
+          <option
+            value="day"
+          >
+            day
+          </option>
+          <option
+            value="hour"
+          >
+            hour
+          </option>
+          <option
+            value="minute"
+          >
+            minute
+          </option>
+          <option
+            value="sec"
+          >
+            sec
+          </option>
+          <option
+            value="msec"
+          >
+            msec
+          </option>
+        </select>
+        <div
+          class="invalid-feedback"
+        />
+      </div>
+    </div>
     <div
       class="invalid-feedback"
       style="display: block;"

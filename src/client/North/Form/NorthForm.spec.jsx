@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import newConfig from '../../../../tests/testConfig'
 import NorthForm from './NorthForm.jsx'
 
@@ -22,23 +22,27 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('NorthForm', () => {
   newConfig.north.applications.forEach((application) => {
     test(`check NorthForm with application: ${application.name}`, () => {
       act(() => {
-        ReactDOM.render(
+        root.render(
           <NorthForm application={application} applicationIndex={0} onChange={() => 1} />,
-          container,
         )
       })
       expect(container).toMatchSnapshot()
@@ -47,9 +51,8 @@ describe('NorthForm', () => {
 
   test('check NorthForm with empty application', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NorthForm application={{ api: 'Console', name: 'emptyApplication' }} applicationIndex={0} onChange={() => 1} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

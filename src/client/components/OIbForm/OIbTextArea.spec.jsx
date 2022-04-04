@@ -2,95 +2,100 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import OIbTextArea from './OIbTextArea.jsx'
 import { minLength } from '../../../services/validation.service'
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('OIbTextArea', () => {
-  test('check TexteArea with value="some text in the area"', () => {
+  test('check TextArea with value="some text in the area"', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         value="some text in the area"
         name="name"
         onChange={() => (1)}
         defaultValue="default text"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check TexteArea with value="some text" and no label', () => {
+  test('check TextArea with value="some text" and no label', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         value="some text"
         name="name"
         onChange={() => (1)}
         defaultValue="default text"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check TexteArea with value and help text', () => {
+  test('check TextArea with value and help text', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         value="some text in the area"
         help={<div>some help text</div>}
         name="name"
         onChange={() => (1)}
         defaultValue="default text"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check TexteArea with too short value', () => {
+  test('check TextArea with too short value', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         name="name"
         onChange={() => (1)}
         value="short text"
         valid={minLength(10)}
         defaultValue="default text"
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check Texte with inline', () => {
+  test('check TextArea with inline', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         name="name"
         onChange={() => (1)}
         value="a text"
         defaultValue="default text"
         inline
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check Text no value', () => {
+  test('check TextArea no value', () => {
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         name="name"
         onChange={() => (1)}
         defaultValue="default text"
         inline
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
@@ -98,7 +103,7 @@ describe('OIbTextArea', () => {
     const onChange = jest.fn()
     const valid = jest.fn()
     act(() => {
-      ReactDOM.render(<OIbTextArea
+      root.render(<OIbTextArea
         label="label"
         name="name"
         onChange={onChange}
@@ -106,7 +111,7 @@ describe('OIbTextArea', () => {
         defaultValue="default text"
         valid={valid}
         inline
-      />, container)
+      />)
     })
     Simulate.change(document.getElementById('name'), { target: { value: 'new_text' } })
     expect(onChange).toBeCalledWith('name', 'new_text', valid('new_text'))

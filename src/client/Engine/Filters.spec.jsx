@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import testConfig from '../../../tests/testConfig'
 import Filters from './Filters.jsx'
 
@@ -17,30 +17,34 @@ const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
-
 describe('Filters', () => {
   test('check Filters', () => {
     act(() => {
-      ReactDOM.render(<Filters
+      root.render(<Filters
         filters={testConfig.engine.filter}
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check change line', () => {
     act(() => {
-      ReactDOM.render(<Filters
+      root.render(<Filters
         filters={testConfig.engine.filter}
-      />, container)
+      />)
     })
     Simulate.change(document.querySelector('td input'), { target: { value: '2.2.2.2' } })
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.filter.0', value: '2.2.2.2', validity: null })
@@ -48,20 +52,26 @@ describe('Filters', () => {
   })
   test('check delete Filter', () => {
     act(() => {
-      ReactDOM.render(<Filters
+      root.render(<Filters
         filters={testConfig.engine.filter}
-      />, container)
+      />)
     })
-    Simulate.click(document.querySelector('td path'))
-    Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
+    act(() => {
+      Simulate.click(document.querySelector('td path'))
+    })
+
+    act(() => {
+      Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
+    })
     expect(dispatchNewConfig).toBeCalledWith({ type: 'deleteRow', name: 'engine.filter.0' })
+
     expect(container).toMatchSnapshot()
   })
   test('check add line', () => {
     act(() => {
-      ReactDOM.render(<Filters
+      root.render(<Filters
         filters={testConfig.engine.filter}
-      />, container)
+      />)
     })
     Simulate.click(document.querySelector('th path'))
     expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.filter', value: '' })

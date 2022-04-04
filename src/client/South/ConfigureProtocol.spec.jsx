@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import newConfig from '../../../tests/testConfig'
 import ConfigureProtocol from './ConfigureProtocol.jsx'
 import utils from '../helpers/utils'
@@ -22,28 +22,36 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('ConfigureProtocol', () => {
   test('check ConfigureProtocol', () => {
     act(() => {
-      ReactDOM.render(<ConfigureProtocol />, container)
+      root.render(<ConfigureProtocol />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check update', () => {
     act(() => {
-      ReactDOM.render(<ConfigureProtocol />, container)
+      root.render(<ConfigureProtocol />)
     })
-    Simulate.change(document.getElementById('south.dataSources.8.OPCHDA.host'), { target: { value: 'newhost' } })
+    act(() => {
+      Simulate.change(document.getElementById('south.dataSources.8.OPCHDA.host'), { target: { value: 'newhost' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'south.dataSources.8.OPCHDA.host',
@@ -54,12 +62,12 @@ describe('ConfigureProtocol', () => {
   })
   test('check datasource not found', () => {
     const reactUseContextMock = React.useContext
-    // temporary empty applicartions array
+    // temporary empty array
     const config = utils.jsonCopy(newConfig)
     config.south.dataSources = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
-      ReactDOM.render(<ConfigureProtocol />, container)
+      root.render(<ConfigureProtocol />)
     })
     expect(container).toMatchSnapshot()
     React.useContext = reactUseContextMock

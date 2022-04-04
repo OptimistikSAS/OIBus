@@ -22,12 +22,11 @@ const OIbCheckBox = ({
   }
   if (value === null) return null
   if (switchButton) {
-    // bootstrap classNames used instead of <FormGroup switch> due to bug in reactstrap
     return (
-      <FormGroup className="form-check form-switch">
+      <FormGroup switch>
         <Input
           className="mb-3"
-          type="checkbox"
+          type="switch"
           id={name}
           name={name}
           label={label}

@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import EditableIdField from './EditableIdField.jsx'
 
 // mock states
@@ -30,20 +30,25 @@ React.useState = jest.fn().mockImplementation((init) => {
 })
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('EditableIdField', () => {
   test('check EditableIdField editing = false', () => {
     act(() => {
-      ReactDOM.render(<EditableIdField
+      root.render(<EditableIdField
         connectorName="id"
         fromList={[{ test: 'test' }]}
         editing={false}
@@ -51,13 +56,13 @@ describe('EditableIdField', () => {
         fieldName="name"
         valid={() => null}
         nameChanged={() => (1)}
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check EditableIdField editing = true', () => {
     act(() => {
-      ReactDOM.render(<EditableIdField
+      root.render(<EditableIdField
         connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
@@ -65,7 +70,7 @@ describe('EditableIdField', () => {
         editing
         valid={() => null}
         nameChanged={() => (1)}
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
@@ -73,7 +78,7 @@ describe('EditableIdField', () => {
   test('check editing done', () => {
     const idChanged = jest.fn()
     act(() => {
-      ReactDOM.render(<EditableIdField
+      root.render(<EditableIdField
         connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
@@ -81,7 +86,7 @@ describe('EditableIdField', () => {
         editing
         valid={() => null}
         nameChanged={idChanged}
-      />, container)
+      />)
     })
     Simulate.click(document.querySelector('button svg path'))
     expect(idChanged).toBeCalled()
@@ -91,7 +96,7 @@ describe('EditableIdField', () => {
   test('check editing done with error', () => {
     const idChanged = jest.fn()
     act(() => {
-      ReactDOM.render(<EditableIdField
+      root.render(<EditableIdField
         connectorName="id"
         fromList={[{ test: 'test' }]}
         index={1}
@@ -99,7 +104,7 @@ describe('EditableIdField', () => {
         editing
         valid={() => 'error'}
         nameChanged={idChanged}
-      />, container)
+      />)
     })
     Simulate.click(document.querySelector('button svg path'))
     expect(idChanged).not.toBeCalled()
