@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue, endsWith } from '../../services/validation.service'
+import { notEmpty, minValue } from '../../services/validation.service'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {
@@ -46,7 +46,7 @@ schema.form = {
   },
   inputFolder: {
     type: 'OIbText',
-    valid: endsWith('/'),
+    valid: notEmpty(),
     defaultValue: './input/',
     help: <div>Path to folder such as: c:/input/</div>,
   },

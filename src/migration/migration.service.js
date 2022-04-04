@@ -1,6 +1,5 @@
 const fs = require('fs/promises')
 
-const path = require('path')
 const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 const Logger = require('../engine/logger/Logger.class')
@@ -74,9 +73,7 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
  * @returns {Promise<void>} - Promise resolve if migration succeeds
  */
 const migrate = async (configFile) => {
-  const logger = new Logger('Migration')
-  engineConfigLogParameters.logParameters.fileLog.fileName = `${path.dirname(configFile)}/logs/migration.log`
-  engineConfigLogParameters.logParameters.sqliteLog.fileName = `${path.dirname(configFile)}/logs/migration.db`
+  const logger = new Logger('OIBus-migration')
   try {
     await logger.changeParameters(engineConfigLogParameters)
 

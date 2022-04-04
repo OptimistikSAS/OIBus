@@ -517,6 +517,13 @@ module.exports = {
         dataSource.logParameters.sqliteLevel = 'trace'
       }
 
+      if (Object.prototype.hasOwnProperty.call(dataSource, 'enable')) {
+        if (!Object.prototype.hasOwnProperty.call(dataSource, 'enabled')) {
+          dataSource.enabled = dataSource.enable
+        }
+        delete dataSource.enable
+      }
+
       if (dataSource.protocol === 'FolderScanner') {
         logger.info(`Fixing Folder Scanner settings for data source ${dataSource.dataSourceId}`)
 
@@ -532,6 +539,16 @@ module.exports = {
           }
         }
 
+        if (!dataSource.scanMode && !dataSource.points) {
+          logger.info(`Filling Folder Scanner scanMode for data source ${dataSource.dataSourceId} with last engine scanMode`)
+
+          dataSource.scanMode = config.engine.scanModes[config.engine.scanModes.length - 1].scanMode
+        } else if (!dataSource.scanMode && dataSource.points?.length > 0) {
+          logger.info(`Filling Folder Scanner scanMode for data source ${dataSource.dataSourceId} with first point scanMode`)
+          dataSource.scanMode = dataSource.points[0].scanMode
+          delete dataSource.points
+        }
+
         // a previous migration forgot to update the compression parameter (called "compress" before)
         if (typeof dataSource.FolderScanner.compression === 'undefined') {
           if (typeof dataSource.FolderScanner.compress !== 'undefined') {
@@ -541,13 +558,7 @@ module.exports = {
             dataSource.FolderScanner.compression = false
           }
         }
-        if (dataSource.FolderScanner.inputFolder) {
-          // a previous commit add the endsWith('/') validation in the front, causing error when going back to the
-          // application after an update if the inputFolder did not include the '/' previously
-          if (!dataSource.FolderScanner.inputFolder.endsWith('/')) {
-            dataSource.FolderScanner.inputFolder = `${dataSource.FolderScanner.inputFolder}/`
-          }
-        } else {
+        if (!dataSource.FolderScanner.inputFolder) {
           dataSource.FolderScanner.inputFolder = './input/'
         }
       }
@@ -607,7 +618,7 @@ module.exports = {
         }
 
         logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
-        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedAt/g, '@StartTime')
+        dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedDate/g, '@StartTime')
 
         logger.info(`Changing SQLDbToFile type to SQL for ${dataSource.name}`)
 
@@ -706,6 +717,13 @@ module.exports = {
         dataSource.OPCUA_HA.keepSessionAlive = false
         dataSource.OPCUA_HA.certFile = ''
         dataSource.OPCUA_HA.keyFile = ''
+
+        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+          }
+        })
       }
       if (dataSource.protocol === 'OPCUA_DA') {
         logger.info(`Add OPCUA_DA security fields for data source ${dataSource.dataSourceId}`)
@@ -719,6 +737,13 @@ module.exports = {
         dataSource.OPCUA_DA.keepSessionAlive = false
         dataSource.OPCUA_DA.certFile = ''
         dataSource.OPCUA_DA.keyFile = ''
+
+        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+          }
+        })
       }
 
       if (dataSource.protocol === 'OPCHDA') {
@@ -779,6 +804,18 @@ module.exports = {
         if (!dataSource.OPCHDA.retryInterval) {
           dataSource.OPCHDA.retryInterval = 10000
         }
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCHDA, 'readIntervalDelay')) {
+          logger.info('Add readIntervalDelay')
+          dataSource.OPCHDA.readIntervalDelay = 200
+        }
+
+        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
+        dataSource.points?.forEach((point) => {
+          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
+            point.pointId = point.nodeId
+          }
+        })
       }
 
       if (dataSource.protocol === 'ADS') {
@@ -819,6 +856,13 @@ module.exports = {
 
       if (!application.subscribedTo) {
         application.subscribedTo = []
+      }
+
+      if (Object.prototype.hasOwnProperty.call(application, 'enable')) {
+        if (!Object.prototype.hasOwnProperty.call(application, 'enabled')) {
+          application.enabled = application.enable
+        }
+        delete application.enable
       }
 
       if (application.api === 'AmazonS3') {
@@ -1025,51 +1069,36 @@ module.exports = {
         logger.info(`Renaming old cache file ${oldDataSourcePath} to ${newDataSourcePath} for datasource ${dataSource.name}`)
         try {
           await fs.rename(oldDataSourcePath, newDataSourcePath)
+
+          if (dataSource.protocol === 'SQL') {
+            logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
+            const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
+            const database = await databaseService.createConfigDatabase(databasePath)
+            const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
+            await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
+          }
+
+          if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
+            const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
+            const database = await databaseService.createConfigDatabase(databasePath)
+            if (!dataSource[dataSource.protocol].scanGroups) {
+              dataSource[dataSource.protocol].scanGroups = []
+            }
+            const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
+            // eslint-disable-next-line no-restricted-syntax
+            for (const scanMode of scanModes) {
+              logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
+              const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
+              if (lastCompletedAtString) {
+                const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
+                await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
+              }
+            }
+          }
         } catch (error) {
           logger.error(`Could not rename file ${oldDataSourcePath} to ${newDataSourcePath} for dataSource ${dataSource.name}`)
           throw error
         }
-      }
-
-      if (dataSource.protocol === 'SQL') {
-        logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
-        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-        const database = await databaseService.createConfigDatabase(databasePath)
-        const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
-        await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
-      }
-
-      if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
-        const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-        const database = await databaseService.createConfigDatabase(databasePath)
-        if (!dataSource[dataSource.protocol].scanGroups) {
-          dataSource[dataSource.protocol].scanGroups = []
-        }
-        const scanModes = dataSource[dataSource.protocol].scanGroups.map((scanGroup) => scanGroup.scanMode)
-        // eslint-disable-next-line no-restricted-syntax
-        for (const scanMode of scanModes) {
-          logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
-          const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
-          if (lastCompletedAtString) {
-            const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
-            await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
-          }
-        }
-        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
-        dataSource.points?.forEach((point) => {
-          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
-            point.pointId = point.nodeId
-          }
-        })
-      }
-
-      if (dataSource.protocol === 'OPCUA_DA') {
-        logger.info(`Add pointId fields in the points for ${dataSource.name}`)
-        dataSource.points?.forEach((point) => {
-          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
-            point.pointId = point.nodeId
-          }
-        })
       }
 
       // This field can now be deleted

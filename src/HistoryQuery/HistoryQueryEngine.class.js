@@ -28,7 +28,6 @@ class HistoryQueryEngine extends BaseEngine {
     const { engineConfig } = this.configService.getConfig()
     const { historyQuery: { folder } } = engineConfig
     this.cacheFolder = folder
-    this.historyQueries = []
     this.historyQueryRepository = new HistoryQueryRepository(this.configService.getHistoryQueryConfigurationFileLocation())
   }
 
