@@ -41,7 +41,7 @@ class OIAnalytics extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.trace(`OIAnalytics ${this.name} handleValues() with ${values.length} values`)
+    this.logger.trace(`OIAnalytics ${this.application.name} handleValues() with ${values.length} values`)
     const cleanedValues = values.filter((value) => value?.data?.value !== undefined
       && value?.data?.value !== null
       && value.timestamp !== null
@@ -52,7 +52,7 @@ class OIAnalytics extends ApiHandler {
         pointId: value.pointId,
       }))
     await this.postJson(cleanedValues)
-    this.logger.debug(`OIAnalytics ${this.name} has posted ${cleanedValues.length} values`)
+    this.logger.debug(`OIAnalytics ${this.application.name} has posted ${cleanedValues.length} values`)
     this.statusData['Last handled values at'] = new Date().toISOString()
     this.statusData['Number of values sent since OIBus has started'] += values.length
     this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${values[values.length - 1].data.value})`
@@ -67,7 +67,7 @@ class OIAnalytics extends ApiHandler {
    */
   async handleFile(filePath) {
     const stats = await fs.stat(filePath)
-    this.logger.debug(`OIAnalytics ${this.name} handleFile(${filePath}) (${stats.size} bytes)`)
+    this.logger.debug(`OIAnalytics ${this.application.name} handleFile(${filePath}) (${stats.size} bytes)`)
     this.statusData['Last uploaded file'] = filePath
     this.statusData['Number of files sent since OIBus has started'] += 1
     this.statusData['Last upload at'] = new Date().toISOString()
