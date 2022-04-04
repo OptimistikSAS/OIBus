@@ -2,10 +2,10 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 import timexe from 'timexe'
 
+import * as ReactDOMClient from 'react-dom/client'
 import newConfig from '../../../tests/testConfig'
 import Engine from './Engine.jsx'
 
@@ -33,66 +33,83 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('Engine', () => {
   test('check Engine', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check change engineName', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
-    Simulate.change(document.getElementById('engine.engineName'), { target: { value: 'OIBus test' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.engineName'), { target: { value: 'OIBus test' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.engineName', value: 'OIBus test', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check change port', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
-    Simulate.change(document.getElementById('engine.port'), { target: { value: 1234 } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.port'), { target: { value: 1234 } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.port', value: 1234, validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check change user', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
-    Simulate.change(document.getElementById('engine.user'), { target: { value: 'new_user' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.user'), { target: { value: 'new_user' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.user', value: 'new_user', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check change password', () => {
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
-    Simulate.change(document.getElementById('engine.password'), { target: { value: '{{notEncrypted}}new_password' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.password'), { target: { value: '{{notEncrypted}}new_password' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.password', value: '{{notEncrypted}}new_password', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check Engine when config has no proxies', () => {
     newConfig.engine.proxies = null
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check Engine when no engine', () => {
     newConfig.engine = null
     act(() => {
-      ReactDOM.render(<Engine />, container)
+      root.render(<Engine />)
     })
     expect(container).toMatchSnapshot()
     global.Date = RealDate

@@ -89,7 +89,6 @@ exports[`NodeView display main page based on config 2`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >
@@ -104,7 +103,6 @@ exports[`NodeView display main page based on config 3`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >
@@ -119,7 +117,6 @@ exports[`NodeView display main page based on config 4`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >
@@ -134,7 +131,6 @@ exports[`NodeView display main page based on config 5`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >

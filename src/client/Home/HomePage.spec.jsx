@@ -2,15 +2,15 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import HomePage from './HomePage.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
 // ReacFlow does not seem to be working with jest.
 // so we have to mock this component
-jest.mock('../../../node_modules/react-flow-renderer/dist/esm/index.js', () => () => 'ReactFlow')
+jest.mock('react-flow-renderer', () => () => 'ReactFlow')
 
 global.EventSource = class {
   constructor() {
@@ -19,15 +19,19 @@ global.EventSource = class {
 }
 
 let container
-
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 const setAlert = jest.fn()
@@ -36,9 +40,8 @@ React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
 describe('HomePage', () => {
   test('display Health page based on config', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <HomePage />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -46,9 +49,8 @@ describe('HomePage', () => {
   test('display Health with config null', () => {
     React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
     act(() => {
-      ReactDOM.render(
+      root.render(
         <HomePage />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

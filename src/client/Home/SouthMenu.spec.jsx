@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import SouthMenu from './SouthMenu.jsx'
 import newConfig from '../../../tests/testConfig'
 
@@ -23,16 +23,20 @@ jest.mock('react-router-dom', () => (
 const dataSource = newConfig.south.dataSources[0]
 
 let container
-
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
   jest.clearAllMocks()
 })
 
@@ -41,9 +45,8 @@ describe('SouthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthMenu dataSource={dataSource} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -51,9 +54,8 @@ describe('SouthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: {}, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthMenu dataSource={dataSource} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -61,9 +63,8 @@ describe('SouthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: { south: {} }, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthMenu dataSource={dataSource} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -71,9 +72,8 @@ describe('SouthMenu', () => {
     React.useContext = jest.fn().mockReturnValue({ newConfig: { south: { dataSources: [] } }, dispatchNewConfig })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthMenu dataSource={dataSource} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -81,9 +81,8 @@ describe('SouthMenu', () => {
 
   test('display SouthMenu page based on config', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <SouthMenu dataSource={dataSource} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -91,10 +90,14 @@ describe('SouthMenu', () => {
 
   test('check duplicate dataSource', async () => {
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
+      root.render(<SouthMenu dataSource={dataSource} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-duplicate'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-duplicate'))
+    })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
@@ -112,10 +115,15 @@ describe('SouthMenu', () => {
     const dataSourceWithCopyInName = newConfig.south.dataSources[2]
 
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSourceWithCopyInName} />, container)
+      root.render(<SouthMenu dataSource={dataSourceWithCopyInName} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-duplicate'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-duplicate'))
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'south.dataSources',
@@ -131,31 +139,51 @@ describe('SouthMenu', () => {
 
   test('check edit first dataSource', () => {
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
+      root.render(<SouthMenu dataSource={dataSource} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-settings'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+
+    act(() => {
+      Simulate.click(document.getElementById('oi-settings'))
+    })
     expect(mockNavigate).toBeCalledWith(`/south/${newConfig.south.dataSources[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
   test('check status first dataSource', () => {
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
+      root.render(<SouthMenu dataSource={dataSource} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-status'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-status'))
+    })
+
     expect(mockNavigate).toBeCalledWith(`/south/${newConfig.south.dataSources[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 
   test('check delete first dataSource', () => {
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
+      root.render(<SouthMenu dataSource={dataSource} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-delete'))
-    Simulate.click(document.getElementById('confirm'))
+
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+
+    act(() => {
+      Simulate.click(document.getElementById('oi-delete'))
+    })
+
+    act(() => {
+      Simulate.click(document.getElementById('confirm'))
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
       name: 'south.dataSources.0',
@@ -165,11 +193,18 @@ describe('SouthMenu', () => {
 
   test('check cancel delete first dataSource', () => {
     act(() => {
-      ReactDOM.render(<SouthMenu dataSource={dataSource} />, container)
+      root.render(<SouthMenu dataSource={dataSource} />)
     })
-    Simulate.click(document.getElementById('dropdown-toggle'))
-    Simulate.click(document.getElementById('oi-delete'))
-    Simulate.click(document.getElementById('cancel'))
+    act(() => {
+      Simulate.click(document.getElementById('dropdown-toggle'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('oi-delete'))
+    })
+    act(() => {
+      Simulate.click(document.getElementById('cancel'))
+    })
+
     expect(dispatchNewConfig).not.toBeCalled()
     expect(container).toMatchSnapshot()
   })

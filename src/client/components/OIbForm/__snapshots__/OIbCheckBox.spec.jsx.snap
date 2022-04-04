@@ -44,7 +44,7 @@ exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
 exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `
 <div>
   <div
-    class="form-check form-switch mb-3"
+    class="form-check form-switch"
   >
     <input
       checked=""

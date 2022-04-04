@@ -5,7 +5,6 @@ exports[`HomePage display Health page based on config 1`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >
@@ -20,7 +19,6 @@ exports[`HomePage display Health with config null 1`] = `
   <div
     class="container"
   >
-    
     <div
       style="height: 710px; width: 100%; padding-top: 2rem;"
     >

@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import newConfig from '../../../tests/testConfig'
 
 import SouthStatus from './SouthStatus.jsx'
@@ -29,29 +29,33 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
-  // jest.spyOn(Date.prototype, 'toISOString').mockReturnValue('2000-01-01T00:00:00.000Z');
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('South Status', () => {
   React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
   test('display SouthStatus page based on config', () => {
     act(() => {
-      ReactDOM.render(<SouthStatus />, container)
+      root.render(<SouthStatus />)
     })
     expect(container).toMatchSnapshot()
   })
 
   test('go to previous page', () => {
     act(() => {
-      ReactDOM.render(<SouthStatus />, container)
+      root.render(<SouthStatus />)
     })
     Simulate.click(document.getElementById('oi-sub-nav'))
     Simulate.click(document.getElementById('oi-navigate'))

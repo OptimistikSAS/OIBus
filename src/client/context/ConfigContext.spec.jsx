@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import utils from '../helpers/utils'
 import testConfig from '../../../tests/testConfig'
 import { ConfigProvider, reducer } from './ConfigContext.jsx'
@@ -57,35 +57,38 @@ React.useReducer = jest.fn().mockImplementation(() => [testConfig, jest.fn()])
 const dispatchNewConfig = (action) => reducer(testConfig, action)
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('ConfigProvider', () => {
   test('check ConfigProvider', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
   })
   test('check initial data setup', async () => {
     await act(async () => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     expect(setActiveConfig).toBeCalledWith(testConfig)
@@ -99,11 +102,10 @@ describe('ConfigProvider', () => {
     const originalGlobalFetchMock = global.fetch
     global.fetch = jest.fn().mockImplementation(() => ({ status: 500 }))
     await act(async () => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     expect(console.error).toBeCalled()
@@ -112,11 +114,10 @@ describe('ConfigProvider', () => {
   })
   test('check reset action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'reset', config: testConfig }
@@ -125,11 +126,10 @@ describe('ConfigProvider', () => {
   })
   test('check update action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'update', name: 'engine.port', value: 2224 }
@@ -141,11 +141,10 @@ describe('ConfigProvider', () => {
     testConfig.errors = { 'engine.port': 'some previous error' }
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'update', name: 'engine.port', value: 2224 }
@@ -164,11 +163,10 @@ describe('ConfigProvider', () => {
     }
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'update', name: 'engine.port', value: 2224 }
@@ -181,11 +179,10 @@ describe('ConfigProvider', () => {
   })
   test('check update action invalide', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'update', name: 'engine.port', value: 0, validity: 'Value should be between 1 and 65535' }
@@ -194,11 +191,10 @@ describe('ConfigProvider', () => {
   })
   test('check deleteRow action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
 
@@ -212,11 +208,10 @@ describe('ConfigProvider', () => {
     // add some previuous error to test error cleaning
     testConfig.errors = { 'north.applications.0': 'some previous error' }
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
 
@@ -237,11 +232,10 @@ describe('ConfigProvider', () => {
       'engine.port': 'some previous error',
     }
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
 
@@ -257,11 +251,10 @@ describe('ConfigProvider', () => {
   })
   test('check deleteAllRows action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'deleteAllRows', name: 'south.dataSources.0.points' }
@@ -272,11 +265,10 @@ describe('ConfigProvider', () => {
   })
   test('check addRow action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'addRow', name: 'south.dataSources.0.points', value: {} }
@@ -287,11 +279,10 @@ describe('ConfigProvider', () => {
   })
   test('check importPoints action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'importPoints', name: 'south.dataSources.0.points', value: [{}] }
@@ -302,11 +293,10 @@ describe('ConfigProvider', () => {
   })
   test('check unknown action', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <ConfigProvider>
           <div />
         </ConfigProvider>,
-        container,
       )
     })
     const action = { type: 'unknown' }

@@ -2,29 +2,34 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import apis from '../services/apis'
 import About from './About.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
-let container
 global.EventSource = class {
   constructor() {
     this.close = () => {}
   }
 }
 
+let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 // sample status (object returned by Server to give various informations on the behavior)
@@ -85,9 +90,8 @@ React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
 describe('About', () => {
   test('display About page based on config and status', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <About />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -101,9 +105,8 @@ describe('About', () => {
     const originalError = console.error
     console.error = jest.fn()
     act(() => {
-      ReactDOM.render(
+      root.render(
         <About />,
-        container,
       )
     })
     // resolve the call requested by useffect with a reject
@@ -116,9 +119,8 @@ describe('About', () => {
   test('display About with config null', () => {
     React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
     act(() => {
-      ReactDOM.render(
+      root.render(
         <About />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

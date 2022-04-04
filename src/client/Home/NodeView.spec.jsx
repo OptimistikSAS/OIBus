@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
+import * as ReactDOMClient from 'react-dom/client'
 import NodeView from './NodeView.jsx'
 import newConfig from '../../../tests/testConfig'
 
@@ -17,22 +17,27 @@ global.EventSource = class {
 
 // ReactFlow does not seem to be working with jest.
 // so we have to mock this component
-jest.mock('../../../node_modules/react-flow-renderer/dist/esm/index.js', () => () => ('ReactFlow'))
+jest.mock('react-flow-renderer', () => () => 'ReactFlow')
 
 let container
-
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
+  container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
+  document.body.appendChild(container)
+
   React.useContext = jest.fn().mockReturnValue({
     newConfig,
     dispatchNewConfig,
   })
-  container = document.createElement('div')
-  document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 // sample status (object returned by Server to give various informations on the behavior)
@@ -42,9 +47,8 @@ React.useContext = jest.fn().mockReturnValue({ newConfig })
 describe('NodeView', () => {
   test('display main page based on config', async () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -55,9 +59,8 @@ describe('NodeView', () => {
     })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -68,9 +71,8 @@ describe('NodeView', () => {
     })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -81,9 +83,8 @@ describe('NodeView', () => {
     })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()
@@ -94,9 +95,8 @@ describe('NodeView', () => {
     })
 
     act(() => {
-      ReactDOM.render(
+      root.render(
         <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

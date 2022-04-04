@@ -2,10 +2,10 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 import timexe from 'timexe'
 
+import * as ReactDOMClient from 'react-dom/client'
 import testConfig from '../../../tests/testConfig'
 import ScanModes from './ScanModes.jsx'
 
@@ -33,42 +33,53 @@ const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('ScanModes', () => {
   test('check ScanModes', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check change first scan mode', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'every30Second' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'every30Second' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.scanMode', value: 'every30Second', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check change first scan mode to invalide: already existing', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'every1Min' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: 'every1Min' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'engine.scanModes.0.scanMode',
@@ -79,11 +90,14 @@ describe('ScanModes', () => {
   })
   test('check change first scan mode to invalide: empty', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: '' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.scanModes.0.scanMode'), { target: { value: '' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'engine.scanModes.0.scanMode',
@@ -94,32 +108,43 @@ describe('ScanModes', () => {
   })
   test('check change first cron', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.change(document.getElementById('engine.scanModes.0.cronTime.every.value'), { target: { value: '10' } })
+    act(() => {
+      Simulate.change(document.getElementById('engine.scanModes.0.cronTime.every.value'), { target: { value: '10' } })
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.scanModes.0.cronTime', value: '* * * * * /10', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check delete first scan mode', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.click(document.querySelector('td path'))
-    Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
+
+    act(() => {
+      Simulate.click(document.querySelector('td path'))
+    })
+    act(() => {
+      Simulate.click(document.getElementsByClassName('btn btn-primary')[0])
+    })
+
     expect(dispatchNewConfig).toBeCalledWith({ type: 'deleteRow', name: 'engine.scanModes.0' })
     expect(container).toMatchSnapshot()
   })
   test('check add line to scan modes', () => {
     act(() => {
-      ReactDOM.render(<ScanModes
+      root.render(<ScanModes
         scanModes={testConfig.engine.scanModes}
-      />, container)
+      />)
     })
-    Simulate.click(document.querySelector('th path'))
+    act(() => {
+      Simulate.click(document.querySelector('th path'))
+    })
     expect(dispatchNewConfig).toBeCalledWith({ type: 'addRow', name: 'engine.scanModes', value: { scanMode: '', cronTime: '* * * * * *' } })
     expect(container).toMatchSnapshot()
     global.Date = RealDate

@@ -94,7 +94,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-check form-switch mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
@@ -447,7 +447,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-check form-switch mb-3"
+            class="form-check form-switch"
           >
             <input
               checked=""
@@ -800,7 +800,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch mb-3"
+            class="form-check form-switch"
           >
             <input
               class="mb-3 form-check-input"
@@ -973,7 +973,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
               id="readIntervalDelay"
               name="readIntervalDelay"
               type="integer"
-              value=""
+              value="200"
             />
             <div
               class="invalid-feedback"

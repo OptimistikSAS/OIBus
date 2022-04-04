@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act, Simulate } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import testConfig from '../../../tests/testConfig'
 import HealthSignal from './HealthSignal.jsx'
 
@@ -15,32 +15,37 @@ mockMath.random = () => 1
 global.Math = mockMath
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('HealthSignal', () => {
   test('check HealthSignal', () => {
     act(() => {
-      ReactDOM.render(<HealthSignal
+      root.render(<HealthSignal
         healthSignal={testConfig.engine.healthSignal}
         onChange={() => (1)}
-      />, container)
+      />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check change healthSignal http to false', () => {
     act(() => {
-      ReactDOM.render(<HealthSignal
+      root.render(<HealthSignal
         healthSignal={testConfig.engine.healthSignal}
         onChange={onChange}
-      />, container)
+      />)
     })
     Simulate.change(document.getElementById('engine.healthSignal.http.enabled'), { target: { checked: false } })
     expect(onChange).toBeCalledWith('engine.healthSignal.http.enabled', false, null)
@@ -48,10 +53,10 @@ describe('HealthSignal', () => {
   })
   test('check change healthSignal log to false', () => {
     act(() => {
-      ReactDOM.render(<HealthSignal
+      root.render(<HealthSignal
         healthSignal={testConfig.engine.healthSignal}
         onChange={onChange}
-      />, container)
+      />)
     })
     Simulate.change(document.getElementById('engine.healthSignal.logging.enabled'), { target: { checked: false } })
     expect(onChange).toBeCalledWith('engine.healthSignal.logging.enabled', false, null)

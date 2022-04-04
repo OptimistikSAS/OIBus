@@ -2,30 +2,34 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { act } from 'react-dom/test-utils'
 
+import * as ReactDOMClient from 'react-dom/client'
 import { AlertProvider } from './AlertContext.jsx'
 
 let container
+let root
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
   container = document.createElement('div')
+  root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
 })
 
 afterEach(() => {
   document.body.removeChild(container)
   container = null
+  root = null
 })
 
 describe('AlertProvider', () => {
   test('check AlertProvider', () => {
     act(() => {
-      ReactDOM.render(
+      root.render(
         <AlertProvider>
           <div />
         </AlertProvider>,
-        container,
       )
     })
     expect(container).toMatchSnapshot()

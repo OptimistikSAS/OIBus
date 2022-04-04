@@ -65,8 +65,8 @@ const Log = () => {
     }
   }
 
-  useEffect(async () => {
-    await retrieveLogs()
+  useEffect(() => {
+    retrieveLogs()
   }, [])
 
   /**
