@@ -1077,7 +1077,7 @@ module.exports = {
         logger.info(`No db file to migrate for dataSource ${dataSource.name}`)
       }
       if (oldDataSourceDbExists) {
-        const newDataSourcePath = path.resolve(cachePath, dataSource.id)
+        const newDataSourcePath = path.resolve(cachePath, `${dataSource.id}.db`)
         logger.info(`Renaming old cache file ${oldDataSourcePath} to ${newDataSourcePath} for datasource ${dataSource.name}`)
         try {
           await fs.rename(oldDataSourcePath, newDataSourcePath)
@@ -1109,7 +1109,6 @@ module.exports = {
           }
         } catch (error) {
           logger.error(`Could not rename file ${oldDataSourcePath} to ${newDataSourcePath} for dataSource ${dataSource.name}`)
-          throw error
         }
       }
 
@@ -1169,7 +1168,7 @@ module.exports = {
         logger.info(`No ${oldApplicationPath} file to migrate for application ${application.name}`)
       }
       if (oldApplicationDbExists) {
-        const newApplicationPath = path.resolve(cachePath, application.id)
+        const newApplicationPath = path.resolve(cachePath, `${application.id}.db`)
         logger.info(`Renaming old cache file ${oldApplicationPath} to ${newApplicationPath} for application ${application.name}`)
         try {
           await fs.rename(oldApplicationPath, newApplicationPath)
