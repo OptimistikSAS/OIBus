@@ -236,7 +236,6 @@ schema.form = {
     md: 2,
   },
 }
-schema.points = null
 
 schema.withDriver = (driver) => {
   schema.form.domain.hidden = driver !== 'mssql'

@@ -52,7 +52,7 @@ const modbusConfig = {
     slaveId: 1,
     addressOffset: 'Modbus',
     endianness: 'Big Endian',
-    swapBytesinWords: false,
+    swapBytesInWords: false,
     swapWordsInDWords: false,
   },
   points: [
@@ -189,7 +189,7 @@ describe('Modbus', () => {
         slaveId: 1,
         addressOffset: 'JBus',
         endianness: 'Big Endian',
-        swapBytesinWords: false,
+        swapBytesInWords: false,
         swapWordsInDWords: false,
       },
       points: [
