@@ -157,23 +157,32 @@ class ADS extends ProtocolHandler {
       return
     }
 
-    await nodesToRead.forEach((node) => {
-      this.client.readSymbol(node.pointId)
-        .then((nodeResult) => {
-          const timestamp = new Date().toISOString()
-          this.parseValues(
-            `${this.plcName}${node.pointId}`,
-            nodeResult.symbol?.type,
-            nodeResult.value,
-            timestamp,
-            nodeResult.type?.subItems,
-            nodeResult.type?.enumInfo,
-          )
-        })
-        .catch((error) => {
-          this.logger.error(`on Scan ${scanMode}:${error.stack}`)
-        })
-    })
+    try {
+      await nodesToRead.forEach((node) => {
+        this.client.readSymbol(node.pointId)
+          .then((nodeResult) => {
+            const timestamp = new Date().toISOString()
+            this.parseValues(
+              `${this.plcName}${node.pointId}`,
+              nodeResult.symbol?.type,
+              nodeResult.value,
+              timestamp,
+              nodeResult.type?.subItems,
+              nodeResult.type?.enumInfo,
+            )
+          })
+          .catch((error) => {
+            if (error.message === 'Client is not connected. Use connect() to connect to the target first.') {
+              this.disconnect()
+              throw error
+            }
+            this.logger.error(`on Scan ${scanMode}:${error.stack}`)
+          })
+      })
+    } catch (connectionError) {
+      this.logger.error('Connection error, trying to reconnect.')
+      await this.connect()
+    }
   }
 
   /**
