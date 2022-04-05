@@ -511,12 +511,13 @@ class OIBusEngine extends BaseEngine {
     this.updateEngineStatusData()
     if (!this.eventEmitters['/engine/sse']) {
       this.eventEmitters['/engine/sse'] = {}
-      this.eventEmitters['/engine/sse'].events = new EventEmitter()
-      this.eventEmitters['/engine/sse'].events.setMaxListeners(0)
-      this.eventEmitters['/engine/sse'].events.on('data', this.listener)
-      this.eventEmitters['/engine/sse'].statusData = this.statusData
-      this.updateStatusDataStream()
+    } else {
+      this.eventEmitters['/engine/sse'].events.removeListener('data', this.listener)
     }
+    this.eventEmitters['/engine/sse'].events = new EventEmitter()
+    this.eventEmitters['/engine/sse'].events.on('data', this.listener)
+    this.eventEmitters['/engine/sse'].statusData = this.statusData
+    this.updateStatusDataStream()
     if (this.liveStatusInterval) {
       clearInterval(this.liveStatusInterval)
     }

@@ -60,12 +60,13 @@ class HistoryQueryEngine extends BaseEngine {
   initializeStatusData() {
     if (!this.eventEmitters['/history/engine/sse']) {
       this.eventEmitters['/history/engine/sse'] = {}
-      this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
-      this.eventEmitters['/history/engine/sse'].events.setMaxListeners(0)
-      this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
-      this.eventEmitters['/history/engine/sse'].statusData = this.statusData
-      this.updateStatusDataStream()
+    } else {
+      this.eventEmitters['/history/engine/sse'].events.removeListener('data', this.listener)
     }
+    this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
+    this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
+    this.eventEmitters['/history/engine/sse'].statusData = this.statusData
+    this.updateStatusDataStream()
     if (this.liveStatusInterval) {
       clearInterval(this.liveStatusInterval)
     }

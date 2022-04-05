@@ -75,8 +75,10 @@ class Server {
     this.user = user
 
     if (password) {
-      this.password = oibusEngine.encryptionService.decryptText(password)
-      if (this.password == null) {
+      try {
+        this.password = oibusEngine.encryptionService.decryptText(password)
+      } catch (error) {
+        this.password = null
         this.app.logger.error('Error decrypting admin password. Falling back to default')
       }
     } else {

@@ -47,12 +47,13 @@ class HistoryQuery {
 
     if (!this.engine.eventEmitters[`/history/${this.id}/sse`]) {
       this.engine.eventEmitters[`/history/${this.id}/sse`] = {}
-      this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
-      this.engine.eventEmitters[`/history/${this.id}/sse`].events.setMaxListeners(0)
-      this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
-      this.engine.eventEmitters[`/history/${this.id}/sse`].statusData = this.statusData
-      this.updateStatusDataStream()
+    } else {
+      this.engine.eventEmitters[`/history/${this.id}/sse`].events.removeListener('data', this.listener)
     }
+    this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
+    this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
+    this.engine.eventEmitters[`/history/${this.id}/sse`].statusData = this.statusData
+    this.updateStatusDataStream()
   }
 
   /**
