@@ -12,6 +12,7 @@ const clientController = require('./controllers/clientController')
 const Logger = require('../engine/logger/Logger.class')
 
 const router = require('./routes')
+const EncryptionService = require('../services/EncryptionService.class')
 
 /**
  * Class Server - Provides general attributes and methods for protocols.
@@ -31,7 +32,12 @@ class Server {
     this.app.engine = oibusEngine
     this.app.historyQueryEngine = historyQueryEngine
     this.app.logger = new Logger('web-server')
-    this.app.logger.setEncryptionService(this.app.engine.encryptionService)
+
+    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService.setKeyFolder(oibusEngine.configService.keyFolder)
+    this.encryptionService.checkOrCreatePrivateKey()
+
+    this.app.logger.setEncryptionService(this.encryptionService)
 
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
