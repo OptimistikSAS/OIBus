@@ -167,16 +167,20 @@ class OIBusEngine extends BaseEngine {
         name,
       } = dataSource
       if (enabled) {
-        // Initiate the correct Protocol
-        const south = this.createSouth(protocol, dataSource)
-        if (south) {
-          this.activeProtocols[id] = south
-          // eslint-disable-next-line no-await-in-loop
-          await this.activeProtocols[id].init()
-          // eslint-disable-next-line no-await-in-loop
-          await this.activeProtocols[id].connect()
-        } else {
-          this.logger.error(`Protocol for ${name} is not found : ${protocol}`)
+        try {
+          // Initiate the correct Protocol
+          const south = this.createSouth(protocol, dataSource)
+          if (south) {
+            this.activeProtocols[id] = south
+            // eslint-disable-next-line no-await-in-loop
+            await this.activeProtocols[id].init()
+            // eslint-disable-next-line no-await-in-loop
+            await this.activeProtocols[id].connect()
+          } else {
+            this.logger.error(`Protocol for ${name} is not found: ${protocol}`)
+          }
+        } catch (error) {
+          this.logger.error(`Error when starting south connector ${name}: ${error}`)
         }
       }
     }
@@ -192,16 +196,20 @@ class OIBusEngine extends BaseEngine {
       } = application
       // select the right api handler
       if (enabled) {
+        try {
         // Initiate the correct API
-        const north = this.createNorth(api, application)
-        if (north) {
-          this.activeApis[id] = north
-          // eslint-disable-next-line no-await-in-loop
-          await this.activeApis[id].init()
-          // eslint-disable-next-line no-await-in-loop
-          await this.activeApis[id].connect()
-        } else {
-          this.logger.error(`API for ${name} is not found : ${api}`)
+          const north = this.createNorth(api, application)
+          if (north) {
+            this.activeApis[id] = north
+            // eslint-disable-next-line no-await-in-loop
+            await this.activeApis[id].init()
+            // eslint-disable-next-line no-await-in-loop
+            await this.activeApis[id].connect()
+          } else {
+            this.logger.error(`API for ${name} is not found: ${api}`)
+          }
+        } catch (error) {
+          this.logger.error(`Error when starting north connector ${name}: ${error}`)
         }
       }
     }
