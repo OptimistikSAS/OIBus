@@ -6,12 +6,13 @@
 [Setup]
 AppId={{A4DCC920-510F-4D9D-AD02-67AA402EC010}
 AppName={#MyAppName}
+// MyAppVersion is set by the npm command build-win-setup on release
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL=https://github.com/OptimistikSAS/OIBus
 AppUpdatesURL={#MyAppURL}
-AppCopyright=Copyright 2019-2021 Optimistik, all rights reserved
+AppCopyright=Copyright 2019-2022 Optimistik, all rights reserved
 ArchitecturesAllowed=x64
 Compression=lzma
 DefaultDirName=C:\Program Files\{#MyAppName}
@@ -256,7 +257,11 @@ begin;
     end;
   end
   else
+  begin
+    // The default config file won't be use if another config file is used. It can be deleted
+    DeleteFile(DefaultConfigFilePath)
     Result := True;
+  end
 end;
 
 // Checking user-input
