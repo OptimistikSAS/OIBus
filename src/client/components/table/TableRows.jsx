@@ -99,7 +99,7 @@ const TableRows = ({
             <Modal
               show={false}
               title="Delete"
-              body={`Are you sure you want to delete ${isHistoryQuery ? row[1].value : row[0].name}?`}
+              body={`Are you sure you want to delete ${isHistoryQuery ? row[1].value : row[0].value.props.value}?`}
             >
               {(confirm) => (
                 <FaTrashAlt
