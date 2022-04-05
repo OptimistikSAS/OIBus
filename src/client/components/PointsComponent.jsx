@@ -53,11 +53,7 @@ const PointsComponent = ({
   const findIndexBasedOnVirtualIndex = (index) => {
     const paginatedIndex = MAX_ON_PAGE * (selectedPage - 1) + index
     const pointToOperate = filteredPoints[paginatedIndex]
-    const indexInTable = points.findIndex((point) => point.virtualIndex === pointToOperate.virtualIndex)
-    // reverse the table index to get the index in the config file
-    const totalIndex = points.length - 1
-    const totalOnPage = totalIndex - (MAX_ON_PAGE * (selectedPage - 1))
-    return totalOnPage - indexInTable
+    return pointsOrdered.findIndex((point) => point.pointId === pointToOperate.pointId)
   }
 
   /**
@@ -81,7 +77,7 @@ const PointsComponent = ({
 
   /**
    * Delete point
-   * @param {string} index the index of point
+   * @param {number} index the index of point
    * @returns {void}
    */
   const handleDeletePoint = (index) => {
