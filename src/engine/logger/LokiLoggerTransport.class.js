@@ -84,7 +84,10 @@ class LokiTransport {
       fetchOptions.headers.Authorization = `Basic ${basic}`
     }
     try {
-      await fetch(this.lokiAddress, fetchOptions)
+      const result = await fetch(this.lokiAddress, fetchOptions)
+      if (result.status !== 200 || result.status !== 201) {
+        throw new Error(`Loki fetch error: ${result.status} - ${result.statusText}`)
+      }
     } catch (error) {
       console.error(error)
     }
@@ -116,8 +119,8 @@ class LokiTransport {
       }, (responseData.expires_in - 60) * 1000)
       this.token = responseData
       this.mustRenewToken = false
-    } catch {
-      // ignore error
+    } catch (error) {
+      console.error(error)
     }
   }
 
