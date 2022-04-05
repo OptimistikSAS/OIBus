@@ -6,15 +6,15 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -28,10 +28,17 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -553,15 +560,15 @@ exports[`ConfigurePoints check add new point 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -575,10 +582,17 @@ exports[`ConfigurePoints check add new point 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1100,15 +1114,15 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1122,10 +1136,17 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -1647,15 +1668,15 @@ exports[`ConfigurePoints check delete all points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -1669,10 +1690,17 @@ exports[`ConfigurePoints check delete all points 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2194,15 +2222,15 @@ exports[`ConfigurePoints check delete first point 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -2216,10 +2244,17 @@ exports[`ConfigurePoints check delete first point 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -2741,15 +2776,15 @@ exports[`ConfigurePoints check edit filter input 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -2763,10 +2798,17 @@ exports[`ConfigurePoints check edit filter input 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3288,15 +3330,15 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3310,10 +3352,17 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -3835,15 +3884,15 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -3857,10 +3906,17 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -4382,15 +4438,15 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -4404,10 +4460,17 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -4929,15 +4992,15 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -4951,10 +5014,17 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -5476,15 +5546,15 @@ exports[`ConfigurePoints check export points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -5498,10 +5568,17 @@ exports[`ConfigurePoints check export points 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -6023,15 +6100,15 @@ exports[`ConfigurePoints check import points file input 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -6045,10 +6122,17 @@ exports[`ConfigurePoints check import points file input 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -6570,15 +6654,15 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -6592,10 +6676,17 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -7117,15 +7208,15 @@ exports[`ConfigurePoints check import points press 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -7139,10 +7230,17 @@ exports[`ConfigurePoints check import points press 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -7664,15 +7762,15 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -7686,10 +7784,17 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8211,15 +8316,15 @@ exports[`ConfigurePoints check import points success 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8233,10 +8338,17 @@ exports[`ConfigurePoints check import points success 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8778,15 +8890,15 @@ exports[`ConfigurePoints check no points 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -8800,10 +8912,17 @@ exports[`ConfigurePoints check no points 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -8997,15 +9116,15 @@ exports[`ConfigurePoints check pagination 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -9019,10 +9138,17 @@ exports[`ConfigurePoints check pagination 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"
@@ -9544,15 +9670,15 @@ exports[`ConfigurePoints check render with filterText 1`] = `
     class="d-flex align-items-center w-100 oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center pl-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon mr-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -9566,10 +9692,17 @@ exports[`ConfigurePoints check render with filterText 1`] = `
           />
         </svg>
       </button>
-      | OPC-HDA
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        OPC-HDA
+      </span>
     </h6>
     <div
-      class="pull-right mr-3"
+      class="pull-right me-3"
     >
       <button
         class="inline-button autosize oi-status-button btn btn-outline-secondary btn-sm"

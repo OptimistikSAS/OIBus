@@ -81,12 +81,13 @@ class ApiHandler {
     }
     if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
-      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
-      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.setMaxListeners(0)
-      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
-      this.engine.eventEmitters[`/north/${this.application.id}/sse`].statusData = this.statusData
-      this.updateStatusDataStream()
+    } else {
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.removeListener('data', this.listener)
     }
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`].statusData = this.statusData
+    this.updateStatusDataStream()
   }
 
   /**

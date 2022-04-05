@@ -147,7 +147,7 @@ class ADS extends ProtocolHandler {
    */
   async lastPointQuery(scanMode) {
     if (!this.connected) {
-      this.logger.trace(`onScan ignored: connected: ${this.connected}`)
+      this.logger.debug(`onScan ignored: connected: ${this.connected}`)
       return
     }
 

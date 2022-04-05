@@ -7,15 +7,15 @@ exports[`North Status display NorthStatus page based on config 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon me-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -29,7 +29,14 @@ exports[`North Status display NorthStatus page based on config 1`] = `
           />
         </svg>
       </button>
-      | c
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        c
+      </span>
     </h6>
   </div>
   <div
@@ -53,15 +60,15 @@ exports[`North Status go to previous page 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon me-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -75,7 +82,14 @@ exports[`North Status go to previous page 1`] = `
           />
         </svg>
       </button>
-      | c
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        c
+      </span>
     </h6>
   </div>
   <div

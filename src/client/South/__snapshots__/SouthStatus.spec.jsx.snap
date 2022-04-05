@@ -7,15 +7,15 @@ exports[`South Status display SouthStatus page based on config 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon me-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -29,7 +29,14 @@ exports[`South Status display SouthStatus page based on config 1`] = `
           />
         </svg>
       </button>
-      | MQTTServer
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        MQTTServer
+      </span>
     </h6>
     <div
       class="pull-right me-3"
@@ -63,15 +70,15 @@ exports[`South Status go to previous page 1`] = `
     id="oi-sub-nav"
   >
     <h6
-      class="text-muted d-flex align-items-center ps-3 pt-1"
+      class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <button
-        class="util-button btn btn-outline-secondary"
+        class="util-button p-0 m-0 btn btn-outline-secondary"
         id="oi-navigate"
         type="button"
       >
         <svg
-          class="oi-back-icon me-2"
+          class="oi-back-icon"
           fill="currentColor"
           height="1em"
           stroke="currentColor"
@@ -85,7 +92,14 @@ exports[`South Status go to previous page 1`] = `
           />
         </svg>
       </button>
-      | MQTTServer
+      <span
+        class="mx-2"
+      >
+        |
+      </span>
+      <span>
+        MQTTServer
+      </span>
     </h6>
     <div
       class="pull-right me-3"

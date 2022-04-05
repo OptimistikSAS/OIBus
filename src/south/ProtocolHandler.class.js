@@ -177,12 +177,13 @@ class ProtocolHandler {
 
     if (!this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]) {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`] = {}
-      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
-      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.setMaxListeners(0)
-      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
-      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].statusData = this.statusData
-      this.updateStatusDataStream()
+    } else {
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.removeListener('data', this.listener)
     }
+    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
+    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
+    this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].statusData = this.statusData
+    this.updateStatusDataStream()
   }
 
   /**

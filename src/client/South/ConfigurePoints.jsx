@@ -94,20 +94,21 @@ const ConfigurePoints = () => {
   return (
     <>
       <div className="d-flex align-items-center w-100 oi-sub-nav">
-        <h6 className="text-muted d-flex align-items-center pl-3 pt-1">
+        <h6 className="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0">
           <Button
             id="oi-navigate"
             outline
             onClick={() => {
               navigate(-1)
             }}
-            className="util-button"
+            className="util-button p-0 m-0"
           >
-            <FaArrowLeft className="oi-back-icon mr-2" />
+            <FaArrowLeft className="oi-back-icon" />
           </Button>
-          {`| ${dataSource.name}`}
+          <span className="mx-2">|</span>
+          <span>{dataSource.name}</span>
         </h6>
-        <div className="pull-right mr-3">
+        <div className="pull-right me-3">
           <StatusButton
             handler={() => {
               navigate(`/south/${id}/live`)
