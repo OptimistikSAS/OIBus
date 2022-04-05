@@ -76,7 +76,7 @@ class Modbus extends ProtocolHandler {
     }
 
     // transform 01 02 03 04 into 02 01 04 03
-    if (this.dataSource.Modbus.swapBytesinWords) {
+    if (this.dataSource.Modbus.swapBytesInWords) {
       responseBuffer = responseBuffer.swap16()
     }
     /* Here, the position must be multiplied by 2 because the jsmodbus library is set to read addresses values on 16 bits (2 bytes),

@@ -98,7 +98,7 @@ schema.form = {
     label: 'Endianness',
     defaultValue: 'Big Endian',
   },
-  swapBytesinWords: {
+  swapBytesInWords: {
     type: 'OIbCheckBox',
     md: 1,
     newRow: true,

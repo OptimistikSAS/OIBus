@@ -468,11 +468,12 @@ module.exports = {
       },
       http: {
         enabled: config.engine.aliveSignal.enabled,
-        host: config.engine.aliveSignal.host,
+        host: config.engine.aliveSignal.host || 'http://localhost',
         endpoint: config.engine.aliveSignal.endpoint,
         authentication: config.engine.aliveSignal.authentication,
         frequency: config.engine.aliveSignal.frequency,
-        proxy: config.engine.aliveSignal.proxy,
+        proxy: config.engine.aliveSignal.proxy || '',
+        verbose: config.engine.aliveSignal.verbose || false,
       },
     }
     delete config.engine.aliveSignal
@@ -541,13 +542,12 @@ module.exports = {
 
         if (!dataSource.scanMode && !dataSource.points) {
           logger.info(`Filling Folder Scanner scanMode for data source ${dataSource.dataSourceId} with last engine scanMode`)
-
           dataSource.scanMode = config.engine.scanModes[config.engine.scanModes.length - 1].scanMode
         } else if (!dataSource.scanMode && dataSource.points?.length > 0) {
           logger.info(`Filling Folder Scanner scanMode for data source ${dataSource.dataSourceId} with first point scanMode`)
           dataSource.scanMode = dataSource.points[0].scanMode
-          delete dataSource.points
         }
+        dataSource.points = []
 
         // a previous migration forgot to update the compression parameter (called "compress" before)
         if (typeof dataSource.FolderScanner.compression === 'undefined') {
@@ -620,8 +620,9 @@ module.exports = {
         logger.info(`Rename @LastCompletedAt to @StartTime in the query for ${dataSource.name}`)
         dataSource.SQLDbToFile.query = dataSource.SQLDbToFile.query.replace(/@LastCompletedDate/g, '@StartTime')
 
-        logger.info(`Changing SQLDbToFile type to SQL for ${dataSource.name}`)
+        dataSource.points = []
 
+        logger.info(`Changing SQLDbToFile type to SQL for ${dataSource.name}`)
         dataSource.SQL = dataSource.SQLDbToFile
         delete dataSource.SQLDbToFile
         dataSource.protocol = 'SQL'
@@ -830,6 +831,12 @@ module.exports = {
         if (!dataSource.Modbus) {
           dataSource.Modbus = {}
         }
+
+        if (Object.prototype.hasOwnProperty.call(dataSource.Modbus, 'swapBytesinWords')) {
+          logger.info('Change swapBytesinWords field to swapBytesInWords')
+          dataSource.Modbus.swapBytesInWords = dataSource.Modbus.swapBytesinWords
+          delete dataSource.Modbus.swapBytesinWords
+        }
       }
     }
     for (const application of config.north.applications) {
@@ -870,6 +877,11 @@ module.exports = {
         // Case where a connector has been created but never set
         if (!application.AmazonS3) {
           application.AmazonS3 = {}
+        }
+
+        if (Object.prototype.hasOwnProperty.call(application.AmazonS3.authentication, 'accessKey')) {
+          application.AmazonS3.authentication.key = application.AmazonS3.authentication.accessKey
+          delete application.AmazonS3.authentication.accessKey
         }
 
         application.AmazonS3.key = application.AmazonS3.accessKey
