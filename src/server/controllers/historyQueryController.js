@@ -1,10 +1,12 @@
+const { nanoid } = require('nanoid')
 /**
  * Create a new HistoryQuery entry.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const createHistoryQuery = async (ctx) => {
-  const historyQuery = await ctx.app.historyQueryEngine.historyQueryRepository.create(ctx.request.body)
+  const id = nanoid()
+  const historyQuery = await ctx.app.historyQueryEngine.historyQueryRepository.create({ ...ctx.request.body, id })
   process.send({ type: 'reload-historyquery-engine' })
   ctx.ok(historyQuery)
 }
@@ -83,7 +85,17 @@ const orderHistoryQuery = async (ctx) => {
  * @return {void}
  */
 const deleteHistoryQuery = async (ctx) => {
+  const { position } = ctx.query
   await ctx.app.historyQueryEngine.historyQueryRepository.delete(ctx.params.id)
+
+  const queries = await ctx.app.historyQueryEngine.historyQueryRepository.getAll()
+  // eslint-disable-next-line no-restricted-syntax
+  for (const query of queries) {
+    if (query.orderColumn > position + 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await ctx.app.historyQueryEngine.historyQueryRepository.order(query.id, query.orderColumn - 1)
+    }
+  }
   process.send({ type: 'reload-historyquery-engine' })
   ctx.ok()
 }

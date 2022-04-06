@@ -86,7 +86,7 @@ const updateHistoryQuery = async (id, body) => putRequest(`/history-queries/${id
 const enableHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/enable`, body)
 const pauseHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/pause`, body)
 const orderHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/order`, body)
-const deleteHistoryQuery = async (id) => deleteRequest(`/history-queries/${id}`)
+const deleteHistoryQuery = async (id, position) => deleteRequest(`/history-queries/${id}?position=${position}`)
 const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queries/${id}/status`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
