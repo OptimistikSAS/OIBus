@@ -62,24 +62,11 @@ const HistoryQuery = () => {
    */
   const handleDelete = async (position) => {
     const queryToDelete = queries[findIndexBasedOnId(position)]
-    await apis.deleteHistoryQuery(queryToDelete.id)
-    setQueries(queries.filter((query) => query.id !== queryToDelete.id))
-
-    queries.forEach((currentQuery) => {
-      if (currentQuery.orderColumn > position + 1) {
-        apis.orderHistoryQuery(currentQuery.id, { orderColumn: currentQuery.orderColumn - 1 }).then(() => {
-          setQueries(queries.map((query) => {
-            if (query.id === currentQuery.id) {
-              return {
-                ...query,
-                orderColumn: currentQuery.orderColumn - 1,
-              }
-            }
-            return query
-          }).filter((query) => query.id !== queryToDelete.id))
-        })
-      }
-    })
+    await apis.deleteHistoryQuery(queryToDelete.id, position)
+    apis.getHistoryQueries()
+      .then((response) => {
+        setQueries(response)
+      })
   }
 
   /**

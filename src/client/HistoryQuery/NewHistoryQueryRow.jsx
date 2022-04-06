@@ -1,8 +1,6 @@
 import React from 'react'
 import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
-import { nanoid } from 'nanoid'
-import { useNavigate } from 'react-router-dom'
 import { OIbSelect } from '../components/OIbForm/index'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
@@ -15,7 +13,6 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
   const [southHandler, setSouthHandler] = React.useState(filteredSouthHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
-  const navigate = useNavigate()
   const schema = protocol === 'SQL'
     ? ProtocolSchemas.SQL.withDriver(southHandler.SQL.driver)
     : ProtocolSchemas[protocol]
@@ -25,12 +22,10 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
    * @returns {void}
    */
   const handleAddHistoryQuery = () => {
-    const id = nanoid()
     const currentDateMinus7Days = new Date()
     currentDateMinus7Days.setDate(currentDateMinus7Days.getDate() - 7)
 
     addQuery({
-      id,
       name: `${southHandler.name} -> ${northHandler.name}`,
       enabled: false,
       status: 'pending',
@@ -47,7 +42,6 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
       compress: false,
       paused: false,
     })
-    navigate(`/history-query/${id}`)
   }
 
   /**
