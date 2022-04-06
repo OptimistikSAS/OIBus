@@ -16,7 +16,6 @@ const HistoryQueryForm = ({ query }) => {
   const [queryToUpdate, setQueryToUpdate] = useState(query)
   const [progressStatus, setProgressStatus] = useState({ status: query.status })
 
-  const { name, paused } = queryToUpdate
   const { newConfig } = React.useContext(ConfigContext)
   const [errors, setErrors] = useState({})
   const dataSource = newConfig?.south?.dataSources.find(
@@ -31,12 +30,11 @@ const HistoryQueryForm = ({ query }) => {
 
   React.useEffect(() => {
     let source
-    if (progressStatus.status !== 'finished' && progressStatus.status !== 'pending') {
+    if (!queryToUpdate.paused
+        && queryToUpdate.enabled
+        && queryToUpdate.status !== 'pending'
+        && queryToUpdate.status !== 'finished') {
       source = new EventSource(`/history/${queryToUpdate.id}/sse`)
-      source.onerror = (error) => {
-        console.error(error)
-      }
-
       source.onmessage = (event) => {
         if (event && event.data) {
           const myData = JSON.parse(event.data)
@@ -48,6 +46,23 @@ const HistoryQueryForm = ({ query }) => {
           })
         }
       }
+    } else {
+      // Monitor which history query is running
+      source = new EventSource('/history/engine/sse')
+      source.onmessage = (event) => {
+        if (event && event.data) {
+          const myData = JSON.parse(event.data)
+          // If the displayed query is running, we refresh it to update its status and subscribe to its sse
+          if (myData.ongoingHistoryQueryId === queryToUpdate.id) {
+            apis.getHistoryQueryById(queryToUpdate.id).then((updatedQuery) => (
+              setQueryToUpdate(updatedQuery)
+            ))
+          }
+        }
+      }
+    }
+    source.onerror = (error) => {
+      console.error(error)
     }
 
     return () => {
@@ -56,7 +71,7 @@ const HistoryQueryForm = ({ query }) => {
   }, [queryToUpdate])
 
   const handlePause = async () => {
-    await apis.pauseHistoryQuery(queryToUpdate.id, { paused: !paused })
+    await apis.pauseHistoryQuery(queryToUpdate.id, { paused: !queryToUpdate.paused })
     setQueryToUpdate({ ...queryToUpdate, paused: !queryToUpdate.paused })
   }
 
@@ -211,7 +226,7 @@ const HistoryQueryForm = ({ query }) => {
           >
             <FaArrowLeft className="oi-back-icon mr-2" />
           </Button>
-          {`| ${name}`}
+          {`| ${queryToUpdate.name}`}
         </h6>
       </div>
       <Container fluid>
@@ -245,7 +260,7 @@ const HistoryQueryForm = ({ query }) => {
             </Col>
             {queryToUpdate.enabled && progressStatus.status !== 'finished' ? (
               <Col md={2}>
-                {paused ? (
+                {queryToUpdate.paused ? (
                   <>
                     <FaPlayCircle
                       className="oi-icon-breadcrumb"
