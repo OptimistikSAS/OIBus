@@ -374,6 +374,11 @@ label {
   width: 14px;
 }
 
+.oi-filter {
+  margin-bottom: 5px;
+  width: 14px;
+}
+
 .oi-icon {
   width: 12px;
   color: #627187;
