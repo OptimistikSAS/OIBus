@@ -7332,15 +7332,42 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
                   class="col"
                 >
                   <p>
-                    The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime. If @StartTime and @EndTime are used, the query will be split according to the maxReadInterval parameter. For example, if @EndTime and @StartTime is a two hours interval, and maxReadInterval is 3600s, the query will be split in two parts. Two files will be created.
+                    The query must be adapted to the selected driver (MSSQL, Oracle...). The following variables can be used in the query:
+                    <ul>
+                      <li>
+                        <b>
+                          @StartTime:
+                        </b>
+                         
+                        The time of the previous query retrieved from the 'Time column' field. For the first query, it is initialized to the current date. The date format can be adapted with driver specific function.
+                        <br />
+                        For example, with sqlite, the following function can be used to parse the date as a string:
+                        <i>
+                           strftime('%Y-%m-%dT%H:%M:%f', @StartTime / 1000, 'unixepoch')
+                        </i>
+                      </li>
+                      <li>
+                        <b>
+                          @EndTime:
+                        </b>
+                         
+                        The current time (by default) or, if the query is split with 'Max read interval', the end time of the current interval.
+                      </li>
+                    </ul>
                   </p>
                   <p>
-                    To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout.
+                    To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure separate connection timeout and request timeout (not available for sqlite).
+                  </p>
+                  <p>
+                    To avoid a heavy query on a server, the query can be split into several sub-queries. To do so, you can use the variables @StartTime and @EndTime.
                     <br />
-                    Note for Oracle: Connection timeout can be specified in the 'sqlnet.ora' file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora) like this: 'SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms'
+                    If you request data with a column named timestamp, the WHERE clause can look like this : WHERE timestamp &gt; @StartTime and timestamp &lt; @EndTime.
                   </p>
                   <p>
-                    The query results are then converted into a csv (see below).
+                    @StartTime is set to the last retrieved value (retrieved from the 'Time column' field), and @EndTime is set to @StartTime + maxReadInterval (if @StartTime + maxReadInterval &lt; current date). @StartTime is then incremented at each sub-query until @EndTime reaches the current date. Each sub-query stores its results in its own csv file. See the File Settings help section below for more information.
+                  </p>
+                  <p>
+                    Note for Oracle: Connection timeout can be specified in the 'sqlnet.ora' file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora) like this: 'SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms'
                   </p>
                 </div>
               </div>
@@ -7352,7 +7379,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
         class="row"
       >
         <div
-          class="col-md-8"
+          class="col-md-12"
         >
           <div
             class="mb-3"
@@ -7373,7 +7400,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
                 class="form-text text-muted"
               >
                 <div>
-                  Available variables: @StartTime, @EndTime
+                  Available variables: @StartTime, @EndTime. See Query Settings help section.
                 </div>
               </small>
             </div>
@@ -7476,7 +7503,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Put 0 to not split the query
+                Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.
               </div>
             </small>
           </div>
@@ -8802,9 +8829,41 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           >
             <label
               class="form-label"
+              for="south.dataSources.0.OPCUA_HA.readTimeout"
+            >
+              Read timeout (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.OPCUA_HA.readTimeout"
+              name="south.dataSources.0.OPCUA_HA.readTimeout"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Read timeout (ms)
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
-              Retry interval
+              Retry interval (ms)
             </label>
             <input
               aria-invalid="true"
@@ -8819,15 +8878,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             >
               Value must be greater than 1000
             </div>
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Retry Interval (ms)
-              </div>
-            </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
         <div
           class="col-md-2"
         >
@@ -8838,7 +8894,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="true"
@@ -8857,7 +8913,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Split the time interval into smaller intervals of this duration (in s)
+                Split the time interval into smaller intervals of this duration (in s).
               </div>
             </small>
           </div>
@@ -8872,7 +8928,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -8922,38 +8978,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
             >
               <div>
                 Max number of values returned for one point during a read interval
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.OPCUA_HA.readTimeout"
-            >
-              Read timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCUA_HA.readTimeout"
-              name="south.dataSources.0.OPCUA_HA.readTimeout"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Read timeout (ms)
               </div>
             </small>
           </div>
@@ -9939,9 +9963,41 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           >
             <label
               class="form-label"
+              for="south.dataSources.0.OPCUA_HA.readTimeout"
+            >
+              Read timeout (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.OPCUA_HA.readTimeout"
+              name="south.dataSources.0.OPCUA_HA.readTimeout"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Read timeout (ms)
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
-              Retry interval
+              Retry interval (ms)
             </label>
             <input
               aria-invalid="true"
@@ -9956,15 +10012,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             >
               Value must be greater than 1000
             </div>
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Retry Interval (ms)
-              </div>
-            </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
         <div
           class="col-md-2"
         >
@@ -9975,7 +10028,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="true"
@@ -9994,7 +10047,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Split the time interval into smaller intervals of this duration (in s)
+                Split the time interval into smaller intervals of this duration (in s).
               </div>
             </small>
           </div>
@@ -10009,7 +10062,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -10059,38 +10112,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
             >
               <div>
                 Max number of values returned for one point during a read interval
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.OPCUA_HA.readTimeout"
-            >
-              Read timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCUA_HA.readTimeout"
-              name="south.dataSources.0.OPCUA_HA.readTimeout"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Read timeout (ms)
               </div>
             </small>
           </div>
@@ -10847,9 +10868,41 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           >
             <label
               class="form-label"
+              for="south.dataSources.0.OPCUA_HA.readTimeout"
+            >
+              Read timeout (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.OPCUA_HA.readTimeout"
+              name="south.dataSources.0.OPCUA_HA.readTimeout"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Read timeout (ms)
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
               for="south.dataSources.0.OPCUA_HA.retryInterval"
             >
-              Retry interval
+              Retry interval (ms)
             </label>
             <input
               aria-invalid="true"
@@ -10864,15 +10917,12 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             >
               Value must be greater than 1000
             </div>
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Retry Interval (ms)
-              </div>
-            </small>
           </div>
         </div>
+      </div>
+      <div
+        class="row"
+      >
         <div
           class="col-md-2"
         >
@@ -10883,7 +10933,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.maxReadInterval"
             >
-              Max read interval
+              Max read interval (s)
             </label>
             <input
               aria-invalid="true"
@@ -10902,7 +10952,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="form-text text-muted"
             >
               <div>
-                Split the time interval into smaller intervals of this duration (in s)
+                Split the time interval into smaller intervals of this duration (in s).
               </div>
             </small>
           </div>
@@ -10917,7 +10967,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
               class="form-label"
               for="south.dataSources.0.OPCUA_HA.readIntervalDelay"
             >
-              Read interval delay
+              Read interval delay (ms)
             </label>
             <input
               aria-invalid="false"
@@ -10967,38 +11017,6 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
             >
               <div>
                 Max number of values returned for one point during a read interval
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.0.OPCUA_HA.readTimeout"
-            >
-              Read timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.0.OPCUA_HA.readTimeout"
-              name="south.dataSources.0.OPCUA_HA.readTimeout"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Read timeout (ms)
               </div>
             </small>
           </div>

@@ -98,30 +98,58 @@ schema.form = {
     children: (
       <>
         <p>
-          The query may have a specific format and contain a WHERE clause with the date constraint of the time column using @StartTime and @EndTime.
-          If @StartTime and @EndTime are used, the query will be split according to the maxReadInterval parameter.
-          For example, if @EndTime and @StartTime is a two hours interval, and maxReadInterval is 3600s, the query will be split in two parts.
-          Two files will be created.
+          The query must be adapted to the selected driver (MSSQL, Oracle...).
+          The following variables can be used in the query:
+          <ul>
+            <li>
+              <b>@StartTime:</b>
+              {' '}
+              The time of the previous query retrieved from the &apos;Time column&apos; field.
+              For the first query, it is initialized to the current date.
+              The date format can be adapted with driver specific function.
+              <br />
+              For example, with sqlite, the following function can be used to parse the date as a string:
+              <i> strftime(&apos;%Y-%m-%dT%H:%M:%f&apos;, @StartTime / 1000, &apos;unixepoch&apos;)</i>
+            </li>
+            <li>
+              <b>@EndTime:</b>
+              {' '}
+              The current time (by default) or, if the query is split with &apos;Max read interval&apos;, the end time of the current interval.
+            </li>
+          </ul>
         </p>
         <p>
           To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
-          separate connection timeout and request timeout.
+          separate connection timeout and request timeout (not available for sqlite).
+        </p>
+        <p>
+          To avoid a heavy query on a server, the query can be split into several sub-queries.
+          To do so, you can use the variables @StartTime and @EndTime.
           <br />
+          If you request data with a column named timestamp, the WHERE clause can look like this :
+          WHERE timestamp &gt; @StartTime and timestamp &lt; @EndTime.
+        </p>
+        <p>
+          @StartTime is set to the last retrieved value (retrieved from the &apos;Time column&apos; field),
+          and @EndTime is set to @StartTime + maxReadInterval (if @StartTime + maxReadInterval &lt; current date).
+          @StartTime is then incremented at each sub-query until @EndTime reaches the current date.
+          Each sub-query stores its results in its own csv file. See the File Settings help section below for more information.
+        </p>
+        <p>
           Note for Oracle:
           Connection timeout can be specified in the &apos;sqlnet.ora&apos; file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora)
           like this: &apos;SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms&apos;
         </p>
-        <p>The query results are then converted into a csv (see below).</p>
       </>
     ),
   },
   query: {
-    md: 8,
+    md: 12,
     type: 'OIbTextArea',
     contentType: 'sql',
-    defaultValue: 'SELECT * FROM Table WHERE timestamp > @LastCompletedDate',
+    defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
     valid: notEmpty(),
-    help: <div>Available variables: @StartTime, @EndTime</div>,
+    help: <div>Available variables: @StartTime, @EndTime. See Query Settings help section.</div>,
   },
   connectionTimeout: {
     type: 'OIbInteger',
@@ -144,7 +172,7 @@ schema.form = {
     md: 2,
     valid: minValue(0),
     defaultValue: 0,
-    help: <div>Put 0 to not split the query</div>,
+    help: <div>Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.</div>,
   },
   readIntervalDelay: {
     type: 'OIbInteger',
