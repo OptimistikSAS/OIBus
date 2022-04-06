@@ -1,7 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Container } from 'reactstrap'
+import { Button, Col, Container, Input, Label, Row, UncontrolledCollapse } from 'reactstrap'
 import ReactFlow from 'react-flow-renderer'
+import { FaFilter } from 'react-icons/fa'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import EngineNode from './EngineNode.jsx'
 import SouthNode from './SouthNode.jsx'
@@ -12,6 +13,8 @@ const NODE_BORDER = '1px solid #eaecef'
 
 const NodeView = ({ onRestart, onShutdown }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const [southFilter, setSouthFilter] = React.useState('')
+  const [northFilter, setNorthFilter] = React.useState('')
   const onChange = (name, value, validity) => {
     dispatchNewConfig({
       type: 'update',
@@ -21,10 +24,17 @@ const NodeView = ({ onRestart, onShutdown }) => {
     })
   }
 
+  const resetFilters = () => {
+    setNorthFilter('')
+    setSouthFilter('')
+  }
+
   const engineName = newConfig?.engine?.engineName ?? ''
   const safeMode = newConfig?.engine?.safeMode ?? false
-  const applications = newConfig?.north?.applications ?? []
-  const dataSources = newConfig?.south?.dataSources ?? []
+  const applications = newConfig?.north?.applications?.filter(
+    (application) => application.name.toLowerCase().includes(northFilter.toLowerCase()),
+  ) ?? []
+  const dataSources = newConfig?.south?.dataSources?.filter((dataSource) => dataSource.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
   const globalZIndex = dataSources.length + applications.length + 1
   const northNodes = applications.map((application, indexNorth) => ({
     id: application.id,
@@ -125,8 +135,60 @@ const NodeView = ({ onRestart, onShutdown }) => {
     ...northLinks,
     ...southLinks,
   ]
+
+  const id = `id${Math.random()
+    .toString(36)
+    .substring(2, 9)}`
+
   return (
     <Container>
+      {(dataSources.length > 5 || applications.legth > 5 || northFilter || southFilter)
+      && (
+      <>
+        <Row>
+          <h5>
+            <Button color="link" id={id} className="util-button mt-1" onClick={resetFilters}>
+              <FaFilter
+                className="oi-filter"
+                size={18}
+              />
+            </Button>
+          </h5>
+        </Row>
+        <UncontrolledCollapse toggler={id}>
+          <Row style={{ marginBottom: '15px' }}>
+            {(dataSources.length > 5 || southFilter !== '')
+            && (
+            <Col md={3}>
+              <Label for="southFilter">Filter south by name:</Label>
+              <Input
+                name="southFilter"
+                className="oi-form-input"
+                type="text"
+                id="southFilter"
+                onChange={(event) => setSouthFilter(event.target.value)}
+                value={southFilter}
+              />
+            </Col>
+            )}
+            {(applications.length > 5 || northFilter !== '')
+            && (
+            <Col md={3}>
+              <Label for="northFilter">Filter north by name:</Label>
+              <Input
+                name="northFilter"
+                className="oi-form-input"
+                type="text"
+                id="northFilter"
+                onChange={(event) => setNorthFilter(event.target.value)}
+                value={northFilter}
+              />
+            </Col>
+            )}
+          </Row>
+        </UncontrolledCollapse>
+      </>
+      )}
       <div
         style={{
           height:
