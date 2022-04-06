@@ -65,8 +65,8 @@ const Log = () => {
     }
   }
 
-  useEffect(() => {
-    retrieveLogs()
+  useEffect(async () => {
+    await retrieveLogs()
   }, [])
 
   /**
@@ -136,7 +136,7 @@ const Log = () => {
                   const date = new Date(timestamp)
                   return (
                     <tr key={id} className={`oi-log ${selectStyle(level)}`}>
-                      <td className="text-nowrap">{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
+                      <td style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
                       <td>{level}</td>
                       <td>{scope}</td>
                       <td>{source}</td>
