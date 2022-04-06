@@ -43,12 +43,17 @@ class LokiTransport {
     const streams = []
     Object.entries(this.batchLogs).forEach(([logLevel, logMessages]) => {
       if (logMessages.length > 0) {
-        streams.push({
-          stream: {
-            oibus: this.engineName,
-            level: LEVEL_FORMAT[logLevel],
-          },
-          values: [...logMessages],
+        logMessages.forEach((logMessage) => {
+          const jsonMessage = JSON.parse(logMessage[1])
+          streams.push({
+            stream: {
+              oibus: this.engineName,
+              level: LEVEL_FORMAT[logLevel],
+              scope: jsonMessage.scope,
+              source: jsonMessage.source,
+            },
+            values: [[logMessage[0], jsonMessage.message]],
+          })
         })
       }
     })
@@ -85,8 +90,9 @@ class LokiTransport {
     }
     try {
       const result = await fetch(this.lokiAddress, fetchOptions)
-      if (result.status !== 200 || result.status !== 201) {
-        throw new Error(`Loki fetch error: ${result.status} - ${result.statusText}`)
+
+      if (result.status !== 200 && result.status !== 201 && result.status !== 204) {
+        throw new Error(`Loki fetch error: ${result.status} - ${result.statusText} with payload ${dataBuffer}`)
       }
     } catch (error) {
       console.error(error)
