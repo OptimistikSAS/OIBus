@@ -101,6 +101,6 @@ schema.form = {
     defaultValue: '',
   },
 }
-schema.category = 'Api'
+schema.category = 'API'
 
 export default schema

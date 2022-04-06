@@ -150,5 +150,5 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'Api'
+schema.category = 'API'
 export default schema
