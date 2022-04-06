@@ -58,6 +58,7 @@ class HistoryQueryEngine extends BaseEngine {
    * @returns {void}
    */
   initializeStatusData() {
+    this.statusData = { ongoingHistoryQueryId: null }
     if (!this.eventEmitters['/history/engine/sse']) {
       this.eventEmitters['/history/engine/sse'] = {}
     } else {
@@ -67,12 +68,6 @@ class HistoryQueryEngine extends BaseEngine {
     this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
     this.eventEmitters['/history/engine/sse'].statusData = this.statusData
     this.updateStatusDataStream()
-    if (this.liveStatusInterval) {
-      clearInterval(this.liveStatusInterval)
-    }
-    this.liveStatusInterval = setInterval(() => {
-      this.updateStatusDataStream()
-    }, 5000)
   }
 
   updateStatusDataStream() {
@@ -147,16 +142,14 @@ class HistoryQueryEngine extends BaseEngine {
    * @return {Promise<void>} - The stop promise
    */
   async stop() {
-    if (this.liveStatusInterval) {
-      clearInterval(this.liveStatusInterval)
-    }
-
     if (this.safeMode) {
       return
     }
 
     if (this.historyQuery) {
       await this.historyQuery.stop()
+      this.statusData.ongoingHistorQueryId = null
+      this.updateStatusDataStream()
     }
   }
 
@@ -182,9 +175,13 @@ class HistoryQueryEngine extends BaseEngine {
       if (dataSourceToUse && applicationToUse) {
         this.historyQuery = new HistoryQuery(this, this.logger, historyQueryConfig, dataSourceToUse, applicationToUse)
         this.historyQuery.start()
+        this.statusData.ongoingHistoryQueryId = this.historyQuery.id
+        this.updateStatusDataStream()
       }
     } else {
       this.logger.warn('No HistoryQuery to execute')
+      this.statusData.ongoingHistoryQueryId = null
+      this.updateStatusDataStream()
     }
   }
 
