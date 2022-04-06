@@ -136,13 +136,11 @@ const NodeView = ({ onRestart, onShutdown }) => {
     ...southLinks,
   ]
 
-  const id = `id${Math.random()
-    .toString(36)
-    .substring(2, 9)}`
+  const id = 'filter-toggler-id'
 
   return (
     <Container>
-      {(dataSources.length > 5 || applications.legth > 5 || northFilter || southFilter)
+      {(dataSources.length > 5 || applications.length > 5 || northFilter || southFilter)
       && (
       <>
         <Row>

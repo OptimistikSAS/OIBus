@@ -11,7 +11,7 @@ exports[`NodeView display main page based on config 1`] = `
       <h5>
         <button
           class="util-button mt-1 btn btn-link"
-          id="ida70k6y7"
+          id="filter-toggler-id"
           type="button"
         >
           <svg
@@ -33,7 +33,7 @@ exports[`NodeView display main page based on config 1`] = `
     </div>
     <div
       class="collapse"
-      toggler="ida70k6y7"
+      toggler="filter-toggler-id"
     >
       <div
         class="row"
