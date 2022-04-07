@@ -53,18 +53,24 @@ class Logger {
     }
 
     if (lokiLog.level !== 'none') {
-      targets.push({
-        target: path.join(__dirname, 'LokiLoggerTransport.class.js'),
-        options: {
-          username: lokiLog.username,
-          password: this.encryptionService.decryptText(lokiLog.password),
-          tokenAddress: lokiLog.tokenAddress,
-          lokiAddress: lokiLog.lokiAddress,
-          engineName: engineConfig.engineName,
-          interval: lokiLog.interval,
-        },
-        level: lokiLog.level,
-      })
+      try {
+        targets.push({
+          target: path.join(__dirname, 'LokiLoggerTransport.class.js'),
+          options: {
+            username: lokiLog.username,
+            password: this.encryptionService.decryptText(lokiLog.password),
+            tokenAddress: lokiLog.tokenAddress,
+            lokiAddress: lokiLog.lokiAddress,
+            engineName: engineConfig.engineName,
+            interval: lokiLog.interval,
+          },
+          level: lokiLog.level,
+        })
+      } catch (error) {
+        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
+        // logged in the console and loki won't be activated
+        console.error(error)
+      }
     }
 
     if (targets.length > 0) {
