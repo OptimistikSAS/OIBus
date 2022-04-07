@@ -35,10 +35,12 @@ const NorthStatus = () => {
       (element) => element.id === id,
     )
     setApplication(currentApplication)
+  }, [newConfig, id])
 
+  React.useEffect(() => {
     let source
-    if (currentApplication && currentApplication.enabled) {
-      source = new EventSource(`/north/${id}/sse`)
+    if (application && application.enabled) {
+      source = new EventSource(`/north/${application.id}/sse`)
       source.onerror = (error) => {
         console.error(error)
       }
@@ -56,7 +58,7 @@ const NorthStatus = () => {
     return () => {
       source?.close()
     }
-  }, [newConfig])
+  }, [application])
 
   return application ? (
     <>
@@ -84,9 +86,7 @@ const NorthStatus = () => {
           <Table headers={[]} rows={connectorData} />
         ) : (
           <div className="oi-status-error">
-            {' '}
-            No Information displayed because the connector is disabled
-            {' '}
+            This connector is not enabled.
           </div>
         )}
       </Container>

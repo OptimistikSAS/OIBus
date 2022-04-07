@@ -341,7 +341,7 @@ class OIBusEngine extends BaseEngine {
     this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
 
     // Stop the listener
-    this.eventEmitters['/engine/sse']?.events?.off('data', this.listener)
+    this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
   }
 
   /**
@@ -513,8 +513,6 @@ class OIBusEngine extends BaseEngine {
     this.updateEngineStatusData()
     if (!this.eventEmitters['/engine/sse']) {
       this.eventEmitters['/engine/sse'] = {}
-    } else {
-      this.eventEmitters['/engine/sse'].events.removeListener('data', this.listener)
     }
     this.eventEmitters['/engine/sse'].events = new EventEmitter()
     this.eventEmitters['/engine/sse'].events.on('data', this.listener)
@@ -534,9 +532,9 @@ class OIBusEngine extends BaseEngine {
     const processUptime = 1000 * 1000 * process.uptime()
     const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime)
       .toFixed(2)
-    const freeMemory = Number(os.freemem() / 1024 / 1024)
+    const freeMemory = Number(os.freemem() / 1024 / 1024 / 1024)
       .toFixed(2)
-    const totalMemory = Number(os.totalmem() / 1024 / 1024)
+    const totalMemory = Number(os.totalmem() / 1024 / 1024 / 1024)
       .toFixed(2)
     const percentMemory = Number((freeMemory / totalMemory) * 100)
       .toFixed(2)
@@ -544,12 +542,34 @@ class OIBusEngine extends BaseEngine {
 
     this.statusData['Up time'] = humanizeDuration(1000 * process.uptime(), { round: true })
     this.statusData['CPU usage'] = `${cpuUsagePercentage}%`
-    this.statusData['Global memory usage'] = `${freeMemory} MB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB (${percentMemory} %)`
-    this.statusData['Resident set size (min / current / max)'] = memoryUsage.rss
+    this.statusData['OS free memory'] = `${freeMemory} GB / ${totalMemory} GB (${percentMemory} %)`
+    this.statusData['RAM occupation (min / current / max)'] = memoryUsage.rss
     this.statusData['Total heap size (min / current / max)'] = memoryUsage.heapTotal
     this.statusData['Heap used (min / current / max)'] = memoryUsage.heapUsed
     this.statusData['External C++ V8 memory (min / current / max)'] = memoryUsage.external
     this.statusData['Array buffers memory (min / current / max)'] = memoryUsage.arrayBuffers
+
+    Object.values(this.activeApis).forEach((activeNorthConnector) => {
+      if (activeNorthConnector.canHandleValues) {
+        this.statusData[`Number of values sent to North "${
+          activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of values sent since OIBus has started']
+      }
+      if (activeNorthConnector.canHandleFiles) {
+        this.statusData[`Number of files sent to North "${
+          activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of files sent since OIBus has started']
+      }
+    })
+
+    Object.values(this.activeProtocols).forEach((activeSouthConnector) => {
+      if (activeSouthConnector.handlesPoints) {
+        this.statusData[`Number of values retrieved from South "${
+          activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of values since OIBus has started']
+      }
+      if (activeSouthConnector.handlesFiles) {
+        this.statusData[`Number of files retrieved from South "${
+          activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of files since OIBus has started']
+      }
+    })
   }
 
   updateStatusDataStream() {

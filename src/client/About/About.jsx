@@ -56,7 +56,9 @@ const About = () => {
         setdynamicStatus(myData)
       }
     }
-    return (() => source.close())
+    return () => {
+      source.close()
+    }
   }, [activeConfig])
 
   return (

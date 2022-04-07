@@ -87,7 +87,7 @@ class ApiHandler {
     if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
     } else {
-      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.removeListener('data', this.listener)
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.removeAllListeners()
     }
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
@@ -104,7 +104,7 @@ class ApiHandler {
     this.connected = false
     const { name, id } = this.application
     this.logger.info(`North API ${name} (${id}) disconnected`)
-    this.engine.eventEmitters[`/north/${id}/sse`]?.events?.off('data', this.listener)
+    this.engine.eventEmitters[`/north/${id}/sse`]?.events?.removeAllListeners()
   }
 
   /**
