@@ -40,7 +40,6 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
       },
       filePattern: './@ConnectorName-@CurrentDate-@QueryPart.csv',
       compress: false,
-      paused: false,
     })
   }
 

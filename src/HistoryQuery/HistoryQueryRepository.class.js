@@ -22,7 +22,6 @@ class HistoryQueryRepository {
                    name TEXT,
                    status TEXT,
                    enabled INTEGER,
-                   paused INTEGER,
                    southId TEXT,
                    northId TEXT,
                    startTime TEXT,
@@ -49,9 +48,9 @@ class HistoryQueryRepository {
       order = orderResult.maxOrder + 1
     }
 
-    const query = `INSERT INTO ${HistoryQueryRepository.TABLE} (id, orderColumn, name, status, enabled, paused, southId, northId, startTime, endTime,
+    const query = `INSERT INTO ${HistoryQueryRepository.TABLE} (id, orderColumn, name, status, enabled, southId, northId, startTime, endTime,
                                                                 filePattern, compress, settings)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     const stmt = await this.database.prepare(query)
     await stmt.run(
       historyQuery.id,
@@ -59,7 +58,6 @@ class HistoryQueryRepository {
       historyQuery.name,
       historyQuery.status,
       historyQuery.enabled,
-      historyQuery.paused,
       historyQuery.southId,
       historyQuery.northId,
       historyQuery.startTime,
@@ -117,7 +115,6 @@ class HistoryQueryRepository {
                        name = ?,
                        status = ?,
                        enabled = ?,
-                       paused = ?,
                        southId = ?,
                        northId = ?,
                        startTime = ?,
@@ -132,7 +129,6 @@ class HistoryQueryRepository {
       historyQuery.name,
       historyQuery.status,
       historyQuery.enabled,
-      historyQuery.paused,
       historyQuery.southId,
       historyQuery.northId,
       historyQuery.startTime,
@@ -186,7 +182,6 @@ class HistoryQueryRepository {
     const ongoingQuery = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE enabled = 1
-                     AND paused = 0
                      AND status IN ('${HistoryQuery.STATUS_EXPORTING}', '${HistoryQuery.STATUS_IMPORTING}')
                    ORDER BY orderColumn ASC
                    LIMIT 1`
@@ -201,7 +196,6 @@ class HistoryQueryRepository {
     const pendingQuery = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE enabled = 1
-                     AND paused = 0
                      AND status = '${HistoryQuery.STATUS_PENDING}'
                    ORDER BY orderColumn ASC
                    LIMIT 1`
