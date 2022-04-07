@@ -150,6 +150,7 @@ class HistoryQueryEngine extends BaseEngine {
       await this.historyQuery.stop()
       this.statusData.ongoingHistorQueryId = null
       this.updateStatusDataStream()
+      this.historyQuery = null
     }
   }
 
