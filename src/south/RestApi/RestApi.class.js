@@ -102,7 +102,7 @@ class RestApi extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @param {Date} startTime - The start time
    * @param {Date} endTime - The end time
-   * @return {void}
+   * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
     let updatedStartTime = startTime
@@ -112,6 +112,7 @@ class RestApi extends ProtocolHandler {
       results = await this.getDataFromRestApi(startTime, endTime)
     } catch (error) {
       this.logger.error(JSON.stringify(error))
+      return -1
     }
 
     if (results) {
@@ -119,7 +120,7 @@ class RestApi extends ProtocolHandler {
       let formattedResults = null
       if (!parsers[this.payloadParser]) {
         this.logger.error(`Parser "${this.payloadParser}" does not exist`)
-        return
+        return -1
       }
       try {
         const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results)
@@ -129,7 +130,7 @@ class RestApi extends ProtocolHandler {
         }
       } catch (parsingError) {
         this.logger.error(`Could not format the results with parser "${this.payloadParser}". Error: ${JSON.stringify(parsingError)}`)
-        return
+        return -1
       }
 
       if (this.convertToCsv) {
@@ -155,7 +156,7 @@ class RestApi extends ProtocolHandler {
           }
         } catch (error) {
           this.logger.error(error)
-          return
+          return -1
         }
       } else {
         await this.addValues(formattedResults)
@@ -170,6 +171,8 @@ class RestApi extends ProtocolHandler {
     } else {
       this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
     }
+
+    return 0
   }
 
   /**

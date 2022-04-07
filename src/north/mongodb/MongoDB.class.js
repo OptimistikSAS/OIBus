@@ -14,7 +14,7 @@ class MongoDB extends ApiHandler {
    * Constructor for MongoDB
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -69,22 +69,20 @@ class MongoDB extends ApiHandler {
 
   /**
    * Connection to MongoDB
+   * @param {string} _additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  connect() {
-    super.connect()
-    this.logger.info(`Connection to MongoDB: ${this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`}`)
+  connect(_additionalInfo = '') {
+    this.logger.info(`Connecting ${this.application.name} to MongoDB: ${
+      this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`}`)
     const url = (this.user === '') ? `mongodb://${this.host}`
       : `mongodb://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}`
 
     this.client = new mongo.MongoClient(url, { useUnifiedTopology: true })
     this.client.connect((error) => {
       if (error) {
-        this.logger.error(`Error during connection To MongoDB: ${error}`)
+        this.logger.error(`Error during connection to MongoDB: ${error}`)
       } else {
-        this.logger.info('Connection To MongoDB: OK')
-        this.statusData['Connected at'] = new Date().toISOString()
-        this.updateStatusDataStream()
         // open database db
         this.mongoDatabase = this.client.db(this.database)
 
@@ -102,6 +100,7 @@ class MongoDB extends ApiHandler {
 
         // indication that collection existence is not checked
         this.collectionChecked = false
+        super.connect(`url: ${url}`)
       }
     })
   }
@@ -111,7 +110,7 @@ class MongoDB extends ApiHandler {
    * @return {void}
    */
   async disconnect() {
-    this.logger.info('Disconnection from MongoDB')
+    this.logger.info(`Disconnecting ${this.application.name} from MongoDB`)
     if (this.client) {
       await this.client.close()
     }

@@ -11,7 +11,7 @@ class TimescaleDB extends ApiHandler {
    * Constructor for TimescaleDB
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -62,10 +62,11 @@ class TimescaleDB extends ApiHandler {
 
   /**
    * Connection to TimescaleDB
+   * @param {string} _additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  connect() {
-    this.logger.info(`Connection to TimescaleDB: postgres://${this.user}:<password>@${this.host}/${this.database}`)
+  connect(_additionalInfo = '') {
+    this.logger.info(`Connecting ${this.application.name} to TimescaleDB: postgres://${this.user}:<password>@${this.host}/${this.database}`)
 
     // Build the url
     const url = `postgres://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
@@ -76,7 +77,7 @@ class TimescaleDB extends ApiHandler {
         this.logger.error(`Error during connection to TimescaleDB: ${error}`)
         this.clientPG = null
       } else {
-        this.logger.info('Connection To TimescaleDB: OK')
+        super.connect(`url: ${url}`)
       }
     })
   }

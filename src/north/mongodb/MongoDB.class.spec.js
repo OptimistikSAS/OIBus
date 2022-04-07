@@ -74,13 +74,13 @@ describe('MongoDB north', () => {
 
     mongodb.MongoClient.mockReturnValue(client)
     await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connection to MongoDB: mongodb://user:<password>@host')
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connection To MongoDB: OK')
+    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connecting undefined to MongoDB: mongodb://user:<password>@host')
+    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('North API undefined started with protocol undefined url: mongodb://user:password@host')
     expect(mongoDbNorth.listCollections).toEqual([{ name: 'collection1' }, { name: 'collection2' }])
 
     mongoDbNorth.user = ''
     await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connection to MongoDB: mongodb://host')
+    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connecting undefined to MongoDB: mongodb://host')
 
     await mongoDbNorth.disconnect()
 
@@ -97,7 +97,7 @@ describe('MongoDB north', () => {
 
     mongodb.MongoClient.mockReturnValue(client)
     await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('Error during connection To MongoDB: connection error')
+    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('Error during connection to MongoDB: connection error')
 
     mongoDbNorth.client = null
     await mongoDbNorth.disconnect()

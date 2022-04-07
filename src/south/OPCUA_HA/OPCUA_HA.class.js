@@ -195,7 +195,7 @@ class OPCUA_HA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @param {Date} startTime - The start time
    * @param {Date} endTime - The end time
-   * @return {Promise<void>} - The on scan promise
+   * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
     this.ongoingReads[scanMode] = true
@@ -319,9 +319,11 @@ class OPCUA_HA extends ProtocolHandler {
       this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
+      return -1
     }
 
     this.ongoingReads[scanMode] = false
+    return 0
   }
 
   /**

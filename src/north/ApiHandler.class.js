@@ -17,7 +17,7 @@ class ApiHandler {
    * the following methods:
    * - **handleValues**: receive an array of values that need to be sent to an external applications
    * - **handleFile**: receive a file that need to be sent to an external application.
-   * - **connect**: to allow to establish proper connection to the external application (optional)
+   * - **connect**: to allow establishing proper connection to the external application (optional)
    * - **disconnect**: to allow proper disconnection (optional)
    *
    * The constructor of the API need to initialize:
@@ -42,6 +42,7 @@ class ApiHandler {
     this.encryptionService = EncryptionService.getInstance()
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
+    this.connected = false
 
     this.scanModes = this.engine.scanModes
     this.statusData = {}
@@ -65,11 +66,15 @@ class ApiHandler {
   /**
    * Method called by Engine to initialize a given api. This method can be surcharged in the
    * North api implementation to allow connection to a third party application for example.
+   * @param {string} additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  connect() {
+  connect(additionalInfo) {
     const { name, api } = this.application
-    this.logger.info(`North API ${name} started with protocol ${api}`)
+    this.connected = true
+    this.statusData['Connected at'] = new Date().toISOString()
+    this.updateStatusDataStream()
+    this.logger.info(`North API ${name} started with protocol ${api} ${additionalInfo}`)
   }
 
   initializeStatusData() {
@@ -92,10 +97,11 @@ class ApiHandler {
 
   /**
    * Method called by Engine to stop a given api. This method can be surcharged in the
-   * North api implementation to allow to disconnect to a third party application for example.
+   * North api implementation to allow disconnecting to a third party application for example.
    * @return {void}
    */
   disconnect() {
+    this.connected = false
     const { name, id } = this.application
     this.logger.info(`North API ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/north/${id}/sse`]?.events?.off('data', this.listener)

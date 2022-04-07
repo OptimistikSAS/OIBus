@@ -48,7 +48,8 @@ describe('TimescaleDB north', () => {
     await timescaleDbNorth.init()
     await timescaleDbNorth.connect()
 
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('Connection To TimescaleDB: OK')
+    // eslint-disable-next-line max-len
+    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
     let expectedResult = null
     let expectedError = null
     try {
@@ -202,7 +203,8 @@ describe('TimescaleDB north', () => {
     }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('Connection To TimescaleDB: OK')
+    // eslint-disable-next-line max-len
+    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
 
     timescaleDbNorth.useDataKeyValue = true
     timescaleDbNorth.keyParentValue = 'level'
@@ -246,7 +248,8 @@ describe('TimescaleDB north', () => {
     }
     pg.Client.mockReturnValue(client)
     await timescaleDbNorth.connect()
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('Connection To TimescaleDB: OK')
+    // eslint-disable-next-line max-len
+    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
 
     timescaleDbNorth.timestampPathInDataValue = 'associatedTimestamp.timestamp'
     timescaleDbNorth.useDataKeyValue = true

@@ -19,7 +19,7 @@ class CsvToHttp extends ApiHandler {
    * Constructor for CsvToHttp
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {

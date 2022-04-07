@@ -37,7 +37,7 @@ class WATSYConnect extends ApiHandler {
    * Constructor for WATSYConnect
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -83,25 +83,23 @@ class WATSYConnect extends ApiHandler {
 
   /**
    * Connection to Broker MQTT
+   * @param {string} _additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  connect() {
-    super.connect()
-    this.logger.info(`Connecting WATSYConnect North MQTT Connector to ${this.url}...`)
+  connect(_additionalInfo = '') {
+    this.logger.info(`Connecting WATSYConnect ${this.application.name} to ${this.url}...`)
     this.client = mqtt.connect(this.url, { port: this.port, username: this.username, password: this.encryptionService.decryptText(this.password) })
     this.client.on('error', (error) => {
       this.logger.error(error)
     })
 
     this.client.on('connect', () => {
-      this.logger.info(`Connection WATSYConnect North MQTT Connector to ${this.url}`)
-      this.statusData['Connected at'] = new Date().toISOString()
-      this.updateStatusDataStream()
+      super.connect(`url: ${this.url}`)
     })
   }
 
   /**
-   * Disconnection from MQTT Broker
+   * Disconnection from WATSYConnect
    * @return {void}
    */
   disconnect() {

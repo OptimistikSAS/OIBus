@@ -159,12 +159,16 @@ class SQL extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @param {Date} startTime - The start time
    * @param {Date} endTime - The end time
-   * @return {void}
+   * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
+    if (!this.connected) {
+      this.logger.error(`The connector ${this.dataSource.name} has been stopped.`)
+      return -1
+    }
     if (!this.timezone) {
       this.logger.error('Invalid timezone')
-      return
+      return -1
     }
 
     let updatedStartTime = startTime
@@ -192,12 +196,13 @@ class SQL extends ProtocolHandler {
           break
         default:
           this.logger.error(`Driver ${this.driver} not supported by ${this.dataSource.name}`)
-          return
+          return -1
       }
       const requestFinishTime = new Date().getTime()
       this.logger.info(`Found ${result.length} results in ${humanizeDuration(requestFinishTime - requestStartTime)}`)
     } catch (error) {
       this.logger.error(error)
+      return -1
     }
 
     if (result.length > 0) {
@@ -229,6 +234,7 @@ class SQL extends ProtocolHandler {
           }
         } catch (error) {
           this.logger.error(error)
+          return -1
         }
       }
     }
@@ -244,6 +250,7 @@ class SQL extends ProtocolHandler {
     }
 
     this.ongoingReads[scanMode] = false
+    return 0
   }
 
   /**

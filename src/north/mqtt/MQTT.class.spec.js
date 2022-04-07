@@ -55,7 +55,7 @@ describe('MQTT north', () => {
     expect(mqttNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
 
     mqttNorth.handleConnectEvent()
-    expect(mqttNorth.logger.info).toHaveBeenCalledWith(`North MQTT Connector connected to ${mqttConfig.MQTT.url}`)
+    expect(mqttNorth.logger.info).toHaveBeenCalledWith('North API mqtt started with protocol MQTT url: mqtt://hostname:1883')
   })
 
   it('should properly connect with cert files', async () => {

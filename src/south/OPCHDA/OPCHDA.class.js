@@ -60,7 +60,7 @@ class OPCHDA extends ProtocolHandler {
    * @param {String} scanMode - The scan mode
    * @param {Date} startTime - The start time
    * @param {Date} endTime - The end time
-   * @return {Promise<void>} - The on scan promise
+   * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
     this.sendReadMessage(scanMode, startTime, endTime)
@@ -69,6 +69,7 @@ class OPCHDA extends ProtocolHandler {
       // eslint-disable-next-line no-await-in-loop
       await this.delay(100)
     }
+    return 0
   }
 
   /**

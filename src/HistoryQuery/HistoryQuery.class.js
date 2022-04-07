@@ -121,7 +121,14 @@ class HistoryQuery {
       this.south.name = `${this.dataSource.name}-${this.application.name}`
       await this.south.init()
       await this.south.connect()
-      await this.export()
+      if (this.south.connected) {
+        await this.export()
+      } else {
+        await this.disable()
+        this.logger.error(`Could not connect to south connector ${
+          this.south.dataSource.name
+        }. This history query has been disabled. Check the connection before enabling it again.`)
+      }
     } else {
       this.logger.error(`South connector "${name}" is not found (history query ${this.id})`)
       await this.disable()
@@ -148,7 +155,14 @@ class HistoryQuery {
     if (this.north) {
       await this.north.init()
       await this.north.connect()
-      await this.import()
+      if (this.north.connected) {
+        await this.import()
+      } else {
+        await this.disable()
+        this.logger.error(`Could not connect to north connector ${
+          this.north.application.name
+        }. This history query has been disabled. Check the connection before enabling it again.`)
+      }
     } else {
       this.logger.error(`North connector "${name}" is not found (history query ${this.id})`)
       await this.disable()
@@ -179,7 +193,11 @@ class HistoryQuery {
           this.statusData.scanGroup = `${scanGroup.scanMode} - ${scanGroup.aggregate}`
           this.updateStatusDataStream()
           // eslint-disable-next-line no-await-in-loop
-          await this.exportScanMode(scanMode)
+          const exportResult = await this.exportScanMode(scanMode)
+          if (exportResult === -1) {
+            this.logger.trace('exportScanMode failed. Leaving export method.')
+            return
+          }
         } else {
           this.logger.error(`scanMode ${scanMode} ignored: scanGroup.points undefined or empty`)
         }
@@ -187,7 +205,11 @@ class HistoryQuery {
       this.statusData.scanGroup = null
       this.updateStatusDataStream()
     } else {
-      await this.exportScanMode(this.dataSource.scanMode)
+      const exportResult = await this.exportScanMode(this.dataSource.scanMode)
+      if (exportResult === -1) {
+        this.logger.trace('exportScanMode failed. Leaving export method.')
+        return
+      }
     }
 
     await this.startImport()
@@ -244,7 +266,7 @@ class HistoryQuery {
   /**
    * Export data from South for a given scanMode.
    * @param {string} scanMode - The scan mode to handle
-   * @return {Promise<void>} - The result promise
+   * @return {Promise<number>} - The history query result: -1 if an error occurred, 0 otherwise
    */
   async exportScanMode(scanMode) {
     let startTime = this.south.lastCompletedAt[scanMode]
@@ -271,7 +293,13 @@ class HistoryQuery {
       }
 
       // eslint-disable-next-line no-await-in-loop
-      await this.south.historyQuery(scanMode, startTime, intervalEndTime)
+      const historyQueryResult = await this.south.historyQuery(scanMode, startTime, intervalEndTime)
+
+      if (historyQueryResult === -1) {
+        this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. startTime: ${
+          startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
+        return -1
+      }
 
       startTime = intervalEndTime
       this.south.queryParts[scanMode] += 1
@@ -285,6 +313,7 @@ class HistoryQuery {
     this.statusData.currentTime = startTime.toISOString()
     this.statusData.progress = 100
     this.updateStatusDataStream()
+    return 0
   }
 
   /**
