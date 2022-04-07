@@ -323,6 +323,7 @@ class OIBusEngine extends BaseEngine {
         this.logger.info(`Stopping south ${protocol.dataSource.name} (${id})`)
         protocol.disconnect()
       })
+    this.activeProtocols = []
 
     // Stop Applications
     Object.entries(this.activeApis)
@@ -330,6 +331,7 @@ class OIBusEngine extends BaseEngine {
         this.logger.info(`Stopping north ${application.application.name} (${id})`)
         application.disconnect()
       })
+    this.activeApis = []
 
     // Log cache data
     const apisCacheStats = await this.cache.getCacheStatsForApis()
