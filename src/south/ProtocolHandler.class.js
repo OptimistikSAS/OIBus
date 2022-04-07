@@ -178,7 +178,7 @@ class ProtocolHandler {
     if (!this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]) {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`] = {}
     } else {
-      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.removeListener('data', this.listener)
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.removeAllListeners()
     }
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
@@ -289,7 +289,7 @@ class ProtocolHandler {
     } = this.dataSource
     this.connected = false
     this.logger.info(`Data source ${name} (${id}) disconnected`)
-    this.engine.eventEmitters[`/south/${id}/sse`]?.events?.off('data', this.listener)
+    this.engine.eventEmitters[`/south/${id}/sse`]?.events?.removeAllListeners()
   }
 
   /**

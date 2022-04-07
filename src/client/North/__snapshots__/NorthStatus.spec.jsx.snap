@@ -45,9 +45,7 @@ exports[`North Status display NorthStatus page based on config 1`] = `
     <div
       class="oi-status-error"
     >
-       
-      No Information displayed because the connector is disabled
-       
+      This connector is not enabled.
     </div>
   </div>
 </div>
@@ -98,9 +96,7 @@ exports[`North Status go to previous page 1`] = `
     <div
       class="oi-status-error"
     >
-       
-      No Information displayed because the connector is disabled
-       
+      This connector is not enabled.
     </div>
   </div>
 </div>

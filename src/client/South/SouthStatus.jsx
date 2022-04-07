@@ -36,10 +36,12 @@ const SouthStatus = () => {
       (element) => element.id === id,
     )
     setDataSource(currentDataSource)
+  }, [newConfig, id])
 
+  React.useEffect(() => {
     let source
-    if (currentDataSource && currentDataSource.enabled) {
-      source = new EventSource(`/south/${id}/sse`)
+    if (dataSource && dataSource.enabled) {
+      source = new EventSource(`/south/${dataSource.id}/sse`)
       source.onerror = (error) => {
         console.error(error)
       }
@@ -57,7 +59,7 @@ const SouthStatus = () => {
     return () => {
       source?.close()
     }
-  }, [newConfig])
+  }, [dataSource])
 
   return dataSource ? (
     <>
@@ -89,9 +91,7 @@ const SouthStatus = () => {
           <Table headers={[]} rows={connectorData} />
         ) : (
           <div className="oi-status-error">
-            {' '}
-            No Information displayed because the connector is disabled
-            {' '}
+            This connector is not enabled.
           </div>
         )}
       </Container>

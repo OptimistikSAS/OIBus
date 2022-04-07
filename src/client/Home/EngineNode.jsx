@@ -5,7 +5,7 @@ import { Badge } from 'reactstrap'
 import EngineMenu from './EngineMenu.jsx'
 
 const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
-  const [connectorData, setConnectorData] = React.useState({})
+  const [oibusEngineData, setOibusEngineData] = React.useState({})
 
   React.useEffect(() => {
     const source = new EventSource('/engine/sse')
@@ -15,7 +15,7 @@ const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
     source.onmessage = (event) => {
       if (event && event.data) {
         const myData = JSON.parse(event.data)
-        setConnectorData(myData)
+        setOibusEngineData(myData)
       }
     }
 
@@ -23,6 +23,7 @@ const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
       source?.close()
     }
   }, [])
+
   return (
     <div className="d-flex flex-column h-100 w-100">
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
@@ -40,10 +41,10 @@ const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
         className="w-100 text-decoration-none text-muted flex-grow-1"
       >
         <div className="d-flex flex-column h-100 justify-content-between py-2 oi-node-click-item">
-          {Object.entries(connectorData)
+          {Object.entries(oibusEngineData)
             .filter(
               ([key]) => key === 'Up time'
-                || key === 'Global memory usage'
+                || key === 'OS free memory'
                 || key === 'CPU usage',
             )
             .map(([key, value]) => (

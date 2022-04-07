@@ -62,7 +62,7 @@ class HistoryQueryEngine extends BaseEngine {
     if (!this.eventEmitters['/history/engine/sse']) {
       this.eventEmitters['/history/engine/sse'] = {}
     } else {
-      this.eventEmitters['/history/engine/sse'].events.removeListener('data', this.listener)
+      this.eventEmitters['/history/engine/sse'].events.removeAllListeners()
     }
     this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
     this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
@@ -150,6 +150,7 @@ class HistoryQueryEngine extends BaseEngine {
       await this.historyQuery.stop()
       this.statusData.ongoingHistorQueryId = null
       this.updateStatusDataStream()
+      this.eventEmitters['/history/engine/sse']?.events?.removeAllListeners()
       this.historyQuery = null
     }
   }

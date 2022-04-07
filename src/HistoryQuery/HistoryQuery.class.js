@@ -48,7 +48,7 @@ class HistoryQuery {
     if (!this.engine.eventEmitters[`/history/${this.id}/sse`]) {
       this.engine.eventEmitters[`/history/${this.id}/sse`] = {}
     } else {
-      this.engine.eventEmitters[`/history/${this.id}/sse`].events.removeListener('data', this.listener)
+      this.engine.eventEmitters[`/history/${this.id}/sse`].events.removeAllListeners()
     }
     this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
@@ -93,7 +93,7 @@ class HistoryQuery {
       this.logger.info(`Stopping north ${this.application.name}`)
       await this.north.disconnect()
     }
-    this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.off('data', this.listener)
+    this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.removeAllListeners()
   }
 
   /**
