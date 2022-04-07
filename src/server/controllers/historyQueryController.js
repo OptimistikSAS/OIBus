@@ -56,19 +56,6 @@ const enableHistoryQuery = async (ctx) => {
 }
 
 /**
- * Pause/Resume a HistoryQuery entry.
- * @param {Object} ctx - The KOA context
- * @return {void}
- */
-const pauseHistoryQuery = async (ctx) => {
-  const historyQuery = await ctx.app.historyQueryEngine.historyQueryRepository.get(ctx.params.id)
-  historyQuery.paused = ctx.request.body.paused
-  const updatedHistoryQuery = await ctx.app.historyQueryEngine.historyQueryRepository.update(historyQuery)
-  process.send({ type: 'reload-historyquery-engine' })
-  ctx.ok(updatedHistoryQuery)
-}
-
-/**
  * Re-order a HistoryQuery entry.
  * @param {Object} ctx - The KOA context
  * @return {void}
@@ -116,7 +103,6 @@ module.exports = {
   getHistoryQueryById,
   updateHistoryQuery,
   enableHistoryQuery,
-  pauseHistoryQuery,
   orderHistoryQuery,
   deleteHistoryQuery,
   getStatus,

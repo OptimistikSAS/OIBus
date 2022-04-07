@@ -84,7 +84,6 @@ const getHistoryQueries = async () => getRequest('/history-queries')
 const getHistoryQueryById = async (id) => getRequest(`/history-queries/${id}`)
 const updateHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}`, body)
 const enableHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/enable`, body)
-const pauseHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/pause`, body)
 const orderHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}/order`, body)
 const deleteHistoryQuery = async (id, position) => deleteRequest(`/history-queries/${id}?position=${position}`)
 const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queries/${id}/status`)
@@ -108,7 +107,6 @@ export default {
   getHistoryQueryById,
   updateHistoryQuery,
   enableHistoryQuery,
-  pauseHistoryQuery,
   orderHistoryQuery,
   deleteHistoryQuery,
   getLastCompletedForHistoryQuery,

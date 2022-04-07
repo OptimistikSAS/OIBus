@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Col, Container, Form, Label, Row } from 'reactstrap'
+import { Button, Col, Container, Form, Row } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import { FaArrowLeft, FaArrowRight, FaPauseCircle, FaPlayCircle } from 'react-icons/fa'
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa'
 import { OIbCheckBox, OIbInteger, OIbText, OIbTextArea, OIbTitle } from '../../components/OIbForm'
 import OIbDate from '../../components/OIbForm/OIbDate.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
@@ -29,9 +29,32 @@ const HistoryQueryForm = ({ query }) => {
   const navigate = useNavigate()
 
   React.useEffect(() => {
+    // Monitor which history query is running
+    const source = new EventSource('/history/engine/sse')
+    source.onmessage = (event) => {
+      if (event && event.data) {
+        const myData = JSON.parse(event.data)
+        // If the displayed query is running, we refresh it to update its status and subscribe to its sse
+        if (myData.ongoingHistoryQueryId === queryToUpdate.id) {
+          apis.getHistoryQueryById(queryToUpdate.id).then((updatedQuery) => (
+            setQueryToUpdate(updatedQuery)
+          ))
+        }
+      }
+    }
+
+    source.onerror = (error) => {
+      console.error(error)
+    }
+
+    return () => {
+      source?.close()
+    }
+  }, [])
+
+  React.useEffect(() => {
     let source
-    if (!queryToUpdate.paused
-        && queryToUpdate.enabled
+    if (queryToUpdate.enabled
         && queryToUpdate.status !== 'pending'
         && queryToUpdate.status !== 'finished') {
       source = new EventSource(`/history/${queryToUpdate.id}/sse`)
@@ -46,34 +69,15 @@ const HistoryQueryForm = ({ query }) => {
           })
         }
       }
-    } else {
-      // Monitor which history query is running
-      source = new EventSource('/history/engine/sse')
-      source.onmessage = (event) => {
-        if (event && event.data) {
-          const myData = JSON.parse(event.data)
-          // If the displayed query is running, we refresh it to update its status and subscribe to its sse
-          if (myData.ongoingHistoryQueryId === queryToUpdate.id) {
-            apis.getHistoryQueryById(queryToUpdate.id).then((updatedQuery) => (
-              setQueryToUpdate(updatedQuery)
-            ))
-          }
-        }
+      source.onerror = (error) => {
+        console.error(error)
       }
-    }
-    source.onerror = (error) => {
-      console.error(error)
     }
 
     return () => {
       source?.close()
     }
   }, [queryToUpdate])
-
-  const handlePause = async () => {
-    await apis.pauseHistoryQuery(queryToUpdate.id, { paused: !queryToUpdate.paused })
-    setQueryToUpdate({ ...queryToUpdate, paused: !queryToUpdate.paused })
-  }
 
   const handleEnabled = async () => {
     await apis.enableHistoryQuery(queryToUpdate.id, { enabled: !queryToUpdate.enabled })
@@ -258,40 +262,6 @@ const HistoryQueryForm = ({ query }) => {
                 switchButton
               />
             </Col>
-            {queryToUpdate.enabled && progressStatus.status !== 'finished' ? (
-              <Col md={2}>
-                {queryToUpdate.paused ? (
-                  <>
-                    <FaPlayCircle
-                      className="oi-icon-breadcrumb"
-                      size={15}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handlePause()
-                      }}
-                    />
-
-                    <Label className="status-text-breadcrumb text-warning">
-                      Paused
-                    </Label>
-                  </>
-                ) : (
-                  <>
-                    <FaPauseCircle
-                      className="oi-icon-breadcrumb"
-                      size={15}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handlePause()
-                      }}
-                    />
-                    <Label className="status-text-breadcrumb text-success">
-                      Ongoing
-                    </Label>
-                  </>
-                )}
-              </Col>
-            ) : null}
             <Col md={2}>
               <Button
                 disabled={checkIfQueryHasChanged()}
@@ -329,6 +299,7 @@ const HistoryQueryForm = ({ query }) => {
                   {progressStatus.scanGroup && (
                     <span className="mx-1">
                       (for scan group
+                      {' '}
                       {progressStatus.scanGroup}
                       )
                     </span>
