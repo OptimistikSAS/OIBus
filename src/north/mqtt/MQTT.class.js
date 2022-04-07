@@ -14,7 +14,7 @@ class MQTT extends ApiHandler {
    * Constructor for MQTT
    * @constructor
    * @param {Object} applicationParameters - The application parameters
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(applicationParameters, engine) {
@@ -58,7 +58,7 @@ class MQTT extends ApiHandler {
    * @return {Promise} - The handle status
    */
   async handleValues(values) {
-    this.logger.trace(`MQTT North handleValues() call with ${values.length} values`)
+    this.logger.trace(`MQTT handleValues() call with ${values.length} values`)
     const successCount = await this.publishValues(values)
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
@@ -72,11 +72,11 @@ class MQTT extends ApiHandler {
 
   /**
    * Connection to Broker MQTT
+   * @param {string} _additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  async connect() {
-    super.connect()
-    this.logger.info(`Connecting North MQTT Connector to ${this.url}...`)
+  async connect(_additionalInfo = '') {
+    this.logger.info(`Connecting ${this.application.name} to ${this.url}...`)
 
     const options = {
       username: this.username,
@@ -98,9 +98,7 @@ class MQTT extends ApiHandler {
    * @return {void}
    */
   handleConnectEvent() {
-    this.logger.info(`North MQTT Connector connected to ${this.url}`)
-    this.statusData['Connected at'] = new Date().toISOString()
-    this.updateStatusDataStream()
+    super.connect(`url: ${this.url}`)
   }
 
   /**
@@ -117,7 +115,7 @@ class MQTT extends ApiHandler {
    * @return {void}
    */
   disconnect() {
-    this.logger.info(`Disconnecting North MQTT Connector from ${this.url}`)
+    this.logger.info(`Disconnecting ${this.application.name} from ${this.url}`)
     this.client.end(true)
     this.statusData['Connected at'] = 'Not connected'
     this.updateStatusDataStream()

@@ -175,9 +175,9 @@ class HistoryQueryEngine extends BaseEngine {
 
       if (dataSourceToUse && applicationToUse) {
         this.historyQuery = new HistoryQuery(this, this.logger, historyQueryConfig, dataSourceToUse, applicationToUse)
-        this.historyQuery.start()
         this.statusData.ongoingHistoryQueryId = this.historyQuery.id
         this.updateStatusDataStream()
+        this.historyQuery.start()
       }
     } else {
       this.logger.warn('No HistoryQuery to execute')

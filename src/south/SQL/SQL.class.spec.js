@@ -192,6 +192,7 @@ describe('SQL', () => {
 
   it('should quit historyQuery if timezone is invalid', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
     const { timezone } = sqlSouth
     sqlSouth.timezone = undefined
 
@@ -204,6 +205,8 @@ describe('SQL', () => {
 
   it('should interact with MS SQL server if driver is mssql', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mssql'
     const query = jest.fn(() => ({ recordsets: [[{ timestamp: new Date('2020-12-25T00:00:00.000Z') }]] }))
     const input = jest.fn(() => ({ query }))
@@ -241,6 +244,8 @@ describe('SQL', () => {
   it('should interact with MySQL server if driver is mysql', async () => {
     global.Date = RealDate
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
     const startTime = new Date('2019-10-03T13:36:36.360Z')
     const endTime = new Date('2019-10-03T13:40:40.400Z')
@@ -306,6 +311,8 @@ describe('SQL', () => {
 
   it('should interact with MySQL server and catch request error', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
 
     const connection = {
@@ -332,6 +339,8 @@ describe('SQL', () => {
 
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'postgresql'
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
       .toJSDate()
@@ -383,6 +392,8 @@ describe('SQL', () => {
 
   it('should interact with PostgreSQL server and catch request error', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'postgresql'
 
     types.setTypeParser = jest.fn()
@@ -403,6 +414,8 @@ describe('SQL', () => {
 
   it('should interact with PostgreSQL server and not end connection if it is null', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'postgresql'
 
     types.setTypeParser = jest.fn()
@@ -420,6 +433,8 @@ describe('SQL', () => {
 
   it('should interact with Oracle server if driver is oracle', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     if (!oracledb) return
     sqlSouth.driver = 'oracle'
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
@@ -468,6 +483,8 @@ describe('SQL', () => {
 
   it('should interact with Oracle server and catch request error', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     if (!oracledb) return
     sqlSouth.driver = 'oracle'
 
@@ -496,6 +513,8 @@ describe('SQL', () => {
 
   it('should interact with SQLite database server if driver is sqlite', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'sqlite'
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
       .toJSDate()
@@ -538,6 +557,8 @@ describe('SQL', () => {
 
   it('should interact with SQLite database and catch request error', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'sqlite'
 
     jest.spyOn(sqlite, 'open')
@@ -553,6 +574,8 @@ describe('SQL', () => {
 
   it('should trigger an error and catch it', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mssql'
 
     const query = jest.fn(() => ({ recordsets: [[{ timestamp: new Date('2020-12-25T00:00:00.000Z') }]] }))
@@ -574,6 +597,8 @@ describe('SQL', () => {
 
   it('should log an error if invalid driver is specified', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'invalid'
 
     await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
@@ -584,6 +609,8 @@ describe('SQL', () => {
 
   it('should not send file on emtpy result', async () => {
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
 
     sqlSouth.getDataFromMySQL = () => []
@@ -598,6 +625,8 @@ describe('SQL', () => {
   it('should send uncompressed file when the result is not empty and compression is false', async () => {
     global.Date = RealDate
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
 
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
@@ -639,6 +668,8 @@ describe('SQL', () => {
   it('should send compressed file when the result is not empty and compression is true', async () => {
     global.Date = RealDate
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
 
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
@@ -678,6 +709,8 @@ describe('SQL', () => {
   it('should manage fs unlink error and catch error', async () => {
     global.Date = RealDate
     await sqlSouth.init()
+    await sqlSouth.connect()
+
     sqlSouth.driver = 'mysql'
 
     const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')

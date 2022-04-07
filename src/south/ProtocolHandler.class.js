@@ -242,7 +242,13 @@ class ProtocolHandler {
       }
 
       // eslint-disable-next-line no-await-in-loop
-      await this.historyQuery(scanMode, startTime, intervalEndTime)
+      const historyQueryResult = await this.historyQuery(scanMode, startTime, intervalEndTime)
+
+      if (historyQueryResult === -1) {
+        this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. queryPart-${scanMode}: ${
+          this.queryParts[scanMode]}, startTime: ${startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
+        return
+      }
 
       this.queryParts[scanMode] += 1
       // eslint-disable-next-line no-await-in-loop
@@ -281,6 +287,7 @@ class ProtocolHandler {
       name,
       id,
     } = this.dataSource
+    this.connected = false
     this.logger.info(`Data source ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/south/${id}/sse`]?.events?.off('data', this.listener)
   }
