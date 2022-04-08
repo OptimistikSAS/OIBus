@@ -36,7 +36,7 @@ WizardResizable=no
 
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "en"; MessagesFile: "compiler:Default.isl"
 
 
 [Files]
@@ -226,7 +226,9 @@ begin;
         Result := True
       else if StringChangeEx(FileStr, '"engineName": "OIBus"', '"engineName": "' + MyOIBusName + '"', True) <= 0 then
         Result := True
-      else if StringChangeEx(FileStr, '"port": 2223', '"port": ' + MyPortNum, True) <= 0 then
+      else if StringChangeEx(FileStr, '"level": "debug"', '"level": "error"', True) <= 0 then // Replace the debug level in error level for console log
+        Result := True
+      else if StringChangeEx(FileStr, '"level": "error",', '"level": "info",', True) <= 0 then // Replace the error level in info level for file and sqlite log
         Result := True
       // modifications applied : replacing old oibus.json content with new one
       else
@@ -276,7 +278,7 @@ begin
     if FileExists(JsonFile) then
     begin
       ConfExists := True;
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to use it for this OIBus session?', mbInformation, MB_YESNO) = IDNO then
+      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to use it for this OIBus?', mbInformation, MB_YESNO) = IDNO then
       begin
         if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False;
@@ -491,7 +493,7 @@ begin
   OIBusLink := TLabel.Create(WizardForm);
   OIBusLink.Parent := WizardForm.FinishedPage;
   OIBusLink.Left := 300;
-  OIBusLink.Top := 300;//WizardForm.ClientHeight - OIBusLink.ClientHeight + 8;
+  OIBusLink.Top := 300; //WizardForm.ClientHeight - OIBusLink.ClientHeight + 8;
   OIBusLink.Cursor := crHand;
   OIBusLink.Font.Color := clBlue;
   OIBusLink.Font.Style := [fsUnderline];
