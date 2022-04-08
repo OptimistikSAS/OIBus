@@ -113,7 +113,7 @@ exports[`SouthForm check SouthForm with dataSource: ADS - Test 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -1315,7 +1315,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -2048,7 +2048,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -3687,7 +3687,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -5140,7 +5140,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-35 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -5870,7 +5870,7 @@ exports[`SouthForm check SouthForm with dataSource: PLC-42 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -6600,7 +6600,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -8383,7 +8383,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServer 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -9517,7 +9517,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -10422,7 +10422,7 @@ exports[`SouthForm check SouthForm with dataSource: SimulationServerBis copy 1`]
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"

@@ -113,7 +113,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -1586,7 +1586,7 @@ exports[`ConfigureProtocol check update 1`] = `
           class="col-md-4"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
