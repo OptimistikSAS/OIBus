@@ -14,6 +14,7 @@ import ConnectorButton from '../ConnectorButton.jsx'
 
 const HistoryQueryForm = ({ query }) => {
   const [queryToUpdate, setQueryToUpdate] = useState(query)
+  const [queryHasChanged, setQueryHasChanged] = useState(false)
   const [progressStatus, setProgressStatus] = useState({ status: query.status })
 
   const { newConfig } = React.useContext(ConfigContext)
@@ -88,6 +89,7 @@ const HistoryQueryForm = ({ query }) => {
     if (Object.values(errors).length === 0) {
       setAlert(null)
       await apis.updateHistoryQuery(queryToUpdate.id, { ...queryToUpdate })
+      setQueryHasChanged(false)
     } else {
       setAlert({
         text: 'You have unresolved errors in configuration! Please fix before updating the settings.',
@@ -97,19 +99,31 @@ const HistoryQueryForm = ({ query }) => {
   }
 
   const onChange = (propertyName, value) => {
-    setQueryToUpdate({ ...queryToUpdate, [propertyName]: value })
+    if (queryToUpdate[propertyName] !== value) {
+      setQueryToUpdate({ ...queryToUpdate, [propertyName]: value })
+      setQueryHasChanged(true)
+    }
   }
 
   const onMaxReadIntervalChange = (_, value) => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, maxReadInterval: value } })
+    if (queryToUpdate.settings.maxReadInterval !== value) {
+      setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, maxReadInterval: value } })
+      setQueryHasChanged(true)
+    }
   }
 
   const onReadIntervalDelayChange = (_, value) => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, readIntervalDelay: value } })
+    if (queryToUpdate.settings.readIntervalDelay !== value) {
+      setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, readIntervalDelay: value } })
+      setQueryHasChanged(true)
+    }
   }
 
-  const handleAddQuery = (_, value) => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, query: value } })
+  const onQueryChange = (_, value) => {
+    if (queryToUpdate.settings.query !== value) {
+      setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, query: value } })
+      setQueryHasChanged(true)
+    }
   }
 
   const handleAddPoint = (attributes) => {
@@ -126,6 +140,7 @@ const HistoryQueryForm = ({ query }) => {
         },
       },
     )
+    setQueryHasChanged(true)
   }
 
   const handleChangePoint = (attributeDescription, value, validity) => {
@@ -151,6 +166,7 @@ const HistoryQueryForm = ({ query }) => {
         }),
       },
     }))
+    setQueryHasChanged(true)
   }
 
   const handleDeletePoint = (indexInTable) => {
@@ -164,10 +180,12 @@ const HistoryQueryForm = ({ query }) => {
     Object.keys(errors).forEach((errorKey) => {
       if (errorKey.split('.')[1] === String(indexInTable)) delete errors[errorKey]
     })
+    setQueryHasChanged(true)
   }
 
   const handleDeleteAllPoint = () => {
     setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [] } })
+    setQueryHasChanged(true)
   }
 
   const handleImportPoints = async (file) => {
@@ -180,6 +198,7 @@ const HistoryQueryForm = ({ query }) => {
             ...queryToUpdate,
             settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, ...newPoints] },
           })
+          setQueryHasChanged(true)
         })
         .catch((error) => {
           console.error(error)
@@ -190,11 +209,6 @@ const HistoryQueryForm = ({ query }) => {
       setAlert({ text: error.message, type: 'danger' })
     }
   }
-
-  const checkIfQueryHasChanged = () => JSON.stringify(queryToUpdate.settings) === JSON.stringify(query.settings)
-        || queryToUpdate.startTime !== query.startTime || queryToUpdate.endTime !== query.endTime
-        || queryToUpdate.filePattern !== query.filePattern
-        || queryToUpdate.compress !== query.compress
 
   /**
      * Returns the text color for each status
@@ -264,7 +278,7 @@ const HistoryQueryForm = ({ query }) => {
             </Col>
             <Col md={2}>
               <Button
-                disabled={checkIfQueryHasChanged()}
+                disabled={!queryHasChanged}
                 color="primary"
                 onClick={() => handleUpdateHistoryQuery()}
               >
@@ -385,7 +399,7 @@ const HistoryQueryForm = ({ query }) => {
                     name="query"
                     contentType="sql"
                     value={queryToUpdate.settings?.query}
-                    onChange={handleAddQuery}
+                    onChange={onQueryChange}
                     help={
                       (
                         <div>
