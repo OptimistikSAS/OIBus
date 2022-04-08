@@ -1,15 +1,29 @@
 import React from 'react'
-import { notEmpty } from '../../services/validation.service'
+import { notEmpty, optional } from '../../services/validation.service'
 
 const schema = { name: 'CSV' }
 schema.form = {
+  AmazonS3Settings: {
+    type: 'OIbTitle',
+    label: 'Amazon S3 settings',
+    md: 12,
+  },
   bucket: {
     type: 'OIbText',
+    md: 4,
     valid: notEmpty(),
+    defaultValue: '',
+  },
+  region: {
+    type: 'OIbText',
+    md: 4,
+    newRow: false,
+    valid: optional(),
     defaultValue: '',
   },
   folder: {
     type: 'OIbText',
+    md: 4,
     newRow: false,
     valid: notEmpty(),
     defaultValue: '',

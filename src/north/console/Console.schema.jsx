@@ -2,7 +2,7 @@ import React from 'react'
 
 const schema = { name: 'Console' }
 schema.form = {
-  OIConnectSettings: {
+  ConsoleSettings: {
     type: 'OIbTitle',
     label: 'OIConsole settings',
     md: 12,

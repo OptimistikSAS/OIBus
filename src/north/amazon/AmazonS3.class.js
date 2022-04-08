@@ -1,8 +1,8 @@
 const fs = require('fs')
 const url = require('url')
 const path = require('path')
-
-const AWS = require('aws-sdk')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
+const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 const ProxyAgent = require('proxy-agent')
 
 const ApiHandler = require('../ApiHandler.class')
@@ -23,17 +23,14 @@ class AmazonS3 extends ApiHandler {
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
 
-    const { bucket, folder, authentication, proxy = null } = applicationParameters.AmazonS3
+    const { bucket, folder, region, authentication, proxy = null } = applicationParameters.AmazonS3
 
     this.bucket = bucket
     this.folder = folder
-
-    AWS.config.update({
-      accessKeyId: authentication.key,
-      secretAccessKey: this.encryptionService.decryptText(authentication.secretKey),
-    })
+    this.region = region
 
     const configuredProxy = this.getProxy(proxy)
+    let httpAgent
     if (configuredProxy) {
       const { protocol, host, port, username = null, password = null } = configuredProxy
 
@@ -43,12 +40,17 @@ class AmazonS3 extends ApiHandler {
         proxyOptions.auth = `${username}:${this.encryptionService.decryptText(password)}`
       }
 
-      const agent = new ProxyAgent(proxyOptions)
-
-      AWS.config.update({ httpOptions: { agent } })
+      httpAgent = new ProxyAgent(proxyOptions)
     }
 
-    this.s3 = new AWS.S3()
+    this.s3 = new S3Client({
+      region: this.region,
+      credentials: {
+        accessKeyId: authentication.key,
+        secretAccessKey: this.encryptionService.decryptText(authentication.secretKey),
+      },
+      requestHandler: httpAgent ? new NodeHttpHandler({ httpAgent }) : null,
+    })
 
     this.canHandleFiles = true
   }
@@ -66,7 +68,7 @@ class AmazonS3 extends ApiHandler {
     }
 
     try {
-      await this.s3.upload(params).promise()
+      await this.s3.send(new PutObjectCommand(params))
     } catch (error) {
       this.logger.error(error)
       return ApiHandler.STATUS.COMMUNICATION_ERROR
@@ -86,7 +88,7 @@ class AmazonS3 extends ApiHandler {
   /* eslint-disable-next-line class-methods-use-this */
   getFilenameWithoutTimestamp(filePath) {
     const { name, ext } = path.parse(filePath)
-    const filename = name.substr(0, name.lastIndexOf('-'))
+    const filename = name.slice(0, name.lastIndexOf('-'))
     return `${filename}${ext}`
   }
 }

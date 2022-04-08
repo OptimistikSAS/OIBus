@@ -46,7 +46,7 @@ const testConfig = {
     proxies: [
       {
         name: 'sss',
-        protocol: '',
+        protocol: 'http',
         host: 'hhh',
         port: 123,
         username: 'uuu',
@@ -54,7 +54,7 @@ const testConfig = {
       },
       {
         name: 'ff',
-        protocol: '',
+        protocol: 'http',
         host: 'tt',
         port: 1,
         username: 'uii',
@@ -62,7 +62,7 @@ const testConfig = {
       },
       {
         name: 'no-auth',
-        protocol: '',
+        protocol: 'http',
         host: 'tt',
         port: 1,
       },
@@ -611,6 +611,7 @@ const testConfig = {
         enabled: false,
         AmazonS3: {
           bucket: 'aef',
+          region: 'eu-west-3',
           folder: 'azsdfcv',
           proxy: '',
           authentication: {

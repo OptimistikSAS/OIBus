@@ -15,7 +15,7 @@ const validation = {
   },
   scanMode: {
     isSelectedOnce: (val, name, config) => {
-      const path = `${name.substr(0, name.indexOf('scanGroups'))}scanGroups`
+      const path = `${name.slice(0, name.indexOf('scanGroups'))}scanGroups`
       const existingScanGroups = objectPath.get(config, path)
       let error = null
       if (Array.isArray(existingScanGroups)) {

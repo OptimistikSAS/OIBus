@@ -20,7 +20,7 @@ class BaseRequest {
   /* eslint-disable-next-line class-methods-use-this */
   getFilenameWithoutTimestamp(filePath) {
     const { name, ext } = path.parse(filePath)
-    const filename = name.substr(0, name.lastIndexOf('-'))
+    const filename = name.slice(0, name.lastIndexOf('-'))
     return `${filename}${ext}`
   }
 

@@ -9342,6 +9342,24 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
         class="row"
       >
         <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Amazon S3 settings
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          />
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
           class="col-md-4"
         >
           <div
@@ -9366,10 +9384,31 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
             />
           </div>
         </div>
-      </div>
-      <div
-        class="row"
-      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.applications.0.AmazonS3.region"
+            >
+              Region
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.applications.0.AmazonS3.region"
+              name="north.applications.0.AmazonS3.region"
+              type="text"
+              value="eu-west-3"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
         <div
           class="col-md-4"
         >
@@ -10270,6 +10309,24 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
         class="row"
       >
         <div
+          class="col-md-12"
+        >
+          <div
+            class="row"
+          >
+            <h5>
+              Amazon S3 settings
+            </h5>
+          </div>
+          <div
+            class="container-fluid"
+          />
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
           class="col-md-4"
         >
           <div
@@ -10294,10 +10351,9 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
             />
           </div>
         </div>
-      </div>
-      <div
-        class="row"
-      >
+        <div
+          class="col-md-4"
+        />
         <div
           class="col-md-4"
         >
