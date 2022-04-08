@@ -107,7 +107,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -1184,7 +1184,7 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"

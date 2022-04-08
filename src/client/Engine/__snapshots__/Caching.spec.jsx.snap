@@ -167,7 +167,7 @@ exports[`Caching check Caching 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="form-check form-switch mb-3"
       >
         <input
           checked=""
@@ -426,7 +426,7 @@ exports[`Caching check change archiveFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="form-check form-switch mb-3"
       >
         <input
           checked=""
@@ -685,7 +685,7 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="form-check form-switch mb-3"
       >
         <input
           checked=""
@@ -944,7 +944,7 @@ exports[`Caching check change cacheFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="form-check form-switch mb-3"
       >
         <input
           checked=""

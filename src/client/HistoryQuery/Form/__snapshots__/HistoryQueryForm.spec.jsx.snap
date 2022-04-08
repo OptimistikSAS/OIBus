@@ -94,7 +94,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -470,7 +470,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -846,7 +846,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"

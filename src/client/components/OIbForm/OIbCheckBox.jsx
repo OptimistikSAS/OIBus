@@ -17,17 +17,17 @@ const OIbCheckBox = ({
     if (value === null) onChange(name, defaultValue)
   }, [value])
   const handleChange = (event) => {
-    const { target } = event
-    const { checked } = target
+    const { checked } = event.target
     onChange(name, checked, null)
   }
   if (value === null) return null
   if (switchButton) {
+    // bootstrap classNames used instead of <FormGroup switch> due to bug in reactstrap
     return (
-      <FormGroup switch>
+      <FormGroup className="form-check form-switch">
         <Input
           className="mb-3"
-          type="switch"
+          type="checkbox"
           id={name}
           name={name}
           label={label}

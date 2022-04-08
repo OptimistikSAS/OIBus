@@ -2134,7 +2134,7 @@ exports[`Engine check Engine 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -2905,7 +2905,7 @@ exports[`Engine check Engine 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -2969,7 +2969,7 @@ exports[`Engine check Engine 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -5671,7 +5671,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -6023,7 +6023,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -6087,7 +6087,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -8794,7 +8794,7 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -9565,7 +9565,7 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -9629,7 +9629,7 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -12331,7 +12331,7 @@ exports[`Engine check change password 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -13102,7 +13102,7 @@ exports[`Engine check change password 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -13166,7 +13166,7 @@ exports[`Engine check change password 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -15868,7 +15868,7 @@ exports[`Engine check change port 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -16639,7 +16639,7 @@ exports[`Engine check change port 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -16703,7 +16703,7 @@ exports[`Engine check change port 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -19405,7 +19405,7 @@ exports[`Engine check change user 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -20176,7 +20176,7 @@ exports[`Engine check change user 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -20240,7 +20240,7 @@ exports[`Engine check change user 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""

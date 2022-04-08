@@ -107,7 +107,7 @@ exports[`NorthForm check NorthForm with application: CsvToHttp 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -1580,7 +1580,7 @@ exports[`NorthForm check NorthForm with application: RawFileSender 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -2602,7 +2602,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -3844,7 +3844,7 @@ exports[`NorthForm check NorthForm with application: WATSYConnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -4934,7 +4934,7 @@ exports[`NorthForm check NorthForm with application: c 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -5791,7 +5791,7 @@ exports[`NorthForm check NorthForm with application: filewriter 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -6597,7 +6597,7 @@ exports[`NorthForm check NorthForm with application: monoiconnect 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -7654,7 +7654,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               checked=""
@@ -9007,7 +9007,7 @@ exports[`NorthForm check NorthForm with application: test04 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
@@ -9935,7 +9935,7 @@ exports[`NorthForm check NorthForm with application: test04 copy 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="form-check form-switch mb-3"
           >
             <input
               class="mb-3 form-check-input"
