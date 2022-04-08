@@ -304,7 +304,7 @@ module.exports = {
           logger.info('Add clientId field to MQTT')
           dataSource.MQTT.clientId = `OIBus-${Math.random()
             .toString(16)
-            .substr(2, 8)}`
+            .slice(2, 8)}`
         }
         if (!Object.prototype.hasOwnProperty.call(dataSource.MQTT, 'keepalive')) {
           logger.info('Add keepalive field to MQTT')
@@ -884,10 +884,11 @@ module.exports = {
           delete application.AmazonS3.authentication.accessKey
         }
 
-        application.AmazonS3.key = application.AmazonS3.accessKey
         if (!application.AmazonS3.proxy) {
           application.AmazonS3.proxy = ''
         }
+
+        application.AmazonS3.region = ''
       }
 
       if (application.api === 'Console') {
