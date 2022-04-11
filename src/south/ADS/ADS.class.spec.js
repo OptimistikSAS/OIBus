@@ -670,8 +670,6 @@ describe('ADS south', () => {
 
     expect(adsSouth.connected)
       .toBeTruthy()
-
-    expect(adsSouth.reconnectTimeout).toBe(null)
   })
 
   it('should retry to connect in case of failure', async () => {
@@ -688,7 +686,7 @@ describe('ADS south', () => {
     expect(adsSouth.logger.error)
       .toBeCalledTimes(1)
 
-    expect(adsSouth.reconnectTimeout).not.toBe(null)
+    expect(adsSouth.reconnectTimeout).not.toBeUndefined()
   })
 
   it('should properly read onScan', async () => {
