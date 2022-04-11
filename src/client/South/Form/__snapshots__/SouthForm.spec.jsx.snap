@@ -7339,7 +7339,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
                           @StartTime:
                         </b>
                          
-                        The time of the previous query retrieved from the 'Time column' field. For the first query, it is initialized to the current date. The date format can be adapted with driver specific function.
+                        The time of the previous query retrieved from the 'Time column' field. For the first query, it is initialized to the current date. The date format can be adapted with driver specific functions.
                         <br />
                         For example, with sqlite, the following function can be used to parse the date as a string:
                         <i>
@@ -7588,7 +7588,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
                   class="col"
                 >
                   <p>
-                    The query results are converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template.
+                    The query results are converted into a CSV file. It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also the name of the file with a template.
                     <p>
                       The file name can be adapted with the following variables: 
                     </p>

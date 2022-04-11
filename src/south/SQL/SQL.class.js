@@ -237,6 +237,8 @@ class SQL extends ProtocolHandler {
           return -1
         }
       }
+    } else {
+      this.logger.debug(`No result found between ${startTime.toISOString()} and ${endTime.toISOString()}`)
     }
 
     const oldLastCompletedAt = this.lastCompletedAt[scanMode]
