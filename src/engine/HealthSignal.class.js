@@ -31,11 +31,11 @@ class HealthSignal {
   start() {
     if (this.http.enabled) {
       this.logger.info('Initializing http health signal')
-      this.httpTimer = setTimeout(this.sendHttpSignal.bind(this), this.http.frequency * 1000)
+      this.httpTimer = setInterval(this.sendHttpSignal.bind(this), this.http.frequency * 1000)
     }
     if (this.logging.enabled) {
       this.logger.info('Initializing logging health signal')
-      this.loggingTimer = setTimeout(this.sendLoggingSignal.bind(this), this.logging.frequency * 1000)
+      this.loggingTimer = setInterval(this.sendLoggingSignal.bind(this), this.logging.frequency * 1000)
     }
   }
 
@@ -45,10 +45,10 @@ class HealthSignal {
    */
   stop() {
     if (this.httpTimer) {
-      clearTimeout(this.httpTimer)
+      clearInterval(this.httpTimer)
     }
     if (this.loggingTimer) {
-      clearTimeout(this.loggingTimer)
+      clearInterval(this.loggingTimer)
     }
   }
 
@@ -76,8 +76,6 @@ class HealthSignal {
     } catch (error) {
       this.logger.error(`sendRequest error status: ${error}`)
     }
-
-    this.httpTimer = setTimeout(this.sendHttpSignal.bind(this), this.http.frequency * 1000)
   }
 
   /**
@@ -89,7 +87,6 @@ class HealthSignal {
 
     const healthStatus = await this.prepareStatus(true)
     this.logger.info(JSON.stringify(healthStatus))
-    this.loggingTimer = setTimeout(this.sendLoggingSignal.bind(this), this.logging.frequency * 1000)
   }
 
   /**

@@ -34,7 +34,6 @@ describe('HealthSignal', () => {
         username: 'username',
         password: 'password',
       },
-      id: 'id',
       frequency: 300,
       proxy: 'proxy_name',
     },
@@ -101,7 +100,7 @@ describe('HealthSignal', () => {
     const healthSignal = new HealthSignal(engine)
     engine.getVersion.mockReturnValue('version')
 
-    const status = await healthSignal.prepareStatus(false, healthSignal.http.id)
+    const status = await healthSignal.prepareStatus(false)
 
     expect(engine.getVersion).toHaveBeenCalledTimes(1)
     expect(engine.getStatus).not.toHaveBeenCalled()
@@ -113,7 +112,7 @@ describe('HealthSignal', () => {
     engine.getVersion.mockReturnValue('ver')
     engine.getStatus.mockReturnValue({ status: 'status', version: 'version' })
 
-    const status = await healthSignal.prepareStatus(true, healthSignal.http.id)
+    const status = await healthSignal.prepareStatus(true)
 
     expect(engine.getVersion).toHaveBeenCalledTimes(1)
     expect(engine.getStatus).toHaveBeenCalledTimes(1)
@@ -121,7 +120,6 @@ describe('HealthSignal', () => {
   })
 
   it('should call RequestService httpSend()', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const status = { status: 'status' }
 
     const healthSignal = new HealthSignal(engine)
@@ -144,27 +142,26 @@ describe('HealthSignal', () => {
       headers,
     )
     expect(healthSignal.logger.debug).toBeCalledWith('Health signal successful')
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1)
   })
 
   it('should properly stop when enabled', () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
     const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = true
     healthSignal.start()
     healthSignal.httpTimer = () => {}
     healthSignal.stop()
 
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
   })
 
   it('should properly stop when disabled', () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
     const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = false
     healthSignal.start()
     healthSignal.stop()
 
-    expect(clearTimeoutSpy).not.toBeCalled()
+    expect(clearIntervalSpy).not.toBeCalled()
   })
 })
