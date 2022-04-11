@@ -175,8 +175,6 @@ class OPCUA_DA extends ProtocolHandler {
    * @returns {Promise<void>} - The connect promise
    */
   async connectToOpcuaServer() {
-    this.reconnectTimeout = null
-
     try {
       // define OPCUA_DA connection parameters
       const connectionStrategy = {
@@ -215,6 +213,9 @@ class OPCUA_DA extends ProtocolHandler {
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+      }
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }

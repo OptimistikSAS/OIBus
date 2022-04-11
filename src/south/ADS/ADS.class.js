@@ -204,7 +204,6 @@ class ADS extends ProtocolHandler {
   }
 
   async connectToAdsServer() {
-    this.reconnectTimeout = null
     try {
       const result = await this.client.connect()
       this.connected = true
@@ -216,6 +215,9 @@ class ADS extends ProtocolHandler {
       this.statusData['Connected at'] = 'Not connected'
       this.updateStatusDataStream()
       this.logger.error(`ADS connect error: ${JSON.stringify(error)}`)
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+      }
       this.reconnectTimeout = setTimeout(this.connectToAdsServer.bind(this), this.retryInterval)
     }
   }

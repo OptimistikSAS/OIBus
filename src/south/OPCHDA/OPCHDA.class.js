@@ -178,7 +178,6 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendConnectMessage() {
-    this.reconnectTimeout = null
     const { host, serverName } = this.dataSource.OPCHDA
     const message = {
       Request: 'Connect',
@@ -267,6 +266,9 @@ class OPCHDA extends ProtocolHandler {
             this.sendInitializeMessage()
           } else {
             this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}, retrying in ${retryInterval}ms`)
+            if (this.reconnectTimeout) {
+              clearTimeout(this.reconnectTimeout)
+            }
             this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
           }
           break
@@ -282,6 +284,9 @@ class OPCHDA extends ProtocolHandler {
             if (messageObject.Content.Disconnected) {
               this.logger.error('Agent disconnected from OPC HDA server')
               this.connected = false
+              if (this.reconnectTimeout) {
+                clearTimeout(this.reconnectTimeout)
+              }
               this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
             }
 
