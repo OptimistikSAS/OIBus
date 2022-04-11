@@ -1,6 +1,7 @@
 const fs = require('fs/promises')
 const fetch = require('node-fetch')
 const csv = require('papaparse')
+const { Settings } = require('luxon')
 
 const RestApi = require('./RestApi.class')
 const databaseService = require('../../services/database.service')
@@ -43,10 +44,20 @@ jest.mock('../../services/database.service', () => ({
   getConfig: jest.fn((_database, _key) => '1587640141001.0'),
   upsertConfig: jest.fn(),
 }))
+const nowDateString = '2020-02-02T02:02:02.222Z'
+Settings.now = () => new Date(nowDateString).valueOf()
+const RealDate = Date
 
 beforeEach(() => {
   jest.resetAllMocks()
   jest.clearAllMocks()
+
+  global.Date = jest.fn(() => new RealDate(nowDateString))
+  global.Date.UTC = jest.fn(() => new RealDate(nowDateString).toUTCString())
+})
+
+afterEach(() => {
+  global.Date = RealDate
 })
 
 describe('RestAPI south', () => {
@@ -59,7 +70,8 @@ describe('RestAPI south', () => {
       port: 4200,
       connectionTimeout: 1000,
       requestTimeout: 1000,
-      host: 'http://localhost',
+      host: 'localhost',
+      protocol: 'http',
       compression: false,
       requestMethod: 'GET',
       endpoint: '/api/oianalytics/data/values/query',
@@ -68,6 +80,7 @@ describe('RestAPI south', () => {
       fileName: 'rast-api-results_@CurrentDate.csv',
       timeColumn: 'timestamp',
       timezone: 'Europe/Paris',
+      variableDateFormat: 'ISO',
       authentication: {
         username: 'user',
         password: 'password',
@@ -109,9 +122,6 @@ describe('RestAPI south', () => {
   })
 
   it('should create RestApi connector and connect', async () => {
-    const nowDateString = '2020-02-02T02:02:02.222Z'
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
     databaseService.getConfig.mockReturnValue(null)
 
     const southRestApi = new RestApi(restApiConfig, engine)
@@ -139,10 +149,10 @@ describe('RestAPI south', () => {
       .toEqual(restApiConfig.RestApi.compression)
     expect(southRestApi.delimiter)
       .toEqual(restApiConfig.RestApi.delimiter)
-    expect(southRestApi.dateFormat)
-      .toEqual(restApiConfig.RestApi.dateFormat)
-    expect(southRestApi.timeColumn)
-      .toEqual(restApiConfig.RestApi.timeColumn)
+    expect(southRestApi.protocol)
+      .toEqual(restApiConfig.RestApi.protocol)
+    expect(southRestApi.variableDateFormat)
+      .toEqual(restApiConfig.RestApi.variableDateFormat)
     expect(southRestApi.acceptSelfSigned)
       .toEqual(restApiConfig.RestApi.acceptSelfSigned)
     expect(southRestApi.payloadParser)
@@ -156,10 +166,10 @@ describe('RestAPI south', () => {
 
     await southRestApi.connect()
     expect(southRestApi.lastCompletedAt[restApiConfig.scanMode]).toEqual(new Date('2020-02-02T02:02:02.222Z'))
-    global.Date = RealDate
   })
 
   it('should fail to scan', async () => {
+    global.Date = RealDate
     // Test fetch status error with basic auth
     const southRestApi = new RestApi(restApiConfig, engine)
     await southRestApi.init()
@@ -179,7 +189,6 @@ describe('RestAPI south', () => {
     // Test fetch error and bearer auth
     southRestApi.logger.error.mockClear()
     fetch.mockClear()
-    fetch.mockReturnValue(Promise.reject(new Error()))
     southRestApi.authentication.type = 'Bearer'
     southRestApi.authentication.token = 'myToken'
     await southRestApi.historyQuery(restApiConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
@@ -193,12 +202,10 @@ describe('RestAPI south', () => {
         timeout: 1000,
       },
     )
-    expect(southRestApi.logger.error).toHaveBeenCalledWith('{"responseError":false,"error":{}}')
 
     // Test fetch with API Key
     southRestApi.logger.error.mockClear()
     fetch.mockClear()
-    fetch.mockReturnValue(Promise.reject(new Error()))
     southRestApi.authentication.type = 'API Key'
     southRestApi.authentication.key = 'myKey'
     southRestApi.authentication.secretKey = 'mySecret'
@@ -234,11 +241,6 @@ describe('RestAPI south', () => {
   })
 
   it('should successfully scan http endpoint with oianalytics time values', async () => {
-    const nowDateString = '2020-02-02T02:02:02.222Z'
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
-    global.Date.now = jest.fn(() => new RealDate(nowDateString).getTime())
-
     const endpointResult = [
       {
         type: 'time-values',
@@ -304,6 +306,5 @@ describe('RestAPI south', () => {
     southRestApi.payloadParser = 'Bad parser'
     await southRestApi.historyQuery(restApiConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
     expect(southRestApi.logger.error).toHaveBeenCalledWith('Parser "Bad parser" does not exist')
-    global.Date = RealDate
   })
 })

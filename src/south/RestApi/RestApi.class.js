@@ -3,8 +3,8 @@ const path = require('path')
 const csv = require('papaparse')
 const fetch = require('node-fetch')
 const https = require('https')
+const http = require('http')
 
-const { DateTime } = require('luxon')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 const oiaTimeValues = require('./formatters/oia-time-values')
@@ -16,6 +16,30 @@ const parsers = {
   SLIMS: slims,
 }
 
+const requestWithBody = (body, options = {}) => new Promise((resolve, reject) => {
+  const callback = (response) => {
+    let str = ''
+    response.on('data', (chunk) => {
+      str += chunk
+    })
+    response.on('end', () => {
+      try {
+        const parsedResult = JSON.parse(str)
+        resolve(parsedResult)
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
+  const req = (options.protocol === 'https:' ? https : http).request(options, callback)
+  req.on('error', (e) => {
+    reject(e)
+  })
+  req.write(body)
+  req.end()
+})
+
 /**
  * Class RestApi
  */
@@ -26,7 +50,7 @@ class RestApi extends ProtocolHandler {
    * Constructor for RestApi
    * @constructor
    * @param {Object} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
   constructor(dataSource, engine) {
@@ -41,6 +65,7 @@ class RestApi extends ProtocolHandler {
       requestMethod,
       host,
       port,
+      protocol,
       endpoint,
       queryParams,
       body,
@@ -50,30 +75,33 @@ class RestApi extends ProtocolHandler {
       fileName,
       compression,
       delimiter,
-      dateFormat,
-      timeColumn,
       payloadParser,
       convertToCsv,
       acceptSelfSigned,
+      variableDateFormat,
+      maxReadInterval,
+      readIntervalDelay,
     } = this.dataSource.RestApi
 
     this.requestMethod = requestMethod
     this.host = host
     this.port = port
+    this.protocol = protocol
     this.endpoint = endpoint
     this.queryParams = queryParams
     this.body = body
     this.authentication = authentication
     this.connectionTimeout = connectionTimeout
     this.requestTimeout = requestTimeout
+    this.maxReadInterval = maxReadInterval
+    this.readIntervalDelay = readIntervalDelay
     this.fileName = fileName
     this.compression = compression
     this.delimiter = delimiter
-    this.dateFormat = dateFormat
-    this.timeColumn = timeColumn
     this.acceptSelfSigned = acceptSelfSigned
     this.payloadParser = payloadParser
     this.convertToCsv = convertToCsv
+    this.variableDateFormat = variableDateFormat
 
     this.tmpFolder = path.resolve(this.engineConfig.caching.cacheFolder, this.dataSource.id)
 
@@ -123,7 +151,7 @@ class RestApi extends ProtocolHandler {
         return -1
       }
       try {
-        const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results)
+        const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results, this.timeColumn)
         formattedResults = httpResults
         if (latestDateRetrieved > updatedStartTime.toISOString()) {
           updatedStartTime = latestDateRetrieved
@@ -133,33 +161,48 @@ class RestApi extends ProtocolHandler {
         return -1
       }
 
-      if (this.convertToCsv) {
-        const fileName = this.fileName.replace('@CurrentDate', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss'))
-        const filePath = path.join(this.tmpFolder, fileName)
-        this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`)
-        const csvContent = await this.generateCSV(formattedResults)
-        try {
-          await fs.writeFile(filePath, csvContent)
-          if (this.compression) {
-            try {
-              // Compress and send the compressed file
-              const gzipPath = `${filePath}.gz`
-              await this.compress(filePath, gzipPath)
-              await this.addFile(gzipPath, false)
-              await fs.unlink(filePath)
-            } catch (compressionError) {
-              this.logger.error(`Error compressing file ${fileName}. Sending it raw instead`)
+      if (formattedResults.length > 0) {
+        this.logger.info(`Found ${formattedResults.length} results between ${startTime.toISOString()} and ${endTime.toISOString()}`)
+        if (this.convertToCsv) {
+          const fileName = this.replaceFilenameWithVariable(this.fileName, this.queryParts[scanMode])
+          const filePath = path.join(this.tmpFolder, fileName)
+          this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`)
+          const csvContent = await this.generateCSV(formattedResults)
+          try {
+            this.logger.debug(`Writing CSV file at ${filePath}`)
+            await fs.writeFile(filePath, csvContent)
+
+            if (this.compression) {
+              try {
+                // Compress and send the compressed file
+                const gzipPath = `${filePath}.gz`
+                await this.compress(filePath, gzipPath)
+                try {
+                  await fs.unlink(filePath)
+                  this.logger.info(`File ${filePath} compressed and deleted`)
+                } catch (unlinkError) {
+                  this.logger.error(unlinkError)
+                }
+
+                this.logger.debug(`Sending compressed ${gzipPath} to Engine.`)
+                await this.addFile(gzipPath, false)
+              } catch (compressionError) {
+                this.logger.error(`Error compressing file ${filePath}. Sending it raw instead`)
+                await this.addFile(filePath, false)
+              }
+            } else {
+              this.logger.debug(`Sending ${filePath} to Engine.`)
               await this.addFile(filePath, false)
             }
-          } else {
-            await this.addFile(filePath, false)
+          } catch (error) {
+            this.logger.error(error)
+            return -1
           }
-        } catch (error) {
-          this.logger.error(error)
-          return -1
+        } else {
+          await this.addValues(formattedResults)
         }
       } else {
-        await this.addValues(formattedResults)
+        this.logger.debug(`No result found between ${startTime.toISOString()} and ${endTime.toISOString()}`)
       }
     }
 
@@ -201,22 +244,52 @@ class RestApi extends ProtocolHandler {
       default:
         break
     }
-    const fetchOptions = {
-      method: this.requestMethod,
-      headers,
-      agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
-      timeout: this.connectionTimeout,
-    }
-    const requestUrl = `${this.host}:${this.port}${this.endpoint}${this.formatQueryParams(startTime, endTime)}`
-
-    if (this.body) {
-      fetchOptions.body = JSON.stringify(this.body).replace(/@StartTime/g, new Date(startTime).toISOString())
-        .replace(/@EndTime/g, new Date(endTime).toISOString())
-    }
-    // eslint-disable-next-line max-len
-    this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} authentication and ${this.requestMethod} method: ${requestUrl}`)
     let results = null
-    try {
+    if (this.requestMethod === 'GET' && this.body) {
+      const bodyToSend = this.body.replace(
+        /@StartTime/g,
+        this.variableDateFormat === 'ISO' ? new Date(startTime).toISOString() : new Date(startTime).getTime(),
+      )
+        .replace(
+          /@EndTime/g,
+          this.variableDateFormat === 'ISO' ? new Date(endTime).toISOString() : new Date(endTime).getTime(),
+        )
+      headers['Content-Type'] = 'application/json'
+      headers['Content-Length'] = bodyToSend.length
+      const requestOptions = {
+        method: this.requestMethod,
+        agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null, // lgtm [js/disabling-certificate-validation]
+        timeout: this.connectionTimeout,
+        host: this.host,
+        port: this.port,
+        protocol: `${this.protocol}:`,
+        path: this.endpoint,
+        headers,
+      }
+
+      results = await requestWithBody(bodyToSend, requestOptions)
+    } else {
+      const fetchOptions = {
+        method: this.requestMethod,
+        headers,
+        agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+        timeout: this.connectionTimeout,
+      }
+      const requestUrl = `${this.protocol}://${this.host}:${this.port}${this.endpoint}${this.formatQueryParams(startTime, endTime)}`
+
+      if (this.body) {
+        fetchOptions.body = this.body.replace(
+          /@StartTime/g,
+          this.variableDateFormat === 'ISO' ? new Date(startTime).toISOString() : new Date(startTime).getTime(),
+        )
+          .replace(
+            /@EndTime/g,
+            this.variableDateFormat === 'ISO' ? new Date(endTime).toISOString() : new Date(endTime).getTime(),
+          )
+      }
+      // eslint-disable-next-line max-len
+      this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} authentication and ${this.requestMethod} method: ${requestUrl}`)
+
       const response = await fetch(requestUrl, fetchOptions)
       if (!response.ok) {
         const responseError = {
@@ -227,12 +300,6 @@ class RestApi extends ProtocolHandler {
         return Promise.reject(responseError)
       }
       results = await response.json()
-    } catch (error) {
-      const connectError = {
-        responseError: false,
-        error,
-      }
-      return Promise.reject(connectError)
     }
 
     return results
@@ -250,10 +317,12 @@ class RestApi extends ProtocolHandler {
         let value
         switch (queryParam.queryParamValue) {
           case '@StartTime':
-            value = new Date(startTime).toISOString()
+            value = this.variableDateFormat === 'ISO'
+              ? new Date(startTime).toISOString() : new Date(startTime).getTime()
             break
           case '@EndTime':
-            value = new Date(endTime).toISOString()
+            value = this.variableDateFormat === 'ISO'
+              ? new Date(endTime).toISOString() : new Date(endTime).getTime()
             break
           default:
             value = queryParam.queryParamValue

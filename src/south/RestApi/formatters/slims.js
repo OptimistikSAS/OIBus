@@ -30,7 +30,7 @@ const format = (httpResult) => {
     formattedData.push({
       pointId: `${rsltCfPid.value}-${testName.value}`,
       unit: rsltValue.unit,
-      timestamp: rsltCfSamplingDateAndTime.value,
+      timestamp: new Date(rsltCfSamplingDateAndTime.value).toISOString(),
       value: rsltValue.value,
     })
     if (new Date(rsltCfSamplingDateAndTime.value) > latestDateRetrieved) {

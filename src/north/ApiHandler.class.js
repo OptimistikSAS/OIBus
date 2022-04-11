@@ -74,7 +74,11 @@ class ApiHandler {
     this.connected = true
     this.statusData['Connected at'] = new Date().toISOString()
     this.updateStatusDataStream()
-    this.logger.info(`North API ${name} started with protocol ${api} ${additionalInfo}`)
+    if (additionalInfo) {
+      this.logger.info(`North API ${name} started with protocol ${api} ${additionalInfo}`)
+    } else {
+      this.logger.info(`North API ${name} started with protocol ${api}`)
+    }
   }
 
   initializeStatusData() {

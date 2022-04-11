@@ -106,7 +106,7 @@ schema.form = {
               {' '}
               The time of the previous query retrieved from the &apos;Time column&apos; field.
               For the first query, it is initialized to the current date.
-              The date format can be adapted with driver specific function.
+              The date format can be adapted with driver specific functions.
               <br />
               For example, with sqlite, the following function can be used to parse the date as a string:
               <i> strftime(&apos;%Y-%m-%dT%H:%M:%f&apos;, @StartTime / 1000, &apos;unixepoch&apos;)</i>
@@ -190,7 +190,7 @@ schema.form = {
     children: (
       <>
         <p>
-          The query results are converted into a csv. It is possible to specify the delimiter used in the CSV file, how to format
+          The query results are converted into a CSV file. It is possible to specify the delimiter used in the CSV file, how to format
           the timestamp field and also the name of the file with a template.
           <p>The file name can be adapted with the following variables: </p>
           <ul>
