@@ -97,7 +97,7 @@ schema.form = {
     md: 12,
     children: (
       <>
-        <p>
+        <div>
           The query must be adapted to the selected driver (MSSQL, Oracle...).
           The following variables can be used in the query:
           <ul>
@@ -117,7 +117,7 @@ schema.form = {
               The current time (by default) or, if the query is split with &apos;Max read interval&apos;, the end time of the current interval.
             </li>
           </ul>
-        </p>
+        </div>
         <p>
           To prevent blocking if the SQL server is not available or the query is faulty it is possible to configure
           separate connection timeout and request timeout (not available for sqlite).
@@ -189,7 +189,7 @@ schema.form = {
     md: 12,
     children: (
       <>
-        <p>
+        <div>
           The query results are converted into a CSV file. It is possible to specify the delimiter used in the CSV file, how to format
           the timestamp field and also the name of the file with a template.
           <p>The file name can be adapted with the following variables: </p>
@@ -211,7 +211,7 @@ schema.form = {
               If the query is not split, @QueryPart is replaced by 0
             </li>
           </ul>
-        </p>
+        </div>
         <p>
           Since we have no information about the SQL server timezone it is possible to specify the time column and the timezone for it.
         </p>

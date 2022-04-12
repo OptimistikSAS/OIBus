@@ -94,7 +94,7 @@ schema.form = {
     md: 12,
     children: (
       <>
-        <p>
+        <div>
           You can add query params directly from the table (key/value pairs), or enter a body in a json format.
           The following variables can be used in the query:
           <ul>
@@ -110,7 +110,7 @@ schema.form = {
               The current time (by default) or, if the query is split with &apos;Max read interval&apos;, the end time of the current interval.
             </li>
           </ul>
-        </p>
+        </div>
         <p>
           To prevent blocking if the HTTP server is not available or the query is faulty it is possible to configure
           separate connection timeout and request timeout.
@@ -166,7 +166,7 @@ schema.form = {
     label: 'File Settings',
     md: 12,
     children: (
-      <p>
+      <div>
         The query results are converted into a CSV file following the parser specified below.
         It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also
         the name of the file with a template.
@@ -189,7 +189,7 @@ schema.form = {
             If the query is not split, @QueryPart is replaced by 0
           </li>
         </ul>
-      </p>
+      </div>
     ),
   },
   payloadParser: {
