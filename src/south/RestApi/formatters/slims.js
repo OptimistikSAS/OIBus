@@ -20,7 +20,7 @@ const format = (httpResult) => {
       throw Error('Bad data: expect test_name to have a value')
     }
     const rsltValue = element.columns.find((column) => column.name === 'rslt_value')
-    if (!rsltValue?.unit || (rsltValue && rsltValue.value === null)) {
+    if (rsltValue && rsltValue.value === null) {
       throw Error('Bad data: expect rslt_value to have a unit and a value')
     }
     const rsltCfSamplingDateAndTime = element.columns.find((column) => column.name === 'rslt_cf_samplingDateAndTime')

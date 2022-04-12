@@ -151,13 +151,13 @@ class RestApi extends ProtocolHandler {
         return -1
       }
       try {
-        const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results, this.timeColumn)
+        const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results)
         formattedResults = httpResults
         if (latestDateRetrieved > updatedStartTime.toISOString()) {
           updatedStartTime = latestDateRetrieved
         }
       } catch (parsingError) {
-        this.logger.error(`Could not format the results with parser "${this.payloadParser}". Error: ${JSON.stringify(parsingError)}`)
+        this.logger.error(`Could not format the results with parser "${this.payloadParser}". Error: ${parsingError.message}`)
         return -1
       }
 
@@ -201,20 +201,18 @@ class RestApi extends ProtocolHandler {
         } else {
           await this.addValues(formattedResults)
         }
+        const oldLastCompletedAt = this.lastCompletedAt[scanMode]
+        this.lastCompletedAt[scanMode] = updatedStartTime
+        if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
+          this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
+          await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+        } else {
+          this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
+        }
       } else {
         this.logger.debug(`No result found between ${startTime.toISOString()} and ${endTime.toISOString()}`)
       }
     }
-
-    const oldLastCompletedAt = this.lastCompletedAt[scanMode]
-    this.lastCompletedAt[scanMode] = updatedStartTime
-    if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
-      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
-      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-    } else {
-      this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
-    }
-
     return 0
   }
 

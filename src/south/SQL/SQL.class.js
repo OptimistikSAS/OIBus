@@ -115,7 +115,7 @@ class SQL extends ProtocolHandler {
   }
 
   /**
-   * Function used to parse an entry and get latest date
+   * Function used to parse an entry and get the latest date
    * @param {*} entryList - on sql result item
    * @param {Date} startTime - The reference date
    * @return {Date} date - the updated date in iso string format
@@ -172,7 +172,6 @@ class SQL extends ProtocolHandler {
     }
 
     let updatedStartTime = startTime
-    this.ongoingReads[scanMode] = true
     let result
     result = []
     try {
@@ -237,21 +236,19 @@ class SQL extends ProtocolHandler {
           return -1
         }
       }
+
+      const oldLastCompletedAt = this.lastCompletedAt[scanMode]
+      updatedStartTime = this.getLatestDate(result, updatedStartTime)
+      this.lastCompletedAt[scanMode] = updatedStartTime
+      if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
+        this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
+        await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+      } else {
+        this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
+      }
     } else {
       this.logger.debug(`No result found between ${startTime.toISOString()} and ${endTime.toISOString()}`)
     }
-
-    const oldLastCompletedAt = this.lastCompletedAt[scanMode]
-    updatedStartTime = this.getLatestDate(result, updatedStartTime)
-    this.lastCompletedAt[scanMode] = updatedStartTime
-    if (this.lastCompletedAt[scanMode] !== oldLastCompletedAt) {
-      this.logger.debug(`Updating lastCompletedAt to ${this.lastCompletedAt[scanMode].toISOString()}`)
-      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-    } else {
-      this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}`)
-    }
-
-    this.ongoingReads[scanMode] = false
     return 0
   }
 
