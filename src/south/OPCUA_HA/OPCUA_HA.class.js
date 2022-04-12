@@ -198,8 +198,6 @@ class OPCUA_HA extends ProtocolHandler {
    * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
-    this.ongoingReads[scanMode] = true
-
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
@@ -321,8 +319,6 @@ class OPCUA_HA extends ProtocolHandler {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
       return -1
     }
-
-    this.ongoingReads[scanMode] = false
     return 0
   }
 

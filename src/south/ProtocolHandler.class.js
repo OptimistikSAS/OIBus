@@ -221,6 +221,7 @@ class ProtocolHandler {
       }
     }
 
+    this.ongoingReads[scanMode] = true
     let startTime = this.lastCompletedAt[scanMode]
     const endTime = new Date()
     let intervalEndTime
@@ -247,6 +248,7 @@ class ProtocolHandler {
       if (historyQueryResult === -1) {
         this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. queryPart-${scanMode}: ${
           this.queryParts[scanMode]}, startTime: ${startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
+        this.ongoingReads[scanMode] = false
         return
       }
 
@@ -259,6 +261,7 @@ class ProtocolHandler {
     } while (intervalEndTime !== endTime)
     this.queryParts[scanMode] = 0
     await this.setConfig(`queryPart-${scanMode}`, this.queryParts[scanMode])
+    this.ongoingReads[scanMode] = false
   }
 
   async onScan(scanMode) {
