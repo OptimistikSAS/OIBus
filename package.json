@@ -93,7 +93,7 @@
     "react-json-view": "1.21.3",
     "react-router": "6.3.0",
     "react-router-dom": "6.3.0",
-    "reactstrap": "9.0.1",
+    "reactstrap": "9.0.2",
     "real-require": "git://github.com/burgerni10/real-require.git",
     "sprintf-js": "1.1.2",
     "sqlite": "4.0.25",
