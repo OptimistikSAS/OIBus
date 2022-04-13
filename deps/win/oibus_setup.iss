@@ -56,7 +56,6 @@ WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommende
 var
   AccessLink: TLabel;
   OIBusLink: TLabel;
-  MyDataDir: string;
   MyAdminName: string;
   MyOIBusName: string;
   MyPortNum: string;
@@ -116,17 +115,17 @@ begin
 end;
 
 // Create (or overwrite existing) OIBus_Data directory
-function CheckDataDir: Boolean;
+function CreateDataDir: Boolean;
 var
   DirCreated: Boolean;
 begin
   Result := True;
-  if not DirExists(MyDataDir) then
+  if not DirExists(OIBus_DataDirPage.Values[0]) then
   begin
-    DirCreated := CreateDir(MyDataDir)
+    DirCreated := CreateDir(OIBus_DataDirPage.Values[0])
     if not DirCreated then
     begin
-      MsgBox('Error: Directory ' + MyDataDir + ' could not be created', mbError, MB_OK)
+      MsgBox('Error: Directory ' + OIBus_DataDirPage.Values[0] + ' could not be created', mbError, MB_OK)
       Result := False;
     end
   end
@@ -134,7 +133,7 @@ begin
   begin
     if OverwriteConfig = True then
     begin
-      if not DeleteDataDir(MyDataDir) then
+      if not DeleteDataDir(OIBus_DataDirPage.Values[0]) then
         Result := False
     end;
   end;
@@ -169,9 +168,9 @@ begin
     Result := False
   else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
     Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + MyDataDir + '\oibus.json"""' + #13#10, True) then
+  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '\oibus.json"""' + #13#10, True) then
     Result := False
-  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + MyDataDir + '\oibus.json"""', ExpandConstant('{app}')) then
+  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '\oibus.json"""', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppDirectory "' + ExpandConstant('{app}') + '"' + #13#10, True) then
     Result := False
@@ -210,7 +209,7 @@ var
   FileStr: string;
 begin;
   DefaultConfigFilePath := ExpandConstant('{app}') + '\defaultConfig.json';
-  ConfigFilePath := MyDataDir + '\oibus.json';
+  ConfigFilePath := OIBus_DataDirPage.Values[0] + '\oibus.json';
   if ((ConfExists and OverwriteConfig) or not ConfExists) then
   begin
     MyOIBusName := NamesQueryPage.Values[0];
@@ -248,7 +247,7 @@ begin;
               Result := False
             else
             begin
-              if CreateDir(MyDataDir + '\cache\') and CreateDir(MyDataDir + '\logs\') then
+              if CreateDir(OIBus_DataDirPage.Values[0] + '\cache\') and CreateDir(OIBus_DataDirPage.Values[0] + '\logs\') then
                 Result := True
             end
           end
@@ -278,7 +277,7 @@ begin
     if FileExists(JsonFile) then
     begin
       ConfExists := True;
-      if MsgBox('An oibus.json file was found at ' + MyDataDir + '. Do you want to use it for this OIBus?', mbInformation, MB_YESNO) = IDNO then
+      if MsgBox('An oibus.json file was found at ' + OIBus_DataDirPage.Values[0] + '. Do you want to use it for this OIBus?', mbInformation, MB_YESNO) = IDNO then
       begin
         if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False;
@@ -306,7 +305,7 @@ begin
   MyAdminName := NamesQueryPage.Values[1];
   MyPortNum := NamesQueryPage.Values[2];
   Memo := 'Destination location:' + Newline + Space + ExpandConstant('{app}') + Newline + Newline
-  Memo := Memo + 'OIBus data folder location:' + Newline + Space + MyDataDir + Newline + Newline
+  Memo := Memo + 'OIBus data folder location:' + Newline + Space + OIBus_DataDirPage.Values[0] + Newline + Newline
   if OverwriteConfig = True then
   begin
     Memo := Memo + 'OIBus name:' + Newline + Space + MyOIBusName + Newline + Newline
@@ -393,15 +392,32 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Dir: string;
 begin
+  if CurStep = ssInstall then
+  begin
+      if RegValueExists(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath') then
+      begin
+        if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath', Dir) then
+        begin
+          ExecCmd('nssm.exe', ' stop OIBus', Dir + '\..\')
+          Sleep(400);
+        end;
+        if not ExecCmd('nssm.exe', 'remove OIBus confirm', ExpandConstant('{app}')) then
+        begin
+          MsgBox('ERROR : Could not remove OIBus service. Remove it manually and retry installation.', mbCriticalError, MB_OK)
+        end
+      end;
+  end;
   if CurStep = ssPostInstall then
   begin
     // 1# Creating/overwriting OIBusData
-    if not CheckDataDir then
+    if not CreateDataDir then
       MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
     else begin
       // 2# Saving OIBusData folder-path to registry for later use
-      if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', MyDataDir) then
+      if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', OIBus_DataDirPage.Values[0]) then
       begin
         MsgBox('ERROR : could not write in registry ; Setup failed.', mbError, MB_OK)
         DeleteMyRegistry
@@ -423,20 +439,10 @@ begin
 end;
 
 function InitializeSetup: Boolean;
-var
-  Dir: string;
 begin
   OverwriteConfig := True;
   ConfExists := False;
   Result := True;
-  if RegValueExists(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath') then
-  begin
-    if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath', Dir) then
-    begin
-      ExecCmd('nssm.exe', ' stop OIBus', Dir + '\..\')
-      Sleep(400);
-    end;
-  end;
 end;
 
 procedure InitializeWizard();
@@ -480,7 +486,6 @@ begin
   NamesQueryPage.Add('Enter the port on which you want your OIBus-client to run.', False);
   NamesQueryPage.Values[2] := '2223';
   AfterID := NamesQueryPage.ID;
-  MyDataDir := OIBus_DataDirPage.Values[0];
   MyOIBusName := NamesQueryPage.Values[0];
   MyAdminName := NamesQueryPage.Values[1];
   MyPortNum := NamesQueryPage.Values[2];
