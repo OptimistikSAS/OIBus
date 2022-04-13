@@ -4,13 +4,14 @@ on:
   release:
     types: [published]
 jobs:
-  publish-non-windows:
-    name: 'Publish non windows packages'
+  publish-executables:
+    name: 'Publish executable packages'
     runs-on: ${{ matrix.config['os'] }}
     strategy:
       matrix:
         config:
           - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip' }
+          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
           - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip' }
     timeout-minutes: 20
     steps:
@@ -20,18 +21,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16.13
+          node-version: 16.14
 
       - name: Use npm
         run: |
-          npm install -g npm@8.1.1
+          npm install -g npm@8.3.1
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         id: pkg
         run: |
           npm ci
           npm run build-${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
-          zip -r ../oibus.zip .
+          ${{ matrix.config['zip'] }} -r ../oibus.zip .
       - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -44,7 +45,7 @@ jobs:
               name: '${{ matrix.config['archiveName'] }}',
               data: fs.readFileSync('./dist/oibus.zip')
             })
-  publish-windows:
+  publish-windows-installer:
     name: 'Publish windows installer'
     runs-on: windows-latest
     timeout-minutes: 20
@@ -55,11 +56,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16.13
+          node-version: 16.14
 
       - name: Use npm
         run: |
-          npm install -g npm@8.1.0
+          npm install -g npm@8.3.1
       - name: Package OIBus for win
         id: pkg
         run: |
@@ -80,6 +81,6 @@ jobs:
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               release_id: context.payload.release.id,
-              name: 'OIBus_setup_win32x64.exe',
+              name: 'OIBus-setup-win32x64.exe',
               data: fs.readFileSync('./dist/win-setup-release/oibus_setup.exe')
             })
