@@ -10,9 +10,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip' }
+          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip', zip: 'zip -r' }
           - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
-          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip' }
+          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip', zip: 'zip -r' }
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -32,7 +32,7 @@ jobs:
           npm ci
           npm run build-${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
-          ${{ matrix.config['zip'] }} -r ../oibus.zip .
+          ${{ matrix.config['zip'] }} ../oibus.zip .
       - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
