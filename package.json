@@ -97,7 +97,7 @@
     "real-require": "git://github.com/burgerni10/real-require.git",
     "sprintf-js": "1.1.2",
     "sqlite": "4.0.25",
-    "sqlite3": "5.0.3",
+    "sqlite3": "5.0.4",
     "thread-stream": "git://github.com/burgerni10/thread-stream.git",
     "timexe": "1.0.5",
     "tunnel": "0.0.6"
