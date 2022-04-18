@@ -107,7 +107,7 @@ logger.changeParameters({
     process.chdir(path.parse(configFile).dir)
 
     // Migrate config file, if needed
-    migrationService.migrate(configFile).then(() => {
+    migrationService.migrate(configFile).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
@@ -116,21 +116,22 @@ logger.changeParameters({
 
       const oibusEngine = new OIBusEngine(configService)
       const historyQueryEngine = new HistoryQueryEngine(configService)
-      const server = new Server(oibusEngine, historyQueryEngine)
-      server.listen()
+      let server
 
       if (check) {
         logger.warn('OIBus is running in check mode')
         process.send({ type: 'shutdown-ready' })
       } else {
-        oibusEngine.start(safeMode)
-        historyQueryEngine.start(safeMode)
+        await oibusEngine.start(safeMode)
+        await historyQueryEngine.start(safeMode)
+        server = new Server(oibusEngine, historyQueryEngine)
+        server.listen()
       }
 
       // Catch Ctrl+C and properly stop the Engine
       process.on('SIGINT', () => {
         logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-        const stopAll = [oibusEngine.stop(), historyQueryEngine.stop()]
+        const stopAll = [oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]
         Promise.allSettled(stopAll)
           .then(() => {
             process.exit()
@@ -143,23 +144,26 @@ logger.changeParameters({
           case 'reload-oibus-engine':
             logger.info('Reloading OIBus Engine')
             await oibusEngine.stop()
-            oibusEngine.start(safeMode)
+            await oibusEngine.start(safeMode)
+            await server.stop()
+            server = new Server(oibusEngine, historyQueryEngine)
+            server.listen()
             break
           case 'reload-historyquery-engine':
             logger.info('Reloading HistoryQuery Engine')
             await historyQueryEngine.stop()
-            historyQueryEngine.start(safeMode)
+            await historyQueryEngine.start(safeMode)
             break
           case 'reload':
             logger.info('Reloading OIBus')
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
+            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()])
               .then(() => {
                 process.exit()
               })
             break
           case 'shutdown':
             logger.info('Shutting down OIBus')
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop()])
+            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server?.stop()])
               .then(() => {
                 process.send({ type: 'shutdown-ready' })
               })
