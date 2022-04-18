@@ -39,6 +39,24 @@ class Server {
 
     this.app.logger.setEncryptionService(this.encryptionService)
 
+    // Get the config entries
+    const { engineConfig } = oibusEngine.configService.getConfig()
+    const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
+
+    this.port = port
+    this.user = user
+
+    if (password) {
+      try {
+        this.password = this.encryptionService.decryptText(password)
+      } catch (error) {
+        console.error(error)
+        this.password = null
+      }
+    } else {
+      this.password = null
+    }
+
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
@@ -72,24 +90,6 @@ class Server {
         this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
       }
     })
-
-    // Get the config entries
-    const { engineConfig } = oibusEngine.configService.getConfig()
-    const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
-
-    this.port = port
-    this.user = user
-
-    if (password) {
-      try {
-        this.password = oibusEngine.encryptionService.decryptText(password)
-      } catch (error) {
-        this.password = null
-        this.app.logger.error('Error decrypting admin password. Falling back to default')
-      }
-    } else {
-      this.password = null
-    }
 
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
@@ -152,6 +152,11 @@ class Server {
     this.app.logger.changeParameters(engineConfig).then(() => {
       this.app.listen(this.port, () => this.app.logger.info(`Web server started on ${this.port}`))
     })
+  }
+
+  async stop() {
+    this.app.removeAllListeners()
+    this.app = null
   }
 }
 
