@@ -75,7 +75,7 @@
     "mqtt-wildcard": "3.0.9",
     "mssql": "8.1.0",
     "mysql2": "2.3.3",
-    "nanoid": "3.3.2",
+    "nanoid": "3.3.4",
     "node-fetch": "2.6.7",
     "node-opcua": "2.66.3",
     "object-path": "0.11.8",
