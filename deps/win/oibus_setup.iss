@@ -4,6 +4,7 @@
 #define MyDateTime GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':')
 
 [Setup]
+SignTool=signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p $f
 AppId={{A4DCC920-510F-4D9D-AD02-67AA402EC010}
 AppName={#MyAppName}
 // MyAppVersion is set by the npm command build-win-setup on release
@@ -49,7 +50,7 @@ Source: "..\..\src\config\defaultConfig.json"; DestDir: "{app}"; Flags: ignoreve
 
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%n%nIMPORTANT :%nInternet Explorer is NOT supported. OIBus will only run properly using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%n%nIMPORTANT :%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
 
 
 [Code]
@@ -200,6 +201,22 @@ begin
   end;
 end;
 
+// Generate go.bat file used to run OIBus from a terminal window
+function CreateLauncherFile: Boolean;
+begin
+    FileContent := 'echo Stopping OIBus service...' + #13#10
+      + 'nssm.exe stop OIBus' + #13#10
+      + '@echo Starting OIBus in the console...' + #13#10
+      + '"' + ExpandConstant('{app}') + '\oibus.exe" --config "' + ConfigFilePath + '"'
+    if not SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False) then
+      Result := False
+    else
+    begin
+      if CreateDir(OIBus_DataDirPage.Values[0] + '\cache\') and CreateDir(OIBus_DataDirPage.Values[0] + '\logs\') then
+        Result := True
+    end
+end;
+
 // Set configuration by altering oibus.json according to user input
 function SetConfig: Boolean;
 var
@@ -238,20 +255,8 @@ begin;
           if not SaveStringToFile(ConfigFilePath, FileContent, False) then
             Result := False
           else
-          begin
-            FileContent := 'echo Stopping OIBus service...' + #13#10
-              + 'nssm.exe stop OIBus >nul 2>&1' + #13#10
-              + '@echo Starting OIBus in the console...' + #13#10
-              + '"' + ExpandConstant('{app}') + '\oibus.exe" --config "' + ConfigFilePath + '"'
-            if not SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False) then
-              Result := False
-            else
-            begin
-              if CreateDir(OIBus_DataDirPage.Values[0] + '\cache\') and CreateDir(OIBus_DataDirPage.Values[0] + '\logs\') then
-                Result := True
-            end
-          end
-        end
+            Result := True
+        end;
         else
           Result := False;
       end;
@@ -428,7 +433,13 @@ begin
         MsgBox('ERROR : Configuration-setup failed', mbCriticalError, MB_OK);
         DeleteMyRegistry
       end
-      // 4# executing install related commands
+      // 5# creating go.bat file
+      else if not CreateLauncherFile() then
+        begin
+          MsgBox('ERROR : Configuration-setup failed', mbCriticalError, MB_OK);
+          DeleteMyRegistry
+        end
+      // 5# executing install related commands
       else if not InstallProgram() then
       begin
         MsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK)
