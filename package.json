@@ -114,7 +114,7 @@
     "babel-jest": "27.5.1",
     "babel-loader": "8.2.4",
     "css-loader": "6.7.1",
-    "eslint": "8.13.0",
+    "eslint": "8.15.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-jsx-a11y": "6.5.1",
