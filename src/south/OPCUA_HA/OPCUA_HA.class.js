@@ -1,5 +1,6 @@
 const Opcua = require('node-opcua')
 
+const { StatusCodes } = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 /**
@@ -15,7 +16,7 @@ class OPCUA_HA extends ProtocolHandler {
    * Constructor for OPCUA_HA
    * @constructor
    * @param {Object} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
   constructor(dataSource, engine) {
@@ -121,6 +122,7 @@ class OPCUA_HA extends ProtocolHandler {
     }))
     let historyReadDetails
 
+    const logs = {}
     const dataValues = [[]]
     do {
       if (options?.aggregateFn) {
@@ -128,8 +130,7 @@ class OPCUA_HA extends ProtocolHandler {
           this.logger.error(`Option aggregateFn ${options.aggregateFn} without processingInterval`)
         }
         // we use the same aggregate for all nodes (OPCUA allows to have a different one for each)
-        const aggregateType = Array(nodesToRead.length)
-          .fill(options.aggregateFn)
+        const aggregateType = Array(nodesToRead.length).fill(options.aggregateFn)
         historyReadDetails = new Opcua.ReadProcessedDetails({
           aggregateType,
           endTime,
@@ -165,8 +166,15 @@ class OPCUA_HA extends ProtocolHandler {
          * Reason of statusCode not equal to zero could be there is no data for the requested data and interval
          */
         if (result.statusCode.value !== 0) {
-          // eslint-disable-next-line no-underscore-dangle
-          this.logger.debug(`${nodesToRead[i].nodeId}: ${result.statusCode.value} - ${result.statusCode._description}`)
+          if (!logs[result.statusCode.value]) {
+            logs[result.statusCode.value] = {
+              // eslint-disable-next-line no-underscore-dangle
+              descriptions: result.statusCode._description,
+              affectedNodes: [nodesToRead[i].nodeId],
+            }
+          } else {
+            logs[result.statusCode.value].affectedNodes.push(nodesToRead[i].nodeId)
+          }
         }
         nodesToRead[i].continuationPoint = result.continuationPoint
       })
@@ -187,6 +195,17 @@ class OPCUA_HA extends ProtocolHandler {
       releaseContinuationPoints: true,
       timestampsToReturn: Opcua.TimestampsToReturn.Both,
     }))
+
+    Object.keys(logs).forEach((statusCode) => {
+      switch (statusCode) {
+        case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
+          this.logger.debug(`${logs[statusCode].description} (${statusCode}): ${logs[statusCode].affectedNodes.toString()}`)
+          break
+        default:
+          this.logger.debug(`${logs[statusCode].description} (${statusCode}): ${logs[statusCode].affectedNodes.toString()}`)
+          break
+      }
+    })
     return dataValues
   }
 
@@ -317,6 +336,9 @@ class OPCUA_HA extends ProtocolHandler {
       this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
+      await this.disconnect()
+      this.initializeStatusData()
+      await this.connect()
       return -1
     }
     return 0
@@ -343,7 +365,7 @@ class OPCUA_HA extends ProtocolHandler {
 
   /**
    * Connect to OPCUA_HA server with retry.
-   * @returns {Promise<void>} - The connect promise
+   * @returns {Promise<void>} - The connection promise
    */
   async connectToOpcuaServer() {
     try {

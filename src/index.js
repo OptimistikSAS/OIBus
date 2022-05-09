@@ -116,16 +116,15 @@ logger.changeParameters({
 
       const oibusEngine = new OIBusEngine(configService)
       const historyQueryEngine = new HistoryQueryEngine(configService)
-      let server
+      const server = new Server(oibusEngine, historyQueryEngine)
 
       if (check) {
         logger.warn('OIBus is running in check mode')
         process.send({ type: 'shutdown-ready' })
       } else {
-        await oibusEngine.start(safeMode)
-        await historyQueryEngine.start(safeMode)
-        server = new Server(oibusEngine, historyQueryEngine)
-        server.listen()
+        oibusEngine.start(safeMode)
+        historyQueryEngine.start(safeMode)
+        server.start()
       }
 
       // Catch Ctrl+C and properly stop the Engine
@@ -144,15 +143,14 @@ logger.changeParameters({
           case 'reload-oibus-engine':
             logger.info('Reloading OIBus Engine')
             await oibusEngine.stop()
-            await oibusEngine.start(safeMode)
             await server.stop()
-            server = new Server(oibusEngine, historyQueryEngine)
-            server.listen()
+            oibusEngine.start(safeMode)
+            server.start()
             break
           case 'reload-historyquery-engine':
             logger.info('Reloading HistoryQuery Engine')
             await historyQueryEngine.stop()
-            await historyQueryEngine.start(safeMode)
+            historyQueryEngine.start(safeMode)
             break
           case 'reload':
             logger.info('Reloading OIBus')

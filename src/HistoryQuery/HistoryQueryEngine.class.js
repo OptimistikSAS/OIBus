@@ -130,7 +130,7 @@ class HistoryQueryEngine extends BaseEngine {
 
     this.safeMode = safeMode || engineConfig.safeMode
     if (this.safeMode) {
-      this.logger.info('HistoryQuery Engine is running in safe mode')
+      this.logger.warn('HistoryQuery Engine is running in safe mode')
       return
     }
 
@@ -151,6 +151,7 @@ class HistoryQueryEngine extends BaseEngine {
       this.statusData.ongoingHistorQueryId = null
       this.updateStatusDataStream()
       this.eventEmitters['/history/engine/sse']?.events?.removeAllListeners()
+      this.eventEmitters['/history/engine/sse']?.stream?.destroy()
       this.historyQuery = null
     }
   }
