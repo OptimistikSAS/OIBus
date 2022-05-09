@@ -87,6 +87,13 @@ class ProtocolHandler {
     if (supportHistory && typeof this.historyQuery !== 'function') {
       this.logger.error(`${this.constructor.name} should implement the historyQuery() method.`)
     }
+
+    if (this.handlesPoints) {
+      this.statusData['Number of values since OIBus has started'] = 0
+    }
+    if (this.handlesFiles) {
+      this.statusData['Number of files since OIBus has started'] = 0
+    }
   }
 
   prepareHistorySupport() {
@@ -168,17 +175,11 @@ class ProtocolHandler {
   }
 
   initializeStatusData() {
-    if (this.handlesPoints) {
-      this.statusData['Number of values since OIBus has started'] = 0
-    }
-    if (this.handlesFiles) {
-      this.statusData['Number of files since OIBus has started'] = 0
-    }
-
     if (!this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`]) {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`] = {}
     } else {
       this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.removeAllListeners()
+      this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].stream?.destroy()
     }
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/south/${this.dataSource.id}/sse`].events.on('data', this.listener)
@@ -203,7 +204,7 @@ class ProtocolHandler {
 
   async historyQueryHandler(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
-      this.logger.debug(`onScan ignored: connected: ${this.connected},ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      this.logger.debug(`onScan ignored: connected: ${this.connected}, ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
     }
 
@@ -293,6 +294,7 @@ class ProtocolHandler {
     this.connected = false
     this.logger.info(`Data source ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/south/${id}/sse`]?.events?.removeAllListeners()
+    this.engine.eventEmitters[`/south/${id}/sse`]?.stream?.destroy()
   }
 
   /**

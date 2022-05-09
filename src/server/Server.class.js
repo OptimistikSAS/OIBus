@@ -26,21 +26,22 @@ class Server {
    * @return {void}
    */
   constructor(oibusEngine, historyQueryEngine) {
-    this.app = new Koa()
-
     // capture the engine and logger under app for reuse in routes.
-    this.app.engine = oibusEngine
-    this.app.historyQueryEngine = historyQueryEngine
-    this.app.logger = new Logger('web-server')
+    this.engine = oibusEngine
+    this.historyQueryEngine = historyQueryEngine
+    this.logger = new Logger('web-server')
+    this.webServer = null // store the listening web server
 
     this.encryptionService = EncryptionService.getInstance()
     this.encryptionService.setKeyFolder(oibusEngine.configService.keyFolder)
     this.encryptionService.checkOrCreatePrivateKey()
 
-    this.app.logger.setEncryptionService(this.encryptionService)
+    this.logger.setEncryptionService(this.encryptionService)
+  }
 
+  start() {
     // Get the config entries
-    const { engineConfig } = oibusEngine.configService.getConfig()
+    const { engineConfig } = this.engine.configService.getConfig()
     const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
     this.port = port
@@ -57,6 +58,9 @@ class Server {
       this.password = null
     }
 
+    this.app = new Koa()
+    this.app.engine = this.engine
+    this.app.historyQueryEngine = this.historyQueryEngine
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
@@ -64,8 +68,8 @@ class Server {
         // eslint-disable-next-line no-return-await
         return await next()
       }
-      if ((!ctx.path.startsWith('/history/') && !this.app.engine.eventEmitters[ctx.path])
-          || (ctx.path.startsWith('/history/') && !this.app.historyQueryEngine.eventEmitters[ctx.path])) {
+      if ((!ctx.path.startsWith('/history/') && !this.engine.eventEmitters[ctx.path])
+          || (ctx.path.startsWith('/history/') && !this.historyQueryEngine.eventEmitters[ctx.path])) {
         // eslint-disable-next-line no-return-await
         return await next()
       }
@@ -81,13 +85,13 @@ class Server {
 
       ctx.status = 200
       if (ctx.path.startsWith('/history/')) {
-        this.app.historyQueryEngine.eventEmitters[ctx.path].stream = new PassThrough()
-        ctx.body = this.app.historyQueryEngine.eventEmitters[ctx.path].stream
-        this.app.historyQueryEngine.eventEmitters[ctx.path].events.emit('data', this.app.historyQueryEngine.eventEmitters[ctx.path].statusData)
+        this.historyQueryEngine.eventEmitters[ctx.path].stream = new PassThrough()
+        ctx.body = this.historyQueryEngine.eventEmitters[ctx.path].stream
+        this.historyQueryEngine.eventEmitters[ctx.path].events.emit('data', this.historyQueryEngine.eventEmitters[ctx.path].statusData)
       } else {
-        this.app.engine.eventEmitters[ctx.path].stream = new PassThrough()
-        ctx.body = this.app.engine.eventEmitters[ctx.path].stream
-        this.app.engine.eventEmitters[ctx.path].events.emit('data', this.app.engine.eventEmitters[ctx.path].statusData)
+        this.engine.eventEmitters[ctx.path].stream = new PassThrough()
+        ctx.body = this.engine.eventEmitters[ctx.path].stream
+        this.engine.eventEmitters[ctx.path].events.emit('data', this.engine.eventEmitters[ctx.path].statusData)
       }
     })
 
@@ -106,7 +110,7 @@ class Server {
         if (err.status === 401) {
           ctx.status = 401
           ctx.set('WWW-Authenticate', 'Basic')
-          this.app.logger.warn('UnauthorizedError: Bad Combination Login/Password')
+          this.logger.warn('UnauthorizedError: Bad Combination Login/Password')
         } else {
           throw err
         }
@@ -144,19 +148,16 @@ class Server {
     this.app.use(router.routes())
     this.app.use(router.allowedMethods())
     this.app.use(clientController.serveClient)
-  }
 
-  listen() {
-    const { engineConfig } = this.app.engine.configService.getConfig()
-
-    this.app.logger.changeParameters(engineConfig).then(() => {
-      this.app.listen(this.port, () => this.app.logger.info(`Web server started on ${this.port}`))
+    this.logger.changeParameters(engineConfig).then(() => {
+      this.webServer = this.app.listen(this.port, () => {
+        this.logger.info(`Web server started on ${this.port}`)
+      })
     })
   }
 
   async stop() {
-    this.app.removeAllListeners()
-    this.app = null
+    await this.webServer?.close()
   }
 }
 

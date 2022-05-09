@@ -342,6 +342,7 @@ class OIBusEngine extends BaseEngine {
 
     // Stop the listener
     this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
+    this.eventEmitters['/engine/sse']?.stream?.destroy()
   }
 
   /**

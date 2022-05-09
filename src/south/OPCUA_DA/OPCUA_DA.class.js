@@ -15,7 +15,7 @@ class OPCUA_DA extends ProtocolHandler {
    * Constructor for OPCUA_DA
    * @constructor
    * @param {Object} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
   constructor(dataSource, engine) {
@@ -85,12 +85,11 @@ class OPCUA_DA extends ProtocolHandler {
    */
   async lastPointQuery(scanMode) {
     if (!this.connected) {
-      this.logger.trace(`onScan ignored: connected: ${this.connected}`)
+      this.logger.debug(`onScan ignored: connected: ${this.connected}`)
       return
     }
 
-    const nodesToRead = this.dataSource.points
-      .filter((point) => point.scanMode === scanMode)
+    const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
       this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
       return
@@ -105,6 +104,9 @@ class OPCUA_DA extends ProtocolHandler {
       await this.manageDataValues(dataValues, nodesToRead)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
+      await this.disconnect()
+      this.initializeStatusData()
+      await this.connect()
     }
   }
 
@@ -172,7 +174,7 @@ class OPCUA_DA extends ProtocolHandler {
 
   /**
    * Connect to OPCUA_DA server with retry.
-   * @returns {Promise<void>} - The connect promise
+   * @returns {Promise<void>} - The connection promise
    */
   async connectToOpcuaServer() {
     try {

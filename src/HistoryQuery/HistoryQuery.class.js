@@ -49,6 +49,7 @@ class HistoryQuery {
       this.engine.eventEmitters[`/history/${this.id}/sse`] = {}
     } else {
       this.engine.eventEmitters[`/history/${this.id}/sse`].events.removeAllListeners()
+      this.engine.eventEmitters[`/history/${this.id}/sse`].stream?.destroy()
     }
     this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
@@ -94,6 +95,7 @@ class HistoryQuery {
       await this.north.disconnect()
     }
     this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.removeAllListeners()
+    this.engine.eventEmitters[`/history/${this.id}/sse`]?.stream?.destroy()
   }
 
   /**

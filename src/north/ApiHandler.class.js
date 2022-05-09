@@ -92,6 +92,7 @@ class ApiHandler {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
     } else {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.removeAllListeners()
+      this.engine.eventEmitters[`/north/${this.application.id}/sse`].stream?.destroy()
     }
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
@@ -109,6 +110,7 @@ class ApiHandler {
     const { name, id } = this.application
     this.logger.info(`North API ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/north/${id}/sse`]?.events?.removeAllListeners()
+    this.engine.eventEmitters[`/north/${id}/sse`]?.stream?.destroy()
   }
 
   /**

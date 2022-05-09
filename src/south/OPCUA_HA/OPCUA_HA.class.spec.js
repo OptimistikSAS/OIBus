@@ -422,11 +422,17 @@ describe('OPCUA-HA south', () => {
   })
 
   it('should onScan catch errors', async () => {
+    Opcua.OPCUAClient.create.mockReturnValue({
+      connect: jest.fn(),
+      createSession: jest.fn(),
+      disconnect: jest.fn(),
+    })
     await opcuaSouth.connect()
     opcuaSouth.connected = true
     opcuaSouth.ongoingReads[opcuaConfig.OPCUA_HA.scanGroups[0].scanMode] = false
     opcuaSouth.readHistoryValue = jest.fn()
     opcuaSouth.readHistoryValue.mockReturnValue(Promise.reject(new Error('fail')))
+    opcuaSouth.session = { close: jest.fn() }
     await opcuaSouth.historyQueryHandler(opcuaConfig.OPCUA_HA.scanGroups[0].scanMode)
 
     expect(opcuaSouth.readHistoryValue)
