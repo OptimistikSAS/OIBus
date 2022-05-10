@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.1](https://github.com/OptimistikSAS/OIBus/compare/v2.0.0...v2.0.1) (2022-05-10)
+
+
+### Bug Fixes
+
+* **deps:** update aws-sdk-js-v3 monorepo ([58df450](https://github.com/OptimistikSAS/OIBus/commit/58df450b33da82072992e7de528dcdafd0f0c799))
+* **deps:** update dependency luxon to v2.3.2 ([67e8826](https://github.com/OptimistikSAS/OIBus/commit/67e882610c2cc05ba264e1523c2a7f4cec56580d))
+* **deps:** update dependency nanoid to v3.3.4 ([bb317cb](https://github.com/OptimistikSAS/OIBus/commit/bb317cb4d154b82542b0424515e009baa6072187))
+* **deps:** update dependency sqlite3 to v5.0.8 ([cf44999](https://github.com/OptimistikSAS/OIBus/commit/cf44999ccba7b3c8756386d055010b7d01ec9223))
+* **deps:** update react monorepo to v18 (major) ([dc68f98](https://github.com/OptimistikSAS/OIBus/commit/dc68f98b72db240cc3c447ad15f1beaa9caeeac3))
+* **engine:** fix web server reload and opcua server restart ([041b1fa](https://github.com/OptimistikSAS/OIBus/commit/041b1fa9ca6d7245b2e4da567c584d21e16ad9d9))
+
 ## [2.0.0](https://github.com/OptimistikSAS/OIBus/compare/v1.2.3...v2.0.0) (2022-04-19)
 
 
