@@ -78,6 +78,18 @@ class Cache {
     }
   }
 
+  stop() {
+    this.logger.info('Stopping cache timers...')
+    Object.values(this.apis).forEach((application) => {
+      if (application.timeout) {
+        clearTimeout(application.timeout)
+      }
+    })
+    if (this.archiveTimeout) {
+      clearTimeout(this.archiveTimeout)
+    }
+  }
+
   /**
    * Initialize the cache by creating a database for every North application.
    * also initializes an internal object for North applications
@@ -259,7 +271,6 @@ class Cache {
 
   /**
    * Transfer the file into the cache folder.
-   *
    * @param {string} filePath - The file path
    * @param {string} cachePath - The cache path
    * @param {boolean} preserveFiles - Whether to preserve the file
