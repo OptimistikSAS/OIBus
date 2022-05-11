@@ -1,7 +1,7 @@
 /**
  * Parse data from SLIMS Result table
  * @param {object} httpResult - the data resulting of a SLIMS Result table API call
- * @return {{httpResults: *[], latestDateRetrieved: string}} - the formatted results flattened for easier access
+ * @return {{httpResults: *[], latestDateRetrieved: Date}} - the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
 const format = (httpResult) => {
@@ -37,7 +37,7 @@ const format = (httpResult) => {
       latestDateRetrieved = new Date(rsltCfSamplingDateAndTime.value)
     }
   })
-  return { httpResults: formattedData, latestDateRetrieved: latestDateRetrieved.toISOString() }
+  return { httpResults: formattedData, latestDateRetrieved }
 }
 
 module.exports = format

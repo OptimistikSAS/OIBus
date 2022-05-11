@@ -50,7 +50,7 @@ const checkDataFormat = (resultElement) => {
 /**
  * Parse data from OIAnalytics time values API
  * @param {object} httpResult - the data resulting of an OIAnalytics time series API call
- * @return {{httpResults: *[], latestDateRetrieved: string}} - the formatted results flattened for easier access
+ * @return {{httpResults: *[], latestDateRetrieved: Date}} - the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
 const format = (httpResult) => {
@@ -73,7 +73,7 @@ const format = (httpResult) => {
       }
     })
   })
-  return { httpResults: formattedData, latestDateRetrieved: latestDateRetrieved.toISOString() }
+  return { httpResults: formattedData, latestDateRetrieved }
 }
 
 module.exports = format
