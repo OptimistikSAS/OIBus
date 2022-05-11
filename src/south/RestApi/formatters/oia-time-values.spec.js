@@ -102,11 +102,11 @@ describe('oia time values formatter', () => {
             unit: 'pH',
             value: 8,
           }],
-        latestDateRetrieved: '2022-01-01T00:10:00.000Z',
+        latestDateRetrieved: new Date('2022-01-01T00:10:00.000Z'),
       })
 
     expect(oiaTimeValues([]))
-      .toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' })
+      .toEqual({ httpResults: [], latestDateRetrieved: new Date('1970-01-01T00:00:00.000Z') })
     expect(oiaTimeValues([
       {
         type: 'time-values',
@@ -121,6 +121,6 @@ describe('oia time values formatter', () => {
         values: [],
       },
     ]))
-      .toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' })
+      .toEqual({ httpResults: [], latestDateRetrieved: new Date('1970-01-01T00:00:00.000Z') })
   })
 })

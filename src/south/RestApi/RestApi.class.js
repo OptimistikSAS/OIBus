@@ -153,7 +153,7 @@ class RestApi extends ProtocolHandler {
       try {
         const { httpResults, latestDateRetrieved } = parsers[this.payloadParser](results)
         formattedResults = httpResults
-        if (latestDateRetrieved > updatedStartTime.toISOString()) {
+        if (latestDateRetrieved > updatedStartTime) {
           updatedStartTime = latestDateRetrieved
         }
       } catch (parsingError) {
