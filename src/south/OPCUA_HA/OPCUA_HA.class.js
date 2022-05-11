@@ -169,7 +169,7 @@ class OPCUA_HA extends ProtocolHandler {
           if (!logs[result.statusCode.value]) {
             logs[result.statusCode.value] = {
               // eslint-disable-next-line no-underscore-dangle
-              descriptions: result.statusCode._description,
+              description: result.statusCode._description,
               affectedNodes: [nodesToRead[i].nodeId],
             }
           } else {
@@ -199,10 +199,21 @@ class OPCUA_HA extends ProtocolHandler {
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
         case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
-          this.logger.debug(`${logs[statusCode].description} (${statusCode}): ${logs[statusCode].affectedNodes.toString()}`)
+          if (logs[statusCode].affectedNodes.length > 10) {
+            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
+              logs[statusCode].affectedNodes[0]}..${logs[statusCode].affectedNodes[logs[statusCode].affectedNodes.length - 1]}]`)
+          } else {
+            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${logs[statusCode].affectedNodes.toString()}]`)
+          }
+
           break
         default:
-          this.logger.debug(`${logs[statusCode].description} (${statusCode}): ${logs[statusCode].affectedNodes.toString()}`)
+          if (logs[statusCode].affectedNodes.length > 10) {
+            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
+              logs[statusCode].affectedNodes[0]}..${logs[statusCode].affectedNodes[logs[statusCode].affectedNodes.length - 1]}]`)
+          } else {
+            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${logs[statusCode].affectedNodes.toString()}]`)
+          }
           break
       }
     })
