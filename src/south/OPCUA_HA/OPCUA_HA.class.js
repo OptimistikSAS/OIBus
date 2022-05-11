@@ -3,6 +3,8 @@ const Opcua = require('node-opcua')
 const { StatusCodes } = require('node-opcua')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
+const MAX_NUMBER_OF_NODE_TO_LOG = 10
+
 /**
  *
  *
@@ -199,16 +201,8 @@ class OPCUA_HA extends ProtocolHandler {
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
         case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
-          if (logs[statusCode].affectedNodes.length > 10) {
-            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
-              logs[statusCode].affectedNodes[0]}..${logs[statusCode].affectedNodes[logs[statusCode].affectedNodes.length - 1]}]`)
-          } else {
-            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${logs[statusCode].affectedNodes.toString()}]`)
-          }
-
-          break
         default:
-          if (logs[statusCode].affectedNodes.length > 10) {
+          if (logs[statusCode].affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
             this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
               logs[statusCode].affectedNodes[0]}..${logs[statusCode].affectedNodes[logs[statusCode].affectedNodes.length - 1]}]`)
           } else {

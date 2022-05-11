@@ -316,6 +316,7 @@ class OIBusEngine extends BaseEngine {
     this.jobs.forEach((id) => {
       timexe.remove(id)
     })
+    this.jobs = []
 
     // Stop Protocols
     Object.entries(this.activeProtocols)
@@ -339,6 +340,10 @@ class OIBusEngine extends BaseEngine {
 
     const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
     this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
+
+    // stop the cache timers
+    this.cache.stop()
+    this.cache = null
 
     // Stop the listener
     this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
